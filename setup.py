@@ -6,11 +6,11 @@ def read_requirements():
         return [line.strip() for line in file if not line.startswith('#')]
 
 setup(
-    name='my_library',
+    name='jaxcmr',
     version='0.1.0',
-    description='A short description of your library',
-    author='Your Name',
-    author_email='your.email@example.com',
+    description='the context maintenance and retrieval model implemented and evaluated using jax',
+    author='Jordan Gunn',
+    author_email='gunnjordanb@gmail.com',
     packages=find_packages(),
     install_requires=read_requirements(),
     classifiers=[
