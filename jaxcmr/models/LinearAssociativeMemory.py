@@ -6,8 +6,8 @@ from jaxtyping import Integer, Float, Array
 from flax.struct import PyTreeNode
 import jax.numpy as jnp
 from plum import dispatch
-from jax import lax
-
+from jax import lax, jit
+from functools import partial
 
 #%% Type Hierarchy
 
@@ -22,24 +22,23 @@ class LinearAssociativeMcf(LinearAssociativeMemory):
 
 #%% Mfc Initialization
 
-@dispatch
-def initialize_mfc(
+@partial(jit, static_argnums=(0,))
+def basic_init_mfc(
     item_count: int | Integer[Array, ""],
     learning_rate: float | Float[Array, ""]
     ) -> LinearAssociativeMfc:
-    "Initialize a linear associative feature-to-context memory"
+    "A linear associative feature-to-context memory assuming one-hot item representations"
     memory = jnp.eye(item_count, item_count + 2)
     memory = jnp.hstack([jnp.zeros((item_count, 1)), memory[:, :-1]])
     memory = memory * (1 - learning_rate)
     return LinearAssociativeMfc(memory)
 
-
-@dispatch
-def initialize_mfc(
+@jit
+def generalized_init_mfc(
     items: Float[Array, "item_count item_features"], 
     learning_rate: float | Float[Array, ""], 
     ) -> LinearAssociativeMfc:
-    "Generalized initialize function for LinearAssociativeMfc with arbitrary item representations"
+    "A linear associative feature-to-context memory from arbitrary item representations"
     item_count = items.shape[0]
     item_feature_count = items.shape[1]
     context_feature_count = item_count + 2
@@ -51,10 +50,20 @@ def initialize_mfc(
 
     return LinearAssociativeMfc(memory)
 
-#%% Mcf Initialization
+@dispatch
+def initialize_mfc(
+    item_count: int | Integer[Array, ""], learning_rate: float | Float[Array, ""]) -> LinearAssociativeMfc:
+    return basic_init_mfc(item_count, learning_rate)
 
 @dispatch
-def initialize_mcf(
+def initialize_mfc(
+    items: Float[Array, "item_count item_features"], learning_rate: float | Float[Array, ""]) -> LinearAssociativeMfc:
+    return generalized_init_mfc(items, learning_rate)
+
+#%% Mcf Initialization
+
+@partial(jit, static_argnums=(0,))
+def basic_init_mcf(
     item_count: int | Integer[Array, ""],
     shared_support: float | Float[Array, ""],
     item_support: float | Float[Array, ""]
@@ -66,9 +75,8 @@ def initialize_mcf(
         (jnp.zeros((1, item_count)), memory, jnp.zeros((1, item_count))))
     return LinearAssociativeMcf(memory)
 
-
-@dispatch
-def initialize_mcf(
+@jit
+def generalized_init_mcf(
     items: Float[Array, "item_count item_features"], 
     shared_support: float | Float[Array, ""],
     item_support: float | Float[Array, ""]
@@ -88,8 +96,25 @@ def initialize_mcf(
     
     return LinearAssociativeMcf(memory)
 
+@dispatch
+def initialize_mcf(
+    item_count: int | Integer[Array, ""],
+    shared_support: float | Float[Array, ""],
+    item_support: float | Float[Array, ""]
+    ) -> LinearAssociativeMcf:
+    return basic_init_mcf(item_count, shared_support, item_support)
+
+@dispatch
+def initialize_mcf(
+    items: Float[Array, "item_count item_features"], 
+    shared_support: float | Float[Array, ""],
+    item_support: float | Float[Array, ""]
+    ) -> LinearAssociativeMcf:
+    return generalized_init_mcf(items, shared_support, item_support)
+
 #%% 
 
+@jit
 @dispatch
 def linear_associate(
     memory_state: Float[Array, "input_features output_features"],
@@ -102,6 +127,7 @@ def linear_associate(
         learning_rate * jnp.outer(input_feature_pattern, output_feature_pattern))
 
 
+@jit
 @dispatch
 def associate(
     memory: LinearAssociativeMemory,
