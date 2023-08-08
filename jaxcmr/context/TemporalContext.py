@@ -15,41 +15,42 @@ class TemporalContext(Context):
 
 __all__ = [
     "TemporalContext",
-    "state",
-    "start_context_input",
-    "delay_context_input",
+    "initialize_temporal_context",
+    "get_state",
+    "get_start_context_input",
+    "get_delay_context_input",
     "integrate",
     "rho_integrate",
-    "initialize_temporal_context",
 ]
 
 #%% Accessors
 
 @jit
 @dispatch
-def state(context: TemporalContext) -> Float[Array, "context_feature_units"]:
+def get_state(context: TemporalContext) -> Float[Array, "context_feature_units"]:
     return context.state
 
-
 @jit
 @dispatch
-def start_context_input(context: TemporalContext) -> Float[Array, "context_feature_units"]:
+def get_start_context_input(
+    context: TemporalContext
+) -> Float[Array, "context_feature_units"]:
     return context.start_context_input
 
-
 @jit
 @dispatch
-def delay_context_input(context: TemporalContext) -> Float[Array, "context_feature_units"]:
+def get_delay_context_input(
+    context: TemporalContext
+) -> Float[Array, "context_feature_units"]:
     return context.delay_context_input
 
-
 @jit
 @dispatch
-def update_state(
-    context: TemporalContext, new_state: Float[Array, "context_feature_units"],
+def set_state(
+    context: TemporalContext, 
+    new_state: Float[Array, "context_feature_units"],
 ) -> TemporalContext:
     return context.replace(state=new_state)
-
 
 #%% Specialized functions
 
@@ -62,7 +63,6 @@ def initialize_temporal_context(item_count: int | Integer[Array, ""]) -> Tempora
         start_context_input=context_state.at[0].set(1),
         delay_context_input=context_state.at[-1].set(1),
     )
-
 
 @jit
 @dispatch
@@ -77,7 +77,6 @@ def rho_integrate(
     ) - (drift_rate * (context_state * context_input))
     return (rho * context_state) + (drift_rate * context_input)
 
-
 @jit
 @dispatch
 def integrate(
@@ -86,4 +85,4 @@ def integrate(
     drift_rate: float | Float[Array, ""],
 ) -> TemporalContext:
     "Integrate an input representation into temporal context"
-    return update_state(context, rho_integrate(state(context), context_input, drift_rate))
+    return set_state(context, rho_integrate(get_state(context), context_input, drift_rate))

@@ -1,8 +1,19 @@
 """
 MemorySearch
+
 Abstract type and functions for memory search models.
-Subclasses must implement the following functions:
+Subtypes that implement all abstract functions are compatible with concrete functions defined here.
+
+A MemorySearch model is a stateful model that can be in one of two modes: acthive or inactive.
+A model is initialized in association with a specific item_count, and can be updated by experiencing
+additional items or by retrieving items from memory.
+Items are specified for encoding and retrieval by their index (1-indexed).
+0 is a special index that indicates based on context either that no item is encoded or that 
+retrieval is terminated.
+Given a state of the model, a probability of each possible retrieval outcome can be computed.
 """
+
+#%% Imports
 
 from jaxtyping import Integer, Float, Array, PRNGKey, Bool
 from typing import Tuple
@@ -10,13 +21,37 @@ from flax.struct import PyTreeNode
 from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
 
+#%% Public interface
+
+__all__ = [
+    'MemorySearch',
+    'item_count',
+    'experience',
+    'outcome_probabilities',
+    'outcome_probability',
+    'start_retrieving',
+    'active',
+    'stop_recall',
+    'retrieve_item',
+    'retrieve',
+    'single_free_recall',
+    'maybe_single_free_recall',
+    'free_recall',
+    'predict_and_simulate_retrieval',
+    'predict_and_simulate_trial',
+    'uniform_presentations_data_likelihood',
+    'variable_presentations_data_likelihood'
+    ]
+
+#%% Types
+
 class MemorySearch(PyTreeNode):
     pass
 
 #%% Accessors
 
 @dispatch.abstract
-def item_count(model: MemorySearch) -> int | Integer[Array, ""]:
+def get_item_count(model: MemorySearch) -> int | Integer[Array, ""]:
     "Return the number of items initialized with the model"
 
 #%% Encoding
@@ -28,7 +63,7 @@ def experience(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemoryS
 @dispatch
 def experience(model: MemorySearch):
     "Experience all study items initialized with the model"
-    return lax.fori_loop(1, item_count(model)+1, lambda i, model: experience(model, i), model)
+    return lax.fori_loop(1, get_item_count(model)+1, lambda i, model: experience(model, i), model)
 
 @dispatch
 def experience(model: MemorySearch, choices: Integer[Array, "presentation_count"]):
@@ -53,7 +88,7 @@ def start_retrieving(model: MemorySearch) -> MemorySearch:
     "Shift to retrieval mode"
 
 @dispatch.abstract
-def active(model: MemorySearch) -> bool | Bool[Array, ""]:
+def is_active(model: MemorySearch) -> bool | Bool[Array, ""]:
     "Return whether the model has finished retrieving"
 
 @dispatch.abstract
@@ -84,13 +119,13 @@ def single_free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch,
 @dispatch
 def maybe_single_free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch, int]:
     "Perform a free recall event if the model is active and return the resulting state."
-    return lax.cond(active(model), single_free_recall, lambda model, _: (model, 0), (model, rng))
+    return lax.cond(is_active(model), single_free_recall, lambda model, _: (model, 0), (model, rng))
 
 @jit
 @dispatch
 def free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch, int]:
     "Perform free recall events until the model is inactive and return the resulting state."
-    return lax.scan(maybe_single_free_recall, model, random.split(rng, item_count(model)))
+    return lax.scan(maybe_single_free_recall, model, random.split(rng, get_item_count(model)))
 
 #%% Trial Probabilities
 
@@ -103,7 +138,8 @@ def predict_and_simulate_retrieval(
     choice: int | Integer[Array, ""]
 ) -> Tuple[MemorySearch, float | Float[Array, ""]]:
     "Predict the probability of a particular retrieval outcome and then simulate that outcome"
-    likelihood = lax.cond(active(model), outcome_probability, lambda model, _: 0.0, (model, choice))
+    likelihood = lax.cond(
+        is_active(model), outcome_probability, lambda model, _: 0.0, (model, choice))
     return retrieve(model, choice), likelihood + lb
 
 @jit

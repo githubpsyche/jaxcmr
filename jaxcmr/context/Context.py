@@ -13,8 +13,10 @@ from jax import jit
 
 __all__ = [
     "Context",
-    "start_context_input",
-    "delay_context_input",
+    "get_state",
+    "set_state",
+    "get_start_context_input",
+    "get_delay_context_input",
     "integrate",
     "integrate_start_context",
     "integrate_delay_context",
@@ -29,13 +31,26 @@ class Context(PyTreeNode):
 
 @jit
 @dispatch.abstract
-def start_context_input(context: Context) -> Float[Array, "context_feature_units"]:
+def set_state(
+    context: Context, 
+    new_state: Float[Array, "context_feature_units"]
+    ) -> Context:
+    "Update the state of a context representation"
+
+@jit
+@dispatch.abstract
+def get_state(context: Context) -> Float[Array, "context_feature_units"]:
+    "Return the state of a context representation as a 1D array"
+
+@jit
+@dispatch.abstract
+def get_start_context_input(context: Context) -> Float[Array, "context_feature_units"]:
     "Vector representation of start-of-list context."
 
 
 @jit
 @dispatch.abstract
-def delay_context_input(context: Context) -> Float[Array, "context_feature_units"]:
+def get_delay_context_input(context: Context) -> Float[Array, "context_feature_units"]:
     "Vector representation of out-of-list context."
 
 #%% Abstract methods
@@ -57,7 +72,7 @@ def integrate_start_context(
     drift_rate: float | Float[Array, ""],
 ) -> Context:
     "Integrate start-of-list context into current state of a temporal context representation"
-    return integrate(context, start_context_input(context), drift_rate)
+    return integrate(context, get_start_context_input(context), drift_rate)
 
 
 @jit
@@ -67,4 +82,4 @@ def integrate_delay_context(
     drift_rate: float | Float[Array, ""],
 ) -> Context:
     "Integrate out-of-list context into current state of a temporal context representation"
-    return integrate(context, delay_context_input(context), drift_rate)
+    return integrate(context, get_delay_context_input(context), drift_rate)

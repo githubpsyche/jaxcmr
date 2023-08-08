@@ -2,7 +2,7 @@ from jaxcmr.context import (
     initialize_temporal_context, 
     integrate, 
     integrate_delay_context, 
-    state
+    get_state
 )
 from jax import jit, numpy as jnp
 
@@ -22,7 +22,7 @@ def test_integrate_second_context_unit():
         return integrate(context, context_input, encoding_drift_rate)
 
     desired_result = jnp.array([0.9539392, 0.3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
-    assert jnp.allclose(state(f()), desired_result)
+    assert jnp.allclose(get_state(f()), desired_result)
 
 
 def test_integrate_delay_context():
@@ -35,4 +35,4 @@ def test_integrate_delay_context():
         return integrate_delay_context(context, drift_rate)
     
     expected_state = jnp.array([0.8660254, 0., 0., 0., 0., 0., 0.5])
-    assert jnp.allclose(state(f()), expected_state)
+    assert jnp.allclose(get_state(f()), expected_state)

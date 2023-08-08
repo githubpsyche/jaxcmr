@@ -1,5 +1,15 @@
 """
 Linear Associative Memory
+Concrete type and functions for one-way linear associative memory models.
+
+Input and output feature patterns are 1D arrays of shape (M,) and (N,), 
+respectively.
+State interface provides a 2D array of shape (M, N).
+
+Following principles of behavioral over implementational inheritance,
+as long as subtypes provide a working implementation of the state and 
+update_state functions, all other functions will work, regardless of subtype 
+implementation.
 """
 
 #%% Imports
@@ -13,10 +23,10 @@ from jaxcmr.memory import OneWayMemory
 
 __all__ = [
     'LinearAssociativeMemory',
-    'state',
+    'get_state',
     'input_features',
     'output_features',
-    'update_state',
+    'set_state',
     'hebbian_associate',
     'associate',
     'probe',
@@ -28,37 +38,38 @@ __all__ = [
 class LinearAssociativeMemory(OneWayMemory):
     state: Float[Array, "input_features output_features"]
 
-#%% Accessors
+#%% Implementation-Coupled Getters and Setters
 
 @jit
 @dispatch
-def state(memory: LinearAssociativeMemory) -> Float[Array, "input_features output_features"]:
+def get_state(memory: LinearAssociativeMemory) -> Float[Array, "input_features output_features"]:
     "Return the state of a linear associative memory as a 2D array"
     return memory.state
 
 @jit
 @dispatch
-def input_features(memory: LinearAssociativeMemory) -> int:
-    "Return the number of input features of a linear associative memory"
-    return state(memory).shape[0]
-
-@jit
-@dispatch
-def output_features(memory: LinearAssociativeMemory) -> int:
-    "Return the number of output features of a linear associative memory"
-    return state(memory).shape[1]
-
-#%% Encoding
-
-@jit
-@dispatch
-def update_state(
+def set_state(
     memory: LinearAssociativeMemory, 
     new_state: Float[Array, "input_features output_features"]
     ) -> LinearAssociativeMemory:
     "Update the state of a linear associative memory"
     return LinearAssociativeMemory(new_state)
 
+#%% Other Getters
+
+@jit
+@dispatch
+def input_features(memory: LinearAssociativeMemory) -> int:
+    "Return the number of input features of a linear associative memory"
+    return get_state(memory).shape[0]
+
+@jit
+@dispatch
+def output_features(memory: LinearAssociativeMemory) -> int:
+    "Return the number of output features of a linear associative memory"
+    return get_state(memory).shape[1]
+
+#%% Encoding
 
 @jit
 @dispatch
@@ -83,10 +94,10 @@ def associate(
     output_feature_pattern: Float[Array, "output_features"]
     ) -> LinearAssociativeMemory:
     "Associate input and output feature patterns in a linear associative memory"
-    return update_state(
+    return set_state(
         memory, 
         hebbian_associate(
-            state(memory), learning_rate, input_feature_pattern, output_feature_pattern)
+            get_state(memory), learning_rate, input_feature_pattern, output_feature_pattern)
         )
 
 #%% Associative Recall
@@ -98,7 +109,7 @@ def probe(
     probe: Float[Array, "input_features"]
     ) -> Float[Array, "output_features"]:
     "Return the activation vector of a linear associative memory"
-    return jnp.dot(probe, state(memory))
+    return jnp.dot(probe, get_state(memory))
 
 @jit
 @dispatch
