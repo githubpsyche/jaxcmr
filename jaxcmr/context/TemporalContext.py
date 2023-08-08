@@ -11,6 +11,18 @@ class TemporalContext(Context):
     start_context_input: Float[Array, "context_feature_units"] 
     delay_context_input: Float[Array, "context_feature_units"]
 
+#%% Public interface
+
+__all__ = [
+    "TemporalContext",
+    "state",
+    "start_context_input",
+    "delay_context_input",
+    "integrate",
+    "rho_integrate",
+    "initialize_temporal_context",
+]
+
 #%% Accessors
 
 @jit
