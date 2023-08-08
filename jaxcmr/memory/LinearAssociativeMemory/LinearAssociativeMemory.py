@@ -1,14 +1,32 @@
-from jaxtyping import Integer, Float, Array
-from jaxcmr.memory import OneWayMemory
+"""
+Linear Associative Memory
+"""
+
+#%% Imports
+
+from jaxtyping import Float, Array
 from plum import dispatch
-from functools import partial
 from jax import jit, lax, numpy as jnp
+from jaxcmr.memory import OneWayMemory
+
+#%% Public interface
+
+__all__ = [
+    'LinearAssociativeMemory',
+    'state',
+    'input_features',
+    'output_features',
+    'update_state',
+    'hebbian_associate',
+    'associate',
+    'probe',
+    'scale_activation',
+    ]
 
 #%% Types
 
 class LinearAssociativeMemory(OneWayMemory):
-    passtate: Float[Array, "input_features output_features"]
-
+    state: Float[Array, "input_features output_features"]
 
 #%% Accessors
 
@@ -30,8 +48,7 @@ def output_features(memory: LinearAssociativeMemory) -> int:
     "Return the number of output features of a linear associative memory"
     return state(memory).shape[1]
 
-
-#%% Learning
+#%% Encoding
 
 @jit
 @dispatch
@@ -76,7 +93,7 @@ def associate(
 
 @jit
 @dispatch
-def activation(
+def probe(
     memory: LinearAssociativeMemory, 
     probe: Float[Array, "input_features"]
     ) -> Float[Array, "output_features"]:
@@ -101,10 +118,10 @@ def scale_activation(
 
 @jit
 @dispatch
-def activation(
+def probe(
     memory: LinearAssociativeMemory,
     probe: Float[Array, "input_features"],
     scale: float | Float[Array, ""]
     ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a linear associative memory"
-    return scale_activation(activation(memory, probe), scale)
+    return scale_activation(probe(memory, probe), scale)
