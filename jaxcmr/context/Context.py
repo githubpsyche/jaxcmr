@@ -1,12 +1,31 @@
+"""
+Context
+"""
+
+#%% Imports
+
 from flax.struct import PyTreeNode
 from jaxtyping import Float, Array
 from plum import dispatch
 from jax import jit
 
+#%% Public interface
+
+__all__ = [
+    "Context",
+    "start_context_input",
+    "delay_context_input",
+    "integrate",
+    "integrate_start_context",
+    "integrate_delay_context",
+]
+
+#%% Type
 
 class Context(PyTreeNode):
     pass
     
+#%% Accessors
 
 @jit
 @dispatch.abstract
@@ -19,6 +38,7 @@ def start_context_input(context: Context) -> Float[Array, "context_feature_units
 def delay_context_input(context: Context) -> Float[Array, "context_feature_units"]:
     "Vector representation of out-of-list context."
 
+#%% Abstract methods
 
 @jit
 @dispatch.abstract
@@ -48,5 +68,3 @@ def integrate_delay_context(
 ) -> Context:
     "Integrate out-of-list context into current state of a temporal context representation"
     return integrate(context, delay_context_input(context), drift_rate)
-
-
