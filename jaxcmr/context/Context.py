@@ -31,10 +31,7 @@ class Context(PyTreeNode):
 
 @jit
 @dispatch.abstract
-def set_state(
-    context: Context, 
-    new_state: Float[Array, "context_feature_units"]
-    ) -> Context:
+def set_state(context: Context, new_state: Float[Array, "context_feature_units"]) -> Context:
     "Update the state of a context representation"
 
 @jit
@@ -64,22 +61,14 @@ def integrate(
 ) -> Context:
     "Integrate an input representation into current state of a context representation"
 
-
 @jit
 @dispatch
-def integrate_start_context(
-    context: Context,
-    drift_rate: float | Float[Array, ""],
-) -> Context:
+def integrate_start_context(context: Context, drift_rate: float | Float[Array, ""]) -> Context:
     "Integrate start-of-list context into current state of a temporal context representation"
     return integrate(context, get_start_context_input(context), drift_rate)
 
-
 @jit
 @dispatch
-def integrate_delay_context(
-    context: Context,
-    drift_rate: float | Float[Array, ""],
-) -> Context:
+def integrate_delay_context(context: Context, drift_rate: float | Float[Array, ""]) -> Context:
     "Integrate out-of-list context into current state of a temporal context representation"
     return integrate(context, get_delay_context_input(context), drift_rate)
