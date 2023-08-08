@@ -51,7 +51,7 @@ def get_state(memory: LinearAssociativeMemory) -> Float[Array, "input_features o
 def set_state(
     memory: LinearAssociativeMemory, 
     new_state: Float[Array, "input_features output_features"]
-    ) -> LinearAssociativeMemory:
+) -> LinearAssociativeMemory:
     "Update the state of a linear associative memory"
     return LinearAssociativeMemory(new_state)
 
@@ -59,15 +59,11 @@ def set_state(
 
 @jit
 @dispatch
-def input_features(memory: LinearAssociativeMemory) -> int:
-    "Return the number of input features of a linear associative memory"
-    return get_state(memory).shape[0]
+def input_features(memory: LinearAssociativeMemory) -> int: return get_state(memory).shape[0]
 
 @jit
 @dispatch
-def output_features(memory: LinearAssociativeMemory) -> int:
-    "Return the number of output features of a linear associative memory"
-    return get_state(memory).shape[1]
+def output_features(memory: LinearAssociativeMemory) -> int: return get_state(memory).shape[1]
 
 #%% Encoding
 
@@ -78,7 +74,7 @@ def hebbian_associate(
     learning_rate: float | Float[Array, ""],
     input_feature_pattern: Float[Array, "input_features"],
     output_feature_pattern: Float[Array, "output_features"]
-    ) -> Float[Array, "input_features output_features"]:
+) -> Float[Array, "input_features output_features"]:
     "Associate input and output feature patterns in a M x N linear associative memory state"
     return memory_state + (
         learning_rate * jnp.outer(input_feature_pattern, output_feature_pattern
@@ -92,7 +88,7 @@ def associate(
     learning_rate: float | Float[Array, ""],
     input_feature_pattern: Float[Array, "input_features"],
     output_feature_pattern: Float[Array, "output_features"]
-    ) -> LinearAssociativeMemory:
+) -> LinearAssociativeMemory:
     "Associate input and output feature patterns in a linear associative memory"
     return set_state(
         memory, 
@@ -107,7 +103,7 @@ def associate(
 def probe(
     memory: LinearAssociativeMemory, 
     probe: Float[Array, "input_features"]
-    ) -> Float[Array, "output_features"]:
+) -> Float[Array, "output_features"]:
     "Return the activation vector of a linear associative memory"
     return jnp.dot(probe, get_state(memory))
 
@@ -116,7 +112,7 @@ def probe(
 def scale_activation(
     activation: Float[Array, "output_features"],
     scale: float | Float[Array, ""]
-    ) -> Float[Array, "output_features"]:
+) -> Float[Array, "output_features"]:
     "Scale activation vector by a exponent factor using the logsumexp trick to avoid underflow."
     log_activation = jnp.log(activation)
 
@@ -133,6 +129,6 @@ def probe(
     memory: LinearAssociativeMemory,
     probe: Float[Array, "input_features"],
     scale: float | Float[Array, ""]
-    ) -> Float[Array, "output_features"]:
+) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a linear associative memory"
     return scale_activation(probe(memory, probe), scale)
