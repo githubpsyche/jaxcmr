@@ -1,4 +1,9 @@
-from jaxcmr.context import initialize_temporal_context, integrate, integrate_delay_context, state
+from jaxcmr.context import (
+    initialize_temporal_context, 
+    integrate, 
+    integrate_delay_context, 
+    state
+)
 from jax import jit, numpy as jnp
 
 
