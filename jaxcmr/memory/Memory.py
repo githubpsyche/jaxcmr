@@ -1,18 +1,21 @@
 """
 OneWayMemory
 Abstract type and functions for one-way associative memories.
-Subclasses must implement the following functions:
-    input_features
-    output_features
-    associate
-    probe
 """
 
 from jaxtyping import Float, Array
-from flax.struct import PyTreeNode
+from simple_pytree import Pytree
 from plum import dispatch
 
-class OneWayMemory(PyTreeNode):
+__all__ = [
+    "OneWayMemory",
+    "input_features",
+    "output_features",
+    "associate",
+    "probe"
+]
+
+class OneWayMemory(Pytree):
     pass
 
 @dispatch.abstract

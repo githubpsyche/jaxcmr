@@ -1,58 +1,23 @@
 from plum import dispatch
 from jaxtyping import Integer, Float, Array
-from jax import jit, numpy as jnp
-from jaxcmr.context.Context import Context
 from functools import partial
+from simple_pytree import dataclass
+from jax import jit, numpy as jnp
+from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
+from jaxcmr.helpers import replace
 
-#%% Type
-
-class TemporalContext(Context):
+@dataclass
+class TemporalContext(Context, mutable=True):
     state: Float[Array, "context_feature_units"]
     start_context_input: Float[Array, "context_feature_units"] 
     delay_context_input: Float[Array, "context_feature_units"]
 
-#%% Public interface
-
 __all__ = [
     "TemporalContext",
     "initialize_temporal_context",
-    "get_state",
-    "get_start_context_input",
-    "get_delay_context_input",
     "integrate",
     "rho_integrate",
 ]
-
-#%% Accessors
-
-@jit
-@dispatch
-def get_state(context: TemporalContext) -> Float[Array, "context_feature_units"]:
-    return context.state
-
-@jit
-@dispatch
-def get_start_context_input(
-    context: TemporalContext
-) -> Float[Array, "context_feature_units"]:
-    return context.start_context_input
-
-@jit
-@dispatch
-def get_delay_context_input(
-    context: TemporalContext
-) -> Float[Array, "context_feature_units"]:
-    return context.delay_context_input
-
-@jit
-@dispatch
-def set_state(
-    context: TemporalContext, 
-    new_state: Float[Array, "context_feature_units"],
-) -> TemporalContext:
-    return context.replace(state=new_state)
-
-#%% Specialized functions
 
 @partial(jit, static_argnums=(0,))
 @dispatch
@@ -85,4 +50,4 @@ def integrate(
     drift_rate: float | Float[Array, ""],
 ) -> TemporalContext:
     "Integrate an input representation into temporal context"
-    return set_state(context, rho_integrate(get_state(context), context_input, drift_rate))
+    return replace(context, state=rho_integrate(context.state, context_input, drift_rate))
