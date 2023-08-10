@@ -1,32 +1,51 @@
 from plum import dispatch
 from jaxtyping import Integer, Float, Array
 from functools import partial
-from simple_pytree import dataclass
 from jax import jit, numpy as jnp
 from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
 from jaxcmr.helpers import replace
 
-@dataclass
 class TemporalContext(Context, mutable=True):
-    state: Float[Array, "context_feature_units"]
-    start_context_input: Float[Array, "context_feature_units"] 
-    delay_context_input: Float[Array, "context_feature_units"]
+    
+    @dispatch
+    def __init__(
+        self,   
+        state: Float[Array, "context_feature_units"],
+        start_context_input: Float[Array, "context_feature_units"],
+        delay_context_input: Float[Array, "context_feature_units"],
+    ):
+        self.state = state
+        self.start_context_input = start_context_input
+        self.delay_context_input = delay_context_input
+
+    # @dispatch
+    # def __init__(self, item_count: int | Integer[Array, ""]):
+    #     self.state, self.start_context_input, self.delay_context_input = init_temporal_context(
+    #         item_count)
+
+    # @partial(jit, static_argnums=(0,))
+    @classmethod
+    @dispatch
+    def create(cls, item_count: int | Integer[Array, ""]):
+        context_state = jnp.zeros(item_count + 2)
+
+        return cls(
+            context_state.at[0].set(1), context_state.at[0].set(1), context_state.at[-1].set(1))
 
 __all__ = [
     "TemporalContext",
-    "initialize_temporal_context",
     "integrate",
     "rho_integrate",
 ]
 
 @partial(jit, static_argnums=(0,))
 @dispatch
-def initialize_temporal_context(item_count: int | Integer[Array, ""]) -> TemporalContext:
+def init_temporal_context(item_count: int | Integer[Array, ""]):
     context_state = jnp.zeros(item_count + 2)
-    return TemporalContext(
-        state=context_state.at[0].set(1),
-        start_context_input=context_state.at[0].set(1),
-        delay_context_input=context_state.at[-1].set(1),
+    return (
+        context_state.at[0].set(1),  # state
+        context_state.at[0].set(1),  # start context_input
+        context_state.at[-1].set(1), # delay context input
     )
 
 @jit
