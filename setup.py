@@ -12,7 +12,7 @@ setup(
     author='Jordan Gunn',
     author_email='gunnjordanb@gmail.com',
     packages=find_packages(),
-    install_requires=read_requirements(),
+    install_requires=[],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
