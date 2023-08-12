@@ -134,28 +134,33 @@ def retrieve(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySea
 @jit
 @dispatch
 def single_free_recall(
-    model: MemorySearch, rng: PRNGKeyArray
+    model: MemorySearch, 
+    rng: PRNGKeyArray
 ) -> Tuple[MemorySearch, int]:
     "Perform a free recall event and return the resulting state."
-    outcome_probabilities = outcome_probabilities(model)
-    choice = random.choice(rng, outcome_probabilities.shape[0], p=outcome_probabilities)
+    p_all = outcome_probabilities(model)
+    choice = random.choice(rng, p_all.shape[0], p=p_all)
     return retrieve(model, choice), choice
 
 
 @jit
 @dispatch
 def maybe_single_free_recall(
-    model: MemorySearch, rng: PRNGKeyArray
+    model: MemorySearch, 
+    rng: PRNGKeyArray
 ) -> Tuple[MemorySearch, int]:
     "Perform a free recall event if the model is active and return the resulting state."
     return lax.cond(
-        model.is_active, single_free_recall, lambda model, _: (model, 0), (model, rng)
+        model.is_active, single_free_recall, lambda model, _: (model, 0), model, rng
     )
 
 
 @jit
 @dispatch
-def free_recall(model: MemorySearch, rng: PRNGKeyArray) -> Tuple[MemorySearch, int]:
+def free_recall(
+    model: MemorySearch, 
+    rng: PRNGKeyArray
+) -> Tuple[MemorySearch, int]:
     "Perform free recall events until the model is inactive and return the resulting state."
     return lax.scan(
         maybe_single_free_recall, model, random.split(rng, model.item_count)
@@ -174,15 +179,16 @@ def predict_and_simulate_retrieval(
 ) -> Tuple[MemorySearch, float | Float[Array, ""]]:
     "Predict the probability of a particular retrieval outcome and then simulate that outcome"
     likelihood = lax.cond(
-        model.is_active, outcome_probability, lambda model, _: 0.0, (model, choice)
+        model.is_active, outcome_probability, lambda model, _: 0.0, model, choice
     )
-    return retrieve(model, choice), likelihood + lb
+    return retrieve(model, choice), likelihood
 
 
 @jit
 @dispatch
 def predict_and_simulate_trial(
-    model: MemorySearch, trial: Float[Array, "event_count"]
+    model: MemorySearch, 
+    trial: Integer[Array, "event_count"]
 ) -> Tuple[MemorySearch, Float[Array, "event_count"]]:
     "Predict the probability of each retrieval outcome and then simulate the outcome of each event"
     return lax.scan(predict_and_simulate_retrieval, model, trial)
