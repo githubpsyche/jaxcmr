@@ -1,13 +1,17 @@
 from plum import dispatch
 from jaxtyping import Integer, Float, Array
-from functools import partial
 from jax import jit, numpy as jnp
 from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
 from jaxcmr.helpers import replace
 
+__all__ = [
+    "TemporalContext",
+    "integrate",
+    "rho_integrate",
+]
+
 class TemporalContext(Context, mutable=True):
     
-    @dispatch
     def __init__(
         self,   
         state: Float[Array, "context_feature_units"],
@@ -18,35 +22,15 @@ class TemporalContext(Context, mutable=True):
         self.start_context_input = start_context_input
         self.delay_context_input = delay_context_input
 
-    # @dispatch
-    # def __init__(self, item_count: int | Integer[Array, ""]):
-    #     self.state, self.start_context_input, self.delay_context_input = init_temporal_context(
-    #         item_count)
-
-    # @partial(jit, static_argnums=(0,))
     @classmethod
     @dispatch
     def create(cls, item_count: int | Integer[Array, ""]):
         context_state = jnp.zeros(item_count + 2)
-
         return cls(
-            context_state.at[0].set(1), context_state.at[0].set(1), context_state.at[-1].set(1))
-
-__all__ = [
-    "TemporalContext",
-    "integrate",
-    "rho_integrate",
-]
-
-@partial(jit, static_argnums=(0,))
-@dispatch
-def init_temporal_context(item_count: int | Integer[Array, ""]):
-    context_state = jnp.zeros(item_count + 2)
-    return (
-        context_state.at[0].set(1),  # state
-        context_state.at[0].set(1),  # start context_input
-        context_state.at[-1].set(1), # delay context input
-    )
+            state=context_state.at[0].set(1), 
+            start_context_input=context_state.at[0].set(1), 
+            delay_context_input=context_state.at[-1].set(1)
+            )
 
 @jit
 @dispatch

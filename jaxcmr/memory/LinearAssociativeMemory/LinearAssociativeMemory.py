@@ -19,7 +19,6 @@ from plum import dispatch
 from jax import jit, lax, numpy as jnp
 from jaxcmr.memory import OneWayMemory
 from jaxcmr.helpers import replace
-from simple_pytree import dataclass
 
 #%% Public interface
 
@@ -35,18 +34,20 @@ __all__ = [
 
 #%% Types
 
-@dataclass
 class LinearAssociativeMemory(OneWayMemory, mutable=True):
-    state: Float[Array, "input_features output_features"]
+    
+    @dispatch
+    def __init__(self, state: Float[Array, "input_features output_features"]):
+        self.state = state
 
-@jit
-@dispatch
-def input_features(memory: LinearAssociativeMemory) -> int: return memory.state.shape[0]
-
-@jit
-@dispatch
-def output_features(memory: LinearAssociativeMemory) -> int: return memory.state.shape[1]
-
+    @property
+    def input_features(self):
+        return self.state.shape[0]
+    
+    @property
+    def output_features(self):
+        return self.state.shape[1]
+    
 #%% Encoding
 
 @jit
@@ -80,15 +81,6 @@ def associate(
 
 @jit
 @dispatch
-def probe(
-    memory: LinearAssociativeMemory, 
-    probe: Float[Array, "input_features"]
-) -> Float[Array, "output_features"]:
-    "Return the activation vector of a linear associative memory"
-    return jnp.dot(probe, memory.state)
-
-@jit
-@dispatch
 def scale_activation(
     activation: Float[Array, "output_features"],
     scale: float | Float[Array, ""]
@@ -105,9 +97,18 @@ def scale_activation(
 @jit
 @dispatch
 def probe(
+    memory: LinearAssociativeMemory, 
+    probe: Float[Array, "input_features"]
+) -> Float[Array, "output_features"]:
+    "Return the activation vector of a linear associative memory"
+    return jnp.dot(probe, memory.state)
+
+@jit
+@dispatch
+def probe(
     memory: LinearAssociativeMemory,
     probe: Float[Array, "input_features"],
     scale: float | Float[Array, ""]
 ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a linear associative memory"
-    return scale_activation(probe(memory, probe), scale)
+    return scale_activation(jnp.dot(probe, memory.state), scale)

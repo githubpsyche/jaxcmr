@@ -3,7 +3,7 @@ OneWayMemory
 Abstract type and functions for one-way associative memories.
 """
 
-from jaxtyping import Float, Array
+from jaxtyping import Float, Integer, Array
 from simple_pytree import Pytree
 from plum import dispatch
 
@@ -15,16 +15,9 @@ __all__ = [
     "probe"
 ]
 
-class OneWayMemory(Pytree):
-    pass
-
-@dispatch.abstract
-def input_features(memory: OneWayMemory) -> int:
-    "Return the number of input features of a one-way associative memory"
-
-@dispatch.abstract
-def output_features(memory: OneWayMemory) -> int:
-    "Return the number of output features of a one-way associative memory"
+class OneWayMemory(Pytree, mutable=True):
+    input_features: int | Integer[Array, ""]
+    output_features: int | Integer[Array, ""]
 
 @dispatch.abstract
 def associate(

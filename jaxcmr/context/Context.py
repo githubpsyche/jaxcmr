@@ -2,7 +2,7 @@
 Context
 """
 
-from simple_pytree import Pytree, dataclass
+from simple_pytree import Pytree
 from jaxtyping import Float, Array
 from plum import dispatch
 from jax import jit
@@ -14,7 +14,6 @@ __all__ = [
     "integrate_delay_context",
 ]
 
-@dataclass
 class Context(Pytree):
     start_context_input: Float[Array, "context_feature_units"]
     delay_context_input: Float[Array, "context_feature_units"]
