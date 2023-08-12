@@ -5,12 +5,15 @@ from jax import jit, numpy as jnp
 from plum import dispatch
 from functools import partial
 from jaxcmr.memory import LinearAssociativeMcf, LinearAssociativeMfc
-
+from simple_pytree import static_field
 
 __all__ = ["BaseCMR", "exponential_primacy_weighting"]
 
 
 class BaseCMR(CMR, mutable=True):
+
+    item_count = static_field()
+    
     def __init__(
         self,
         item_count: int | Integer[Array, ""],
