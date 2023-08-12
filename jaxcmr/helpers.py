@@ -1,5 +1,6 @@
 from copy import copy
 
+
 def replace(instance, **kwargs):
     new_instance = copy(instance)
 
