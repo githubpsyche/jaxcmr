@@ -10,3 +10,11 @@ This is a little more indirect, but it allows me to pass a lot of arguments at o
 The compromise seems to be to include implementations following the first pattern and just have them called by functions following the second pattern.
 
 Yeah, ok.
+
+I'm definitely going to implement at least two variants of OneWayMemory: LinearAssociativeMemory and InstanceMemory, for example.
+
+The parameters used to probe LinearAssociativeMemory instances and InstanceMemory instances are different: Instance memories have a trace-based activation scaling parameter along with a feature-based one, while linear associative memories only have a feature-based one.
+
+Storing these in parent classes seems inappropriate, as it would require different implementations of functions retrieving activations depending on the type of memory treated as an attribute. 
+
+Therefore, I seem to have a good reason to instead store these parameters in the delegate class instances themselves, and exclude mention of them from the shared interface for retrieving activations.

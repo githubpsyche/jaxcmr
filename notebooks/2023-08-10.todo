@@ -1,0 +1,47 @@
+Okay, so I'm stuck. Let's fix this fast.
+
+✔ Think @started(23-08-10 15:57) @done(23-08-10 16:42) @lasted(45m29s)
+
+Okay, okay, okay. 
+
+let's think about this. 
+
+In my Memory type hierarchy, 
+I have a Memory abstract class,
+A LinearAssociativeMemory subclass with a specific implementation
+And subtypes LinearAssociativeMfc and LinearAssociativeMcf. 
+
+The abstract class is supposed to be for specifying functions that will work even for memories that are not linear associative -- like my instance-based memory.
+
+The linearassociativememory class similarly specifies functions that work over all subclasses.
+
+And my subclasses in this case specifically only provide initialization functions and specialized getters.
+
+So what am I going for in my memorysearch hierarchy?
+Memorysearch abstract class specifies functions that will work even if the model isn't a CMR model (defined as having Mcf, Mfc, Context).
+
+CMR has functions that work across CMR subtypes
+
+BaseCMR should mostly be for initialization functions and specialized getters.
+
+So I'll assume a consistent implementation.
+CMR just has a init function with the exact attributes that will form the model.
+BaseCMR has stuff specific to linearassociativemcf.
+
+When I want to make a new cmr variant that has a different init, it either needs specialized getters or to be a separate file.
+
+Ok.
+
+✔ Add basic but complete init to CMR class @started(23-08-10 16:43) @done(23-08-10 16:57) @lasted(14m42s)
+✔ Use same basic but complete init for BaseCMR (optional) @done(23-08-10 16:57)
+    Honestly, what I have is fine. I need to be more comfortable with things that work.
+✔ Configure create function to use BaseCMR init @done(23-08-10 16:58)
+✔ Implement concrete functions to work with the more general CMR class @started(23-08-10 16:58) @done(23-08-10 17:32) @lasted(34m16s)
+- Tests
+
+Why though? What do I get? Better branching for ICMR and for SemanticCMR. Fine.
+
+Hmm. So if the likelihood function works,  maybe I can finally implement SemanticCMR?
+Well, I'd need semantic cmr plus a fitting function.
+
+Also still need to initialize mcf correctly.
