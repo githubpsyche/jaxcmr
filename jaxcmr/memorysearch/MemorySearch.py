@@ -15,7 +15,7 @@ Given a state of the model, a probability of each possible retrieval outcome can
 
 #%% Imports
 
-from jaxtyping import Integer, Float, Array, PRNGKey
+from jaxtyping import Integer, Float, Array, PRNGKeyArray
 from typing import Tuple
 from simple_pytree import Pytree
 from plum import dispatch
@@ -44,9 +44,10 @@ __all__ = [
 
 #%% Types
 
-class MemorySearch(Pytree):
+class MemorySearch(Pytree, mutable=True):
     item_count: int # the number of items initialized with the model
     is_active: bool # whether the model is still open to new experiences or retrieval events
+
 
 #%% Encoding
 
@@ -59,22 +60,21 @@ def experience(model: MemorySearch, choices: Integer[Array, "presentation_count"
     "Experience all study items initialized with the model, in the specified order"
     return lax.fori_loop(0, choices.shape[0], lambda i, model: experience(model, choices[i]), model)
 
+@jit
+@dispatch
+def experience(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySearch:
+    "Experience a study item at the specified index (1-indexed) or ignore it (choice = 0)"
+    return lax.cond(choice==0, lambda _: model, lambda _: experience_item(model, choice - 1), None)
+
 @dispatch
 def experience(model: MemorySearch):
     "Experience all study items initialized with the model"
     return lax.fori_loop(1, model.item_count+1, lambda i, model: experience(model, i), model)
 
-@jit
-@dispatch
-def experience(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySearch:
-    "Experience a study item at the specified index (1-indexed) or ignore it (choice = 0)"
-    return lax.cond(
-        choice == 0, lambda _: model, lambda _: experience_item(model, choice - 1), None)
-
 #%% Event Probabilities
 
 @dispatch.abstract
-def outcome_probabilities(model: MemorySearch) -> Float[Array, "item_count+1"]:
+def outcome_probabilities(model: MemorySearch) -> Float[Array, "outcome_count"]:
     "Return the probability of each possible retrieval outcome"
 
 @dispatch.abstract
@@ -86,14 +86,14 @@ def outcome_probability(
 
 @dispatch.abstract
 def start_retrieving(model: MemorySearch) -> MemorySearch:
-    "Shift to retrieval mode"
+    "Evolve model reflect its initial state at the start of free recall"
 
 @dispatch.abstract
 def retrieve_item(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySearch:
-    "Retrieve an item"
+    "Retrieve an item from memory"
 
 @dispatch
-def stop_recall(model: MemorySearch, _: int | Integer[Array, ""]) -> MemorySearch:
+def stop_recall(model: MemorySearch, _: int | Integer[Array, ""] = 0) -> MemorySearch:
     "The model shifts to inactive mode"
     return replace(model, is_active=False)
 
@@ -107,7 +107,7 @@ def retrieve(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySea
 
 @jit
 @dispatch
-def single_free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch, int]:
+def single_free_recall(model: MemorySearch, rng: PRNGKeyArray) -> Tuple[MemorySearch, int]:
     "Perform a free recall event and return the resulting state."
     outcome_probabilities = outcome_probabilities(model)
     choice = random.choice(rng, outcome_probabilities.shape[0], p=outcome_probabilities)
@@ -115,13 +115,13 @@ def single_free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch,
 
 @jit
 @dispatch
-def maybe_single_free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch, int]:
+def maybe_single_free_recall(model: MemorySearch, rng: PRNGKeyArray) -> Tuple[MemorySearch, int]:
     "Perform a free recall event if the model is active and return the resulting state."
     return lax.cond(model.is_active, single_free_recall, lambda model, _: (model, 0), (model, rng))
 
 @jit
 @dispatch
-def free_recall(model: MemorySearch, rng: PRNGKey) -> Tuple[MemorySearch, int]:
+def free_recall(model: MemorySearch, rng: PRNGKeyArray) -> Tuple[MemorySearch, int]:
     "Perform free recall events until the model is inactive and return the resulting state."
     return lax.scan(maybe_single_free_recall, model, random.split(rng, model.item_count))
 
