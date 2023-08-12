@@ -7,7 +7,7 @@ from jaxtyping import Float, Integer, Array
 from simple_pytree import Pytree
 from plum import dispatch
 
-__all__ = ["OneWayMemory", "input_features", "output_features", "associate", "probe"]
+__all__ = ["OneWayMemory", "associate", "probe"]
 
 
 class OneWayMemory(Pytree, mutable=True):

@@ -46,6 +46,14 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
         learning_rate: float | Float[Array, ""],
     ):
         return cls(generalized_init_mfc(items, learning_rate))
+    
+    @property
+    def input_features(self):
+        return self.state.shape[0]
+
+    @property
+    def output_features(self):
+        return self.state.shape[1]
 
 
 # %% Initialization

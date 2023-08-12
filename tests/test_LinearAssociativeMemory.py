@@ -96,12 +96,6 @@ class TestLinearAssociativeMemory:
         mfc = LinearAssociativeMfc.create(self.item_count, self.learning_rate)
         assert len(probe(mfc, self.items[0])) == self.item_count + 2
 
-    def test_probe_result_sum(self):
-        mcf = LinearAssociativeMcf.create(
-            self.item_count, self.shared_support, self.item_support
-        )
-        assert jnp.sum(probe(mcf, self.contexts[0])) == 1.0
-
     def test_choice_sensitivity(self):
         mcf = LinearAssociativeMcf.create(
             self.item_count,

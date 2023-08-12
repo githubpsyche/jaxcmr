@@ -63,6 +63,14 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
             generalized_init_linear_mcf(items, shared_support, item_support),
             choice_sensitivity,
         )
+    
+    @property
+    def input_features(self):
+        return self.state.shape[0]
+
+    @property
+    def output_features(self):
+        return self.state.shape[1]
 
 
 # %% Initialization

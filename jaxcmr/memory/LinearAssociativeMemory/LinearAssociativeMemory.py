@@ -24,8 +24,6 @@ from jaxcmr.helpers import replace
 
 __all__ = [
     "LinearAssociativeMemory",
-    "input_features",
-    "output_features",
     "hebbian_associate",
     "associate",
     "probe",
