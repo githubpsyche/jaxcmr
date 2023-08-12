@@ -1,7 +1,11 @@
 from plum import dispatch
 from jaxtyping import Integer, Float, Array
 from jax import jit, numpy as jnp
-from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
+from jaxcmr.context.Context import (
+    Context,
+    integrate_start_context,
+    integrate_delay_context,
+)
 from jaxcmr.helpers import replace
 
 __all__ = [
@@ -10,10 +14,10 @@ __all__ = [
     "rho_integrate",
 ]
 
+
 class TemporalContext(Context, mutable=True):
-    
     def __init__(
-        self,   
+        self,
         state: Float[Array, "context_feature_units"],
         start_context_input: Float[Array, "context_feature_units"],
         delay_context_input: Float[Array, "context_feature_units"],
@@ -27,10 +31,11 @@ class TemporalContext(Context, mutable=True):
     def create(cls, item_count: int | Integer[Array, ""]):
         context_state = jnp.zeros(item_count + 2)
         return cls(
-            state=context_state.at[0].set(1), 
-            start_context_input=context_state.at[0].set(1), 
-            delay_context_input=context_state.at[-1].set(1)
-            )
+            state=context_state.at[0].set(1),
+            start_context_input=context_state.at[0].set(1),
+            delay_context_input=context_state.at[-1].set(1),
+        )
+
 
 @jit
 @dispatch
@@ -45,6 +50,7 @@ def rho_integrate(
     ) - (drift_rate * (context_state * context_input))
     return (rho * context_state) + (drift_rate * context_input)
 
+
 @jit
 @dispatch
 def integrate(
@@ -53,4 +59,6 @@ def integrate(
     drift_rate: float | Float[Array, ""],
 ) -> TemporalContext:
     "Integrate an input representation into temporal context"
-    return replace(context, state=rho_integrate(context.state, context_input, drift_rate))
+    return replace(
+        context, state=rho_integrate(context.state, context_input, drift_rate)
+    )
