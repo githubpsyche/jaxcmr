@@ -99,15 +99,28 @@ def experience_item(model: CMR, item_index: int | Integer[Array, ""]) -> CMR:
 
 # %% Event Probabilities
 
+@dispatch
+def stop_probability(
+    stop_probability_scale: float | Float[Array, ""],
+    stop_probability_growth: float | Float[Array, ""],
+    recall_total: int | Integer[Array, ""],
+):
+    return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
+
 
 @dispatch
 def stop_probability(model: CMR, _: Any = None) -> Float[Array, ""]:
     "Probability of stopping recall given the current state of the model"
-    return lax.min(
-        jnp.exp(model.recall_total * model.stop_probability_growth)
-        * model.stop_probability_scale,
-        1.0 - ((model.item_count - model.recall_total) * lb),
-    )
+    return lax.cond(
+            model.is_active,
+            lambda _: lax.min(
+                stop_probability(
+                model.stop_probability_scale, model.stop_probability_growth, model.recall_total), 
+                1.0 - ((model.item_count - model.recall_total) * lb)
+            ),
+            lambda _: 1.,
+            None,
+        )
 
 
 @dispatch
@@ -124,11 +137,9 @@ def outcome_probabilities(model: CMR) -> Float[Array, "outcome_count"]:
     "Return the probability of each possible retrieval outcome, with termination indexed at 0"
     p_stop = stop_probability(model)
     item_activation = probe(model.mcf, model.context.state) + lb
-    item_activation = item_activation.at[:].multiply(
-        1 - model.recall_mask
-    )  # mask recalled items
+    item_activation = item_activation * (1 - model.recall_mask)  # mask recalled items
     return jnp.hstack(
-        (p_stop, (((1 - p_stop) * item_activation) / jnp.sum(item_activation)))
+        (p_stop, ((1 - p_stop) * item_activation / jnp.sum(item_activation)))
     )
 
 

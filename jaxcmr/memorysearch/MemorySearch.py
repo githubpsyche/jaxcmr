@@ -178,10 +178,7 @@ def predict_and_simulate_retrieval(
     model: MemorySearch, choice: int | Integer[Array, ""]
 ) -> Tuple[MemorySearch, float | Float[Array, ""]]:
     "Predict the probability of a particular retrieval outcome and then simulate that outcome"
-    likelihood = lax.cond(
-        model.is_active, outcome_probability, lambda model, _: 0.0, model, choice
-    )
-    return retrieve(model, choice), likelihood
+    return retrieve(model, choice), outcome_probability(model, choice)
 
 
 @jit
