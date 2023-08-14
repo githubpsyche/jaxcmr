@@ -17,7 +17,7 @@ implementation.
 from jaxtyping import Float, Integer, Array
 from plum import dispatch
 from jax import jit, lax, numpy as jnp
-from jaxcmr.memory import OneWayMemory
+from jaxcmr.memory import OneWayMemory, scale_activation
 from jaxcmr.helpers import replace
 
 # %% Public interface
@@ -27,7 +27,6 @@ __all__ = [
     "hebbian_associate",
     "associate",
     "probe",
-    "scale_activation",
 ]
 
 # %% Types
@@ -83,22 +82,6 @@ def associate(
 
 # %% Associative Recall
 
-
-@jit
-@dispatch
-def scale_activation(
-    activation: Float[Array, "output_features"], 
-    scale: float | Float[Array, ""]
-) -> Float[Array, "output_features"]:
-    "Scale activation vector by a exponent factor using the logsumexp trick to avoid underflow."
-    log_activation = jnp.log(activation)
-    return lax.cond(
-        jnp.logical_and(jnp.any(activation != 0), scale != 1),
-        lambda _: jnp.exp(scale * (log_activation - jnp.max(log_activation))),
-        lambda _: activation,
-        None,
-    )
-
 @jit
 @dispatch
 def linear_probe(
@@ -121,7 +104,8 @@ def linear_probe(
 @jit
 @dispatch
 def probe(
-    memory: LinearAssociativeMemory, probe: Float[Array, "input_features"]
+    memory: LinearAssociativeMemory, 
+    probe: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
     "Return the activation vector of a linear associative memory"
     return linear_probe(memory.state, probe)
