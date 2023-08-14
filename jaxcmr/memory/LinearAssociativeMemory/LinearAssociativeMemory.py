@@ -14,7 +14,7 @@ implementation.
 
 # %% Imports
 
-from jaxtyping import Float, Array
+from jaxtyping import Float, Integer, Array
 from plum import dispatch
 from jax import jit, lax, numpy as jnp
 from jaxcmr.memory import OneWayMemory
@@ -39,11 +39,11 @@ class LinearAssociativeMemory(OneWayMemory, mutable=True):
         self.state = state
 
     @property
-    def input_features(self):
+    def input_features(self) -> int | Integer[Array, ""]:
         return self.state.shape[0]
 
     @property
-    def output_features(self):
+    def output_features(self) -> int | Integer[Array, ""]:
         return self.state.shape[1]
 
 
@@ -87,7 +87,8 @@ def associate(
 @jit
 @dispatch
 def scale_activation(
-    activation: Float[Array, "output_features"], scale: float | Float[Array, ""]
+    activation: Float[Array, "output_features"], 
+    scale: float | Float[Array, ""]
 ) -> Float[Array, "output_features"]:
     "Scale activation vector by a exponent factor using the logsumexp trick to avoid underflow."
     log_activation = jnp.log(activation)
