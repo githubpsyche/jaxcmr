@@ -39,7 +39,7 @@ def extract_objective_data(data, trial_mask):
     
     # check if presentations have within-trial repetitions
     trial_list_lengths = trial_list_lengths[trial_mask]
-    list_lengths = np.unique(trial_list_lengths)
+    list_lengths = np.unique(trial_list_lengths).astype(int)
     presentations = data['pres_itemnos'][trial_mask]
     has_repetitions = not (
         presentations[:, :list_lengths[0]] == np.arange(list_lengths[0])+1).all()
