@@ -87,16 +87,7 @@ def associate(
 def linear_probe(
     memory_state: Float[Array, "input_features output_features"],
     probe: Float[Array, "input_features"],
-) -> Float[Array, "output_features"]:
-    "Return the activation vector of a M x N linear associative memory state"
-    return jnp.dot(probe, memory_state)
-
-@jit
-@dispatch
-def linear_probe(
-    memory_state: Float[Array, "input_features output_features"],
-    probe: Float[Array, "input_features"],
-    scale: float | Float[Array, ""],
+    scale: float | Float[Array, ""] = 1.
 ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a M x N linear associative memory state"
     return scale_activation(jnp.dot(probe, memory_state), scale)
