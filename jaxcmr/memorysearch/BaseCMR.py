@@ -6,7 +6,6 @@ from plum import dispatch
 from functools import partial
 from jaxcmr.memory import LinearAssociativeMcf, LinearAssociativeMfc
 from simple_pytree import static_field
-import numpy as np
 
 __all__ = ["BaseCMR", "exponential_primacy_weighting"]
 
