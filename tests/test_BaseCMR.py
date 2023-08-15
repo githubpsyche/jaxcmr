@@ -61,7 +61,7 @@ class TestBaseCMR:
 
     def test_outcome_probabilities(self):
         cmr = experience(self.cmr, 1)
-        cmr = experience(self.cmr, 2)
+        cmr = experience(cmr, 2)
         cmr = retrieve(cmr, 1)
 
         p_all = outcome_probabilities(cmr)

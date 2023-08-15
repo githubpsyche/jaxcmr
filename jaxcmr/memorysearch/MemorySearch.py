@@ -21,6 +21,7 @@ from simple_pytree import Pytree
 from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
 from jaxcmr.helpers import replace
+from functools import partial
 
 # %% Public interface
 
@@ -40,6 +41,7 @@ __all__ = [
     "predict_and_simulate_trial",
     "uniform_presentations_data_likelihood",
     "variable_presentations_data_likelihood",
+    "exponential_primacy_weighting"
 ]
 
 # %% Types
@@ -48,6 +50,18 @@ __all__ = [
 class MemorySearch(Pytree, mutable=True):
     item_count: int  # the number of items initialized with the model
     is_active: bool  # whether the model is still open to new experiences or retrieval events
+
+
+@partial(jit, static_argnums=(0,))
+@dispatch
+def exponential_primacy_weighting(
+    presentation_count: int | Integer[Array, ""],
+    primacy_scale: float | Float[Array, ""],
+    primacy_decay: float | Float[Array, ""],
+) -> Float[Array, "presentation_count"]:
+    "The primacy effect as exponential decay of boosted attention weights."
+    arange = jnp.arange(presentation_count, dtype=jnp.float32)
+    return primacy_scale * jnp.exp(-primacy_decay * arange) + 1
 
 
 # %% Encoding
