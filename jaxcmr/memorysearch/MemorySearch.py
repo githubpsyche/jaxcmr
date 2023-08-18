@@ -22,6 +22,7 @@ from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
 from jaxcmr.helpers import replace
 from functools import partial
+lb = jnp.finfo(float).eps
 
 # %% Public interface
 
@@ -182,8 +183,6 @@ def free_recall(
 
 
 # %% Trial Probabilities
-
-lb = jnp.finfo(float).eps
 
 
 @jit
