@@ -1,4 +1,4 @@
-from jaxtyping import Integer, Float, Array
+from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger
 from jaxcmr.memorysearch.CMR import CMR
 from jaxcmr.memorysearch.MemorySearch import exponential_primacy_weighting
 from jaxcmr.context import TemporalContext
@@ -16,20 +16,20 @@ class BaseCMR(CMR, mutable=True):
     
     def __init__(
         self,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
-        encoding_drift_rate: float | Float[Array, ""],
-        delay_drift_rate: float | Float[Array, ""],
-        start_drift_rate: float | Float[Array, ""],
-        recall_drift_rate: float | Float[Array, ""],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        learning_rate: float | Float[Array, ""],
-        primacy_scale: float | Float[Array, ""],
-        primacy_decay: float | Float[Array, ""],
-        stop_probability_scale: float | Float[Array, ""],
-        stop_probability_growth: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""],
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
+        encoding_drift_rate: ScalarFloat,
+        delay_drift_rate: ScalarFloat,
+        start_drift_rate: ScalarFloat,
+        recall_drift_rate: ScalarFloat,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        learning_rate: ScalarFloat,
+        primacy_scale: ScalarFloat,
+        primacy_decay: ScalarFloat,
+        stop_probability_scale: ScalarFloat,
+        stop_probability_growth: ScalarFloat,
+        choice_sensitivity: ScalarFloat,
     ):
         self.mfc = LinearAssociativeMfc.create(item_count, learning_rate)
         self.mcf = LinearAssociativeMcf.create(
@@ -59,20 +59,20 @@ class BaseCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
-        encoding_drift_rate: float | Float[Array, ""],
-        delay_drift_rate: float | Float[Array, ""],
-        start_drift_rate: float | Float[Array, ""],
-        recall_drift_rate: float | Float[Array, ""],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        learning_rate: float | Float[Array, ""],
-        primacy_scale: float | Float[Array, ""],
-        primacy_decay: float | Float[Array, ""],
-        stop_probability_scale: float | Float[Array, ""],
-        stop_probability_growth: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""],
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
+        encoding_drift_rate: ScalarFloat,
+        delay_drift_rate: ScalarFloat,
+        start_drift_rate: ScalarFloat,
+        recall_drift_rate: ScalarFloat,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        learning_rate: ScalarFloat,
+        primacy_scale: ScalarFloat,
+        primacy_decay: ScalarFloat,
+        stop_probability_scale: ScalarFloat,
+        stop_probability_growth: ScalarFloat,
+        choice_sensitivity: ScalarFloat,
     ):
         return cls(
             item_count,
@@ -95,8 +95,8 @@ class BaseCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
         parameters: dict,
     ):
         return cls(
@@ -120,7 +120,7 @@ class BaseCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
+        item_count: ScalarInteger,
         parameters: dict,
     ):
         return cls(

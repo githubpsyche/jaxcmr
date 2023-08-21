@@ -14,8 +14,8 @@ from jaxcmr.memorysearch import (
 )
 from jax import numpy as jnp, jit, lax
 
-class TestInstanceCMR:
 
+class TestInstanceCMR:
     parameters = {
         "encoding_drift_rate": 0.8016327576683261,
         "delay_drift_rate": 0.9966411723460118,
@@ -32,9 +32,9 @@ class TestInstanceCMR:
         "mcf_trace_sensitivity": 1.0,
     }
 
-    base_cmr = jit(lambda parameters: BaseCMR.create(10, 10, parameters))(parameters)
+    base_cmr = jit(lambda parameters: BaseCMR.create(10, parameters))(parameters)
     cmr = jit(
-        lambda parameters: InstanceCMR.create(10, 10, parameters))(parameters)
+        lambda parameters: InstanceCMR.create(10, parameters))(parameters)
 
     def test_has_choice_sensitivity(self):
         assert self.cmr.mcf.feature_scale == self.parameters["choice_sensitivity"]

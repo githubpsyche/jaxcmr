@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import jax.numpy as jnp
-from jaxtyping import Float, Array
+from jaxcmr.helpers import Float, Array
 
 def visualize_2d_array(array: Float[Array, "input_features output_features"]):
     array = np.array(array)

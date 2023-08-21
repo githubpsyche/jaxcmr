@@ -13,7 +13,7 @@ The memory returns just the portion of the activation vector corresponding to fe
 
 # %% Imports
 
-from jaxtyping import Float, Integer, Array
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
 from plum import dispatch
 from jax import jit, numpy as jnp
 from jaxcmr.memory import OneWayMemory, scale_activation
@@ -32,28 +32,30 @@ __all__ = [
 
 # %% Types
 
+
 class InstanceMemory(OneWayMemory, mutable=True):
     @dispatch
     def __init__(
-        self, 
-        state: Float[Array, "instances instance_features"], 
-        encoding_index: int | Integer[Array, ""] = 0,
-        input_features: int | Integer[Array, ""] = 0,
-        output_features: int | Integer[Array, ""] = 0,
-        ):
+        self,
+        state: Float[Array, "instances instance_features"],
+        encoding_index: ScalarInteger = 0,
+        input_features: ScalarInteger = 0,
+        output_features: ScalarInteger = 0,
+    ):
         self.state = state
         self.encoding_index = encoding_index
         self.input_features = input_features
         self.output_features = output_features
-    
+
 
 # %% Encoding
+
 
 @jit
 @dispatch
 def associate(
     memory: InstanceMemory,
-    learning_rate: float | Float[Array, ""],
+    learning_rate: ScalarFloat,
     input_pattern: Float[Array, "input_features"],
     output_pattern: Float[Array, "output_features"],
 ) -> InstanceMemory:
@@ -61,59 +63,68 @@ def associate(
     return replace(
         memory,
         state=instance_associate(
-            memory.state, memory.encoding_index, learning_rate, input_pattern, output_pattern
+            memory.state,
+            memory.encoding_index,
+            learning_rate,
+            input_pattern,
+            output_pattern,
         ),
         encoding_index=memory.encoding_index + 1,
     )
+
 
 @jit
 @dispatch
 def instance_associate(
     memory_state: Float[Array, "instances instance_features"],
-    encoding_index: int | Integer[Array, ""],
-    learning_rate: float | Float[Array, ""],
+    encoding_index: ScalarInteger,
+    learning_rate: ScalarFloat,
     input_pattern: Float[Array, "input_features"],
     output_pattern: Float[Array, "output_features"],
 ) -> Float[Array, "instances instance_features"]:
     "Associate two patterns in a instance-based memory state"
     return memory_state.at[encoding_index].set(
-        jnp.concatenate((input_pattern, output_pattern * learning_rate)))
+        jnp.concatenate((input_pattern, output_pattern * learning_rate))
+    )
 
 
 # %% Associative Recall
+
 
 @jit
 @dispatch
 def probe(
     memory: InstanceMemory,
     probe: Float[Array, "input_features"],
-    feature_scale: float | Float[Array, ""] = 1.,
-    trace_scale: float | Float[Array, ""] = 1.,
+    feature_scale: ScalarFloat = 1.0,
+    trace_scale: ScalarFloat = 1.0,
 ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of an instance-based memory"
     return instance_probe(memory.state, probe, feature_scale, trace_scale)
+
 
 @jit
 @dispatch
 def instance_probe(
     memory_state: Float[Array, "instances instance_features"],
     probe: Float[Array, "input_features"],
-    feature_scale: float | Float[Array, ""],
-    trace_scale: float | Float[Array, ""],
+    feature_scale: ScalarFloat,
+    trace_scale: ScalarFloat,
 ) -> Float[Array, "output_features"]:
     "Support for each item feature given probe and an instance-based memory."
 
     t = trace_activation(memory_state, probe, trace_scale)
-    a = jnp.dot(t, memory_state)[probe.shape[0]:]
+    a = jnp.dot(t, memory_state)[probe.shape[0] :]
     return scale_activation(a, feature_scale)
+
 
 @jit
 @dispatch
 def trace_activation(
     state: Float[Array, "instances instance_features"],
     probe: Float[Array, "input_features"],
-    trace_scale: float | Float[Array, ""],
+    trace_scale: ScalarFloat,
 ) -> Float[Array, "instances"]:
     "Return activation for each trace in an instance-based memory"
-    a = jnp.dot(state[:, :probe.shape[0]], probe)
+    a = jnp.dot(state[:, : probe.shape[0]], probe)
     return scale_activation(a, trace_scale)

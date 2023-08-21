@@ -1,5 +1,5 @@
 from plum import dispatch
-from jaxtyping import Integer, Float, Array
+from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger
 from jax import jit, numpy as jnp
 from jaxcmr.context.Context import (
     Context,
@@ -28,7 +28,7 @@ class TemporalContext(Context, mutable=True):
 
     @classmethod
     @dispatch
-    def create(cls, item_count: int | Integer[Array, ""]):
+    def create(cls, item_count: ScalarInteger):
         context_state = jnp.zeros(item_count + 2)
         return cls(
             state=context_state.at[0].set(1),
@@ -42,7 +42,7 @@ class TemporalContext(Context, mutable=True):
 def rho_integrate(
     context_state: Float[Array, "context_feature_units"],
     context_input: Float[Array, "context_feature_units"],
-    drift_rate: float | Float[Array, ""],
+    drift_rate: ScalarFloat,
 ) -> Float[Array, "context_feature_units"]:
     "Apply rho integration rule to update context state"
     rho = jnp.sqrt(
@@ -56,7 +56,7 @@ def rho_integrate(
 def integrate(
     context: TemporalContext,
     context_input: Float[Array, "context_feature_units"],
-    drift_rate: float | Float[Array, ""],
+    drift_rate: ScalarFloat,
 ) -> TemporalContext:
     "Integrate an input representation into temporal context"
     return replace(

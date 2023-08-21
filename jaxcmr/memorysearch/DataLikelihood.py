@@ -1,27 +1,63 @@
 # %% Imports
 
-from jaxtyping import Integer, Float, Array, PRNGKeyArray
-from typing import Tuple
-from jax import jit, random, lax, numpy as jnp
+from jaxcmr.helpers import Integer, Float, Array, ScalarInteger, ScalarFloat
+from typing import Tuple, Callable
+from jax import jit, lax, numpy as jnp, vmap
 from plum import dispatch
+from functools import partial
 from jaxcmr.memorysearch.MemorySearch import *
+import numpy as np
+from jax.tree_util import Partial
 
 # %% Public interface
 
 __all__ = [
-    'predict_and_simulate_retrieval',
-    'predict_and_simulate_trial',
-    'uniform_presentations_data_likelihood',
-    'variable_presentations_data_likelihood',
+    "predict_and_simulate_retrieval",
+    "predict_and_simulate_trial",
+    "trial_list_length",
+    "trial_item_count",
+    "log_likelihood",
+    "predict_and_simulate_pres_and_trial",
+    "uniform_presentations_data_likelihood",
+    "variable_presentations_data_likelihood",
 ]
 
-# %% Functions
+# %% Helpers
+
+
+@jit
+@dispatch
+def trial_list_length(
+    presentation: Integer[Array, "max_presentation_count"]
+) -> ScalarInteger:
+    "Return the number of study events in each trial"
+    return jnp.sum(presentation != 0)
+
+
+@jit
+@dispatch
+def trial_item_count(
+    presentation: Integer[Array, "max_presentation_count"]
+) -> ScalarInteger:
+    "Return the number of unique items in each trial"
+    return jnp.max(presentation)
+
+
+@jit
+@dispatch
+def log_likelihood(likelihoods: Float[Array, "..."]):
+    "Return the log-likelihood over a set of likelihoods"
+    return -jnp.sum(jnp.log(likelihoods))
+
+
+# %% Event-level likelihood functions
+
 
 @jit
 @dispatch
 def predict_and_simulate_retrieval(
-    model: MemorySearch, choice: int | Integer[Array, ""]
-) -> Tuple[MemorySearch, float | Float[Array, ""]]:
+    model: MemorySearch, choice: ScalarInteger
+) -> Tuple[MemorySearch, ScalarFloat]:
     "Predict the probability of a particular retrieval outcome and then simulate that outcome"
     return retrieve(model, choice), outcome_probability(model, choice)
 
@@ -29,8 +65,7 @@ def predict_and_simulate_retrieval(
 @jit
 @dispatch
 def predict_and_simulate_trial(
-    model: MemorySearch, 
-    trial: Integer[Array, "event_count"]
+    model: MemorySearch, trial: Integer[Array, "event_count"]
 ) -> Tuple[MemorySearch, Float[Array, "event_count"]]:
     "Predict the probability of each retrieval outcome and then simulate the outcome of each event"
     return lax.scan(predict_and_simulate_retrieval, model, trial)
@@ -38,36 +73,145 @@ def predict_and_simulate_trial(
 
 @jit
 @dispatch
-def uniform_presentations_data_likelihood(
-    model: MemorySearch,
-    trials: Integer[Array, "trial_count event_count"],
-) -> float | Float[Array, ""]:
-    "Log-likelihood over trials with uniform presentation structure for an initialized model"
-    model = start_retrieving(experience(model))
-    return -jnp.sum(
-        jnp.log(
-            lax.map(lambda trial: predict_and_simulate_trial(model, trial)[1], trials)
-        )
+def predict_and_simulate_trial(
+    model_init: Callable,
+    item_count: ScalarInteger,
+    presentation: Integer[Array, "study_events"],
+    trial: Integer[Array, "recall_events"],
+    parameters: dict,
+):
+    "Initialize model and study events, then simulate and predict retrieval events"
+    return predict_and_simulate_pres_and_trial(
+        model_init, item_count, presentation, trial, parameters
     )
 
 
-@jit
+# %% Added flexibility for variable presentation structure
+
+
+@partial(jit, static_argnums=(0, 1))
+@dispatch
+def predict_and_simulate_pres_and_trial(
+    model_init,  #: Callable,
+    item_count,  #: ScalarInteger,
+    presentation,  #: Integer[Array, "study_events"],
+    trial,  #: Integer[Array, "recall_events"],
+    parameters,  #: dict,
+) -> Tuple[MemorySearch, Float[Array, "event_count"]]:
+    "Initialize model and study events, then simulate and predict retrieval events"
+
+    model = model_init(item_count, presentation.shape[0], parameters)
+    model = start_retrieving(experience(model, presentation))
+    return predict_and_simulate_trial(model, trial)
+
+
+# %% Multi-trial likelihood functions
+
+
+@partial(jit, static_argnums=(0, 1))
+@dispatch
+def uniform_presentations_data_likelihood(
+    model_create_fn: Callable,
+    item_count: ScalarInteger,
+    trials: Integer[Array, "trial_count event_count"],
+    parameters,
+):
+    "Log-likelihood over trials with variable presentation structure for an uninitialized model"
+    model = model_create_fn(item_count, parameters)
+    model = start_retrieving(experience(model))
+    return log_likelihood(
+        lax.map(lambda trial: predict_and_simulate_trial(model, trial)[1], trials)
+    )
+
+
+@partial(jit, static_argnums=(0, 1))
 @dispatch
 def variable_presentations_data_likelihood(
-    model: MemorySearch,
-    presentations: Integer[Array, "trial_count max_presentation_count"],
-    trials: Integer[Array, "trial_count event_count"],
-) -> float | Float[Array, ""]:
-    "Log-likelihood over trials with variable presentation structure for an initialized model"
-    models = lax.map(
-        f=lambda presentation: experience(model, presentation), xs=presentations
+    model_create_fn: Callable,
+    item_count: ScalarInteger,
+    presentation: Integer[Array, "study_event_count"],
+    trial: Integer[Array, "recall_event_count"],
+    parameters,
+):
+    "Log-likelihood over trials with variable presentation structure for an uninitialized model"
+
+    return log_likelihood(
+        predict_and_simulate_pres_and_trial(
+            model_create_fn,
+            item_count,
+            presentation,
+            trial,
+            parameters,
+        )[1]
     )
-    models = lax.map(f=start_retrieving, xs=models)
-    return -jnp.sum(
-        jnp.log(
-            lax.map(
-                f=lambda i: predict_and_simulate_trial(models[i], trials[i]),
-                xs=jnp.arange(trials.shape[0]),
-            )
+
+
+@partial(jit, static_argnums=(0, 1))
+@dispatch
+def variable_presentations_data_likelihood(
+    model_create_fn: Callable,
+    item_count: ScalarInteger,
+    presentations: Integer[Array, "trial_count study_event_count"],
+    trials: Integer[Array, "trial_count recall_event_count"],
+    parameters,
+):
+    return log_likelihood(
+        lax.map(
+            lambda trial_index: predict_and_simulate_pres_and_trial(
+                model_create_fn,
+                item_count,
+                presentations[trial_index],
+                trials[trial_index],
+                parameters,
+            )[1],
+            jnp.arange(trials.shape[0]),
         )
     )
+
+
+def variable_presentations_likelihood(
+    model_create_fn: Callable,
+    item_count: ScalarInteger,
+    presentations: Integer[Array, "trial_count study_event_count"],
+    trials: Integer[Array, "trial_count recall_event_count"],
+    parameters,
+):
+    return lax.map(
+        lambda trial_index: predict_and_simulate_pres_and_trial(
+            model_create_fn,
+            item_count,
+            presentations[trial_index],
+            trials[trial_index],
+            parameters,
+        )[1],
+        jnp.arange(trials.shape[0]),
+    )
+
+
+@dispatch
+def variable_presentations_data_likelihood(
+    model_create_fn: Callable,
+    item_counts: Integer[Array, "trial_count"],
+    presentations: Integer[Array, "trial_count study_event_count"],
+    trials: Integer[Array, "trial_count recall_event_count"],
+) -> Callable:
+    item_counts = vmap(trial_item_count)(presentations)
+    functions = [
+        Partial(
+            variable_presentations_likelihood,
+            model_create_fn,
+            item_count,
+            presentations[item_counts == item_count],
+            trials[item_counts == item_count],
+        )
+        for item_count in np.unique(item_counts)
+    ]
+
+    @jit
+    def f(parameters):
+        log_likelihoods = []
+        for fn in functions:
+            log_likelihoods.append(fn(parameters))
+        return log_likelihood(jnp.array(log_likelihoods))
+
+    return f

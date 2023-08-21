@@ -6,7 +6,7 @@ Initialization functions for a context-to-feature linear associative memory as s
 
 # %% Imports
 
-from jaxtyping import Integer, Float, Array
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
 from functools import partial
@@ -31,7 +31,7 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
     def __init__(
         self,
         state: Float[Array, "context_features item_features"],
-        choice_sensitivity: float | Float[Array, ""] = 1.0,
+        choice_sensitivity: ScalarFloat = 1.0,
     ):
         self.state = state
         self.choice_sensitivity = choice_sensitivity
@@ -40,10 +40,10 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""] = 1.0,
+        item_count: ScalarInteger,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        choice_sensitivity: ScalarFloat = 1.0,
     ):
         return cls(
             basic_init_linear_mcf(item_count, shared_support, item_support),
@@ -55,9 +55,9 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
     def create(
         cls,
         items: Float[Array, "item_count item_features"],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""] = 1.0,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        choice_sensitivity: ScalarFloat = 1.0,
     ):
         return cls(
             generalized_init_linear_mcf(items, shared_support, item_support),
@@ -78,9 +78,9 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
 
 @partial(jit, static_argnums=(0,))
 def basic_init_linear_mcf(
-    item_count: int | Integer[Array, ""],
-    shared_support: float | Float[Array, ""],
-    item_support: float | Float[Array, ""],
+    item_count: ScalarInteger,
+    shared_support: ScalarFloat,
+    item_support: ScalarFloat,
 ) -> Float[Array, "context_features item_features"]:
     "Initialize a linear associative context-to-feature memory"
     memory = jnp.full((item_count, item_count), shared_support)
@@ -91,8 +91,8 @@ def basic_init_linear_mcf(
 @jit
 def generalized_init_linear_mcf(
     items: Float[Array, "item_count item_features"],
-    shared_support: float | Float[Array, ""],
-    item_support: float | Float[Array, ""],
+    shared_support: ScalarFloat,
+    item_support: ScalarFloat,
 ) -> Float[Array, "context_features item_features"]:
     "Generalized initialize function for LinearAssociativeMcf with arbitrary item representations"
     item_count = items.shape[0]

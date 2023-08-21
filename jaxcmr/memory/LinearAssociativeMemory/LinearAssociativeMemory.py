@@ -14,7 +14,7 @@ implementation.
 
 # %% Imports
 
-from jaxtyping import Float, Integer, Array
+from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger
 from plum import dispatch
 from jax import jit, lax, numpy as jnp
 from jaxcmr.memory import OneWayMemory, scale_activation
@@ -38,11 +38,11 @@ class LinearAssociativeMemory(OneWayMemory, mutable=True):
         self.state = state
 
     @property
-    def input_features(self) -> int | Integer[Array, ""]:
+    def input_features(self) -> ScalarInteger:
         return self.state.shape[0]
 
     @property
-    def output_features(self) -> int | Integer[Array, ""]:
+    def output_features(self) -> ScalarInteger:
         return self.state.shape[1]
 
 
@@ -53,7 +53,7 @@ class LinearAssociativeMemory(OneWayMemory, mutable=True):
 @dispatch
 def hebbian_associate(
     memory_state: Float[Array, "input_features output_features"],
-    learning_rate: float | Float[Array, ""],
+    learning_rate: ScalarFloat,
     input_feature_pattern: Float[Array, "input_features"],
     output_feature_pattern: Float[Array, "output_features"],
 ) -> Float[Array, "input_features output_features"]:
@@ -67,7 +67,7 @@ def hebbian_associate(
 @dispatch
 def associate(
     memory: LinearAssociativeMemory,
-    learning_rate: float | Float[Array, ""],
+    learning_rate: ScalarFloat,
     input_feature_pattern: Float[Array, "input_features"],
     output_feature_pattern: Float[Array, "output_features"],
 ) -> LinearAssociativeMemory:
@@ -82,12 +82,13 @@ def associate(
 
 # %% Associative Recall
 
+
 @jit
 @dispatch
 def linear_probe(
     memory_state: Float[Array, "input_features output_features"],
     probe: Float[Array, "input_features"],
-    scale: float | Float[Array, ""] = 1.
+    scale: ScalarFloat = 1.0,
 ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a M x N linear associative memory state"
     return scale_activation(jnp.dot(probe, memory_state), scale)
@@ -98,7 +99,7 @@ def linear_probe(
 def probe(
     memory: LinearAssociativeMemory,
     probe: Float[Array, "input_features"],
-    scale: float | Float[Array, ""] = 1.,
+    scale: ScalarFloat = 1.0,
 ) -> Float[Array, "output_features"]:
     "Return the scaled activation vector of a linear associative memory"
     return linear_probe(memory.state, probe, scale)

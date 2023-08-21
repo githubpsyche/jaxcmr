@@ -3,7 +3,7 @@ OneWayMemory
 Abstract type and functions for one-way associative memories.
 """
 
-from jaxtyping import Float, Integer, Array
+from jaxcmr.helpers import Float, Integer, Array, ScalarInteger, ScalarFloat
 from jax import jit, lax, numpy as jnp
 from simple_pytree import Pytree
 from plum import dispatch
@@ -12,8 +12,8 @@ __all__ = ["OneWayMemory", "associate", "probe", "scale_activation"]
 
 
 class OneWayMemory(Pytree, mutable=True):
-    input_features: int | Integer[Array, ""]
-    output_features: int | Integer[Array, ""]
+    input_features: ScalarInteger
+    output_features: ScalarInteger
 
 
 @dispatch.abstract
@@ -35,7 +35,7 @@ def probe(
 @dispatch
 def scale_activation(
     activation: Float[Array, "output_features"], 
-    scale: float | Float[Array, ""]
+    scale: ScalarFloat
 ) -> Float[Array, "output_features"]:
     "Scale activation vector by a exponent factor using the logsumexp trick to avoid underflow."
     log_activation = jnp.log(activation)

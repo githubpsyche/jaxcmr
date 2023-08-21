@@ -6,7 +6,7 @@ Initialization functions for a feature-to-context linear associative memory as s
 
 # %% Imports
 
-from jaxtyping import Integer, Float, Array
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
 from functools import partial
@@ -33,8 +33,8 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        learning_rate: float | Float[Array, ""],
+        item_count: ScalarInteger,
+        learning_rate: ScalarFloat,
     ):
         return cls(basic_init_mfc(item_count, learning_rate))
 
@@ -43,7 +43,7 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     def create(
         cls,
         items: Float[Array, "item_count item_features"],
-        learning_rate: float | Float[Array, ""],
+        learning_rate: ScalarFloat,
     ):
         return cls(generalized_init_mfc(items, learning_rate))
     
@@ -61,7 +61,7 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
 
 @partial(jit, static_argnums=(0,))
 def basic_init_mfc(
-    item_count: int | Integer[Array, ""], learning_rate: float | Float[Array, ""]
+    item_count: ScalarInteger, learning_rate: ScalarFloat
 ) -> Float[Array, "item_features context_features"]:
     "A linear associative feature-to-context memory assuming one-hot item representations"
     memory = jnp.eye(item_count, item_count + 2)
@@ -72,7 +72,7 @@ def basic_init_mfc(
 @jit
 def generalized_init_mfc(
     items: Float[Array, "item_count item_features"],
-    learning_rate: float | Float[Array, ""],
+    learning_rate: ScalarFloat,
 ) -> Float[Array, "item_features context_features"]:
     "A linear associative feature-to-context memory from arbitrary item representations"
     item_count = items.shape[0]

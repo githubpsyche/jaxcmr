@@ -1,4 +1,4 @@
-from jaxtyping import Integer, Float, Array, Bool
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
 from jaxcmr.memorysearch.CMR import CMR
 from jaxcmr.memorysearch.MemorySearch import exponential_primacy_weighting
 from jaxcmr.context import TemporalContext
@@ -16,21 +16,21 @@ class InstanceCMR(CMR, mutable=True):
     
     def __init__(
         self,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
-        encoding_drift_rate: float | Float[Array, ""],
-        delay_drift_rate: float | Float[Array, ""],
-        start_drift_rate: float | Float[Array, ""],
-        recall_drift_rate: float | Float[Array, ""],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        learning_rate: float | Float[Array, ""],
-        primacy_scale: float | Float[Array, ""],
-        primacy_decay: float | Float[Array, ""],
-        stop_probability_scale: float | Float[Array, ""],
-        stop_probability_growth: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""],
-        trace_sensitivity: float | Float[Array, ""]
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
+        encoding_drift_rate: ScalarFloat,
+        delay_drift_rate: ScalarFloat,
+        start_drift_rate: ScalarFloat,
+        recall_drift_rate: ScalarFloat,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        learning_rate: ScalarFloat,
+        primacy_scale: ScalarFloat,
+        primacy_decay: ScalarFloat,
+        stop_probability_scale: ScalarFloat,
+        stop_probability_growth: ScalarFloat,
+        choice_sensitivity: ScalarFloat,
+        trace_sensitivity: ScalarFloat
     ):
         self.mfc = LinearAssociativeMfc.create(item_count, learning_rate)
         self.mcf = InstanceMcf.create(
@@ -60,21 +60,21 @@ class InstanceCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
-        encoding_drift_rate: float | Float[Array, ""],
-        delay_drift_rate: float | Float[Array, ""],
-        start_drift_rate: float | Float[Array, ""],
-        recall_drift_rate: float | Float[Array, ""],
-        shared_support: float | Float[Array, ""],
-        item_support: float | Float[Array, ""],
-        learning_rate: float | Float[Array, ""],
-        primacy_scale: float | Float[Array, ""],
-        primacy_decay: float | Float[Array, ""],
-        stop_probability_scale: float | Float[Array, ""],
-        stop_probability_growth: float | Float[Array, ""],
-        choice_sensitivity: float | Float[Array, ""],
-        trace_sensitivity: float | Float[Array, ""]
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
+        encoding_drift_rate: ScalarFloat,
+        delay_drift_rate: ScalarFloat,
+        start_drift_rate: ScalarFloat,
+        recall_drift_rate: ScalarFloat,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        learning_rate: ScalarFloat,
+        primacy_scale: ScalarFloat,
+        primacy_decay: ScalarFloat,
+        stop_probability_scale: ScalarFloat,
+        stop_probability_growth: ScalarFloat,
+        choice_sensitivity: ScalarFloat,
+        trace_sensitivity: ScalarFloat
     ):
         return cls(
             item_count,
@@ -98,8 +98,8 @@ class InstanceCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
-        presentation_count: int | Integer[Array, ""],
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
         parameters: dict,
     ):
         return cls(
@@ -124,26 +124,30 @@ class InstanceCMR(CMR, mutable=True):
     @dispatch
     def create(
         cls,
-        item_count: int | Integer[Array, ""],
+        item_count: ScalarInteger,
         parameters: dict,
     ):
-        return cls(
-            item_count,
-            item_count,
-            parameters["encoding_drift_rate"],
-            parameters["delay_drift_rate"],
-            parameters["start_drift_rate"],
-            parameters["recall_drift_rate"],
-            parameters["shared_support"],
-            parameters["item_support"],
-            parameters["learning_rate"],
-            parameters["primacy_scale"],
-            parameters["primacy_decay"],
-            parameters["stop_probability_scale"],
-            parameters["stop_probability_growth"],
-            parameters["choice_sensitivity"],
-            parameters["mcf_trace_sensitivity"]
-        )
+        # TODO: simplify into call to 4-arg create dispatch
+        # return call to create using item_count as the presentation_count parameter
+        return cls.create(item_count, item_count, parameters)
+
+        # return cls(
+        #     item_count,
+        #     item_count,
+        #     parameters["encoding_drift_rate"],
+        #     parameters["delay_drift_rate"],
+        #     parameters["start_drift_rate"],
+        #     parameters["recall_drift_rate"],
+        #     parameters["shared_support"],
+        #     parameters["item_support"],
+        #     parameters["learning_rate"],
+        #     parameters["primacy_scale"],
+        #     parameters["primacy_decay"],
+        #     parameters["stop_probability_scale"],
+        #     parameters["stop_probability_growth"],
+        #     parameters["choice_sensitivity"],
+        #     parameters["mcf_trace_sensitivity"]
+        # )
 
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:

@@ -15,12 +15,11 @@ Given a state of the model, a probability of each possible retrieval outcome can
 
 # %% Imports
 
-from jaxtyping import Integer, Float, Array, PRNGKeyArray
+from jaxcmr.helpers import replace, Integer, Float, Array, ScalarInteger, ScalarFloat, PRNGKeyArray
 from typing import Tuple
 from simple_pytree import Pytree
 from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
-from jaxcmr.helpers import replace
 from functools import partial
 lb = jnp.finfo(float).eps
 
@@ -52,9 +51,9 @@ class MemorySearch(Pytree, mutable=True):
 @partial(jit, static_argnums=(0,))
 @dispatch
 def exponential_primacy_weighting(
-    presentation_count: int | Integer[Array, ""],
-    primacy_scale: float | Float[Array, ""],
-    primacy_decay: float | Float[Array, ""],
+    presentation_count: ScalarInteger,
+    primacy_scale: ScalarFloat,
+    primacy_decay: ScalarFloat,
 ) -> Float[Array, "presentation_count"]:
     "The primacy effect as exponential decay of boosted attention weights."
     arange = jnp.arange(presentation_count, dtype=jnp.float32)
@@ -66,7 +65,7 @@ def exponential_primacy_weighting(
 
 @dispatch.abstract
 def experience_item(
-    model: MemorySearch, item_index: int | Integer[Array, ""]
+    model: MemorySearch, item_index: ScalarInteger
 ) -> MemorySearch:
     "Experience a study item at the specified index"
 
@@ -81,7 +80,7 @@ def experience(model: MemorySearch, choices: Integer[Array, "presentation_count"
 
 @jit
 @dispatch
-def experience(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySearch:
+def experience(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
     "Experience a study item at the specified index (1-indexed) or ignore it (choice = 0)"
     return lax.cond(
         choice == 0, lambda _: model, lambda _: experience_item(model, choice - 1), None
@@ -106,8 +105,8 @@ def outcome_probabilities(model: MemorySearch) -> Float[Array, "outcome_count"]:
 
 @dispatch.abstract
 def outcome_probability(
-    model: MemorySearch, choice: int | Integer[Array, ""]
-) -> float | Float[Array, ""]:
+    model: MemorySearch, choice: ScalarInteger
+) -> ScalarFloat:
     "Return the probability of a particular retrieval outcome"
 
 
@@ -121,20 +120,20 @@ def start_retrieving(model: MemorySearch) -> MemorySearch:
 
 @dispatch.abstract
 def retrieve_item(
-    model: MemorySearch, choice: int | Integer[Array, ""]
+    model: MemorySearch, choice: ScalarInteger
 ) -> MemorySearch:
     "Retrieve an item from memory"
 
 
 @dispatch
-def stop_recall(model: MemorySearch, _: int | Integer[Array, ""] = 0) -> MemorySearch:
+def stop_recall(model: MemorySearch, _: ScalarInteger = 0) -> MemorySearch:
     "The model shifts to inactive mode"
     return replace(model, is_active=False)
 
 
 @jit
 @dispatch
-def retrieve(model: MemorySearch, choice: int | Integer[Array, ""]) -> MemorySearch:
+def retrieve(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
     "Perform specified retrieval event, either item recall (choice > 0) or termination (choice = 0)"
     return lax.cond(choice > 0, retrieve_item, stop_recall, model, choice)
 
