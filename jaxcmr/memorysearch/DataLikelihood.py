@@ -212,6 +212,6 @@ def variable_presentations_data_likelihood(
         log_likelihoods = []
         for fn in functions:
             log_likelihoods.append(fn(parameters))
-        return log_likelihood(jnp.array(log_likelihoods))
+        return log_likelihood(jnp.vstack(log_likelihoods))
 
     return f
