@@ -1,6 +1,6 @@
 # %% Imports
 
-from jaxcmr.helpers import Integer, Float, Array, ScalarInteger, ScalarFloat
+from jaxcmr.helpers import Integer, Float, Array, ScalarInteger, ScalarFloat, study_events, recall_events
 from typing import Tuple, Callable
 from jax import jit, lax, numpy as jnp, vmap
 from plum import dispatch
@@ -19,7 +19,9 @@ __all__ = [
     "log_likelihood",
     "predict_and_simulate_pres_and_trial",
     "uniform_presentations_data_likelihood",
+    "variable_presentations_likelihood",
     "variable_presentations_data_likelihood",
+    "recall_by_item_index"
 ]
 
 # %% Helpers
@@ -28,25 +30,38 @@ __all__ = [
 @jit
 @dispatch
 def trial_list_length(
-    presentation: Integer[Array, "max_presentation_count"]
+    presentation: Integer[Array, "study_events"]
 ) -> ScalarInteger:
-    "Return the number of study events in each trial"
+    """Return the number of study events in each trial"""
     return jnp.sum(presentation != 0)
 
 
 @jit
 @dispatch
 def trial_item_count(
-    presentation: Integer[Array, "max_presentation_count"]
+    presentation: Integer[Array, "study_events"]
 ) -> ScalarInteger:
-    "Return the number of unique items in each trial"
+    """Return the number of unique items in each trial"""
     return jnp.max(presentation)
 
 
 @jit
 @dispatch
+def recall_by_item_index(
+        item_index_by_study_position: Integer[Array, "study_events"],
+        study_position_by_recall_position: Integer[Array, "recall_events"]
+) -> Integer[Array, "recall_events"]:
+    """Trial recall events in terms of item index rather than study position"""
+    return lax.map(
+        lambda r: lax.select(r == 0, 0, item_index_by_study_position[r-1]),
+        study_position_by_recall_position
+    )
+
+
+@jit
+@dispatch
 def log_likelihood(likelihoods: Float[Array, "..."]):
-    "Return the log-likelihood over a set of likelihoods"
+    """Return the log-likelihood over a set of likelihoods"""
     return -jnp.sum(jnp.log(likelihoods))
 
 
@@ -58,16 +73,16 @@ def log_likelihood(likelihoods: Float[Array, "..."]):
 def predict_and_simulate_retrieval(
     model: MemorySearch, choice: ScalarInteger
 ) -> Tuple[MemorySearch, ScalarFloat]:
-    "Predict the probability of a particular retrieval outcome and then simulate that outcome"
+    """Predict the probability of a particular retrieval outcome and then simulate that outcome"""
     return retrieve(model, choice), outcome_probability(model, choice)
 
 
 @jit
 @dispatch
 def predict_and_simulate_trial(
-    model: MemorySearch, trial: Integer[Array, "event_count"]
-) -> Tuple[MemorySearch, Float[Array, "event_count"]]:
-    "Predict the probability of each retrieval outcome and then simulate the outcome of each event"
+    model: MemorySearch, trial: Integer[Array, "recall_events"]
+) -> Tuple[MemorySearch, Float[Array, "recall_events"]]:
+    """Predict the probability of each retrieval outcome and then simulate the outcome of each event"""
     return lax.scan(predict_and_simulate_retrieval, model, trial)
 
 
@@ -80,7 +95,7 @@ def predict_and_simulate_trial(
     trial: Integer[Array, "recall_events"],
     parameters: dict,
 ):
-    "Initialize model and study events, then simulate and predict retrieval events"
+    """Initialize model and study events, then simulate and predict retrieval events"""
     return predict_and_simulate_pres_and_trial(
         model_init, item_count, presentation, trial, parameters
     )
@@ -97,9 +112,8 @@ def predict_and_simulate_pres_and_trial(
     presentation,  #: Integer[Array, "study_events"],
     trial,  #: Integer[Array, "recall_events"],
     parameters,  #: dict,
-) -> Tuple[MemorySearch, Float[Array, "event_count"]]:
-    "Initialize model and study events, then simulate and predict retrieval events"
-
+) -> Tuple[MemorySearch, Float[Array, "recall_events"]]:
+    """Initialize model and study events, then simulate and predict retrieval events"""
     model = model_init(item_count, presentation.shape[0], parameters)
     model = start_retrieving(experience(model, presentation))
     return predict_and_simulate_trial(model, trial)
@@ -116,7 +130,7 @@ def uniform_presentations_data_likelihood(
     trials: Integer[Array, "trial_count event_count"],
     parameters,
 ):
-    "Log-likelihood over trials with variable presentation structure for an uninitialized model"
+    """Log-likelihood over trials with variable presentation structure for an uninitialized model"""
     model = model_create_fn(item_count, parameters)
     model = start_retrieving(experience(model))
     return log_likelihood(
@@ -129,11 +143,11 @@ def uniform_presentations_data_likelihood(
 def variable_presentations_data_likelihood(
     model_create_fn: Callable,
     item_count: ScalarInteger,
-    presentation: Integer[Array, "study_event_count"],
-    trial: Integer[Array, "recall_event_count"],
+    presentation: Integer[Array, "study_events"],
+    trial: Integer[Array, "recall_events"],
     parameters,
 ):
-    "Log-likelihood over trials with variable presentation structure for an uninitialized model"
+    """Log-likelihood over trials with variable presentation structure for an uninitialized model"""
 
     return log_likelihood(
         predict_and_simulate_pres_and_trial(
@@ -191,7 +205,6 @@ def variable_presentations_likelihood(
 @dispatch
 def variable_presentations_data_likelihood(
     model_create_fn: Callable,
-    item_counts: Integer[Array, "trial_count"],
     presentations: Integer[Array, "trial_count study_event_count"],
     trials: Integer[Array, "trial_count recall_event_count"],
 ) -> Callable:

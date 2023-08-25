@@ -6,15 +6,12 @@ Initialization functions for a context-to-feature linear associative memory as s
 
 # %% Imports
 
-from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat, input_features, output_features
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
 from functools import partial
-from jaxcmr.memory.LinearAssociativeMemory.LinearAssociativeMemory import (
-    LinearAssociativeMemory,
-    hebbian_associate,
-    scale_activation,
-)
+from jaxcmr.memory.LinearAssociativeMemory.LinearAssociativeMemory import LinearAssociativeMemory, hebbian_associate
+from jaxcmr.memory.Memory import scale_activation
 
 # %% Public interface
 
@@ -82,7 +79,7 @@ def basic_init_linear_mcf(
     shared_support: ScalarFloat,
     item_support: ScalarFloat,
 ) -> Float[Array, "context_features item_features"]:
-    "Initialize a linear associative context-to-feature memory"
+    """Initialize a linear associative context-to-feature memory"""
     memory = jnp.full((item_count, item_count), shared_support)
     memory = memory.at[jnp.diag_indices(item_count)].set(item_support)
     return jnp.vstack((jnp.zeros((1, item_count)), memory, jnp.zeros((1, item_count))))
@@ -94,7 +91,7 @@ def generalized_init_linear_mcf(
     shared_support: ScalarFloat,
     item_support: ScalarFloat,
 ) -> Float[Array, "context_features item_features"]:
-    "Generalized initialize function for LinearAssociativeMcf with arbitrary item representations"
+    """Generalized initialize function for LinearAssociativeMcf with arbitrary item representations"""
     item_count = items.shape[0]
     item_feature_count = items.shape[1]
     context_feature_count = item_count + 2
@@ -108,7 +105,7 @@ def generalized_init_linear_mcf(
     return lax.fori_loop(
         0,
         item_count,
-        lambda i, memory: hebbian_associate(memory, 1.0, contexts[i], items[i]),
+        lambda i, m: hebbian_associate(m, 1.0, contexts[i], items[i]),
         memory,
     )
 
@@ -119,7 +116,7 @@ def generalized_init_linear_mcf(
 @jit
 @dispatch
 def probe(
-    memory: LinearAssociativeMcf, probe: Float[Array, "input_features"]
+    memory: LinearAssociativeMcf, _probe: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
-    "Return the activation vector of a linear associative memory"
-    return scale_activation(jnp.dot(probe, memory.state), memory.choice_sensitivity)
+    """Return the activation vector of a linear associative memory"""
+    return scale_activation(jnp.dot(_probe, memory.state), memory.choice_sensitivity)

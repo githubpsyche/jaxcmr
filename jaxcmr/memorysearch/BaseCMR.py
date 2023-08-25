@@ -143,5 +143,3 @@ class BaseCMR(CMR, mutable=True):
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
         return self._mcf_learning_rate[self.encoding_index]
-
-

@@ -9,6 +9,7 @@ from jaxcmr.memory import (
 import plum
 import pytest
 
+
 class TestInstanceMemory:
     item_count = 16
     learning_rate = 0.10455606050373444
@@ -69,14 +70,13 @@ class TestInstanceMemory:
             lambda context: probe(linear_mcf, context), self.contexts)
         instance_mcf_orthonormal_activations = lax.map(
             lambda context: probe(instance_mcf, context), self.contexts)
-        
+
         assert jnp.allclose(
             linear_mcf_orthonormal_activations,
             instance_mcf_orthonormal_activations
         )
 
     def test_scale_activation(self):
-
         mcf2 = InstanceMcf.create(
             self.item_count,
             self.item_count,
@@ -103,8 +103,6 @@ class TestInstanceMemory:
             self.choice_sensitivity,
             self.trace_sensitivity
         )
-
-
 
         activation1 = probe(mcf, self.contexts[0])
         activation2 = probe(mcf2, self.contexts[0])

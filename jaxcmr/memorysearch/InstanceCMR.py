@@ -131,24 +131,6 @@ class InstanceCMR(CMR, mutable=True):
         # return call to create using item_count as the presentation_count parameter
         return cls.create(item_count, item_count, parameters)
 
-        # return cls(
-        #     item_count,
-        #     item_count,
-        #     parameters["encoding_drift_rate"],
-        #     parameters["delay_drift_rate"],
-        #     parameters["start_drift_rate"],
-        #     parameters["recall_drift_rate"],
-        #     parameters["shared_support"],
-        #     parameters["item_support"],
-        #     parameters["learning_rate"],
-        #     parameters["primacy_scale"],
-        #     parameters["primacy_decay"],
-        #     parameters["stop_probability_scale"],
-        #     parameters["stop_probability_growth"],
-        #     parameters["choice_sensitivity"],
-        #     parameters["mcf_trace_sensitivity"]
-        # )
-
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
         return self._mcf_learning_rate[self.encoding_index]

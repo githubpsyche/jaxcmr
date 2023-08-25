@@ -1,11 +1,7 @@
 from plum import dispatch
-from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger
+from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger, context_feature_units
 from jax import jit, numpy as jnp
-from jaxcmr.context.Context import (
-    Context,
-    integrate_start_context,
-    integrate_delay_context,
-)
+from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
 from jaxcmr.helpers import replace
 
 __all__ = [
@@ -44,7 +40,7 @@ def rho_integrate(
     context_input: Float[Array, "context_feature_units"],
     drift_rate: ScalarFloat,
 ) -> Float[Array, "context_feature_units"]:
-    "Apply rho integration rule to update context state"
+    """Apply rho integration rule to update context state"""
     rho = jnp.sqrt(
         1 + jnp.square(drift_rate) * (jnp.square(context_state * context_input) - 1)
     ) - (drift_rate * (context_state * context_input))
@@ -58,7 +54,7 @@ def integrate(
     context_input: Float[Array, "context_feature_units"],
     drift_rate: ScalarFloat,
 ) -> TemporalContext:
-    "Integrate an input representation into temporal context"
+    """Integrate an input representation into temporal context"""
     return replace(
         context, state=rho_integrate(context.state, context_input, drift_rate)
     )

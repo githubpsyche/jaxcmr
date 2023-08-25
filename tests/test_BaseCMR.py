@@ -13,6 +13,7 @@ from jaxcmr.memorysearch import (
 )
 from jax import numpy as jnp, jit, lax
 
+
 class TestBaseCMR:
     parameters = {
         "encoding_drift_rate": 0.8016327576683261,
@@ -83,6 +84,7 @@ class TestBaseCMR:
         assert jnp.allclose(p_all.sum(), 1)
         assert jnp.allclose(p_all, desired_result)
 
+
 # %%
 
 from jaxcmr.memorysearch import free_recall
@@ -92,11 +94,11 @@ from jaxcmr.analyses import single_pres_spc, single_pres_pfr, single_pres_crp
 import numpy as np
 import jax
 
-class TestWithData:
 
-    data_path = 'data/{}.h5'
+class TestWithData:
+    data_path = '../../../data/{}.h5'
     data = load_data(data_path.format('HealyKahana2014'))
-    parameters = load_parameters('data/base_cmr_parameters.json')
+    parameters = load_parameters('../../../data/base_cmr_parameters.json')
     parameters['fixed']['mcf_trace_sensitivity'] = 1.0
 
     trial_query = "data['listtype'] == -1"

@@ -3,7 +3,7 @@ Context
 """
 
 from simple_pytree import Pytree
-from jaxcmr.helpers import Float, Array, ScalarFloat
+from jaxcmr.helpers import Float, Array, ScalarFloat, context_feature_units
 from plum import dispatch
 from jax import jit
 
@@ -18,6 +18,7 @@ __all__ = [
 class Context(Pytree):
     start_context_input: Float[Array, "context_feature_units"]
     delay_context_input: Float[Array, "context_feature_units"]
+    state: Float[Array, "context_feature_units"]
 
 
 @jit
@@ -27,18 +28,18 @@ def integrate(
     context_input: Float[Array, "context_feature_units"],
     drift_rate: ScalarFloat,
 ) -> Context:
-    "Integrate an input representation into current state of a context representation"
+    """Integrate an input representation into current state of a context representation"""
 
 
 @jit
 @dispatch
 def integrate_start_context(context: Context, drift_rate: ScalarFloat) -> Context:
-    "Integrate start-of-list context into current state of a temporal context representation"
+    """Integrate start-of-list context into current state of a temporal context representation"""
     return integrate(context, context.start_context_input, drift_rate)
 
 
 @jit
 @dispatch
 def integrate_delay_context(context: Context, drift_rate: ScalarFloat) -> Context:
-    "Integrate out-of-list context into current state of a temporal context representation"
+    """Integrate out-of-list context into current state of a temporal context representation"""
     return integrate(context, context.delay_context_input, drift_rate)

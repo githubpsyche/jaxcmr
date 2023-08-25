@@ -1,15 +1,18 @@
 """
 Instance-based $M^{CF}$
 
-Initialization functions for a context-to-feature instance-based memory that reproduces the behavior of the linear associative $M^{CF}$ memory as specified for CMR.
+Initialization functions for a context-to-feature instance-based memory that reproduces the behavior of the linear
+associative $M^{CF}$ memory as specified for CMR.
 """
 
 # %% Imports
 
-from jaxcmr.helpers import ScalarFloat, ScalarInteger, Float, Array
-from plum import dispatch
-from jax import jit, lax, numpy as jnp
 from functools import partial
+
+from jax import jit, numpy as jnp
+from plum import dispatch
+
+from jaxcmr.helpers import ScalarFloat, ScalarInteger, Float, Array, input_features, output_features
 from jaxcmr.memory.InstanceMemory.InstanceMemory import (
     InstanceMemory,
     instance_probe,
@@ -33,15 +36,15 @@ class InstanceMcf(InstanceMemory, mutable=True):
         encoding_index: ScalarInteger = 0,
         feature_scale: ScalarFloat = 1.0,
         trace_scale: ScalarFloat = 1.0,
-        input_features: ScalarInteger = 0,
-        output_features: ScalarInteger = 0,
+        _input_features: ScalarInteger = 0,
+        _output_features: ScalarInteger = 0,
     ):
         self.state = state
         self.encoding_index = encoding_index
         self.feature_scale = feature_scale
         self.trace_scale = trace_scale
-        self.input_features = input_features
-        self.output_features = output_features
+        self.input_features = _input_features
+        self.output_features = _output_features
 
     @classmethod
     @dispatch
@@ -72,8 +75,8 @@ def basic_init_instance_mcf(
     presentation_count: ScalarInteger,
     shared_support: ScalarFloat,
     item_support: ScalarFloat,
-) -> Float[Array, "context_features item_features"]:
-    "Initialize a instance-based context-to-feature memory state"
+) -> Float[Array, "instances instance_features"]:
+    """Initialize a instance-based context-to-feature memory state"""
 
     item_feature_count = item_count
     context_feature_count = item_count + 2
@@ -97,7 +100,7 @@ def basic_init_instance_mcf(
 @jit
 @dispatch
 def probe(
-    memory: InstanceMcf, probe: Float[Array, "input_features"]
+    memory: InstanceMcf, _probe: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
-    "Probe the memory with a probe vector"
-    return instance_probe(memory.state, probe, memory.feature_scale, memory.trace_scale)
+    """Probe the memory with a probe vector"""
+    return instance_probe(memory.state, _probe, memory.feature_scale, memory.trace_scale)

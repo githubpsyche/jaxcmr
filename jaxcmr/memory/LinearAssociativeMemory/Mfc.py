@@ -63,7 +63,7 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
 def basic_init_mfc(
     item_count: ScalarInteger, learning_rate: ScalarFloat
 ) -> Float[Array, "item_features context_features"]:
-    "A linear associative feature-to-context memory assuming one-hot item representations"
+    """A linear associative feature-to-context memory assuming one-hot item representations"""
     memory = jnp.eye(item_count, item_count + 2)
     memory = jnp.hstack([jnp.zeros((item_count, 1)), memory[:, :-1]])
     return memory * (1 - learning_rate)
@@ -74,7 +74,7 @@ def generalized_init_mfc(
     items: Float[Array, "item_count item_features"],
     learning_rate: ScalarFloat,
 ) -> Float[Array, "item_features context_features"]:
-    "A linear associative feature-to-context memory from arbitrary item representations"
+    """A linear associative feature-to-context memory from arbitrary item representations"""
     item_count = items.shape[0]
     item_feature_count = items.shape[1]
     context_feature_count = item_count + 2
@@ -83,8 +83,8 @@ def generalized_init_mfc(
     return lax.fori_loop(
         0,
         item_count,
-        lambda i, memory: hebbian_associate(
-            memory, 1 - learning_rate, items[i], contexts[i]
+        lambda i, m: hebbian_associate(
+            m, 1 - learning_rate, items[i], contexts[i]
         ),
         memory,
     )
