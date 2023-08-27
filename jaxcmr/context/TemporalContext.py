@@ -1,7 +1,20 @@
+"""
+Temporal Context
+
+Temporal context as specified in the Context Maintenance and Retrieval (CMR) model.
+
+Temporal context initializes with a state vector of zeros with a 1 in the first position (TemporalContext.create).
+This also initializes start_context_input same state vector.
+Successive positions reserve a unit to represent each item in the study list.
+An final contextual unit is reserved to represent out-of-list context (outlist_context_input).
+
+This state vector is updated by integrating novel context features such that the resulting state vector is a weighted sum of the current state vector and the novel context features, maintaining a unit magnitude (see `rho_integrate`).
+"""
+
 from plum import dispatch
 from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger, context_feature_units
 from jax import jit, numpy as jnp
-from jaxcmr.context.Context import Context, integrate_start_context, integrate_delay_context
+from jaxcmr.context.Context import Context, integrate_start_context, integrate_outlist_context
 from jaxcmr.helpers import replace
 
 __all__ = [
@@ -16,11 +29,11 @@ class TemporalContext(Context, mutable=True):
         self,
         state: Float[Array, "context_feature_units"],
         start_context_input: Float[Array, "context_feature_units"],
-        delay_context_input: Float[Array, "context_feature_units"],
+        outlist_context_input: Float[Array, "context_feature_units"],
     ):
         self.state = state
         self.start_context_input = start_context_input
-        self.delay_context_input = delay_context_input
+        self.outlist_context_input = outlist_context_input
 
     @classmethod
     @dispatch
@@ -29,7 +42,7 @@ class TemporalContext(Context, mutable=True):
         return cls(
             state=context_state.at[0].set(1),
             start_context_input=context_state.at[0].set(1),
-            delay_context_input=context_state.at[-1].set(1),
+            outlist_context_input=context_state.at[-1].set(1),
         )
 
 

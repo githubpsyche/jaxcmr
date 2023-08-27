@@ -17,13 +17,14 @@ Given a state of the model, a probability of each possible retrieval outcome can
 
 from jaxcmr.helpers import (
     replace, Integer, Float, Array, ScalarInteger, ScalarFloat,
-    PRNGKeyArray, study_events, recall_outcomes
+    PRNGKeyArray, study_events, recall_outcomes, recall_events
 )
 from typing import Tuple
 from simple_pytree import Pytree
 from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
 from functools import partial
+from beartype.typing import Callable
 
 lb = jnp.finfo(float).eps
 
@@ -42,7 +43,8 @@ __all__ = [
     "single_free_recall",
     "maybe_single_free_recall",
     "free_recall",
-    "exponential_primacy_weighting"
+    "exponential_primacy_weighting",
+    "simulate_trial"
 ]
 
 
@@ -70,9 +72,7 @@ def exponential_primacy_weighting(
 
 
 @dispatch.abstract
-def experience_item(
-        model: MemorySearch, item_index: ScalarInteger
-) -> MemorySearch:
+def experience_item(model: MemorySearch, item_index: ScalarInteger) -> MemorySearch:
     """Experience a study item at the specified index"""
 
 
@@ -110,9 +110,7 @@ def outcome_probabilities(model: MemorySearch) -> Float[Array, "recall_outcomes"
 
 
 @dispatch.abstract
-def outcome_probability(
-        model: MemorySearch, choice: ScalarInteger
-) -> ScalarFloat:
+def outcome_probability(model: MemorySearch, choice: ScalarInteger) -> ScalarFloat:
     """Return the probability of a particular retrieval outcome"""
 
 
@@ -181,3 +179,37 @@ def free_recall(
     return lax.scan(
         maybe_single_free_recall, model, random.split(rng, model.item_count)
     )
+
+
+# %% Data Simulation
+
+@partial(jit, static_argnums=(0, 1))
+@dispatch
+def simulate_trial(
+        model_create_fn: Callable,
+        item_count: ScalarInteger,
+        presentation: Integer[Array, "study_events"],
+        rng: PRNGKeyArray,
+        parameters: dict
+) -> Integer[Array, "recall_events"]:
+    """Initialize model and study events, then simulate and predict retrieval events"""
+    model = model_create_fn(item_count, presentation.shape[0], parameters)
+    model = start_retrieving(experience(model, presentation))
+    return free_recall(model, rng)[1]
+
+
+# @partial(jit, static_argnums=(0, 1))
+# @dispatch
+# def simulate_trial(
+#     model_create_fn: Callable,
+#     item_count: ScalarInteger,
+#     presentation: Integer[Array, "study_events"],
+#     first_recall: ScalarInteger,
+#     rng: PRNGKeyArray,
+#     parameters: dict
+# ) -> Float[Array, "recall_events"]:
+#     """Initialize model and study events, then simulate and predict retrieval events"""
+#     model = model_create_fn(item_count, presentation.shape[0], parameters)
+#     model = start_retrieving(experience(model, presentation))
+#     model = retrieve(model, first_recall)
+#     return free_recall(model, rng)[1]

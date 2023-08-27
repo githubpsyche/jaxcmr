@@ -1,38 +1,47 @@
+"""
+Tests for TemporalContext type and functions
+"""
+
+# %% Setup
+
 from jaxcmr.context import (
-    TemporalContext,
-    integrate,
-    integrate_delay_context,
+    Context, TemporalContext, integrate, integrate_outlist_context, integrate_start_context
 )
+from compmempy.models.context import TemporalContext as numba_TemporalContext
 from jax import jit, numpy as jnp
-
-
-def integrate_second_f():
-    item_count = 10
-    encoding_drift_rate = 0.3
-    context = TemporalContext.create(item_count)
-
-    context_input = jnp.zeros(item_count + 2)
-    context_input = context_input.at[1].set(1)
-    context_input = context_input / jnp.sqrt(jnp.sum(jnp.square(context_input)))
-
-    return integrate(context, context_input, encoding_drift_rate)
+import numpy as np
+import json
 
 
 def integrate_drift_f():
     item_count = 5
     context = TemporalContext.create(item_count)
     drift_rate = 0.5
-    return integrate_delay_context(context, drift_rate)
+    return integrate_outlist_context(context, drift_rate)
 
 
-def test_integrate_second_context_unit():
-    desired_result = jnp.array([0.9539392, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    assert jnp.allclose(jit(integrate_second_f)().state, desired_result)
-    assert jnp.allclose(integrate_second_f().state, desired_result)
+class TestTemporalContext:
 
+    # comparison stucture from numba implementation
+    with open('D:/data/base_cmr_parameters.json') as f:
+        parameters = json.load(f)['fixed']
+    item_count = 16
+    items = np.eye(item_count)
+    numba_context = numba_TemporalContext(items, parameters)
 
-def test_integrate_delay_context():
-    expected_state = jnp.array([0.8660254, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5])
-    assert jnp.allclose(integrate_drift_f().state, expected_state)
-    assert jnp.allclose(jit(integrate_drift_f)().state, expected_state)
+    context = TemporalContext.create(item_count)
+
+    # mfc activations decide context_input
+
+    context_input = np.array([0., 0.89544394, 0., 0., 0., 0.,
+                              0., 0., 0., 0., 0., 0.,
+                              0., 0., 0., 0., 0., 0.])
+
+    # there's also a normalization step
+    context_input = context_input / np.sqrt(np.sum(np.square(context_input)))
+
+    # context_input is integrated into context,
+    numba_context.integrate(context_input, parameters['encoding_drift_rate'])
+
+    numba_context.state
 
