@@ -5,9 +5,9 @@ __all__ = ['recall_by_all_study_positions', 'fast_sem_crp', 'plot_sem_crp', 'sin
 
 # %% ../src/analyses/00_Analyses.ipynb 3
 import numpy as np
-# from numba import njit
+from numba import njit
 
-# @njit(nogil=True)
+@njit(nogil=True)
 def recall_by_all_study_positions(
     recall_by_first_study_position, # Integer array where rows correspond go trials and columns to recall positions. Non-zero values identify a (1-indexed) study position of the item recalled at that position.  
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -44,7 +44,7 @@ def recall_by_all_study_positions(
 # from numba import njit
 import numpy as np
 
-# @njit(nogil=True)
+@njit(nogil=True)
 def fast_sem_crp(
     trials: np.ndarray, # 2D Integer array. Non-zero values are the (1-indexed) single study position of the item recalled at that position in the row's trial.
     distances: np.ndarray, # 3D array, entry (i,j,k) is the distance between the jth and kth items in the ith trial.
@@ -171,7 +171,7 @@ def plot_sem_crp(
 import numpy as np
 # from numba import njit
 
-# @njit(fastmath=True, nogil=True)
+@njit(fastmath=True, nogil=True)
 def single_pres_crp(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values are the (1-indexed) single study position of the item recalled at that position.
     list_length, # Number of item presentations in each study sequence
@@ -215,7 +215,7 @@ def single_pres_crp(
     return total_actual_lags / total_possible_lags
 
 # %% ../src/analyses/Lag_Contiguity_Effect.ipynb 5
-# @njit(nogil=True)
+@njit(nogil=True)
 def multi_pres_crp(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify a (1-indexed) study position of the item recalled at that position.
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -303,7 +303,7 @@ def multi_pres_crp(
 
 
 # %% ../src/analyses/Lag_Contiguity_Effect.ipynb 6
-# @njit(fastmath=True, nogil=True)
+@njit(fastmath=True, nogil=True)
 def masked_crp(
     trials, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify a (1-indexed) study position of the item recalled at that position.
     list_length, # Number of item presentations in each study sequence
@@ -451,7 +451,7 @@ def plot_crp(
 import numpy as np
 # from numba import njit
 
-# @njit
+@njit
 def neighbor_contiguity(
     trials, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify the first (1-indexed) study position of the item with that recall position.
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -636,7 +636,7 @@ def plot_neighbor_contiguity(
 import numpy as np
 # from numba import njit
 
-# @njit(nogil=True)
+@njit(nogil=True)
 def single_pres_pfr(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values are the (1-indexed) single study position of the item recalled at that position.
     list_length # Number of item presentations in each study sequence
@@ -647,7 +647,7 @@ def single_pres_pfr(
     return np.bincount(recalls[:, 0], minlength=list_length+1)[1:]/len(recalls)
 
 # %% ../src/analyses/Probability_of_First_Recall.ipynb 5
-# @njit(nogil=True)
+@njit(nogil=True)
 def multi_pres_pfr(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify a (1-indexed) study position of the item recalled at that position.
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -746,7 +746,7 @@ def plot_pfr(
 import numpy as np
 # from numba import njit
 
-# @njit(nogil=True)
+@njit(nogil=True)
 def single_pres_spc(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values are the (1-indexed) single study position of the item recalled at that position.
     list_length # Number of item presentations in each study sequence
@@ -759,7 +759,7 @@ def single_pres_spc(
     return np.bincount(recalls.flatten(), minlength=list_length+1)[1:]/len(recalls)
 
 # %% ../src/analyses/Serial_Position_Effect.ipynb 5
-# @njit(nogil=True)
+@njit(nogil=True)
 def multi_pres_spc(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify a (1-indexed) study position of the item recalled at that position.
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -858,7 +858,7 @@ def plot_spc(
 # from numba import njit, prange
 import numpy as np
 
-# @njit(nogil=True, parallel=True)
+@njit(nogil=True, parallel=True)
 def recall_probability_by_lag(
     recalls, # Integer array where rows correspond to trials and columns to recall positions. Non-zero values identify the first (1-indexed) study position of the item with that recall position.
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
@@ -895,7 +895,7 @@ def recall_probability_by_lag(
     return total_retrieved/total_presented
 
 # %% ../src/analyses/Spacing_Effect.ipynb 5
-# @njit(nogil=True, parallel=True)
+@njit(nogil=True, parallel=True)
 def find_max_lag(
     presentations, # Integer array where rows correspond to trials and columns to study positions. Non-zero values identify the unique index of the item presented at that position.
     ):
