@@ -111,14 +111,12 @@ class TestLinearAssociativeMemory:
             self.item_support,
             self.choice_sensitivity,
         )
-        mcf2 = LinearAssociativeMcf.create(
-            self.items, self.shared_support, self.item_support, 1.0
-        )
+        mcf2 = LinearAssociativeMcf.create(self.items, self.shared_support, self.item_support, 1.0)
+
         activation1 = probe(mcf, self.contexts[0])
         activation2 = probe(mcf2, self.contexts[0])
-        assert jnp.allclose(
-            activation1, scale_activation(activation2, self.choice_sensitivity)
-        )
+        
+        assert jnp.allclose(activation1, scale_activation(activation2, self.choice_sensitivity))
         assert jnp.allclose(
             activation1 / jnp.sum(activation1),
             jnp.power(activation2, self.choice_sensitivity)
