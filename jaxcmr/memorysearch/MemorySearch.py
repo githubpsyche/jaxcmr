@@ -17,7 +17,7 @@ Given a state of the model, a probability of each possible retrieval outcome can
 
 from jaxcmr.helpers import (
     replace, Integer, Float, Array, ScalarInteger, ScalarFloat,
-    PRNGKeyArray, study_events, recall_outcomes, recall_events
+    PRNGKeyArray, study_events, recall_outcomes, recall_events, lb
 )
 from typing import Tuple
 from simple_pytree import Pytree
@@ -25,8 +25,6 @@ from plum import dispatch
 from jax import jit, random, lax, numpy as jnp
 from functools import partial
 from beartype.typing import Callable
-
-lb = jnp.finfo(float).eps
 
 
 # %% Public interface
