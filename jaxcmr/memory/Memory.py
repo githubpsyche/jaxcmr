@@ -7,9 +7,10 @@ from jax import jit, lax, numpy as jnp
 from plum import dispatch
 from simple_pytree import Pytree
 
-from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat, input_features, output_features
+from jaxcmr.helpers import (
+    Float, Array, ScalarInteger, ScalarFloat, input_features, output_features, lb)
 
-__all__ = ["OneWayMemory", "associate", "probe", "scale_activation"]
+__all__ = ["OneWayMemory", "associate", "probe", "scale_activation", "normalize"]
 
 
 class OneWayMemory(Pytree, mutable=True):
@@ -39,7 +40,7 @@ def scale_activation(
         activation: Float[Array, "output_features"],
         scale: ScalarFloat
 ) -> Float[Array, "output_features"]:
-    """Scale activation vector by a exponent factor using the logsumexp trick to avoid underflow."""
+    """Scale activation vector by exponent factor using the logsumexp trick to avoid underflow."""
     log_activation = jnp.log(activation)
     return lax.cond(
         jnp.logical_and(jnp.any(activation != 0), scale != 1),
@@ -47,3 +48,9 @@ def scale_activation(
         lambda _: activation,
         None,
     )
+
+@jit
+@dispatch
+def normalize(vector: Float[Array, "features"]) -> Float[Array, "output_features"]:
+    """Enforce magnitude of vector to 1."""
+    return vector / jnp.sqrt(jnp.sum(jnp.square(vector)) + lb)
