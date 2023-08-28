@@ -1,6 +1,9 @@
 from copy import copy
 import jaxtyping
 import numpy as np
+from jax import numpy as jnp
+
+lb = jnp.finfo(jnp.float32).eps
 
 ScalarInteger = jaxtyping.Integer[jaxtyping.Array, ''] | int | np.int32 | np.int64
 ScalarFloat = jaxtyping.Float[jaxtyping.Array, ''] | float | np.float32 | np.float64
