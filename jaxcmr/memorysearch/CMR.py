@@ -17,7 +17,7 @@ implementation.
 # %% Imports
 
 from jaxcmr.helpers import (
-    Integer, Float, Array, Bool, ScalarFloat, ScalarInteger, ScalarBool, recall_outcomes
+    Integer, Float, Array, Bool, ScalarFloat, ScalarInteger, ScalarBool, recall_outcomes, lb
 )
 from plum import dispatch
 from typing import Any
@@ -32,8 +32,6 @@ from jaxcmr.context import (
 )
 from jaxcmr.helpers import replace
 from functools import partial
-
-lb = jnp.finfo(jnp.float32).eps
 
 # %% Public Interface
 
