@@ -19,7 +19,7 @@ from plum import dispatch
 
 from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger, input_features, output_features
 from jaxcmr.helpers import replace
-from jaxcmr.memory import OneWayMemory, scale_activation
+from jaxcmr.memory import OneWayMemory, scale_activation, normalize
 
 # %% Public interface
 
@@ -92,7 +92,7 @@ def linear_probe(
     scale: ScalarFloat = 1.0,
 ) -> Float[Array, "output_features"]:
     """Return the scaled activation vector of a M x N linear associative memory state"""
-    return scale_activation(jnp.dot(_probe, memory_state), scale)
+    return normalize(scale_activation(jnp.dot(_probe, memory_state), scale))
 
 
 @jit
