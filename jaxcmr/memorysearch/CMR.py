@@ -26,6 +26,7 @@ from jaxcmr.helpers import (
     ScalarBool,
     recall_outcomes,
     lb,
+    replace,
 )
 from plum import dispatch
 from typing import Any
@@ -38,10 +39,7 @@ from jaxcmr.context import (
     integrate_start_context,
     integrate_outlist_context,
 )
-from jaxcmr.helpers import replace
 from functools import partial
-
-config.update("jax_enable_x64", True)
 
 # %% Public Interface
 
