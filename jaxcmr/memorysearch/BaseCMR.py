@@ -116,29 +116,29 @@ class BaseCMR(CMR, mutable=True):
             parameters["choice_sensitivity"],
         )
     
-    @classmethod
-    @dispatch
-    def create(
-        cls,
-        item_count: ScalarInteger,
-        parameters: dict,
-    ):
-        return cls(
-            item_count,
-            item_count,
-            parameters["encoding_drift_rate"],
-            parameters["delay_drift_rate"],
-            parameters["start_drift_rate"],
-            parameters["recall_drift_rate"],
-            parameters["shared_support"],
-            parameters["item_support"],
-            parameters["learning_rate"],
-            parameters["primacy_scale"],
-            parameters["primacy_decay"],
-            parameters["stop_probability_scale"],
-            parameters["stop_probability_growth"],
-            parameters["choice_sensitivity"],
-        )
+    # @classmethod
+    # @dispatch
+    # def create(
+    #     cls,
+    #     item_count: ScalarInteger,
+    #     parameters: dict,
+    # ):
+    #     return cls(
+    #         item_count,
+    #         item_count,
+    #         parameters["encoding_drift_rate"],
+    #         parameters["delay_drift_rate"],
+    #         parameters["start_drift_rate"],
+    #         parameters["recall_drift_rate"],
+    #         parameters["shared_support"],
+    #         parameters["item_support"],
+    #         parameters["learning_rate"],
+    #         parameters["primacy_scale"],
+    #         parameters["primacy_decay"],
+    #         parameters["stop_probability_scale"],
+    #         parameters["stop_probability_growth"],
+    #         parameters["choice_sensitivity"],
+    #     )
 
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:

@@ -3,9 +3,9 @@ from jaxcmr.memory import (
     LinearAssociativeMcf,
     InstanceMcf,
     associate,
-    probe,
-    scale_activation,
+    probe
 )
+from jaxcmr.helpers import power_scale
 import plum
 import pytest
 
@@ -76,7 +76,7 @@ class TestInstanceMemory:
             instance_mcf_orthonormal_activations
         )
 
-    def test_scale_activation(self):
+    def test_power_scale(self):
         mcf2 = InstanceMcf.create(
             self.item_count,
             self.item_count,
@@ -111,7 +111,7 @@ class TestInstanceMemory:
         assert activation3[0] > activation2[0]
 
         assert jnp.allclose(
-            activation1, scale_activation(activation2, self.choice_sensitivity)
+            activation1, power_scale(activation2, self.choice_sensitivity)
         )
 
         assert jnp.allclose(

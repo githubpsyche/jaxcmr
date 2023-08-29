@@ -1,3 +1,3 @@
-from jaxcmr.memory.Memory import *
-from jaxcmr.memory.LinearAssociativeMemory import *
-from jaxcmr.memory.InstanceMemory import *
+from jaxcmr.memory.types import *
+from jaxcmr.memory.associate import *
+from jaxcmr.memory.probe import *

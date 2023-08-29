@@ -1,8 +1,7 @@
 """
 Instance-based $M^{CF}$
 
-Initialization functions for a context-to-feature instance-based memory that reproduces the behavior of the linear
-associative $M^{CF}$ memory as specified for CMR.
+Initialization functions for a context-to-feature instance-based memory that reproduces the behavior of the linear associative $M^{CF}$ memory as specified for CMR.
 """
 
 # %% Imports

@@ -21,17 +21,19 @@ from jaxcmr.helpers import (
 )
 from plum import dispatch
 from typing import Any
-from jax import jit, lax, numpy as jnp
+from jax import jit, lax, numpy as jnp, config
 from jaxcmr.memorysearch import MemorySearch
 from jaxcmr.memory import OneWayMemory, probe, associate
 from jaxcmr.context import (
     Context,
     integrate,
     integrate_start_context,
-    integrate_delay_context,
+    integrate_outlist_context,
 )
 from jaxcmr.helpers import replace
 from functools import partial
+
+config.update("jax_enable_x64", True)
 
 # %% Public Interface
 
@@ -159,7 +161,7 @@ def outcome_probability(
 @dispatch
 def start_retrieving(model: CMR) -> CMR:
     """Evolve model reflect its initial state at the start of free recall"""
-    new_context = integrate_delay_context(model.context, model.delay_drift_rate)
+    new_context = integrate_outlist_context(model.context, model.delay_drift_rate)
     new_context = integrate_start_context(new_context, model.start_drift_rate)
     return replace(model, context=new_context)
 

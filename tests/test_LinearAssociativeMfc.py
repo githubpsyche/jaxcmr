@@ -4,8 +4,8 @@ from jaxcmr.memory import (
     LinearAssociativeMfc,
     associate,
     probe,
-    scale_activation,
 )
+from jaxcmr.helpers import power_scale
 import plum
 import pytest
 
@@ -116,7 +116,7 @@ class TestLinearAssociativeMemory:
         activation1 = probe(mcf, self.contexts[0])
         activation2 = probe(mcf2, self.contexts[0])
         
-        assert jnp.allclose(activation1, scale_activation(activation2, self.choice_sensitivity))
+        assert jnp.allclose(activation1, power_scale(activation2, self.choice_sensitivity))
         assert jnp.allclose(
             activation1 / jnp.sum(activation1),
             jnp.power(activation2, self.choice_sensitivity)
