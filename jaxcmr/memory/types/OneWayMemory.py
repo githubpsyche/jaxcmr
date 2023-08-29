@@ -5,16 +5,14 @@ Abstract type and functions for one-way associative memories.
 
 # %% Imports
 
+from plum import dispatch
 from simple_pytree import Pytree
+
 from jaxcmr.helpers import (
     Float,
     Array,
     ScalarInteger,
-    input_features,
-    output_features,
 )
-from jax import jit, lax, numpy as jnp
-from plum import dispatch
 
 # %% Exports
 
@@ -24,7 +22,8 @@ __all__ = ["OneWayMemory", "LinearAssociativeMemory", "InstanceMemory"]
 
 
 class OneWayMemory(Pytree, mutable=True):
-    "Abstract type with declared attributes for one-way associative memories"
+    """Abstract type with declared attributes for one-way associative memories"""
+
     input_features: ScalarInteger
     output_features: ScalarInteger
 

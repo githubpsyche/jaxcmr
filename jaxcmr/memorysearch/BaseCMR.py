@@ -11,9 +11,8 @@ __all__ = ["BaseCMR"]
 
 
 class BaseCMR(CMR, mutable=True):
-
     item_count = static_field()
-    
+
     def __init__(
         self,
         item_count: ScalarInteger,
@@ -115,7 +114,7 @@ class BaseCMR(CMR, mutable=True):
             parameters["stop_probability_growth"],
             parameters["choice_sensitivity"],
         )
-    
+
     # @classmethod
     # @dispatch
     # def create(

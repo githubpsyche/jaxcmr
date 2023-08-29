@@ -15,17 +15,26 @@ Given a state of the model, a probability of each possible retrieval outcome can
 
 # %% Imports
 
-from jaxcmr.helpers import (
-    replace, Integer, Float, Array, ScalarInteger, ScalarFloat,
-    PRNGKeyArray, study_events, recall_outcomes, recall_events, lb
-)
-from typing import Tuple
-from simple_pytree import Pytree
-from plum import dispatch
-from jax import jit, random, lax, numpy as jnp
 from functools import partial
-from beartype.typing import Callable
+from typing import Tuple
 
+from beartype.typing import Callable
+from jax import jit, random, lax, numpy as jnp
+from plum import dispatch
+from simple_pytree import Pytree
+
+from jaxcmr.helpers import (
+    replace,
+    Integer,
+    Float,
+    Array,
+    ScalarInteger,
+    ScalarFloat,
+    PRNGKeyArray,
+    study_events,
+    recall_outcomes,
+    recall_events,
+)
 
 # %% Public interface
 
@@ -42,7 +51,7 @@ __all__ = [
     "maybe_single_free_recall",
     "free_recall",
     "exponential_primacy_weighting",
-    "simulate_trial"
+    "simulate_trial",
 ]
 
 
@@ -57,9 +66,9 @@ class MemorySearch(Pytree, mutable=True):
 @partial(jit, static_argnums=(0,))
 @dispatch
 def exponential_primacy_weighting(
-        presentation_count: ScalarInteger,
-        primacy_scale: ScalarFloat,
-        primacy_decay: ScalarFloat,
+    presentation_count: ScalarInteger,
+    primacy_scale: ScalarFloat,
+    primacy_decay: ScalarFloat,
 ) -> Float[Array, "study_events"]:
     """The primacy effect as exponential decay of boosted attention weights."""
     arange = jnp.arange(presentation_count, dtype=jnp.float32)
@@ -94,9 +103,7 @@ def experience(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
 @dispatch
 def experience(model: MemorySearch):
     """Experience all study items initialized with the model"""
-    return lax.fori_loop(
-        1, model.item_count + 1, lambda i, m: experience(m, i), model
-    )
+    return lax.fori_loop(1, model.item_count + 1, lambda i, m: experience(m, i), model)
 
 
 # %% Event Probabilities
@@ -121,9 +128,7 @@ def start_retrieving(model: MemorySearch) -> MemorySearch:
 
 
 @dispatch.abstract
-def retrieve_item(
-        model: MemorySearch, choice: ScalarInteger
-) -> MemorySearch:
+def retrieve_item(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
     """Retrieve an item from memory"""
 
 
@@ -146,8 +151,7 @@ def retrieve(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
 @jit
 @dispatch
 def single_free_recall(
-        model: MemorySearch,
-        rng: PRNGKeyArray
+    model: MemorySearch, rng: PRNGKeyArray
 ) -> Tuple[MemorySearch, ScalarInteger]:
     """Perform a free recall event and return the resulting state."""
     p_all = outcome_probabilities(model)
@@ -158,8 +162,7 @@ def single_free_recall(
 @jit
 @dispatch
 def maybe_single_free_recall(
-        model: MemorySearch,
-        rng: PRNGKeyArray
+    model: MemorySearch, rng: PRNGKeyArray
 ) -> Tuple[MemorySearch, ScalarInteger]:
     """Perform a free recall event if the model is active and return the resulting state."""
     return lax.cond(
@@ -170,8 +173,7 @@ def maybe_single_free_recall(
 @jit
 @dispatch
 def free_recall(
-        model: MemorySearch,
-        rng: PRNGKeyArray
+    model: MemorySearch, rng: PRNGKeyArray
 ) -> Tuple[MemorySearch, ScalarInteger | PRNGKeyArray]:
     """Perform free recall events until the model is inactive and return the resulting state."""
     return lax.scan(
@@ -181,14 +183,15 @@ def free_recall(
 
 # %% Data Simulation
 
+
 @partial(jit, static_argnums=(0, 1))
 @dispatch
 def simulate_trial(
-        model_create_fn: Callable,
-        item_count: ScalarInteger,
-        presentation: Integer[Array, "study_events"],
-        rng: PRNGKeyArray,
-        parameters: dict
+    model_create_fn: Callable,
+    item_count: ScalarInteger,
+    presentation: Integer[Array, "study_events"],
+    rng: PRNGKeyArray,
+    parameters: dict,
 ) -> Integer[Array, "recall_events"]:
     """Initialize model and study events, then simulate and predict retrieval events"""
     model = model_create_fn(item_count, presentation.shape[0], parameters)

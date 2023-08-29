@@ -8,13 +8,23 @@ This also initializes start_context_input same state vector.
 Successive positions reserve a unit to represent each item in the study list.
 An final contextual unit is reserved to represent out-of-list context (outlist_context_input).
 
-This state vector is updated by integrating novel context features such that the resulting state vector is a weighted sum of the current state vector and the novel context features, maintaining a unit magnitude (see `rho_integrate`).
-"""
+This state vector is updated by integrating novel context features such that the resulting state vector is a weighted
+sum of the current state vector and the novel context features, maintaining a unit magnitude (see `rho_integrate`)."""
 
 from plum import dispatch
-from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger, context_feature_units
+from jaxcmr.helpers import (
+    Float,
+    Array,
+    ScalarFloat,
+    ScalarInteger,
+    context_feature_units,
+)
 from jax import jit, numpy as jnp
-from jaxcmr.context.Context import Context, integrate_start_context, integrate_outlist_context
+from jaxcmr.context.Context import (
+    Context,
+    integrate_start_context,
+    integrate_outlist_context,
+)
 from jaxcmr.helpers import replace
 
 __all__ = [

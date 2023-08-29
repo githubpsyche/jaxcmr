@@ -17,7 +17,15 @@ implementation.
 # %% Imports
 
 from jaxcmr.helpers import (
-    Integer, Float, Array, Bool, ScalarFloat, ScalarInteger, ScalarBool, recall_outcomes, lb
+    Integer,
+    Float,
+    Array,
+    Bool,
+    ScalarFloat,
+    ScalarInteger,
+    ScalarBool,
+    recall_outcomes,
+    lb,
 )
 from plum import dispatch
 from typing import Any
@@ -72,6 +80,7 @@ class CMR(MemorySearch, mutable=True):
     recall_sequence: Integer[Array, "item_count"]
     recall_mask: bool | Bool[Array, "item_count"]
 
+
 # %% Encoding
 
 
@@ -97,11 +106,12 @@ def experience_item(model: CMR, item_index: ScalarInteger) -> CMR:
 
 # %% Event Probabilities
 
+
 @dispatch
 def stop_probability(
-        stop_probability_scale: ScalarFloat,
-        stop_probability_growth: ScalarFloat,
-        recall_total: ScalarInteger,
+    stop_probability_scale: ScalarFloat,
+    stop_probability_growth: ScalarFloat,
+    recall_total: ScalarInteger,
 ):
     """Probability of stopping recall given total number of items recalled and model parameters"""
     return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
@@ -114,17 +124,19 @@ def stop_probability(model: CMR, _: Any = None) -> ScalarFloat:
         model.is_active,
         lambda _: lax.min(
             stop_probability(
-                model.stop_probability_scale, model.stop_probability_growth, model.recall_total),
-            1.0 - ((model.item_count - model.recall_total) * lb)
+                model.stop_probability_scale,
+                model.stop_probability_growth,
+                model.recall_total,
+            ),
+            1.0 - ((model.item_count - model.recall_total) * lb),
         ),
-        lambda _: 1.,
+        lambda _: 1.0,
         None,
     )
 
 
 @dispatch
-def item_probability(
-        model: CMR, choice: ScalarInteger) -> ScalarFloat:
+def item_probability(model: CMR, choice: ScalarInteger) -> ScalarFloat:
     """Probability of retrieving the item with the specified index (1-indexed)"""
     p_stop = stop_probability(model)
     item_activation = probe(model.mcf, model.context.state) + lb
@@ -144,9 +156,7 @@ def outcome_probabilities(model: CMR) -> Float[Array, "recall_outcomes"]:
 
 
 @dispatch
-def outcome_probability(
-        model: CMR, choice: ScalarInteger
-) -> ScalarFloat:
+def outcome_probability(model: CMR, choice: ScalarInteger) -> ScalarFloat:
     """Return the probability of a particular retrieval outcome"""
     return lax.cond(
         choice > 0,
@@ -157,6 +167,7 @@ def outcome_probability(
 
 
 # %% Item Retrieval
+
 
 @dispatch
 def start_retrieving(model: CMR) -> CMR:

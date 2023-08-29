@@ -23,6 +23,7 @@ from jaxcmr.helpers import (
     ScalarFloat,
     input_features,
     output_features,
+    instances,
     power_scale,
     normalize,
 )
@@ -30,6 +31,7 @@ from jaxcmr.helpers import (
 # %% Exports
 
 __all__ = ["probe", "linear_probe", "instance_probe", "trace_activation"]
+
 
 # %% Abstract Probe Function
 
@@ -44,11 +46,14 @@ def probe(
 # %% Probe Functions for Linear Associative Memories
 
 """
-Probing a linear associative memory involves a dot product between the input feature pattern and the memory state matrix.
+Probing a linear associative memory involves a dot product between the input feature pattern and the memory state 
+matrix.
 
-Depending on the type of linear associative memory, the activation vector is scaled by a power factor and/or normalized to unit magnitude.
+Depending on the type of linear associative memory, the activation vector is scaled by a power factor and/or 
+normalized to unit magnitude.
 
-When typing constrains whether power scaling or normalization is required, we dispatch type-specialized probe functions to avoid unnecessary computation.
+When typing constrains whether power scaling or normalization is required, we dispatch type-specialized probe 
+functions to avoid unnecessary computation.
 """
 
 

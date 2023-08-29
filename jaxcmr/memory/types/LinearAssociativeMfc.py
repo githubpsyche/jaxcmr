@@ -1,8 +1,9 @@
 """
 Linear Associative $M^{FC}$
 
-Initialization functions for a feature-to-context linear associative memory as specified for CMR.
-Item representations and a space of one-hot context states are associated according to the Hebbian learning rule based on a provided learning rate.
+Initialization functions for a feature-to-context linear associative memory as specified for CMR. Item
+representations and a space of one-hot context states are associated according to the Hebbian learning rule based on
+a provided learning rate.
 
 When initialized with an item count, items are represented as one-hot vectors.
 Otherwise, items can be explicitly provided as a matrix of item vectors.
@@ -10,7 +11,14 @@ Otherwise, items can be explicitly provided as a matrix of item vectors.
 
 # %% Imports
 from jaxcmr.memory.types.OneWayMemory import LinearAssociativeMemory
-from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
+from jaxcmr.helpers import (
+    Float,
+    Array,
+    ScalarInteger,
+    ScalarFloat,
+    input_features,
+    output_features,
+)
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
 from functools import partial
@@ -21,7 +29,9 @@ __all__ = [
     "LinearAssociativeMfc",
 ]
 
+
 # %% Base Type for Linear Associative Mfc
+
 
 class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     @dispatch
@@ -45,7 +55,7 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
         learning_rate: ScalarFloat,
     ):
         return cls(generalized_init_mfc(items, learning_rate))
-    
+
     @property
     def input_features(self):
         return self.state.shape[0]
@@ -54,7 +64,9 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     def output_features(self):
         return self.state.shape[1]
 
+
 # %% Type-Specific Helper Functions
+
 
 @partial(jit, static_argnums=(0,))
 def basic_init_mfc(
@@ -80,11 +92,10 @@ def generalized_init_mfc(
     return lax.fori_loop(
         0,
         item_count,
-        lambda i, m: hebbian_associate(
-            m, 1 - learning_rate, items[i], contexts[i]
-        ),
+        lambda i, m: hebbian_associate(m, 1 - learning_rate, items[i], contexts[i]),
         memory,
     )
+
 
 @jit
 @dispatch

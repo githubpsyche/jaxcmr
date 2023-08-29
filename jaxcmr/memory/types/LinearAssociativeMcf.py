@@ -1,8 +1,9 @@
 """
 Linear Associative $M^{CF}$
 
-Initialization functions for a context-to-feature linear associative memory as specified for CMR.
-Item representations and a space of one-hot context states are associated according to the Hebbian learning rule based on a provided learning rate.
+Initialization functions for a context-to-feature linear associative memory as specified for CMR. Item
+representations and a space of one-hot context states are associated according to the Hebbian learning rule based on
+a provided learning rate.
 
 When initialized with an item count, items are represented as one-hot vectors.
 Otherwise, items can be explicitly provided as a matrix of item vectors.
@@ -10,14 +11,22 @@ Otherwise, items can be explicitly provided as a matrix of item vectors.
 
 # %% Imports
 from jaxcmr.memory.types.OneWayMemory import LinearAssociativeMemory
-from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
+from jaxcmr.helpers import (
+    Float,
+    Array,
+    ScalarInteger,
+    ScalarFloat,
+    input_features,
+    output_features,
+)
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
 from functools import partial
 
 # %% Exports
 
-__all__ = ["LinearAssociativeMcf",]
+__all__ = ["LinearAssociativeMcf"]
+
 
 # %% Base Type for Linear Associative Mcf
 
@@ -107,6 +116,7 @@ def generalized_init_linear_mcf(
         lambda i, m: hebbian_associate(m, 1.0, contexts[i], items[i]),
         memory,
     )
+
 
 @jit
 @dispatch

@@ -5,6 +5,7 @@ One-way associative memories are used to associate input and output feature vect
 """
 
 # %% Imports
+
 from plum import dispatch
 from jax import jit, numpy as jnp
 from jaxcmr.memory.types import (
@@ -22,14 +23,16 @@ from jaxcmr.helpers import (
     ScalarInteger,
     input_features,
     output_features,
-    replace
+    replace,
 )
 
 # %% Exports
 
 __all__ = ["associate", "hebbian_associate", "instance_associate"]
 
+
 # %% Abstract Asspcoate Function
+
 
 @dispatch.abstract
 def associate(
@@ -39,7 +42,9 @@ def associate(
 ) -> Float[Array, "output_features"]:
     """Associate input and output feature patterns in a one-way associative memory"""
 
+
 # %% Associative Functions for Linear Associative Memories
+
 
 @jit
 @dispatch
@@ -53,6 +58,7 @@ def hebbian_associate(
     return memory_state + (
         learning_rate * jnp.outer(input_feature_pattern, output_feature_pattern)
     )
+
 
 @jit
 @dispatch
@@ -70,7 +76,9 @@ def associate(
         ),
     )
 
+
 # %% Associative Functions for Instance Memories
+
 
 @jit
 @dispatch
@@ -85,6 +93,7 @@ def instance_associate(
     return memory_state.at[encoding_index].set(
         jnp.concatenate((input_pattern, output_pattern * learning_rate))
     )
+
 
 @jit
 @dispatch

@@ -49,11 +49,11 @@ class Parameters(object):
         return s
 
     def copy(self):
-        "Copy the parameters definition."
+        """Copy the parameters definition."""
         return copy.deepcopy(self)
 
     def to_json(self, json_file: str) -> None:
-        "Write parameter definitions to a JSON file."
+        """Write parameter definitions to a JSON file."""
 
         data = {
             'fixed': {k: v for k, v in self.fixed.items()},

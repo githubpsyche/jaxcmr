@@ -5,8 +5,6 @@ from jax import numpy as jnp, jit, lax, config
 from plum import dispatch
 import numpy as np
 
-config.update("jax_enable_x64", True)
-
 # lb = jnp.finfo(jnp.float32).eps
 lb = jnp.array(np.finfo(float).eps)
 

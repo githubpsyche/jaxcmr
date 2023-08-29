@@ -4,16 +4,16 @@ Instance Mcf
 
 # %% Imports
 
-from jax import jit, numpy as jnp
 from functools import partial
+
+from jax import jit, numpy as jnp
 from plum import dispatch
+
 from jaxcmr.helpers import (
     ScalarFloat,
     ScalarInteger,
     Float,
     Array,
-    input_features,
-    output_features,
 )
 from jaxcmr.memory.types.OneWayMemory import InstanceMemory
 

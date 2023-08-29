@@ -11,9 +11,8 @@ __all__ = ["InstanceCMR"]
 
 
 class InstanceCMR(CMR, mutable=True):
-
     item_count = static_field()
-    
+
     def __init__(
         self,
         item_count: ScalarInteger,
@@ -30,11 +29,16 @@ class InstanceCMR(CMR, mutable=True):
         stop_probability_scale: ScalarFloat,
         stop_probability_growth: ScalarFloat,
         choice_sensitivity: ScalarFloat,
-        trace_sensitivity: ScalarFloat
+        trace_sensitivity: ScalarFloat,
     ):
         self.mfc = LinearAssociativeMfc.create(item_count, learning_rate)
         self.mcf = InstanceMcf.create(
-            item_count, presentation_count, shared_support, item_support, choice_sensitivity, trace_sensitivity
+            item_count,
+            presentation_count,
+            shared_support,
+            item_support,
+            choice_sensitivity,
+            trace_sensitivity,
         )
         self.context = TemporalContext.create(item_count)
         self.encoding_drift_rate = encoding_drift_rate
@@ -74,7 +78,7 @@ class InstanceCMR(CMR, mutable=True):
         stop_probability_scale: ScalarFloat,
         stop_probability_growth: ScalarFloat,
         choice_sensitivity: ScalarFloat,
-        trace_sensitivity: ScalarFloat
+        trace_sensitivity: ScalarFloat,
     ):
         return cls(
             item_count,
@@ -91,7 +95,7 @@ class InstanceCMR(CMR, mutable=True):
             stop_probability_scale,
             stop_probability_growth,
             choice_sensitivity,
-            trace_sensitivity
+            trace_sensitivity,
         )
 
     @classmethod
@@ -117,9 +121,9 @@ class InstanceCMR(CMR, mutable=True):
             parameters["stop_probability_scale"],
             parameters["stop_probability_growth"],
             parameters["choice_sensitivity"],
-            parameters["mcf_trace_sensitivity"]
+            parameters["mcf_trace_sensitivity"],
         )
-    
+
     @classmethod
     @dispatch
     def create(
