@@ -1,33 +1,34 @@
 """
 Context
 
-A type hierarchy for implementing contextual representations that mediate encoding and memory search during tasks
-such as free recall.
+A type hierarchy for implementing contextual representations that mediate encoding and memory search during tasks such as free recall.
 
 Context can `integrate` novel contextual features to change its state over time.
 
-Within retrieved context accounts of performance, context can mediate activities such as learning and memory search.
-For example, its state at each study position can be associated in memory with active item features. And at each
-recall attempt, its state can be used to probe memory, directing recall towards item that were studied with similar
-contextual states.
-
-These constraints call for a context class that can integrate new features and queried for its current state based on
-parameters configured at the time of its instantiation. When an operation depends on information that would not be
-available at the time of instantiation, this information should be passed as an argument to the operation.
-
-To support drift back toward its initial state or away from study list context, a context class should also support
-the ability to integrate a start-of-list context and an out-of-list context."""
+To support drift back toward its initial state or away from study list context, 
+a context should also support integration of a start-of-list context and an out-of-list context.
+"""
 
 # %% Setup
 
 from simple_pytree import Pytree
-from jaxcmr.helpers import Float, Array, ScalarFloat, context_feature_units
+from jaxcmr.helpers import (
+    Float,
+    Array,
+    ScalarFloat,
+    ScalarInteger,
+    context_feature_units,
+    replace,
+    normalize_to_unit_length
+)
 from plum import dispatch
-from jax import jit
+from jax import jit, numpy as jnp
 
 __all__ = [
     "Context",
+    "TemporalContext",
     "integrate",
+    "rho_integrate",
     "integrate_start_context",
     "integrate_outlist_context",
 ]
@@ -41,18 +42,56 @@ class Context(Pytree):
     outlist_context_input: Float[Array, "context_feature_units"]
     state: Float[Array, "context_feature_units"]
 
+class TemporalContext(Context, mutable=True):
+    def __init__(
+        self,
+        state: Float[Array, "context_feature_units"],
+        start_context_input: Float[Array, "context_feature_units"],
+        outlist_context_input: Float[Array, "context_feature_units"],
+    ):
+        self.state = state
+        self.start_context_input = start_context_input
+        self.outlist_context_input = outlist_context_input
 
-# %% Abstract Operations
+    @classmethod
+    @dispatch
+    def create(cls, item_count: ScalarInteger):
+        context_state = jnp.zeros(item_count + 2)
+        return cls(
+            state=context_state.at[0].set(1),
+            start_context_input=context_state.at[0].set(1),
+            outlist_context_input=context_state.at[-1].set(1),
+        )
+
+# %% Integration
 
 
 @jit
-@dispatch.abstract
+@dispatch
+def rho_integrate(
+    context_state: Float[Array, "context_feature_units"],
+    context_input: Float[Array, "context_feature_units"],
+    drift_rate: ScalarFloat,
+) -> Float[Array, "context_feature_units"]:
+    """Integrate an input representation into a contextual state, preserving unit length."""
+    context_input = normalize_to_unit_length(context_input)
+    rho = jnp.sqrt(
+        1 + jnp.square(drift_rate) * (jnp.square(context_state * context_input) - 1)
+    ) - (drift_rate * (context_state * context_input))
+    return (rho * context_state) + (drift_rate * context_input)
+
+
+@jit
+@dispatch
 def integrate(
     context: Context,
     context_input: Float[Array, "context_feature_units"],
     drift_rate: ScalarFloat,
 ) -> Context:
     """Integrate an input representation into current state of a context representation"""
+    return replace(
+        context, state=rho_integrate(context.state, context_input, drift_rate)
+    )
 
 
 @jit
