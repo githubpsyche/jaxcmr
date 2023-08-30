@@ -124,17 +124,6 @@ class InstanceCMR(CMR, mutable=True):
             parameters["mcf_trace_sensitivity"],
         )
 
-    @classmethod
-    @dispatch
-    def create(
-        cls,
-        item_count: ScalarInteger,
-        parameters: dict,
-    ):
-        # TODO: simplify into call to 4-arg create dispatch
-        # return call to create using item_count as the presentation_count parameter
-        return cls.create(item_count, item_count, parameters)
-
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
         return self._mcf_learning_rate[self.encoding_index]

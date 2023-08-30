@@ -9,7 +9,8 @@ Successive positions reserve a unit to represent each item in the study list.
 An final contextual unit is reserved to represent out-of-list context (outlist_context_input).
 
 This state vector is updated by integrating novel context features such that the resulting state vector is a weighted
-sum of the current state vector and the novel context features, maintaining a unit magnitude (see `rho_integrate`)."""
+sum of the current state vector and the novel context features, maintaining a unit magnitude (see `rho_integrate`).
+"""
 
 from plum import dispatch
 from jaxcmr.helpers import (
@@ -19,6 +20,7 @@ from jaxcmr.helpers import (
     ScalarInteger,
     context_feature_units,
     replace,
+    normalize_to_unit_length
 )
 from jax import jit, numpy as jnp
 from jaxcmr.context.Context import (
@@ -64,6 +66,7 @@ def rho_integrate(
     drift_rate: ScalarFloat,
 ) -> Float[Array, "context_feature_units"]:
     """Apply rho integration rule to update context state"""
+    context_input = normalize_to_unit_length(context_input)
     rho = jnp.sqrt(
         1 + jnp.square(drift_rate) * (jnp.square(context_state * context_input) - 1)
     ) - (drift_rate * (context_state * context_input))

@@ -12,10 +12,8 @@ from jax import jit, numpy as jnp
 from jaxcmr.memory.types import (
     OneWayMemory,
     LinearAssociativeMemory,
-    InstanceMemory,
     LinearAssociativeMcf,
     InstanceMcf,
-    LinearAssociativeMfc,
 )
 from jaxcmr.helpers import (
     Float,
@@ -25,7 +23,6 @@ from jaxcmr.helpers import (
     output_features,
     instances,
     power_scale,
-    normalize,
 )
 
 # %% Exports
@@ -40,7 +37,7 @@ __all__ = ["probe", "linear_probe", "instance_probe", "trace_activation"]
 def probe(
     memory: OneWayMemory, input_feature_pattern: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
-    """Retrieve the output vector associated with an input vector in a one-way associative memory"""
+    """Retrieve the output associated with an input in a one-way associative memory"""
 
 
 # %% Probe Functions for Linear Associative Memories
@@ -62,10 +59,9 @@ functions to avoid unnecessary computation.
 def linear_probe(
     memory_state: Float[Array, "input_features output_features"],
     input_feature_pattern: Float[Array, "input_features"],
-    scale: ScalarFloat,
 ) -> Float[Array, "output_features"]:
-    """Return the scaled activation vector of a M x N linear associative memory state"""
-    return normalize(power_scale(jnp.dot(input_feature_pattern, memory_state), scale))
+    """Retrieve the output associated with an input in an M x N linear associative memory state"""
+    return jnp.dot(input_feature_pattern, memory_state)
 
 
 @jit
@@ -73,19 +69,9 @@ def linear_probe(
 def probe(
     memory: LinearAssociativeMemory,
     input_feature_pattern: Float[Array, "input_features"],
-    scale: ScalarFloat,
 ) -> Float[Array, "output_features"]:
-    """Return the scaled activation vector of a linear associative memory"""
-    return linear_probe(memory.state, input_feature_pattern, scale)
-
-
-@jit
-@dispatch
-def probe(
-    memory: LinearAssociativeMfc, input_feature_pattern: Float[Array, "input_features"]
-) -> Float[Array, "output_features"]:
-    """Probe a feature-to-context linear associative memory, normalizing the output."""
-    return normalize(jnp.dot(input_feature_pattern, memory.state))
+    """Retrieve the output associated with an input in a LinearAssociativeMemory"""
+    return linear_probe(memory.state, input_feature_pattern)
 
 
 @jit
@@ -93,10 +79,9 @@ def probe(
 def probe(
     memory: LinearAssociativeMcf, input_feature_pattern: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
-    """Probe a LinearAssociativeMcf, scaling output based using its sensitivity parameter."""
-    return power_scale(
-        jnp.dot(input_feature_pattern, memory.state), memory.choice_sensitivity
-    )
+    """Retrieve the output associated with an input in a LinearAssociativeMcf"""
+    base_activation = linear_probe(memory.state, input_feature_pattern)
+    return power_scale(base_activation, memory.choice_sensitivity)
 
 
 # %% Probe Functions for Instance-Based Memories
@@ -109,8 +94,9 @@ def trace_activation(
     input_feature_pattern: Float[Array, "input_features"],
     trace_scale: ScalarFloat,
 ) -> Float[Array, "instances"]:
-    """Return activation for each trace in an instance-based memory"""
-    a = jnp.dot(state[:, : input_feature_pattern.shape[0]], input_feature_pattern)
+    """Retrieve the output associated with an input in a  instance-based memory state"""
+    relevant_state = state[:, : input_feature_pattern.shape[0]]
+    a = jnp.dot(relevant_state, input_feature_pattern)
     return power_scale(a, trace_scale)
 
 
@@ -137,18 +123,4 @@ def probe(
     """Probe the memory with a probe vector"""
     return instance_probe(
         memory.state, input_feature_pattern, memory.feature_scale, memory.trace_scale
-    )
-
-
-@jit
-@dispatch
-def probe(
-    memory: InstanceMemory,
-    input_feature_pattern: Float[Array, "input_features"],
-    feature_scale: ScalarFloat = 1.0,
-    trace_scale: ScalarFloat = 1.0,
-) -> Float[Array, "output_features"]:
-    """Return the scaled activation vector of an instance-based memory"""
-    return instance_probe(
-        memory.state, input_feature_pattern, feature_scale, trace_scale
     )

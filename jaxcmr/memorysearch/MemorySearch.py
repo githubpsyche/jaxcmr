@@ -16,9 +16,7 @@ Given a state of the model, a probability of each possible retrieval outcome can
 # %% Imports
 
 from functools import partial
-from typing import Tuple
-
-from beartype.typing import Callable
+from beartype.typing import Callable, Tuple
 from jax import jit, random, lax, numpy as jnp
 from plum import dispatch
 from simple_pytree import Pytree

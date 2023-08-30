@@ -29,7 +29,7 @@ from jaxcmr.helpers import (
     replace,
 )
 from plum import dispatch
-from typing import Any
+from beartype.typing import Any
 from jax import jit, lax, numpy as jnp, config
 from jaxcmr.memorysearch import MemorySearch
 from jaxcmr.memory import OneWayMemory, probe, associate
@@ -144,7 +144,7 @@ def item_probability(model: CMR, choice: ScalarInteger) -> ScalarFloat:
 
 @dispatch
 def outcome_probabilities(model: CMR) -> Float[Array, "recall_outcomes"]:
-    """Return the probability of each possible retrieval outcome, with termination indexed at 0"""
+    """Return the probability of possible retrieval outcomes, with termination indexed at 0"""
     p_stop = stop_probability(model)
     item_activation = probe(model.mcf, model.context.state) + lb
     item_activation = item_activation * (1 - model.recall_mask)  # mask recalled items

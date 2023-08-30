@@ -12,9 +12,6 @@ from jaxcmr.memory.types import (
     OneWayMemory,
     LinearAssociativeMemory,
     InstanceMemory,
-    LinearAssociativeMcf,
-    InstanceMcf,
-    LinearAssociativeMfc,
 )
 from jaxcmr.helpers import (
     Float,
@@ -31,12 +28,13 @@ from jaxcmr.helpers import (
 __all__ = ["associate", "hebbian_associate", "instance_associate"]
 
 
-# %% Abstract Asspcoate Function
+# %% Shared Interface for Associative Functions
 
 
 @dispatch.abstract
 def associate(
     memory: OneWayMemory,
+    learning_rate: ScalarFloat,
     input_feature_pattern: Float[Array, "input_features"],
     output_feature_pattern: Float[Array, "output_features"],
 ) -> Float[Array, "output_features"]:

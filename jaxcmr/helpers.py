@@ -5,8 +5,7 @@ from jax import numpy as jnp, jit, lax, config
 from plum import dispatch
 import numpy as np
 
-# lb = jnp.finfo(jnp.float32).eps
-lb = jnp.array(np.finfo(float).eps)
+lb = jnp.finfo(jnp.float32).eps
 
 ScalarInteger = jaxtyping.Integer[jaxtyping.Array, ""] | int | np.int32 | np.int64
 ScalarFloat = jaxtyping.Float[jaxtyping.Array, ""] | float | np.float32 | np.float64
@@ -38,16 +37,25 @@ def replace(instance, **kwargs):
 
 @jit
 @dispatch
-def normalize(vector: Float[Array, "features"]) -> Float[Array, "output_features"]:
+def normalize_to_unit_length(
+    vector: Float[Array, "features"]
+) -> Float[Array, "features"]:
     """Enforce magnitude of vector to 1."""
     return vector / jnp.sqrt(jnp.sum(jnp.square(vector)) + lb)
 
 
 @jit
 @dispatch
+def normalize_to_sum_one(vector: Float[Array, "features"]) -> Float[Array, "features"]:
+    """Enforce sum of vector to 1."""
+    return vector / jnp.sum(vector)
+
+
+@jit
+@dispatch
 def power_scale(
-    vector: Float[Array, "output_features"], scale: ScalarFloat
-) -> Float[Array, "output_features"]:
+    vector: Float[Array, "features"], scale: ScalarFloat
+) -> Float[Array, "features"]:
     """Scale activation vector by exponent factor using the logsumexp trick to avoid underflow."""
     log_activation = jnp.log(vector)
     return lax.cond(

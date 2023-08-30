@@ -9,7 +9,7 @@ from jaxcmr.helpers import (
     study_events,
     recall_events,
 )
-from typing import Tuple, Callable
+from beartype.typing import Tuple, Callable
 from jax import jit, lax, numpy as jnp, vmap
 from plum import dispatch
 from functools import partial
