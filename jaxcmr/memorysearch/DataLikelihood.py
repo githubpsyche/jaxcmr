@@ -27,7 +27,6 @@ __all__ = [
     "log_likelihood",
     "predict_and_simulate_pres_and_trial",
     "uniform_presentations_data_likelihood",
-    # "variable_presentations_likelihood",
     "variable_presentations_data_likelihood",
     "recall_by_item_index",
 ]

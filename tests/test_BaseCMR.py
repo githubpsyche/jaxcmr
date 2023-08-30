@@ -1,13 +1,12 @@
 from jaxcmr.memorysearch import (
     BaseCMR,
     experience,
-    experience_item,
     retrieve,
     start_retrieving,
     item_probability,
     outcome_probability,
     stop_probability,
-    outcome_probabilities,
+    outcome_probability,
     predict_and_simulate_trial,
     uniform_presentations_data_likelihood
 )
@@ -39,7 +38,7 @@ class TestBaseCMR:
         assert self.cmr.mcf.choice_sensitivity == self.parameters["choice_sensitivity"]
 
     def test_experience_item(self):
-        cmr = experience_item(self.cmr, 0)
+        cmr = experience(self.cmr, 1)
         cmr
 
     def test_experience_cmr(self):
@@ -65,7 +64,7 @@ class TestBaseCMR:
         cmr = experience(cmr, 2)
         cmr = retrieve(cmr, 1)
 
-        p_all = outcome_probabilities(cmr)
+        p_all = outcome_probability(cmr)
         desired_result = jnp.array(
             [
                 0.00503323,
@@ -113,7 +112,7 @@ class TestWithData:
         rng = jax.random.PRNGKey(0)
 
         model = BaseCMR.create(item_count, item_count, self.parameters['fixed'])
-        model = experience(model)
+        model = start_retrieving(experience(model))
 
         recalls = np.array(
             lax.map(lambda rng: free_recall(model, rng), jax.random.split(rng, experiment_count))[1]

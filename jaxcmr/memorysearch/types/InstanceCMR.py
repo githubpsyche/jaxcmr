@@ -1,16 +1,15 @@
-from jaxcmr.helpers import Float, Array, ScalarFloat, ScalarInteger
-from jaxcmr.memorysearch.CMR import CMR
-from jaxcmr.memorysearch.MemorySearch import exponential_primacy_weighting
+from jaxcmr.helpers import Float, Array, ScalarInteger, ScalarFloat
+from jaxcmr.memorysearch.types.MemorySearch import CMR, exponential_primacy_weighting
+from jaxcmr.memory import InstanceMcf, LinearAssociativeMfc
 from jaxcmr.context import TemporalContext
 from jax import numpy as jnp
 from plum import dispatch
-from jaxcmr.memory import LinearAssociativeMcf, LinearAssociativeMfc
 from simple_pytree import static_field
 
-__all__ = ["BaseCMR"]
+__all__ = ["InstanceCMR"]
 
 
-class BaseCMR(CMR, mutable=True):
+class InstanceCMR(CMR, mutable=True):
     item_count = static_field()
 
     def __init__(
@@ -29,10 +28,16 @@ class BaseCMR(CMR, mutable=True):
         stop_probability_scale: ScalarFloat,
         stop_probability_growth: ScalarFloat,
         choice_sensitivity: ScalarFloat,
+        trace_sensitivity: ScalarFloat,
     ):
         self.mfc = LinearAssociativeMfc.create(item_count, learning_rate)
-        self.mcf = LinearAssociativeMcf.create(
-            item_count, shared_support, item_support, choice_sensitivity
+        self.mcf = InstanceMcf.create(
+            item_count,
+            presentation_count,
+            shared_support,
+            item_support,
+            choice_sensitivity,
+            trace_sensitivity,
         )
         self.context = TemporalContext.create(item_count)
         self.encoding_drift_rate = encoding_drift_rate
@@ -72,6 +77,7 @@ class BaseCMR(CMR, mutable=True):
         stop_probability_scale: ScalarFloat,
         stop_probability_growth: ScalarFloat,
         choice_sensitivity: ScalarFloat,
+        trace_sensitivity: ScalarFloat,
     ):
         return cls(
             item_count,
@@ -88,6 +94,7 @@ class BaseCMR(CMR, mutable=True):
             stop_probability_scale,
             stop_probability_growth,
             choice_sensitivity,
+            trace_sensitivity,
         )
 
     @classmethod
@@ -113,8 +120,9 @@ class BaseCMR(CMR, mutable=True):
             parameters["stop_probability_scale"],
             parameters["stop_probability_growth"],
             parameters["choice_sensitivity"],
+            parameters["mcf_trace_sensitivity"],
         )
 
     @property
-    def mcf_learning_rate(self) -> Float[Array, ""]:
+    def mcf_learning_rate(self) -> ScalarFloat:
         return self._mcf_learning_rate[self.encoding_index]

@@ -2,13 +2,11 @@ from jaxcmr.memorysearch import (
     InstanceCMR,
     BaseCMR,
     experience,
-    experience_item,
     retrieve,
     start_retrieving,
     item_probability,
     outcome_probability,
     stop_probability,
-    outcome_probabilities,
     predict_and_simulate_trial,
     uniform_presentations_data_likelihood
 )
@@ -49,10 +47,10 @@ class TestInstanceCMR:
     def test_outcome_probabilities(self):
         cmr = experience(self.cmr, 2)
         cmr = retrieve(cmr, 1)
-        instance_p_all = outcome_probabilities(cmr)
+        instance_p_all = outcome_probability(cmr)
 
         cmr = experience(self.base_cmr, 2)
         cmr = retrieve(cmr, 1)
-        base_p_all = outcome_probabilities(cmr)
+        base_p_all = outcome_probability(cmr)
 
         assert jnp.allclose(instance_p_all, base_p_all)
