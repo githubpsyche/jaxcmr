@@ -19,7 +19,7 @@ from jaxcmr.helpers import (
     ScalarInteger,
     context_feature_units,
     replace,
-    normalize_to_unit_length
+    normalize_to_unit_length,
 )
 from plum import dispatch
 from jax import jit, numpy as jnp
@@ -42,6 +42,7 @@ class Context(Pytree):
     outlist_context_input: Float[Array, "context_feature_units"]
     state: Float[Array, "context_feature_units"]
 
+
 class TemporalContext(Context, mutable=True):
     def __init__(
         self,
@@ -62,6 +63,7 @@ class TemporalContext(Context, mutable=True):
             start_context_input=context_state.at[0].set(1),
             outlist_context_input=context_state.at[-1].set(1),
         )
+
 
 # %% Integration
 
