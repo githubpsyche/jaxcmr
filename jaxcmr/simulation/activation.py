@@ -1,3 +1,4 @@
+import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,11 +14,10 @@ def visualize_2d_array(array: Float[Array, "input_features output_features"]):
     plt.colorbar()
 
     # Add value annotations on each cell of the array
-    for i in range(rows):
-        for j in range(cols):
-            plt.text(
-                j, i, format(array[i, j], ".3f"), ha="center", va="center", color="w"
-            )
+    for i, j in itertools.product(range(rows), range(cols)):
+        plt.text(
+            j, i, format(array[i, j], ".3f"), ha="center", va="center", color="w"
+        )
 
     plt.xticks(np.arange(cols))
     plt.yticks(np.arange(rows))
