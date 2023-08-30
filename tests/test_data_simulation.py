@@ -40,9 +40,9 @@ class TestDataSimulation:
     list_types = data['listtype'].flatten() #data['list_type'].flatten()
     subjects = data['subject'].flatten()
 
-    result_path = '../../../../data/results/jax_{}_{}_{}.jsonl'
+    result_path = '../../../../data/results/{}_{}_{}.jsonl'
     result_path = result_path.format(model_name, data_tag, ignore_first_recall)
-    result_path = r"D:\data\results\jax_Base_CMR_HealyKahana2014_False.jsonl"
+    result_path = r"D:\data\results\Base_CMR_HealyKahana2014_False.jsonl"
 
     with open(result_path) as f:
         parameter_sets = [json.loads(line) for line in f.readlines()]

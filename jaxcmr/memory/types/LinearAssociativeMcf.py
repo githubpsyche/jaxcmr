@@ -70,11 +70,11 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
         )
 
     @property
-    def input_features(self):
+    def input_features(self) -> ScalarInteger:
         return self.state.shape[0]
 
     @property
-    def output_features(self):
+    def output_features(self) -> ScalarInteger:
         return self.state.shape[1]
 
 

@@ -125,5 +125,5 @@ class InstanceCMR(CMR, mutable=True):
         )
 
     @property
-    def mcf_learning_rate(self) -> Float[Array, ""]:
+    def mcf_learning_rate(self) -> ScalarFloat:
         return self._mcf_learning_rate[self.encoding_index]

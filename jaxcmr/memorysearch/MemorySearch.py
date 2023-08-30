@@ -58,7 +58,7 @@ __all__ = [
 
 class MemorySearch(Pytree, mutable=True):
     item_count: int  # the number of items initialized with the model
-    is_active: bool  # whether the model is still open to new experiences or retrieval events
+    is_active: bool  # whether the model is still open to new experiences or retrievals
 
 
 @partial(jit, static_argnums=(0,))
@@ -82,7 +82,7 @@ def experience_item(model: MemorySearch, item_index: ScalarInteger) -> MemorySea
 
 
 @dispatch
-def experience(model: MemorySearch, choices: Integer[Array, "study_events"]):
+def experience(model: MemorySearch, choices: Integer[Array, "study_events"]) -> MemorySearch:
     """Experience all study items initialized with the model, in the specified order"""
     return lax.fori_loop(
         0, choices.shape[0], lambda i, m: experience(m, choices[i]), model
@@ -99,7 +99,7 @@ def experience(model: MemorySearch, choice: ScalarInteger) -> MemorySearch:
 
 
 @dispatch
-def experience(model: MemorySearch):
+def experience(model: MemorySearch) -> MemorySearch:
     """Experience all study items initialized with the model"""
     return lax.fori_loop(1, model.item_count + 1, lambda i, m: experience(m, i), model)
 
@@ -195,20 +195,3 @@ def simulate_trial(
     model = model_create_fn(item_count, presentation.shape[0], parameters)
     model = start_retrieving(experience(model, presentation))
     return free_recall(model, rng)[1]
-
-
-# @partial(jit, static_argnums=(0, 1))
-# @dispatch
-# def simulate_trial(
-#     model_create_fn: Callable,
-#     item_count: ScalarInteger,
-#     presentation: Integer[Array, "study_events"],
-#     first_recall: ScalarInteger,
-#     rng: PRNGKeyArray,
-#     parameters: dict
-# ) -> Float[Array, "recall_events"]:
-#     """Initialize model and study events, then simulate and predict retrieval events"""
-#     model = model_create_fn(item_count, presentation.shape[0], parameters)
-#     model = start_retrieving(experience(model, presentation))
-#     model = retrieve(model, first_recall)
-#     return free_recall(model, rng)[1]

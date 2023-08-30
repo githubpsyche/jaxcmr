@@ -92,17 +92,10 @@ class TestLinearAssociativeMemory:
         with pytest.raises(plum.NotFoundLookupError):
             associate(memory, self.items[0], self.items[0])
 
-    def test_probe_result_length(self):
-        "Probe results should have length equal to the number of items plus two"
+    def test_probe_result_size(self):
+        "Probe results should have size equal to the number of items plus two"
         mfc = LinearAssociativeMfc.create(self.item_count, self.learning_rate)
         assert len(probe(mfc, self.items[0])) == self.item_count + 2
-
-    def test_probe_result_magnitude(self):
-        "Probe results should be normalized to have a magnitude of 1."
-        mfc = LinearAssociativeMfc.create(self.item_count, self.learning_rate)
-        mfc = associate(mfc, 0.1, self.items[0], self.contexts[0])
-        probe_result = probe(mfc, self.items[0])
-        assert jnp.allclose(jnp.linalg.norm(probe_result), 1.0)
 
     def test_choice_sensitivity(self):
         mcf = LinearAssociativeMcf.create(

@@ -64,7 +64,7 @@ def recall_by_item_index(
 
 @jit
 @dispatch
-def log_likelihood(likelihoods: Float[Array, "..."]):
+def log_likelihood(likelihoods: Float[Array, "..."]) -> ScalarFloat:
     """Return the log-likelihood over a set of likelihoods"""
     return -jnp.sum(jnp.log(likelihoods))
 
@@ -98,7 +98,7 @@ def predict_and_simulate_trial(
     presentation: Integer[Array, "study_events"],
     trial: Integer[Array, "recall_events"],
     parameters: dict,
-):
+) -> Tuple[MemorySearch, Float[Array, "recall_events"]]:
     """Initialize model and study events, then simulate and predict retrieval events"""
     return predict_and_simulate_pres_and_trial(
         model_init, item_count, presentation, trial, parameters
@@ -133,7 +133,7 @@ def uniform_presentations_data_likelihood(
     item_count: ScalarInteger,
     trials: Integer[Array, "trial_count event_count"],
     parameters,
-):
+) -> ScalarFloat:
     """Log-likelihood over trials with variable presentation structure for an uninitialized model"""
     model = model_create_fn(item_count, parameters)
     model = start_retrieving(experience(model))
@@ -150,7 +150,7 @@ def variable_presentations_data_likelihood(
     presentation: Integer[Array, "study_events"],
     trial: Integer[Array, "recall_events"],
     parameters,
-):
+) -> ScalarFloat:
     """Log-likelihood over trials with variable presentation structure for an uninitialized model"""
 
     return log_likelihood(
@@ -172,7 +172,7 @@ def variable_presentations_data_likelihood(
     presentations: Integer[Array, "trial_count study_event_count"],
     trials: Integer[Array, "trial_count recall_event_count"],
     parameters,
-):
+) -> ScalarFloat:
     return log_likelihood(
         lax.map(
             lambda trial_index: predict_and_simulate_pres_and_trial(
@@ -225,7 +225,7 @@ def variable_presentations_data_likelihood(
     ]
 
     @jit
-    def f(parameters):
+    def f(parameters) -> ScalarFloat:
         log_likelihoods = []
         for fn in functions:
             log_likelihoods.append(fn(parameters))

@@ -110,7 +110,7 @@ def stop_probability(
     stop_probability_scale: ScalarFloat,
     stop_probability_growth: ScalarFloat,
     recall_total: ScalarInteger,
-):
+) -> ScalarFloat:
     """Probability of stopping recall given total number of items recalled and model parameters"""
     return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
 
