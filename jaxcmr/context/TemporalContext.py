@@ -18,7 +18,7 @@ from jaxcmr.helpers import (
     ScalarFloat,
     ScalarInteger,
     context_feature_units,
-    replace
+    replace,
 )
 from jax import jit, numpy as jnp
 from jaxcmr.context.Context import (
@@ -26,6 +26,7 @@ from jaxcmr.context.Context import (
     integrate_start_context,
     integrate_outlist_context,
 )
+
 __all__ = [
     "TemporalContext",
     "integrate",
