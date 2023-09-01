@@ -8,12 +8,16 @@ from jaxcmr.helpers import (
     ScalarFloat,
     study_events,
     recall_events,
+    get_list_length,
+    get_item_count,
+    log_likelihood,
+    recall_by_item_index
 )
 from beartype.typing import Tuple, Callable
 from jax import jit, lax, numpy as jnp, vmap
 from plum import dispatch
 from functools import partial
-from jaxcmr.memorysearch.MemorySearch import *
+from jaxcmr.memorysearch import MemorySearch, retrieve, start_retrieving, experience, outcome_probability
 import numpy as np
 from jax.tree_util import Partial
 
@@ -22,50 +26,15 @@ from jax.tree_util import Partial
 __all__ = [
     "predict_and_simulate_retrieval",
     "predict_and_simulate_trial",
-    "trial_list_length",
-    "trial_item_count",
-    "log_likelihood",
+    # "get_list_length",
+    # "get_item_count",
+    # "log_likelihood",
+    # "recall_by_item_index",
     "predict_and_simulate_pres_and_trial",
     "uniform_presentations_data_likelihood",
     "variable_presentations_data_likelihood",
-    "recall_by_item_index",
+    
 ]
-
-# %% Helpers
-
-
-@jit
-@dispatch
-def trial_list_length(presentation: Integer[Array, "study_events"]) -> ScalarInteger:
-    """Return the number of study events in each trial"""
-    return jnp.sum(presentation != 0)
-
-
-@jit
-@dispatch
-def trial_item_count(presentation: Integer[Array, "study_events"]) -> ScalarInteger:
-    """Return the number of unique items in each trial"""
-    return jnp.max(presentation)
-
-
-@jit
-@dispatch
-def recall_by_item_index(
-    item_index_by_study_position: Integer[Array, "study_events"],
-    study_position_by_recall_position: Integer[Array, "recall_events"],
-) -> Integer[Array, "recall_events"]:
-    """Trial recall events in terms of item index rather than study position"""
-    return lax.map(
-        lambda r: lax.select(r == 0, 0, item_index_by_study_position[r - 1]),
-        study_position_by_recall_position,
-    )
-
-
-@jit
-@dispatch
-def log_likelihood(likelihoods: Float[Array, "..."]) -> ScalarFloat:
-    """Return the log-likelihood over a set of likelihoods"""
-    return -jnp.sum(jnp.log(likelihoods))
 
 
 # %% Event-level likelihood functions
@@ -211,7 +180,7 @@ def variable_presentations_data_likelihood(
     presentations: Integer[Array, "trial_count study_event_count"],
     trials: Integer[Array, "trial_count recall_event_count"],
 ) -> Callable:
-    item_counts = vmap(trial_item_count)(presentations)
+    item_counts = vmap(get_item_count)(presentations)
     functions = [
         Partial(
             variable_presentations_likelihood,

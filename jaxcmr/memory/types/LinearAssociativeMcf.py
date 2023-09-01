@@ -18,6 +18,7 @@ from jaxcmr.helpers import (
     ScalarFloat,
     input_features,
     output_features,
+    item_count,
 )
 from plum import dispatch
 from jax import lax, jit, numpy as jnp
@@ -36,7 +37,7 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
     def __init__(
         self,
         state: Float[Array, "context_features item_features"],
-        choice_sensitivity: ScalarFloat = 1.0,
+        choice_sensitivity: ScalarFloat,
     ):
         self.state = state
         self.choice_sensitivity = choice_sensitivity
@@ -48,7 +49,7 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
         item_count: ScalarInteger,
         shared_support: ScalarFloat,
         item_support: ScalarFloat,
-        choice_sensitivity: ScalarFloat = 1.0,
+        choice_sensitivity: ScalarFloat,
     ):
         return cls(
             basic_init_linear_mcf(item_count, shared_support, item_support),
@@ -62,11 +63,21 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
         items: Float[Array, "item_count item_features"],
         shared_support: ScalarFloat,
         item_support: ScalarFloat,
-        choice_sensitivity: ScalarFloat = 1.0,
+        choice_sensitivity: ScalarFloat,
     ):
         return cls(
             generalized_init_linear_mcf(items, shared_support, item_support),
             choice_sensitivity,
+        )
+
+    @classmethod
+    @dispatch
+    def create(cls, items, presentation_count: ScalarInteger, parameters: dict):
+        return cls.create(
+            items,
+            parameters["shared_support"],
+            parameters["item_support"],
+            parameters["choice_sensitivity"],
         )
 
     @property

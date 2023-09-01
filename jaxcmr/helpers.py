@@ -2,6 +2,7 @@ from copy import copy
 import jaxtyping
 import numpy as np
 from jax import numpy as jnp, jit, lax, config
+from jax.tree_util import tree_map
 from plum import dispatch
 import numpy as np
 
@@ -21,6 +22,7 @@ item_count = "Number of unique items in the trial"
 output_features = "Number of units in the output representation"
 instances = "Number of instances in the memory"
 recall_events = "Number of recall events in the simulated trial"
+trial_count = "Number of trials in the experiment"
 
 Integer = jaxtyping.Integer
 Float = jaxtyping.Float
@@ -29,6 +31,7 @@ Bool = jaxtyping.Bool
 
 
 def replace(instance, **kwargs):
+    """Return a copy of instance with the specified attributes replaced."""
     new_instance = copy(instance)
 
     for attr, value in kwargs.items():
@@ -66,3 +69,70 @@ def power_scale(
         lambda _: vector,
         None,
     )
+
+
+def tree_transpose(list_of_trees):
+    """Convert a list of trees of identical structure into a single tree of arrays."""
+    return tree_map(lambda *xs: jnp.array(xs), *list_of_trees)
+
+
+@jit
+@dispatch
+def get_list_length(presentation: Integer[Array, "study_events"]) -> ScalarInteger:
+    """Return the number of study events in a trial"""
+    return jnp.sum(presentation != 0)
+
+
+@jit
+@dispatch
+def get_item_count(presentation: Integer[Array, "study_events"]) -> ScalarInteger:
+    """Return the number of unique items in a trial"""
+    return jnp.max(presentation)
+
+
+@jit
+@dispatch
+def recall_by_item_index(
+    item_index_by_study_position: Integer[Array, "study_events"],
+    study_position_by_recall_position: Integer[Array, "recall_events"],
+) -> Integer[Array, "recall_events"]:
+    """Trial recall events in terms of item index rather than study position"""
+    return lax.map(
+        lambda r: lax.select(r == 0, 0, item_index_by_study_position[r - 1]),
+        study_position_by_recall_position,
+    )
+
+@jit
+@dispatch
+def recall_by_study_position(
+    item_index_by_study_position: Integer[Array, "study_events"],
+    item_index_by_recall_position: Integer[Array, "recall_events"],
+):
+    """Trial recall events in terms of (first) study position rather than item index"""
+    return lax.map(
+        lambda r: lax.cond(
+            r == 0,
+            lambda _: 0,
+            lambda _: jnp.argmax(item_index_by_study_position == r) + 1,
+            None,
+        ),
+        item_index_by_recall_position,
+    )
+
+@jit
+@dispatch
+def log_likelihood(likelihoods: Float[Array, "..."]) -> ScalarFloat:
+    """Return the log-likelihood over a set of likelihoods"""
+    return -jnp.sum(jnp.log(likelihoods))
+
+
+def select_parameters_by_subject(
+    subject_indices: Integer[Array, "trial_count"], parameters: list[dict]
+) -> list[dict]:
+    """Select parameters based on provided subject indices."""
+    return [
+        next(
+            param["fixed"] for param in parameters if param["subject"] == subject_index
+        )
+        for subject_index in subject_indices
+    ]

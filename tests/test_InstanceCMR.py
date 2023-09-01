@@ -10,11 +10,12 @@ from jaxcmr.memorysearch import (
     predict_and_simulate_trial,
     uniform_presentations_data_likelihood
 )
-from jax import numpy as jnp, jit, lax
+from jax import numpy as jnp, jit, lax, disable_jit
+import pytest
 
-
-class TestInstanceCMR:
-    parameters = {
+@pytest.fixture
+def parameters():
+    return {
         "encoding_drift_rate": 0.8016327576683261,
         "delay_drift_rate": 0.9966411723460118,
         "start_drift_rate": 0.051123130268380085,
@@ -28,29 +29,37 @@ class TestInstanceCMR:
         "stop_probability_growth": 0.3779780110633191,
         "choice_sensitivity": 1.0,
         "mcf_trace_sensitivity": 1.0,
+        "mfc_trace_sensitivity": 1.0
     }
 
-    base_cmr = jit(lambda parameters: BaseCMR.create(10, 10, parameters))(parameters)
-    cmr = jit(
-        lambda parameters: InstanceCMR.create(10, 10, parameters))(parameters)
+@pytest.fixture
+def base_cmr(parameters):
+    return BaseCMR(10, 10, parameters)
 
-    def test_has_choice_sensitivity(self):
-        assert self.cmr.mcf.feature_scale == self.parameters["choice_sensitivity"]
+@pytest.fixture
+def cmr(parameters) -> InstanceCMR:
+    return InstanceCMR(10, 10, parameters)
 
-    def test_stop_probability(self):
-        cmr = experience(self.cmr)
-        cmr = retrieve(cmr, 1)
-        p_stop = stop_probability(cmr)
-        assert jnp.allclose(p_stop, 0.005033231)
-        assert jnp.allclose(outcome_probability(cmr, 0), 0.005033231)
+def test_init_instance_cmr(cmr):
+    cmr
 
-    def test_outcome_probabilities(self):
-        cmr = experience(self.cmr, 2)
-        cmr = retrieve(cmr, 1)
-        instance_p_all = outcome_probability(cmr)
+def test_has_choice_sensitivity(cmr, parameters):
+    assert cmr.mcf.feature_scale == parameters["choice_sensitivity"]
 
-        cmr = experience(self.base_cmr, 2)
-        cmr = retrieve(cmr, 1)
-        base_p_all = outcome_probability(cmr)
+def test_stop_probability(cmr):
+    cmr = experience(cmr)
+    cmr = retrieve(cmr, 1)
+    p_stop = stop_probability(cmr)
+    assert jnp.allclose(p_stop, 0.005033231)
+    assert jnp.allclose(outcome_probability(cmr, 0), 0.005033231)
 
-        assert jnp.allclose(instance_p_all, base_p_all)
+def test_outcome_probabilities(cmr, base_cmr):
+    cmr = experience(cmr, 2)
+    cmr = retrieve(cmr, 1)
+    instance_p_all = outcome_probability(cmr)
+
+    cmr = experience(base_cmr, 2)
+    cmr = retrieve(cmr, 1)
+    base_p_all = outcome_probability(cmr)
+
+    assert jnp.allclose(instance_p_all, base_p_all)

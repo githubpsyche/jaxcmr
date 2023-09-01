@@ -5,12 +5,10 @@ from jaxcmr.memorysearch import (
     variable_presentations_data_likelihood,
     predict_and_simulate_trial,
     predict_and_simulate_pres_and_trial,
-    log_likelihood,
     start_retrieving,
     experience,
-    trial_item_count,
-    trial_list_length,
 )
+from jaxcmr.helpers import log_likelihood, get_item_count, get_list_length
 from jax import numpy as jnp, jit, lax, vmap, disable_jit
 
 
@@ -55,7 +53,7 @@ class TestDataLikelihood:
 
     def test_predict_and_simulate_pres(self):
 
-        item_counts = vmap(trial_item_count)(self.presentation)
+        item_counts = vmap(get_item_count)(self.presentation)
 
         likelihood = predict_and_simulate_pres_and_trial(
             InstanceCMR.create,
@@ -68,7 +66,7 @@ class TestDataLikelihood:
 
     def test_variable_data_likelihood(self):
 
-        item_counts = vmap(trial_item_count)(self.presentation)
+        item_counts = vmap(get_item_count)(self.presentation)
 
         likelihood = []
         for trial_index, item_count in enumerate(item_counts):
@@ -83,7 +81,7 @@ class TestDataLikelihood:
 
     def test_multitrial_variable_data_likelihood(self):
 
-        item_counts = vmap(trial_item_count)(self.presentation)
+        item_counts = vmap(get_item_count)(self.presentation)
 
         likelihood = []
         for item_count in jnp.unique(item_counts):
@@ -98,7 +96,7 @@ class TestDataLikelihood:
 
     def test_dispatch_variable_data_likelihood(self):
 
-        item_counts = vmap(trial_item_count)(self.presentation)
+        item_counts = vmap(get_item_count)(self.presentation)
 
         likelihood_fn = variable_presentations_data_likelihood(
             InstanceCMR.create,

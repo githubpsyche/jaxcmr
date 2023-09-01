@@ -56,6 +56,14 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     ):
         return cls(generalized_init_mfc(items, learning_rate))
 
+    @classmethod
+    @dispatch
+    def create(cls, items, presentation_count: ScalarInteger, parameters: dict):
+        return cls.create(
+            items,
+            parameters["learning_rate"],
+        )
+
     @property
     def input_features(self) -> ScalarInteger:
         return self.state.shape[0]

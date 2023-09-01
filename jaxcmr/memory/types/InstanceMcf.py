@@ -66,6 +66,23 @@ class InstanceMcf(InstanceMemory, mutable=True):
             item_count,
         )
 
+    @classmethod
+    @dispatch
+    def create(
+        cls,
+        items,
+        presentation_count: ScalarInteger,
+        parameters: dict,
+    ):
+        return cls.create(
+            items,
+            presentation_count,
+            parameters["shared_support"],
+            parameters["item_support"],
+            parameters["choice_sensitivity"],
+            parameters["mcf_trace_sensitivity"],
+        )
+
 
 @partial(jit, static_argnums=(0, 1))
 def init_instance_mcf(
