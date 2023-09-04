@@ -57,7 +57,7 @@ def rng():
 
 @pytest.fixture
 def presentations():
-    "Two presentation sequences with different study order but same item count"
+    """Two presentation sequences with different study order but same item count"""
     return jnp.array([[1, 2, 3, 4, 5, 6, 7, 8, 9], [9, 8, 7, 6, 5, 4, 3, 2, 1]])
 
 
@@ -100,22 +100,6 @@ def test_multiple_parameter_trial_simulation(parameter_list, rng):
     )
     assert trials.shape[0] == len(parameter_list)
     assert trials.shape[1] == 10
-
-
-def test_multi_parameter_multi_trial_simulation(parameter_list, rng):
-    _simulate_trials = jax.vmap(simulate_trials, in_axes=(None, None, None, 0, 0))
-    trials = _simulate_trials(
-        BaseCMR,
-        10,
-        100,
-        jax.random.split(rng, len(parameter_list)),
-        tree_transpose(parameter_list),
-    )
-    assert trials.shape[0] == len(parameter_list)
-    assert trials.shape[1] == 100
-    assert trials.shape[2] == 10
-
-    assert not jnp.allclose(trials[0, 0], trials[1, 0])
 
 
 def test_multi_parameter_multi_trial_simulation(parameter_list, rng):

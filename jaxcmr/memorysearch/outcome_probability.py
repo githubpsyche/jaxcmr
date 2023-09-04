@@ -12,7 +12,7 @@ from jaxcmr.memorysearch.types import CMR
 from jaxcmr.memory import probe
 from jax import jit, lax, numpy as jnp
 from beartype.typing import Any
-from jaxcmr.helpers import ScalarFloat, Float, Array, ScalarInteger, lb
+from jaxcmr.helpers import ScalarFloat, Float, Array, ScalarInteger, lb, recall_outcomes
 
 # %% Exports
 

@@ -1,4 +1,4 @@
-from jax import numpy as jnp, jit, disable_jit
+from jax import numpy as jnp
 from jaxcmr.memory import (
     LinearAssociativeMcf,
     LinearAssociativeMfc,
@@ -30,27 +30,27 @@ items = jnp.eye(item_count, dtype=jnp.float32)
 
 
 def test_initialize_with_item_count():
-    "Mfc can be initialized with an item count and learning rate"
+    """Mfc can be initialized with an item count and learning rate"""
     LinearAssociativeMfc.create(item_count, parameters["learning_rate"])
 
 
 def test_initialize_with_items():
-    "Mfc can be initialized with an array of item representations"
+    """Mfc can be initialized with an array of item representations"""
     LinearAssociativeMfc.create(items, parameters["learning_rate"])
 
 
 def test_initialize_with_dict():
-    "Mfc can be initialized with a dictionary of parameters"
+    """Mfc can be initialized with a dictionary of parameters"""
     LinearAssociativeMfc.create(item_count, parameters)
 
 
 def test_initialize_with_dict_and_items():
-    "Mfc can be initialized with a dict and array of item representations"
+    """Mfc can be initialized with a dict and array of item representations"""
     LinearAssociativeMfc.create(items, parameters)
 
 
 def test_initialize_methods_are_equivalent():
-    "Initializing with 16 or jnp.eye(16) produces equivalent memory states"
+    """Initializing with 16 or jnp.eye(16) produces equivalent memory states"""
     memory1 = LinearAssociativeMfc.create(item_count, parameters["learning_rate"])
     memory2 = LinearAssociativeMfc.create(items, parameters["learning_rate"])
     memory3 = LinearAssociativeMfc.create(item_count, parameters)
@@ -62,7 +62,7 @@ def test_initialize_methods_are_equivalent():
 
 
 def test_generalized_mfc():
-    "Init w overlapping items connects applicable context and item features."
+    """Init w overlapping items connects applicable context and item features."""
     items = jnp.eye(item_count, item_count + 4)
     items = items.at[1:, 0].set(0.2)
     memory = LinearAssociativeMfc.create(items, 0.1)
@@ -93,7 +93,7 @@ def test_generalized_mfc():
 
 
 def test_dispatch_associate():
-    "Calls to associate should work for instances of subtypes of LinearAssociativeMemory"
+    """Calls to associate should work for instances of subtypes of LinearAssociativeMemory"""
     mfc = LinearAssociativeMfc.create(item_count, parameters)
     mcf = LinearAssociativeMcf.create(item_count, parameters)
     mfc = associate(mfc, 0.1, items[0], contexts[0])
@@ -101,7 +101,7 @@ def test_dispatch_associate():
 
 
 def test_shape_selective_dispatch():
-    "Associating with wrong-shaped inputs raises NotFoundLookupError"
+    """Associating with wrong-shaped inputs raises NotFoundLookupError"""
 
     memory = LinearAssociativeMfc.create(item_count, parameters)
     with pytest.raises(plum.NotFoundLookupError):
@@ -109,14 +109,14 @@ def test_shape_selective_dispatch():
 
 
 def test_probe_result_size():
-    "Probing should return a result of item_count + 2 dimensions"
+    """Probing should return a result of item_count + 2 dimensions"""
     memory = LinearAssociativeMfc.create(item_count, parameters)
     result = probe(memory, items[0])
     assert result.shape[0] == item_count + 2
 
 
 def test_choice_sensitivity_scales_activations():
-    "Choice sensitivity scales activations"
+    """Choice sensitivity scales activations"""
     mcf = LinearAssociativeMcf.create(
         item_count, parameters["shared_support"], parameters["item_support"], 1.0
     )

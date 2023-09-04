@@ -24,8 +24,7 @@ from jaxcmr.helpers import (
     Array,
     ScalarInteger,
     ScalarFloat,
-    item_features,
-    item_count,
+    study_events,
 )
 
 # %% Exports
@@ -58,7 +57,7 @@ class CMR(MemorySearch, mutable=True):
         mcf: OneWayMemory,
         parameters: dict,
     ):
-        "The Context Maintenance and Retrieval (CMR) model of memory search."
+        """The Context Maintenance and Retrieval (CMR) model of memory search."""
 
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.delay_drift_rate = parameters["delay_drift_rate"]
@@ -100,7 +99,7 @@ def basic_init_cmr(
     presentation_count: ScalarInteger,
     parameters: dict,
 ) -> CMR:
-    "Initialize CMR with linear associative memories and a temporal context."
+    """Initialize CMR with linear associative memories and a temporal context."""
 
     mfc = mfc_init(item_count, presentation_count, parameters)
     mcf = mcf_init(item_count, presentation_count, parameters)
@@ -118,7 +117,7 @@ def generalized_init_cmr(
     presentation_count: ScalarInteger,
     parameters: dict,
 ) -> CMR:
-    "Initialize CMR with linear associative memories and a temporal context."
+    """Initialize CMR with linear associative memories and a temporal context."""
 
     mfc = mfc_init(items, presentation_count, parameters)
     mcf = mcf_init(items, presentation_count, parameters)

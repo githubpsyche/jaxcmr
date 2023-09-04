@@ -1,10 +1,10 @@
 from copy import copy
+
 import jaxtyping
 import numpy as np
-from jax import numpy as jnp, jit, lax, config
+from jax import numpy as jnp, jit, lax
 from jax.tree_util import tree_map
 from plum import dispatch
-import numpy as np
 
 lb = jnp.finfo(jnp.float32).eps
 
@@ -18,6 +18,7 @@ recall_outcomes = "The number of (possible) retrieval outcomes in the simulated 
 context_feature_units = "Number of units in the context representation"
 input_features = "Number of units in the input representation"
 item_features = "Number of units in item representations"
+features = "Number of units in the representation"
 item_count = "Number of unique items in the trial"
 output_features = "Number of units in the output representation"
 instances = "Number of instances in the memory"
@@ -102,6 +103,7 @@ def recall_by_item_index(
         study_position_by_recall_position,
     )
 
+
 @jit
 @dispatch
 def recall_by_study_position(
@@ -118,6 +120,7 @@ def recall_by_study_position(
         ),
         item_index_by_recall_position,
     )
+
 
 @jit
 @dispatch

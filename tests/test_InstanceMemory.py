@@ -1,4 +1,4 @@
-from jax import numpy as jnp, jit, lax, disable_jit
+from jax import numpy as jnp, lax
 from jaxcmr.memory import (
     LinearAssociativeMcf,
     InstanceMcf,
@@ -6,8 +6,6 @@ from jaxcmr.memory import (
     probe
 )
 from jaxcmr.helpers import power_scale
-import plum
-import pytest
 
 
 class TestInstanceMemory:
@@ -21,7 +19,7 @@ class TestInstanceMemory:
     items = jnp.eye(item_count, dtype=jnp.float32)
 
     def test_initialize_mcf(self):
-        "Initializing with 16 or jnp.eye(16) produces equivalent memory states"
+        """Initializing with 16 or jnp.eye(16) produces equivalent memory states"""
         linear_mcf = LinearAssociativeMcf.create(
             self.item_count,
             self.shared_support,

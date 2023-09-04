@@ -11,6 +11,7 @@ from jaxcmr.context import (
 )
 from jax import jit, numpy as jnp
 
+
 def test_integrate_second_context_unit():
     """
     Test that the second context unit is updated correctly in the integration step,
@@ -47,5 +48,3 @@ def test_integrate_outlist_context():
 
     expected_state = jnp.array([0.8660254, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5])
     assert jnp.allclose(f().state, expected_state)
-
-#TODO: add test confirming that magnitude of integrated context vector is reliably enforced 1, even after many iterations

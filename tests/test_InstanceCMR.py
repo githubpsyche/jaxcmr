@@ -3,15 +3,12 @@ from jaxcmr.memorysearch import (
     BaseCMR,
     experience,
     retrieve,
-    start_retrieving,
-    item_probability,
     outcome_probability,
     stop_probability,
-    predict_and_simulate_trial,
-    uniform_presentations_data_likelihood
 )
-from jax import numpy as jnp, jit, lax, disable_jit
+from jax import numpy as jnp
 import pytest
+
 
 @pytest.fixture
 def parameters():
@@ -32,19 +29,24 @@ def parameters():
         "mfc_trace_sensitivity": 1.0
     }
 
+
 @pytest.fixture
 def base_cmr(parameters):
     return BaseCMR(10, 10, parameters)
+
 
 @pytest.fixture
 def cmr(parameters) -> InstanceCMR:
     return InstanceCMR(10, 10, parameters)
 
+
 def test_init_instance_cmr(cmr):
     cmr
 
+
 def test_has_choice_sensitivity(cmr, parameters):
     assert cmr.mcf.feature_scale == parameters["choice_sensitivity"]
+
 
 def test_stop_probability(cmr):
     cmr = experience(cmr)
@@ -52,6 +54,7 @@ def test_stop_probability(cmr):
     p_stop = stop_probability(cmr)
     assert jnp.allclose(p_stop, 0.005033231)
     assert jnp.allclose(outcome_probability(cmr, 0), 0.005033231)
+
 
 def test_outcome_probabilities(cmr, base_cmr):
     cmr = experience(cmr, 2)

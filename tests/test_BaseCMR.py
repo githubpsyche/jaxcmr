@@ -4,14 +4,14 @@ from jaxcmr.memorysearch import (
     retrieve,
     start_retrieving,
     item_probability,
-    outcome_probability,
     stop_probability,
     outcome_probability,
     predict_and_simulate_trial,
     uniform_presentations_data_likelihood
 )
-from jax import numpy as jnp, jit, lax
+from jax import numpy as jnp, lax
 import pytest
+
 
 @pytest.fixture
 def parameters():
@@ -30,23 +30,27 @@ def parameters():
         "choice_sensitivity": 1.0,
     }
 
+
 @pytest.fixture
 def cmr(parameters):
     return BaseCMR(10, 10, parameters)
 
+
 def test_init_base_cmr(cmr):
-    cmr
+    pass
+
 
 def test_has_choice_sensitivity(cmr, parameters):
     assert cmr.mcf.choice_sensitivity == parameters["choice_sensitivity"]
 
+
 def test_experience_item(cmr):
-    result = experience(cmr, 1)
-    result
+    experience(cmr, 1)
+
 
 def test_experience_cmr(cmr):
-    result = experience(cmr)
-    result
+    experience(cmr)
+
 
 def test_recall_mask(cmr):
     cmr = experience(cmr)
@@ -55,12 +59,14 @@ def test_recall_mask(cmr):
     assert retrieved_item_recall_probability == 0.0
     assert outcome_probability(cmr, 1) == 0.0
 
+
 def test_stop_probability(cmr):
     cmr = experience(cmr)
     cmr = retrieve(cmr, 1)
     p_stop = stop_probability(cmr)
     assert jnp.allclose(p_stop, 0.005033231)
     assert jnp.allclose(outcome_probability(cmr, 0), 0.005033231)
+
 
 def test_outcome_probabilities(cmr):
     cmr = experience(cmr, 1)
@@ -129,18 +135,24 @@ class TestWithData:
 
     def test_predict_and_simulate_trial(self):
         item_count = 16
-        rng = jax.random.PRNGKey(0)
         model = experience(BaseCMR(item_count, item_count, self.parameters['fixed']))
         model = start_retrieving(model)
-        trial_likelihood = predict_and_simulate_trial(model, self.trials[0][1])
-        multitrial_likelihood = lax.map(lambda trial: predict_and_simulate_trial(model, trial)[1], self.trials[0])
+        predict_and_simulate_trial(model, self.trials[0][1])
+
+
+    def test_multitrial_likelihood(self):
+        item_count = 16
+        model = experience(BaseCMR(item_count, item_count, self.parameters['fixed']))
+        model = start_retrieving(model)
+        multitrial_likelihood = lax.map(
+            lambda trial: predict_and_simulate_trial(model, trial)[1], self.trials[0])
 
         scalar_likelihood = -jnp.sum(jnp.log(multitrial_likelihood))
         assert jnp.allclose(scalar_likelihood, 88686.25)
 
+
     def test_uniform_data_likelihood(self):
         item_count = 16
-        rng = jax.random.PRNGKey(0)
         model = BaseCMR(item_count, item_count, self.parameters['fixed'])
         likelihood = uniform_presentations_data_likelihood(model, self.trials[0])
         assert jnp.allclose(likelihood, 88686.25)

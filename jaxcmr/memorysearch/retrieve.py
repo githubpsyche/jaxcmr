@@ -6,9 +6,8 @@ Memory search involves encoding items into memory and eventually performing a re
 
 # %% Imports
 from plum import dispatch
-from functools import partial
 from jaxcmr.memorysearch.types import MemorySearch, CMR
-from jaxcmr.memory import probe, associate
+from jaxcmr.memory import probe
 from jax import jit, lax
 from jaxcmr.context import integrate, integrate_outlist_context, integrate_start_context
 from jaxcmr.helpers import (
