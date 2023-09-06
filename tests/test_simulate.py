@@ -14,7 +14,7 @@ Since these shape key model structures, jax makes it difficult to vectorize acro
 
 # %% Imports
 
-from jaxcmr.memorysearch import BaseCMR, simulate_h5_from_h5
+from jaxcmr.memorysearch import BaseCMR, InstanceCMR, simulate_h5_from_h5
 import pytest
 import jax
 from jaxcmr.datasets import load_data, generate_trial_mask
@@ -90,6 +90,16 @@ def rng():
 
 
 # %% Tests
+
+@pytest.mark.parametrize("model_create_fn", [BaseCMR, InstanceCMR])
+def test_data_simulation(
+    model_create_fn, peers_data, peers_parameters, rng, peers_trial_query
+):
+    trial_mask = generate_trial_mask(peers_data, peers_trial_query)
+    sim_h5 = simulate_h5_from_h5(
+        model_create_fn, peers_data, peers_parameters, rng, trial_mask, 1
+    )
+    assert sim_h5["recalls"].shape == peers_data["recalls"][trial_mask].shape
 
 
 def test_peers_data_simulation(

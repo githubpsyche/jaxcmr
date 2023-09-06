@@ -6,8 +6,7 @@ from jaxcmr.memorysearch import (
     item_probability,
     stop_probability,
     outcome_probability,
-    predict_and_simulate_trial,
-    uniform_presentations_data_likelihood
+    predict_trials
 )
 from jax import numpy as jnp, lax
 import pytest
@@ -33,26 +32,32 @@ def parameters():
 
 @pytest.fixture
 def cmr(parameters):
+    """Base CMR instance with 10 items presented once each"""
     return BaseCMR(10, 10, parameters)
 
 
 def test_init_base_cmr(cmr):
+    """Check that the base CMR instance is produced without error"""
     pass
 
 
 def test_has_choice_sensitivity(cmr, parameters):
+    """Check that the base CMR instance passes choice sensitivity to mcf attribute"""
     assert cmr.mcf.choice_sensitivity == parameters["choice_sensitivity"]
 
 
 def test_experience_item(cmr):
+    """Check that the base CMR instance experiences an item without error"""
     experience(cmr, 1)
 
 
 def test_experience_cmr(cmr):
+    """Check that the base CMR instance experiences its item set without error"""
     experience(cmr)
 
 
 def test_recall_mask(cmr):
+    """Check that Base CMR ascribes 0 probability to retrieval of already recalled items"""
     cmr = experience(cmr)
     cmr = retrieve(cmr, 1)
     retrieved_item_recall_probability = item_probability(cmr, 1)
@@ -61,6 +66,7 @@ def test_recall_mask(cmr):
 
 
 def test_stop_probability(cmr):
+    """Check that Base CMR ascribes correct termination probability after retrieving one item"""
     cmr = experience(cmr)
     cmr = retrieve(cmr, 1)
     p_stop = stop_probability(cmr)
@@ -69,28 +75,7 @@ def test_stop_probability(cmr):
 
 
 def test_outcome_probabilities(cmr):
-    cmr = experience(cmr, 1)
-    cmr = experience(cmr, 2)
-    cmr = retrieve(cmr, 1)
-
-    p_all = outcome_probability(cmr)
-    desired_result = jnp.array(
-        [
-            0.00503323,
-            0.0,
-            0.50872654,
-            0.101161,
-            0.0395892,
-            0.02791035,
-            0.02784999,
-            0.03489236,
-            0.0503365,
-            0.07826934,
-            0.12623152,
-        ]
-    )
-    assert jnp.allclose(p_all.sum(), 1)
-    assert jnp.allclose(p_all, desired_result)
+    raise NotImplementedError
 
 
 # %%
@@ -133,26 +118,9 @@ class TestWithData:
 
         raise NotImplementedError
 
-    def test_predict_and_simulate_trial(self):
-        item_count = 16
-        model = experience(BaseCMR(item_count, item_count, self.parameters['fixed']))
-        model = start_retrieving(model)
-        predict_and_simulate_trial(model, self.trials[0][1])
-
-
-    def test_multitrial_likelihood(self):
-        item_count = 16
-        model = experience(BaseCMR(item_count, item_count, self.parameters['fixed']))
-        model = start_retrieving(model)
-        multitrial_likelihood = lax.map(
-            lambda trial: predict_and_simulate_trial(model, trial)[1], self.trials[0])
-
-        scalar_likelihood = -jnp.sum(jnp.log(multitrial_likelihood))
-        assert jnp.allclose(scalar_likelihood, 88686.25)
-
 
     def test_uniform_data_likelihood(self):
         item_count = 16
         model = BaseCMR(item_count, item_count, self.parameters['fixed'])
-        likelihood = uniform_presentations_data_likelihood(model, self.trials[0])
+        likelihood = predict_trials(BaseCMR, item_count, self.trials[0], self.parameters['fixed'])
         assert jnp.allclose(likelihood, 88686.25)
