@@ -81,8 +81,8 @@ def basic_init_mfc(
     item_count: ScalarInteger, learning_rate: ScalarFloat
 ) -> Float[Array, "item_features context_features"]:
     """A linear associative feature-to-context memory assuming one-hot item representations"""
-    memory = jnp.eye(item_count, item_count + 2)
-    memory = jnp.hstack([jnp.zeros((item_count, 1)), memory[:, :-1]])
+    memory = jnp.eye(item_count, item_count + 1)
+    memory = jnp.hstack([jnp.zeros((item_count, 1)), memory])
     return memory * (1 - learning_rate)
 
 

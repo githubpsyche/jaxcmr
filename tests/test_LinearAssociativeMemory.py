@@ -53,8 +53,8 @@ def test_initialize_methods_are_equivalent():
     """Initializing with 16 or jnp.eye(16) produces equivalent memory states"""
     memory1 = LinearAssociativeMfc.create(item_count, parameters["learning_rate"])
     memory2 = LinearAssociativeMfc.create(items, parameters["learning_rate"])
-    memory3 = LinearAssociativeMfc.create(item_count, parameters)
-    memory4 = LinearAssociativeMfc.create(items, parameters)
+    memory3 = LinearAssociativeMfc.create(item_count, item_count, parameters)
+    memory4 = LinearAssociativeMfc.create(items, item_count, parameters)
 
     assert jnp.array_equal(memory1.state, memory2.state)
     assert jnp.array_equal(memory3.state, memory4.state)
