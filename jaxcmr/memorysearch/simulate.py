@@ -36,7 +36,7 @@ from jax import jit, random, lax, vmap, numpy as jnp
 
 # %% Exports
 
-__all__ = ["free_recall", "simulate_trial", "simulate_h5_from_h5"]
+__all__ = ["free_recall", "simulate_trial", "simulate_trials", "simulate_h5_from_h5"]
 
 # %% Single event simulation
 

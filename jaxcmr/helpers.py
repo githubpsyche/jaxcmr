@@ -2,9 +2,10 @@ from copy import copy
 
 import jaxtyping
 import numpy as np
-from jax import numpy as jnp, jit, lax
+from jax import numpy as jnp, jit, lax, random
 from jax.tree_util import tree_map
 from plum import dispatch
+from functools import partial
 
 lb = jnp.finfo(jnp.float32).eps
 
@@ -139,3 +140,23 @@ def select_parameters_by_subject(
         )
         for subject_index in subject_indices
     ]
+
+
+@partial(jit, static_argnums=(1, 2))
+def latin_hypercube_sampling(rng_key, dim, num_samples):
+    """Generate Latin Hypercube Samples (LHS) in a JIT-compatible manner."""
+    # Step 1: Generate Base Points
+    base_points = jnp.linspace(0, 1, num_samples)
+
+    # Step 2: Shuffle Points in each dimension
+    rng_keys = random.split(rng_key, dim)
+    shuffled_points = lax.map(lambda key: random.permutation(key, base_points), rng_keys)
+
+    return shuffled_points.T
+
+# @jit
+# def sigmoid(x):
+#     return 1 / (1 + np.exp(-x))
+
+def scale_to_bounds(lhs_samples, lower_bounds, upper_bounds):
+    return lower_bounds + (upper_bounds - lower_bounds) * lhs_samples
