@@ -24,6 +24,8 @@ from jaxcmr.helpers import (
 from plum import dispatch
 from jax import jit, numpy as jnp
 
+from functools import partial
+
 __all__ = [
     "Context",
     "TemporalContext",
@@ -49,20 +51,58 @@ class TemporalContext(Context, mutable=True):
         state: Float[Array, "context_feature_units"],
         start_context_input: Float[Array, "context_feature_units"],
         outlist_context_input: Float[Array, "context_feature_units"],
+        max_item_count: ScalarInteger,
     ):
         self.state = state
         self.start_context_input = start_context_input
         self.outlist_context_input = outlist_context_input
+        self.max_item_count = max_item_count
 
     @classmethod
     @dispatch
     def create(cls, item_count: ScalarInteger):
-        context_state = jnp.zeros(item_count + 2)
+        state, start_context_input, outlist_context_input = init_context(item_count)
         return cls(
-            state=context_state.at[0].set(1),
-            start_context_input=context_state.at[0].set(1),
-            outlist_context_input=context_state.at[-1].set(1),
+            state,
+            start_context_input,
+            outlist_context_input,
+            item_count
         )
+    
+    @classmethod
+    @dispatch
+    def create(cls, item_count: ScalarInteger, max_item_count: ScalarInteger):
+        state, start_context_input, outlist_context_input = init_size_flexible_context(
+            item_count, max_item_count)
+        return cls(
+            state,
+            start_context_input,
+            outlist_context_input,
+            max_item_count
+        )
+
+
+# %% Initialization
+
+
+@partial(jit, static_argnums=(0,))
+def init_context(item_count):
+    context_state = jnp.zeros(item_count + 2)
+    return (
+        context_state.at[0].set(1),
+        context_state.at[0].set(1),
+        context_state.at[-1].set(1),
+    )
+
+
+@partial(jit, static_argnums=(0, 1))
+def init_size_flexible_context(item_count, max_item_count):
+    context_state = jnp.zeros(max_item_count + 2)
+    return (
+        context_state.at[0].set(1),
+        context_state.at[0].set(1),
+        context_state.at[item_count + 2 - 1].set(1),
+    )
 
 
 # %% Integration
