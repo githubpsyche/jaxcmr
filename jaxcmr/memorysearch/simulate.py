@@ -157,26 +157,16 @@ def simulate_h5_from_h5(
         data["pres_itemnos"][trial_mask], experiment_count, 1
     )
     subject_indices = np.matlib.repmat(data["subject"][trial_mask], experiment_count, 1)
+    parameters_by_index = select_parameters_by_subject(subject_indices, parameters)
     item_counts = vmap(get_item_count)(presentations)
-    _simulate_trials = vmap(simulate_trial, in_axes=(None, None, 0, 0, 0))
 
-    for item_count in jnp.unique(item_counts):
-        rng, _ = random.split(rng)
-        ic_mask = item_counts == item_count
-        ic_presentations = presentations[ic_mask]
-        ic_parameters = select_parameters_by_subject(
-            subject_indices[ic_mask], parameters
-        )
-
-        result = _simulate_trials(
-            model_create_fn,
-            item_count.item(),
-            ic_presentations,
-            random.split(rng, len(ic_presentations)),
-            tree_transpose(ic_parameters),
-        )
-        sim_h5["recalls"][ic_mask, : result.shape[1]] = vmap(recall_by_study_position)(
-            ic_presentations, result
-        )
+    result = vmap(simulate_trial, in_axes=(None, None, 0, 0, 0))(
+        model_create_fn,
+        max(item_counts).item(),
+        presentations,
+        random.split(rng, len(presentations)),
+        tree_transpose(parameters_by_index),
+    )
+    sim_h5["recalls"][:, :result.shape[1]] = vmap(recall_by_study_position)(presentations, result)
 
     return sim_h5

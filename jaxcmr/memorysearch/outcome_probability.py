@@ -79,7 +79,7 @@ def stop_probability(model: CMR, _: Any = None) -> ScalarFloat:
                 model.stop_probability_growth,
                 model.recall_total,
             ),
-            1.0 - ((model.item_count - model.recall_total) * lb),
+            1.0 - (sum(1-model.recall_mask) * lb),
         ),
         lambda _: 1.0,
         None,

@@ -32,7 +32,7 @@ __all__ = [
     "predict_trial",
     "init_and_predict_trial",
     "predict_trials",
-    "create_predict_fn",
+    "_create_predict_fn",
 ]
 
 # %% Single Event Prediction (and Simulation)
@@ -107,7 +107,7 @@ def predict_trials(
 @dispatch
 def predict_trials(
     model_init: Callable[[ScalarInteger, ScalarInteger, dict], MemorySearch],
-    item_count: ScalarInteger,
+    max_item_count: ScalarInteger,
     presentations: Integer[Array, "trial_count study_events"],
     trials: Integer[Array, "trial_count event_count"],
     parameters: dict,
@@ -115,14 +115,14 @@ def predict_trials(
     """Log-likelihood of trials given matched presentation sequences and model parameters"""
     return log_likelihood(
         vmap(init_and_predict_trial, in_axes=(None, None, 0, 0, None))(
-            model_init, item_count, presentations, trials, parameters
+            model_init, max_item_count, presentations, trials, parameters
         )[1]
     )
 
 
 # %% Factory Functions
 
-def create_predict_fn(
+def _create_predict_fn(
     model_init: Callable[[ScalarInteger, ScalarInteger, dict], MemorySearch],
     presentations: Integer[Array, "trial_count study_events"],
     trials: Integer[Array, "trial_count recall_event_count"],
@@ -141,22 +141,10 @@ def create_predict_fn(
     """
 
     item_counts = vmap(get_item_count)(presentations)
-    unique_item_counts = np.unique(item_counts)
-    item_counts_are_identical = len(unique_item_counts) == 1
-    presentations_are_identical = len(np.unique(presentations).shape) == 1
+    unique_rows = set(map(jnp.array_str, presentations))
+    presentations_are_identical = len(unique_rows) == 1
 
-    if item_counts_are_identical and presentations_are_identical:
+    if presentations_are_identical:
         return Partial(predict_trials, model_init, item_counts[0].item(), trials)
-    elif item_counts_are_identical:
-        return Partial(predict_trials, model_init, item_counts[0].item(), presentations, trials)
     else:
-        functions = [
-            Partial(predict_trials, model_init, item_count, presentations[item_counts==item_count], trials[item_counts==item_count])
-            for item_count in unique_item_counts
-        ]
-
-        @jit
-        def predict_trials_fn(parameters: dict) -> ScalarFloat:
-            return sum(fn(parameters) for fn in functions)
-        
-        return predict_trials_fn
+        return Partial(predict_trials, model_init, max(item_counts).item(), presentations, trials)

@@ -59,6 +59,7 @@ def _experience_item(model: CMR, item_index: ScalarInteger) -> CMR:
             model.mcf, model.mcf_learning_rate, new_context.state, encoded_item
         ),
         encoding_index=model.encoding_index + 1,
+        recall_mask=model.recall_mask.at[item_index].set(False)
     )
 
 

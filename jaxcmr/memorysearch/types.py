@@ -77,7 +77,7 @@ class CMR(MemorySearch, mutable=True):
 
         self.item_count = items.shape[0]
         self.recall_sequence = jnp.zeros(self.item_count, jnp.int32)
-        self.recall_mask = jnp.zeros(self.item_count, jnp.bool_)
+        self.recall_mask = jnp.ones(self.item_count, jnp.bool_)
         self.encoding_index = 0
         self.is_active = True
         self.recall_total = 0

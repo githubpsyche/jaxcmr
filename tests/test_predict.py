@@ -3,15 +3,13 @@ import pytest
 from jaxcmr.memorysearch import (
     BaseCMR,
     InstanceCMR,
-    retrieve,
     start_retrieving,
     experience,
-    outcome_probability,
     predict_and_simulate_retrieval,
     predict_trial,
     init_and_predict_trial,
     predict_trials,
-    create_predict_fn,
+    _create_predict_fn,
 )
 from jaxcmr.helpers import log_likelihood, get_item_count
 from jax import vmap, numpy as jnp
@@ -104,6 +102,29 @@ def test_predict_trial(model_create_fn, item_count, parameters, trials):
     assert trial_probabilities.shape == trials[0].shape
     assert (trial_probabilities == 1.0).sum() + 1 == (trials[0] == 0).sum()
 
+def test_predict_trial_with_higher_item_count(
+        model_create_fn, item_count, parameters, trials, uniform_presentations):
+    """
+    Test that init_and_predict_trial makes the same predictions with higher than needed item count
+    """
+
+    model = start_retrieving(
+        experience(model_create_fn(item_count, item_count, parameters))
+    )
+    _, base_trial_probabilities = predict_trial(model, trials[0])
+
+    _, init_trial_probabilities = init_and_predict_trial(
+        model_create_fn, item_count, uniform_presentations[0], trials[0], parameters
+    )
+
+    _, higher_init_trial_probabilities = init_and_predict_trial(
+        model_create_fn, item_count + 10, uniform_presentations[0], trials[0], parameters
+    )
+
+    assert jnp.allclose(base_trial_probabilities, init_trial_probabilities)
+    assert jnp.allclose(base_trial_probabilities, higher_init_trial_probabilities)
+
+
 
 def test_predict_trials(model_create_fn, item_count, parameters, trials):
     """Test that sum of predict_trial calls is same result as a single predict_trials call"""
@@ -123,7 +144,7 @@ def test_factory_fn(
     model_create_fn, item_count, parameters, uniform_presentations, trials
 ):
     """Test that factory function can create a predict function that works like predict_trials"""
-    predict_fn = create_predict_fn(model_create_fn, uniform_presentations, trials)
+    predict_fn = _create_predict_fn(model_create_fn, uniform_presentations, trials)
     predict_result = predict_fn(parameters)
     assert predict_result == predict_trials(
         model_create_fn, item_count, trials, parameters
@@ -143,9 +164,9 @@ def test_dispatch_predict_trials(
 
 
 def test_variable_presentations_predict(
-    model_create_fn, item_count, parameters, variable_presentations, trials
+    model_create_fn, parameters, variable_presentations, trials
 ):
-    """Test that predict_trials handles variable presentations correctly"""
+    """Test that presentations with variable item_counts can be handled w/o dispatch"""
 
     item_counts = vmap(get_item_count)(variable_presentations)
     multicall_result = sum(
@@ -161,7 +182,34 @@ def test_variable_presentations_predict(
         for i in range(len(item_counts))
     )
 
-    predict_fn = create_predict_fn(model_create_fn, variable_presentations, trials)
+    max_item_count = max(item_counts).item()
+    predict_result = predict_trials(
+        model_create_fn, max_item_count, variable_presentations, trials, parameters
+    )
+
+    assert jnp.allclose(multicall_result, predict_result)
+
+
+def test_dispatch_variable_presentations_predict(
+    model_create_fn, parameters, variable_presentations, trials
+):
+    """Test that create_predict_fn produces fn that handles variable presentations correctly"""
+
+    item_counts = vmap(get_item_count)(variable_presentations)
+    multicall_result = sum(
+        log_likelihood(
+            init_and_predict_trial(
+                model_create_fn,
+                item_counts[i].item(),
+                variable_presentations[i],
+                trials[i],
+                parameters,
+            )[1]
+        )
+        for i in range(len(item_counts))
+    )
+
+    predict_fn = _create_predict_fn(model_create_fn, variable_presentations, trials)
     predict_result = predict_fn(parameters)
 
     assert jnp.allclose(multicall_result, predict_result)
