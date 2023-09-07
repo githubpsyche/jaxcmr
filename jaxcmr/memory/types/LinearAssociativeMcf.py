@@ -55,6 +55,22 @@ class LinearAssociativeMcf(LinearAssociativeMemory, mutable=True):
             basic_init_linear_mcf(item_count, shared_support, item_support),
             choice_sensitivity,
         )
+    
+    @classmethod
+    @dispatch
+    def create(
+        cls,
+        item_count: ScalarInteger,
+        max_item_count: ScalarInteger,
+        shared_support: ScalarFloat,
+        item_support: ScalarFloat,
+        choice_sensitivity: ScalarFloat,
+    ):
+        return cls(
+            basic_init_linear_mcf(item_count, shared_support, item_support),
+            choice_sensitivity,
+        )
+
 
     @classmethod
     @dispatch
