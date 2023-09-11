@@ -85,6 +85,13 @@ def test_multiple_presentation_trial_simulation(parameters, rng, presentations):
     assert trials.shape[1] == 10
     assert not jnp.allclose(trials[0], trials[1])
 
+    # with jax.disable_jit():
+    trial = simulate_trial(BaseCMR, 10, presentations[0], rng, parameters)
+
+    nonzero_elements = trial[trial != 0]
+    unique_nonzero_elements = jnp.unique(nonzero_elements)
+    assert len(nonzero_elements) == len(unique_nonzero_elements)
+
 
 def test_tree_transpose(parameter_list):
     result = tree_transpose(parameter_list)

@@ -32,8 +32,9 @@ def outcome_probability(model: CMR) -> Float[Array, "recall_outcomes"]:
     p_stop = stop_probability(model)
     item_activation = probe(model.mcf, model.context.state) + lb
     item_activation = item_activation * (1 - model.recall_mask)  # mask recalled items
+    item_activation_sum = jnp.sum(item_activation)
     return jnp.hstack(
-        (p_stop, ((1 - p_stop) * item_activation / jnp.sum(item_activation)))
+        (p_stop, ((1 - p_stop) * item_activation / lax.select(item_activation_sum == 0, 1., item_activation_sum)))
     )
 
 
