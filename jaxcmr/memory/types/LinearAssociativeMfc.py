@@ -37,8 +37,6 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
     @dispatch
     def __init__(self, state: Float[Array, "item_features context_features"]):
         self.state = state
-        self.input_features = self.state.shape[0]
-        self.output_features = self.state.shape[1]
 
     @classmethod
     @dispatch
@@ -65,14 +63,6 @@ class LinearAssociativeMfc(LinearAssociativeMemory, mutable=True):
             items,
             parameters["learning_rate"],
         )
-
-    # @property
-    # def input_features(self) -> ScalarInteger:
-    #     return self.state.shape[0]
-
-    # @property
-    # def output_features(self) -> ScalarInteger:
-    #     return self.state.shape[1]
 
 
 # %% Type-Specific Helper Functions

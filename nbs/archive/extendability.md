@@ -1,3 +1,6 @@
+Summary of this note:
+https://chat.openai.com/share/6b1cfc29-ee9d-4f53-8649-9a8ca69fa549
+
 The big benefit of multiple dispatch is supposed to be the ability to add specialized functions to an external library without otherwise requiring a broader understanding of how the library works.
 
 For example, I add a version of a function that only runs when an argument has a specific value. Library functions that depend on that function will automatically use the specialized version when appropriate.
@@ -46,4 +49,4 @@ By contrast, ICMR depends on some units of implementation in CMR, and CMR depend
 Could I have defined LinearAssociativeMemory implementations into separate scripts without losing something?
 They share implementations of hebbian_associate, so more than interface is shared.
 
-Nah, I'd rather be able to think about them separately. 
+Nah, I'd rather be able to think about them separately.

@@ -85,44 +85,82 @@ class CMR(MemorySearch, mutable=True):
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
         return self._mcf_learning_rate[self.encoding_index]
+    
+    @classmethod
+    @dispatch
+    def create(
+        cls,
+        mfc_init: Callable,
+        mcf_init: Callable,
+        context_init: Callable,
+        item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
+        parameters: dict,
+    ):
+        """Initialize CMR with one way associative memories and a temporal context."""
 
+        mfc = mfc_init(item_count, presentation_count, parameters)
+        mcf = mcf_init(item_count, presentation_count, parameters)
+        context = context_init(item_count)
+        items = jnp.eye(item_count, item_count)
+        return cls(items, presentation_count, context, mfc, mcf, parameters)
+    
+
+    @classmethod
+    @dispatch
+    def create(
+        cls,
+        mfc_init: Callable,
+        mcf_init: Callable,
+        context_init: Callable,
+        items: Integer[Array, "item_count item_features"],
+        presentation_count: ScalarInteger,
+        parameters: dict,
+    ):
+        """Initialize CMR with one way associative memories and a temporal context."""
+
+        mfc = mfc_init(items, presentation_count, parameters)
+        mcf = mcf_init(items, presentation_count, parameters)
+        context = context_init(items.shape[0])
+        return cls(items, presentation_count, context, mfc, mcf, parameters)
+            
 
 # %% Model Variant Constructors
 
 
-@partial(jit, static_argnums=(0, 1, 2, 3, 4))
-def basic_init_cmr(
-    mfc_init: Callable,
-    mcf_init: Callable,
-    context_init: Callable,
-    item_count: ScalarInteger,
-    presentation_count: ScalarInteger,
-    parameters: dict,
-) -> CMR:
-    """Initialize CMR with linear associative memories and a temporal context."""
+# @partial(jit, static_argnums=(0, 1, 2, 3, 4))
+# def basic_init_cmr(
+#     mfc_init: Callable,
+#     mcf_init: Callable,
+#     context_init: Callable,
+#     item_count: ScalarInteger,
+#     presentation_count: ScalarInteger,
+#     parameters: dict,
+# ) -> CMR:
+#     """Initialize CMR with one way associative memories and a temporal context."""
 
-    mfc = mfc_init(item_count, presentation_count, parameters)
-    mcf = mcf_init(item_count, presentation_count, parameters)
-    context = context_init(item_count)
-    items = jnp.eye(item_count, item_count)
-    return CMR(items, presentation_count, context, mfc, mcf, parameters)
+#     mfc = mfc_init(item_count, presentation_count, parameters)
+#     mcf = mcf_init(item_count, presentation_count, parameters)
+#     context = context_init(item_count)
+#     items = jnp.eye(item_count, item_count)
+#     return CMR(items, presentation_count, context, mfc, mcf, parameters)
 
 
-@partial(jit, static_argnums=(0, 1, 2, 3, 5))
-def generalized_init_cmr(
-    mfc_init: Callable,
-    mcf_init: Callable,
-    context_init: Callable,
-    items: Integer[Array, "item_count item_features"],
-    presentation_count: ScalarInteger,
-    parameters: dict,
-) -> CMR:
-    """Initialize CMR with linear associative memories and a temporal context."""
+# @partial(jit, static_argnums=(0, 1, 2, 3, 4))
+# def generalized_init_cmr(
+#     mfc_init: Callable,
+#     mcf_init: Callable,
+#     context_init: Callable,
+#     items: Integer[Array, "item_count item_features"],
+#     presentation_count: ScalarInteger,
+#     parameters: dict,
+# ) -> CMR:
+#     """Initialize CMR with one way associative memories and a temporal context."""
 
-    mfc = mfc_init(items, presentation_count, parameters)
-    mcf = mcf_init(items, presentation_count, parameters)
-    context = context_init(items.shape[0])
-    return CMR(items, presentation_count, context, mfc, mcf, parameters)
+#     mfc = mfc_init(items, presentation_count, parameters)
+#     mcf = mcf_init(items, presentation_count, parameters)
+#     context = context_init(items.shape[0])
+#     return CMR(items, presentation_count, context, mfc, mcf, parameters)
 
 
 # %% Variants
@@ -130,31 +168,15 @@ def generalized_init_cmr(
 
 @dispatch
 def BaseCMR(
-    item_count: ScalarInteger,
+    items_or_item_count: ScalarInteger,
     presentation_count: ScalarInteger,
     parameters: dict,
 ) -> CMR:
-    return basic_init_cmr(
+    return CMR.create(
         LinearAssociativeMfc.create,
         LinearAssociativeMcf.create,
         TemporalContext.create,
-        item_count,
-        presentation_count,
-        parameters,
-    )
-
-
-@dispatch
-def BaseCMR(
-    items: Integer[Array, "item_count item_features"],
-    presentation_count: ScalarInteger,
-    parameters: dict,
-) -> CMR:
-    return generalized_init_cmr(
-        LinearAssociativeMfc.create,
-        LinearAssociativeMcf.create,
-        TemporalContext.create,
-        items,
+        items_or_item_count,
         presentation_count,
         parameters,
     )
@@ -162,31 +184,15 @@ def BaseCMR(
 
 @dispatch
 def InstanceCMR(
-    item_count: ScalarInteger,
+    items_or_item_count,
     presentation_count: ScalarInteger,
     parameters: dict,
 ) -> CMR:
-    return basic_init_cmr(
+    return CMR.create(
         LinearAssociativeMfc.create,
         InstanceMcf.create,
         TemporalContext.create,
-        item_count,
-        presentation_count,
-        parameters,
-    )
-
-
-@dispatch
-def InstanceCMR(
-    items: Integer[Array, "item_count item_features"],
-    presentation_count: ScalarInteger,
-    parameters: dict,
-) -> CMR:
-    return generalized_init_cmr(
-        LinearAssociativeMfc.create,
-        InstanceMcf.create,
-        TemporalContext.create,
-        items,
+        items_or_item_count,
         presentation_count,
         parameters,
     )
