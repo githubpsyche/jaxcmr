@@ -9,7 +9,7 @@ from jaxcmr.helpers import PRNGKeyArray, Bool, Array, get_item_count
 import pytest
 import json
 from jaxcmr.datasets import load_data, generate_trial_mask
-from jaxcmr.memorysearch import BaseCMR, create_predict_fn
+from jaxcmr.memorysearch import BaseCMR, _create_predict_fn
 from evosax import ParameterReshaper
 
 
@@ -151,7 +151,7 @@ def test_peers_model_fit(
 ):
     trial_mask = generate_trial_mask(peers_data, peers_trial_query)
     fit_result = fit_to_h5(
-        create_predict_fn,
+        _create_predict_fn,
         model_create_fn,
         peers_data,
         peers_parameters,

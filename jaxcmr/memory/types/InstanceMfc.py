@@ -35,12 +35,14 @@ class InstanceMfc(InstanceMemory, mutable=True):
         self,
         state: Float[Array, "instances instance_features"],
         encoding_index: ScalarInteger,
+        feature_scale: ScalarFloat = 1.0,
         trace_scale: ScalarFloat = 1.0,
         _input_features: ScalarInteger = 0,
         _output_features: ScalarInteger = 0,
     ):
         self.state = state
         self.encoding_index = encoding_index
+        self.feature_scale = feature_scale
         self.trace_scale = trace_scale
         self.input_features = _input_features
         self.output_features = _output_features
@@ -50,13 +52,15 @@ class InstanceMfc(InstanceMemory, mutable=True):
     def create(
         cls,
         item_count: ScalarInteger,
+        presentation_count: ScalarInteger,
         learning_rate: ScalarFloat,
+        feature_scale: ScalarFloat = 1.0,
         trace_scale: ScalarFloat = 1.0,
-
     ):
         return cls(
-            init_instance_mfc(item_count, learning_rate),
+            init_instance_mfc(item_count, presentation_count, learning_rate),
             item_count,
+            feature_scale,
             trace_scale,
             item_count,
             item_count + 2,
@@ -74,7 +78,8 @@ class InstanceMfc(InstanceMemory, mutable=True):
             items,
             presentation_count,
             parameters['learning_rate'],
-            parameters['mfc_trace_scale']
+            parameters['mfc_choice_sensitivity'],
+            parameters['mfc_trace_sensitivity']
         )
     
 

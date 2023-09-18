@@ -1,5 +1,5 @@
 # %% Imports
-from jaxcmr.memorysearch import FittingStrategy, BaseCMR, InstanceCMR, create_predict_fn
+from jaxcmr.memorysearch import FittingStrategy, BaseCMR, InstanceCMR, _create_predict_fn
 import pytest
 import jax
 import json
@@ -58,7 +58,7 @@ def subject_presentations(data, trial_mask):
 
 @pytest.fixture
 def single_subject_objective_fn(model_create_fn, subject_presentations, subject_trials):
-    return vmap(create_predict_fn(model_create_fn, subject_presentations[0], subject_trials[0]))
+    return vmap(_create_predict_fn(model_create_fn, subject_presentations[0], subject_trials[0]))
 
 
 # %% Tests

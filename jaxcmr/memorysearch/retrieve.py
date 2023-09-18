@@ -17,7 +17,7 @@ from jaxcmr.helpers import (
 
 # %% Exports
 
-__all__ = ["start_retrieving", "stop_recall", "retrieve"]
+__all__ = ["start_retrieving", "stop_recall", "retrieve", "_retrieve_item"]
 
 # %% Base retrieval functions
 

@@ -13,7 +13,7 @@ from jaxcmr.memory.types import (
     OneWayMemory,
     LinearAssociativeMemory,
     LinearAssociativeMcf,
-    InstanceMcf,
+    InstanceMemory,
 )
 from jaxcmr.helpers import (
     Float,
@@ -118,7 +118,7 @@ def instance_probe(
 @jit
 @dispatch
 def probe(
-    memory: InstanceMcf, input_feature_pattern: Float[Array, "input_features"]
+    memory: InstanceMemory, input_feature_pattern: Float[Array, "input_features"]
 ) -> Float[Array, "output_features"]:
     """Probe the memory with a probe vector"""
     return instance_probe(
