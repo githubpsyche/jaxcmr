@@ -3,6 +3,7 @@ from copy import copy
 import jaxtyping
 import numpy as np
 from jax import numpy as jnp, jit, lax, random
+from beartype.typing import Callable
 from jax.tree_util import tree_map
 from plum import dispatch
 from functools import partial
