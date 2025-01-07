@@ -25,7 +25,7 @@ data_query = "data['listtype'] == -1"
 data_path = "data/HealyKahana2014.h5"
 
 # fitting params
-redo_fits = False
+redo_fits = True
 run_tag = "test"
 model_name = "BaseCMR"
 relative_tolerance = 0.001

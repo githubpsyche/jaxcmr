@@ -1,27 +1,32 @@
-from jax import lax, numpy as jnp, jit, vmap
-from typing import Callable, Mapping, Optional, Type, Iterable
+from typing import Callable, Iterable, Mapping, Optional, Type
+
 import numpy as np
+from jax import jit, lax, vmap
+from jax import numpy as jnp
+
 from cmr_mlx.typing import (
+    Array,
+    Float,
+    Float_,
+    Integer,
     MemorySearch,
     MemorySearchModelFactory,
-    Integer,
-    Array,
-    Float_,
-    Float,
     Real,
 )
+
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
     """Return whether all rows in the 2D array are identical."""
     return jnp.all(arr == arr[0])  # type: ignore
 
+
 def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array, ""]:
     """Return the summed log likelihood over specified likelihoods."""
     return -jnp.sum(jnp.log(likelihoods))
 
+
 def predict_and_simulate_recalls(
-    model: MemorySearch,
-    choices: Integer[Array, " recall_events"]
+    model: MemorySearch, choices: Integer[Array, " recall_events"]
 ) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
     """
     Return the updated model and the outcome probabilities of a chain of retrieval events.
@@ -32,6 +37,7 @@ def predict_and_simulate_recalls(
     return lax.scan(
         lambda m, c: (m.retrieve(c), m.outcome_probability(c)), model, choices
     )
+
 
 class MemorySearchLikelihoodFnGenerator:
     def __init__(
@@ -85,10 +91,13 @@ class MemorySearchLikelihoodFnGenerator:
         Only valid if all present-lists match.
         """
         model = self.init_model_for_retrieval(jnp.array(0), parameters)
-        return lax.map(
-            lambda i: predict_and_simulate_recalls(model, self.trials[i])[1],
-            trial_indices,
-        )
+        # return lax.map(
+        #     lambda i: predict_and_simulate_recalls(model, self.trials[i])[1],
+        #     trial_indices,
+        # )
+        return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
+            model, self.trials[trial_indices]
+        )[1]
 
     def present_and_predict_trials(
         self,
@@ -99,13 +108,12 @@ class MemorySearchLikelihoodFnGenerator:
         Predict outcomes for each trial by creating a new model for each trial
         (re-experiencing items per trial).
         """
-        return lax.map(
-            lambda i: predict_and_simulate_recalls(
-                self.init_model_for_retrieval(i, parameters),
-                self.trials[i]
-            )[1],
-            trial_indices,
-        )
+
+        def present_and_predict_trial(i):
+            model = self.init_model_for_retrieval(i, parameters)
+            return predict_and_simulate_recalls(model, self.trials[i])[1]
+        
+        return vmap(present_and_predict_trial)(trial_indices)
 
     def base_predict_trials_loss(
         self,
@@ -162,6 +170,7 @@ class MemorySearchLikelihoodFnGenerator:
             x is shape (n_samples, n_params) for multiple sets of free parameters.
             We'll vectorize over the first axis, returning shape (n_samples,).
             """
+
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
                 param_dict = {key: x_row[i] for i, key in enumerate(free_params)}
                 return specialized_loss_fn(param_dict)
