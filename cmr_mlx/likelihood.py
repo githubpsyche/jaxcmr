@@ -10,7 +10,6 @@ from cmr_mlx.typing import (
     Float,
     Real,
 )
-import jax
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
     """Return whether all rows in the 2D array are identical."""
