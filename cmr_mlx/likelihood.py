@@ -10,6 +10,7 @@ from cmr_mlx.typing import (
     Float,
     Real,
 )
+import jax
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
     """Return whether all rows in the 2D array are identical."""
@@ -167,7 +168,7 @@ class MemorySearchLikelihoodFnGenerator:
                 return specialized_loss_fn(param_dict)
 
             # vmap applies loss_for_one_sample across the leading dimension of x
-            return vmap(loss_for_one_sample)(x)
+            return vmap(loss_for_one_sample, in_axes=1)(x)
 
         # Return a function that checks the dimensionality of x at runtime
         return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
