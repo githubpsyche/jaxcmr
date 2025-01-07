@@ -167,9 +167,7 @@ results["num_steps"] = num_steps
 results["cross_rate"] = cross_rate
 results["diff_w"] = diff_w
 
-Markdown(
-    summarize_parameters([results], query_parameters, include_std=True, include_ci=True)
-)
+print(summarize_parameters([results], query_parameters, include_std=True, include_ci=True))
 
 # %%
 
