@@ -6,7 +6,6 @@ from typing import Optional
 import h5py
 import jax.numpy as jnp
 import numpy as np
-from IPython.display import Markdown  # type: ignore
 from jax import random
 
 from cmr_mlx.cmr import CMRFactory as model_factory
