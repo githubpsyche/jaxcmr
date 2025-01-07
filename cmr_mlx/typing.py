@@ -7,6 +7,27 @@ Float_ = Float[Array, ""] | float | int
 Int_ = Integer[Array, ""] | int
 Bool_ = Bool[Array, ""] | bool
 
+__all__ = [
+    "Array",
+    "ArrayLike",
+    "Bool",
+    "Float",
+    "Float_",
+    "Int_",
+    "Integer",
+    "Real",
+    "Shaped",
+    "PRNGKeyArray",
+    "MemorySearch",
+    "MemorySearchCreateFn",
+    "MemorySearchModelFactory",
+    "Memory",
+    "Context",
+    "LossFnGenerator",
+    "FitResult",
+    "FittingAlgorithm",
+]
+
 
 class MemorySearch(Protocol):
     """A model of memory search.
@@ -80,7 +101,7 @@ class MemorySearchModelFactory(Protocol):
 
     def create_model(
         self,
-        trial_index: int,
+        trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
