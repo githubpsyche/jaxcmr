@@ -1,3 +1,5 @@
+import json
+import os
 import warnings
 from typing import Optional
 
@@ -5,10 +7,12 @@ import h5py
 import jax.numpy as jnp
 import numpy as np
 from IPython.display import Markdown  # type: ignore
+from jax import random
 
 from cmr_mlx.cmr import CMRFactory as model_factory
 from cmr_mlx.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from cmr_mlx.scipy_de import ScipyDE as fitting_method
+from cmr_mlx.simulation import simulate_h5_from_h5
 from cmr_mlx.summarize import summarize_parameters
 from cmr_mlx.typing import Array, Bool
 
@@ -22,6 +26,7 @@ data_query = "data['listtype'] == -1"
 data_path = "data/HealyKahana2014.h5"
 
 # fitting params
+redo_fits = False
 run_tag = "test"
 model_name = "BaseCMR"
 relative_tolerance = 0.001
@@ -29,6 +34,10 @@ popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
+
+# sim params
+experiment_count = 50
+seed = 0
 
 base_params = {
     "encoding_drift_rate": 0.999,
@@ -97,6 +106,14 @@ def generate_trial_mask(
     return eval(trial_query).flatten()
 
 
+# add subdirectories for each product type: json, figures, h5
+product_dirs = {}
+for product in ["fits", "figures", "simulations"]:
+    product_dir = os.path.join(product)
+    product_dirs[product] = product_dir
+    if not os.path.exists(product_dir):
+        os.makedirs(product_dir)
+
 data = load_data(data_path)
 trial_mask = generate_trial_mask(data, data_query)
 
@@ -105,26 +122,42 @@ connections = jnp.zeros((max_size, max_size))
 
 # %%
 
-fitter = fitting_method(
-    {key: jnp.array(value) for key, value in data.items()},
-    connections,
-    base_params,
-    model_factory,
-    loss_fn_generator,
-    hyperparams={
-        "num_steps": num_steps,
-        "pop_size": popsize,
-        "relative_tolerance": relative_tolerance,
-        "cross_over_rate": cross_rate,
-        "diff_w": diff_w,
-        "progress_bar": True,
-        "display_iterations": False,
-        "bounds": bounds,
-    },
+fit_path = os.path.join(
+    product_dirs["fits"], f"{data_name}_{model_name}_{run_tag}.json"
 )
+print(fit_path)
 
-results = fitter.fit(trial_mask)
-results = dict(results)
+if os.path.exists(fit_path) and not redo_fits:
+    with open(fit_path) as f:
+        results = json.load(f)
+        if "subject" not in results["fits"]:
+            results["fits"]["subject"] = results["subject"]
+
+else:
+    fitter = fitting_method(
+        {key: jnp.array(value) for key, value in data.items()},
+        connections,
+        base_params,
+        model_factory,
+        loss_fn_generator,
+        hyperparams={
+            "num_steps": num_steps,
+            "pop_size": popsize,
+            "relative_tolerance": relative_tolerance,
+            "cross_over_rate": cross_rate,
+            "diff_w": diff_w,
+            "progress_bar": True,
+            "display_iterations": False,
+            "bounds": bounds,
+        },
+    )
+
+    results = fitter.fit(trial_mask)
+    results = dict(results)
+
+    with open(fit_path, "w") as f:
+        json.dump(results, f, indent=4)
+
 results["data_query"] = data_query
 results["model"] = model_name
 results["name"] = f"{data_name}_{model_name}_{run_tag}"
@@ -139,3 +172,15 @@ Markdown(
 )
 
 # %%
+
+rng = random.PRNGKey(seed)
+rng, rng_iter = random.split(rng)
+simulate_h5_from_h5(
+    model_factory=model_factory,
+    dataset=data,
+    connections=connections,
+    parameters={key: jnp.array(val) for key, val in results["fits"].items()}, # type: ignore
+    trial_mask=trial_mask,
+    experiment_count=experiment_count,
+    rng=rng_iter,
+)
