@@ -47,14 +47,14 @@ class MemorySearchLikelihoodFnGenerator:
         self.create_model = self.factory.create_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         trials = np.array(dataset["recalls"])
-        for trial_index in range(self.trials.shape[0]):
+        for trial_index in range(trials.shape[0]):
             present = self.present_lists[trial_index]
-            recall = self.trials[trial_index]
+            recall = trials[trial_index]
             reindexed = np.array(
                 [(present[item - 1] if item else 0) for item in recall]
             )
             trials[trial_index] = reindexed
-        self.trials = jnp.array(self.trials)
+        self.trials = jnp.array(trials)
 
     def init_model_for_retrieval(self, trial_index, parameters):
         present = self.present_lists[trial_index]

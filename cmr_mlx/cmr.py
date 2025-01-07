@@ -55,7 +55,6 @@ class CMR(Pytree):
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.mfc_sensitivity = parameters["mfc_choice_sensitivity"]
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self._stop_probability = exponential_stop_probability(
@@ -71,7 +70,7 @@ class CMR(Pytree):
             list_length,
             self.context.size,
             parameters["learning_rate"],
-            parameters["mfc_choice_sensitivity"],
+            1.0,
         )
         self.mcf: Memory = LinearMemory.init_mcf(
             list_length,
@@ -232,7 +231,7 @@ class CMRFactory:
 
     def create_model(
         self,
-        trial_index: int,
+        trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
