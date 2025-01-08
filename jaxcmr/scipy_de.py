@@ -5,7 +5,7 @@ from scipy.optimize import differential_evolution
 from tqdm import trange
 from jax import numpy as jnp
 
-from cmr_mlx.typing import (
+from jaxcmr.typing import (
     Array,
     Float_,
     Bool,

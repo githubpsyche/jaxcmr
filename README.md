@@ -1,2 +1,2 @@
-# cmr-mlx
- cmr and variants implemented and evaluated using mlx
+# jaxcmr
+ modeling memory search with jax

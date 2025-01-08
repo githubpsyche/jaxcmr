@@ -1,8 +1,8 @@
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from cmr_mlx.helpers import lb
-from cmr_mlx.typing import Array, Float, Float_
+from jaxcmr.helpers import lb
+from jaxcmr.typing import Array, Float, Float_
 
 
 def linalg_norm(

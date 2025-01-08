@@ -5,7 +5,7 @@ from jax import lax, random, vmap
 from jax import numpy as jnp
 from jax.tree_util import tree_map
 
-from cmr_mlx.typing import (
+from jaxcmr.typing import (
     Array,
     Bool,
     Float,

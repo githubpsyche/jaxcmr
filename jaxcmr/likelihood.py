@@ -4,7 +4,7 @@ import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
-from cmr_mlx.typing import (
+from jaxcmr.typing import (
     Array,
     Float,
     Float_,

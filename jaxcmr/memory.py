@@ -2,7 +2,7 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from cmr_mlx.typing import Array, Float, Float_
+from jaxcmr.typing import Array, Float, Float_
 
 
 def power_scale(value: Float_, scale: Float_) -> Float:

@@ -8,12 +8,12 @@ import jax.numpy as jnp
 import numpy as np
 from jax import random
 
-from cmr_mlx.cmr import CMRFactory as model_factory
-from cmr_mlx.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
-from cmr_mlx.scipy_de import ScipyDE as fitting_method
-from cmr_mlx.simulation import simulate_h5_from_h5
-from cmr_mlx.summarize import summarize_parameters
-from cmr_mlx.typing import Array, Bool
+from jaxcmr.cmr import CMRFactory as model_factory
+from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.scipy_de import ScipyDE as fitting_method
+from jaxcmr.simulation import simulate_h5_from_h5
+from jaxcmr.summarize import summarize_parameters
+from jaxcmr.typing import Array, Bool
 
 warnings.filterwarnings("ignore")
 

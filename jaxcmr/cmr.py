@@ -5,10 +5,10 @@ from jax import numpy as jnp
 import numpy as np
 from simple_pytree import Pytree
 
-from cmr_mlx.helpers import lb
-from cmr_mlx.typing import Array, Float, Integer, Float_, Int_, Context, Memory, MemorySearch
-from cmr_mlx.context import TemporalContext
-from cmr_mlx.memory import LinearMemory
+from jaxcmr.helpers import lb
+from jaxcmr.typing import Array, Float, Integer, Float_, Int_, Context, Memory, MemorySearch
+from jaxcmr.context import TemporalContext
+from jaxcmr.memory import LinearMemory
 
 def exponential_primacy_decay(
     study_index: Int_, primacy_scale: Float_, primacy_decay: Float_
