@@ -1,5 +1,8 @@
 # %%
 
+#!%load_ext autoreload
+#!%autoreload 2
+
 import json
 import os
 import warnings
@@ -168,7 +171,9 @@ results["num_steps"] = num_steps
 results["cross_rate"] = cross_rate
 results["diff_w"] = diff_w
 
-print(summarize_parameters([results], query_parameters, include_std=True, include_ci=True))
+print(
+    summarize_parameters([results], query_parameters, include_std=True, include_ci=True)
+)
 
 # %%
 
@@ -178,7 +183,7 @@ simulate_h5_from_h5(
     model_factory=model_factory,
     dataset=data,
     connections=connections,
-    parameters={key: jnp.array(val) for key, val in results["fits"].items()}, # type: ignore
+    parameters={key: jnp.array(val) for key, val in results["fits"].items()},  # type: ignore
     trial_mask=trial_mask,
     experiment_count=experiment_count,
     rng=rng_iter,
