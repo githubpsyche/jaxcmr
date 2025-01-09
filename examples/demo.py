@@ -15,7 +15,7 @@ from jax import random
 
 from jaxcmr.cmr import CMRFactory as model_factory
 from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
-from jaxcmr.scipy_de import ScipyDE as fitting_method
+from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
 from jaxcmr.typing import Array, Bool
