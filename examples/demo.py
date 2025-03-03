@@ -6,19 +6,17 @@
 import json
 import os
 import warnings
-from typing import Optional
 
-import h5py
 import jax.numpy as jnp
 import numpy as np
 from jax import random
 
 from jaxcmr.cmr import CMRFactory as model_factory
-from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.fitting import ScipyDE as fitting_method
+from jaxcmr.helpers import generate_trial_mask, load_data
+from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
-from jaxcmr.typing import Array, Bool
 
 warnings.filterwarnings("ignore")
 
@@ -86,28 +84,6 @@ query_parameters = [
 ]
 
 # %%
-
-
-def load_data(data_path: str) -> dict[str, jnp.ndarray]:
-    """Load data from hdf5 file."""
-    with h5py.File(data_path, "r") as f:
-        result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
-    return {key: jnp.array(value) for key, value in result.items()}
-
-
-def generate_trial_mask(
-    data: dict, trial_query: Optional[str]
-) -> Bool[Array, " trial_count"]:
-    """Returns a boolean mask for selecting trials based on a specified query condition.
-
-    Args:
-        data: dict containing trial data arrays, including a "recalls" key with an array.
-        trial_query: condition to evaluate, which should return a boolean array.
-        If None, returns a mask that selects all trials.
-    """
-    if trial_query is None:
-        return jnp.ones(data["recalls"].shape[0], dtype=bool)
-    return eval(trial_query).flatten()
 
 
 # add subdirectories for each product type: json, figures, h5

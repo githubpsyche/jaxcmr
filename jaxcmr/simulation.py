@@ -1,4 +1,4 @@
-from typing import Optional, Type, Mapping
+from typing import Optional, Type, Mapping, Sequence
 
 import numpy as np
 from jax import lax, random, vmap
@@ -170,7 +170,19 @@ def simulate_h5_from_h5(
     rng: PRNGKeyArray,
     size=3,
 ) -> dict[str, Integer[Array, " trials ?"]]:
-    """Simulates dataset from existing dataset using a memory search model parameterized by subject."""
+    """
+    Simulates dataset from existing dataset using a memory search model parameterized by subject.
+    
+    Args:
+        model_factory: Factory class for creating memory search model instances.
+        dataset: Original H5 dataset containing trial data.
+        connections: Optional connectivity matrix between items in the word pool.
+        parameters: Dictionary of simulation parameters, parameterized per subject.
+        trial_mask: Boolean array specifying which trials to simulate.
+        experiment_count: Number of simulation iterations per trial.
+        rng: PRNGKeyArray for random number generation.
+        size: Maximum number of study positions to return for each item during reindexing.
+    """
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(model_factory, sim_h5, connections)
@@ -216,3 +228,61 @@ def simulate_h5_from_h5(
     sim_h5["recalls"] = reindex_fn(sim_h5["recalls"], sim_h5["pres_itemnos"], size)
     sim_h5["recalls"] = sim_h5["recalls"][:, :, 0]
     return sim_h5
+
+def parameter_shifted_simulate_h5_from_h5(
+    model_factory: Type[MemorySearchModelFactory],
+    dataset: dict[str, Integer[Array, " trials ?"]],
+    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    parameters: dict[str, Float[Array, " subject_count"]],
+    trial_mask: Bool[Array, " trial_count"],
+    experiment_count: int,
+    varied_parameter: str,
+    parameter_values: Sequence[float],
+    rng: PRNGKeyArray,
+    size=3,
+) -> list[dict[str, Integer[Array, " trials ?"]]]:
+    """
+    Simulates multiple H5 datasets by systematically varying a specified parameter, using the updated 
+    simulate_h5_from_h5 implementation.
+
+    For each value in `parameter_values`, this function creates a shifted parameters dictionary by 
+    overwriting the entire array for `varied_parameter` with the given value. It then invokes 
+    simulate_h5_from_h5— which handles dataset preallocation, parameter sampling, trial reordering, 
+    and item reindexing— to generate a simulated H5 dataset for that parameter setting.
+
+    Args:
+        model_factory: Factory class for creating memory search model instances.
+        dataset: Original H5 dataset containing trial data.
+        connections: Optional connectivity matrix between items in the word pool.
+        parameters: Dictionary of simulation parameters, parameterized per subject.
+        trial_mask: Boolean array specifying which trials to simulate.
+        experiment_count: Number of simulation iterations per trial.
+        varied_parameter: The parameter key to be varied across simulations.
+        parameter_values: Sequence of values to assign to the varied parameter.
+        rng: PRNGKeyArray for random number generation.
+        size: Maximum number of study positions to return for each item during reindexing.
+
+    Returns:
+        A list of H5-like datasets (dictionaries), each corresponding to simulation results generated 
+        with a different value for the varied parameter.
+    """
+    sim_h5s = []
+    for parameter_value in parameter_values:
+        rng, rng_split = random.split(rng)
+        shifted_parameters = {
+            **parameters,
+            varied_parameter: parameters[varied_parameter].at[:].set(parameter_value)
+        }
+        sim_h5 = simulate_h5_from_h5(
+            model_factory,
+            dataset,
+            connections,
+            shifted_parameters,
+            trial_mask,
+            experiment_count,
+            rng_split,
+            size,
+        )
+        sim_h5s.append(sim_h5)
+    return sim_h5s
+
