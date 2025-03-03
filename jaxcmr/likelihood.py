@@ -90,7 +90,7 @@ class MemorySearchLikelihoodFnGenerator:
         skipping re-experiencing items for each subsequent trial.
         Only valid if all present-lists match.
         """
-        model = self.init_model_for_retrieval(jnp.array(0), parameters)
+        model = self.init_model_for_retrieval(trial_indices[0], parameters)
         return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
             model, self.trials[trial_indices]
         )[1]
