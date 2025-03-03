@@ -73,6 +73,7 @@ class ScipyDE:
         self.diff_w = hyperparams.get("diff_w", 0.85)
         self.progress_bar = hyperparams.get("progress_bar", True)
         self.display_iterations = hyperparams.get("display_iterations", False)
+        self.best_of = hyperparams.get("best_of", 1)
 
         # Instantiate the loss function generator
         self.loss_fn_generator = loss_fn_generator(model_factory, dataset, connections)
@@ -94,17 +95,22 @@ class ScipyDE:
         )
 
         # Run differential evolution
-        fit_result = differential_evolution(
-            loss_fn,
-            self.bounds,
-            maxiter=self.num_steps,
-            popsize=self.pop_size,
-            vectorized=True,
-            disp=self.display_iterations,
-            tol=self.relative_tolerance,
-            mutation=self.diff_w,
-            recombination=self.cross_over_rate,
-        )
+        best_fitness = np.inf
+        for _ in range(self.best_of):
+            fit_result = differential_evolution(
+                loss_fn,
+                self.bounds,
+                maxiter=self.num_steps,
+                popsize=self.pop_size,
+                vectorized=True,
+                disp=self.display_iterations,
+                tol=self.relative_tolerance,
+                mutation=self.diff_w,
+                recombination=self.cross_over_rate,
+            )
+            if fit_result.fun < best_fitness:
+                best_fitness = fit_result.fun
+                best_fit_result = fit_result
 
         # Prepare output
         result: FitResult = {
@@ -112,7 +118,7 @@ class ScipyDE:
             "free": {
                 k: self.free_parameter_bounds[k] for k in self.free_parameter_bounds
             },
-            "fitness": [float(fit_result.fun)],
+            "fitness": [float(best_fit_result.fun)],
             "fits": {
                 # For each base param, we just repeat its original value
                 **{
@@ -121,7 +127,7 @@ class ScipyDE:
                 },
                 # For each free param, we store the optimizer's best value
                 **{
-                    param_name: [float(fit_result.x[idx])]
+                    param_name: [float(best_fit_result.x[idx])]
                     for idx, param_name in enumerate(self.free_parameter_bounds)
                 },
                 # Subject is -1 if not subject-specific
