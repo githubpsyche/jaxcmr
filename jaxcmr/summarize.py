@@ -1,7 +1,67 @@
-from typing import Optional
+import importlib
+import json
+from typing import Mapping, Optional
 
 import numpy as np
-from scipy.stats import t
+import pandas as pd
+from jax import numpy as jnp
+from jax.tree_util import tree_map
+from scipy.stats import t, ttest_rel
+
+from jaxcmr.typing import Array, Float, MemorySearchCreateFn
+
+__all__ = [
+    "bound_params",
+    "import_from_string",
+    "load_opt_params",
+    "validate_params",
+    "calculate_ci",
+    "summarize_parameters",
+]
+
+
+def bound_params(
+    params: Mapping[str, Float[Array, " popsize"]], bounds: Mapping[str, list[float]]
+) -> dict[str, Float[Array, " popsize"]]:
+    """Return parameters scaled within bounds"""
+    return tree_map(
+        lambda param, bound: jnp.minimum(jnp.maximum(bound[0], param), bound[1]),
+        params,
+        bounds,
+    )
+
+
+def import_from_string(import_string):
+    module_name, function_name = import_string.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
+
+
+def load_opt_params(base_param_path: str):
+    """Load the base parameters and bounds for the optimization.
+
+    Args:
+        base_param_path: Path to the base parameters file.
+    """
+    with open(base_param_path) as f:
+        fit_config = json.load(f)
+    base_params = fit_config["fixed"].copy()
+    param_bounds = fit_config["free"].copy()
+    return {"base": base_params, "bounds": param_bounds}
+
+
+def validate_params(
+    loss_fn, model_init: MemorySearchCreateFn, trials, list_arg, opt_params
+):
+    """Validate the bounds of the optimization parameters."""
+    base_params, base_bounds = opt_params
+    test_params = base_params.copy()
+    for key, key_bounds in base_bounds.items():
+        test_params[key] = key_bounds[0]
+    loss_fn(model_init, list_arg, trials, test_params)
+    for key, key_bounds in base_bounds.items():
+        test_params[key] = key_bounds[1]
+    loss_fn(model_init, list_arg, trials, test_params)
 
 
 def calculate_ci(data: list[float], confidence=0.95) -> float:
@@ -121,3 +181,100 @@ def summarize_parameters(
         )
 
     return md_table
+
+
+def generate_t_p_matrices(results: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Returns matrices of t-values and p-values from paired t-tests on model fitness results.
+
+    Args:
+    - results: dicts containing `name` and subjectwise `fitness` data for each model.
+    """
+    # Extract model names
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+
+    # Initialize matrices for t-values and 'less' p-values
+    t_values = np.zeros((num_models, num_models))
+    p_values_less = np.zeros((num_models, num_models))
+
+    # Populate the matrices with t and p values from the paired t-tests
+    for i, model_a in enumerate(results):
+        for j, model_b in enumerate(results):
+            t, p_less = ttest_rel(
+                model_a["fitness"], model_b["fitness"], alternative="less"
+            )
+            t_values[i, j] = t
+            p_values_less[i, j] = p_less
+
+    # Convert matrices to pandas DataFrames, replacing NaNs with empty strings
+    df_t = pd.DataFrame(t_values, index=model_names, columns=model_names).replace(
+        np.nan, ""
+    )
+    df_p = pd.DataFrame(p_values_less, index=model_names, columns=model_names).replace(
+        np.nan, ""
+    )
+
+    return df_t, df_p
+
+
+def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
+    """
+    Calculates the Akaike Information Criterion weights for a list of models.
+
+    Parameters:
+    - results (list): A list of dictionaries, each with 'name', 'fitness', and 'free' (parameters).
+
+    Returns:
+    - DataFrame: A pandas DataFrame with a row for each model and their AICw scores.
+    """
+    aics = []
+    names = []
+
+    # Calculate AIC for each model
+    for model in results:
+        k = len(model["free"])  # number of parameters
+        log_likelihood = sum(model["fitness"])  # assuming fitness is log-likelihood
+        aic = 2 * k + 2 * log_likelihood
+        aics.append(aic)
+        names.append(model["name"])
+
+    # Convert AICs to AIC weights
+    aics = np.array(aics)
+    min_aic = np.min(aics)
+    delta_aic = aics - min_aic
+    weights = np.exp(-0.5 * delta_aic)
+    aic_weights = weights / np.sum(weights)
+
+    # Create DataFrame
+    df = pd.DataFrame({"Model": names, "AICw": aic_weights})
+    return df.sort_values(by="AICw", ascending=False)
+
+
+def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
+    """Returns matrix of fractions of fitness in row model < in model j.
+
+    Args:
+        - results: dicts containing each containing 'name' and 'fitness' data for each model.
+    """
+    # Extract model names
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+
+    # Initialize matrix for comparison results
+    comparison_matrix = np.zeros((num_models, num_models))
+
+    # Populate the matrix with comparison fractions
+    for i, model_a in enumerate(results):
+        for j, model_b in enumerate(results):
+            if i != j:
+                # Calculate the fraction of fitness values in model_a that are lower than those in model_b
+                comparison_scores = np.array(model_a["fitness"]) < np.array(
+                    model_b["fitness"]
+                )
+                comparison_fraction = np.mean(comparison_scores)
+                comparison_matrix[i, j] = comparison_fraction
+            else:
+                # Set diagonal to NaN for clarity, since self-comparison does not make sense here
+                comparison_matrix[i, j] = np.nan
+
+    return pd.DataFrame(comparison_matrix, index=model_names, columns=model_names)
