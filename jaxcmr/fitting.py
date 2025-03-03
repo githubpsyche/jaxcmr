@@ -191,6 +191,11 @@ class ScipyDE:
                     continue
                 all_results["fits"][param_name] += values_list
 
+            # print last fit and raise error if fitness is not finite
+            if not jnp.isfinite(fit_result["fitness"][0]):
+                print(fit_result)
+                raise ValueError("Non-finite fitness")
+
         return all_results
 
     def fit(
