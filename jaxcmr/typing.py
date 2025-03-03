@@ -28,7 +28,7 @@ __all__ = [
     "FittingAlgorithm",
 ]
 
-
+test = 0
 class MemorySearch(Protocol):
     """A model of memory search.
 
@@ -39,8 +39,6 @@ class MemorySearch(Protocol):
 
     item_count: int
     is_active: Bool[Array, ""]
-    recallable: Bool[Array, " item_count"]
-    recall_total: Integer[Array, ""]
 
     def experience(self, choice: Int_) -> "MemorySearch":
         """Returns model after experiencing the specified study item.
@@ -107,26 +105,6 @@ class MemorySearchModelFactory(Protocol):
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
-
-class ProbabilityCalculator(Protocol):
-    """
-    Computes item-choice probabilities from supports and sensitivity.
-    """
-
-    def outcome_probability(
-        self,
-        item_index: Int_,
-        supports: Float[Array, " items"],
-    ) -> Float_:
-        """Returns the probability of selecting the specified item."""
-        ...
-
-    def outcome_probabilities(
-        self,
-        supports: Float[Array, " items"],
-    ) -> Float[Array, " items"]:
-        """Returns a probability distribution over all items."""
         ...
 
 
