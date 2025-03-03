@@ -3,7 +3,7 @@ from typing import Any, Callable
 import numpy as np
 from jax import numpy as jnp, vmap, lax
 
-from cru_to_cmr.typing import Array, Float, Real, Integer
+from jaxcmr.typing import Array, Float, Real, Integer
 
 # from numba import njit
 

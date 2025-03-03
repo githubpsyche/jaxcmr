@@ -3,9 +3,9 @@ from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 
 from scipy.stats import bootstrap
-from cru_to_cmr.helpers.array import segment_by_nan
+from jaxcmr.experimental.array import segment_by_nan
 from jax import numpy as jnp
-from cru_to_cmr.typing import Real, Array
+from jaxcmr.typing import Real, Array
 
 
 __all__ = [
