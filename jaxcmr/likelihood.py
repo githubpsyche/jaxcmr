@@ -91,10 +91,6 @@ class MemorySearchLikelihoodFnGenerator:
         Only valid if all present-lists match.
         """
         model = self.init_model_for_retrieval(jnp.array(0), parameters)
-        # return lax.map(
-        #     lambda i: predict_and_simulate_recalls(model, self.trials[i])[1],
-        #     trial_indices,
-        # )
         return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
             model, self.trials[trial_indices]
         )[1]
