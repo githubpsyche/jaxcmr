@@ -1,4 +1,3 @@
-import importlib
 import json
 from typing import Mapping, Optional
 
@@ -12,7 +11,6 @@ from jaxcmr.typing import Array, Float, MemorySearchCreateFn
 
 __all__ = [
     "bound_params",
-    "import_from_string",
     "load_opt_params",
     "validate_params",
     "calculate_ci",
@@ -29,12 +27,6 @@ def bound_params(
         params,
         bounds,
     )
-
-
-def import_from_string(import_string):
-    module_name, function_name = import_string.rsplit(".", 1)
-    module = importlib.import_module(module_name)
-    return getattr(module, function_name)
 
 
 def load_opt_params(base_param_path: str):

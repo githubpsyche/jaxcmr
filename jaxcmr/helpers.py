@@ -1,3 +1,4 @@
+import importlib
 from typing import Callable, Optional, Sequence
 
 import h5py
@@ -6,6 +7,12 @@ import jax.numpy as jnp
 from jaxcmr.typing import Array, Bool
 
 lb = jnp.finfo(jnp.float32).eps
+
+
+def import_from_string(import_string):
+    module_name, function_name = import_string.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
 
 
 def generate_trial_mask(
