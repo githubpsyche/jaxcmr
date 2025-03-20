@@ -51,7 +51,7 @@ popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
-best_of = 1
+best_of = 3
 
 # sim params
 experiment_count = 50
