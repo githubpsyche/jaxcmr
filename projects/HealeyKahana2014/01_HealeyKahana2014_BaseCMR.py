@@ -95,7 +95,7 @@ query_parameters = [
 
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
-for product in ["fits", "figures", "simulations"]:
+for product in ["fits", "figures"]:#, "simulations"]:
     product_dir = os.path.join(product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
