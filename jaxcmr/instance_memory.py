@@ -1,4 +1,3 @@
-from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
