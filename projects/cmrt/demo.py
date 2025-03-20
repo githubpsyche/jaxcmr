@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     custom_cell_magics: kql
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.11.2
-#   kernelspec:
-#     display_name: .venv
-#     language: python
-#     name: python3
-# ---
-
 # %%
 
 #!%load_ext autoreload
@@ -31,14 +15,14 @@ import numpy as np
 from jax import random
 from matplotlib import rcParams  # type: ignore
 
-from cmrt.cmr import CMRFactory as model_factory
-from cmrt.fitting import ScipyDE as fitting_method
-from cmrt.helpers import import_from_string
-from cmrt.experimental.array import to_numba_typed_dict
-from cmrt.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
-from cmrt.simulation import simulate_h5_from_h5
-from cmrt.summarize import summarize_parameters
-from cmrt.typing import Array, Bool
+from jaxcmr.cmr import CMRFactory as model_factory
+from jaxcmr.fitting import ScipyDE as fitting_method
+from jaxcmr.helpers import import_from_string
+from jaxcmr.experimental.array import to_numba_typed_dict
+from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.simulation import simulate_h5_from_h5
+from jaxcmr.summarize import summarize_parameters
+from jaxcmr.typing import Array, Bool
 
 warnings.filterwarnings("ignore")
 
