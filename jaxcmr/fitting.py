@@ -1,3 +1,4 @@
+import time
 from typing import Any, Mapping, Optional, Type
 
 import numpy as np
@@ -57,7 +58,7 @@ class ScipyDE:
         self.connections = connections
         self.base_params = base_params
 
-        # Extract hyperparams or use defaults
+        # Hyperparameters (with defaults)
         if hyperparams is None:
             hyperparams = {}
 
@@ -79,6 +80,19 @@ class ScipyDE:
 
         # Subject IDs
         self.subjects = dataset["subject"].flatten()
+
+        # Store all hyperparameters to return later
+        self.all_hyperparams = {
+            "bounds": self.free_parameter_bounds,
+            "num_steps": self.num_steps,
+            "pop_size": self.pop_size,
+            "relative_tolerance": self.relative_tolerance,
+            "cross_over_rate": self.cross_over_rate,
+            "diff_w": self.diff_w,
+            "progress_bar": self.progress_bar,
+            "display_iterations": self.display_iterations,
+            "best_of": self.best_of,
+        }
 
     def single_fit(
         self,
@@ -111,7 +125,6 @@ class ScipyDE:
                 best_fitness = fit_result.fun
                 best_fit_result = fit_result
 
-        # Prepare output
         result: FitResult = {
             "fixed": {k: float(v) for k, v in self.base_params.items()},
             "free": {
@@ -123,12 +136,15 @@ class ScipyDE:
                 **{k: [float(v)] for k, v in self.base_params.items()},
                 # For each free param, we store the optimizer's best value
                 **{
-                    param_name: [float(fit_result.x[idx])]
+                    param_name: [float(best_fit_result.x[idx])]
                     for idx, param_name in enumerate(self.free_parameter_bounds)
                 },
                 # Subject is -1 if not subject-specific
                 "subject": [-1],
             },
+            # These keys will be added at the top-level fit call
+            "hyperparameters": {},
+            "fit_time": 0.0,
         }
         return result
 
@@ -154,6 +170,8 @@ class ScipyDE:
                 **{k: [] for k in self.base_params},
                 "subject": [],
             },
+            "hyperparameters": {},
+            "fit_time": 0.0,
         }
 
         # Optionally show progress bar
@@ -162,7 +180,6 @@ class ScipyDE:
             if self.progress_bar
             else range(len(unique_subjects))
         )
-
         for s in subject_range:
             # If no trials for this subject, skip
             if np.sum(subject_trial_masks[s]) == 0:
@@ -179,7 +196,6 @@ class ScipyDE:
                     f"for subject {unique_subjects[s]}"
                 )
 
-            # Append subject ID
             all_results["fits"]["subject"].append(int(unique_subjects[s]))
 
             # Append param values
@@ -203,8 +219,17 @@ class ScipyDE:
         trial_mask: Bool[Array, " trials"],
         fit_to_subjects: bool = True,
     ) -> FitResult:
-        """Convenience wrapper for either single-fit or subject-by-subject fitting."""
-        if fit_to_subjects:
-            return self.fit_to_subjects(trial_mask)
-        else:
-            return self.single_fit(trial_mask)
+        """Convenience wrapper for either single-fit or subject-by-subject fitting that also benchmarks the process."""
+        start_time = time.perf_counter()
+
+        result = (
+            self.fit_to_subjects(trial_mask)
+            if fit_to_subjects
+            else self.single_fit(trial_mask)
+        )
+
+        end_time = time.perf_counter()
+        result["fit_time"] = end_time - start_time
+        result["hyperparameters"] = self.all_hyperparams
+
+        return result

@@ -213,6 +213,11 @@ class FitResult(TypedDict):
     fits: dict[str, list[float]]
     """Dictionary of parameter names -> optimized values (one or many)."""
 
+    hyperparameters: dict[str, Any]
+    """Dictionary of hyperparameter names and their values used during fitting."""
+    
+    fit_time: float
+    """Total time (in seconds) taken to perform the fitting."""
 
 class FittingAlgorithm(Protocol):
     """Protocol describing a fitting algorithm for memory search models.
