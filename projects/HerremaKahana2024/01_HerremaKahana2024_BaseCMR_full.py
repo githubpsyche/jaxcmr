@@ -6,9 +6,7 @@
 import json
 import os
 import warnings
-from typing import Optional
 
-import h5py
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,13 +14,12 @@ from jax import random
 from matplotlib import rcParams  # type: ignore
 
 from jaxcmr.cmr import CMRFactory as model_factory
-from jaxcmr.fitting import ScipyDE as fitting_method
-from jaxcmr.helpers import import_from_string
 from jaxcmr.experimental.array import to_numba_typed_dict
+from jaxcmr.fitting import ScipyDE as fitting_method
+from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data
 from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
-from jaxcmr.typing import Array, Bool
 
 warnings.filterwarnings("ignore")
 
@@ -41,13 +38,13 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 # %%
 
 # data params
-data_name = "HerrKaha24"
+data_name = "HerremaKahana2024"
 data_query = "data['listLength'] <= 40"
-data_path = "data/HerrKaha24.h5"
+data_path = "data/HerremaKahana2024.h5"
 run_tag = "full"
 
 # fitting params
-redo_fits = False
+redo_fits = True
 model_name = "BaseCMR"
 relative_tolerance = 0.001
 popsize = 15
@@ -57,12 +54,11 @@ diff_w = 0.85
 best_of = 1
 
 # sim params
-experiment_count = 10
+experiment_count = 50
 seed = 0
 
 parameters = {
-    "fixed": {
-    },
+    "fixed": {},
     "free": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -94,28 +90,7 @@ query_parameters = [
     "choice_sensitivity",
 ]
 
-
 # %%
-def load_data(data_path: str) -> dict[str, jnp.ndarray]:
-    """Load data from hdf5 file."""
-    with h5py.File(data_path, "r") as f:
-        result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
-    return {key: jnp.array(value) for key, value in result.items()}
-
-
-def generate_trial_mask(
-    data: dict, trial_query: Optional[str]
-) -> Bool[Array, " trial_count"]:
-    """Returns a boolean mask for selecting trials based on a specified query condition.
-
-    Args:
-        data: dict containing trial data arrays, including a "recalls" key with an array.
-        trial_query: condition to evaluate, which should return a boolean array.
-        If None, returns a mask that selects all trials.
-    """
-    if trial_query is None:
-        return jnp.ones(data["recalls"].shape[0], dtype=bool)
-    return eval(trial_query).flatten()
 
 
 # add subdirectories for each product type: json, figures, h5
@@ -176,11 +151,6 @@ else:
 results["data_query"] = data_query
 results["model"] = model_name
 results["name"] = f"{data_name}_{model_name}_{run_tag}"
-results["relative_tolerance"] = relative_tolerance
-results["popsize"] = popsize
-results["num_steps"] = num_steps
-results["cross_rate"] = cross_rate
-results["diff_w"] = diff_w
 
 with open(fit_path, "w") as f:
     json.dump(results, f, indent=4)
@@ -205,10 +175,9 @@ sim = simulate_h5_from_h5(
 
 # %%
 
-unique_list_lengths = np.unique(data['listLength'][trial_mask])
+unique_list_lengths = np.unique(data["listLength"][trial_mask])
 
 for LL in unique_list_lengths:
-
     for analysis in comparison_analyses:
         figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.pdf"
         figure_path = os.path.join("figures/", figure_str)
@@ -223,7 +192,9 @@ for LL in unique_list_lengths:
         axis = analysis(
             datasets=[
                 to_numba_typed_dict({key: np.array(val) for key, val in sim.items()}),
-                to_numba_typed_dict({key: np.array(value) for key, value in data.items()}),
+                to_numba_typed_dict(
+                    {key: np.array(value) for key, value in data.items()}
+                ),
             ],
             trial_masks=[np.array(_joint_trial_mask), np.array(joint_trial_mask)],
             color_cycle=color_cycle,

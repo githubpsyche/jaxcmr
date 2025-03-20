@@ -315,9 +315,9 @@ def pad_fields(aggregated_dict):
 ###############################################################################
 
 if __name__ == "__main__":
-    csv_path = "data/raw/HerrKaha24.csv"
+    csv_path = "data/raw/HerremaKahana2024.csv"
     wordpool_path = "data/wordpool_ltpFR3.txt"
-    target_data_path = "data/HerrKaha24.h5"
+    target_data_path = "data/HerremaKahana2024.h5"
 
     df = pd.read_csv(csv_path)
     embam = parse_jspsych_csv(

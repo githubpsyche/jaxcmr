@@ -48,8 +48,8 @@ use_progress_bar = True
 # %%
 # | CONFIG / PARAMETERS
 
-fit_path = "fits/HerrKaha24_BaseCMR_full.json"
-data_path = "data/HerrKaha24.h5"
+fit_path = "fits/HerremaKahana2024_BaseCMR_full.json"
+data_path = "data/HerremaKahana2024.h5"
 data_query = "data['subject'] > -1"
 
 use_progress_bar = True
