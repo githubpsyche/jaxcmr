@@ -26,6 +26,7 @@ data_query = "data['listtype'] == -1"
 data_path = "data/HealyKahana2014.h5"
 
 # fitting params
+project_path = "projects/profiling"
 redo_fits = True
 run_tag = "test"
 model_name = "BaseCMR"
@@ -86,8 +87,8 @@ query_parameters = [
 
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
-for product in ["fits", "figures", "simulations"]:
-    product_dir = os.path.join(product)
+for product in ["fits"]:#, "figures", "simulations"]:
+    product_dir = os.path.join(project_path, product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
         os.makedirs(product_dir)
