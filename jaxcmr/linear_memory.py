@@ -49,7 +49,6 @@ class LinearMemory(Pytree):
         """Return the output pattern associated with the input pattern in memory.
 
         Args:
-            memory: the current memory state.
             input_pattern: the input feature pattern.
         """
         return power_scale(jnp.dot(in_pattern, self.state), self.activation_scale)
