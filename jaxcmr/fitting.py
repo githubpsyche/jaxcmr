@@ -1,24 +1,23 @@
 from typing import Any, Mapping, Optional, Type
 
 import numpy as np
+from jax import numpy as jnp
 from scipy.optimize import differential_evolution
 from tqdm import trange
-from jax import numpy as jnp
 
 from jaxcmr.typing import (
     Array,
-    Float_,
     Bool,
+    FitResult,
+    Float_,
     Integer,
     LossFnGenerator,
     MemorySearchModelFactory,
-    FitResult
 )
 
 
 def make_subject_trial_masks(
-    trial_mask: Bool[Array, " trials"], 
-    subject_vector: Integer[Array, " trials"]
+    trial_mask: Bool[Array, " trials"], subject_vector: Integer[Array, " trials"]
 ):
     """Returns a list of masks, one per unique subject, plus the list of unique subjects."""
     unique_subjects = np.unique(subject_vector)
@@ -121,13 +120,10 @@ class ScipyDE:
             "fitness": [float(best_fit_result.fun)],
             "fits": {
                 # For each base param, we just repeat its original value
-                **{
-                    k: [float(v)]
-                    for k, v in self.base_params.items()
-                },
+                **{k: [float(v)] for k, v in self.base_params.items()},
                 # For each free param, we store the optimizer's best value
                 **{
-                    param_name: [float(best_fit_result.x[idx])]
+                    param_name: [float(fit_result.x[idx])]
                     for idx, param_name in enumerate(self.free_parameter_bounds)
                 },
                 # Subject is -1 if not subject-specific
@@ -162,7 +158,9 @@ class ScipyDE:
 
         # Optionally show progress bar
         subject_range = (
-            trange(len(unique_subjects)) if self.progress_bar else range(len(unique_subjects))
+            trange(len(unique_subjects))
+            if self.progress_bar
+            else range(len(unique_subjects))
         )
 
         for s in subject_range:
@@ -193,8 +191,10 @@ class ScipyDE:
 
             # print last fit and raise error if fitness is not finite
             if not jnp.isfinite(fit_result["fitness"][0]):
-                print(fit_result)
-                raise ValueError("Non-finite fitness")
+                raise ValueError(
+                    f"Non-finite fitness for subject {int(unique_subjects[s])}",
+                    fit_result,
+                )
 
         return all_results
 
