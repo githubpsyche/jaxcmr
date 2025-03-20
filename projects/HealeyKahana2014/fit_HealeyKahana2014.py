@@ -151,11 +151,6 @@ else:
 results["data_query"] = data_query
 results["model"] = model_name
 results["name"] = f"{data_name}_{model_name}_{run_tag}"
-results["relative_tolerance"] = relative_tolerance
-results["popsize"] = popsize
-results["num_steps"] = num_steps
-results["cross_rate"] = cross_rate
-results["diff_w"] = diff_w
 
 with open(fit_path, "w") as f:
     json.dump(results, f, indent=4)
