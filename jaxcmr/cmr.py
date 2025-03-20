@@ -281,7 +281,7 @@ class BaseCMRFactory:
 
     def create_model(
         self,
-        trial_index: int,
+        trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -299,7 +299,7 @@ class InstanceCMRFactory:
 
     def create_model(
         self,
-        trial_index: int,
+        trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -317,7 +317,7 @@ class MixedCMRFactory:
 
     def create_model(
         self,
-        trial_index: int,
+        trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
