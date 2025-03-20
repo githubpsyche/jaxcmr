@@ -60,6 +60,8 @@ class ScipyDE:
         self.subjects = dataset["subject"].flatten()
 
         # configure convenience features
+        if hyperparams is None:
+            hyperparams = {}
         self.progress_bar = hyperparams.get("progress_bar", True)
         self.display_iterations = hyperparams.get("display_iterations", False)
 
