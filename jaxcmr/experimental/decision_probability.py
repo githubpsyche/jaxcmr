@@ -5,7 +5,7 @@ from jax.scipy.special import ndtr
 from jaxtyping import Array, Bool, Float, Integer
 from simple_pytree import Pytree
 
-from jaxcmr.helpers import lb
+from jaxcmr.math import lb
 
 Float_ = Float[Array, ""] | float | int
 Int_ = Integer[Array, ""] | int

@@ -1,15 +1,24 @@
 from typing import Mapping, Optional
 
+import numpy as np
 from jax import lax
 from jax import numpy as jnp
-import numpy as np
 from simple_pytree import Pytree
 
-from jaxcmr.helpers import lb
-from jaxcmr.typing import Array, Float, Integer, Float_, Int_, Context, Memory, MemorySearch
 from jaxcmr.context import TemporalContext
+from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
 from jaxcmr.memory import LinearMemory
-from jaxcmr.math import exponential_stop_probability, exponential_primacy_decay
+from jaxcmr.typing import (
+    Array,
+    Context,
+    Float,
+    Float_,
+    Int_,
+    Integer,
+    Memory,
+    MemorySearch,
+)
+
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
@@ -194,6 +203,7 @@ class CMR(Pytree):
                 ),
             )
         )
+
 
 class CMRFactory:
     def __init__(

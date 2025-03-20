@@ -1,15 +1,8 @@
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from jaxcmr.helpers import lb
+from jaxcmr.math import normalize_magnitude
 from jaxcmr.typing import Array, Float, Float_
-
-
-def normalize_magnitude(
-    vector: Float[Array, " features"],
-) -> Float[Array, " features"]:
-    """Return the input vector normalized to unit length."""
-    return vector / jnp.sqrt(jnp.sum(vector**2) + lb)
 
 
 class TemporalContext(Pytree):

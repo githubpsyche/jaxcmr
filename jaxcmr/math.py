@@ -1,7 +1,9 @@
 import jax.numpy as jnp
 from jax import lax
 
-from jaxcmr.typing import Float, Float_, Int_
+from jaxcmr.typing import Array, Float, Float_, Int_
+
+lb = jnp.finfo(jnp.float32).eps
 
 
 def power_scale(value: Float_, scale: Float_) -> Float:
@@ -39,3 +41,10 @@ def exponential_stop_probability(
         recall_total: the total number of items recalled.
     """
     return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
+
+
+def normalize_magnitude(
+    vector: Float[Array, " features"],
+) -> Float[Array, " features"]:
+    """Return the input vector normalized to unit length."""
+    return vector / jnp.sqrt(jnp.sum(vector**2) + lb)

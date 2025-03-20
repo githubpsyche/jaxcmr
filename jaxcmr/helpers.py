@@ -6,8 +6,6 @@ import jax.numpy as jnp
 
 from jaxcmr.typing import Array, Bool
 
-lb = jnp.finfo(jnp.float32).eps
-
 
 def import_from_string(import_string):
     module_name, function_name = import_string.rsplit(".", 1)
