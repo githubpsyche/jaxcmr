@@ -9,32 +9,7 @@ from jaxcmr.helpers import lb
 from jaxcmr.typing import Array, Float, Integer, Float_, Int_, Context, Memory, MemorySearch
 from jaxcmr.context import TemporalContext
 from jaxcmr.memory import LinearMemory
-
-def exponential_primacy_decay(
-    study_index: Int_, primacy_scale: Float_, primacy_decay: Float_
-):
-    """Returns the exponential primacy weighting for the specified study event.
-
-    Args:
-        study_index: the index of the study event.
-        primacy_scale: the scale factor for primacy effect.
-        primacy_decay: the decay factor for primacy effect.
-    """
-    return primacy_scale * jnp.exp(-primacy_decay * study_index) + 1
-
-
-def exponential_stop_probability(
-    stop_probability_scale: Float_, stop_probability_growth: Float_, recall_total: Int_
-):
-    """Returns the exponential stop probability for the specified recall event.
-
-    Args:
-        stop_probability_scale: the scale factor for stop probability.
-        stop_probability_growth: the growth factor for stop probability.
-        recall_total: the total number of items recalled.
-    """
-    return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
-
+from jaxcmr.math import exponential_stop_probability, exponential_primacy_decay
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
