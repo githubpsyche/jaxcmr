@@ -20,7 +20,7 @@ from jaxcmr.typing import (
 def make_subject_trial_masks(
     trial_mask: Bool[Array, " trials"], subject_vector: Integer[Array, " trials"]
 ):
-    """Returns a list of masks, one per unique subject, plus the list of unique subjects."""
+    """Returns a list of subject-specific masks and the list of unique subjects."""
     unique_subjects = np.unique(subject_vector)
     subject_masks = [
         (subject_vector == s) & trial_mask.astype(bool) for s in unique_subjects
@@ -57,46 +57,32 @@ class ScipyDE:
         self.dataset = dataset
         self.connections = connections
         self.base_params = base_params
-
-        # Hyperparameters (with defaults)
-        if hyperparams is None:
-            hyperparams = {}
-
-        # Pull out free-parameter bounds from hyperparams (or default to empty dict)
-        self.free_parameter_bounds = hyperparams.get("bounds", {})
-        self.bounds = np.array(list(self.free_parameter_bounds.values()))
-
-        self.num_steps = hyperparams.get("num_steps", 1000)
-        self.pop_size = hyperparams.get("pop_size", 15)
-        self.relative_tolerance = hyperparams.get("relative_tolerance", 0.001)
-        self.cross_over_rate = hyperparams.get("cross_over_rate", 0.9)
-        self.diff_w = hyperparams.get("diff_w", 0.85)
-        self.progress_bar = hyperparams.get("progress_bar", True)
-        self.display_iterations = hyperparams.get("display_iterations", False)
-        self.best_of = hyperparams.get("best_of", 1)
-
-        # Instantiate the loss function generator
-        self.loss_fn_generator = loss_fn_generator(model_factory, dataset, connections)
-
-        # Subject IDs
         self.subjects = dataset["subject"].flatten()
 
-        # Store all hyperparameters to return later
+        # configure convenience features
+        self.progress_bar = hyperparams.get("progress_bar", True)
+        self.display_iterations = hyperparams.get("display_iterations", False)
+
+        # Extract bounds for free params; store all hyperparams for convenience
+        self.free_parameter_bounds = hyperparams.get("bounds", {})
+        self.bounds = np.array(list(self.free_parameter_bounds.values()))
+        
+        if hyperparams is None:
+            hyperparams = {}
         self.all_hyperparams = {
             "bounds": self.free_parameter_bounds,
-            "num_steps": self.num_steps,
-            "pop_size": self.pop_size,
-            "relative_tolerance": self.relative_tolerance,
-            "cross_over_rate": self.cross_over_rate,
-            "diff_w": self.diff_w,
-            "progress_bar": self.progress_bar,
-            "display_iterations": self.display_iterations,
-            "best_of": self.best_of,
+            "num_steps": hyperparams.get("num_steps", 1000),
+            "pop_size": hyperparams.get("pop_size", 15),
+            "relative_tolerance": hyperparams.get("relative_tolerance", 0.001),
+            "cross_over_rate": hyperparams.get("cross_over_rate", 0.9),
+            "diff_w": hyperparams.get("diff_w", 0.85),
+            "best_of": hyperparams.get("best_of", 1),
         }
 
-    def single_fit(
-        self,
-        trial_mask: Bool[Array, " trials"],
+        self.loss_fn_generator = loss_fn_generator(model_factory, dataset, connections)
+
+    def _fit_single_mask(
+        self, trial_mask: Bool[Array, " trials"], subject_id: int = -1
     ) -> FitResult:
         """Returns result of fitting the model to the trials specified by the mask."""
         # Convert the mask to an array of trial indices
@@ -109,51 +95,58 @@ class ScipyDE:
 
         # Run differential evolution
         best_fitness = np.inf
-        for _ in range(self.best_of):
+        for _ in range(self.all_hyperparams["best_of"]):
             fit_result = differential_evolution(
                 loss_fn,
                 self.bounds,
-                maxiter=self.num_steps,
-                popsize=self.pop_size,
+                maxiter=self.all_hyperparams["num_steps"],
+                popsize=self.all_hyperparams["pop_size"],
                 vectorized=True,
                 disp=self.display_iterations,
-                tol=self.relative_tolerance,
-                mutation=self.diff_w,
-                recombination=self.cross_over_rate,
+                tol=self.all_hyperparams["relative_tolerance"],
+                mutation=self.all_hyperparams["diff_w"],
+                recombination=self.all_hyperparams["cross_over_rate"],
             )
             if fit_result.fun < best_fitness:
                 best_fitness = fit_result.fun
                 best_fit_result = fit_result
 
-        result: FitResult = {
+        return {
             "fixed": {k: float(v) for k, v in self.base_params.items()},
             "free": {
                 k: self.free_parameter_bounds[k] for k in self.free_parameter_bounds
             },
-            "fitness": [float(best_fit_result.fun)],
+            "fitness": [float(best_fitness)],
             "fits": {
                 # For each base param, we just repeat its original value
                 **{k: [float(v)] for k, v in self.base_params.items()},
                 # For each free param, we store the optimizer's best value
                 **{
+                    # Map each free param name to the best-fit value
                     param_name: [float(best_fit_result.x[idx])]
                     for idx, param_name in enumerate(self.free_parameter_bounds)
                 },
-                # Subject is -1 if not subject-specific
-                "subject": [-1],
+                "subject": [subject_id],
             },
             # These keys will be added at the top-level fit call
             "hyperparameters": {},
             "fit_time": 0.0,
         }
-        return result
 
-    def fit_to_subjects(
-        self,
-        trial_mask: Bool[Array, " trials"],
+    def fit(
+        self, trial_mask: Bool[Array, " trials"], fit_to_subjects: bool = True
     ) -> FitResult:
-        """Returns result of fitting the model separately to each subject present in the dataset."""
-        # Create one trial mask per subject
+        """Either fit the model to all subjects individually or do a single global fit."""
+        t0 = time.perf_counter()
+
+        # If not per-subject, just do one global fit
+        if not fit_to_subjects:
+            result = self._fit_single_mask(trial_mask)
+            result["hyperparameters"] = self.all_hyperparams
+            result["fit_time"] = time.perf_counter() - t0
+            return result
+
+        # Otherwise, gather per-subject masks
         subject_trial_masks, unique_subjects = make_subject_trial_masks(
             trial_mask, self.subjects
         )
@@ -170,7 +163,7 @@ class ScipyDE:
                 **{k: [] for k in self.base_params},
                 "subject": [],
             },
-            "hyperparameters": {},
+            "hyperparameters": self.all_hyperparams,
             "fit_time": 0.0,
         }
 
@@ -186,16 +179,16 @@ class ScipyDE:
                 continue
 
             # Single-fit on the subject-specific mask
-            fit_result = self.single_fit(subject_trial_masks[s])
+            fit_result = self._fit_single_mask(subject_trial_masks[s], int(unique_subjects[s]))
             all_results["fitness"] += fit_result["fitness"]
 
             # Show in tqdm progress bar
             if self.progress_bar:
-                subject_range.set_description(  # type: ignore
-                    f"Last fitness: {fit_result['fitness']} "
-                    f"for subject {unique_subjects[s]}"
+                subject_range.set_description( # type: ignore
+                    f"Subject={unique_subjects[s]}, Fitness={fit_result['fitness'][0]}"
                 )
 
+            # Accumulate fitted parameters
             all_results["fits"]["subject"].append(int(unique_subjects[s]))
 
             # Append param values
@@ -205,31 +198,11 @@ class ScipyDE:
                     continue
                 all_results["fits"][param_name] += values_list
 
-            # print last fit and raise error if fitness is not finite
+            # Bail out if we got a non-finite fitness
             if not jnp.isfinite(fit_result["fitness"][0]):
                 raise ValueError(
-                    f"Non-finite fitness for subject {int(unique_subjects[s])}",
-                    fit_result,
+                    f"Non-finite fitness for subject {unique_subjects[s]}", fit_result
                 )
 
+        all_results["fit_time"] = time.perf_counter() - t0
         return all_results
-
-    def fit(
-        self,
-        trial_mask: Bool[Array, " trials"],
-        fit_to_subjects: bool = True,
-    ) -> FitResult:
-        """Convenience wrapper for either single-fit or subject-by-subject fitting that also benchmarks the process."""
-        start_time = time.perf_counter()
-
-        result = (
-            self.fit_to_subjects(trial_mask)
-            if fit_to_subjects
-            else self.single_fit(trial_mask)
-        )
-
-        end_time = time.perf_counter()
-        result["fit_time"] = end_time - start_time
-        result["hyperparameters"] = self.all_hyperparams
-
-        return result
