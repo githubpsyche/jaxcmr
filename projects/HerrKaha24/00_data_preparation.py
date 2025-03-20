@@ -1,12 +1,15 @@
-import pandas as pd
-import numpy as np
+import contextlib
 import json
-from jaxcmr.helpers import save_dict_to_hdf5
 
+import numpy as np
+import pandas as pd
+
+from jaxcmr.helpers import save_dict_to_hdf5
 
 ###############################################################################
 #                               1. WORDPOOL & SUBJECTS                        #
 ###############################################################################
+
 
 def load_wordpool(wordpool_path):
     """
@@ -19,6 +22,7 @@ def load_wordpool(wordpool_path):
         raise ValueError("Wordpool file is empty.")
     return {w: i for i, w in enumerate(dict.fromkeys(words), start=1)}
 
+
 def convert_subjects_to_ints(df, subject_col):
     """
     Convert string subject labels to integers (1, 2, 3...).
@@ -27,17 +31,18 @@ def convert_subjects_to_ints(df, subject_col):
     if subject_col not in df.columns:
         raise ValueError(f"No column {subject_col} in DataFrame.")
     unique_labels = df[subject_col].dropna().unique()
-    label_map = {}
-    next_id = 1
-    for label in sorted(unique_labels, key=str):
-        label_map[label] = next_id
-        next_id += 1
+    label_map = {
+        label: next_id
+        for next_id, label in enumerate(sorted(unique_labels, key=str), start=1)
+    }
     df[subject_col] = df[subject_col].apply(lambda x: label_map.get(x, 0)).astype(int)
     return label_map
+
 
 ###############################################################################
 #                        2. HELPER FUNCTIONS FOR A BLOCK                      #
 ###############################################################################
+
 
 def extract_presentation_items(block_df, wordpool_map):
     """
@@ -49,7 +54,9 @@ def extract_presentation_items(block_df, wordpool_map):
     pres_df = block_df[block_df["type"] == "WORD"].copy()
     if pres_df.empty:
         return [], []
-    sort_col = "serial_position" if "serial_position" in pres_df.columns else "trial_index"
+    sort_col = (
+        "serial_position" if "serial_position" in pres_df.columns else "trial_index"
+    )
     pres_df = pres_df.sort_values(sort_col, na_position="last")
     studied_words = pres_df["word"].fillna("").str.lower().str.strip().tolist()
     pres_itemids = []
@@ -59,6 +66,7 @@ def extract_presentation_items(block_df, wordpool_map):
         pres_itemids.append(wordpool_map[w])
     pres_itemnos = list(range(1, len(pres_itemids) + 1))
     return pres_itemids, pres_itemnos
+
 
 def extract_raw_typed(block_df):
     """
@@ -74,36 +82,35 @@ def extract_raw_typed(block_df):
     rec_df = rec_df[~(rec_df["rec_word"].isna() & rec_df["rt"].isna())]
     if rec_df.empty:
         return [], []
-    
+
     # Do not re-sort, since the recall order is already correct (e.g., via time_elapsed)
     rec_df = rec_df.reset_index(drop=True)
-    
+
     typed_words = rec_df.apply(_extract_typed_word, axis=1).tolist()
     typed_times = rec_df["rt"].fillna(0).astype(float).tolist()
     typed_times = [int(round(t)) for t in typed_times]
-    
+
     assert len(typed_words) == len(typed_times), (
         f"Mismatch in typed recall extraction: {len(typed_words)} words vs {len(typed_times)} RTs"
     )
     return typed_words, typed_times
+
 
 def _extract_typed_word(row):
     """
     If rec_word is present, return that (lowercased),
     otherwise parse 'response' which might look like "{'Q0': 'some text'}".
     """
-    w = str(row.get("rec_word", "")).strip().lower()
-    if w:
+    if w := str(row.get("rec_word", "")).strip().lower():
         return w
     resp = row.get("response", "")
     if isinstance(resp, str) and "Q0" in resp:
-        try:
+        with contextlib.suppress(Exception):
             fixed = resp.replace("'", '"')
             parsed = json.loads(fixed)
             return str(parsed.get("Q0", "")).strip().lower()
-        except:
-            pass
     return ""
+
 
 def build_raw_recall_arrays(typed_words, typed_times, pres_itemids, wordpool_map):
     """
@@ -133,6 +140,7 @@ def build_raw_recall_arrays(typed_words, typed_times, pres_itemids, wordpool_map
 
     return recalls, rec_ids, recall_rt
 
+
 def build_clean_recall_arrays(recalls, recall_rt):
     """
     Produce clean recall arrays by filtering out intrusions (recall == -1)
@@ -152,6 +160,7 @@ def build_clean_recall_arrays(recalls, recall_rt):
         clean_recalls.append(pos)
         clean_rts.append(rt)
     return clean_recalls, clean_rts
+
 
 def parse_single_block(block_df, wordpool_map, subject_id, session_id, list_id):
     """
@@ -193,23 +202,25 @@ def parse_single_block(block_df, wordpool_map, subject_id, session_id, list_id):
         "rec_itemids": rec_itemids,
         "recall_rt": recall_rt,
         "clean_recalls": clean_recs,
-        "clean_recall_rt": clean_rts
+        "clean_recall_rt": clean_rts,
     }
+
 
 ###############################################################################
 #                      3. PROCESS THE ENTIRE CSV                               #
 ###############################################################################
 
+
 def parse_jspsych_csv(df, wordpool_path, subject_col, session_col, list_col):
     # 1) Copy the DataFrame to avoid modifying the original.
     df2 = df.copy()
-    
+
     # 2) Load the wordpool mapping from the specified file.
     wordpool_map = load_wordpool(wordpool_path)
-    
+
     # 3) Convert subject labels (strings) to integer codes.
     convert_subjects_to_ints(df2, subject_col)
-    
+
     # 4) Ensure session and list columns exist and are numeric.
     # If session_col doesn't exist, set it to 1 for all rows.
     if session_col not in df2.columns:
@@ -217,14 +228,11 @@ def parse_jspsych_csv(df, wordpool_path, subject_col, session_col, list_col):
     else:
         df2[session_col] = df2[session_col].fillna(1)
     df2[session_col] = df2[session_col].astype(int)
-    
+
     # Similarly, if list_col doesn't exist, set it to 0 for all rows.
-    if list_col not in df2.columns:
-        df2[list_col] = 0
-    else:
-        df2[list_col] = df2[list_col].fillna(0)
+    df2[list_col] = 0 if list_col not in df2.columns else df2[list_col].fillna(0)
     df2[list_col] = df2[list_col].astype(int)
-    
+
     # 5) Group by (subject, session, list) and process each block.
     group_cols = [subject_col, session_col, list_col]
     block_dicts = []
@@ -236,10 +244,10 @@ def parse_jspsych_csv(df, wordpool_path, subject_col, session_col, list_col):
             wordpool_map=wordpool_map,
             subject_id=int(subj_val),
             session_id=int(sess_val),
-            list_id=(l_val + 1)  # 1-based indexing
+            list_id=(l_val + 1),  # 1-based indexing
         )
         block_dicts.append(block_result)
-    
+
     # 6) Aggregate the block results and pad to 2D numpy arrays.
     # Here we choose to use the "clean" recall arrays.
     aggregated = {
@@ -262,7 +270,7 @@ def parse_jspsych_csv(df, wordpool_path, subject_col, session_col, list_col):
         aggregated["listLength"].append(b["listLength"])
         aggregated["pres_itemids"].append(b["pres_itemids"])
         aggregated["pres_itemnos"].append(b["pres_itemnos"])
-        
+
         # use clean arrays for modeling
         # aggregated["recalls"].append(b["recalls"])
         # aggregated["rec_itemids"].append(b["rec_itemids"])
@@ -271,12 +279,14 @@ def parse_jspsych_csv(df, wordpool_path, subject_col, session_col, list_col):
         # aggregated["clean_recall_rt"].append(b["clean_recall_rt"])
         aggregated["recalls"].append(b["clean_recalls"])
         aggregated["irt"].append(b["clean_recall_rt"])
-    
+
     return pad_fields(aggregated)
+
 
 ###############################################################################
 #                   4. ZERO-PADDING FIELDS TO NUMPY ARRAYS                    #
 ###############################################################################
+
 
 def pad_fields(aggregated_dict):
     """
@@ -299,6 +309,7 @@ def pad_fields(aggregated_dict):
             final[key] = np.array(val_list).reshape(n, 1)
     return final
 
+
 ###############################################################################
 #                               5. DRIVER                                     #
 ###############################################################################
@@ -314,7 +325,7 @@ if __name__ == "__main__":
         wordpool_path,
         subject_col="worker_id",
         session_col="session",
-        list_col="list"
+        list_col="list",
     )
 
     for k, v in embam.items():
