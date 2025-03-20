@@ -7,7 +7,7 @@ from simple_pytree import Pytree
 
 from jaxcmr.context import TemporalContext
 from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
-from jaxcmr.memory import LinearMemory
+from jaxcmr.linear_memory import LinearMemory
 from jaxcmr.typing import (
     Array,
     Context,
