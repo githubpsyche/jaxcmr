@@ -21,9 +21,9 @@ warnings.filterwarnings("ignore")
 # %%
 
 # data params
-data_name = "HealyKahana2014"
+data_name = "HealeyKahana2014"
 data_query = "data['listtype'] == -1"
-data_path = "data/HealyKahana2014.h5"
+data_path = "data/HealeyKahana2014.h5"
 
 # fitting params
 project_path = "projects/profiling"

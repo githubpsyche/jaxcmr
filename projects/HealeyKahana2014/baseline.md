@@ -1,5 +1,5 @@
-fits/HealyKahana2014_BaseCMR_test.json
-Last fitness: [653.1034545898438] for subject 244: 100%|██████████| 126/126 [08:11<00:00,  3.90s/it]| | | HealyKahana2014 BaseCMR test |
+fits/HealeyKahana2014_BaseCMR_test.json
+Last fitness: [653.1034545898438] for subject 244: 100%|██████████| 126/126 [08:11<00:00,  3.90s/it]| | | HealeyKahana2014 BaseCMR test |
 |---|---|---|
 | fitness | mean | 589.29 +/- 16.95 |
 | | std | 95.78 |
