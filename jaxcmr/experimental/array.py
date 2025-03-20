@@ -4,6 +4,8 @@ import numpy as np
 from jax import numpy as jnp, vmap, lax
 
 from jaxcmr.typing import Array, Float, Real, Integer
+from numba import types
+from numba.typed import Dict
 
 # from numba import njit
 
@@ -21,6 +23,31 @@ __all__ = [
     "njit_apply_along_axis",
     "filter_repeated_recalls",
 ]
+
+def to_numba_typed_dict(py_dict: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """
+    Converts a Python dictionary of 2D int64 arrays to a Numba-typed dictionary.
+
+    Parameters
+    ----------
+        py_dict (dict[str, np.ndarray]): A Python dictionary containing 2D int64 arrays.
+
+    Returns
+    -------
+        dict[str, np.ndarray]: A Numba-typed dictionary containing 2D int32 arrays.
+    """
+    # Define the key and value types for the Numba typed dict
+    key_type = types.unicode_type
+    value_type = types.Array(types.int32, 2, "C")  # 2D int64 array
+
+    # Initialize an empty Numba typed dict
+    numba_dict = Dict.empty(key_type=key_type, value_type=value_type)
+
+    # Populate the Numba typed dict
+    for key, value in py_dict.items():
+        numba_dict[key] = np.ascontiguousarray(value.astype(np.int32))
+
+    return numba_dict
 
 def filter_trial(trial):
     seen = set()
