@@ -9,13 +9,11 @@ import warnings
 
 import jax.numpy as jnp
 import numpy as np
-from jax import random
 
 from jaxcmr.cmr import CMRFactory as model_factory
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, load_data
 from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
-from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
 
 warnings.filterwarnings("ignore")
@@ -149,18 +147,4 @@ results["diff_w"] = diff_w
 
 print(
     summarize_parameters([results], query_parameters, include_std=True, include_ci=True)
-)
-
-# %%
-
-rng = random.PRNGKey(seed)
-rng, rng_iter = random.split(rng)
-simulate_h5_from_h5(
-    model_factory=model_factory,
-    dataset=data,
-    connections=connections,
-    parameters={key: jnp.array(val) for key, val in results["fits"].items()},  # type: ignore
-    trial_mask=trial_mask,
-    experiment_count=experiment_count,
-    rng=rng_iter,
 )
