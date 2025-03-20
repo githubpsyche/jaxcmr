@@ -6,8 +6,9 @@ from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from jaxcmr.context import TemporalContext
-from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
+from jaxcmr.instance_memory import InstanceMemory
 from jaxcmr.linear_memory import LinearMemory
+from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
 from jaxcmr.typing import (
     Array,
     Context,
@@ -27,6 +28,9 @@ class CMR(Pytree):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
+        mfc: Memory,
+        mcf: Memory,
+        context: Context,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -49,20 +53,9 @@ class CMR(Pytree):
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
-        self.context: Context = TemporalContext.init(list_length)
-        self.mfc: Memory = LinearMemory.init_mfc(
-            list_length,
-            self.context.size,
-            parameters["learning_rate"],
-            1.0,
-        )
-        self.mcf: Memory = LinearMemory.init_mcf(
-            list_length,
-            self.context.size,
-            parameters["item_support"],
-            parameters["shared_support"],
-            parameters["choice_sensitivity"],
-        )
+        self.context = context
+        self.mfc = mfc
+        self.mcf = mcf
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
@@ -205,7 +198,79 @@ class CMR(Pytree):
         )
 
 
-class CMRFactory:
+def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """Creates a regular CMR model with linear associative $M^{FC}$ and $M^{CF}$ memories."""
+    context = TemporalContext.init(list_length)
+    mfc = LinearMemory.init_mfc(
+        list_length,
+        context.size,
+        parameters["learning_rate"],
+        parameters.get("mfc_choice_sensitivity", 1.0),
+    )
+    mcf = LinearMemory.init_mcf(
+        list_length,
+        context.size,
+        parameters["item_support"],
+        parameters["shared_support"],
+        parameters["choice_sensitivity"],
+    )
+    return CMR(list_length, parameters, mfc, mcf, context)
+
+
+def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """
+    Creates InstanceCMR model with instance-based $M^{FC}$ and $M^{CF}$ memories.
+
+    Equivalent to the original CMR model when `mcf_trace_sensitivity` is set to 1.0.
+    Usually slower than the linear version, but often more interpretable and flexible.
+    """
+    context = TemporalContext.init(list_length)
+    mfc = InstanceMemory.init_mfc(
+        list_length,
+        context.size,
+        list_length,
+        parameters["learning_rate"],
+        parameters.get("mfc_choice_sensitivity", 1.0),
+        parameters.get("mfc_trace_sensitivity", 1.0),
+    )
+    mcf = InstanceMemory.init_mcf(
+        list_length,
+        context.size,
+        list_length,
+        parameters["item_support"],
+        parameters["shared_support"],
+        parameters["choice_sensitivity"],
+        parameters["mcf_trace_sensitivity"],
+    )
+    return CMR(list_length, parameters, mfc, mcf, context)
+
+
+def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """
+    Creates MixedCMR model with linear $M^{FC}$ and instance-based $M^{CF}$ memories.
+
+    Equivalent to InstanceCMR but faster feature-to-context memory.
+    """
+    context = TemporalContext.init(list_length)
+    mfc = LinearMemory.init_mfc(
+        list_length,
+        context.size,
+        parameters["learning_rate"],
+        parameters.get("mfc_choice_sensitivity", 1.0),
+    )
+    mcf = InstanceMemory.init_mcf(
+        list_length,
+        context.size,
+        list_length,
+        parameters["item_support"],
+        parameters["shared_support"],
+        parameters["choice_sensitivity"],
+        parameters["mcf_trace_sensitivity"],
+    )
+    return CMR(list_length, parameters, mfc, mcf, context)
+
+
+class BaseCMRFactory:
     def __init__(
         self,
         dataset: dict[str, Integer[Array, " trials ?"]],
@@ -216,8 +281,44 @@ class CMRFactory:
 
     def create_model(
         self,
-        trial_index: Integer[Array, ""],
+        trial_index: int,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
-        return CMR(self.max_list_length, parameters)
+        return BaseCMR(self.max_list_length, parameters)
+
+
+class InstanceCMRFactory:
+    def __init__(
+        self,
+        dataset: dict[str, Integer[Array, " trials ?"]],
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        trial_index: int,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return InstanceCMR(self.max_list_length, parameters)
+
+
+class MixedCMRFactory:
+    def __init__(
+        self,
+        dataset: dict[str, Integer[Array, " trials ?"]],
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        trial_index: int,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return MixedCMR(self.max_list_length, parameters)
