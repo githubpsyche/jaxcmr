@@ -2,18 +2,8 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
+from jaxcmr.math import power_scale
 from jaxcmr.typing import Array, Float, Float_
-
-
-def power_scale(value: Float_, scale: Float_) -> Float:
-    """Returns value scaled by the exponent factor using logsumexp trick."""
-    log_activation = jnp.log(value)
-    return lax.cond(
-        jnp.logical_and(jnp.any(value != 0), scale != 1),
-        lambda _: jnp.exp(scale * (log_activation - jnp.max(log_activation))),
-        lambda _: value,
-        None,
-    )
 
 
 class LinearMemory(Pytree):
