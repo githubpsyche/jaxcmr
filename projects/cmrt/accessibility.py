@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     custom_cell_magics: kql
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.11.2
-#   kernelspec:
-#     display_name: .venv
-#     language: python
-#     name: python3
-# ---
-
 # %%
 #!%load_ext autoreload
 #!%autoreload 2
@@ -31,10 +15,10 @@ import seaborn as sns
 from jax import jit, lax, vmap
 from tqdm import trange
 
-from cmrt.cmr import CMRFactory as model_factory
-from cmrt.fitting import make_subject_trial_masks
-from cmrt.helpers import generate_trial_mask, load_data
-from cmrt.likelihood import MemorySearchLikelihoodFnGenerator as LikelihoodFnGenerator
+from jaxcmr.cmr import CMRFactory as model_factory
+from jaxcmr.fitting import make_subject_trial_masks
+from jaxcmr.helpers import generate_trial_mask, load_data
+from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as LikelihoodFnGenerator
 
 # %%
 # | CONFIG / PARAMETERS
@@ -166,7 +150,9 @@ for s in subject_range:
                 "recall_position": int(recall_positions[i][j].item()),
                 "list_length": int(list_lengths[i].item()),
                 "accessibility": float(accessibility[i][j].item()),
-                "continuation": "Continued" if j < termination_indices[i].item() else "Terminated",
+                "continuation": "Continued"
+                if j < termination_indices[i].item()
+                else "Terminated",
                 "reaction_time": rt,
                 "log_reaction_time": float(log_rt),
             }
@@ -195,7 +181,7 @@ for ll in sorted(unique_list_lengths):
         x="recall_position",
         y="accessibility",
         hue="continuation",
-        errorbar="ci"
+        errorbar="ci",
     )
 
     plt.xlabel("Recall Position")
@@ -205,26 +191,24 @@ for ll in sorted(unique_list_lengths):
     plt.legend(title="Recall Status")
     plt.show()
 # %%
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8, 6))
 subset = all_rows[all_rows["reaction_time"] > 0]
 
-sns.regplot(data=subset, x="accessibility", y="reaction_time", scatter_kws={'s': 10})
+sns.regplot(data=subset, x="accessibility", y="reaction_time", scatter_kws={"s": 10})
 plt.xlabel("Mean Accessibility")
 plt.ylabel("Reaction Time")
 plt.title("Relationship between Accessibility and Reaction Time")
 plt.show()
 
 # %%
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 subset = all_rows[all_rows["reaction_time"] > 0]
 
 plt.figure(figsize=(8, 6))
-sns.regplot(data=subset, x="accessibility", y="log_reaction_time", scatter_kws={'s': 10})
+sns.regplot(
+    data=subset, x="accessibility", y="log_reaction_time", scatter_kws={"s": 10}
+)
 plt.xlabel("Mean Accessibility")
 plt.ylabel("Log(Reaction Time)")
 plt.title("Relationship between Accessibility and Log(Reaction Time)")
@@ -232,30 +216,48 @@ plt.show()
 
 # %%
 # Bin recall positions into 5 groups.
-all_rows['recall_bin'] = pd.cut(all_rows['recall_position'], bins=5)
+all_rows["recall_bin"] = pd.cut(all_rows["recall_position"], bins=5)
 subset = all_rows[all_rows["reaction_time"] > 0]
 
 unique_list_lengths = subset["list_length"].unique()
 for ll in sorted(unique_list_lengths):
     ll_subset = subset[subset["list_length"] == ll]
-    sns.lmplot(data=ll_subset, x="accessibility", y="reaction_time", hue="recall_bin", ci=95, scatter_kws={'s':10})
+    sns.lmplot(
+        data=ll_subset,
+        x="accessibility",
+        y="reaction_time",
+        hue="recall_bin",
+        ci=95,
+        scatter_kws={"s": 10},
+    )
     plt.xlabel("Mean Accessibility")
     plt.ylabel("Reaction Time")
-    plt.title("Relationship between Accessibility and Reaction Time\n(Controlled by Recall Position Bin)")
+    plt.title(
+        "Relationship between Accessibility and Reaction Time\n(Controlled by Recall Position Bin)"
+    )
     plt.show()
 
 # %%
 # Bin recall positions into 5 groups.
-all_rows['recall_bin'] = pd.cut(all_rows['recall_position'], bins=5)
+all_rows["recall_bin"] = pd.cut(all_rows["recall_position"], bins=5)
 subset = all_rows[all_rows["reaction_time"] > 0]
 
 unique_list_lengths = subset["list_length"].unique()
 for ll in sorted(unique_list_lengths):
     ll_subset = subset[subset["list_length"] == ll]
-    sns.lmplot(data=ll_subset, x="accessibility", y="log_reaction_time", hue="recall_bin", ci=95, scatter_kws={'s':10})
+    sns.lmplot(
+        data=ll_subset,
+        x="accessibility",
+        y="log_reaction_time",
+        hue="recall_bin",
+        ci=95,
+        scatter_kws={"s": 10},
+    )
     plt.xlabel("Mean Accessibility")
     plt.ylabel("Log(Reaction Time)")
-    plt.title("Relationship between Accessibility and Log(Reaction Time)\n(Controlled by Recall Position Bin)")
+    plt.title(
+        "Relationship between Accessibility and Log(Reaction Time)\n(Controlled by Recall Position Bin)"
+    )
     plt.show()
 
 # %%
