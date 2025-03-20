@@ -43,10 +43,7 @@ def filter_repeated_recalls(recalls: jnp.ndarray):
     # Convert to list of lists for easy manipulation
     recalls_list = recalls.tolist()
 
-    # Apply the filtering to each trial
-    filtered_recalls_list = [filter_trial(trial) for trial in recalls_list]
-
-    return filtered_recalls_list
+    return [filter_trial(trial) for trial in recalls_list]
 
 
 def repmat(matrix: Real[Array, " ..."], m: int, n: int) -> Real[Array, " x y"]:
