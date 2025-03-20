@@ -1,12 +1,12 @@
 import numpy as np
 from tqdm import tqdm
 from jaxcmr.helpers import generate_trial_mask
-# from numba import njit
+from numba import njit
 from jaxcmr.typing import Integer, Array, Int_
 from jax import lax, numpy as jnp
 
 
-# @njit
+@njit
 def shuffle_matrix(rng, matrix, experiment_count):
     # Initialize an empty list to store each shuffled matrix
     shufflings = np.zeros(
@@ -71,7 +71,7 @@ def control_dataset(
         "listLength": np.full((result_trials.shape[0], 1), list_length),
     }
 
-# @njit
+@njit
 def njit_item_to_study_positions(
         item: int,
         presentation: np.ndarray):
