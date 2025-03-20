@@ -5,7 +5,7 @@ from jaxcmr.helpers import lb
 from jaxcmr.typing import Array, Float, Float_
 
 
-def linalg_norm(
+def normalize_magnitude(
     vector: Float[Array, " features"],
 ) -> Float[Array, " features"]:
     """Return the input vector normalized to unit length."""
@@ -27,6 +27,7 @@ class TemporalContext(Pytree):
 
         Args:
             item_count: the number of items in the context model.
+            size: the size of the context representation.
         """
         self.size = size
         self.zeros = jnp.zeros(size)
@@ -45,12 +46,12 @@ class TemporalContext(Pytree):
             context_input: the input representation to be integrated into the contextual state.
             drift_rate: The drift rate parameter.
         """
-        context_input = linalg_norm(context_input)
+        context_input = normalize_magnitude(context_input)
         rho = jnp.sqrt(
             1 + jnp.square(drift_rate) * (jnp.square(self.state * context_input) - 1)
         ) - (drift_rate * (self.state * context_input))
         return self.replace(
-            state=linalg_norm((rho * self.state) + (drift_rate * context_input))
+            state=normalize_magnitude((rho * self.state) + (drift_rate * context_input))
         )
 
     @classmethod
