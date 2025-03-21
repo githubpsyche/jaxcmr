@@ -41,7 +41,7 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 data_name = "HealeyKahana2014"
 data_query = "data['listtype'] == -1"
 data_path = "data/HealeyKahana2014.h5"
-run_tag = "benchmark"
+run_tag = "best_of_1"
 
 # fitting params
 redo_fits = True
@@ -51,7 +51,7 @@ popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
-best_of = 3
+best_of = 1
 
 # sim params
 experiment_count = 50
