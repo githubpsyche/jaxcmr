@@ -44,7 +44,7 @@ data_path = "data/HealeyKahana2014.h5"
 run_tag = "best_of_1"
 
 # fitting params
-redo_fits = True
+redo_fits = False
 model_name = "BaseCMR"
 relative_tolerance = 0.001
 popsize = 15
@@ -209,6 +209,6 @@ for LL in unique_list_lengths:
         axis.set_ylabel(axis.get_ylabel(), fontsize=16)
         # axis.set_title(f'{results["name"]}'.replace("_", " "))
         plt.savefig(figure_path, bbox_inches="tight")
-        plt.show()
+        # plt.show()
 
 # %%
