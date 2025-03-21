@@ -41,10 +41,10 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 data_name = "HealeyKahana2014"
 data_query = "data['listtype'] == -1"
 data_path = "data/HealeyKahana2014.h5"
-run_tag = "best_of_3"
+run_tag = "best_of_1"
 
 # fitting params
-redo_fits = False
+redo_fits = True
 model_name = "BaseCMR"
 relative_tolerance = 0.001
 popsize = 15
