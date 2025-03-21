@@ -41,6 +41,7 @@ __all__ = [
 test = 0
 
 
+@runtime_checkable
 class MemorySearch(Protocol):
     """A model of memory search.
 
@@ -90,6 +91,7 @@ class MemorySearch(Protocol):
         ...
 
 
+@runtime_checkable
 class MemorySearchCreateFn(Protocol):
     """A factory for creating memory search models."""
 
@@ -102,6 +104,7 @@ class MemorySearchCreateFn(Protocol):
         ...
 
 
+@runtime_checkable
 class MemorySearchModelFactory(Protocol):
     def __init__(
         self,
@@ -120,6 +123,7 @@ class MemorySearchModelFactory(Protocol):
         ...
 
 
+@runtime_checkable
 class Memory(Protocol):
     state: Float[Array, " input_size output_size"]
 
@@ -190,6 +194,7 @@ class Context(Protocol):
         ...
 
 
+@runtime_checkable
 class LossFnGenerator(Protocol):
     """Generates loss function for model fitting."""
 
@@ -291,6 +296,7 @@ class RecallDataset(TypedDict):
     list_type: NotRequired[Integer[Array, "n_trials 1"]]
     """List type for each trial (shape: [n_trials, 1])."""
 
+@runtime_checkable
 class FittingAlgorithm(Protocol):
     """Protocol describing a fitting algorithm for memory search models.
 

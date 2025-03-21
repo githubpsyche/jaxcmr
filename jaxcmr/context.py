@@ -4,15 +4,16 @@
 __all__ = ['TemporalContext']
 
 # %% ../notebooks/context.ipynb 2
+import base64
+import io
+
+import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from .math import normalize_magnitude
-from .typing import Array, Float, Float_
 from .state_analysis import matrix_heatmap
-import io
-import base64
-import matplotlib.pyplot as plt
+from .typing import Array, Float, Float_
 
 
 class TemporalContext(Pytree):
@@ -29,7 +30,7 @@ class TemporalContext(Pytree):
         self.zeros = jnp.zeros(size)
         self.state = self.zeros.at[0].set(1)
         self.initial_state = self.zeros.at[0].set(1)
-        self.next_outlist_unit = item_count + 1 
+        self.next_outlist_unit = item_count + 1
 
     @classmethod
     def init(cls, item_count: int) -> "TemporalContext":
@@ -39,7 +40,7 @@ class TemporalContext(Pytree):
             item_count: the number of items in the context model.
         """
         return cls(item_count, item_count + 1)
-    
+
     def integrate(
         self,
         context_input: Float[Array, " context_feature_units"],
@@ -61,7 +62,7 @@ class TemporalContext(Pytree):
 
     def _repr_markdown_(self):
         """Returns a markdown representation of the context model."""
-        fig, ax = matrix_heatmap(self.state, figsize=(10, 1))
+        fig, ax = matrix_heatmap(self.state, figsize=(6, 0.6))
 
         ax.set_xlabel("")
         ax.set_ylabel("")
@@ -70,12 +71,12 @@ class TemporalContext(Pytree):
 
         # Remove colorbar safely if desired:
         for coll in ax.collections:
-            if hasattr(coll, 'colorbar') and coll.colorbar:
+            if hasattr(coll, "colorbar") and coll.colorbar:
                 coll.colorbar.remove()
 
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")
         plt.close(fig)
 
-        encoded = base64.b64encode(buf.getvalue()).decode('utf-8')
+        encoded = base64.b64encode(buf.getvalue()).decode("utf-8")
         return f'<img src="data:image/png;base64,{encoded}" />'
