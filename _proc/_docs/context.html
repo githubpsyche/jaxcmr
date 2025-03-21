@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Context – jaxcmr</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Context – jaxcmr">
+<meta property="og:description" content="modeling memory search with jax">
+<meta property="og:image" content="https://githubpsyche.github.io/jaxcmr/data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeUAAABZCAYAAAAATzzYAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAPYQAAD2EBqD+naQAADRdJREFUeJzt3QuUjnUewPHfmMFg3IqMGZmGlOTSuC5Se5iSdVxOrY2lVbodS5G2klaSFeneaIlattwjuZydERKlRAiZEkZDmiGtMTOuY+a/5/dnxjBOq8vM/F7z/Zzz9L7vM8+MX8/zPv/f/q+Qc45JwAAoNiVKu4AAADAKSRlAACMICkDAGAESRkAACNIygAAGEFSBgDACJIyAABGkJQBADCCpAwAgBEhP+fgrANJEghKV6sjIWUixbqTJ/YSZwmNlThLZpyBFCtx/vZxXghaygAAGEFSBgDACJIyAABGkJQBADCCpAwAgBEkZQAAjCApAwBgBEkZAAAjSMoAABhBUgYAwAiSMgAARpCUAQAwgqQMAIARJGUAAALxqxvVoiUfyIZNX8rWr3fI9qRdkpV1Uv4xbIh073zTz/o7OTk5MnPeIpm7MEF2f/e9lC8fKr9rHiMP3tdXLo+sed7fWf3Zepn81ixJ3LZTgoJEGlxdT+6/s6f/PQAASlxLOW7Sv+WdBfGSsm+fVL/0kl/8D48cFydjXp4ozjnp3aOrtG3VXJatXC097xkkyXv2nrcycP+Qv0vSt3uk+x9ipVunWNm5K1nuHfyEvL/io18cBwAAAdtSHjl0sERdHiER4TXkjbfnyMsTp/zsf3Tt+k0yb1GCNL+uoUx++RkpXbq039/5pt9L/789KaNf/KdMeml03vGH0jNkzEsTpGqVSjJnSpyEX1bd7+/Xp4f0uGugjHp+vLRt2UwqVCj/s2MBACBgW8qtW8T4hPxrzF2U4B8H3vuXvISs2rVuIS1iGssnazdISur+vP3aEk7PyJQ/39Y1LyErfd7rtq5yMC1dlq365FfFBABAiZzotW7DZilXLlRiGjUo8LO2rZqdOuaLLWeO33jqeZuWTQsef3rf5/mOBwAgEBV5Uj5y9Jj88ON/pVbNcAkODi7w86haEf5xd75x5dwx5qjLIwsef3rf7j3fF2LUAABchEk5M/OwfwwLO/4b+64cMbhI2d+5/TzsAoVfuL4U38XAIBAxTplAABKalIOCzvV2s3MPNMSzu/w6VZxxXwzqcNOP888T2v4zPEFW9EAAASSIk/K5cuF+vXN36WkSnZ2doGfJ393amy4dr7x49xx4/OtX87dV/vyU2PRAAAEqmLpvm4e00iOHj0mG7cknvdTu/wx1zU8c/x1jfyjLpUqcPzpfbnHAAAQqAo1KR9MOyRJyXv8Y349unbyj+MnvyVZWVl5+z/6dJ2s27jZL33Kvxa6Y/t2UjGsgsyYt1BS9/+Qt1+fz5y30H+oSOwNbQrzfwUAAHuf6KWfVb1x81b/fHvSt/5x3uIEn0xVTONr5Y9db/HPZ8xbJBP+NV369+stA+7uk/c3WjZrIrd1ucV/qlePux6QG9q0kB9+PCgJy1dK5UoVZdhD/c/6N/2+IX+Vx59+Tv501wNyS4cb/P6E5ask7VCGPP/043yaFwCg5CVlTcgL4pedsy/Rb7lyk/JPGfHoA1Kv7hUyd0G8THtngZQvV0463NDGfyFF7dNrlfPr0rG9VK1cSSa/NVvm/2epBEmQNKh/pdzft5f/lDEAAAJdkNNvhLhAWQeSJBCUrlZHQsoU/KARa06e2EucJTRW4iyZcQZSrMT528d5IVinDACAESRlAACMICkDAGAESRkAACNIygAAGEFSBgDACJIyAABGkJQBADCCpAwAgBEkZQAAjCApAwBgBEkZAAAjSMoAABhBUgYAwAiSMgAAVrhidOzYMTdixAj/aBlxlsw4AylW4iyZcQZSrMR5YYL0P8VVIUhPT5fKlSvLoUOHpFKlSmIVcZbMOAMpVuIsmXEGUqzEeWHovgYAwAiSMgAARpCUAQAwoliTctmyZWXEiBH+0TLiLJlxBlKsxFky4wykWInzwhTrRC8AAHAG3dcAABhBUgYAwAiSMgAARpCUAQAwgqQMAEBJT8qvvfaaXHHFFRIaGiqtWrWStWvXijWrVq2SLl26SEREhAQFBcl7770nFo0ZM0ZatGghFStWlMsuu0y6d+8u27ZtE2smTJggjRs39h9dp1vr1q0lPj6+uMP6v8aOHeuv/+DBg8Wap556yseWf6tfv75YtHfvXunTp49ceumlUq5cOWnUqJF8/vnnYomWSeeeT90GDBgglmRnZ8vw4cMlOjran8u6devKqFGj9LsMxJqMjAx/70RFRflY27RpI+vWrTNfvjvn5Mknn5SaNWv6uGNjY2X79u0XZ1KePXu2DBkyxK8F27BhgzRp0kQ6duwo+/fvF0sOHz7sY9MKhGUrV670hcaaNWtk6dKlkpWVJTfffLOP35JatWr5BLd+/XpfGLdv3166desmW7duFau08Hj99dd9ZcKqa6+9VlJSUvK2jz/+WKw5ePCgtG3bVkqXLu0rYomJifLCCy9I1apVxdr1zn8u9X5SPXr0EEueffZZX8kdP368fPXVV/71uHHjJC4uTqy55557/Hl8++23ZcuWLb5s0gSnlTTL5fu4cePk1VdflYkTJ8pnn30mFSpU8Hnq2LFjhRuYKwYtW7Z0AwYMyHudnZ3tIiIi3JgxY5xVeqrmz5/vAsH+/ft9vCtXrnTWVa1a1b3xxhvOooyMDFevXj23dOlSd+ONN7pBgwY5a/TbbJo0aeKse+yxx9z111/vAo1e87p167qcnBxnSefOnV2/fv3O2nfrrbe63r17O0uOHDnigoOD3eLFi8/a37RpU/fEE084q+V7Tk6OCw8Pd88991zevrS0NFe2bFk3c+bMQo2lyFvKJ06c8C0lrSnlKlWqlH/96aefFnU4FyX9dhN1ySWXiFXa/TZr1ixfW9VubIu096Fz585nvVct0i417YKrU6eO9O7dW3bv3i3WLFy4UJo3b+5bnDrEEhMTI5MnTxbLtKyaNm2a9OvXz3dvWqJdwMuXL5dvvvnGv960aZPvIenUqZNYcvLkSX+v6zBlftodbLFHJ9euXbskNTX1rHtfvzlKh1oLO0+FSBE7cOCAv0g1atQ4a7++/vrrr4s6nItOTk6OH7/RrsKGDRuKNdp9pUlYu4DCwsJk/vz50qBBA7FGKww6tGJh7OunaCExdepUufrqq31368iRI6Vdu3by5Zdf+jkGViQlJfnuVh22GjZsmD+vDz74oJQpU0b69u0rFukYY1pamtx5551izdChQ/1XDOr8geDgYF+mjh492lfKLNH3oN7vOt59zTXX+HJ+5syZPrFdeeWVYlVqaqp/PF+eyv3ZRZOUUfitOy2QrdZCNXl88cUXvjU/d+5cXyDrmLilxLxnzx4ZNGiQHwc7t4ZvTf6WkY57a5LWCTVz5syRu+++WyxVFrWl/Mwzz/jX2lLW96mO11lNym+++aY/v9oLYY1e3+nTp8uMGTP8nAK9p7QyrrFaO586lqy9DZGRkb4C0bRpU+nVq5fvMUVBRd59Xa1aNX9h9u3bd9Z+fR0eHl7U4VxUBg4cKIsXL5YVK1b4SVUWactIa8jNmjXzs8Z1osUrr7wilmhhoZMOtfAICQnxm1YcdNKHPtdWiVVVqlSRq666Snbs2CGW6AzWcyte2nKy2NWukpOTZdmyZX6SkkWPPPKIby337NnTz2K/44475KGHHvL3lDU6M1zvn8zMTF/h1ZU2OhlVh1usCj+di4ojT5UqjkJZC2QdD8lfi9bXVscWrdN5CpqQtSv4gw8+8MskAoVe++PHj4slHTp08N3s2vrI3bSVp12D+lwrlVZpwbdz506fBC3R4ZRzl+npeKi26i2aMmWKH/vWOQUWHTlyxM/FyU/fl3o/WaWzl/V9qTPxlyxZ4ldeWBUdHe2Tb/48pcMFOgu70POUKwazZs3ys9imTp3qEhMT3X333eeqVKniUlNTnbXZtxs3bvSbnqoXX3zRP09OTnaW9O/f31WuXNl9+OGHLiUlJW/TmY+WDB061M8I37Vrl9u8ebN/HRQU5N5/31nndXZ1w8/LC/7npOV69e7WJjY121atX8DHxL1q5d60JCQtzo0aPd9u3b3fTp01358uXdtGnTnDW6GqR27dp+xrhVffv2dZGRkX5Ws177d99911/3Rx991FmTkJDg4uPjXVJSkr/XdbVAq1at3IkTJ0yX72PHjvV5acGCBb686tatm4uOjnZHjx4t1LiKJSmruLg4/8YvU6aMXyK1Zs0aZ82KFSv8xTp30xvCkvPFqNuUKVOcJbqEIyoqyl/z6tWruw4dOgREQraclG+/XZXs2ZNf061kNbXO3bscBYtWrTINWzY0FfI69ev7yZNmuQsWrJkib9/tm3b5qxKT0/370ctQ0NDQ12dOnX8EqPjx487a2bPnu3j0/eoLjPS5bC6vMh6+Z6Tk+OGDx/uatSo4d+zWl4VxXuC71MGAMAIPvsaAAAjSMoAABhBUgYAwAiSMgAARpCUAQAwgqQMAIARJGUAAIwgKQMAYARJGQAAI0jKAAAYQVIGAEBs+B+xKvWdSvAIbAAAAABJRU5ErkJggg==">
+<meta property="og:site_name" content="jaxcmr">
+<meta name="twitter:title" content="Context – jaxcmr">
+<meta name="twitter:description" content="modeling memory search with jax">
+<meta name="twitter:image" content="https://githubpsyche.github.io/jaxcmr/data:image/png;base64,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">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">jaxcmr</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./context.html">Context</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">jaxcmr</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./context.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Context</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#temporalcontext" id="toc-temporalcontext" class="nav-link active" data-scroll-target="#temporalcontext">TemporalContext</a></li>
+  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="context.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Context</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<hr>
+<section id="temporalcontext" class="level3">
+<h3 class="anchored" data-anchor-id="temporalcontext">TemporalContext</h3>
+<blockquote class="blockquote">
+<pre><code> TemporalContext (*args:Any, **kwargs:Any)</code></pre>
+</blockquote>
+<p><em>Temporal context representation for memory search models.</em></p>
+<div id="cell-3" class="cell">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> base64</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jax <span class="im">import</span> numpy <span class="im">as</span> jnp</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> simple_pytree <span class="im">import</span> Pytree</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.math <span class="im">import</span> normalize_magnitude</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.state_analysis <span class="im">import</span> matrix_heatmap</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.typing <span class="im">import</span> Array, Float, Float_</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TemporalContext(Pytree):</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Temporal context representation for memory search models."""</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, item_count: <span class="bu">int</span>, size: <span class="bu">int</span>):</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Create a new temporal context model.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">        Args:</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co">            item_count: the number of items in the context model.</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">            size: the size of the context representation.</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">        """</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.size <span class="op">=</span> size</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.zeros <span class="op">=</span> jnp.zeros(size)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.state <span class="op">=</span> <span class="va">self</span>.zeros.at[<span class="dv">0</span>].<span class="bu">set</span>(<span class="dv">1</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.initial_state <span class="op">=</span> <span class="va">self</span>.zeros.at[<span class="dv">0</span>].<span class="bu">set</span>(<span class="dv">1</span>)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.next_outlist_unit <span class="op">=</span> item_count <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">@classmethod</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> init(cls, item_count: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="st">"TemporalContext"</span>:</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Standardized initialization for a new context model.</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">        Args:</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co">            item_count: the number of items in the context model.</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co">        """</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> cls(item_count, item_count <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> integrate(</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        context_input: Float[Array, <span class="st">" context_feature_units"</span>],</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        drift_rate: Float_,</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> <span class="st">"TemporalContext"</span>:</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Returns context after integrating input representation, preserving unit length.</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">        Args:</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">            context_input: the input representation to be integrated into the contextual state.</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">            drift_rate: The drift rate parameter.</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co">        """</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>        context_input <span class="op">=</span> normalize_magnitude(context_input)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>        rho <span class="op">=</span> jnp.sqrt(</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>            <span class="dv">1</span> <span class="op">+</span> jnp.square(drift_rate) <span class="op">*</span> (jnp.square(<span class="va">self</span>.state <span class="op">*</span> context_input) <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        ) <span class="op">-</span> (drift_rate <span class="op">*</span> (<span class="va">self</span>.state <span class="op">*</span> context_input))</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.replace(</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>            state<span class="op">=</span>normalize_magnitude((rho <span class="op">*</span> <span class="va">self</span>.state) <span class="op">+</span> (drift_rate <span class="op">*</span> context_input))</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _repr_markdown_(<span class="va">self</span>):</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Returns a markdown representation of the context model."""</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>        fig, ax <span class="op">=</span> matrix_heatmap(<span class="va">self</span>.state, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="fl">0.6</span>))</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>        ax.set_xlabel(<span class="st">""</span>)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>        ax.set_ylabel(<span class="st">""</span>)</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ax.set_xticks([])</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>        ax.set_yticks([])</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Remove colorbar safely if desired:</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> coll <span class="kw">in</span> ax.collections:</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">hasattr</span>(coll, <span class="st">"colorbar"</span>) <span class="kw">and</span> coll.colorbar:</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>                coll.colorbar.remove()</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>        buf <span class="op">=</span> io.BytesIO()</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>        fig.savefig(buf, <span class="bu">format</span><span class="op">=</span><span class="st">"png"</span>, bbox_inches<span class="op">=</span><span class="st">"tight"</span>)</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>        plt.close(fig)</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>        encoded <span class="op">=</span> base64.b64encode(buf.getvalue()).decode(<span class="st">"utf-8"</span>)</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f'&lt;img src="data:image/png;base64,</span><span class="sc">{</span>encoded<span class="sc">}</span><span class="ss">" /&gt;'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="notes" class="level3">
+<h3 class="anchored" data-anchor-id="notes">Notes</h3>
+<p>In retrieved-context models, <code>TemporalContext</code> primarily represented as a vector of continuous values, each corresponding to a different context unit.</p>
+<p>This vector is normally initialized with a start-of-list context unit and additional context units for each item in a study list. The first context unit is initialized to 1, while the remaining context units are initialized to 0.</p>
+<p>An additional out-of-list context unit is sometimes included to simulate contextual drift after a memory experiment’s study phase. However, we have found that drifting context toward this out-of-list context unit does not change model performance in a meaningful way unless the drift rate is configured near 1.0. This is because in the CMR model, only relative differences between context units are important. Drifting context toward the out-of-list context unit (unless the drift extinguishes support in all other context units) does not change the relative differences between context units connected in memory within CMR to recallable items, so it does not change the model’s behavior.</p>
+<p>To allow for both standardized and flexible initialization of <code>TemporalContext</code>, we provide an <code>init</code> class method for standardized initialization from just an <code>item_count</code> parameter, and an <code>__init__</code> method for flexible initialization from both <code>item_count</code> and <code>size</code> parameters.</p>
+<div id="cell-6" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>item_count <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>size <span class="op">=</span> item_count <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>drift_rate <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>context <span class="op">=</span> TemporalContext.init(item_count)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># initial state should be 1.0 at the first element, and 0.0 elsewhere</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> context.state[<span class="dv">0</span>] <span class="op">==</span> <span class="fl">1.0</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> jnp.<span class="bu">all</span>(context.state[<span class="dv">1</span>:] <span class="op">==</span> <span class="fl">0.0</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>context</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="3">
+<p><img src="data:image/png;base64,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"></p>
+</div>
+</div>
+<p>This context vector evolves as items are encoded and retrieved, integrating a new contextual input at each step. At each step <span class="math inline">\(i\)</span>, both models update context as</p>
+<p><span class="math display">\[
+c_i = \rho_i c_{i-1} + \beta \, c_{i}^{IN},
+\]</span></p>
+<p>where <span class="math inline">\(\beta\)</span> controls integration of new input <span class="math inline">\(c_i^{IN}\)</span>, and <span class="math inline">\(\rho_i\)</span> normalizes the vector (i.e., enforces the unit length of the context vector):</p>
+<p><span class="math display">\[
+\rho_i = \sqrt{1 + \beta^2\bigl[(c_{i-1} \cdot c^{IN}_i)^2 - 1\bigr]} \;-\;\beta(c_{i-1} \cdot c^{IN}_i).
+\]</span></p>
+<p>This gradual integration yields a recency-based gradient reflecting the order in which items were presented.</p>
+<div id="cell-8" class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>context_input <span class="op">=</span> jnp.zeros(size).at[<span class="op">-</span><span class="dv">1</span>].<span class="bu">set</span>(<span class="dv">1</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>new_context <span class="op">=</span> context.integrate(context_input, drift_rate)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># test: last element is now non-zero; rest are still 0.0, except for the first element</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> new_context.state[<span class="op">-</span><span class="dv">1</span>] <span class="op">&gt;</span> <span class="fl">0.0</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> jnp.<span class="bu">all</span>(new_context.state[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>] <span class="op">==</span> <span class="fl">0.0</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> new_context.state[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="fl">0.0</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># test: final state vector is unit length</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> jnp.isclose(jnp.linalg.norm(new_context.state), <span class="fl">1.0</span>, atol<span class="op">=</span><span class="fl">1e-6</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>new_context</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="9">
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeUAAABZCAYAAAAATzzYAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjEsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvc2/+5QAAAAlwSFlzAAAPYQAAD2EBqD+naQAAEgtJREFUeJzt3QlcVdW+B/AfMg8yCclgyiCKc+KAs6ZmmbeHWT7zWuEz83MTyynNa6l5yzQtX0WWY1oCinkdkkIzc0pFnAVxYBIVRUVlnjn7fdZCTyCG4LvIAn7fz+ewz9mHs/f/TOu/17DXMdA0TQMRERHVuAY1HQARERGVYFImIiJSBJMyERGRIpiUiYiIFMGkTEREpAgmZSIiIkUwKRMRESmCSZmIiEgRTMpERESKMKrqAwpTE6A6YwcPGJm4QnVFBcmMs57GyjjrZ5y1KdbaFOcHbn9HbfDxxZCH/g9rykRERIpgUiYiIlIEkzIREZEimJSJiIgUwaRMRESkCCZlIiIiRTApExERKYJJmYiISBFMykRERIpgUiYiIlIEkzIREZEimJSJiIgUwaRMRESkCCZlIiKi2vrTjULU2fP4ZmUQTkafRVFREbw83PD6K8Pw3IA+ld5G/MVLWL5mHSKOnUJGZiYc7O3Rv093jB8zCjbWDcv9f9ueg/9yW36DB2LeB1Mf5akQEVEd4dreA/0nv4ymnbxgaGSI6+cv48DKXxD98+FKPd6rXwd0fKkPnFs3g5WjDQyNjZB+9RYuHT2PfUu34VZiygMf17xPe/QN8INLGzdomoar0YnYE7gFCQfPVH9Sjjx2CuOmfABTE2MMHtgXlhYW2LnnD7w7ez5SbtzE6JEvPXQbp6LPYuykmcjPL8DTvbrhSVdnnItNQPCPW3Eg4iiCli2GrY11uce5OD0Bv+efKbfe28ujqk+DiIjqEPfureH//QwU5RcgalsE8rNz0WZwV7yyZCLCnYNkcn6YFv2ewpMdm+PKyThk7LkDXWExHJu74qmX+qD90J5YO3ohEg7FlHlMh6E9MfyLAGSlpuP4xn1yXbu/dcPooH8iNOArnAmPrNLzMNBEWq8kUSt+btBAXL+ZipBl/wvvFp5yfWZWNkaOnYjklOv4ef1KuDg1rnA7L772FmITLiJwwRw83bubfv13wRux+JtVGO73POZMf7tcTblzx3ZY8/XCh8Zp7OBRa36cm3HWz1gZZ/2MszbFWpvinO35Kibu+gzWzvZY9uIcpMQkyftMG5rjH1s+gl0TR3zRfyrSklMr3JaRqTGK8gvLrffo0QZjQt7HlVPxWOo3S7/ezNoSU/d/AV1RMZYMmYmMlNtyvbWTPQJ+/kRe/7zPJBRk58nrH18M+c/2KUdEROBy8jU8/0w/fUIWGlpZ4s3XR6CwsAhbf/mtwm1cunJVJuS2rVqUScjC6JHDZA05bMcu5OSWPAkiIqKKiKTZyM0Jp7ce1CdkIT8zF/u+2SqTbceXeuNhHpSQBdEMnZOWJfdRWtshvjC3sUTE9zv0CVkQ1yN++BWWjazR+tkuqIoqJeXIyJJqeI+uPuXu6+nbSS6PnoyqcBupt+/IpauzU/lgGjSAc2NH5Obl4/SZs+Xuz8zMxo9bf8Hy79cjdPPPuBCfWJXwiYioDnLv1lou4/aXzz+x+07LpZtvq0fe/pM+XrCwtZJ91GX3W7LN2Ar26+7rXX19yhcvXpTLZk3KN2k4NLKHhbk5kq5crXAbdjY2cpl8rXyHuU6nw7XrN0v2dTkZ3Tp3LHP/+bgEzF0YWGZdr26d5SCvRna2VXkqRERURzS6W4N90ECsrJvpyM/KLVfLrUjz3u3QtFMLGJoYyce1HNAR2bcy8MtHayu933vrqrLfKiflrKwsfXP1g1hZWiArK7vCbbg1dUUTFydEn72AvQcj0bdHV/19azdsQVp6hr5WXJr/yGF4pl8vuD3pCmMjI8QmJmHZ6hDsjziKgGlzELxsMQwNDavydIiIqA4wa2gul3mZOQ+8XyRls4YWVUrKvcb9TX87NTEFG94OlKOqy+63ZJv5D9iv2Kdgal35/T7yKVH/HwYGBpj17gQETP8Qb783F/17d5ejr0Ut+GDkcXh5uiE2/iIaNDAo87hpE94sc/uptq2wZNFcjHlnBo6eiMLv+yPwTL+ej/nZEBFRXbP9kxB5MbEwhaNXEzz9zot4899zsHnacpz+6WC17rtKfcpWVlb60dYPkpWdA6u/qEXf3//8wzeLZNNz5PFTCN64FWnpmfhy/ix0eaqd/B/7SjRHiz7ol194Tl4/GVV2mDoREdUPeZkltdK/qg2bWpn/ZS26IgU5+Ug+FY+QcYuRGn8VfvPHwsL+z3k07m3T9AH7FfsU8jNyqi8pu7m5yWXSleRy96Xeuo2c3Fw0a+JSqW21b+ONbxbNxcHtP+L47p+w4buvMKBPD1xIKOm3buPtVant2NmW9FFztDYRUf106+Ld/lv38v23YhIQkSDv/c+j0BXr5PnJppZmcoKSyuz33rqq7rdKSblLl5Kh3aKZ+X4HDh+Ty853a7qP4mrKdZw4fQaebk3RwtO9Uo85feacXLo6V3xuNBER1U2Jh8/q+4Lv59WnvVxevPs/j8q6sZ1ciglF7rm3Ta8K9pt4uCRHVUtS7t69uxyk9cvOPTh3IV6/XjRnr/ghFMbGRvivwQP162+m3kZC0uVyzd05OblyKrLSxP/881+fobhYh0n/+J8y94lTnwqLisrFcyIqBt8F/wgjIyMMerpXVZ4KERHVEQkHonE76Tra+/WAU+tm+vVi8pA+4/3k+ccnNu3Xr7dytIWDp4u8vzSXdu5/OY1mq0FdkJuejUvHY/Xro8IOIzcjG938n5UThtwjrnd7fZAcsR2z40j1DfQSye9fMybJaTb9A6aVmWbzasoNvDthbJka6xdLV2Nr+G/4eOYUDB3y5/SYu/YfwpfL1sDXpwMcHRrh9p007PkjArfT0vH2m6+Xm1Tk+3WbsO9QJDq2bwOnJxzl6Ou4xCRZYxcDx96fMh5NK9lsTkREdYuuWIfNM1bIaTbHhs4qM82mmM0r/OMgpF35czavQe+NgM/LffHvd5fixN2pMYXx2+Yh5dwlXD93Gekpt2BibgYn7yflOc5FBUXYNH0ZCnPz9f+fl5GNsNlr5DSb48PmISosQj/NprmdFUInBOpn86q20dddO3XA2m8/w5JVQdi+ax+KiorliOnJb42RSboyxA9YtGzuLpPqnfQMNLSykH3M/iOGye3fTyRpUZO+EJeIQ0dOyJnDHBrZyf299t9D0a51y6o+DSIiqkMSD8VgxfC5GDD5JZkUGxiX/CDFjgXrEH03WT7MrwvXw6Nba7j5esPS3lq26IqpOY+E7MLBVeG4GV9+Ho5TWw4g504m+o73g8/wvkCpH6SIPxBd5edRpbmvhcLUBKiOc1/XzzhrU6yMs37GWZtirU1xfuD2d9QG//G5r4mIiKj6MCkTEREpgkmZiIhIEUzKREREimBSJiIiUgSTMhERkSKYlImIiBTBpExERKQIJmUiIiJFMCkTEREpgkmZiIhIEUzKREREimBSJiIiUgSTMhERkSKYlImIiFSh1aC8vDxtzpw5cqkyxll/Y2Wc9TPO2hQr46xbcRqIPzV1QJCRkQEbGxukp6fD2toaqmKc9TdWxlk/46xNsTLOuhUnm6+JiIgUwaRMRESkCCZlIiIiRdRoUjY1NcWcOXPkUmWMs/7GyjjrZ5y1KVbGWbfirNGBXkRERPQnNl8TEREpgkmZiIhIEUzKREREimBSJiIiUgSTMhERUX1PykuWLIGbmxvMzMzg6+uLyMhIqGbfvn144YUX4OLiAgMDA2zZsgUqmj9/Prp06YKGDRviiSeewNChQ3H+/Hmo5ttvv0X79u3l1HXi0r17d4SHh9d0WA+1YMEC+f5PmjQJqvnwww9lbKUv3t7eUFFycjJeffVVNGrUCObm5mjXrh2OHj0KlYgy6f7XU1wCAgKgkuLiYsyaNQvu7u7ytfT09MRHH30kfssAKsrMzJTfn2bNmsl4e/TogSNHjihdvmuahtmzZ8PZ2VnGPHDgQMTGxtbNpBwaGoopU6bIc8GOHz+ODh064Nlnn8WNGzegkuzsbBmbOIBQ2d69e2WhERERgZ07d6KwsBCDBg2S8aukSZMmMsEdO3ZMFsb9+/eHn58fzpw5A1WJgmPZsmXyYEJVbdq0wbVr1/SXP/74A6q5c+cOevbsCWNjY3kgFhMTg88//xx2dnZQ7f0u/VqK75MwfPhwqOTTTz+VB7lff/01zp49K28vXLgQgYGBUNHYsWPla7l27VpERUXJ8kkkOXGgpmr5vnDhQnz11VdYunQpDh8+DEtLS5mn8vLyqjewmvgVjK5du2oBAQH628XFxZqLi4s2f/58TVXipdq8ebNWG9y4cUPGu3fvXk11dnZ22sqVKzUVZWZmal5eXtrOnTu1vn37ahMnTtRUI37NpkOHDprq3nvvPa1Xr15abSPec09PT02n02kqGTJkiDZmzJgy64YNG6aNGjVKU01OTo5maGiohYWFlVnv4+Ojvf/++5qK5btOp9OcnJy0RYsW6delpaVppqam2rp166o1lsdeUy4oKJA1JXGUdE+DBg3k7UOHDj3ucOok8esmgr29PVQlmt/Wr18vj1ZFM7aKROvDkCFDynxWVSSa1EQTnIeHB0aNGoVLly5BNT/99BM6d+4sa5yii6Vjx45YsWIFVCbKqqCgIIwZM0Y2b6pENP/u2rULFy5ckLdPnTolW0gGDx4M1RQVFcnvu+iqLE00CavYqiMkJiYiJSWlzHdf/HKU6Gqt7jxlhMcsNTVVvkGNGzcus17cPnfu3OMOp87R6XSy70Y0FbZt2xaqEU1XIgmLJiArKyts3rwZrVu3hmrEAYPoWqnpfq+HEYXEmjVr0LJlS9ncOnfuXPTu3RvR0dFyjIEqEhISZHOr6LaaOXOmfF3feecdmJiYwN/fHyoSfYxpaWkYPXo0VDNjxgz5E4Ni/IChoaEsU+fNmycPylQjPofiOy/6vFu1aiXL+nXr1snk1rx5c6goJSVFLh+Up+7dV2eSMlV/7U4UyKoegYrkcfLkSVmb37hxoyyQRZ+4Son58uXLmDhxouwDu//oXjWla0ai31skaTGYZsOGDXjjjTeg0sGiqCl/8skn8raoKYvPqeivUzUpr1q1Sr6+ohVCNeL9DQ4ORkhIiBxTIL5T4mBcxKri6yn6kkWLg6urqzyI8PHxwciRI2WrKZX12JuvHRwc5Jty/fr1MuvFbScnp8cdTp0yYcIEhIWFYffu3XJQlYpEzUgcHXfq1EmOGhcDLb788kuoRBQUYtChKDiMjIzkRRw4iEEf4rqolajK1tYWLVq0QFxcHFQiRrDef+Alak0qNrULSUlJ+O233+QAJRVNmzZN1pZfeeUVOYr9tddew+TJk+V3SkVidLj4DmVlZcmDXnG2jRiQKrpcVOR0NxfVRJ5qUBOFsiiQRX9I6aNocVvVvkXViXEKIiGLpuDff/9dniZRW4j3Pj8/HyoZMGCAbGYXtY97F1HLE02D4ro4qFSVKPTi4+NlElSJ6E65/zQ90R8qavUqWr16tez7FmMKVJSTkyPH4pQmPpfi+6QyMYJZfDbFaPwdO3bIsy9U5O7uLpNv6TwlugvEKOxqz1NaDVi/fr0cxbZmzRotJiZGGzdunGZra6ulpKRoqo2+PXHihLyIl2rx4sXyelJSkqaSt956S7OxsdH27NmjXbt2TX8Rox5VMmPGDDkiPDExUTt9+rS8bWBgoP3666+a6lQdfT116lT5vovX9MCBA9rAgQM1BwcHOQJfJZGRkZqRkZE2b948LTY2VgsODtYsLCy0oKAgTTXibJCmTZvKEeOq8vf311xdXeWIZvHeb9q0Sb7v06dP11S0fft2LTw8XEtISJDfd3HGgK+vr1ZQUKBs+b5gwQKZl7Zu3SrLKz8/P83d3V3Lzc2t1rhqJCkLgYGB8oNvYmIiT5GKiIjQVLN79275Zt1/EV8IlTwoRnFZvXq1phJxCkezZs3ke+7o6KgNGDCgViRklZPyiBEjNGdnZ/maikJa3I6Li9NUtG3bNq1t27bygNzb21tbvny5pqIdO3bI78/58+c1VWVkZMjPoyhDzczMNA8PD3l6UX5+vqai0NBQGaP4nIpTjcQpseIUI5XLd51Op82aNUtr3Lix/MyK8upxfCb4e8pERESK4NzXREREimBSJiIiUgSTMhERkSKYlImIiBTBpExERKQIJmUiIiJFMCkTEREpgkmZiIhIEUzKREREimBSJiIiUgSTMhEREdTwf1poEUA2GYJgAAAAAElFTkSuQmCC"></p>
+</div>
+</div>
+<p>The initial state of the context vector is preserved to enable drift back to the start-of-list context unit.</p>
+<div id="cell-10" class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test: the stored `initial_state` is preserved</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(new_context.initial_state)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> jnp.<span class="bu">all</span>(new_context.initial_state <span class="op">==</span> context.state)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]</code></pre>
+</div>
+</div>
+<p><code>TemporalContext</code> implements the <code>typing.Context</code> protocol. As long as a class implements this interface, it’s usable by other classes that expect a <code>Context</code> object.</p>
+<div id="cell-12" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.typing <span class="im">import</span> Context</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-13" class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># test: TemporalContext implements the Context interface</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">isinstance</span>(new_context, Context)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

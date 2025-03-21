@@ -7,6 +7,7 @@ from typing import (
     Protocol,
     Type,
     TypedDict,
+    runtime_checkable,
 )
 
 import numpy as np
@@ -162,6 +163,7 @@ class Memory(Protocol):
         ...
 
 
+@runtime_checkable
 class Context(Protocol):
     """Context representation for memory search models.
 
