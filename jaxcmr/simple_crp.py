@@ -4,7 +4,7 @@
 __all__ = ['Tabulation', 'tabulate_trial', 'simple_crp']
 
 # %% ../notebooks/simple_crp.ipynb 3
-from jax import lax, jit
+from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
