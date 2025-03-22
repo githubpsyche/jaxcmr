@@ -1,4 +1,5 @@
 import importlib
+from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 import h5py
@@ -11,6 +12,18 @@ def import_from_string(import_string):
     module_name, function_name = import_string.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, function_name)
+
+
+def find_project_root(marker: str = ".git") -> str:
+    """
+    Finds the project root by traversing upwards from `start` directory
+    until a directory containing `marker` is found.
+    """
+    start = Path.cwd()
+    for path in [start, *start.parents]:
+        if (path / marker).exists():
+            return str(path)
+    raise FileNotFoundError(f"Could not find project root containing {marker}.")
 
 
 def generate_trial_mask(
