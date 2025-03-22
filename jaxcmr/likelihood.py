@@ -4,6 +4,7 @@ import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
+from jaxcmr.helpers import all_rows_identical, log_likelihood
 from jaxcmr.typing import (
     Array,
     Float,
@@ -11,18 +12,7 @@ from jaxcmr.typing import (
     Integer,
     MemorySearch,
     MemorySearchModelFactory,
-    Real,
 )
-
-
-def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
-    """Return whether all rows in the 2D array are identical."""
-    return jnp.all(arr == arr[0])  # type: ignore
-
-
-def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array, ""]:
-    """Return the summed log likelihood over specified likelihoods."""
-    return -jnp.sum(jnp.log(likelihoods))
 
 
 def predict_and_simulate_recalls(
@@ -108,7 +98,7 @@ class MemorySearchLikelihoodFnGenerator:
         def present_and_predict_trial(i):
             model = self.init_model_for_retrieval(i, parameters)
             return predict_and_simulate_recalls(model, self.trials[i])[1]
-        
+
         return vmap(present_and_predict_trial)(trial_indices)
 
     def base_predict_trials_loss(

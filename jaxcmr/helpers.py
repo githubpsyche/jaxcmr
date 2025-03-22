@@ -1,17 +1,54 @@
 import importlib
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Callable, Iterable, List, Optional, Sequence
 
 import h5py
 import jax.numpy as jnp
 
-from jaxcmr.typing import Array, Bool
+from jaxcmr.typing import Array, Bool, Float, Real
+
+
+def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
+    """Return whether all rows in the 2D array are identical."""
+    return jnp.all(arr == arr[0])  # type: ignore
+
+
+def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array, ""]:
+    """Return the summed log likelihood over specified likelihoods."""
+    return -jnp.sum(jnp.log(likelihoods))
 
 
 def import_from_string(import_string):
+    """
+    Import a module or function from a string.
+
+    Args:
+        import_string: A string in the format 'module.submodule.ClassName' or 'module.function_name'.
+
+    Returns:
+        The imported module or function.
+
+    Raises:
+        ImportError: If the import string is not valid.
+    """
     module_name, function_name = import_string.rsplit(".", 1)
     module = importlib.import_module(module_name)
     return getattr(module, function_name)
+
+
+def format_floats(iterable: Iterable[float], precision: int = 2) -> List[str]:
+    """
+    Formats a list of floats to a specified precision.
+
+    Args:
+        iterable: Iterable of floats to format.
+        precision: Number of decimal places to format to.
+
+    Returns:
+        List of formatted strings.
+    """
+    format_str = f"{{:.{precision}f}}"
+    return [format_str.format(x) for x in iterable]
 
 
 def find_project_root(marker: str = ".git") -> str:

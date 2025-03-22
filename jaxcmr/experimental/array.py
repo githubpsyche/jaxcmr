@@ -11,7 +11,6 @@ from numba.typed import Dict
 
 __all__ = [
     "repmat",
-    "all_rows_identical",
     "np_segment_array_by_index",
     "segment_by_index",
     "sub_connectivity",
@@ -102,11 +101,6 @@ def repmat(matrix: Real[Array, " ..."], m: int, n: int) -> Real[Array, " x y"]:
                 ] = matrix
 
     return result
-
-
-def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
-    """Return whether all rows in the 2D array are identical."""
-    return jnp.all(arr == arr[0])  # type: ignore
 
 
 def np_segment_array_by_index(
