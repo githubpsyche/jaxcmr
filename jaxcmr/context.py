@@ -66,7 +66,6 @@ class TemporalContext(Pytree):
 
         ax.set_xlabel("")
         ax.set_ylabel("")
-        # ax.set_xticks([])
         ax.set_yticks([])
 
         # Remove colorbar safely if desired:
