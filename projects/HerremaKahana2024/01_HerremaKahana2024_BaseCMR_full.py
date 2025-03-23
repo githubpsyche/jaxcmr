@@ -44,7 +44,7 @@ data_path = "data/HerremaKahana2024.h5"
 run_tag = "full"
 
 # fitting params
-redo_fits = True
+redo_fits = False
 model_name = "BaseCMR"
 relative_tolerance = 0.001
 popsize = 15
@@ -179,8 +179,8 @@ unique_list_lengths = np.unique(data["listLength"][trial_mask])
 
 for LL in unique_list_lengths:
     for analysis in comparison_analyses:
-        figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.pdf"
-        figure_path = os.path.join("figures/", figure_str)
+        figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.png"
+        figure_path = os.path.join("figures/fits/", figure_str)
         print(figure_str)
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
         ll_trial_mask = generate_trial_mask(data, f"data['listLength'] == {LL}")
@@ -208,7 +208,7 @@ for LL in unique_list_lengths:
         axis.set_xlabel(axis.get_xlabel(), fontsize=16)
         axis.set_ylabel(axis.get_ylabel(), fontsize=16)
         # axis.set_title(f'{results["name"]}'.replace("_", " "))
-        plt.savefig(figure_path, bbox_inches="tight")
-        plt.show()
+        plt.savefig(figure_path, bbox_inches="tight", dpi=600)
+        # plt.show()
 
 # %%

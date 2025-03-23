@@ -1,1 +1,0 @@
-[How to Draw SPC for Serial Recall Data](https://chatgpt.com/share/67df1db4-5b98-8012-8329-229d0dcb56c6)
