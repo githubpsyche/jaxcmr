@@ -27,9 +27,9 @@ warnings.filterwarnings("ignore")
 
 comparison_analysis_paths = [
     # "compmempy.analyses.rpl.plot_spacing",
-    "compmempy.analyses.spc.plot_spc",
-    "compmempy.analyses.crp.plot_crp",
-    "compmempy.analyses.pfr.plot_pfr",
+    "jaxcmr.spc.plot_spc",
+    "jaxcmr.crp.plot_crp",
+    "jaxcmr.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
 
