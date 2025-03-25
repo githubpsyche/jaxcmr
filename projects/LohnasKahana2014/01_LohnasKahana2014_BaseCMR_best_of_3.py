@@ -175,19 +175,19 @@ sim = simulate_h5_from_h5(
 
 # %%
 
-unique_list_lengths = np.unique(data["listLength"][trial_mask])
+unique_list_types = np.unique(data["list_type"][trial_mask])
 
-for LL in unique_list_lengths:
+for LT in unique_list_types:
     for analysis in comparison_analyses:
-        figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.png"
+        figure_str = f"{results['name']}_LT{LT}_{analysis.__name__[5:]}.png"
         figure_path = os.path.join("figures/fits/", figure_str)
         print(figure_str)
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-        ll_trial_mask = generate_trial_mask(data, f"data['listLength'] == {LL}")
-        joint_trial_mask = np.logical_and(trial_mask, ll_trial_mask)
+        lt_trial_mask = generate_trial_mask(data, f"data['list_type'] == {LT}")
+        joint_trial_mask = np.logical_and(trial_mask, lt_trial_mask)
         _trial_mask = generate_trial_mask(sim, data_query)
-        _ll_trial_mask = generate_trial_mask(sim, f"data['listLength'] == {LL}")
-        _joint_trial_mask = np.logical_and(_trial_mask, _ll_trial_mask)
+        _lt_trial_mask = generate_trial_mask(sim, f"data['list_type'] == {LT}")
+        _joint_trial_mask = np.logical_and(_trial_mask, _lt_trial_mask)
 
         axis = analysis(
             datasets=[
