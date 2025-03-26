@@ -4,8 +4,17 @@ from typing import Callable, Iterable, List, Optional, Sequence
 
 import h5py
 import jax.numpy as jnp
+import markdown
+from IPython.display import HTML, display
+from nbdev import show_doc as nbdev_show_doc
 
 from jaxcmr.typing import Array, Bool, Float, Real
+
+
+def show_doc(func):
+    """Decorator to show documentation for a function."""
+    html = markdown.markdown(str(nbdev_show_doc(func)), extensions=["tables"])
+    display(HTML(html))
 
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
