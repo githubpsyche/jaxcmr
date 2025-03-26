@@ -20,7 +20,7 @@ class InstanceMemory(Pytree):
 
     def __init__(
         self,
-        state: Float[Array, " input_size output_size"],
+        state: Float[Array, " trace_count input_size+output_size"],
         probe: Float[Array, " input_size+output_size"],
         study_index: Int_,
         feature_activation_scale: Float_,
@@ -56,8 +56,10 @@ class InstanceMemory(Pytree):
             study_index=self.study_index + 1,
         )
 
-    def trace_activations(self, input_pattern: Float[Array, " input_size"]):
-        """Return the trace activations for the input pattern.
+    def trace_activations(
+        self, input_pattern: Float[Array, " input_size+output_size"]
+    ) -> Float[Array, " trace_count"]:
+        """Return the activations of each trace based on the input pattern.
 
         Args:
             input_pattern: the input feature pattern.

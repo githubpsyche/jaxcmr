@@ -128,7 +128,7 @@ class InstanceCMR(Pytree):
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
             #! We find all traces corresponding to the item and set them to not recallable
-            recallable=self.recallable.at[self.trace_items == item_index].set(False),
+            recallable=self.recallable * (self.trace_items != item_index),
             recall_total=self.recall_total + 1,
         )
 
@@ -146,14 +146,15 @@ class InstanceCMR(Pytree):
 
     def activations(self) -> Float[Array, " trace_count"]:
         """Returns relative support for retrieval of each trace given model state"""
-        trace_activations = self.mcf.trace_activations(self.context.state) + lb
+        probe = self.mcf._probe.at[: self.context.state.size].set(self.context.state)
+        trace_activations = self.mcf.trace_activations(probe) + lb
         return trace_activations * self.recallable  # mask recalled traces
 
     def item_activation(
         self, item_index: Int_, trace_activations: Float[Array, " trace_count"]
     ) -> Float[Array, ""]:
         """Returns relative support for retrieval of the specified item given model state"""
-        return jnp.sum(trace_activations[self.trace_items == item_index])
+        return jnp.sum(trace_activations * (self.trace_items == item_index))
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
