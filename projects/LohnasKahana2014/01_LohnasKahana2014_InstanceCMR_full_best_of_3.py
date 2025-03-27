@@ -13,7 +13,7 @@ import numpy as np
 from jax import random
 from matplotlib import rcParams  # type: ignore
 
-from jaxcmr.cmr import BaseCMRFactory as model_factory
+from jaxcmr.cmr import MixedCMRFactory as model_factory
 from jaxcmr.experimental.array import to_numba_typed_dict
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data
@@ -38,14 +38,14 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 # %%
 
 # data params
-data_name = "HealeyKahana2014"
-data_query = "data['listtype'] == -1"
-data_path = "data/HealeyKahana2014.h5"
-run_tag = "best_of_3"
+data_name = "LohnasKahana2014"
+data_query = "data['list_type'] > 0"
+data_path = "data/LohnasKahana2014.h5"
+run_tag = "full_best_of_3"
 
 # fitting params
 redo_fits = False
-model_name = "BaseCMR"
+model_name = "InstanceCMR"
 relative_tolerance = 0.001
 popsize = 15
 num_steps = 1000
@@ -58,7 +58,9 @@ experiment_count = 50
 seed = 0
 
 parameters = {
-    "fixed": {},
+    "fixed": {
+        "choice_sensitivity": 1.0,
+    },
     "free": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -70,9 +72,11 @@ parameters = {
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        # "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "mcf_trace_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
     },
 }
+
 
 
 query_parameters = [
@@ -95,7 +99,7 @@ query_parameters = [
 
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
-for product in ["fits", "figures"]:#, "simulations"]:
+for product in ["fits", "figures"]:  # , "simulations"]:
     product_dir = os.path.join(product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
@@ -175,26 +179,33 @@ sim = simulate_h5_from_h5(
 
 # %%
 
-unique_list_lengths = np.unique(data["listLength"][trial_mask])
-
-for LL in unique_list_lengths:
+for combined_LT, lt_values in [
+    ("1", [1]),
+    ("2", [2]),
+    ("3", [3]),
+    ("4", [4]),
+    ("234", [2, 3, 4]),
+    ("34", [3, 4]),
+]:
     for analysis in comparison_analyses:
-        figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.png"
+        figure_str = f"{results['name']}_LT{combined_LT}_{analysis.__name__[5:]}.png"
         figure_path = os.path.join("figures/fits/", figure_str)
         print(figure_str)
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-        ll_trial_mask = generate_trial_mask(data, f"data['listLength'] == {LL}")
-        joint_trial_mask = np.logical_and(trial_mask, ll_trial_mask)
+
+        # Create a mask for data using np.isin for the selected list types
+        lt_trial_mask = np.isin(data["list_type"].flatten(), lt_values)
+        joint_trial_mask = np.logical_and(trial_mask, lt_trial_mask)
+
+        # Create a mask for simulation data similarly
         _trial_mask = generate_trial_mask(sim, data_query)
-        _ll_trial_mask = generate_trial_mask(sim, f"data['listLength'] == {LL}")
-        _joint_trial_mask = np.logical_and(_trial_mask, _ll_trial_mask)
+        _lt_trial_mask = np.isin(sim["list_type"].flatten(), lt_values)
+        _joint_trial_mask = np.logical_and(_trial_mask, _lt_trial_mask)
 
         axis = analysis(
             datasets=[
                 to_numba_typed_dict({key: np.array(val) for key, val in sim.items()}),
-                to_numba_typed_dict(
-                    {key: np.array(value) for key, value in data.items()}
-                ),
+                to_numba_typed_dict({key: np.array(val) for key, val in data.items()}),
             ],
             trial_masks=[np.array(_joint_trial_mask), np.array(joint_trial_mask)],
             color_cycle=color_cycle,
@@ -207,8 +218,6 @@ for LL in unique_list_lengths:
         axis.tick_params(labelsize=14)
         axis.set_xlabel(axis.get_xlabel(), fontsize=16)
         axis.set_ylabel(axis.get_ylabel(), fontsize=16)
-        # axis.set_title(f'{results["name"]}'.replace("_", " "))
         plt.savefig(figure_path, bbox_inches="tight", dpi=600)
-        # plt.show()
 
 # %%

@@ -22,20 +22,20 @@ class InstanceMemory(Pytree):
         self,
         state: Float[Array, " trace_count input_size+output_size"],
         probe: Float[Array, " input_size+output_size"],
-        weight: Float[Array, " input_size+output_size"],
         study_index: Int_,
         feature_activation_scale: Float_,
         trace_activation_scale: Float_,
+        shared_support: Float_,
         input_size: int,
         output_size: int,
     ):
         self.state = state
-        self.weight = weight
         self.input_size = input_size
         self.output_size = output_size
         self.study_index = study_index
         self.feature_activation_scale = feature_activation_scale
         self.trace_activation_scale = trace_activation_scale
+        self.shared_support = shared_support
         self._probe = probe
 
     def associate(
@@ -53,9 +53,8 @@ class InstanceMemory(Pytree):
         """
         return self.replace(
             state=self.state.at[self.study_index].set(
-                jnp.concatenate((in_pattern, out_pattern))
+                jnp.concatenate((in_pattern, out_pattern * learning_rate))
             ),
-            weight=self.weight.at[self.study_index].set(learning_rate),
             study_index=self.study_index + 1,
         )
 
@@ -68,7 +67,7 @@ class InstanceMemory(Pytree):
             input_pattern: the input feature pattern.
             trace_activation_scale: the scaling factor for activated traces.
         """
-        activation = jnp.dot(self.state, input_pattern) * self.weight
+        activation = jnp.dot(self.state, input_pattern)
         return power_scale(activation, self.trace_activation_scale)
 
     def probe(
@@ -112,11 +111,9 @@ class InstanceMemory(Pytree):
         """
         item_feature_count = list_length
         items = jnp.eye(list_length)
-        trace_count = list_length + size
-        contexts = jnp.eye(list_length, context_feature_count, 1)
-        weight = jnp.zeros(trace_count).at[:item_feature_count].set(1 - learning_rate)
+        contexts = jnp.eye(list_length, context_feature_count, 1) * (1 - learning_rate)
         presentations = (
-            jnp.zeros((trace_count, item_feature_count + context_feature_count))
+            jnp.zeros((list_length + size, item_feature_count + context_feature_count))
             .at[:list_length, :item_feature_count]
             .set(items)
         )
@@ -124,7 +121,6 @@ class InstanceMemory(Pytree):
         return cls(
             state=presentations.at[:list_length, item_feature_count:].set(contexts),
             probe=jnp.zeros(item_feature_count + context_feature_count),
-            weight=weight,
             study_index=list_length,
             input_size=item_feature_count,
             output_size=context_feature_count,
@@ -164,20 +160,18 @@ class InstanceMemory(Pytree):
             trace_activation_scale: the activation scaling factor for traces.
         """
         item_feature_count = list_length
-        trace_count = list_length + size
         contexts = jnp.eye(list_length, context_feature_count, 1)
         items = (
             jnp.eye(list_length) * (item_support - shared_support)
         ) + shared_support
         presentations = (
-            jnp.zeros((trace_count, context_feature_count + item_feature_count))
+            jnp.zeros((size + list_length, context_feature_count + item_feature_count))
             .at[:list_length, :context_feature_count]
             .set(contexts)
         )
         return cls(
             state=presentations.at[:list_length, context_feature_count:].set(items),
             probe=jnp.zeros(item_feature_count + context_feature_count),
-            weight=jnp.zeros(trace_count).at[:item_feature_count].set(1.0),
             study_index=list_length,
             input_size=context_feature_count,
             output_size=item_feature_count,

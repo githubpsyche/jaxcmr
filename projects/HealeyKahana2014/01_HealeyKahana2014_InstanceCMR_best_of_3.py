@@ -44,7 +44,7 @@ data_path = "data/HealeyKahana2014.h5"
 run_tag = "best_of_3"
 
 # fitting params
-redo_fits = False
+redo_fits = True
 model_name = "InstanceCMR"
 relative_tolerance = 0.001
 popsize = 15
