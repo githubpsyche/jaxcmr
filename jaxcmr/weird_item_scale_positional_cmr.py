@@ -82,10 +82,11 @@ class CMR(Pytree):
         mfc_cue = self.positions[self.study_index] # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(mfc_cue, new_context.state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(new_context.state, mfc_cue, self.mcf_learning_rate),
+            mfc=self.mfc.associate(mfc_cue, self.context.state, self.mfc_learning_rate), #! updated
+            mcf=self.mcf.associate(self.context.state, mfc_cue, self.mcf_learning_rate), #! updated
             #! also update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! and track each item's study position(s)

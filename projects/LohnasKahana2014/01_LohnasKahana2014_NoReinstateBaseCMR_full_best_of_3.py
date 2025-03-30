@@ -59,7 +59,6 @@ seed = 0
 
 parameters = {
     "fixed": {
-        "choice_sensitivity": 1.0,
     },
     "free": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -72,8 +71,8 @@ parameters = {
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-        # "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-        "mcf_trace_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        # "mcf_trace_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
     },
 }
 

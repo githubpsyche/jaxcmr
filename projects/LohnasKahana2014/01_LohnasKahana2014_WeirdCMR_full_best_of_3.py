@@ -13,7 +13,7 @@ import numpy as np
 from jax import random
 from matplotlib import rcParams  # type: ignore
 
-from jaxcmr.position_scale_cmr import BaseCMRFactory as model_factory
+from jaxcmr.weird_cmr import BaseCMRFactory as model_factory
 from jaxcmr.experimental.array import to_numba_typed_dict
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data
@@ -45,7 +45,7 @@ run_tag = "full_best_of_3"
 
 # fitting params
 redo_fits = False
-model_name = "PositionScaleCMR"
+model_name = "WeirdCMR"
 relative_tolerance = 0.001
 popsize = 15
 num_steps = 1000
@@ -58,9 +58,7 @@ experiment_count = 50
 seed = 0
 
 parameters = {
-    "fixed": {
-        # "choice_sensitivity": 1.0,
-    },
+    "fixed": {},
     "free": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -73,10 +71,8 @@ parameters = {
         "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-        # "mcf_trace_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
     },
 }
-
 
 
 query_parameters = [

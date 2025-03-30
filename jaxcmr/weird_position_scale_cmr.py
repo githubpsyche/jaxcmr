@@ -82,10 +82,11 @@ class CMR(Pytree):
         mfc_cue = self.positions[self.study_index] # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(mfc_cue, new_context.state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(new_context.state, mfc_cue, self.mcf_learning_rate),
+            mfc=self.mfc.associate(mfc_cue, self.context.state, self.mfc_learning_rate), #! updated
+            mcf=self.mcf.associate(self.context.state, mfc_cue, self.mcf_learning_rate), #! updated
             #! also update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! and track each item's study position(s)
@@ -156,12 +157,10 @@ class CMR(Pytree):
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
         position_activations = self.position_activations()
-        item_activations = jnp.sum(
-            position_activations[:, None] * (self.studied[:, None] == self.item_ids[None, :] + 1),
-            axis=0,
+        return lax.map(
+            lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
+            self.item_ids,
         )
-        #! special version that scales item activations instead of position activations
-        return power_scale(item_activations, self.mcf_sensitivity)
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -244,7 +243,7 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         context.size,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
 
@@ -271,7 +270,7 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
@@ -296,7 +295,7 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
