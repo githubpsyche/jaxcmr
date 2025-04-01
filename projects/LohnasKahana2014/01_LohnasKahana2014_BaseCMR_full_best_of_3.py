@@ -25,6 +25,9 @@ warnings.filterwarnings("ignore")
 
 # %%
 
+single_analysis_paths = [
+    "jaxcmr.repcrp.plot_rep_crp",
+]
 comparison_analysis_paths = [
     # "compmempy.analyses.rpl.plot_spacing",
     "jaxcmr.spc.plot_spc",
@@ -32,6 +35,7 @@ comparison_analysis_paths = [
     "jaxcmr.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
+single_analyses = [import_from_string(path) for path in single_analysis_paths]
 
 comparison_analyses = [import_from_string(path) for path in comparison_analysis_paths]
 
@@ -216,4 +220,40 @@ for combined_LT, lt_values in [
         axis.set_ylabel(axis.get_ylabel(), fontsize=16)
         plt.savefig(figure_path, bbox_inches="tight", dpi=600)
 
+# %%
+
+for combined_LT, lt_values in [
+    ("3", [3]),
+    ("4", [4]),
+    ("34", [3, 4]),
+]:
+    for dataset_index, dataset in enumerate([
+        to_numba_typed_dict({key: np.array(val) for key, val in sim.items()}),
+        # to_numba_typed_dict({key: np.array(value) for key, value in data.items()}),
+    ]):
+        for analysis in single_analyses:
+            figure_str = f"{results['name']}_LT{combined_LT}_{analysis.__name__[5:]}.png"
+            figure_path = os.path.join("figures/fits/", figure_str)
+            print(figure_str)
+            color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+
+            # Create a mask for simulation data similarly
+            _trial_mask = generate_trial_mask(dataset, data_query)
+            _lt_trial_mask = np.isin(dataset["list_type"].flatten(), lt_values)
+            _joint_trial_mask = np.logical_and(_trial_mask, _lt_trial_mask)
+
+            axis = analysis(
+                datasets=[dataset],
+                trial_masks=[np.array(_joint_trial_mask)],
+                color_cycle=color_cycle,
+                labels=["Model", "Data"][dataset_index],
+                contrast_name="source",
+                axis=None,
+                distances=1 - connections,
+            )
+
+            axis.tick_params(labelsize=14)
+            axis.set_xlabel(axis.get_xlabel(), fontsize=16)
+            axis.set_ylabel(axis.get_ylabel(), fontsize=16)
+            plt.savefig(figure_path, bbox_inches="tight", dpi=600)
 # %%
