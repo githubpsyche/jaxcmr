@@ -1,6 +1,7 @@
-|    | Model               |        AICw |
-|---:|:--------------------|------------:|
-|  0 | BaseCMR             | 1           |
-|  1 | WeirdCMR            | 3.27824e-34 |
-|  3 | WeirdNoReinstateCMR | 6.86928e-36 |
-|  2 | NoReinstateCMR      | 7.49202e-41 |
+|    | Model               |         AICw |
+|---:|:--------------------|-------------:|
+|  4 | OutlistCMRDE        | 1            |
+|  0 | BaseCMR             | 1.7855e-79   |
+|  1 | WeirdCMR            | 5.8533e-113  |
+|  3 | WeirdNoReinstateCMR | 1.22651e-114 |
+|  2 | NoReinstateCMR      | 1.3377e-119  |

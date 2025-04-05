@@ -79,3 +79,43 @@ class TemporalContext(Pytree):
 
         encoded = base64.b64encode(buf.getvalue()).decode("utf-8")
         return f'<img src="data:image/png;base64,{encoded}" />'
+
+    @property
+    def outlist_input(self) -> Float[Array, " context_feature_units"]:
+        """Return the out-of-list context input."""
+        return self.zeros.at[self.next_outlist_unit].set(1)
+    
+    def integrate_with_outlist(
+        self,
+        inlist_input: Float[Array, " context_feature_units"],
+        ratio: Float_,
+        drift_rate: Float_,
+    ) -> "TemporalContext":
+        """Integrates in-list context input with out-of-list context.
+
+        Will produce errors if no out-of-list context units are available.
+
+        Args:
+            inlist_input: the input representation to be integrated into the contextual state.
+            ratio: the ratio of out-of-list context to in-list context.
+            drift_rate: The drift rate parameter.
+        """
+        context_input = normalize_magnitude(
+            (normalize_magnitude(inlist_input) * ratio) + (self.outlist_input * (1 - ratio))
+        )
+        rho = jnp.sqrt(
+            1 + jnp.square(drift_rate) * (jnp.square(self.state * context_input) - 1)
+        ) - (drift_rate * (self.state * context_input))
+        return self.replace(
+            state=normalize_magnitude((rho * self.state) + (drift_rate * context_input)),
+            next_outlist_unit=self.next_outlist_unit + 1,
+        )
+    
+    @classmethod
+    def init_expanded(cls, item_count: int) -> "TemporalContext":
+        """Initialize a new context model with room for out-of-list contexts.
+
+        Args:
+            item_count: the number of items in the context model.
+        """
+        return cls(item_count, item_count + item_count + 1)
