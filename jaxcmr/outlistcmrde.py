@@ -48,13 +48,6 @@ class CMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         #! We use a weird learning rate parameter for repetitions
         self.mfc_sensitivity = parameters["mfc_trace_sensitivity"]
-        #! a separate pre-exp mfc for retrieving full input
-        # self.pre_exp_mfc = LinearMemory.init_mfc(
-        #     list_length,
-        #     context.size,
-        #     parameters["learning_rate"],
-        #     parameters["mfc_choice_sensitivity"],
-        # )
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self._stop_probability = exponential_stop_probability(

@@ -1,7 +1,7 @@
-|    | Model               |         AICw |
-|---:|:--------------------|-------------:|
-|  4 | OutlistCMRDE        | 1            |
-|  0 | BaseCMR             | 1.7855e-79   |
-|  1 | WeirdCMR            | 5.8533e-113  |
-|  3 | WeirdNoReinstateCMR | 1.22651e-114 |
-|  2 | NoReinstateCMR      | 1.3377e-119  |
+|    | Model                   |         AICw |
+|---:|:------------------------|-------------:|
+|  1 | WeirdPositionScaleCMR   | 0.571049     |
+|  4 | WeirdNoPrexpPositionCMR | 0.428951     |
+|  3 | OutlistCMRDE            | 3.24986e-09  |
+|  0 | WeirdCMR                | 1.90224e-121 |
+|  2 | WeirdNoReinstateCMR     | 3.98598e-123 |

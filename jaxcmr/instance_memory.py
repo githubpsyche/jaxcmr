@@ -80,6 +80,17 @@ class InstanceMemory(Pytree):
         t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
         a = jnp.dot(t, self.state)[in_pattern.size :]
         return power_scale(a, self.feature_activation_scale)
+    
+    def zero_out(
+        self,
+        index: Int_,
+    ) -> "InstanceMemory":
+        """Return the updated memory after zeroing out associations for a given input index.
+
+        Args:
+            index: the index to zero out.
+        """
+        ...
 
     @classmethod
     def init_mfc(

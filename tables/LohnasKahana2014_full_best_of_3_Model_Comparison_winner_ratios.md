@@ -1,7 +1,7 @@
-|                     |    BaseCMR |   WeirdCMR |   NoReinstateCMR |   WeirdNoReinstateCMR |   OutlistCMRDE |
-|:--------------------|-----------:|-----------:|-----------------:|----------------------:|---------------:|
-| BaseCMR             |            |   0.714286 |         0.742857 |              0.657143 |       0.285714 |
-| WeirdCMR            |   0.285714 |            |         0.571429 |              0.571429 |       0.114286 |
-| NoReinstateCMR      |   0.257143 |   0.428571 |                  |              0.457143 |       0.171429 |
-| WeirdNoReinstateCMR |   0.342857 |   0.428571 |         0.542857 |                       |       0.2      |
-| OutlistCMRDE        |   0.714286 |   0.885714 |         0.828571 |              0.8      |                |
+|                         |   WeirdCMR |   WeirdPositionScaleCMR |   WeirdNoReinstateCMR |   OutlistCMRDE |   WeirdNoPrexpPositionCMR |
+|:------------------------|-----------:|------------------------:|----------------------:|---------------:|--------------------------:|
+| WeirdCMR                |            |               0.142857  |              0.571429 |       0.114286 |                  0.142857 |
+| WeirdPositionScaleCMR   |   0.857143 |                         |              0.914286 |       0.542857 |                  0.542857 |
+| WeirdNoReinstateCMR     |   0.428571 |               0.0857143 |                       |       0.2      |                  0.114286 |
+| OutlistCMRDE            |   0.885714 |               0.457143  |              0.8      |                |                  0.4      |
+| WeirdNoPrexpPositionCMR |   0.857143 |               0.457143  |              0.885714 |       0.6      |                           |
