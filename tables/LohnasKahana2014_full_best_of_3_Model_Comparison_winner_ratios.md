@@ -1,7 +1,9 @@
-|                         |   WeirdCMR |   WeirdPositionScaleCMR |   WeirdNoReinstateCMR |   OutlistCMRDE |   WeirdNoPrexpPositionCMR |
-|:------------------------|-----------:|------------------------:|----------------------:|---------------:|--------------------------:|
-| WeirdCMR                |            |               0.142857  |              0.571429 |       0.114286 |                  0.142857 |
-| WeirdPositionScaleCMR   |   0.857143 |                         |              0.914286 |       0.542857 |                  0.542857 |
-| WeirdNoReinstateCMR     |   0.428571 |               0.0857143 |                       |       0.2      |                  0.114286 |
-| OutlistCMRDE            |   0.885714 |               0.457143  |              0.8      |                |                  0.4      |
-| WeirdNoPrexpPositionCMR |   0.857143 |               0.457143  |              0.885714 |       0.6      |                           |
+|                         |   WeirdCMR |   WeirdPositionScaleCMR |   WeirdNoReinstateCMR |   OutlistCMRDE |   WeirdNoPrexpPositionCMR |   FlexPositionScaleCMR |   NoPrexpPositionCMR |
+|:------------------------|-----------:|------------------------:|----------------------:|---------------:|--------------------------:|-----------------------:|---------------------:|
+| WeirdCMR                |            |               0.142857  |              0.571429 |       0.114286 |                  0.142857 |               0.257143 |             0.257143 |
+| WeirdPositionScaleCMR   |   0.857143 |                         |              0.914286 |       0.542857 |                  0.542857 |               0.6      |             0.657143 |
+| WeirdNoReinstateCMR     |   0.428571 |               0.0857143 |                       |       0.2      |                  0.114286 |               0.171429 |             0.285714 |
+| OutlistCMRDE            |   0.885714 |               0.457143  |              0.8      |                |                  0.4      |               0.485714 |             0.6      |
+| WeirdNoPrexpPositionCMR |   0.857143 |               0.457143  |              0.885714 |       0.6      |                           |               0.428571 |             0.828571 |
+| FlexPositionScaleCMR    |   0.742857 |               0.371429  |              0.828571 |       0.514286 |                  0.571429 |                        |             0.742857 |
+| NoPrexpPositionCMR      |   0.742857 |               0.342857  |              0.714286 |       0.4      |                  0.171429 |               0.257143 |                      |
