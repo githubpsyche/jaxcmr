@@ -124,7 +124,7 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(False),
+            # recallable=self.recallable.at[item_index].set(False),
             recall_total=self.recall_total + 1,
         )
 

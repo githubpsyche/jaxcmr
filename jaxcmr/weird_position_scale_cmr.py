@@ -90,6 +90,7 @@ class CMR(Pytree):
         mfc_cue = self.positions[self.study_index]  # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+
         #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
@@ -144,7 +145,7 @@ class CMR(Pytree):
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
             #! find all study positions of the recalled item and set to not recallable
             # recallable=self.recallable.at[item_index].set(False),
-            recallable=self.recallable * (self.studied != item_index + 1),
+            # recallable=self.recallable * (self.studied != item_index + 1),
             recall_total=self.recall_total + 1,
         )
 
@@ -253,7 +254,7 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         context.size,
         parameters["learning_rate"],
-        1.0# parameters.get("mfc_choice_sensitivity", 1.0),
+        1.0,  # parameters.get("mfc_choice_sensitivity", 1.0),
     )
     mcf = LinearMemory.init_mcf(
         list_length,
