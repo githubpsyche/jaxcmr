@@ -6,9 +6,10 @@ import h5py
 import jax.numpy as jnp
 import markdown
 from IPython.display import HTML, display
+from jax import vmap
 from nbdev import show_doc as nbdev_show_doc
 
-from jaxcmr.typing import Array, Bool, Float, Real
+from jaxcmr.typing import Array, Bool, Float, Real, Integer
 
 
 def show_doc(func):
@@ -162,3 +163,29 @@ def apply_by_subject(
             func(trials[subject_mask], presentations[subject_mask], list_length, *args)
         )
     return results
+
+
+def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
+    """
+    Returns a boolean array indicating which rows in `recalls` contain repeated nonzero values.
+
+    Args:
+        arr: 2D array
+    """
+
+    def check_row(row):
+        # Only consider nonzero values
+        mask = row > 0
+        values: Integer[Array, " values"] = jnp.where(
+            mask, row, -1
+        )  # fill non-recalled with -1 (guaranteed not to repeat)
+
+        # Sort and compare adjacent values
+        sorted_vals = jnp.sort(values)
+        eq_adjacent = sorted_vals[1:] == sorted_vals[:-1]
+
+        # Must ignore -1/-1 matches (which occur if multiple padding values present)
+        valid_repeats = eq_adjacent & (sorted_vals[1:] != -1)
+        return jnp.any(valid_repeats)
+
+    return vmap(check_row)(arr)

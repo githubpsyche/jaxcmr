@@ -53,6 +53,8 @@ class CMR(Pytree):
         self.mfc_sensitivity = parameters.get(
             "mfc_choice_sensitivity", parameters["choice_sensitivity"]
         )
+        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
+
         self.item_count = list_length
         #! item representations on F now position representations
         self.positions = jnp.eye(list_length)
@@ -147,12 +149,16 @@ class CMR(Pytree):
             self.mfc.probe(mfc_cue),
             self.recall_drift_rate,
         )
+        #! find all study positions of the recalled item and set to not recallable
+        recallable = lax.cond(
+            self.allow_repeated_recalls,
+            true_fun=lambda: self.recallable,
+            false_fun=lambda: self.recallable * (self.studied != item_index + 1),
+        )
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            #! find all study positions of the recalled item and set to not recallable
-            # recallable=self.recallable.at[item_index].set(False),
-            # recallable=self.recallable * (self.studied != item_index + 1),
+            recallable=recallable,
             recall_total=self.recall_total + 1,
         )
 

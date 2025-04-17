@@ -48,6 +48,8 @@ class CMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         #! We use a weird learning rate parameter for repetitions
         self.mfc_sensitivity = parameters["mfc_trace_sensitivity"]
+        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
+
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self._stop_probability = exponential_stop_probability(
@@ -133,7 +135,7 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            # recallable=self.recallable.at[item_index].set(False),
+            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
             recall_total=self.recall_total + 1,
         )
 
