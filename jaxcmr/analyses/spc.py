@@ -9,7 +9,7 @@ from jax import vmap, jit
 
 from typing import Optional, Sequence
 from ..typing import Array, Float, Integer, Bool
-from ..experimental.repetition import all_study_positions
+from ..repetition import all_study_positions
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..helpers import apply_by_subject, find_max_list_length
 
