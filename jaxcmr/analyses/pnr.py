@@ -11,10 +11,10 @@ from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from .experimental.plotting import init_plot, plot_data, set_plot_labels
-from .experimental.repetition import all_study_positions
-from .helpers import apply_by_subject, find_max_list_length
-from .typing import Array, Bool, Float, Integer
+from ..experimental.plotting import init_plot, plot_data, set_plot_labels
+from ..experimental.repetition import all_study_positions
+from ..helpers import apply_by_subject, find_max_list_length
+from ..typing import Array, Bool, Float, Integer
 
 
 # %% ../notebooks/pnr.ipynb 4
