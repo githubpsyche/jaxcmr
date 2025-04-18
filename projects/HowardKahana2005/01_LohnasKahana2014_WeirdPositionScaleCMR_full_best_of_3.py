@@ -13,7 +13,7 @@ import numpy as np
 from jax import random
 from matplotlib import rcParams  # type: ignore
 
-from jaxcmr.weird_position_scale_cmr import BaseCMRFactory as model_factory
+from jaxcmr.models.weird_position_scale_cmr import BaseCMRFactory as model_factory
 from jaxcmr.experimental.array import to_numba_typed_dict
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data

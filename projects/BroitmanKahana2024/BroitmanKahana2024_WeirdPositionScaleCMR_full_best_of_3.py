@@ -24,7 +24,7 @@ from jaxcmr.helpers import (
 from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
-from jaxcmr.weird_position_scale_cmr import BaseCMRFactory as model_factory
+from jaxcmr.models.weird_position_scale_cmr import BaseCMRFactory as model_factory
 
 warnings.filterwarnings("ignore")
 

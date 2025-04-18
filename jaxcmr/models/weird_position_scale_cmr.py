@@ -5,10 +5,16 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from jaxcmr.context import TemporalContext
-from jaxcmr.instance_memory import InstanceMemory
-from jaxcmr.linear_memory import LinearMemory
-from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, power_scale, lb
+from jaxcmr.models.context import TemporalContext
+from jaxcmr.models.instance_memory import InstanceMemory
+from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.math import (
+    exponential_primacy_decay,
+    exponential_stop_probability,
+    power_scale,
+    lb,
+    normalize_magnitude,
+)
 from jaxcmr.typing import (
     Array,
     Context,
@@ -43,9 +49,12 @@ class CMR(Pytree):
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
+        self.mfc_sensitivity = parameters.get(
+            "mfc_choice_sensitivity", parameters["choice_sensitivity"]
+        )
+        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
-        #! item representations on F now position representations 
+        #! item representations on F now position representations
         self.positions = jnp.eye(list_length)
         self._stop_probability = exponential_stop_probability(
             self.stop_probability_scale,
@@ -79,18 +88,23 @@ class CMR(Pytree):
             item_index: the index of the item to experience. 0-indexed.
         """
         #! instead of probing and learning using item, we use the item's study position
-        mfc_cue = self.positions[self.study_index] # item = self.items[item_index]
+        mfc_cue = self.positions[self.study_index]  # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+
         #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(mfc_cue, self.context.state, self.mfc_learning_rate), #! updated
-            mcf=self.mcf.associate(self.context.state, mfc_cue, self.mcf_learning_rate), #! updated
+            mfc=self.mfc.associate(
+                mfc_cue, self.context.state, self.mfc_learning_rate
+            ),  #! updated
+            mcf=self.mcf.associate(
+                self.context.state, mfc_cue, self.mcf_learning_rate
+            ),  #! updated
             #! also update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! and track each item's study position(s)
-            studied=self.studied.at[self.study_index].set(item_index+1),
+            studied=self.studied.at[self.study_index].set(item_index + 1),
             study_index=self.study_index + 1,
         )
 
@@ -118,20 +132,25 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
-        #! We don't know which trace was recalled, 
+        #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
         item_activation = self.position_activations() * (self.studied == item_index + 1)
-        mfc_cue = power_scale(item_activation / jnp.sum(item_activation), self.mfc_sensitivity)
+        item_activation = power_scale(item_activation, self.mfc_sensitivity)
+        mfc_cue = normalize_magnitude(item_activation)
         new_context = self.context.integrate(
             self.mfc.probe(mfc_cue),
             self.recall_drift_rate,
         )
+        #! find all study positions of the recalled item and set to not recallable
+        recallable = lax.cond(
+            self.allow_repeated_recalls,
+            true_fun=lambda: self.recallable,
+            false_fun=lambda: self.recallable * (self.studied != item_index + 1),
+        )
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            #! find all study positions of the recalled item and set to not recallable
-            # recallable=self.recallable.at[item_index].set(False),
-            recallable= self.recallable * (self.studied != item_index + 1),
+            recallable=recallable,
             recall_total=self.recall_total + 1,
         )
 
@@ -146,23 +165,23 @@ class CMR(Pytree):
             lambda: self.replace(is_active=False),
             lambda: self.retrieve_item(choice - 1),
         )
-    
+
     def position_activations(self) -> Float[Array, " list_length"]:
         """Returns relative support for retrieval of each study position given model state"""
         #! refactored to get position activations separately
         position_activations = self.mcf.probe(self.context.state) + lb
         return position_activations * self.recallable  # mask recalled study positions
-    
+
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
-        position_activations = self.position_activations()
-        item_activations = jnp.sum(
-            position_activations[:, None] * (self.studied[:, None] == self.item_ids[None, :] + 1),
-            axis=0,
+        position_activations = power_scale(
+            self.position_activations(), self.mcf_sensitivity
         )
-        #! special version that scales item activations instead of position activations
-        return power_scale(item_activations, self.mcf_sensitivity)
+        return lax.map(
+            lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
+            self.item_ids,
+        )
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -191,7 +210,9 @@ class CMR(Pytree):
         #! Since item activations are potentially distributed across position activations,
         #! instead of indexing by item, we mask position activations by item then sum/normalize
         p_continue = 1 - self.stop_probability()
-        position_activations = self.position_activations()
+        position_activations = power_scale(
+            self.position_activations(), self.mcf_sensitivity
+        )
         item_activation = jnp.sum(
             position_activations * (self.studied == item_index + 1)
         )
@@ -238,14 +259,14 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         context.size,
         parameters["learning_rate"],
-        parameters.get("mfc_choice_sensitivity", 1.0),
+        1.0,  # parameters.get("mfc_choice_sensitivity", 1.0),
     )
     mcf = LinearMemory.init_mcf(
         list_length,
         context.size,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        1.0,  # parameters["choice_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
 
@@ -272,7 +293,7 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
@@ -297,7 +318,7 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        1., # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)

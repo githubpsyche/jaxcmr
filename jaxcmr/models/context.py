@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from .math import normalize_magnitude
-from .state_analysis import matrix_heatmap
-from .typing import Array, Float, Float_
+from ..math import normalize_magnitude
+from ..state_analysis import matrix_heatmap
+from ..typing import Array, Float, Float_
 
 
 class TemporalContext(Pytree):

@@ -5,8 +5,9 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from jaxcmr.context import TemporalContext
-from jaxcmr.linear_memory import LinearMemory
+from jaxcmr.models.context import TemporalContext
+from jaxcmr.models.instance_memory import InstanceMemory
+from jaxcmr.models.linear_memory import LinearMemory
 from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, power_scale, lb
 from jaxcmr.typing import (
     Array,
@@ -15,6 +16,7 @@ from jaxcmr.typing import (
     Float_,
     Int_,
     Integer,
+    Memory,
     MemorySearch,
 )
 
@@ -26,8 +28,8 @@ class CMR(Pytree):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-        mfc: LinearMemory,
-        mcf: LinearMemory,
+        mfc: Memory,
+        mcf: Memory,
         context: Context,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
@@ -79,24 +81,11 @@ class CMR(Pytree):
         #! instead of probing and learning using item, we use the item's study position
         mfc_cue = self.positions[self.study_index] # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
-        #! if this item has been studied before, zero out its pre-experimental connections
-        intermediate_mfc = lax.cond(
-            jnp.isin(item_index+1, self.studied),
-            true_fun=lambda: self.mfc.zero_out(self.study_index),
-            false_fun=lambda: self.mfc,
-        )
-        intermediate_mcf = lax.cond(
-            jnp.isin(item_index+1, self.studied),
-            true_fun=lambda: self.mcf.zero_out(self.study_index+1),
-            false_fun=lambda: self.mcf,
-        )
-
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
-        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=intermediate_mfc.associate(mfc_cue, new_context.state, self.mfc_learning_rate), #!
-            mcf=intermediate_mcf.associate(new_context.state, mfc_cue, self.mcf_learning_rate), #! 
+            mfc=self.mfc.associate(mfc_cue, new_context.state, self.mfc_learning_rate),
+            mcf=self.mcf.associate(new_context.state, mfc_cue, self.mcf_learning_rate),
             #! also update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! and track each item's study position(s)
@@ -258,6 +247,59 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
     return CMR(list_length, parameters, mfc, mcf, context)
 
 
+def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """
+    Creates InstanceCMR model with instance-based $M^{FC}$ and $M^{CF}$ memories.
+
+    Equivalent to the original CMR model when `mcf_trace_sensitivity` is set to 1.0.
+    Usually slower than the linear version, but often more interpretable and flexible.
+    """
+    context = TemporalContext.init(list_length)
+    mfc = InstanceMemory.init_mfc(
+        list_length,
+        context.size,
+        list_length,
+        parameters["learning_rate"],
+        parameters.get("mfc_choice_sensitivity", 1.0),
+        parameters.get("mfc_trace_sensitivity", 1.0),
+    )
+    mcf = InstanceMemory.init_mcf(
+        list_length,
+        context.size,
+        list_length,
+        parameters["item_support"],
+        parameters["shared_support"],
+        parameters["choice_sensitivity"],
+        parameters["mcf_trace_sensitivity"],
+    )
+    return CMR(list_length, parameters, mfc, mcf, context)
+
+
+def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """
+    Creates MixedCMR model with linear $M^{FC}$ and instance-based $M^{CF}$ memories.
+
+    Equivalent to InstanceCMR but faster feature-to-context memory.
+    """
+    context = TemporalContext.init(list_length)
+    mfc = LinearMemory.init_mfc(
+        list_length,
+        context.size,
+        parameters["learning_rate"],
+        parameters.get("mfc_choice_sensitivity", 1.0),
+    )
+    mcf = InstanceMemory.init_mcf(
+        list_length,
+        context.size,
+        list_length,
+        parameters["item_support"],
+        parameters["shared_support"],
+        parameters["choice_sensitivity"],
+        parameters["mcf_trace_sensitivity"],
+    )
+    return CMR(list_length, parameters, mfc, mcf, context)
+
+
 class BaseCMRFactory:
     def __init__(
         self,
@@ -274,3 +316,39 @@ class BaseCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return BaseCMR(self.max_list_length, parameters)
+
+
+class InstanceCMRFactory:
+    def __init__(
+        self,
+        dataset: dict[str, Integer[Array, " trials ?"]],
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return InstanceCMR(self.max_list_length, parameters)
+
+
+class MixedCMRFactory:
+    def __init__(
+        self,
+        dataset: dict[str, Integer[Array, " trials ?"]],
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return MixedCMR(self.max_list_length, parameters)

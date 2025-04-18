@@ -15,7 +15,7 @@ import seaborn as sns
 from jax import jit, lax, vmap
 from tqdm import trange
 
-from jaxcmr.cmr import BaseCMRFactory as model_factory
+from jaxcmr.models.cmr import BaseCMRFactory as model_factory
 from jaxcmr.fitting import make_subject_trial_masks
 from jaxcmr.helpers import generate_trial_mask, load_data
 from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as LikelihoodFnGenerator

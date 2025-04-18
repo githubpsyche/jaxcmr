@@ -10,8 +10,8 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from .math import power_scale
-from .typing import Array, Float, Float_, Int_
+from ..math import power_scale
+from ..typing import Array, Float, Float_, Int_
 
 
 # %% ../notebooks/linear_memory.ipynb 3

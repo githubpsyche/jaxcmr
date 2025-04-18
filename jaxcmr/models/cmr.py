@@ -5,9 +5,9 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from jaxcmr.context import TemporalContext
-from jaxcmr.instance_memory import InstanceMemory
-from jaxcmr.linear_memory import LinearMemory
+from jaxcmr.models.context import TemporalContext
+from jaxcmr.models.instance_memory import InstanceMemory
+from jaxcmr.models.linear_memory import LinearMemory
 from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
 from jaxcmr.typing import (
     Array,
@@ -43,7 +43,6 @@ class CMR(Pytree):
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self._stop_probability = exponential_stop_probability(
@@ -77,11 +76,10 @@ class CMR(Pytree):
         item = self.items[item_index]
         context_input = self.mfc.probe(item)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
-        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(item, self.context.state, self.mfc_learning_rate), #! updated
-            mcf=self.mcf.associate(self.context.state, item, self.mcf_learning_rate), #! updated
+            mfc=self.mfc.associate(item, new_context.state, self.mfc_learning_rate),
+            mcf=self.mcf.associate(new_context.state, item, self.mcf_learning_rate),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -117,7 +115,7 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
+            recallable=self.recallable.at[item_index].set(False),
             recall_total=self.recall_total + 1,
         )
 
