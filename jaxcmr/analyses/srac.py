@@ -11,7 +11,7 @@ from jax import jit
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..experimental.plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import init_plot, plot_data, set_plot_labels
 from ..helpers import apply_by_subject, find_max_list_length
 from ..typing import Array, Bool, Float, Integer
 

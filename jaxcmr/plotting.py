@@ -1,12 +1,11 @@
 from typing import Optional
-from matplotlib.axes import Axes
+
 import matplotlib.pyplot as plt
-
-from scipy.stats import bootstrap
-from jaxcmr.experimental.array import segment_by_nan
 from jax import numpy as jnp
-from jaxcmr.typing import Real, Array
+from matplotlib.axes import Axes
+from scipy.stats import bootstrap
 
+from jaxcmr.typing import Array, Real
 
 __all__ = [
     "init_plot",
@@ -16,6 +15,19 @@ __all__ = [
     "plot_without_error_bars",
     "set_plot_labels",
 ]
+
+
+def segment_by_nan(vector: jnp.ndarray) -> list[tuple[int, int]]:
+    "Returns list of tuples segmenting the vector by its NaN values."
+    segments = []
+    start_idx = 0
+    for i in range(len(vector)):
+        if jnp.isnan(vector[i]):
+            segments.append((start_idx, i))
+            start_idx = i + 1
+    if start_idx < len(vector):
+        segments.append((start_idx, len(vector)))
+    return segments
 
 
 def init_plot(axis: Optional[Axes] = None) -> Axes:
@@ -122,7 +134,7 @@ def plot_data(
     Args:
         axis: the axis to plot on; if None, a new figure is created.
         x_values: Vector of x values to plot.
-        crp_values: vector or matrix of y values to plot.
+        y_values: vector or matrix of y values to plot.
         label: name for the plotted data.
         color: color for the plotted data.
     """

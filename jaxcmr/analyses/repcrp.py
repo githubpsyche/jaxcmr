@@ -13,7 +13,7 @@ from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..experimental.plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import init_plot, plot_data, set_plot_labels
 from ..experimental.repetition import all_study_positions
 from ..helpers import apply_by_subject
 from ..typing import Array, Bool, Float, Int_, Integer

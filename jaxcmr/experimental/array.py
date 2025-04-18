@@ -18,7 +18,6 @@ __all__ = [
     "np_connectivity_by_index",
     "cos_sim",
     "compute_similarity_matrix",
-    "segment_by_nan",
     "njit_apply_along_axis",
     "filter_repeated_recalls",
 ]
@@ -251,19 +250,6 @@ def compute_similarity_matrix(embeddings: Float[Array, " words features"]) -> Re
     cosine_scores = cosine_scores.at[jnp.diag_indices_from(cosine_scores)].set(0)
 
     return cosine_scores
-
-
-def segment_by_nan(vector: jnp.ndarray) -> list[tuple[int, int]]:
-    "Returns list of tuples segmenting the vector by its NaN values."
-    segments = []
-    start_idx = 0
-    for i in range(len(vector)):
-        if jnp.isnan(vector[i]):
-            segments.append((start_idx, i))
-            start_idx = i + 1
-    if start_idx < len(vector):
-        segments.append((start_idx, len(vector)))
-    return segments
 
 
 def njit_apply_along_axis(
