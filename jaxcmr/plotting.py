@@ -91,6 +91,10 @@ def plot_with_error_bars(
             errors[:, start:end],
             label=label if index == 0 else None,
             color=color,
+            capsize=3,
+            marker="o",
+            markersize=5,
+            linewidth=1.5,
         )
 
 
@@ -119,6 +123,10 @@ def plot_without_error_bars(
             y_mean[start:end],
             label=label if index == 0 else None,
             color=color,
+            capsize=3,
+            marker="o",
+            markersize=5,
+            linewidth=1.5,
         )
 
 
@@ -167,5 +175,12 @@ def set_plot_labels(
     # If a contrast name is provided, set it as the legend's title
     if contrast_name:
         axis.legend(title=contrast_name)
+
+    axis.tick_params(labelsize=14)
+    axis.set_xlabel(axis.get_xlabel(), fontsize=16)
+    axis.set_ylabel(axis.get_ylabel(), fontsize=16)
+    for loc in ("top", "right"):
+        axis.spines[loc].set_visible(False)
+    axis.yaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.3)
 
     return axis
