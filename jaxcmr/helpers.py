@@ -178,7 +178,7 @@ def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
         mask = row > 0
         values: Integer[Array, " values"] = jnp.where(
             mask, row, -1
-        )  # fill non-recalled with -1 (guaranteed not to repeat)
+        )  # type: ignore # fill non-recalled with -1 (guaranteed not to repeat)
 
         # Sort and compare adjacent values
         sorted_vals = jnp.sort(values)
