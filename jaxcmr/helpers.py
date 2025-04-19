@@ -9,7 +9,7 @@ from IPython.display import HTML, display
 from jax import vmap
 from nbdev import show_doc as nbdev_show_doc
 
-from jaxcmr.typing import Array, Bool, Float, Real, Integer
+from jaxcmr.typing import Array, Bool, Float, Real, Integer, RecallDataset
 
 
 def show_doc(func):
@@ -74,7 +74,7 @@ def find_project_root(marker: str = ".git") -> str:
 
 
 def generate_trial_mask(
-    data: dict, trial_query: Optional[str]
+    data: RecallDataset, trial_query: Optional[str]
 ) -> Bool[Array, " trial_count"]:
     """Returns a boolean mask for selecting trials based on a specified query condition.
 
