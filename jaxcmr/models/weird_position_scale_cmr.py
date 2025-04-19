@@ -24,6 +24,7 @@ from jaxcmr.typing import (
     Integer,
     Memory,
     MemorySearch,
+    RecallDataset,
 )
 
 
@@ -327,7 +328,7 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
 class BaseCMRFactory:
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
@@ -345,7 +346,7 @@ class BaseCMRFactory:
 class InstanceCMRFactory:
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
@@ -363,7 +364,7 @@ class InstanceCMRFactory:
 class MixedCMRFactory:
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""

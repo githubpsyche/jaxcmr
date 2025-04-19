@@ -38,7 +38,64 @@ __all__ = [
     "FittingAlgorithm",
 ]
 
-test = 0
+
+class RecallDataset(TypedDict):
+    """
+    A typed dictionary representing a dataset for free or serial recall experiments.
+    Each key maps to a 2D integer array of shape (n_trials, ?).
+    Rows correspond to trials; columns vary by field.
+    Zeros are used to indicate unused or padding entries, with values starting from 1.
+
+    Required fields:
+        - subject:       Subject IDs (one per trial).
+        - listLength:    The length of the list presented in each trial.
+        - pres_itemids:  Cross-list item IDs presented in each trial
+                         (points to a global word pool).
+        - pres_itemnos:  Within-list item numbers (1-based indices; 0 indicates padding).
+        - rec_itemids:   Cross-list item IDs corresponding to items recalled.
+        - recalls:       Within-list item numbers for recalled items
+                         (1-based indices; 0 indicates padding).
+
+    Optional fields:
+        - You can add as many as needed, with `NotRequired[...]`.
+    """
+
+    # REQUIRED FIELDS
+
+    subject: Integer[Array, "n_trials 1"]
+    """Subject ID for each trial (shape: [n_trials, 1])."""
+
+    listLength: Integer[Array, "n_trials 1"]
+    """List length for each trial (shape: [n_trials, 1])."""
+
+    pres_itemnos: Integer[Array, "n_trials num_presented"]
+    """Per-trial within-list item numbers (shape: [n_trials, num_presented]).
+    1-based indices with 0 for unused/padding entries."""
+
+    recalls: Integer[Array, "n_trials num_recalled"]
+    """Within-list item numbers for recalled items (shape: [n_trials, num_recalled]).
+    1-based indices with 0 for unused/padding entries."""
+
+    # OPTIONAL FIELDS, REQUIRED FOR SEMANTIC ANALYSIS
+    pres_itemids: Integer[Array, "n_trials num_presented"]
+    """Per-trial cross-list item IDs (shape: [n_trials, num_presented]). 
+    These IDs reference a global word pool and may repeat across trials."""
+
+    rec_itemids: NotRequired[Integer[Array, "n_trials num_recalled"]]
+    """Cross-list item IDs for recalled items (shape: [n_trials, num_recalled])."""
+
+    # OPTIONAL FIELDS, MISC
+    irt: NotRequired[Integer[Array, "n_trials num_recalled"]]
+    """Item response times for recalled items (shape: [n_trials, num_recalled])."""
+
+    session: NotRequired[Integer[Array, "n_trials 1"]]
+    """Session IDs for each trial (shape: [n_trials, 1])."""
+
+    listtype: NotRequired[Integer[Array, "n_trials 1"]]
+    """List type for each trial (shape: [n_trials, 1])."""
+
+    list_type: NotRequired[Integer[Array, "n_trials 1"]]
+    """List type for each trial (shape: [n_trials, 1])."""
 
 
 @runtime_checkable
@@ -108,7 +165,7 @@ class MemorySearchCreateFn(Protocol):
 class MemorySearchModelFactory(Protocol):
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
@@ -237,64 +294,6 @@ class FitResult(TypedDict):
     fit_time: float
     """Total time (in seconds) taken to perform the fitting."""
 
-
-class RecallDataset(TypedDict):
-    """
-    A typed dictionary representing a dataset for free or serial recall experiments.
-    Each key maps to a 2D integer array of shape (n_trials, ?).
-    Rows correspond to trials; columns vary by field.
-    Zeros are used to indicate unused or padding entries, with values starting from 1.
-
-    Required fields:
-        - subject:       Subject IDs (one per trial).
-        - listLength:    The length of the list presented in each trial.
-        - pres_itemids:  Cross-list item IDs presented in each trial
-                         (points to a global word pool).
-        - pres_itemnos:  Within-list item numbers (1-based indices; 0 indicates padding).
-        - rec_itemids:   Cross-list item IDs corresponding to items recalled.
-        - recalls:       Within-list item numbers for recalled items
-                         (1-based indices; 0 indicates padding).
-
-    Optional fields:
-        - You can add as many as needed, with `NotRequired[...]`.
-    """
-
-    # REQUIRED FIELDS
-
-    subject: Integer[Array, "n_trials 1"]
-    """Subject ID for each trial (shape: [n_trials, 1])."""
-
-    listLength: Integer[Array, "n_trials 1"]
-    """List length for each trial (shape: [n_trials, 1])."""
-
-    pres_itemnos: Integer[Array, "n_trials num_presented"]
-    """Per-trial within-list item numbers (shape: [n_trials, num_presented]).
-    1-based indices with 0 for unused/padding entries."""
-
-    recalls: Integer[Array, "n_trials num_recalled"]
-    """Within-list item numbers for recalled items (shape: [n_trials, num_recalled]).
-    1-based indices with 0 for unused/padding entries."""
-
-    # OPTIONAL FIELDS, REQUIRED FOR SEMANTIC ANALYSIS
-    pres_itemids: Integer[Array, "n_trials num_presented"]
-    """Per-trial cross-list item IDs (shape: [n_trials, num_presented]). 
-    These IDs reference a global word pool and may repeat across trials."""
-
-    rec_itemids: NotRequired[Integer[Array, "n_trials num_recalled"]]
-    """Cross-list item IDs for recalled items (shape: [n_trials, num_recalled])."""
-
-    # OPTIONAL FIELDS, MISC
-    irt: NotRequired[Integer[Array, "n_trials num_recalled"]]
-    """Item response times for recalled items (shape: [n_trials, num_recalled])."""
-
-    session: NotRequired[Integer[Array, "n_trials 1"]]
-    """Session IDs for each trial (shape: [n_trials, 1])."""
-
-    listtype: NotRequired[Integer[Array, "n_trials 1"]]
-    """List type for each trial (shape: [n_trials, 1])."""
-
-    list_type: NotRequired[Integer[Array, "n_trials 1"]]
-    """List type for each trial (shape: [n_trials, 1])."""
 
 @runtime_checkable
 class FittingAlgorithm(Protocol):

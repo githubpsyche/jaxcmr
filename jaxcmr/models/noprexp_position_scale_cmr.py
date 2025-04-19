@@ -16,6 +16,7 @@ from jaxcmr.typing import (
     Int_,
     Integer,
     MemorySearch,
+    RecallDataset,
 )
 
 
@@ -261,7 +262,7 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
 class BaseCMRFactory:
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""

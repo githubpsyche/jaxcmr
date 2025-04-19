@@ -22,6 +22,7 @@ from jaxcmr.typing import (
     Integer,
     MemorySearch,
     MemorySearchModelFactory,
+    RecallDataset,
 )
 
 
@@ -55,7 +56,7 @@ class MemorySearchLikelihoodFnGenerator:
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""

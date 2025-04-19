@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from jax import vmap, jit, lax
 
 from typing import Optional, Sequence
-from ..typing import Array, Float, Bool, Integer
+from ..typing import Array, Float, Bool, Integer, RecallDataset
 from ..repetition import all_study_positions
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..helpers import apply_by_subject, find_max_list_length
@@ -55,7 +55,7 @@ def relative_spc(
 
 # %% ../../notebooks/rspc.ipynb 6
 def plot_relative_spc(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     distances: Optional[Float[Array, " word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,

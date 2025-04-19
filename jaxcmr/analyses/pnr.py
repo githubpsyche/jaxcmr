@@ -15,7 +15,7 @@ from matplotlib.axes import Axes
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..repetition import all_study_positions
 from ..helpers import apply_by_subject, find_max_list_length
-from ..typing import Array, Bool, Float, Integer
+from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
 # %% ../../notebooks/pnr.ipynb 4
@@ -193,7 +193,7 @@ def conditional_pnr_with_repeats(
 
 # %% ../../notebooks/pnr.ipynb 15
 def plot_pnr(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     query_recall_position: int = 0,
     distances: Optional[Float[Array, "word_count word_count"]] = None,

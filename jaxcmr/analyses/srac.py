@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from ..plotting import init_plot, plot_data, set_plot_labels
 
 from ..helpers import apply_by_subject, find_max_list_length
-from ..typing import Array, Bool, Float, Integer
+from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 # %% ../../notebooks/srac.ipynb 4
 def fixed_pres_srac(
@@ -62,7 +62,7 @@ def srac_one_trial(
 def srac(
     recalls:       jnp.ndarray,  # [n_trials, L_out]
     presentations: jnp.ndarray,  # [n_trials, L_pres]
-    list_length:   int = None    # unused
+    list_length:   Optional[int|Sequence[int]] = None    # unused
 ) -> jnp.ndarray:               # returns [L_out] float32
     n_trials, L_out = recalls.shape
 
@@ -89,7 +89,7 @@ def srac(
 
 # %% ../../notebooks/srac.ipynb 9
 def plot_srac(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,

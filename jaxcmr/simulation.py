@@ -15,6 +15,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     MemorySearch,
     PRNGKeyArray,
+    RecallDataset,
 )
 
 
@@ -107,7 +108,7 @@ class MemorySearchSimulator:
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
@@ -138,8 +139,8 @@ class MemorySearchSimulator:
 #%%
 
 def preallocate_for_h5_dataset(
-    data: dict, trial_mask: Bool[Array, " trial_count"], experiment_count: int
-) -> dict:
+    data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
+) -> RecallDataset:
     """Pre-allocates dictionary of numpy arrays based on trial mask and experiment count.
 
     Arrays are allocated for each key in the input data.
@@ -162,14 +163,14 @@ def preallocate_for_h5_dataset(
 
 def simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
-    dataset: dict[str, Integer[Array, " trials ?"]],
+    dataset: RecallDataset,
     connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
     rng: PRNGKeyArray,
     size=3,
-) -> dict[str, Integer[Array, " trials ?"]]:
+) -> RecallDataset:
     """
     Simulates dataset from existing dataset using a memory search model parameterized by subject.
     
@@ -231,7 +232,7 @@ def simulate_h5_from_h5(
 
 def parameter_shifted_simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
-    dataset: dict[str, Integer[Array, " trials ?"]],
+    dataset: RecallDataset,
     connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
@@ -240,7 +241,7 @@ def parameter_shifted_simulate_h5_from_h5(
     parameter_values: Sequence[float],
     rng: PRNGKeyArray,
     size=3,
-) -> list[dict[str, Integer[Array, " trials ?"]]]:
+) -> Sequence[RecallDataset]:
     """
     Simulates multiple H5 datasets by systematically varying a specified parameter, using the updated 
     simulate_h5_from_h5 implementation.

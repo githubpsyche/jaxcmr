@@ -16,7 +16,7 @@ from simple_pytree import Pytree
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
-from ..typing import Array, Bool, Float, Int_, Integer
+from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 # %% ../../notebooks/repcrp.ipynb 4
 def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
@@ -164,7 +164,7 @@ def repcrp(
 
 # %% ../../notebooks/repcrp.ipynb 10
 def plot_rep_crp(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
     min_lag: int = 4,
@@ -222,36 +222,6 @@ def plot_rep_crp(
             size,
         )
 
-        # repetition_index = 0
-        # repetition_subject_values = jnp.vstack(
-        #     [each[repetition_index] for each in subject_values]
-        # )[:, lag_range - max_lag : lag_range + max_lag + 1]
-
-        # color = color_cycle.pop(0)
-        # plot_data(
-        #     axis,
-        #     lag_interval,
-        #     repetition_subject_values,
-        #     str(1),
-        #     color,
-        # )
-
-        # repetition_subject_values = jnp.zeros_like(repetition_subject_values)
-        # for repetition_index in repetition_indices[1:]:
-        #     repetition_subject_values = repetition_subject_values + jnp.vstack(
-        #         [each[repetition_index] for each in subject_values]
-        #     )[:, lag_range - max_lag : lag_range + max_lag + 1]
-        # repetition_subject_values = repetition_subject_values / (len(repetition_indices)-1)
-
-        # color = color_cycle.pop(0)
-        # plot_data(
-        #     axis,
-        #     lag_interval,
-        #     repetition_subject_values,
-        #     str("2+"),
-        #     color,
-        # )
-
         for repetition_index in repetition_indices:
             repetition_subject_values = jnp.vstack(
                 [each[repetition_index] for each in subject_values]
@@ -272,7 +242,7 @@ def plot_rep_crp(
 
 # %% ../../notebooks/repcrp.ipynb 11
 def plot_difference_rep_crp(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
     min_lag: int = 4,
@@ -349,7 +319,7 @@ def plot_difference_rep_crp(
 
 # %% ../../notebooks/repcrp.ipynb 12
 def plot_first_rep_crp(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
     min_lag: int = 4,
@@ -377,7 +347,7 @@ def plot_first_rep_crp(
 
 
 def plot_second_rep_crp(
-    datasets: Sequence[dict[str, jnp.ndarray]] | dict[str, jnp.ndarray],
+    datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
     min_lag: int = 4,

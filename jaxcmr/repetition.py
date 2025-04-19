@@ -86,10 +86,9 @@ def _shuffle_and_tile_controls(
     keys = random.split(prng_key, n_permutations)
     batched = jax.vmap(lambda k: random.permutation(k, control_recalls, axis=0))(keys)
     flat_shuffled = batched.reshape((-1, control_recalls.shape[1]))
-    cleaned = filter_repeated_recalls(flat_shuffled)
 
     tiled_pres = jnp.repeat(mixed_presentations, repeats=n_shuffles, axis=0)
-    return cleaned, tiled_pres
+    return flat_shuffled, tiled_pres
 
 
 def make_control_dataset(
@@ -97,6 +96,7 @@ def make_control_dataset(
     mixed_query: str,
     control_query: str,
     n_shuffles: int,
+    remove_repeats: bool = True,
     seed: int = 0,
 ) -> RecallDataset:
     """
@@ -132,6 +132,8 @@ def make_control_dataset(
         new_recalls, new_pres = _shuffle_and_tile_controls(
             pure_recalls, mixed_pres, n_shuffles, prng_keys[i]
         )
+        if remove_repeats:
+            new_recalls = filter_repeated_recalls(new_recalls)
 
         recalls_blocks.append(new_recalls)
         pres_blocks.append(new_pres)

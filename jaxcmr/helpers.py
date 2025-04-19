@@ -88,7 +88,7 @@ def generate_trial_mask(
     return eval(trial_query).flatten()
 
 
-def load_data(data_path: str) -> dict[str, jnp.ndarray]:
+def load_data(data_path: str) -> RecallDataset:
     """
     Loads and processes an HDF5 dataset from the specified file.
 
@@ -105,7 +105,7 @@ def load_data(data_path: str) -> dict[str, jnp.ndarray]:
     """
     with h5py.File(data_path, "r") as f:
         result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
-    return {key: jnp.array(value) for key, value in result.items()}
+    return {key: jnp.array(value) for key, value in result.items()} # type: ignore
 
 
 def save_dict_to_hdf5(data: dict, path: str):
@@ -120,7 +120,7 @@ def save_dict_to_hdf5(data: dict, path: str):
 
 
 def find_max_list_length(
-    datasets: Sequence[dict[str, jnp.ndarray]],
+    datasets: Sequence[RecallDataset],
     trial_masks: Sequence[Bool[Array, " trial_count"]],
 ) -> int:
     """Returns highest list length across multiple datasets, given trial masks.
@@ -136,7 +136,7 @@ def find_max_list_length(
 
 
 def apply_by_subject(
-    data: dict[str, jnp.ndarray],
+    data: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     func: Callable,
     *args,
