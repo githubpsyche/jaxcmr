@@ -1,6 +1,6 @@
-|                       |   WeirdCMR |   WeirdPositionScaleCMR |   WeirdNoReinstateCMR |   OutlistCMRDE |
-|:----------------------|-----------:|------------------------:|----------------------:|---------------:|
-| WeirdCMR              |            |                0.272727 |              0.454545 |       0.151515 |
-| WeirdPositionScaleCMR |   0.727273 |                         |              0.727273 |       0.575758 |
-| WeirdNoReinstateCMR   |   0.545455 |                0.272727 |                       |       0.181818 |
-| OutlistCMRDE          |   0.848485 |                0.424242 |              0.818182 |                |
+|                  |   Classic CMR |   No-Reinstate CMR |   Positional CMR |     CMR-DE |
+|:-----------------|--------------:|-------------------:|-----------------:|-----------:|
+| Classic CMR      |               |           0.454545 |         0.272727 |   0.151515 |
+| No-Reinstate CMR |      0.545455 |                    |         0.272727 |   0.181818 |
+| Positional CMR   |      0.727273 |           0.727273 |                  |   0.575758 |
+| CMR-DE           |      0.848485 |           0.818182 |         0.424242 |            |
