@@ -4,6 +4,7 @@ from typing import Callable, Iterable, List, Optional, Sequence
 
 import h5py
 import jax.numpy as jnp
+import numpy as np
 import markdown
 from IPython.display import HTML, display
 from jax import vmap
