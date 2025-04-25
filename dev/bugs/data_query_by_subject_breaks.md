@@ -1,0 +1,1 @@
+Downstream code doesn't play well if I filter by subjects. 

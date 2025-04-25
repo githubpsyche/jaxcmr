@@ -123,7 +123,6 @@ def plot_without_error_bars(
             y_mean[start:end],
             label=label if index == 0 else None,
             color=color,
-            capsize=3,
             marker="o",
             markersize=5,
             linewidth=1.5,

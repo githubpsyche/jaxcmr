@@ -1,0 +1,3 @@
+If I have a notebook scheme that I re-use and re-parametrize a lot to apply analyses, it should probably just be a function or set of functions provided by a module. This would make it easier to share with others and to use in other notebooks or scripts. It would also make it easier to test the code and ensure that it works correctly.
+
+These can be alternatively defined in notebooks that I use nbdev to export to modules.

@@ -1,0 +1,1 @@
+I think it's because of the difference in max number of recall eventsr and max number of study events. In general, I should make sure analysis code is robust to such differences. 

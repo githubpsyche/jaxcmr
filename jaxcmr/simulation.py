@@ -1,7 +1,7 @@
-from typing import Optional, Type, Mapping, Sequence
+from typing import Mapping, Optional, Sequence, Type
 
 import numpy as np
-from jax import lax, random, vmap
+from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 from jax.tree_util import tree_map
 
@@ -12,8 +12,8 @@ from jaxcmr.typing import (
     Float_,
     Int_,
     Integer,
-    MemorySearchModelFactory,
     MemorySearch,
+    MemorySearchModelFactory,
     PRNGKeyArray,
     RecallDataset,
 )
@@ -43,8 +43,6 @@ def item_to_study_positions(
         lambda: jnp.zeros(size, dtype=int),
         lambda: jnp.nonzero(presentation == item, size=size, fill_value=-1)[0] + 1,
     )
-
-# %%
 
 def single_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
@@ -136,7 +134,6 @@ class MemorySearchSimulator:
             trial_indices, parameters, random.split(rng, trial_indices.size)
         )[1]
 
-#%%
 
 def preallocate_for_h5_dataset(
     data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
@@ -173,7 +170,7 @@ def simulate_h5_from_h5(
 ) -> RecallDataset:
     """
     Simulates dataset from existing dataset using a memory search model parameterized by subject.
-    
+
     Args:
         model_factory: Factory class for creating memory search model instances.
         dataset: Original H5 dataset containing trial data.
@@ -230,6 +227,7 @@ def simulate_h5_from_h5(
     sim_h5["recalls"] = sim_h5["recalls"][:, :, 0]
     return sim_h5
 
+
 def parameter_shifted_simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
     dataset: RecallDataset,
@@ -243,12 +241,12 @@ def parameter_shifted_simulate_h5_from_h5(
     size=3,
 ) -> Sequence[RecallDataset]:
     """
-    Simulates multiple H5 datasets by systematically varying a specified parameter, using the updated 
+    Simulates multiple H5 datasets by systematically varying a specified parameter, using the updated
     simulate_h5_from_h5 implementation.
 
-    For each value in `parameter_values`, this function creates a shifted parameters dictionary by 
-    overwriting the entire array for `varied_parameter` with the given value. It then invokes 
-    simulate_h5_from_h5— which handles dataset preallocation, parameter sampling, trial reordering, 
+    For each value in `parameter_values`, this function creates a shifted parameters dictionary by
+    overwriting the entire array for `varied_parameter` with the given value. It then invokes
+    simulate_h5_from_h5— which handles dataset preallocation, parameter sampling, trial reordering,
     and item reindexing— to generate a simulated H5 dataset for that parameter setting.
 
     Args:
@@ -264,7 +262,7 @@ def parameter_shifted_simulate_h5_from_h5(
         size: Maximum number of study positions to return for each item during reindexing.
 
     Returns:
-        A list of H5-like datasets (dictionaries), each corresponding to simulation results generated 
+        A list of H5-like datasets (dictionaries), each corresponding to simulation results generated
         with a different value for the varied parameter.
     """
     sim_h5s = []
@@ -272,7 +270,7 @@ def parameter_shifted_simulate_h5_from_h5(
         rng, rng_split = random.split(rng)
         shifted_parameters = {
             **parameters,
-            varied_parameter: parameters[varied_parameter].at[:].set(parameter_value)
+            varied_parameter: parameters[varied_parameter].at[:].set(parameter_value),
         }
         sim_h5 = simulate_h5_from_h5(
             model_factory,
@@ -286,4 +284,3 @@ def parameter_shifted_simulate_h5_from_h5(
         )
         sim_h5s.append(sim_h5)
     return sim_h5s
-

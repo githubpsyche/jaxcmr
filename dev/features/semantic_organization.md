@@ -1,0 +1,1 @@
+Let's make sure Semantic CMR and the Distance CRP from Morton & Polyn (2016) works under the current library design.

@@ -14,6 +14,7 @@ from jaxcmr.typing import (
     Integer,
     LossFnGenerator,
     MemorySearchModelFactory,
+    RecallDataset,
 )
 
 
@@ -33,7 +34,7 @@ class ScipyDE:
 
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
         base_params: Mapping[str, Float_],
         model_factory: Type[MemorySearchModelFactory],
