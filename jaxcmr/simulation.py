@@ -1,7 +1,6 @@
 from typing import Mapping, Optional, Sequence, Type
 
-import numpy as np
-from jax import jit, lax, random, vmap
+from jax import lax, random, vmap, jit
 from jax import numpy as jnp
 from jax.tree_util import tree_map
 
@@ -19,10 +18,13 @@ from jaxcmr.typing import (
 )
 
 
-def segment_by_index(vector, index_vector) -> tuple[list[np.ndarray], np.ndarray]:
-    """Segments a vector by index vector."""
-    unique_indices, first_indices = np.unique(index_vector, return_index=True)
-    unique_indices = unique_indices[np.argsort(first_indices)]
+def segment_by_index(
+    vector: jnp.ndarray,
+    index_vector: Integer[Array, " indices"],
+) -> tuple[list[jnp.ndarray], jnp.ndarray]:
+    """Return a list of segments of the vector based on unique indices in index_vector."""
+    unique_indices, first_indices = jnp.unique(index_vector, return_index=True)
+    unique_indices = unique_indices[jnp.argsort(first_indices)]
     return [vector[index_vector == idx] for idx in unique_indices], unique_indices
 
 
@@ -43,6 +45,7 @@ def item_to_study_positions(
         lambda: jnp.zeros(size, dtype=int),
         lambda: jnp.nonzero(presentation == item, size=size, fill_value=-1)[0] + 1,
     )
+
 
 def single_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
@@ -208,9 +211,10 @@ def simulate_h5_from_h5(
 
     # Run simulations for each subject in a single call
     rngs = random.split(rng, len(subjects))
+    jit_present_and_simulate_trials = jit(simulator.present_and_simulate_trials)
     recalls = [
-        simulator.present_and_simulate_trials(
-            jnp.array(trials),
+        jit_present_and_simulate_trials(
+            trials,
             {key: sim_parameters[key][subject] for key in sim_parameters},
             rng_key,
         )
