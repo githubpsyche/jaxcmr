@@ -1,7 +1,7 @@
 from typing import Mapping, Optional, Sequence, Type
 
-from jax import lax, random, vmap, jit
-from jax import numpy as jnp
+import jax.numpy as jnp
+from jax import lax, random, vmap
 from jax.tree_util import tree_map
 
 from jaxcmr.typing import (
@@ -18,21 +18,11 @@ from jaxcmr.typing import (
 )
 
 
-def segment_by_index(
-    vector: jnp.ndarray,
-    index_vector: Integer[Array, " indices"],
-) -> tuple[list[jnp.ndarray], jnp.ndarray]:
-    """Return a list of segments of the vector based on unique indices in index_vector."""
-    unique_indices, first_indices = jnp.unique(index_vector, return_index=True)
-    unique_indices = unique_indices[jnp.argsort(first_indices)]
-    return [vector[index_vector == idx] for idx in unique_indices], unique_indices
-
-
 def item_to_study_positions(
     item: Int_,
     presentation: Integer[Array, " list_length"],
     size: int,
-):
+) -> Integer[Array, " size"]:
     """Return the one-indexed study positions of an item in a 1D presentation sequence.
 
     Args:
@@ -47,7 +37,7 @@ def item_to_study_positions(
     )
 
 
-def single_free_recall(
+def _single_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
 ) -> tuple[MemorySearch, Integer[Array, ""]]:
     """Return model state and choice after performing a free recall event.
@@ -61,7 +51,9 @@ def single_free_recall(
     return model.retrieve(choice), choice
 
 
-def maybe_free_recall(model, rng):
+def _maybe_free_recall(
+    model: MemorySearch, rng: PRNGKeyArray
+) -> tuple[MemorySearch, Integer[Array, ""]]:
     """Return model state and choice after performing a free recall event if the model is active.
 
     Args:
@@ -70,7 +62,7 @@ def maybe_free_recall(model, rng):
     """
     return lax.cond(
         model.is_active,
-        single_free_recall,
+        _single_free_recall,
         lambda m, _: (m, 0),
         model,
         rng,
@@ -87,7 +79,7 @@ def simulate_free_recall(
         list_length: the length of the study and recall sequences.
         rng: key for random number generation.
     """
-    return lax.scan(maybe_free_recall, model, random.split(rng, list_length))
+    return lax.scan(_maybe_free_recall, model, random.split(rng, list_length))
 
 
 def simulate_study_and_free_recall(
@@ -106,6 +98,8 @@ def simulate_study_and_free_recall(
 
 
 class MemorySearchSimulator:
+    """Stateless wrapper that can be vmapped over **trials**."""
+
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
@@ -113,35 +107,30 @@ class MemorySearchSimulator:
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
-        self.factory = model_factory(dataset, connections)
-        self.create_model = self.factory.create_model
+        factory = model_factory(dataset, connections)
+        self.create_model = factory.create_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
+        self.empty = jnp.zeros(dataset["recalls"].shape[-1], jnp.int32)
 
     def simulate_trial(
         self,
         trial_index: Integer[Array, ""],
+        subject_index: Integer[Array, " subject_count"],
         parameters: Mapping[str, Float_],
-        rng: Integer[Array, " rng"],
-    ) -> tuple[MemorySearch, Integer[Array, ""]]:
-        present = self.present_lists[trial_index]
-        model = self.create_model(trial_index, parameters)
-        return simulate_study_and_free_recall(model, present, rng)
-
-    def present_and_simulate_trials(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-        rng: Integer[Array, " rng"],
-    ) -> Integer[Array, " trials recall_events"]:
-        return vmap(self.simulate_trial, in_axes=(0, None, 0))(
-            trial_indices, parameters, random.split(rng, trial_indices.size)
+        rng: PRNGKeyArray,
+    ) -> Integer[Array, " recalls"]:
+        model = self.create_model(
+            trial_index, tree_map(lambda p: p[subject_index], parameters)
+        )
+        return simulate_study_and_free_recall(
+            model, self.present_lists[trial_index], rng
         )[1]
 
 
 def preallocate_for_h5_dataset(
     data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
 ) -> RecallDataset:
-    """Pre-allocates dictionary of numpy arrays based on trial mask and experiment count.
+    """Returns dict with same keys as `data`; each is an array replicated by `experiment_count`.
 
     Arrays are allocated for each key in the input data.
     For 'recalls', the array is initialized with zeros.
@@ -150,11 +139,7 @@ def preallocate_for_h5_dataset(
         data: Dictionary containing dataset arrays.
         trial_mask: Boolean array to select trials.
         experiment_count: Number of times to replicate each array.
-
-    Returns:
-        Dictionary with same keys as `data`; each is an array replicated by `experiment_count`.
     """
-    """Pre-allocate a dictionary of arrays for a given trial mask."""
     return tree_map(
         lambda x: jnp.repeat(x[trial_mask], experiment_count, axis=0),
         data,
@@ -169,7 +154,7 @@ def simulate_h5_from_h5(
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
     rng: PRNGKeyArray,
-    size=3,
+    size: int = 3,
 ) -> RecallDataset:
     """
     Simulates dataset from existing dataset using a memory search model parameterized by subject.
@@ -187,48 +172,22 @@ def simulate_h5_from_h5(
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(model_factory, sim_h5, connections)
-    subjects, _ = jnp.unique(dataset["subject"][trial_mask], return_counts=True)
-    trial_indices, _ = segment_by_index(
-        jnp.arange(sim_h5["recalls"].shape[0], dtype=int), sim_h5["subject"].flatten()
+
+    # Flat trial + subject index vectors (static shapes)
+    total_trials = sim_h5["subject"].size
+    trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
+    subject_indices = sim_h5["subject"].flatten()
+    rngs = random.split(rng, total_trials)
+
+    # One jit-compiled vmap over trials
+    recalls = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
+        trial_indices, subject_indices, parameters, rngs
     )
 
-    # Handle parameter sampling if the number of subjects in parameters doesn't match
-    if len(parameters["subject"]) != len(trial_indices):
-        rng, rng_iter = random.split(rng)
-        shuffled_indices = random.choice(
-            rng_iter,
-            len(parameters["subject"]),
-            shape=(len(trial_indices),),
-            replace=True,
-        )
-        sim_parameters = {key: parameters[key][shuffled_indices] for key in parameters}
-    else:
-        sim_parameters = parameters
-
-    reordering = jnp.concatenate(trial_indices)
-    for key in sim_h5:
-        sim_h5[key] = sim_h5[key][reordering]
-
-    # Run simulations for each subject in a single call
-    rngs = random.split(rng, len(subjects))
-    jit_present_and_simulate_trials = jit(simulator.present_and_simulate_trials)
-    recalls = [
-        jit_present_and_simulate_trials(
-            trials,
-            {key: sim_parameters[key][subject] for key in sim_parameters},
-            rng_key,
-        )
-        for subject, trials, rng_key in zip(subjects, trial_indices, rngs)
-    ]
-
-    sim_h5["recalls"] = jnp.concatenate(recalls)
-
-    # Reindex item positions
-    reindex_fn = vmap(
+    # Reindex study positions
+    sim_h5["recalls"] = vmap(
         vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )
-    sim_h5["recalls"] = reindex_fn(sim_h5["recalls"], sim_h5["pres_itemnos"], size)
-    sim_h5["recalls"] = sim_h5["recalls"][:, :, 0]
+    )(recalls, sim_h5["pres_itemnos"], size)[:, :, 0]
     return sim_h5
 
 
@@ -242,16 +201,10 @@ def parameter_shifted_simulate_h5_from_h5(
     varied_parameter: str,
     parameter_values: Sequence[float],
     rng: PRNGKeyArray,
-    size=3,
+    size: int = 3,
 ) -> Sequence[RecallDataset]:
     """
-    Simulates multiple H5 datasets by systematically varying a specified parameter, using the updated
-    simulate_h5_from_h5 implementation.
-
-    For each value in `parameter_values`, this function creates a shifted parameters dictionary by
-    overwriting the entire array for `varied_parameter` with the given value. It then invokes
-    simulate_h5_from_h5— which handles dataset preallocation, parameter sampling, trial reordering,
-    and item reindexing— to generate a simulated H5 dataset for that parameter setting.
+    Simulates multiple H5 datasets by systematically varying a specified parameter.
 
     Args:
         model_factory: Factory class for creating memory search model instances.
@@ -269,22 +222,24 @@ def parameter_shifted_simulate_h5_from_h5(
         A list of H5-like datasets (dictionaries), each corresponding to simulation results generated
         with a different value for the varied parameter.
     """
-    sim_h5s = []
-    for parameter_value in parameter_values:
-        rng, rng_split = random.split(rng)
-        shifted_parameters = {
+
+    results: list[RecallDataset] = []
+    for value in parameter_values:
+        rng_key, this_rng = random.split(rng)
+        swept_params = {
             **parameters,
-            varied_parameter: parameters[varied_parameter].at[:].set(parameter_value),
+            varied_parameter: jnp.full_like(parameters[varied_parameter], value),
         }
-        sim_h5 = simulate_h5_from_h5(
+        sim_data = simulate_h5_from_h5(
             model_factory,
             dataset,
             connections,
-            shifted_parameters,
+            swept_params,
             trial_mask,
             experiment_count,
-            rng_split,
+            this_rng,
             size,
         )
-        sim_h5s.append(sim_h5)
-    return sim_h5s
+        results.append(sim_data)
+
+    return results
