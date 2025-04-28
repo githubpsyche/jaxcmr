@@ -4,13 +4,26 @@ from typing import Callable, Iterable, List, Optional, Sequence
 
 import h5py
 import jax.numpy as jnp
-import numpy as np
 import markdown
 from IPython.display import HTML, display
 from jax import vmap
 from nbdev import show_doc as nbdev_show_doc
 
-from jaxcmr.typing import Array, Bool, Float, Real, Integer, RecallDataset
+from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
+
+
+def have_common_nonzero(
+    a: Integer[Array, " size"],
+    b: Integer[Array, " size"],
+) -> Bool_:
+    """
+    Return True iff there exists i, j such that
+        a[i] == b[j] > 0   (zeros are treated as padding).
+
+    Works inside `jit` because shapes stay static.
+    """
+    values_equal = a[:, None] == b[None, :]
+    return jnp.any(values_equal & (a > 0)[:, None] & (b > 0)[None, :])
 
 
 def show_doc(func):
@@ -106,7 +119,7 @@ def load_data(data_path: str) -> RecallDataset:
     """
     with h5py.File(data_path, "r") as f:
         result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
-    return {key: jnp.array(value) for key, value in result.items()} # type: ignore
+    return {key: jnp.array(value) for key, value in result.items()}  # type: ignore
 
 
 def save_dict_to_hdf5(data: dict, path: str):
@@ -177,9 +190,7 @@ def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
     def check_row(row):
         # Only consider nonzero values
         mask = row > 0
-        values: Integer[Array, " values"] = jnp.where(
-            mask, row, -1
-        )  # type: ignore # fill non-recalled with -1 (guaranteed not to repeat)
+        values: Integer[Array, " values"] = jnp.where(mask, row, -1)  # type: ignore # fill non-recalled with -1 (guaranteed not to repeat)
 
         # Sort and compare adjacent values
         sorted_vals = jnp.sort(values)
