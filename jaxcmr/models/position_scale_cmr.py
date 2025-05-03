@@ -21,6 +21,8 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
+raise ValueError("PositionScaleCMR is deprecated. Use WeirdPositionScaleCMR instead.")
+
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
@@ -136,7 +138,7 @@ class CMR(Pytree):
         )
 
     def retrieve(self, choice: Int_) -> "CMR":
-        """Return model after simulating the specified retrieval event.
+        """Return model after simulating the  specified retrieval event.
 
         Args:
             choice: the index of the item to retrieve (1-indexed) or 0 to stop.

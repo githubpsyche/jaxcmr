@@ -171,14 +171,16 @@ class CMR(Pytree):
         """Returns relative support for retrieval of each study position given model state"""
         #! refactored to get position activations separately
         position_activations = self.mcf.probe(self.context.state) + lb
-        return position_activations * self.recallable  # mask recalled study positions
+        return power_scale(
+            position_activations * self.recallable,  # mask recalled study positions
+            self.mcf_sensitivity
+        )
+
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
-        position_activations = power_scale(
-            self.position_activations(), self.mcf_sensitivity
-        )
+        position_activations = self.position_activations()
         return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
             self.item_ids,
@@ -211,9 +213,7 @@ class CMR(Pytree):
         #! Since item activations are potentially distributed across position activations,
         #! instead of indexing by item, we mask position activations by item then sum/normalize
         p_continue = 1 - self.stop_probability()
-        position_activations = power_scale(
-            self.position_activations(), self.mcf_sensitivity
-        )
+        position_activations = self.position_activations()
         item_activation = jnp.sum(
             position_activations * (self.studied == item_index + 1)
         )
@@ -260,14 +260,14 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         context.size,
         parameters["learning_rate"],
-        1.0,  # parameters.get("mfc_choice_sensitivity", 1.0),
+        1.0,
     )
     mcf = LinearMemory.init_mcf(
         list_length,
         context.size,
         parameters["item_support"],
         parameters["shared_support"],
-        1.0,  # parameters["choice_sensitivity"],
+        parameters["choice_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
 
