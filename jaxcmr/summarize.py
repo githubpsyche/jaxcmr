@@ -242,6 +242,30 @@ def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
     return df.sort_values(by="AICw", ascending=False)
 
 
+def calculate_bic_scores(
+    results: list[dict],
+) -> pd.DataFrame:
+    """
+    Return a DataFrame of Bayesian Information Criterion (BIC) scores
+    for a collection of model-fit summaries.
+    """
+    names, bics = [], []
+
+    for model in results:
+        k = len(model["free"])  # number of free parameters
+        ll = np.sum(model["fitness"])  # total log-likelihood
+
+        # determine sample size for this model
+        n = len(model["fitness"])
+
+        bic = k * np.log(n) - 2 * ll
+        names.append(model["name"])
+        bics.append(bic)
+
+    df = pd.DataFrame({"Model": names, "BIC": bics})
+    return df.sort_values(by="BIC", ascending=False)
+
+
 def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
     """Returns matrix of fractions of fitness in row model < in model j.
 

@@ -27,8 +27,8 @@ import jax.numpy as jnp
 from jax import random
 import numpy as np
 
-from jaxcmr.cmr_compterm import CMRFactory as compterm_model_factory
-from jaxcmr.models.cmr import BaseCMRFactory as base_model_factory
+from jaxcmr.models.cmr_compterm import CMRFactory as compterm_model_factory
+from jaxcmr.models.cmr_compare import CMRFactory as base_model_factory
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.likelihood import (
     MemorySearchLikelihoodFnGenerator as loss_fn_generator,
@@ -41,9 +41,9 @@ from matplotlib import rcParams  # type: ignore
 import matplotlib.pyplot as plt
 
 comparison_analysis_paths = [
-    "compmempy.analyses.spc.plot_spc",
-    "compmempy.analyses.crp.plot_crp",
-    "compmempy.analyses.pfr.plot_pfr",
+    "jaxcmr.analyses.spc.plot_spc",
+    "jaxcmr.analyses.crp.plot_crp",
+    "jaxcmr.analyses.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
 
@@ -55,9 +55,9 @@ warnings.filterwarnings("ignore")
 # %%
 
 # data params
-data_name = "HealyKahana2014"
-data_query = "data['listtype'] == -1"
-data_path = "data/HealyKahana2014.h5"
+data_name = "IntrusionFreeGordon2021"
+data_query = "data['condition'] == 2"
+data_path = "data/IntrusionFreeGordon2021.h5"
 
 # fitting params
 redo_fits = False
@@ -82,12 +82,13 @@ base_params = {
     "primacy_scale": 0.0,
     "primacy_decay": 0.0,
     "encoding_drift_decrease": 1.0,
+    "allow_repeated_recalls": True,
 }
 comparison_analysis_paths = [
     # "compmempy.analyses.rpl.plot_spacing",
-    "compmempy.analyses.spc.plot_spc",
-    "compmempy.analyses.crp.plot_crp",
-    "compmempy.analyses.pfr.plot_pfr",
+    "jaxcmr.spc.plot_spc",
+    "jaxcmr.crp.plot_crp",
+    "jaxcmr.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
 
@@ -518,7 +519,7 @@ connections = jnp.zeros((max_size, max_size))
 # %%
 
 for model_factory, model_configs in zip(
-    [model_factory, model_factory_compterm], [base_model_configs, compterm_model_configs]
+    [base_model_factory, compterm_model_factory], [base_model_configs, compterm_model_configs]
 ):
 
     for model_name, bounds in model_configs.items():
@@ -597,8 +598,8 @@ for model_factory, model_configs in zip(
             )
 
         for analysis in comparison_analyses:
-            figure_str = f'{results["name"]}_{analysis.__name__[5:]}.tif'
-            figure_path = os.path.join("figures/", figure_str)
+            figure_str = f'{results["name"]}_{analysis.__name__[5:]}.png'
+            figure_path = os.path.join("projects/cru_to_cmr/figures/", figure_str)
             print(figure_str)
             color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
             _trial_mask = generate_trial_mask(sim, data_query)

@@ -1,13 +1,3 @@
-"""
-Okay, it looks like all I need to do is switch from using predict_and_simulate_recalls to something that takes a presentation sequence as an argument along with model and choices. Then I compute m.outcome_probability(correct) and then use choices to determine whether i'm tracking P(correct) or 1-P(correct) for that recall event. scan through all choices/presentations.
-
-Initializes (or “experiences”) the study items in sequence, just as CRU would during encoding.
-Starts retrieval if needed (i.e., calls model.start_retrieving()).
-Iterates over the observed recall events, each of which is tied to a specific study position.
-For each event, computes the model’s probability of the correct item and records either P(correct) if the participant was indeed correct or 1 – P(correct) otherwise.
-Optionally updates the CRU’s internal state via something like model = model.retrieve(...), depending on how you want to replicate CRU’s post-retrieval state update.
-"""
-
 from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np
@@ -27,29 +17,17 @@ from jaxcmr.typing import (
 
 
 def predict_and_simulate_recalls(
-    model: MemorySearch,
-    presented: Integer[Array, " study_events"],
-    choices: Integer[Array, " recall_events"],
+    model: MemorySearch, choices: Integer[Array, " recall_events"]
 ) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
     """
     Return the updated model and the outcome probabilities of a chain of retrieval events.
     Args:
         model: the current memory search model.
-        presented: the indices of the items presented (1-indexed).
         choices: the indices of the items to retrieve (1-indexed) or 0 to stop.
     """
-
-    def predict(model, i):
-        return (
-            model.retrieve(choices[i]),
-            lax.cond(
-                choices[i],
-                lambda: model.outcome_probability(presented[i]),
-                lambda: 1 - model.outcome_probability(presented[i]),
-            ),
-        )
-
-    return lax.scan(predict, model, length=choices.size)
+    return lax.scan(
+        lambda m, c: (m.retrieve(c), m.outcome_probability(c)), model, choices
+    )
 
 
 class MemorySearchLikelihoodFnGenerator:
@@ -62,8 +40,6 @@ class MemorySearchLikelihoodFnGenerator:
         """Initialize the factory with the specified trials and trial data."""
         self.factory = model_factory(dataset, connections)
         self.create_model = self.factory.create_model
-
-        # Store the presentation lists as a JAX array
         self.present_lists = jnp.array(dataset["pres_itemnos"])
 
         # Reindex the recalled items so they match the "present_lists" indexing
@@ -103,9 +79,9 @@ class MemorySearchLikelihoodFnGenerator:
         skipping re-experiencing items for each subsequent trial.
         Only valid if all present-lists match.
         """
-        model = self.init_model_for_retrieval(jnp.array(0), parameters)
-        return vmap(predict_and_simulate_recalls, in_axes=(None, 0, 0))(
-            model, self.trials[trial_indices], self.present_lists[trial_indices]
+        model = self.init_model_for_retrieval(trial_indices[0], parameters)
+        return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
+            model, self.trials[trial_indices]
         )[1]
 
     def present_and_predict_trials(
@@ -120,9 +96,7 @@ class MemorySearchLikelihoodFnGenerator:
 
         def present_and_predict_trial(i):
             model = self.init_model_for_retrieval(i, parameters)
-            return predict_and_simulate_recalls(
-                model, self.trials[i], self.present_lists[i]
-            )[1]
+            return predict_and_simulate_recalls(model, self.trials[i])[1]
 
         return vmap(present_and_predict_trial)(trial_indices)
 
