@@ -21,6 +21,8 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
+raise ValueError("Are you sure you want to use this model variant? I usually don't.")
+
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
