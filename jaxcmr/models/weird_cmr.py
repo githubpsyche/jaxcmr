@@ -284,6 +284,13 @@ class BaseCMRFactory:
 
     def create_model(
         self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters."""
+        return BaseCMR(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
         trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
@@ -302,6 +309,13 @@ class InstanceCMRFactory:
 
     def create_model(
         self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters."""
+        return InstanceCMR(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
         trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
@@ -319,6 +333,13 @@ class MixedCMRFactory:
         self.max_list_length = np.max(dataset["listLength"]).item()
 
     def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters."""
+        return MixedCMR(self.max_list_length, parameters)
+
+    def create_trial_model(
         self,
         trial_index: Int_,
         parameters: Mapping[str, Float_],

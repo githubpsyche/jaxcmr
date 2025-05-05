@@ -433,10 +433,17 @@ class CMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
+    def create_trial_model(
         self,
         trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
+        return CMR(self.max_list_length, parameters, FlatChoiceModel())
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters."""
         return CMR(self.max_list_length, parameters, FlatChoiceModel())

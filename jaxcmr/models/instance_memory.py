@@ -81,6 +81,19 @@ class InstanceMemory(Pytree):
         a = jnp.dot(t, self.state)[in_pattern.size :]
         return power_scale(a, self.feature_activation_scale)
     
+
+    def probe_without_scale(
+        self,
+        in_pattern: Float[Array, " input_size"],
+    ) -> Float[Array, " output_size"]:
+        """Return the output pattern associated with the input pattern in memory.
+
+        Args:
+            input_pattern: the input feature pattern.
+        """
+        t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
+        return jnp.dot(t, self.state)[in_pattern.size :]
+    
     def zero_out(
         self,
         index: Int_,

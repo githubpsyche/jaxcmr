@@ -61,6 +61,17 @@ class LinearMemory(Pytree):
         """
         return power_scale(jnp.dot(in_pattern, self.state), self.activation_scale)
     
+    def probe_without_scale(
+        self,
+        in_pattern: Float[Array, " input_size"],
+    ) -> Float[Array, " output_size"]:
+        """Return the output pattern associated with the input pattern in memory.
+
+        Args:
+            input_pattern: the input feature pattern.
+        """
+        return jnp.dot(in_pattern, self.state)
+    
     def zero_out(
         self,
         index: Int_,

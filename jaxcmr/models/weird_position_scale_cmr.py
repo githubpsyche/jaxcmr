@@ -49,10 +49,7 @@ class CMR(Pytree):
         self.mfc_learning_rate = parameters["learning_rate"]
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
-        self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.mfc_sensitivity = parameters.get(
-            "mfc_choice_sensitivity", parameters["choice_sensitivity"]
-        )
+        self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
         self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
         #! item representations on F now position representations
@@ -171,11 +168,7 @@ class CMR(Pytree):
         """Returns relative support for retrieval of each study position given model state"""
         #! refactored to get position activations separately
         position_activations = self.mcf.probe(self.context.state) + lb
-        return power_scale(
-            position_activations * self.recallable,  # mask recalled study positions
-            self.mcf_sensitivity
-        )
-
+        return position_activations * self.recallable  # mask recalled study positions
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""

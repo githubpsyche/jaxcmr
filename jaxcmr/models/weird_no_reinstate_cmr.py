@@ -291,9 +291,16 @@ class BaseCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
+    def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return BaseCMR(self.max_list_length, parameters)
+    
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -309,9 +316,16 @@ class InstanceCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
+    def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return InstanceCMR(self.max_list_length, parameters)
+    
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -327,9 +341,16 @@ class MixedCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
+    def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return MixedCMR(self.max_list_length, parameters)
+    
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""

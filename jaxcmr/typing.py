@@ -173,6 +173,13 @@ class MemorySearchModelFactory(Protocol):
 
     def create_model(
         self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+    def create_trial_model(
+        self,
         trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
@@ -223,6 +230,17 @@ class Memory(Protocol):
         """
         ...
 
+    def probe_without_scale(
+        self,
+        in_pattern: Float[Array, " input_size"],
+    ) -> Float[Array, " output_size"]:
+        """Return the output pattern associated with the input pattern in memory.
+
+        Args:
+            memory: the current memory state.
+            in_pattern: the input feature pattern.
+        """
+        ...
 
 @runtime_checkable
 class Context(Protocol):
