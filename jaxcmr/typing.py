@@ -230,18 +230,6 @@ class Memory(Protocol):
         """
         ...
 
-    def probe_without_scale(
-        self,
-        in_pattern: Float[Array, " input_size"],
-    ) -> Float[Array, " output_size"]:
-        """Return the output pattern associated with the input pattern in memory.
-
-        Args:
-            memory: the current memory state.
-            in_pattern: the input feature pattern.
-        """
-        ...
-
 @runtime_checkable
 class Context(Protocol):
     """Context representation for memory search models.

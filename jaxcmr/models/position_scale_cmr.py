@@ -5,10 +5,15 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
+from jaxcmr.math import (
+    exponential_primacy_decay,
+    exponential_stop_probability,
+    lb,
+    power_scale,
+)
 from jaxcmr.models.context import TemporalContext
 from jaxcmr.models.instance_memory import InstanceMemory
 from jaxcmr.models.linear_memory import LinearMemory
-from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, power_scale, lb
 from jaxcmr.typing import (
     Array,
     Context,
@@ -21,7 +26,7 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-raise ValueError("PositionScaleCMR is deprecated. Use WeirdPositionScaleCMR instead.")
+# raise ValueError("PositionScaleCMR is deprecated. Use WeirdPositionScaleCMR instead.")
 
 
 class CMR(Pytree):
@@ -48,7 +53,7 @@ class CMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
         self.item_count = list_length
-        #! item representations on F now position representations 
+        #! item representations on F now position representations
         self.positions = jnp.eye(list_length)
         self._stop_probability = exponential_stop_probability(
             self.stop_probability_scale,
@@ -82,7 +87,7 @@ class CMR(Pytree):
             item_index: the index of the item to experience. 0-indexed.
         """
         #! instead of probing and learning using item, we use the item's study position
-        mfc_cue = self.positions[self.study_index] # item = self.items[item_index]
+        mfc_cue = self.positions[self.study_index]  # item = self.items[item_index]
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
         return self.replace(
@@ -92,7 +97,7 @@ class CMR(Pytree):
             #! also update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! and track each item's study position(s)
-            studied=self.studied.at[self.study_index].set(item_index+1),
+            studied=self.studied.at[self.study_index].set(item_index + 1),
             study_index=self.study_index + 1,
         )
 
@@ -120,10 +125,12 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
-        #! We don't know which trace was recalled, 
+        #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
         item_activation = self.position_activations() * (self.studied == item_index + 1)
-        mfc_cue = power_scale(item_activation / jnp.sum(item_activation), self.mfc_sensitivity)
+        mfc_cue = power_scale(
+            item_activation / jnp.sum(item_activation), self.mfc_sensitivity
+        )
         new_context = self.context.integrate(
             self.mfc.probe(mfc_cue),
             self.recall_drift_rate,
@@ -133,7 +140,7 @@ class CMR(Pytree):
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
             #! find all study positions of the recalled item and set to not recallable
             # recallable=self.recallable.at[item_index].set(False),
-            recallable= self.recallable * (self.studied != item_index + 1),
+            recallable=self.recallable * (self.studied != item_index + 1),
             recall_total=self.recall_total + 1,
         )
 
@@ -148,12 +155,12 @@ class CMR(Pytree):
             lambda: self.replace(is_active=False),
             lambda: self.retrieve_item(choice - 1),
         )
-    
+
     def position_activations(self) -> Float[Array, " list_length"]:
         """Returns relative support for retrieval of each study position given model state"""
         #! refactored to get position activations separately
-        position_activations = self.mcf.probe(self.context.state) + lb
-        return position_activations * self.recallable  # mask recalled study positions
+        _activations = self.mcf.probe(self.context.state) * self.recallable
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
     
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
@@ -168,15 +175,11 @@ class CMR(Pytree):
         """Returns probability of stopping retrieval given model state"""
         total_recallable = jnp.sum(self.recallable)
         return lax.cond(
-            total_recallable == 0,
+            jnp.logical_or(total_recallable == 0, ~self.is_active),
             true_fun=lambda: 1.0,
-            false_fun=lambda: lax.cond(
-                self.is_active,
-                true_fun=lambda: jnp.minimum(
-                    1.0 - (lb * total_recallable),
-                    self._stop_probability[self.recall_total],
-                ),
-                false_fun=lambda: 1.0,
+            false_fun=lambda: jnp.minimum(
+                1.0 - (lb * total_recallable),
+                self._stop_probability[self.recall_total],
             ),
         )
 
@@ -190,12 +193,11 @@ class CMR(Pytree):
         """
         #! Since item activations are potentially distributed across position activations,
         #! instead of indexing by item, we mask position activations by item then sum/normalize
-        p_continue = 1 - self.stop_probability()
         position_activations = self.position_activations()
         item_activation = jnp.sum(
             position_activations * (self.studied == item_index + 1)
         )
-        return p_continue * (item_activation / jnp.sum(position_activations))
+        return item_activation / jnp.sum(position_activations)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
         """Return probability of the specified retrieval event.
@@ -208,9 +210,9 @@ class CMR(Pytree):
             choice == 0,
             lambda: p_stop,
             lambda: lax.cond(
-                p_stop == 1.0,
+                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
                 lambda: 0.0,
-                lambda: self.item_probability(choice - 1),
+                lambda: (1-p_stop) * self.item_probability(choice - 1),
             ),
         )
 
@@ -238,14 +240,12 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         context.size,
         parameters["learning_rate"],
-        parameters.get("mfc_choice_sensitivity", 1.0),
     )
     mcf = LinearMemory.init_mcf(
         list_length,
         context.size,
         parameters["item_support"],
         parameters["shared_support"],
-        parameters["choice_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
 
@@ -263,7 +263,6 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         context.size,
         list_length,
         parameters["learning_rate"],
-        parameters.get("mfc_choice_sensitivity", 1.0),
         parameters.get("mfc_trace_sensitivity", 1.0),
     )
     mcf = InstanceMemory.init_mcf(
@@ -272,7 +271,6 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
@@ -289,7 +287,6 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         context.size,
         parameters["learning_rate"],
-        parameters.get("mfc_choice_sensitivity", 1.0),
     )
     mcf = InstanceMemory.init_mcf(
         list_length,
@@ -297,7 +294,6 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         list_length,
         parameters["item_support"],
         parameters["shared_support"],
-        parameters["choice_sensitivity"],
         parameters["mcf_trace_sensitivity"],
     )
     return CMR(list_length, parameters, mfc, mcf, context)
@@ -319,7 +315,7 @@ class BaseCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return BaseCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],
@@ -344,7 +340,7 @@ class InstanceCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return InstanceCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],
@@ -369,7 +365,7 @@ class MixedCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return MixedCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],

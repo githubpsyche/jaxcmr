@@ -27,9 +27,9 @@ warnings.filterwarnings("ignore")
 
 comparison_analysis_paths = [
     # "compmempy.analyses.rpl.plot_spacing",
-    "jaxcmr.spc.plot_spc",
-    "jaxcmr.crp.plot_crp",
-    "jaxcmr.pnr.plot_pnr",
+    "jaxcmr.analyses.spc.plot_spc",
+    "jaxcmr.analyses.crp.plot_crp",
+    "jaxcmr.analyses.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
 
@@ -41,17 +41,17 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 data_name = "HealeyKahana2014"
 data_query = "data['listtype'] == -1"
 data_path = "data/HealeyKahana2014.h5"
-run_tag = "best_of_3"
 
 # fitting params
-redo_fits = False
+redo_fits = True
 model_name = "WeirdBaseCMR"
 relative_tolerance = 0.001
 popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
-best_of = 3
+best_of = 1
+run_tag = f"best_of_{best_of}"
 
 # sim params
 experiment_count = 50
