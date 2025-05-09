@@ -71,7 +71,7 @@ class CMR(Pytree):
         self.mfc = mfc
         self.mcf = mcf
         self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recallable = jnp.ones(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -115,7 +115,6 @@ class CMR(Pytree):
             mcf=self.mcf.associate(
                 self.context.state, item, self.mcf_learning_rate
             ),  #! updated
-            recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
 
