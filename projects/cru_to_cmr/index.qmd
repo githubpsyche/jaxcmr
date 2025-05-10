@@ -116,7 +116,8 @@ We also explore whether CRU's item-identification mechanism can help CMR capture
 
 CRU and CMR each represent items as orthonormal unit vectors.
 However, CRU can optionally model confusability among similar items via a probabilistic competition step at encoding.
-CRU can also model confusion errors that occur during retrieval, but following the reference CRU evaluation [@logan2021serial], we do not include this mechanism in our present evaluation.
+This helps the model account for patterns of intrusion and other errors in serial recall tasks, where participants may confuse similar items (e.g., *p* vs. *q*).
+CRU can also model confusion errors that occur during retrieval, but following the reference CRU implementation [@logan2021serial], we do not include this mechanism in our present evaluation.
 When item $i$ is presented, a racing diffusion with drift rates scaled by $g$ determines which representation crosses the threshold first:
 
 $$
@@ -153,7 +154,7 @@ This gradual integration yields a recency-based gradient reflecting the order in
 
 ## Contextual Input: CRU Omits Feature-To-Context Learning
 
-A key difference is how each model obtains $\mathbf{\vec{c_i^{IN}}}$ from the active item.
+A key difference between CRU and CMR is how each model obtains $\mathbf{\vec{c_i^{IN}}}$ from the active item.
 CRU simply treats the one-hot (orthonormal) item representation as $\mathbf{\vec{c_i^{IN}}}$.
 Since each unique item representation is orthogonal to all others, this direct assignment ensures that the context vector is updated in a way that is unique to the item being studied or recalled.
 By contrast, CMR uses a feature-to-context memory $M^{FC}$ that learns experimental associations between items and context states when items are presented.
@@ -270,10 +271,8 @@ CMR's context-to-feature memory performs this comparison by passing the current 
 In either model, this context-to-item comparison sets up a probabilistic competition between items for retrieval where items that are more strongly associated with the current context are more likely to be retrieved.
 Both models also allow the possibility of terminating recall without retrieving any more items, though they differ in how they factor this possibility into the competition between items.
 In either model, once a retrieval attempt is complete, the item is reported, the context is updated based on the retrieved item, and the process repeats until recall is terminated.
-The most complete specification of CRU also includes a mechanism where retrieved items can be incorrectly reported due to typos or other errors, but we omit this mechanism here as in its original evaluation [@logan2021serial] it was found to add complexity without consistently improving CRU's performance.
-However, other work has shown that this mechanism can be useful in capturing articulatory errors in serial recall [@osth2023item].
-
-<!-- * A key difference between CRU and CMR is how they factor in the possibility of terminating recall without retrieving any more items into this competition. -->
+The most complete specification of CRU also includes a mechanism where retrieved items can be incorrectly reported due to typos or other errors.
+We omit this mechanism here as in its original evaluation [@logan2021serial], but other work has shown that this mechanism can be useful in capturing articulatory errors in serial recall [@osth2023item].
 
 CRU treats the end of the study list as a special "end-of-list" event, assigning it a representation just like any study item and associating it with the final contextual state.
 Because this representation resides in the same instance-based memory as all other contexts, it competes with studied items during retrieval: if the end-of-list representation wins, recall terminates.
@@ -333,8 +332,7 @@ We therefore ask which of these differences matter for free recall, where retrie
 Conversely, given that CMR has been shown able to address serial recall [@lohnas2024retrieved], we also ask whether CMR's added mechanisms confer any advantages over CRU in capturing the strict order of serial recall, or whether CRU's specialized mechanisms for address item confusability can provide further improvements to CMR's performance in this domain.
 To do so, we adopt a factorial approach in which each key mechanism that CRU omits (or implements differently than CMR) is selectively toggled on or off, creating a series of "hybrid" CRU variants that, in a sense, span the gap between CMR and CRU in a hypothetical space of all possible models.
 Our evaluation is not comprehensive -- we do not explore every possible combination of toggled mechanisms -- but instead focuses on the most salient differences between CRU and CMR.
-In particular, we focus on five key factors that distinguish CRU from CMR in the free and serial recall context: (1) dynamic feature-to-context memory, (2) pre-experimental context-to-feature associations, (3) serial position scaling, (4) recall initiation, and (5) recall termination.
-We also evaluate the (6) confusable item identification mechanism provided by CRU, examining how it helps CRU and could help CMR capture the strict order of serial recall.
+In particular, we focus on five key factors that distinguish CRU from CMR: (1) dynamic feature-to-context memory, (2) pre-experimental context-to-feature associations, (3) serial position scaling, (4) recall initiation, (5) recall termination, and (6) confusable item identification.
 
 ## Factors and Variants
 
@@ -350,7 +348,8 @@ The resulting framework generates model variants that differ along the following
     By contrast, CRU omits $M^{FC}$ (or sets $\gamma=0$), instead directly integrating item representations into the context vector with no reinstatement of previously associated contexts.
     This factor is especially pertinent in free recall, where backward transitions are a key empirical signature.
     We show that enabling a dynamic $M^{FC}$ in CRU can help capture these transitions and improve its overall fit to free recall data.
-    In serial recall, this factor is less relevant, but can still help capture phenomena like the fill-in/in-fill effect, where omissions are more likely to be followed by the preceding item than the following item [@logan2023serial; @lohnas2024retrieved].
+    In serial recall, this factor is less relevant, but may still help capture phenomena like the fill-in/in-fill effect, where omissions are more likely to be followed by the preceding item than the following item [@logan2023serial; @lohnas2024retrieved].
+    <!-- TODO: make a clearer results statement. Does it help or doesn't it? -->
 
 2.  **Use or Nonuse of a Pre-Experimental Context-to-Feature Memory**.
     Both $\alpha$ (shared support) and $\delta$ (self-support) in CMR reflect pre-existing item associations that can facilitate retrieval.
@@ -358,14 +357,14 @@ The resulting framework generates model variants that differ along the following
     We consolidate these into a single on/off factor indicating whether such pre-experimental support is active.
     When on, items have baseline associations that may enhance recall probabilities -- particularly relevant in word-based free recall, where semantic or lexical relationships matter.
     When off, all associations arise solely from the experimental context, mirroring CRU's instance-based memory.
-    By toggling this factor, we show that incorporating pre-experimental support can help CRU capture patterns of temporally distant and adjacent transitions in free recall.
-    <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too, but we don't know what that is yet. -->
+    By toggling this factor, we show that incorporating pre-experimental support can help CRU capture patterns of temporally distant and adjacent transitions in free and serial recall.
+    <!-- TODO: does it really help in serial recall? confirm before proceeding -->
 
 3.  **Primacy Gradient**.
     A third factor involves how each model boosts memory for initial study items to account for primacy effects.
     CRU achieves this by modulating contextual integration rate $\beta$ and item identification sensitivity $g$ by serial position, peaking the strength of these mechanisms at the start of the list and decaying toward the end.
     CMR instead employs dedicated parameters $\phi_\text{s}$ and $\phi_{d}$ that scale the learning rate by position in context-to-feature memory $M^{CF}$ from an initial peak to a final baseline.
-    We don't evaluate item confusability in free recall ($g \rightarrow \infty$), so for that evaluation we focus on assessing the effectiveness of CMR-style primacy gradient in CRU.
+    We don't evaluate item confusability in free recall ($g \rightarrow \infty$), so for this evaluation we focus on assessing the effectiveness of CMR-style primacy gradient in CRU.
     We show that incorporating CMR's primacy gradient can enhance CRU's ability to capture the primacy effect in free recall without supposing that items can be visually confused between each other during encoding.
     <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too, but we don't know what that is yet. -->
 
@@ -377,7 +376,7 @@ The resulting framework generates model variants that differ along the following
     <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too, but we don't know what that is yet. -->
 
 5.  **Recall Termination**.
-    Finally, CRU encodes an "end-of-list" state that competes with items to terminate recall, whereas CMR separately calculates a stopping probability using $\theta_\text{s}$ and $\theta_\text{r}$.
+    CRU encodes an "end-of-list" state that competes with items to terminate recall, whereas CMR separately calculates a stopping probability using $\theta_\text{s}$ and $\theta_\text{r}$.
     In our design, we can adopt either the CRU-style item-based mechanism, the CMR-style exponential stop rule, or, in principle, a hybrid combining both.
     This factor addresses how each model handles the decision to stop retrieval -- especially in free recall, where participants spontaneously cease recall rather than exhaustively listing items in order.
     We show that CRU's context-based termination mechanism causes the model to collapse when addressing free recall datasets with strong recency effects, and that incorporating a CMR-style stopping probability can help CRU better capture these patterns.
@@ -386,10 +385,12 @@ The resulting framework generates model variants that differ along the following
 
 6.  **Confusable Item Identification**.
     CRU's item identification mechanism can be toggled on or off, allowing it to model confusability among similar items during encoding and retrieval.
-    This factor is only evaluated in our serial recall fits, where we evaluate whether this mechanism can help CRU capture the strict order of serial recall.
+    When freeing both $g$ and $g_\text{dec}$, the mechanism also helps address serial position effects by scaling the likelihood of confusion errors by serial position.
+    This factor is only evaluated in our serial recall fits, where we leave it on across all model variants to enable prediction of item intrusions. 
+    Our evaluation tests whether the mechanism can be readily incorporated into CMR to help it capture patterns of intrusion and other errors in serial recall tasks and whether additionally toggling on CMR's mechanisms for addressing serial position effects can further improve model performance.
     <!-- TODO: add results statement about what we found -->
 
-By toggling or switching between these mechanisms -- e.g., enabling or disabling feature-to-context learning -- we create a spectrum of CRU variants that bridge between CRU's streamlined architecture and CMR's more flexible associative structures.
+By toggling or switching between mechanisms -- e.g., enabling or disabling feature-to-context learning -- we create a spectrum of CRU variants that bridge between CRU's streamlined architecture and CMR's more flexible associative structures.
 We also include a "baseline CMR" and a "baseline CRU" variant that represents the full CMR and CRU models, respectively, to compare against the hybrid variants.
 
 ## Datasets
@@ -419,7 +420,7 @@ After each trial, a 1000-ms blank screen was presented before the next trial beg
 We fit each model variant at the individual-participant level using a step-wise likelihood procedure common in recent CMR work and embraced in CRU's 2021 evaluation [@kragel2015neural; @morton2016predictive; @polyn2023assessing; @logan2021serial].
 For every trial the model
 
-1.  **encodes** the study list, updating context and associative matrices, then\
+1.  **encodes** the study list, updating context and associative matrices, then
 2.  **scores** each recall event in sequence, adding the log-probability of the observed outcome and updating its state before the next event.
 
 Log-likelihoods are summed across trials and maximised with differential evolution [@storn1997differential].
@@ -427,8 +428,8 @@ To compare models, we report mean and bootstrapped 95% confidence intervals for 
 We also examine which variant gives the best fit on a participant-by-participant basis, probing the robustness of our findings and whether there are individual participants for whom CRU or CMR is a better fit despite the overall group-level results.
 
 In evaluation of free recall data, consistent with prior CMR evaluations, repeated recalls and extralist intrusions are filtered from trials before the likelihood calculation.
-By contrast, for serial recall data, repetitions and intrusions are much more frequent and theoretically diagnostic and thus are not filtered out.
-Instead, we allow models evaluated with serial recall data to repeatedly recall the same item, and when considering CRU's item confusability mechanism, we enable intrusions to be recalled as well.
+By contrast, for serial recall data, repetitions and intrusions are considered theoretically diagnostic and thus are not filtered out.
+Instead, we allow models evaluated with serial recall data to repeatedly recall the same item, as well as to allow out-of-list intrusion to be recalled as well.
 
 CRU's item confusability mechanism presents special challenges for likelihood-based fitting, as model state is not necessarily fully determined by observed study and recall events.
 In this case, the score for an observed recall event is not simply the probability of retrieving the observed item, but a combination of the probability of retrieving the observed item after a successful encoding event, and the probability of reporting the item as a result of confused/failed encoding (i.e., a visual-identification slip, in Logan’s terminology).
@@ -457,8 +458,9 @@ By comparing real and simulated data, we assess whether a model not only matches
 Negative log-likelihood (±95% CI) averaged across participants for selected model variants fit to PEERS data.
 $\gamma$: item-to-context learning rate; $\alpha$: shared support; $\delta$: self-support; $\phi_\text{s}$: primacy scale; $\phi_\text{d}$: primacy decay; $\beta_\text{start}$: start context integration rate.
 :::
+<!-- TODO: update thse fits after my refined approach -->
 
-<!-- TODO: LOGAN: What happens if you use AIC or BIC to penalize the fit of the more complex models? -->
+<!-- TODO: add BIC fit table too -->
 
 ::: {#fig-cmr layout-ncol="3"}
 ![](figures/HealeyKahana2014_BaseCMR_Fitting_pnr.png)
@@ -472,11 +474,12 @@ Summary statistic fits of the baseline CMR model to PEERS data.
 **Middle**: conditional response probability as a function of lag.
 **Right**: recall probability by serial position.
 :::
+<!-- TODO: update with new figures -->
 
-We first perform our evaluation using the @healey2014memory free recall dataset.
+We first perform our evaluation using the @healey2014memory subset of the PEERS free recall dataset.
 We begin by examining the overall goodness of fit for each model variant.
 Standard CMR provides the best fit at the group level (see @tbl-fits) as well as for 100% of individual participants.
-This is no surprise, as CMR was designed to capture free recall phenomena while CRU was developed for serial recall tasks.
+This is no surprise, as CMR uses more parameters and was designed to capture free recall phenomena while CRU was developed for serial recall tasks.
 The value of this approach is in demonstrating how specific model mechanisms improve CRU's fit to the benchmark behavioral phenomena of free recall: serial position effects, recall initiation effects, and temporal organizational effects, as depicted in @fig-cmr.
 
 A serial position analysis demonstrates both a primacy effect (a memorability advantage for early-list items) and a recency effect (a memorability advantage for late-list items).
@@ -531,6 +534,7 @@ Summary statistic fits of baseline CRU (**Top**), CRU with free start context in
 **Middle**: conditional response probability as a function of lag.
 **Right**: recall probability by serial position.
 :::
+<!-- TODO: update fits -->
 
 CRU includes most of CMR's core mechanisms.
 However, CRU's default start-of-list recall initiation mechanism forces it to strongly prioritize the start of the list during recall initiation, which causes its performance to collapse when fit to free recall data exhibiting a strong recency effect.
@@ -555,6 +559,7 @@ The model still substantially underestimates the primacy effect in the overall s
 Simulation of the impact of shifting the start context integration rate parameter $\beta_\text{start}$ on the probability of starting recall by serial position (**Left**) and the recall probability by serial position (**Right**) for CMR.
 Using parameters fit to @healey2014memory, $\beta_\text{start}$ is shifted from 0 to 1 in increments of 0.1, with the color of the lines indicating the value of the parameter.
 :::
+<!-- TODO: update figure -->
 
 Further allowing CRU to include CMR's primacy learning gradient ($\phi_\text{s}$ and $\phi_\text{d}$ parameters) to modulate context-to-feature memory learning rates to peak at the start of the study list further improves its performance.
 This variant is better at capturing the strength of the primacy effect in the overall serial position curve [@fig-initiation], but does not as substantially improve the model's ability to capture the recency effect in recall initiation or the lag-contiguity effect.
@@ -562,6 +567,7 @@ This variant is better at capturing the strength of the primacy effect in the ov
 These differences observed between CRU and CMR in their ability to address serial position effects may be exaggerated by the exclusion of an item identification mechanism in CRU addressing free recall.
 @logan2021serial accounted for primacy effects in CRU with $g_\text{max}$ and $g_\text{dec}$ parameters that allowed the model to modulate the sensitivity of item identification by serial position, but this mechanism does not apply to word free recall data.
 Here, only CRU's $\beta_\text{max}$ and $\beta_{dec}$ parameters were available to modulate contextual integration rates during encoding as a function of serial position, which may have limited the model's ability to capture the primacy effect in the overall serial position curve.
+In our forthcoming evaluation of the models using serial recall data, the full CRU model is examined.
 
 ## Tuning the Sharpness and Asymmetry of the Lag-Contiguity Effect
 
@@ -593,6 +599,7 @@ Summary statistic fits of models to the PEERS dataset [@healey2014memory].
 **Middle**: Conditional response probability as a function of lag.
 **Right**: Recall probability by serial position.
 :::
+<!-- TODO: update figire -->
 
 In free recall, the lag-contiguity effect is bidirectional and assymmetric, with participants more likely to transition to items that were presented immediately after the just-recalled item, but also sometimes transitioning to items that were presented immediately before the just-recalled item in the original study list.
 Standard CRU is able to simulate a bidirectional lag-contiguity effect, but it substantially underestimates the strength of the effect compared to the data, predicting around a 20% probability of +1 lag transition while the data shows over a 40% probability of +1 lag transition.
@@ -630,6 +637,7 @@ This suggests that standard CRU's streamlined implementation is not sufficient t
 Simulation of the impact of shifting CMR's $\gamma$ (**Left**) and $\delta$ (**Right**) parameters on the conditional response probability as a function of lag for CMR.
 Using parameters fit to @healey2014memory, the learning rate parameter $\gamma$ is shifted from 0 to 1 in increments of 0.1, and the item support parameter $\delta$ is shifted from 0 to 10 in increments of 1, with the color of the lines indicating the value of the parameter.
 :::
+<!-- TODO: update figure -->
 
 ## Position- vs Context-Based Mechanisms for Recall Termination
 
@@ -668,6 +676,8 @@ By contrast, in free recall datasets where participants exhibit a strong recency
 The failure of CMR with CRU's context-based recall termination mechanism to capture benchmark patterns may reflect a discrepancy between this prediction and actual participant behavior in the dataset, and suggests that CMR's position-based recall termination mechanism is more effective for capturing free recall data.
 
 # Discussion
+
+<!-- TODO: update after obtaining and reflection on serial recall results -->
 
 The simulation analyses presented here provide a structured comparison of CRU and CMR in the domain of free recall.
 CRU is a successful model of serial recall performance [@logan2018automatic; @logan2021serial; @logan2021bserial].
