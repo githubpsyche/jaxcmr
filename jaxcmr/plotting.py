@@ -87,7 +87,7 @@ def plot_with_error_bars(
     for index, (start, end) in enumerate(segments):
         axis.errorbar(
             x_values[start:end],
-            y_mean[start:end] - errors[0][start:end],
+            y_mean[start:end],
             errors[:, start:end],
             label=label if index == 0 else None,
             color=color,

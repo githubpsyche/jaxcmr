@@ -173,6 +173,13 @@ class MemorySearchModelFactory(Protocol):
 
     def create_model(
         self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+    def create_trial_model(
+        self,
         trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
@@ -222,7 +229,6 @@ class Memory(Protocol):
             activation_scale: the activation scaling factor.
         """
         ...
-
 
 @runtime_checkable
 class Context(Protocol):

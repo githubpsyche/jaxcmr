@@ -5,15 +5,15 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from cru_to_cmr.context import TemporalContext
-from cru_to_cmr.decision_probability import (
-    compute_runner_probabilities,
-    compute_runner_probability,
-    race_diffusion_precompute,
+from jaxcmr.math import (
+    exponential_primacy_decay,
+    exponential_stop_probability,
+    lb,
+    power_scale,
 )
-from cru_to_cmr.helpers import lb
-from cru_to_cmr.memory import LinearMemory
-from cru_to_cmr.typing import (
+from jaxcmr.models.context import TemporalContext
+from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.typing import (
     Array,
     Context,
     Float,
@@ -22,45 +22,8 @@ from cru_to_cmr.typing import (
     Integer,
     Memory,
     MemorySearch,
-    ProbabilityCalculator,
+    RecallDataset,
 )
-
-
-def power_scale(value: Float_, scale: Float_) -> Float:
-    """Returns value scaled by the exponent factor using logsumexp trick."""
-    log_activation = jnp.log(value)
-    return lax.cond(
-        jnp.logical_and(jnp.any(value != 0), scale != 1),
-        lambda _: jnp.exp(scale * (log_activation - jnp.max(log_activation))),
-        lambda _: value,
-        None,
-    )
-
-
-def exponential_primacy_decay(
-    study_index: Int_, primacy_scale: Float_, primacy_decay: Float_
-):
-    """Returns the exponential primacy weighting for the specified study event.
-
-    Args:
-        study_index: the index of the study event.
-        primacy_scale: the scale factor for primacy effect.
-        primacy_decay: the decay factor for primacy effect.
-    """
-    return primacy_scale * jnp.exp(-primacy_decay * study_index) + 1
-
-
-def exponential_stop_probability(
-    stop_probability_scale: Float_, stop_probability_growth: Float_, recall_total: Int_
-):
-    """Returns the exponential stop probability for the specified recall event.
-
-    Args:
-        stop_probability_scale: the scale factor for stop probability.
-        stop_probability_growth: the growth factor for stop probability.
-        recall_total: the total number of items recalled.
-    """
-    return stop_probability_scale * jnp.exp(recall_total * stop_probability_growth)
 
 
 class CMR(Pytree):
@@ -70,9 +33,8 @@ class CMR(Pytree):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-        decision_strategy: ProbabilityCalculator,
+        decision_strategy,
     ):
-        # base cmr parameters
         self.encoding_drift_rate_max = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
@@ -82,6 +44,11 @@ class CMR(Pytree):
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
+        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
+
+        # specific to item-independent stop rule
+        self.stop_probability_scale = parameters["stop_probability_scale"]
+        self.stop_probability_growth = parameters["stop_probability_growth"]
 
         # specific to cru
         # self.item_sensitivity_max = parameters["item_sensitivity_max"]
@@ -89,29 +56,31 @@ class CMR(Pytree):
         self.encoding_drift_decrease = parameters["encoding_drift_decrease"]
 
         self.item_count = list_length
-        self.encoding_probabilities = jnp.ones(self.item_count + 1)
-        self.items = jnp.eye(self.item_count + 1)
-
+        self.encoding_probabilities = jnp.ones(list_length, dtype=float)
+        self.items = jnp.eye(self.item_count)
+        self._stop_probability = exponential_stop_probability(
+            self.stop_probability_scale,
+            self.stop_probability_growth,
+            jnp.arange(self.item_count),
+        )
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context: Context = TemporalContext.init(list_length)
         self.mfc: Memory = LinearMemory.init_mfc(
-            list_length + 1,
+            list_length,
             self.context.size,
             parameters["learning_rate"],
-            1.0,
         )
         self.mcf: Memory = LinearMemory.init_mcf(
-            list_length + 1,
+            list_length,
             self.context.size,
             parameters["item_support"],
             parameters["shared_support"],
-            parameters["choice_sensitivity"],
         )
         self.decision_strategy = decision_strategy
         self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.zeros(self.item_count + 1, dtype=bool)
+        self.recallable = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -181,14 +150,7 @@ class CMR(Pytree):
         """Returns model after transitioning from study to retrieval mode."""
         start_input = self.context.initial_state
         start_context = self.context.integrate(start_input, self.start_drift_rate)
-        #! add learning step for list termination "item" index
-        termination_item = self.items[self.item_count]
-        return self.replace(
-            context=start_context,
-            mfc=self.mfc.associate(termination_item, self.context.state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(self.context.state, termination_item, self.mcf_learning_rate),
-            recallable=self.recallable.at[self.item_count].set(True),
-        )
+        return self.replace(context=start_context)
 
     def retrieve_item(self, item_index: Int_) -> "CMR":
         """Return model after simulating retrieval of item with the specified index.
@@ -203,7 +165,7 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(False),
+            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
             recall_total=self.recall_total + 1,
         )
 
@@ -221,22 +183,18 @@ class CMR(Pytree):
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
-        item_activations = self.mcf.probe(self.context.state) + lb
-        return item_activations * self.recallable  # mask recalled items
+        _activations = self.mcf.probe(self.context.state) * self.recallable
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
         total_recallable = jnp.sum(self.recallable)
         return lax.cond(
-            total_recallable == 0,
+            jnp.logical_or(total_recallable == 0, ~self.is_active),
             true_fun=lambda: 1.0,
-            false_fun=lambda: lax.cond(
-                self.is_active,
-                true_fun=lambda: jnp.minimum(
-                    1.0 - (lb * total_recallable),
-                    self.decision_strategy.outcome_probability(self.item_count, self.activations()),
-                ),
-                false_fun=lambda: 1.0,
+            false_fun=lambda: jnp.minimum(
+                1.0 - (lb * total_recallable),
+                self._stop_probability[self.recall_total],
             ),
         )
 
@@ -248,13 +206,12 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve.
         """
-        p_continue = 1 - self.stop_probability()
         item_activations = self.activations()
         probabilities = (
             self.encoding_probabilities
             * self.decision_strategy.outcome_probabilities(item_activations)
         )
-        return p_continue * (probabilities / jnp.sum(probabilities))[item_index]
+        return probabilities[item_index] / jnp.sum(probabilities)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
         """Return probability of the specified retrieval event.
@@ -267,9 +224,9 @@ class CMR(Pytree):
             choice == 0,
             lambda: p_stop,
             lambda: lax.cond(
-                p_stop == 1.0,
+                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
                 lambda: 0.0,
-                lambda: self.item_probability(choice - 1),
+                lambda: (1-p_stop) * self.item_probability(choice - 1),
             ),
         )
 
@@ -287,25 +244,6 @@ class CMR(Pytree):
                 ((1 - p_stop) * (item_probabilities / jnp.sum(item_probabilities))),
             )
         )
-
-
-class RaceDiffusionModel(Pytree):
-    def outcome_probability(
-        self,
-        item_index: Int_,
-        supports: Float[Array, " items"],
-    ) -> Float_:
-        """Returns the probability of selecting the specified item."""
-        dt, pdfs, cdfs = race_diffusion_precompute(supports)
-        return compute_runner_probability(item_index, pdfs, cdfs, dt)
-
-    def outcome_probabilities(
-        self,
-        supports: Float[Array, " items"],
-    ) -> Float[Array, " items"]:
-        """Returns a probability distribution over all items."""
-        dt, pdfs, cdfs = race_diffusion_precompute(supports)
-        return compute_runner_probabilities(pdfs, cdfs, dt)
 
 
 class FlatChoiceModel(Pytree):
@@ -328,34 +266,23 @@ class FlatChoiceModel(Pytree):
 class CMRFactory:
     def __init__(
         self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
+        dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
+    def create_trial_model(
         self,
-        trial_index: Integer[Array, ""],
+        trial_index: Int_,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return CMR(self.max_list_length, parameters, FlatChoiceModel())
 
-
-class RacingCMRFactory:
-    def __init__(
-        self,
-        dataset: dict[str, Integer[Array, " trials ?"]],
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
-    ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
-        self.max_list_length = np.max(dataset["listLength"]).item()
-
     def create_model(
         self,
-        trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
-        return CMR(self.max_list_length, parameters, RaceDiffusionModel())
+        """Create a new memory search model with the specified parameters."""
+        return CMR(self.max_list_length, parameters, FlatChoiceModel())

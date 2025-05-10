@@ -27,7 +27,7 @@ def item_to_study_positions(
     Args:
         item: the item index.
         presentation: the 1D presentation sequence.
-        size: number of non-zero entries to return.
+        size: max non-zero entries that could be returned
     """
     return lax.cond(
         item == 0,
@@ -46,7 +46,7 @@ def all_study_positions(
     Args:
         study_position: the study position.
         presentation: the 1D presentation sequence.
-        size: number of non-zero entries to return.
+        size: max non-zero entries that could be returned
     """
     item = lax.cond(
         study_position > 0,

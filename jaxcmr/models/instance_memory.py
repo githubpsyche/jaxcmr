@@ -12,7 +12,6 @@ class InstanceMemory(Pytree):
         state: the current state of the memory.
         _probe: pre-allocated probe array for memory retrieval.
         study_index: index for the next trace to be stored.
-        feature_activation_scale: the scaling factor for activated output features.
         trace_activation_scale: the scaling factor for activated traces.
         output_size: the size of the output representation.
         input_size: the size of the input representation.
@@ -23,7 +22,6 @@ class InstanceMemory(Pytree):
         state: Float[Array, " trace_count input_size+output_size"],
         probe: Float[Array, " input_size+output_size"],
         study_index: Int_,
-        feature_activation_scale: Float_,
         trace_activation_scale: Float_,
         input_size: int,
         output_size: int,
@@ -32,7 +30,6 @@ class InstanceMemory(Pytree):
         self.input_size = input_size
         self.output_size = output_size
         self.study_index = study_index
-        self.feature_activation_scale = feature_activation_scale
         self.trace_activation_scale = trace_activation_scale
         self._probe = probe
 
@@ -78,8 +75,19 @@ class InstanceMemory(Pytree):
             input_pattern: the input feature pattern.
         """
         t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
-        a = jnp.dot(t, self.state)[in_pattern.size :]
-        return power_scale(a, self.feature_activation_scale)
+        return jnp.dot(t, self.state)[in_pattern.size :]    
+
+    def probe_without_scale(
+        self,
+        in_pattern: Float[Array, " input_size"],
+    ) -> Float[Array, " output_size"]:
+        """Return the output pattern associated with the input pattern in memory.
+
+        Args:
+            input_pattern: the input feature pattern.
+        """
+        t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
+        return jnp.dot(t, self.state)[in_pattern.size :]
     
     def zero_out(
         self,
@@ -99,7 +107,6 @@ class InstanceMemory(Pytree):
         context_feature_count: int,
         size: int,
         learning_rate: Float_,
-        feature_activation_scale: Float_,
         trace_activation_scale: Float_,
     ) -> "InstanceMemory":
         """Return a new instance-based item-to-context memory model.
@@ -115,7 +122,6 @@ class InstanceMemory(Pytree):
             context_feature_count: the number of unique units in context.
             size: maximum number of additional traces to allow to be stored in memory.
             learning_rate: the learning rate parameter.
-            feature_activation_scale: the activation scaling factor for output features.
             trace_activation_scale: the activation scaling factor for traces.
         """
         item_feature_count = list_length
@@ -133,7 +139,6 @@ class InstanceMemory(Pytree):
             study_index=list_length,
             input_size=item_feature_count,
             output_size=context_feature_count,
-            feature_activation_scale=feature_activation_scale,
             trace_activation_scale=trace_activation_scale,
         )
 
@@ -145,7 +150,6 @@ class InstanceMemory(Pytree):
         size: int,
         item_support: Float_,
         shared_support: Float_,
-        feature_activation_scale: Float_,
         trace_activation_scale: Float_,
     ) -> "InstanceMemory":
         """Return a new instance-based context-to-item memory model.
@@ -165,7 +169,6 @@ class InstanceMemory(Pytree):
             size: maximum number of additional traces to allow to be stored in memory.
             item_support: initial association between an item and its own context feature
             shared_support: initial association between an item and all other contextual features
-            feature_activation_scale: the activation scaling factor for output features.
             trace_activation_scale: the activation scaling factor for traces.
         """
         item_feature_count = list_length
@@ -184,6 +187,5 @@ class InstanceMemory(Pytree):
             study_index=list_length,
             input_size=context_feature_count,
             output_size=item_feature_count,
-            feature_activation_scale=feature_activation_scale,
             trace_activation_scale=trace_activation_scale,
         )

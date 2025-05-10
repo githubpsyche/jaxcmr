@@ -22,38 +22,38 @@ NOTES: Despite being CRU's home turf, I think CMR will almost inevitably outperf
 NOTES: this is easy enough to include. A fuller analysis might try to characterize how summary statistics differ between participants addressed better or around as well by CRU, but this is maybe not necessary to get the paper published. If CMR does fit better to every subject as I suspect it will, then such additional work will be even more clearly unnecessary. Maybe...
 
 3. Addressing output confusion in CMR using mechanisms from CRU.
-Response: We implemented a variant of CMR that updates context using the retrieved item (as in CRU) and incorporated an output‑confusion mechanism. Section XX describes the implementation; Section XX (Figure XX) compares intrusion patterns under both update rules.
+**Response**: We implemented a variant of CMR that updates context using the retrieved item (as in CRU) and incorporated an output‑confusion mechanism. Section XX describes the implementation; Section XX (Figure XX) compares intrusion patterns under both update rules.
 
 NOTES: feels infeasible to setup a clear evaluation of CRU's confusion mechanisms in free recall without the right *data* that sets up empirical confusability probabilities across items like Logan was able to employ for his letter recall experiments. I may just have to discuss this gap in the manuscript and/or focus on the mechanism's role in addressing serial recall performance. Is helpful that Reviewer 1 de-emphasizes this critique compared to the other two in his review, but on the other hand, Reviewer 2 also suggests working on this, so I should probably at least try to implement it.
 
 4. Incorporate CRU's primacy‑drift modification into CMR and evaluate benefit.
-Response: We introduced the CRU‑style item‑to‑context drift parameter into CMR's encoding stage and re‑fit the model. Section XX details the hybrid model; Section XX (Table XX) shows a modest improvement in primacy effects without compromising other fits.
+**Response**: We introduced the CRU‑style item‑to‑context drift parameter into CMR's encoding stage and re‑fit the model. Section XX details the hybrid model; Section XX (Table XX) shows a modest improvement in primacy effects without compromising other fits.
 
 5. Comment on suboptimal serial‑position‑curve fits by CMR.
-Response: In Section XX we now discuss how likelihood‑based fitting (versus summary statistics in Healey & Kahana, 2014) and possible specific subject behaviors -- such as backward‑initiation and sudden “perfect" performers XX -- could shed some light on limitations of CMR's fit to serial position curves and other summary statistics in the evaluated data. 
+**Response**: In Section XX we now discuss how likelihood‑based fitting (versus summary statistics in Healey & Kahana, 2014) and possible specific subject behaviors -- such as backward‑initiation and sudden “perfect" performers XX -- could shed some light on limitations of CMR's fit to serial position curves and other summary statistics in the evaluated data. 
 
 6. Clarify which CMR implementation is used.
-Response: We now state more clearly (Introduction, XX) that we base our CMR implementation on Morton & Polyn (2016), and we enumerate its differences from Polyn et al. (2009) -- namely start‑of‑list context reinstatement and the removed LCA decision rule.
+**Response**: We now state more clearly (Introduction, XX) that we base our CMR implementation on Morton & Polyn (2016), and we enumerate its differences from Polyn et al. (2009) -- namely start‑of‑list context reinstatement and the removed LCA decision rule.
 
 7. Improve mathematical notation: boldface vectors; italics only for variables.
-Response: We revised all equations to use boldface for vector quantities and removed unintended italics from non‑variable terms throughout the text.
+**Response**: We revised all equations to use boldface for vector quantities and removed unintended italics from non‑variable terms throughout the text.
 
 8. Revise phrasing on p. 8 regarding associative matrices in CRU.
-Response: We reworded the description to clarify that CRU lacks explicit associative matrices and that one can view its operations analogously, rather than implying CRU inherently uses that architecture.
+**Response**: We reworded the description to clarify that CRU lacks explicit associative matrices and that one can view its operations analogously, rather than implying CRU inherently uses that architecture.
 
 9. Rephrase CRU vs. CMR equivalence (learning rate = 0).
-Response: We replaced the counter‑intuitive “learning rate = 0" phrasing with a clear statement that CRU omits context reinstatement: in CMR this behavior arises when one sets the item‑to‑context learning parameter to zero.
+**Response**: We replaced the counter‑intuitive “learning rate = 0" phrasing with a clear statement that CRU omits context reinstatement: in CMR this behavior arises when one sets the item‑to‑context learning parameter to zero.
 
 10. Correct statement on p. XX about semantic representations in CMR.
-Response: We corrected the text to acknowledge that the original Polyn et al. (2009) CMR did incorporate LSA‑based semantic representations; the Morton & Polyn (2016) extension broadens but does not introduce semantics de novo.
+**Response**: We corrected the text to acknowledge that the original Polyn et al. (2009) CMR did incorporate LSA‑based semantic representations; the Morton & Polyn (2016) extension broadens but does not introduce semantics de novo.
 
 11. Clarify p. 14 the relationship between racing diffusion and Luce choice.
-Response: ..
+**Response**: ..
 
 NOTES: I disagree with the Reviewer that Luce choice models have been demonstrated to be equivalent to race models; in internal simulations I've found that race models achieve better fits than Luce choice models in the same data, with a sacrifice of model evaluation time. I think Bundesen's results should be interpreted more narrowly than the Reviewer suggests, but don't know if I want to spend much time in the paper on a comparison between the two mechanisms. Perhaps I should just parrot a clarified version of the Reviewer's claim and leave demonstration of contrary results to future work?
 
 12. Specify what “repeated recalls and extralist intrusions are excluded" means (p. 18).
-Response: We now specify that rather than omitting the entire trial when a repeated recall or intrusion occurs, we exclude only the repeated recall or intrusion itself. This is now clarified in the Methods section (p. XX).
+**Response**: We now specify that rather than omitting the entire trial when a repeated recall or intrusion occurs, we exclude only the repeated recall or intrusion itself. This is now clarified in the Methods section (p. XX).
 
 ---
 

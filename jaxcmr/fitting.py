@@ -98,6 +98,7 @@ class ScipyDE:
 
         # Run differential evolution
         best_fitness = np.inf
+        best_fit_result = None
         for _ in range(self.all_hyperparams["best_of"]):
             fit_result = differential_evolution(
                 loss_fn,
@@ -114,6 +115,7 @@ class ScipyDE:
                 best_fitness = fit_result.fun
                 best_fit_result = fit_result
 
+        assert best_fit_result is not None, "No fit result found"
         return {
             "fixed": {k: float(v) for k, v in self.base_params.items()},
             "free": {

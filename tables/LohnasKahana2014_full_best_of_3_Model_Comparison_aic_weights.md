@@ -1,6 +1,10 @@
-|    | Model            |         AICw |
-|---:|:-----------------|-------------:|
-|  2 | Positional CMR   | 1            |
-|  3 | CMR-DE           | 5.69103e-09  |
-|  0 | Classic CMR      | 3.33113e-121 |
-|  1 | No-Reinstate CMR | 6.98011e-123 |
+|    | Model                        |         AICw |
+|---:|:-----------------------------|-------------:|
+|  1 | WeirdPositionScaleCMR        | 0.571049     |
+|  4 | WeirdNoPrexpPositionCMR      | 0.428951     |
+|  7 | WeirdPrimacyPositionScaleCMR | 3.55099e-07  |
+|  3 | OutlistCMRDE                 | 3.24986e-09  |
+|  5 | FlexPositionScaleCMR         | 5.27696e-18  |
+|  6 | NoPrexpPositionCMR           | 8.5139e-60   |
+|  0 | WeirdCMR                     | 1.90224e-121 |
+|  2 | WeirdNoReinstateCMR          | 3.98598e-123 |

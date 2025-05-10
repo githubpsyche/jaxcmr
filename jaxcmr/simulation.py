@@ -108,7 +108,7 @@ class MemorySearchSimulator:
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         factory = model_factory(dataset, connections)
-        self.create_model = factory.create_model
+        self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.empty = jnp.zeros(dataset["recalls"].shape[-1], jnp.int32)
 
