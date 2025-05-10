@@ -38,25 +38,17 @@ class MemorySearchLikelihoodFnGenerator:
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
+        
+        assert "pres_itemids" in dataset
+        assert "rec_itemids" in dataset
+
         self.factory = model_factory(dataset, connections)
-        self.create_model = self.factory.create_model
-        self.present_lists = jnp.array(dataset["pres_itemnos"])
-
-        # Reindex the recalled items so they match the "present_lists" indexing
-        trials = np.array(dataset["recalls"])
-        for trial_index in range(trials.shape[0]):
-            present = self.present_lists[trial_index]
-            recall = trials[trial_index]
-            reindexed = np.array(
-                [(present[item - 1] if item else 0) for item in recall]
-            )
-            trials[trial_index] = reindexed
-
-        self.trials = jnp.array(trials)
+        self.create_model = self.factory.create_trial_model
+        self.present_lists = jnp.array(dataset["pres_itemids"])
+        self.trials = jnp.array(dataset["rec_itemids"])
 
     def init_model_for_retrieval(
         self,
-        model: MemorySearch,
         trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
@@ -64,6 +56,7 @@ class MemorySearchLikelihoodFnGenerator:
         Create and initialize a MemorySearch model for a given trial's presentation list.
         """
         present = self.present_lists[trial_index]
+        model = self.create_model(trial_index, parameters)
         model = lax.fori_loop(
             0, present.size, lambda i, m: m.experience(present[i]), model
         )
@@ -79,8 +72,7 @@ class MemorySearchLikelihoodFnGenerator:
         skipping re-experiencing items for each subsequent trial.
         Only valid if all present-lists match.
         """
-        model = self.create_model(parameters)
-        model = self.init_model_for_retrieval(model, trial_indices[0], parameters)
+        model = self.init_model_for_retrieval(trial_indices[0], parameters)
         return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
             model, self.trials[trial_indices]
         )[1]
@@ -95,12 +87,11 @@ class MemorySearchLikelihoodFnGenerator:
         (re-experiencing items per trial).
         """
 
-        def present_and_predict_trial(model, i):
-            model = self.init_model_for_retrieval(model, i, parameters)
+        def present_and_predict_trial(i):
+            model = self.init_model_for_retrieval(i, parameters)
             return predict_and_simulate_recalls(model, self.trials[i])[1]
 
-        model = self.create_model(parameters)
-        return vmap(present_and_predict_trial, in_axes=(None, 0))(model, trial_indices)
+        return vmap(present_and_predict_trial)(trial_indices)
 
     def base_predict_trials_loss(
         self,

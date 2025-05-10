@@ -7,7 +7,6 @@ from simple_pytree import Pytree
 
 from jaxcmr.math import (
     exponential_primacy_decay,
-    exponential_stop_probability,
     lb,
     power_scale,
 )
@@ -44,10 +43,6 @@ class CMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
 
-        # specific to item-independent stop rule
-        self.stop_probability_scale = parameters["stop_probability_scale"]
-        self.stop_probability_growth = parameters["stop_probability_growth"]
-
         # specific to cru
         self.item_sensitivity_max = parameters["item_sensitivity_max"]
         self.item_sensitivity_decrease = parameters["item_sensitivity_decrease"]
@@ -55,23 +50,18 @@ class CMR(Pytree):
 
         LETTER_COUNT = 26
         self.item_count = LETTER_COUNT
-        self.items = jnp.eye(self.item_count)
-        self._stop_probability = exponential_stop_probability(
-            self.stop_probability_scale,
-            self.stop_probability_growth,
-            jnp.arange(self.item_count),
-        )
+        self.items = jnp.eye(self.item_count + 1)
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = TemporalContext.init(self.item_count)
         self.mfc = LinearMemory.init_mfc(
-            self.item_count,
+            self.item_count + 1,
             self.context.size,
             parameters["learning_rate"],
         )
         self.mcf = LinearMemory.init_mcf(
-            self.item_count,
+            self.item_count + 1,
             self.context.size,
             parameters["item_support"],
             parameters["shared_support"],
@@ -79,7 +69,7 @@ class CMR(Pytree):
         self.distances = distances
         self.slip_matrix = jnp.eye(self.item_count)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.ones(self.item_count, dtype=bool)
+        self.recallable = jnp.ones(self.item_count + 1, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -148,7 +138,17 @@ class CMR(Pytree):
         """Returns model after transitioning from study to retrieval mode."""
         start_input = self.context.initial_state
         start_context = self.context.integrate(start_input, self.start_drift_rate)
-        return self.replace(context=start_context)
+        #! add learning step for list termination "item" index
+        termination_item = self.items[self.item_count]
+        return self.replace(
+            context=start_context,
+            mfc=self.mfc.associate(
+                termination_item, self.context.state, self.mfc_learning_rate
+            ),
+            mcf=self.mcf.associate(
+                self.context.state, termination_item, self.mcf_learning_rate
+            ),
+        )
 
     def retrieve_item(self, item_index: Int_) -> "CMR":
         """Return model after simulating retrieval of item with the specified index.
@@ -193,12 +193,14 @@ class CMR(Pytree):
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
         total_recallable = jnp.sum(self.recallable)
+        decision_strategy = lambda i, a: a[i] / jnp.sum(a)
+
         return lax.cond(
             jnp.logical_or(total_recallable == 0, ~self.is_active),
             true_fun=lambda: 1.0,
             false_fun=lambda: jnp.minimum(
                 1.0 - (lb * total_recallable),
-                self._stop_probability[self.recall_total],
+                decision_strategy(self.item_count, self.activations()),
             ),
         )
 
