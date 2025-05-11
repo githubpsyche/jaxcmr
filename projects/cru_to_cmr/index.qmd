@@ -364,9 +364,9 @@ The resulting framework generates model variants that differ along the following
     A third factor involves how each model boosts memory for initial study items to account for primacy effects.
     CRU achieves this by modulating contextual integration rate $\beta$ and item identification sensitivity $g$ by serial position, peaking the strength of these mechanisms at the start of the list and decaying toward the end.
     CMR instead employs dedicated parameters $\phi_\text{s}$ and $\phi_{d}$ that scale the learning rate by position in context-to-feature memory $M^{CF}$ from an initial peak to a final baseline.
-    We don't evaluate item confusability in free recall ($g \rightarrow \infty$), so for this evaluation we focus on assessing the effectiveness of CMR-style primacy gradient in CRU.
+    We don't evaluate item confusability in free recall ($g \rightarrow \infty$) and interpret CRU's $\beta_\text{dec}$ mechanism as indequate when considered alone, so for free recall evaluation we focus on assessing the effectiveness of CMR-style primacy gradient in CRU.
     We show that incorporating CMR's primacy gradient can enhance CRU's ability to capture the primacy effect in free recall without supposing that items can be visually confused between each other during encoding.
-    <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too, but we don't know what that is yet. -->
+    In our serial recall evaluation, we have the item identification confusability mechanism on across variants, and consider whether CMR's primacy gradient either in addition to or instead of CRU's  $\beta_\text{dec}$ mechanism can further improve model performance.
 
 4.  **Recall Initiation**.
     CRU always initiates recall from the start-of-list context, whereas CMR can bias the cue toward the beginning or end of the list via $\beta_\text{start}$ by integrating the final context state back toward the start.
@@ -380,14 +380,14 @@ The resulting framework generates model variants that differ along the following
     In our design, we can adopt either the CRU-style item-based mechanism, the CMR-style exponential stop rule, or, in principle, a hybrid combining both.
     This factor addresses how each model handles the decision to stop retrieval -- especially in free recall, where participants spontaneously cease recall rather than exhaustively listing items in order.
     We show that CRU's context-based termination mechanism causes the model to collapse when addressing free recall datasets with strong recency effects, and that incorporating a CMR-style stopping probability can help CRU better capture these patterns.
-    <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too. LOGAN: You might mention that CRU’s end of list marker was first implemented in the typing model, in which the “lists” (words to type) were very well learned.  Retrieving the end of list marker was a signal to the executive that typing was done so it could move on to the next word. 
-    -->
+    <!-- TODO: This would need benefit from discusison of relevance of hte mechanism for serial recall, too. LOGAN: You might mention that CRU’s end of list marker was first implemented in the typing model, in which the “lists” (words to type) were very well learned.  Retrieving the end of list marker was a signal to the executive that typing was done so it could move on to the next word.-->
 
 6.  **Confusable Item Identification**.
     CRU's item identification mechanism can be toggled on or off, allowing it to model confusability among similar items during encoding and retrieval.
     When freeing both $g$ and $g_\text{dec}$, the mechanism also helps address serial position effects by scaling the likelihood of confusion errors by serial position.
     This factor is only evaluated in our serial recall fits, where we leave it on across all model variants to enable prediction of item intrusions. 
-    Our evaluation tests whether the mechanism can be readily incorporated into CMR to help it capture patterns of intrusion and other errors in serial recall tasks and whether additionally toggling on CMR's mechanisms for addressing serial position effects can further improve model performance.
+    Our evaluation tests whether the mechanism can be readily incorporated into CMR to help it capture patterns of intrusion and other errors in serial recall tasks and whether additionally toggling on CMR's mechani
+    sms for addressing serial position effects can further improve model performance.
     <!-- TODO: add results statement about what we found -->
 
 By toggling or switching between mechanisms -- e.g., enabling or disabling feature-to-context learning -- we create a spectrum of CRU variants that bridge between CRU's streamlined architecture and CMR's more flexible associative structures.

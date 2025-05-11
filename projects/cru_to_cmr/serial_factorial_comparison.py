@@ -27,7 +27,9 @@ import jax.numpy as jnp
 from jax import random
 import numpy as np
 
-from jaxcmr.models.compterm_omnibus_cru_cmr import BaseCMRFactory as compterm_model_factory
+from jaxcmr.models.compterm_omnibus_cru_cmr import (
+    BaseCMRFactory as compterm_model_factory,
+)
 from jaxcmr.models.omnibus_cru_cmr import BaseCMRFactory as base_model_factory
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.experimental.confusable_likelihood import (
@@ -36,6 +38,7 @@ from jaxcmr.experimental.confusable_likelihood import (
 from jaxcmr.summarize import summarize_parameters
 from jaxcmr.experimental.confusable_simulation import simulate_h5_from_h5
 from jaxcmr.helpers import import_from_string, load_data, generate_trial_mask
+
 # from jaxcmr.helpers import to_numba_typed_dict
 from matplotlib import rcParams  # type: ignore
 import matplotlib.pyplot as plt
@@ -60,8 +63,8 @@ data_query = "data['condition'] == 2"
 data_path = "data/Gordon2021.h5"
 
 # fitting params
-redo_fits = False
-redo_sims = False
+redo_fits = True
+redo_sims = True
 run_tag = "Fitting"
 relative_tolerance = 0.001
 popsize = 15
@@ -99,6 +102,93 @@ base_params = {
 # This allows you to load each configuration and interpret it as the set
 # of free parameters, while anything not listed is presumably held fixed
 # at some default CRU baseline value.
+
+sensitivity_model_configs = base_model_configs = {
+    # ------------------------------------------------------------
+    # Existing entries you already defined (preserved as-is)
+    # ------------------------------------------------------------
+    # "Omnibus": {
+    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
+    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+    #     "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
+    # },
+    # "BaseCMR": {
+    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
+    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+    #     # "encoding_drift_decrease" is omitted for CMR
+    # },
+    #         "Omnibus+Confusable": {
+    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
+    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+    #     "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
+    #     "item_sensitivity_max":      [1e-12, 20.0],
+    #     "item_sensitivity_decrease": [1e-12, 0.999999],
+    # },
+    # "BaseCMR+Confusable": {
+    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
+    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
+    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+    #     "item_sensitivity_max":      [1e-12, 20.0],
+    #     "item_sensitivity_decrease": [1e-12, 0.999999],
+    # },
+    "BaseCRU+Confusable": {
+        "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+        "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
+        # No learning_rate, shared_support/item_support, primacy, or start_drift
+        # because it's the pure CRU baseline
+        "item_sensitivity_max": [1e-12, 20.0],
+        "item_sensitivity_decrease": [1e-12, 0.999999],
+    },
+    "BaseCRU": {
+        "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
+        "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
+        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
+        # No learning_rate, shared_support/item_support, primacy, or start_drift
+        # because it's the pure CRU baseline
+    },
+}
 
 base_model_configs = {
     # ------------------------------------------------------------
@@ -477,7 +567,6 @@ compterm_model_configs = {
 }
 
 
-
 query_parameters = [
     "encoding_drift_rate",
     "start_drift_rate",
@@ -516,10 +605,16 @@ connections = jnp.zeros((max_size, max_size))
 # %%
 
 for model_factory, model_configs in zip(
-    [base_model_factory, compterm_model_factory], [base_model_configs, compterm_model_configs]
+    [base_model_factory, compterm_model_factory],
+    [base_model_configs, compterm_model_configs],
 ):
-
     for model_name, bounds in model_configs.items():
+        model_name += "+Confusable"
+        bounds = {
+            "item_sensitivity_max": [1e-12, 20.0],
+            "item_sensitivity_decrease": [1e-12, 0.999999],
+            **bounds,
+        }
         file_model_name = model_name.replace(" ", "_")
 
         fit_path = os.path.join(
@@ -575,8 +670,10 @@ for model_factory, model_configs in zip(
             )
         )
 
-        sim_path = os.path.join("simulations/", f"{data_name}_{model_name}_{run_tag}_seed_{seed}.hdf5")
-        
+        sim_path = os.path.join(
+            "simulations/", f"{data_name}_{model_name}_{run_tag}_seed_{seed}.hdf5"
+        )
+
         print(sim_path)
 
         if os.path.exists(sim_path) and not redo_sims:
@@ -588,32 +685,45 @@ for model_factory, model_configs in zip(
                 model_factory=model_factory,
                 dataset=data,
                 connections=connections,
-                parameters={key: jnp.array(val) for key, val in results["fits"].items()},  # type: ignore
+                parameters={
+                    key: jnp.array(val) for key, val in results["fits"].items()
+                },  # type: ignore
                 trial_mask=trial_mask,
                 experiment_count=experiment_count,
                 rng=rng_iter,
             )
 
+        list_lengths = [5, 6, 7]
+        model_trial_mask = generate_trial_mask(sim, data_query)
+
         for analysis in comparison_analyses:
-            figure_str = f'{results["name"]}_{analysis.__name__[5:]}.png'
-            figure_path = os.path.join("projects/cru_to_cmr/figures/", figure_str)
-            print(figure_str)
-            color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-            _trial_mask = generate_trial_mask(sim, data_query)
+            base_fig_stem = f"{results['name']}_{analysis.__name__[5:]}"
 
-            axis = analysis(
-                datasets=[sim, data],
-                trial_masks=[np.array(_trial_mask), np.array(trial_mask)],
-                color_cycle=color_cycle,
-                labels=["Model", "Data"],
-                contrast_name="source",
-                axis=None,
-                distances=1 - connections,
-            )
+            for ll in list_lengths:
+                color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+                list_query = f"data['listLength'] == {ll}"
+                ll_model_mask = generate_trial_mask(sim, list_query)
+                ll_data_mask = generate_trial_mask(data, list_query)
+                joint_model_mask = np.logical_and(model_trial_mask, ll_model_mask)
+                joint_data_mask = np.logical_and(trial_mask, ll_data_mask)
 
-            axis.tick_params(labelsize=14)
-            axis.set_xlabel(axis.get_xlabel(), fontsize=16)
-            axis.set_ylabel(axis.get_ylabel(), fontsize=16)
-            # axis.set_title(f'{results["name"]}'.replace("_", " "))
-            plt.savefig(figure_path, bbox_inches="tight", dpi=300)
-            # plt.show()
+                figure_str = f"{base_fig_stem}_LL{ll}.png"
+                figure_path = os.path.join("projects/cru_to_cmr/figures/", figure_str)
+                print(figure_str)
+
+                axis = analysis(
+                    datasets=[sim, data],
+                    trial_masks=[np.array(joint_model_mask), np.array(joint_data_mask)],
+                    color_cycle=color_cycle,
+                    labels=["Model", "Data"],
+                    contrast_name="source",
+                    axis=None,
+                    # distances=1 - connections,
+                )
+
+                axis.tick_params(labelsize=14)
+                axis.set_xlabel(axis.get_xlabel(), fontsize=16)
+                axis.set_ylabel(axis.get_ylabel(), fontsize=16)
+                # axis.set_title(f'{results["name"]}'.replace("_", " "))
+                plt.savefig(figure_path, bbox_inches="tight", dpi=300)
+                # plt.show()

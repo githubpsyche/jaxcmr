@@ -1,7 +1,7 @@
 from typing import Mapping, Optional
 
 import numpy as np
-from jax import lax
+from jax import lax, vmap
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
@@ -50,6 +50,7 @@ class CMR(Pytree):
 
         LETTER_COUNT = 26
         self.item_count = LETTER_COUNT
+        self.item_arange = jnp.arange(self.item_count+1)
         self.items = jnp.eye(self.item_count + 1)
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
@@ -236,19 +237,7 @@ class CMR(Pytree):
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
-        p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
-        return jnp.hstack(
-            (
-                p_stop,
-                (
-                    (1 - p_stop)
-                    * item_activation
-                    / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
-                ),
-            )
-        )
+        return vmap(self.outcome_probability)(self.item_arange)
 
 
 def BaseCMR(
