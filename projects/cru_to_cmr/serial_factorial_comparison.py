@@ -48,6 +48,7 @@ comparison_analysis_paths = [
     "jaxcmr.analyses.intrusion_error_rate.plot_intrusion_error_rate",
     "jaxcmr.analyses.omission_error_rate.plot_omission_error_rate",
     "jaxcmr.analyses.order_error_rate.plot_order_error_rate",
+    "jaxcmr.analyses.crp.plot_crp",
 ]
 
 comparison_analyses = [import_from_string(path) for path in comparison_analysis_paths]
@@ -63,15 +64,15 @@ data_query = "data['condition'] == 2"
 data_path = "data/Gordon2021.h5"
 
 # fitting params
-redo_fits = True
-redo_sims = True
+redo_fits = False
+redo_sims = False
 run_tag = "Fitting"
 relative_tolerance = 0.001
 popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
-best_of = 3
+best_of = 1
 
 # sim params
 experiment_count = 50
@@ -102,93 +103,6 @@ base_params = {
 # This allows you to load each configuration and interpret it as the set
 # of free parameters, while anything not listed is presumably held fixed
 # at some default CRU baseline value.
-
-sensitivity_model_configs = base_model_configs = {
-    # ------------------------------------------------------------
-    # Existing entries you already defined (preserved as-is)
-    # ------------------------------------------------------------
-    # "Omnibus": {
-    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
-    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
-    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-    #     "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
-    # },
-    # "BaseCMR": {
-    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
-    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
-    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-    #     # "encoding_drift_decrease" is omitted for CMR
-    # },
-    #         "Omnibus+Confusable": {
-    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
-    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
-    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-    #     "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
-    #     "item_sensitivity_max":      [1e-12, 20.0],
-    #     "item_sensitivity_decrease": [1e-12, 0.999999],
-    # },
-    # "BaseCMR+Confusable": {
-    #     "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "shared_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "item_support": [2.220446049250313e-16, 99.9999999999999998],
-    #     "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
-    #     "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
-    #     "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
-    #     "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-    #     "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-    #     "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-    #     "item_sensitivity_max":      [1e-12, 20.0],
-    #     "item_sensitivity_decrease": [1e-12, 0.999999],
-    # },
-    "BaseCRU+Confusable": {
-        "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-        "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-        "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-        "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
-        # No learning_rate, shared_support/item_support, primacy, or start_drift
-        # because it's the pure CRU baseline
-        "item_sensitivity_max": [1e-12, 20.0],
-        "item_sensitivity_decrease": [1e-12, 0.999999],
-    },
-    "BaseCRU": {
-        "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-        "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
-        "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
-        "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
-        "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
-        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
-        # No learning_rate, shared_support/item_support, primacy, or start_drift
-        # because it's the pure CRU baseline
-    },
-}
 
 base_model_configs = {
     # ------------------------------------------------------------
@@ -228,6 +142,7 @@ base_model_configs = {
         "stop_probability_scale": [2.220446049250313e-16, 0.9999999999999998],
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
         # No learning_rate, shared_support/item_support, primacy, or start_drift
         # because it's the pure CRU baseline
     },
@@ -238,6 +153,7 @@ base_model_configs = {
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with MCF Pre-Experimental Support": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -247,6 +163,7 @@ base_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Learning Rate Primacy": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -256,6 +173,7 @@ base_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Free Start Drift Rate": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -264,6 +182,7 @@ base_model_configs = {
         "stop_probability_growth": [2.220446049250313e-16, 9.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # ------------------------------------------------------------
     # NEW ENTRIES: all combinations of the four CRU toggles
@@ -280,6 +199,7 @@ base_model_configs = {
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context and Primacy": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -290,6 +210,7 @@ base_model_configs = {
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -299,6 +220,7 @@ base_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt and Primacy": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -310,6 +232,7 @@ base_model_configs = {
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -320,6 +243,7 @@ base_model_configs = {
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Primacy and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -330,6 +254,7 @@ base_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # Triple combinations
     "CRU with Feature-to-Context, Pre-Expt, and Primacy": {
@@ -343,6 +268,7 @@ base_model_configs = {
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context, Pre-Expt, and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -354,6 +280,7 @@ base_model_configs = {
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context, Primacy, and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -365,6 +292,7 @@ base_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt, Primacy, and StartDrift": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -377,6 +305,7 @@ base_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # All four toggles on: same as "Omnibus" but specifically named for clarity
     "CRU with Feature-to-Context, Pre-Expt, Primacy, and StartDrift": {
@@ -428,6 +357,7 @@ compterm_model_configs = {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
         # Removed "stop_probability_scale" and "stop_probability_growth"
     },
     # 4) CRU with Feature-to-Context Learning
@@ -436,6 +366,7 @@ compterm_model_configs = {
         "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # 5) CRU with MCF Pre-Experimental Support
     "CRU with MCF Pre-Experimental Support, and ContextTerm": {
@@ -444,6 +375,7 @@ compterm_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # 6) CRU with Learning Rate Primacy
     "CRU with Learning Rate Primacy, and ContextTerm": {
@@ -452,6 +384,7 @@ compterm_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # 7) CRU with Free Start Drift Rate
     "CRU with Free Start Drift Rate, and ContextTerm": {
@@ -459,6 +392,7 @@ compterm_model_configs = {
         "recall_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # ------------------------------------------------------------
     # Multi-Factor combos (removing stop_probability params, adding suffix)
@@ -470,6 +404,7 @@ compterm_model_configs = {
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context and Primacy, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -478,6 +413,7 @@ compterm_model_configs = {
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context and StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -485,6 +421,7 @@ compterm_model_configs = {
         "choice_sensitivity": [2.220446049250313e-16, 99.9999999999999998],
         "learning_rate": [2.220446049250313e-16, 0.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt and Primacy, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -494,6 +431,7 @@ compterm_model_configs = {
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt and StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -502,6 +440,7 @@ compterm_model_configs = {
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Primacy and StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -510,6 +449,7 @@ compterm_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # Triple combos
     "CRU with Feature-to-Context, Pre-Expt Primacy, and ContextTerm": {
@@ -521,6 +461,7 @@ compterm_model_configs = {
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context, Pre-Expt StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -530,6 +471,7 @@ compterm_model_configs = {
         "shared_support": [2.220446049250313e-16, 99.9999999999999998],
         "item_support": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Feature-to-Context, Primacy StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -539,6 +481,7 @@ compterm_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     "CRU with Pre-Expt, Primacy StartDrift, and ContextTerm": {
         "encoding_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
@@ -549,6 +492,7 @@ compterm_model_configs = {
         "primacy_scale": [2.220446049250313e-16, 99.9999999999999998],
         "primacy_decay": [2.220446049250313e-16, 99.9999999999999998],
         "start_drift_rate": [2.220446049250313e-16, 0.9999999999999998],
+        "encoding_drift_decrease": [2.220446049250313e-16, 0.9999999999999998],
     },
     # 4-factor
     "CRU with Feature-to-Context, Pre-Expt, Primacy StartDrift, and ContextTerm": {
@@ -605,8 +549,8 @@ connections = jnp.zeros((max_size, max_size))
 # %%
 
 for model_factory, model_configs in zip(
-    [base_model_factory, compterm_model_factory],
-    [base_model_configs, compterm_model_configs],
+    [base_model_factory],
+    [base_model_configs],
 ):
     for model_name, bounds in model_configs.items():
         model_name += "+Confusable"

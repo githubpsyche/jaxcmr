@@ -157,7 +157,7 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
-        item_activations = self.activations()
+        item_activations = self.activations()[:-1]
         p_mem = item_activations / jnp.sum(item_activations)
         p_slip = self.slip_matrix[:, item_index]
         joint = p_mem * p_slip
@@ -213,7 +213,7 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve.
         """
-        item_activations = self.activations()
+        item_activations = self.activations()[:-1]
         p_mem = item_activations / jnp.sum(item_activations)
         p_slip = self.slip_matrix[:, item_index]
         return jnp.vdot(p_mem, p_slip)

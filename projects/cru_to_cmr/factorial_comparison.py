@@ -55,13 +55,13 @@ warnings.filterwarnings("ignore")
 # %%
 
 # data params
-data_name = "IntrusionFreeGordon2021"
-data_query = "data['condition'] == 2"
-data_path = "data/IntrusionFreeGordon2021.h5"
+data_name = "HealeyKahana2014"
+data_query = "data['listtype'] == -1"
+data_path = "data/HealeyKahana2014.h5"
 
 # fitting params
 redo_fits = False
-redo_sims = False
+redo_sims = True
 run_tag = "Fitting"
 relative_tolerance = 0.001
 popsize = 15
