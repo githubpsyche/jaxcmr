@@ -1,4 +1,11 @@
-::: {#fig-serial-crp layout-ncol="3"}
+---
+format:
+  pdf:
+    geometry: [landscape, margin=0.1in, centering, vcentering]
+    pagestyle: empty
+---
+
+::: {layout-ncol="3"}
 ![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_crp_LL5.png)
 
 ![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_crp_LL6.png)

@@ -1,4 +1,11 @@
-::: {#fig-initiation layout-ncol="3"}
+---
+format:
+  pdf:
+    geometry: [landscape, margin=0.1in, centering, vcentering]
+    pagestyle: empty
+---
+
+::: {layout-ncol="3"}
 ![](figures/HealeyKahana2014_BaseCRU_Fitting_pnr.png)
 
 ![](figures/HealeyKahana2014_BaseCRU_Fitting_crp.png)
