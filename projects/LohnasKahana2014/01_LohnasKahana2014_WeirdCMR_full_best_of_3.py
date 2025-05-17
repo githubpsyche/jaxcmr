@@ -17,7 +17,7 @@ from jaxcmr.models.weird_cmr import BaseCMRFactory as model_factory
 from jaxcmr.experimental.array import to_numba_typed_dict
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data
-from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.static_likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
 
@@ -26,13 +26,13 @@ warnings.filterwarnings("ignore")
 # %%
 
 single_analysis_paths = [
-    "jaxcmr.repcrp.plot_rep_crp",
+    "jaxcmr.analyses.repcrp.plot_rep_crp",
 ]
 comparison_analysis_paths = [
     # "compmempy.analyses.rpl.plot_spacing",
-    "jaxcmr.spc.plot_spc",
-    "jaxcmr.crp.plot_crp",
-    "jaxcmr.pnr.plot_pnr",
+    "jaxcmr.analyses.spc.plot_spc",
+    "jaxcmr.analyses.crp.plot_crp",
+    "jaxcmr.analyses.pnr.plot_pnr",
     # "compmempy.analyses.distance_crp.plot_distance_crp",
 ]
 single_analyses = [import_from_string(path) for path in single_analysis_paths]
@@ -45,18 +45,18 @@ comparison_analyses = [import_from_string(path) for path in comparison_analysis_
 data_name = "LohnasKahana2014"
 data_query = "data['list_type'] > 0"
 data_path = "data/LohnasKahana2014.h5"
-run_tag = "full_best_of_3"
 max_repetitions = 2
 
 # fitting params
-redo_fits = False
+redo_fits = True
 model_name = "WeirdCMR"
 relative_tolerance = 0.001
 popsize = 15
 num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
-best_of = 3
+best_of = 1
+run_tag = f"full_best_of_{best_of}"
 
 # sim params
 experiment_count = 50

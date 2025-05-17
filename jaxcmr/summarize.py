@@ -9,15 +9,6 @@ from scipy.stats import t, ttest_rel
 
 from jaxcmr.typing import Array, Float, MemorySearchCreateFn
 
-__all__ = [
-    "bound_params",
-    "load_opt_params",
-    "validate_params",
-    "calculate_ci",
-    "summarize_parameters",
-]
-
-
 def bound_params(
     params: Mapping[str, Float[Array, " popsize"]], bounds: Mapping[str, list[float]]
 ) -> dict[str, Float[Array, " popsize"]]:
@@ -240,6 +231,54 @@ def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
     # Create DataFrame
     df = pd.DataFrame({"Model": names, "AICw": aic_weights})
     return df.sort_values(by="AICw", ascending=False)
+
+def calculate_aic(results: list[dict]) -> pd.DataFrame:
+    """
+    Return a DataFrame of Akaike Information Criterion (AIC) scores
+    for a collection of model-fit summaries.
+
+    Each `model` dictionary must contain:
+      • "name"   – a string identifying the model
+      • "fitness" – an iterable of per-observation log-likelihoods
+      • "free"    – a collection of free parameters (length = k)
+
+    AIC = 2k – 2·LL, where LL is the total log-likelihood.
+    Lower AIC indicates a better trade-off between fit and complexity.
+    """
+    aics, names = [], []
+
+    for model in results:
+        k  = len(model["free"])          # number of free parameters
+        ll = np.sum(model["fitness"])    # total log-likelihood (positive)
+        aic = 2 * k - 2 * ll             # <-- note the minus sign
+        aics.append(aic)
+        names.append(model["name"])
+
+    df = pd.DataFrame({"Model": names, "AIC": aics})
+    return df.sort_values(by="AIC", ascending=True)  # best (lowest) first
+
+def calculate_bic_scores(
+    results: list[dict],
+) -> pd.DataFrame:
+    """
+    Return a DataFrame of Bayesian Information Criterion (BIC) scores
+    for a collection of model-fit summaries.
+    """
+    names, bics = [], []
+
+    for model in results:
+        k = len(model["free"])  # number of free parameters
+        ll = np.sum(model["fitness"])  # total log-likelihood
+
+        # determine sample size for this model
+        n = len(model["fitness"])
+
+        bic = k * np.log(n) - 2 * ll
+        names.append(model["name"])
+        bics.append(bic)
+
+    df = pd.DataFrame({"Model": names, "BIC": bics})
+    return df.sort_values(by="BIC", ascending=False)
 
 
 def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
