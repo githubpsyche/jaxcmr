@@ -463,18 +463,7 @@ Negative log-likelihood (±95% CI) averaged across participants for selected mod
 $\gamma$: item-to-context learning rate; $\alpha$: shared support; $\delta$: self-support; $\phi_\text{s}$: primacy scale; $\phi_\text{d}$: primacy decay; $\beta_\text{start}$: start context integration rate.
 :::
 
-::: {#fig-cmr layout-ncol="3"}
-![](figures/HealeyKahana2014_BaseCMR_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_BaseCMR_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_BaseCMR_Fitting_spc.png)
-
-Summary statistic fits of the baseline CMR model to PEERS data.
-**Left**: probability of recall initiation by serial position.
-**Middle**: conditional response probability as a function of lag.
-**Right**: recall probability by serial position.
-:::
+{{< include figcmr.md >}}
 
 Our first evaluation uses the @healey2014memory subset of the PEERS free recall dataset.
 Using the overall goodness of fit for each model variant, standard CMR provides the best fit at the group level (see @tbl-fits) as well as for 100% of individual participants.
@@ -510,30 +499,7 @@ We now turn to CRU and evaluate how its streamlined implementation impacts its a
 
 ## Addressing Serial Position Effects in Recall Initiation and Overall
 
-::: {#fig-initiation layout-ncol="3"}
-![](figures/HealeyKahana2014_BaseCRU_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_BaseCRU_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_BaseCRU_Fitting_spc.png)
-
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_spc.png)
-
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_spc.png)
-
-Summary statistic fits of baseline CRU (**Top**), CRU with free start context integration rate $\beta_\text{start}$ (**Middle**), and CRU freeing both start context integration rate ($\beta_\text{start}$) and primacy gradient ($\phi_\text{s}$ and $\phi_\text{d}$) parameters (**Bottom**) to PEERS free recall data.
-**Left**: probability of recall initiation by serial position.
-**Middle**: conditional response probability as a function of lag.
-**Right**: recall probability by serial position.
-:::
+{{< include figinitiation.md >}}
 
 CRU includes most of CMR's core mechanisms.
 However, CRU's default start-of-list recall initiation mechanism forces it to strongly prioritize the start of the list during recall initiation, which causes its performance to collapse when fit to free recall data exhibiting a strong recency effect.
@@ -550,14 +516,7 @@ Rows 1 and 2 of @fig-initiation show simulated benchmark phenomena for CRU and t
 Fixing $\beta_\text{start}$ to 1 leads to fits where CRU predicts no consistent serial position or lag-contiguity effects, while allowing $\beta_\text{start}$ to vary enables CRU to begin to capture these effects, achieving a U-shaped overall serial position curve, a strong recency effect in recall initiation, and a bidirectional lag-contiguity effect.
 The model still substantially underestimates the primacy effect in the overall serial position curve, the strength of the recency effect in recall initiation, and the strength of the lag-contiguity effect, but these limitations are less severe than when $\beta_\text{start}$ is fixed at 1.0.
 
-::: {#fig-shiftstart layout-nrow="1"}
-![](shifting/BaseCMR_Start_Drift_Rate_Parameter_Shifting_pnr_HealeyKahana2014.png)
-
-![](shifting/BaseCMR_Start_Drift_Rate_Parameter_Shifting_spc_HealeyKahana2014.png)
-
-Simulation of the impact of shifting the start context integration rate parameter $\beta_\text{start}$ on the probability of starting recall by serial position (**Left**) and the recall probability by serial position (**Right**) for CMR.
-Using parameters fit to @healey2014memory, $\beta_\text{start}$ is shifted from 0 to 1 in increments of 0.1, with the color of the lines indicating the value of the parameter.
-:::
+{{< include figshiftstart.md >}}
 
 Further allowing CRU to include CMR's primacy learning gradient ($\phi_\text{s}$ and $\phi_\text{d}$ parameters) to modulate context-to-feature memory learning rates to peak at the start of the study list further improves its performance.
 This variant is better at capturing the strength of the primacy effect in the overall serial position curve [@fig-initiation], but does not as substantially improve the model's ability to capture the recency effect in recall initiation or the lag-contiguity effect.
@@ -569,34 +528,7 @@ In our forthcoming evaluation of the models using serial recall data, the full C
 
 ## Tuning the Sharpness and Asymmetry of the Lag-Contiguity Effect
 
-::: {#fig-fitlagcrp layout-ncol="3"}
-![](figures/HealeyKahana2014_CRU_with_Pre-Expt%2C_Primacy%2C_and_StartDrift_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Pre-Expt%2C_Primacy%2C_and_StartDrift_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Pre-Expt%2C_Primacy%2C_and_StartDrift_Fitting_spc.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Primacy,_and_StartDrift_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Primacy,_and_StartDrift_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Primacy,_and_StartDrift_Fitting_spc.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy,_and_StartDrift_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy,_and_StartDrift_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy,_and_StartDrift_Fitting_spc.png)
-
-Summary statistic fits of models to the PEERS free recall dataset [@healey2014memory].
-**Top**: CRU with free pre-experimental context-to-feature memory ($\alpha$, $\delta$), primacy gradient ($\phi_\text{s}$, $\phi_\text{d}$), and start context integration rate ($\beta_\text{start}$) parameters.
-**Middle**: CRU with free item-to-context learning rate ($\gamma$), primacy gradient ($\phi_\text{s}$, $\phi_\text{d}$), and start context integration rate ($\beta_\text{start}$) parameters.
-**Bottom**: CRU with free item-to-context learning rate ($\gamma$), pre-experimental context-to-feature memory ($\alpha$, $\delta$), primacy gradient ($\phi_\text{s}$, $\phi_\text{d}$), and start context integration rate ($\beta_\text{start}$) parameters -- equivalent to CMR.
-**Left**: Probability of starting recall by serial position.
-**Left**: Probability of starting recall by serial position.
-**Middle**: Conditional response probability as a function of lag.
-**Right**: Recall probability by serial position.
-:::
+{{< include figfitlagcrp.md >}}
 
 In free recall, the lag-contiguity effect is bidirectional and asymmetric, with participants more likely to transition to items that were presented immediately after the just-recalled item, but also sometimes transitioning to items that were presented immediately before the just-recalled item in the original study list.
 Standard CRU is able to simulate a bidirectional lag-contiguity effect, but it substantially underestimates the strength of the effect compared to the data, predicting around a 20% probability of +1 lag transition while the data shows over a 40% probability of +1 lag transition.
@@ -625,29 +557,11 @@ Finally, in the third row of @fig-fitlagcrp, extending CRU to include both CMR's
 However, this model is exactly CMR: CRU with all of CMR's mechanisms enabled.
 This suggests that standard CRU's streamlined implementation is not sufficient to capture the full range of free recall phenomena, and underlines that all of CMR's mechanisms are useful for capturing free recall data, despite the complexity they introduce.
 
-::: {#fig-shiftlearning layout-nrow="1"}
-![](shifting/BaseCMR_Learning_Rate_Parameter_Shifting_crp_HealeyKahana2014.png)
-
-![](shifting/BaseCMR_Item_Support_Parameter_Shifting_crp_HealeyKahana2014.png)
-
-Simulation of the impact of shifting CMR's $\gamma$ (**Left**) and $\delta$ (**Right**) parameters on the conditional response probability as a function of lag for CMR.
-Using parameters fit to @healey2014memory, the learning rate parameter $\gamma$ is shifted from 0 to 1 in increments of 0.1, and the item support parameter $\delta$ is shifted from 0 to 10 in increments of 1, with the color of the lines indicating the value of the parameter.
-:::
+{{< include figshiftlearning.md >}}
 
 ## Position- vs Context-Based Mechanisms for Recall Termination
 
-::: {#fig-freetermination layout-ncol="3"}
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy_StartDrift,_and_ContextTerm_Fitting_pnr.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy_StartDrift,_and_ContextTerm_Fitting_crp.png)
-
-![](figures/HealeyKahana2014_CRU_with_Feature-to-Context,_Pre-Expt,_Primacy_StartDrift,_and_ContextTerm_Fitting_spc.png)
-
-Summary statistic fits of CMR with CRU's context-based recall termination mechanism to @healey2014memory.
-**Left**: probability of starting recall by serial position.
-**Middle**: conditional response probability as a function of lag.
-**Right**: recall probability by serial position.
-:::
+{{< include figfreetermination.md >}}
 
 CRU and CMR's mechanisms for recall termination are fundamentally different.
 This difference cannot be captured by toggling a parameter from a fixed to a freely adjustable value, but rather, these mechanisms can only be swapped between variants.
@@ -700,53 +614,9 @@ In the following sections we examine the ability of a subset of these models to 
 
 ## Serial Recall Accuracy and Error Rates
 
-::: {#fig-serial-srac layout-ncol="3"}
+{{< include figserialsrac.md >}}
 
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_srac_LL5.png)
-
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_srac_LL6.png)
-
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_srac_LL7.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_srac_LL5.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_srac_LL6.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_srac_LL7.png)
-
-![](figures/Gordon2021_BaseCMR+Confusable_Fitting_srac_LL5.png)
-
-![](figures/Gordon2021_BaseCMR+Confusable_Fitting_srac_LL6.png)
-
-![](figures/Gordon2021_BaseCMR+Confusable_Fitting_srac_LL7.png)
-
-Serial recall accuracy (SRAC) fits to @logan2021serial serial recall data for list lengths of 5 (**Left Column**), 6 (**Middle Column**), 7 (**Right Column**) of baseline CRU (**Top**), the best performing CRU variant with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters (**Middle**), and CMR with its default position-based recall termination mechanism and CRU's item identification confusability mechanism (**Bottom**).
-:::
-
-
-::: {#fig-best-serial-errors layout-ncol="3"}
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_intrusion_error_rate_LL5.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_intrusion_error_rate_LL6.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_intrusion_error_rate_LL7.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_order_error_rate_LL5.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_order_error_rate_LL6.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_order_error_rate_LL7.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_omission_error_rate_LL5.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_omission_error_rate_LL6.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_omission_error_rate_LL7.png)
-
-**Intrusion, order, and omission error rates** (top, middle, and bottom rows respectively) **by serial position** for list lengths 5, 6, and 7 (left, center, and right columns), in @logan2021serial serial recall data.
-Lines compare observed error rates with predicted error rates from **best performing CRU variant** with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters.
-:::
+{{< include figbestserialerrors.md >}}
 
 <!-- In free recall we saw that CRU's default start‐of‐list cue seriously underestimates the recency side of the serial position curve and fails to match participants' tendency to begin recall near the last list item.
 Allowing CRU to blend start- and end-of-list context via $\beta_\text{start}$ restored that recency effect, while adding CMR's associative primacy gradient ($\phi_\text{s}$, $\phi_\text{d}$) lifted early-list accuracy.
@@ -778,28 +648,7 @@ Since CRU can address serial recall accuracy and error patterns without CMR's ad
 
 ## Forward and Backward Transitions in Serial Recall
 
-::: {#fig-serial-crp layout-ncol="3"}
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_crp_LL5.png)
-
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_crp_LL6.png)
-
-![](figures/Gordon2021_BaseCRU_with_ContextTerm%2BConfusable_Fitting_crp_LL7.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_crp_LL5.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_crp_LL6.png)
-
-![](figures/Gordon2021_CRU_with_Pre-Expt_and_Primacy,_and_ContextTerm+Confusable_Fitting_crp_LL7.png)
-
-![](figures/Gordon2021_BaseCMR%2BConfusable_Fitting_crp_LL5.png)
-
-![](figures/Gordon2021_BaseCMR%2BConfusable_Fitting_crp_LL6.png)
-
-![](figures/Gordon2021_BaseCMR%2BConfusable_Fitting_crp_LL7.png)
-
-Lag-conditional response probability (lag-CRP) fits of baseline CRU (**Top**); best performing CRU variant with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters (**Middle**); and CMR with its default position-based recall termination mechanism and CRU's item identification confusability mechanism (**Bottom**) to @logan2021serial serial recall data.
-Lines compare observed lag-CRP with predicted lag-CRP for the applicable model variant.
-:::
+{{< include figserialcrp.md >}}
 
 <!-- Although transposition gradients are the more common benchmark for assessing temporal organization in serial recall, here we re-apply the lag-CRP analyses from free recall to the serial recall data, evaluating the probability of recalling an item as a function of the serial lag between the last recalled item and the current item, conditional on whether the item has been recalled yet.
 The lag-CRP was applied in CRU's reference evaluation [@logan2021serial] and using it here allows clearer comparison between free and serial recall performance and between the mechanisms that CRU and CMR use to address them.  -->
