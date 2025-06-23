@@ -39,6 +39,8 @@ from jaxcmr.helpers import import_from_string, load_data, generate_trial_mask
 # from jaxcmr.helpers import to_numba_typed_dict
 from matplotlib import rcParams  # type: ignore
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
 
 comparison_analysis_paths = [
     "jaxcmr.analyses.spc.plot_spc",
@@ -598,7 +600,7 @@ for model_factory, model_configs in zip(
             )
 
         for analysis in comparison_analyses:
-            figure_str = f'{results["name"]}_{analysis.__name__[5:]}.png'
+            figure_str = f'{results["name"]}_{analysis.__name__[5:]}.tif'
             figure_path = os.path.join("projects/cru_to_cmr/figures/", figure_str)
             print(figure_str)
             color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
@@ -619,4 +621,32 @@ for model_factory, model_configs in zip(
             axis.set_ylabel(axis.get_ylabel(), fontsize=16)
             # axis.set_title(f'{results["name"]}'.replace("_", " "))
             plt.savefig(figure_path, bbox_inches="tight", dpi=300)
-            # plt.show()
+            plt.show()
+
+            cmap = plt.get_cmap("binary_r")          # 0 → pure black, 1 → white
+            color_cycle = [
+                mcolors.to_hex(cmap(x))              # convert RGBA → "#rrggbb"
+                for x in np.linspace(0.00, 0.70, 2)  # stay away from x≈1 (near‑white)
+            ]
+
+            axis = analysis(
+                datasets=[sim, data],
+                trial_masks=[np.array(_trial_mask), np.array(trial_mask)],
+                color_cycle=color_cycle,
+                labels=["Model", "Data"],
+                contrast_name="source",
+                axis=None,
+                distances=1 - connections,
+            )
+
+            axis.tick_params(labelsize=14)
+            axis.set_xlabel(axis.get_xlabel(), fontsize=16)
+            axis.set_ylabel(axis.get_ylabel(), fontsize=16)
+            # axis.set_title(f'{results["name"]}'.replace("_", " "))
+
+            bw_path = os.path.join(
+                "projects/cru_to_cmr/figures/", f"bw_{figure_str}"
+            )
+            plt.savefig(bw_path, bbox_inches="tight", dpi=300)
+            plt.show()                              # B/W display (optional)
+            plt.close()                             # free memory

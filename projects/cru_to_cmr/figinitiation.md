@@ -11,23 +11,23 @@ format:
 ---
 
 ::: {#fig-initiation layout-ncol="3"}
-![](figures/HealeyKahana2014_BaseCRU_Fitting_pnr.png)
+![](figures/bw_HealeyKahana2014_BaseCRU_Fitting_pnr.png)
 
-![](figures/HealeyKahana2014_BaseCRU_Fitting_crp.png)
+![](figures/bw_HealeyKahana2014_BaseCRU_Fitting_crp.png)
 
-![](figures/HealeyKahana2014_BaseCRU_Fitting_spc.png)
+![](figures/bw_HealeyKahana2014_BaseCRU_Fitting_spc.png)
 
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_pnr.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_pnr.png)
 
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_crp.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_crp.png)
 
-![](figures/HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_spc.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Free_Start_Drift_rate_Fitting_spc.png)
 
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_pnr.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_pnr.png)
 
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_crp.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_crp.png)
 
-![](figures/HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_spc.png)
+![](figures/bw_HealeyKahana2014_CRU_with_Primacy_and_StartDrift_Fitting_spc.png)
 
 Summary statistic fits of baseline CRU (**Top**), CRU with free start context integration rate $\beta_\text{start}$ (**Middle**), and CRU freeing both start context integration rate ($\beta_\text{start}$) and primacy gradient ($\phi_\text{s}$ and $\phi_\text{d}$) parameters (**Bottom**) to PEERS free recall data.
 **Left**: probability of recall initiation by serial position.

@@ -1,0 +1,22 @@
+project:
+  type: manuscript
+  output-dir: ../../docs/repeat_cmr
+  render: 
+    - index.qmd
+
+manuscript:
+  code-links: repo
+
+execute:
+  freeze: auto
+
+format:
+  html:
+    toc: true
+    theme: darkly
+  apaquarto-pdf:
+    nocorrespondence: true
+    donotrepeattitle: true
+    draftfirst: true
+    filters:
+      - abstract-section
