@@ -1,0 +1,41 @@
+project:
+  type: book
+  output-dir: ../../docs/thesis
+
+book:
+  title: "Same Item, Distinct Contexts: An Instance-Based Retrieved-Context Account of Free and Serial Recall"
+  date: July 7, 2025
+  author:
+    name: Jordan B Gunn
+  chapters:
+    - index.qmd
+    - icmr.qmd
+    - cru_to_cmr.qmd
+    - repfr.qmd
+    - references.qmd
+
+thesis:
+  supervisor: 
+    name: Sean M Polyn
+  degree-name: Doctor of Philosophy
+  university: Vanderbilt University
+  department: Department of Psychology
+  group: Cognition and Cognitive Neuroscience Program
+
+bibliography: references.bib
+
+format:
+  pdf:
+    linestretch: 2
+  quarto-thesis-pdf: 
+    urlcolor: red
+    toclinkcolor: black
+    toc-depth: 3
+    papersize: letter
+    linestretch: 2          # <-- doubles every­thing *after* the title
+    keep-tex: true          # handy for inspection; can be removed
+    header-includes: |
+      %% Single‑space the title page only ---------------------------
+      \usepackage{setspace,etoolbox}
+      \AtBeginEnvironment{titlepage}{\begingroup\singlespacing}
+      \AtEndEnvironment{titlepage}{\endgroup}

@@ -16,71 +16,94 @@ bibliography: references.bib
 ---
 
 # Abstract
+Repetition strengthens memories while tying each occurrence to an evolving temporal context.
+According to retrieved‑context theory (RCT), this evolution is item‑based: encoding or retrieving an item blends contextual features already linked to it into the ongoing state.
+Such blending links occurrences across time, but also engenders associative interference by overlapping traces and diffusing retrieval across occurrences contexts.
+The Context Maintenance and Retrieval (CMR) and other models formalize RCT and capture many classic benchmarks.
+However, repetition tests typically focus on individual domains and use ambiguous control comparisons.
 
-Repetition both strengthens memories and links them to an evolving temporal context that reflects recent experience [@delaney2010spacing].
-According to retrieved‑context theory (RCT), this evolution is item‑based: encountering an item reactivates and blends the composite of its prior contexts into the ongoing state, linking moments through overlapping features [@howard2002distributed; @siegel2014retrieved].
-The Context Maintenance and Retrieval (CMR) model implements RCT in a connectionist architecture and captures many memory benchmarks [@polyn2009context;@healey2019contiguity], yet repetition tests have typically examined a single task domain and applied control analyses that under‑count baseline transitions.
+We re-examined six free- and serial-recall datasets.
+Whereas associative interference in CMR predicts balanced cross-occurrence transition rates across tasks, we identify three contradictory patterns:
+(i) no surplus transitions between temporal neighbors belonging to different occurrences,
+(ii) a bias from repeated items toward neighbors of their first occurrence, and
+(iii) preserved forward chaining from repeated items in serial recall.
 
-Re-examining six free‑ and serial‑recall datasets, we uncovered three diagnostic signatures:
-(i) no surplus transitions between neighbors of different occurrences,
-(ii) biased transitions from repeaters toward first-occurrence neighbors, and
-(iii) preserved forward chaining from repeaters in serial recall.
-Standard CMR fails these because it blends occurrence contexts during encoding and upon retrieval, producing associative interference that predicts balanced cross‑occurrence transitions.
-
-We introduce Instance‑CMR, an implementation of RCT that encodes item-context associations as separate episode traces.
-Configured with the same blending assumptions, Instance-CMR functionally reproduces standard CMR.
-When repetitions instead reinstate non-overlapping contextual features and traces compete at recall for reinstatement, Instance-CMR eliminates interference and satisfies key constraints, yielding higher sequence likelihood fits across datasets without adding parameters.
-These results demonstrate RCT's portability across architectures but challenge its blending assumptions, recasting repetition memory as selection between episode‑specific, non‑overlapping contexts.
+To probe these discrepancies, we introduce Instance‑CMR, a trace-based framework that stores item-context pairings separately and is configurable to either reproduce CMR's behavior or test alternative assumptions.
+In the successful configuration, repetitions (a) reinstate unique, non-overlapping contextual features and (b) traces compete during retrieval for reinstatement.
+Together these mechanisms limit interference and improve sequence‑likelihood fits without adding parameters.
+Instance‑CMR thus unifies free‑ and serial‑recall phenomena and generalizes RCT beyond a connectionist framework.
+Episodic memory, we argue, balances integration and specificity not by blending contexts, but by letting distinct contexts compete at retrieval.
 
 # Introduction
 
 What is the structure of memory for repeated experience?
-It is a staple finding of experimental psychology -- and everyday experience -- that repeating information makes it easier to remember. 
-Yet repetition never occurs in a vacuum: each encounter is embedded in the current episodic context, with its own surrounding events, temporal position, and internal state.
-A second visit to the same neighborhood bakery happens on a different morning, after different preceding errands, and is stored together with those new circumstances.
+Repeating an item usually strengthens later recall, yet every encounter is embedded in a unique episodic context -- its own temporal moment, surrounding events, and internal state.
+A second visit to the same neighbourhood bakery might occur on a chilly afternoon, after an unexpected detour, and in a brighter mood, and those updated circumstances become part of what is stored.
 In list-learning experiments, the principle is the same:
-If the word *canoe* is studied at serial positions 5 and 15, it becomes linked to two distinct sets of neighbors on the mental timeline.
-How these episode-specific contexts are encoded and reinstated during retrieval will influence not only whether and when *canoe* is recalled, but also which other words follow it.
-The present work asks how repetition reshapes these contextual links and, in turn, the structure of memory search.
+If the word *canoe* is studied at serial positions 5 and 15, it becomes linked to two separate stretches of the mental timeline.
+How these episode-specific contexts are encoded and reinstated during retrieval determines not only whether and when *canoe* is recalled, but also which other items come next.
+Here we ask how repetition reshapes those contextual links and, in turn, the structure of memory search.
 
-The spacing effect -- better recall for widely separated repetitions -- has dominated experimental work on repetition for over a century [@ebbinghaus1885; @cepeda2006distributed].
-Numerous theories reproduce this strength advantage, yet none is universally accepted [@maddox2016understanding].
-Most proposals fall into three classes. 
-(1) Contextual‑variability accounts propose that wider spacing lets each encounter bind the item to a more distinct temporal context, increasing the diversity of retrieval cues.
-(2) Deficient‑processing accounts argue that massed repeats receive shallow encoding, whereas spaced repeats receive full processing and form stronger traces [@greene1980spacing; @tharp1983effects].
-(3) Study-phase-retrieval accounts posit that a later encounter reactivates the contextual state of the earlier one, enabling additional encoding or associative strengthening between the two episodes [@hintzman1974repetition; @roediger2006test].
-Although all three explanations can explain the spacing curve, they make different claims about the episode‑specific contexts that repetition creates and about how those contexts configure retrieval.
+The spacing effect -- better memory when repeated encounters are separated by time -- has anchored theories of repetition learning for over a century and remains a decisive benchmark for contemporary models [@ebbinghaus1885; @cepeda2006distributed].
+Competing explanations emphasize three mechanisms.
+(1) Encoding-variability accounts claim that wider lags bind each encounter to more distinct episodic contexts, broadening applicable retrieval cues [@bower1972coding; @glenberg1979component].
+(2) Deficient‑processing accounts hold that massed repeats receive shallow encoding, whereas spaced repeats receive full processing and form stronger traces [@greene1980spacing].
+(3) Study‑phase‑retrieval accounts propose that a later encounter reactivates earlier episodes, enabling additional associative learning [@hintzman1974repetition].
+All three can account for the spacing advantage, but make distinct predictions about the contextual links that guide subsequent recall.
 
-Within this literature, retrieved‑context theory (RCT) has become an influential framework for modeling both repetition effects and the broader dynamics of episodic memory search. 
-Implemented first in the Temporal Context Model and elaborated in the Context Maintenance and Retrieval (CMR) framework, RCT treats recall as an interaction between studied items and a continuously evolving temporal context.
-Each presentation or retrieval reinstates the context previously linked to that item and partially integrates it with the current context -- a departure from earlier models that allowed context to drift independently of items. 
-Because the updated context cues the next retrieval step, this rule directly shapes which items follow one another in recall.
-Retrieved-context theory therefore combines contextual variability (spaced repetitions create more distinct contexts) and study-phase retrieval (each repetition reinstates earlier context) mechanisms to account for the spacing effect [@siegel2014retrieved].
-As specified in CMR, these processes also account for broader benchmark phenomena in free recall such as primacy-recency gradients, lag-contiguity effects, semantic clustering and delayed recall patterns [@polyn2009context; @morton2016predictive].
-Extensions now encompass emotional modulation, dual-task interference, serial-order memory, and other domains, making RCT one of the most widely applied accounts of episodic retrieval.
-Yet the same rules that yield these successes also predict a form of associative interference that has not been rigorously tested—a gap the present work addresses.
+Within this literature, retrieved‑context theory (RCT) has become an influential framework that addresses repetition effects within an overarching account of episodic memory search [@howard2002distributed].
+Implemented first in the Temporal Context Model and elaborated in models such as the Context Maintenance and Retrieval (CMR) [@polyn2009context] and Context Retrieval and Updating (CRU) [@logan2018automatic] frameworks, RCT emphasizes the interaction between studied items and a continuously evolving temporal context.
+According to RCT, presenting or recalling an item blends the contextual features tied to it into the ongoing context state to reflect recent experience.
+Study events link items to varying states of context, while recall reinstates contextual features associated with the item to provide a contextual cue for the next retrieval attempt.
+Retrieved-context theory therefore integrates both contextual variability (spaced repetitions create more distinct contexts) and study-phase retrieval (each repetition reinstates earlier context) mechanisms to address spacing and repetition effects [@siegel2014retrieved].
+The same account explains the temporal organization of memory search and reproduces classic signatures such as lag–contiguity gradients, primacy–recency curves, and robust recall after distractor delays [@polyn2009context; @healey2019contiguity].
+Extensions of the framework now tackle emotional clustering, continual distraction, and serial‑order transpositions, making RCT one of the most widely applied accounts of episodic retrieval.
+<!-- Last sentence needs citations eventually. -->
 
-Most RCT implementations share two architectural commitments.
-First, context evolution is item‑driven: when an item repeats, the contextual features previously associated with that item are retrieved and blended into the current context, rendering the contexts of its two occurrences highly similar in the model. 
-Second, context reinstatement is wholesale: when that item is later retrieved, the same blend of all contextual features associated with it are reinstated before the next recall.
-Either rule produces associative interference: one linked study region cannot be cued without also cuing the other.
-This property predicts (i) boosted transitions between neighbours of the occurrences and (ii) relatively balanced transition rates from the repeated item to each set of neighbors.
-Some free‑recall studies report the cross-neighbor transition boost [@siegel2014retrieved], but serial‑recall work observes little interference in transitions from repeated items, posing a puzzle for the blended‑context assumption.
+Earlier temporal-context theories assumed that the background context drifted gradually and independently of study events, so items were associated with and cued by whatever state happened to prevail [@estes1955statistical; @mensink1989model].
+In the Temporal Context Model, @howard2002distributed showed that letting each item reinstate contextual features specific to it across study and retrieval events solved several puzzles at once.
+First, it produces the forward-skewed lag-contiguity curve typical in free recall: recalling item $i$ shifts the cue toward the context that preceded item $i + 1$, whereas a symmetric time-only drift predicts a symmetric curve unless an extra asymmetry parameter is added.
+Second, because the trace is retrieved at recall, the same recency and contiguity survive long distractors; by contrast, a randomly drifting cue loses those similarities once it has moved on [@sederberg2008context].
+Third, when an item reappears after a delay, reinstatement re-encodes it in a partially restored earlier state, adding study-phase retrieval to a process account of spacing and within-list repetition benefits [@siegel2014retrieved].
+Extending the same rule across lists explains the graded prior‑list‑intrusion pattern: intrusions cluster in the immediately preceding list and near the target position because those items revive contexts most like the present cue [@howard2008persistence; @lohnas2015expanding]. 
+In serial recall, an item‑based update -- realized as a composite blend of associated contexts in CMR or an item-specific contextual feature in CRU -- captures the steep transposition gradient (errors swap neighbouring positions) and the gradual learning observed when a digit sequence is covertly repeated every third trial (the Hebb repetition effect) [@logan2018automatic; @logan2021serial; @lohnas2024retrieved].
+Together these successes position item-based context reinstatement as a linchpin of retrieved-context theory's explanatory power.
 
-Prior evaluations of RCT’s repetition mechanism appear limited in scope, measurement, and model testing. 
-To our knowledge, most studies have drawn on a small number of free‑recall datasets and have frequently deployed a control procedure that tallies transitions from only one of the two matched positions, potentially biasing baseline estimates. 
-Serial‑recall data -- especially sensitive to associative interference because each response must advance the learned order -- have yet to be included alongside free‑recall data to evaluate RCT’s assumptions.
-Moreover, many demonstrations have shown only that the model can qualitatively reproduce key benchmarks with previously fitted parameters; formal, sequence‑level likelihood tests across multiple conditions are less common. 
-Finally, published claims about the role of specific mechanisms (e.g., study‑phase retrieval) seldom report ablation analyses that confirm that the model's ability to predict aspects of performance depends on the mechanism.
-Addressing these concerns calls for broader datasets, symmetry‑respecting controls, and quantitative model comparison.
+RCT's item-based context evolution mechanism links occurrences of the same item across time and provides a coherent basis for episodic memory search.
+However, the same mechanism can also hamper the ability to retrieve contextual details specific to one occurrence without also retrieving details from the other.
+In our bakery example, such associative interference could produce confusion across the details of multiple visits, such as whether the bakery was visited on a rainy day or whether the croissant was fresh.
+In list-learning tasks, this associative interference manifests as a tendency for cues that activate neighbors of one occurrence of an item to also activate neighbors of other occurrences.
+For example, if the word *canoe* is studied at serial positions 5 and 15, then recalling the first occurrence at position 5 or even the neighbor from position 6 could boost the probability of transitioning to items near the second occurrence at position 15. 
+Across most RCT implementations, item-based context evolution produces such associative interference in two ways.
+First, reinstating item-specific contextual features each time an item is studied produces overlapping contextual states such that contextual cues for neighbors of one occurrence will also tend to activate neighbors of other occurrences.
+Second, reinstating item-specific contextual features at retrieval conversely produces a contextual cue that contacts all neighbors of the item simultaneously.
+Either consequence of the mechanism implies that one linked study region cannot be easily cued without also substantially cuing the other.
 
-We therefore re‑examined six archival datasets -- four free‑recall and two serial‑recall corpora -- each containing lists with repeated items. 
-For applicable datasets we constructed control lists that matched study positions and treated both matched positions as potential sources of transitions, filtering duplicate recalls identically in mixed and control conditions. 
-Across datasets we observed three robust patterns: (i) no boost in transitions between neighbors of different occurrences, (ii) a strong bias toward neighbors of the first presentation after the repeated item itself was recalled, and (iii) intact forward chaining in serial recall, with participants advancing from a repeated word to its correct next neighbor rather than to the other occurrence's neighbor.
+Here we argue that such associative interference predicted by retrieved‑context theory is scarce across free and serial recall.
+Building on prior work that refined RCT's treatment of repetition and mapped it across tasks [@siegel2014retrieved; @polyn2009context; @logan2021serial], we probe three concrete predictions from item-based context evolution as implemented in CMR.
+First, in free recall, transitions between the temporal neighbours of two occurrences of the same item should exceed those with matched study positions in control lists without repetitions [@siegel2014retrieved].
+Second, because a repeated item reinstates features associated with all occurrences, its neighbours should be contacted in a more balanced, region‑agnostic fashion compared to position-matched distinct items in control lists.
+Third, in serial recall, recalling the first occurrence of a repeated item should often propel search to the second occurrence’s neighbours, displacing the correct forward neighbour.
+CMR indeed produces all three patterns in simulation. 
+Across datasets and analyses, however, we find little matching evidence, contradicting both earlier claims of boosted cross‑occurrence transitions in free recall [@siegel2014retrieved] or of a capability of retrieved-context models to sidestep associative interference errors in serial recall [@logan2021serial]. 
+This theory–data gap calls the standard item‑based blending assumption of RCT into question.
 
-These results contradict the associative‑interference pattern implied by RCT's blended-context assumptions.
-To reconcile the data with RCT principles, we developed Instance CMR, an episode-specific variant of RCT that assigns each encounter a partly orthogonal context and allows the resulting traces to compete for reinstatement at retrieval based on their similarity to the current context.
-Without adding free parameters, Instance CMR preserves classic benchmark fits while eliminating the interference predicted by blended‑trace models.
+In the present work, we find that such associative interference is scarce in memory search tasks such as free and serial recall.
+Building on an existing base of work that has clarified RCT's account of repetition effects, extended its application across free and serial recall tasks, and refined organizational analyses of sequential recall performance [@siegel2014retrieved; @polyn2009context; @logan2021serial], we identified and tested three predictions of associative interference in RCT's blended-context implementations using six archival datasets spanning task domains.
+First, because overlapping contexts are reinstated at each occurrence of the same item, the probability of transitioning in free recall between neighbors of two occurrences of the same item should be boosted relative to a control list with no repetitions [@siegel2014retrieved].
+Second, because retrieving a repeated item reinstates contextual features associated with either occurrence of a repeated item, the probability of transitioning from free recall of repeated item to neighbors of either occurrence should be more balanced across list regions compared to distinct items studied at the same positions in control lists.
+Third, in serial recall, these same dynamics should predict that transitions from recall of the first occurrence of a repeated item should frequently erroneously advance to the second occurrence's neighbors, rather than to the first occurrence's forward neighbor.
+Other work variously suggest either that retrieved-context models can circumvent interference leaning on residual backward context [@logan2021serial] or alternatively report evidence for boosted cross-neighbor transitions in free recall [@siegel2014retrieved].
+By contrast, our simulations confirm that CMR predicts these associative interference patterns, but across datasets and analyses observe little matching evidence.
+This mismatch between model prediction and empirical scarcity poses a direct challenge to the prevailing item-based context evolution assumption in RCT as it is typically implemented.
+
+To reconcile these issues, we introduce Instance-CMR, a trace‑based framework that stores each item–context pairing as a separate memory instance. 
+Because every encoding rule and parameter of standard CMR can be replicated within Instance-CMR, the framework can be configured to be functionally equivalent to CMR, reproducing its well‑known successes -- and its interference limitation -- with equivalent parameters. 
+Crucially, the same architecture lets us swap in alternative assumptions: (a) each repetition reinstates a unique, non‑overlapping contextual feature, and (b) the resulting traces compete for reinstatement at retrieval.
+In contrast to CMR and other key RCT implementations, this variant within an instance-based framework can construct contextual associations and contextual retrieval cues that are specific to one occurrence of an item instead of blending support across occurrences.
+These changes preserve CMR's fit to classic contiguity and recency effects yet eliminates the boosted associative interference predicted by item-based context evolution.
+In doing so, ICMR bridges retrieved‑context theory with the multiple‑trace tradition exemplified by MINERVA 2 and REM [@hintzman1986judgments; @shiffrin1995memory] and recasts episodic memory as a competition between distinct, item-specific contexts rather than a blending of overlapping ones.
+The result is a theoretically parsimonious account that balances integration and specificity without adding parameters.
 
 The remainder of the paper is organized as follows. 
 First, we review the relevant literature on repetition memory and retrieved-context theory and outline the limitations of prior tests of RCT's repetition mechanism.
@@ -88,3 +111,128 @@ Next, we describe the datasets and analyses that we conducted to constrain and e
 Then, we formalize Instance CMR and the comparison models, outline the likelihood‑based fitting procedure, and present the behavioral results and quantitative model fits.
 Finally, we discuss the implications of our findings for retrieved-context theory, repetition memory, and the design of memory models more generally.
 All data, code, and model implementations are openly available at [repository link].
+
+# Theoretical Framework
+
+## Temporal Dynamics of Free and Serial Recall
+Present CMR and retrieved-context theory as a framework for understanding benchmark phenomena in free and serial recall.
+
+## Repetition Effects in Free and Serial Recall
+Present CMR and retrieved-context theory as a framework for understanding repetition effects in free and serial recall, focusing on providing an updated interpretation of its assumptions that 1) questions the role of study-phase retrieval in addressing spacing effects, and 2) predicts associative interference between repeated items because of its study-phase retrieval mechanism.
+
+Discuss effects in serial recall, applying RCT framework to propose a new account of the effects.
+
+distinguish ranschburg effect as likely a response suppression thing outside the scope of this work.
+
+Focusing on: associative interference in serial recall.
+
+Conversely connect back the problem of associative interference to free recall: just as transition rates from recalls of repeated items to serial neighbors has provided an important constraint for models of serial recall (e.g., ruling out chaining models), we argue that the same is true for free recall.
+
+Propose: CMR's specification of study-phase retrieval is dysfunctional and shares limitations with the chaining model, instantiating associative interference between contextual representations associated with different instances of a repeated item.
+
+## Instance Theory
+Cover literature contrasting instance theory with relevant frameworks.
+
+Focus on analysis by Anderson and otherwise distinguishing classical instance-based model architectures from instance-based retrieval.
+
+Key idea: instance models are best defined in terms of how they retrieve information from memory, rather than their specific implementation: they have the capacity to retrieve specific instances from memory, controlling interference/blending of information across instances.
+
+Key idea: whether a model has this property depends on both the model's architecture and the kinds of representations it uses.
+
+Relate to evidence that humans exhibit this capacity across a variety of tasks that contact memory, including free and serial recall.
+
+## An Instance-based Retrieved Context Model of Repetition Effects
+
+High-level presentation of the model with a diagram and everything wow.
+
+# Empirical Re-Analysis of Archival Datasets
+
+## Datasets
+
+Just control lists:
+- Healey Kahana 2024
+
+Free recall with mixed+control lists:
+- Lohnas & Kahana (2014)
+- Lohnas & Kahana (2024)
+
+Free recall without control lists:
+- Broitman Kahana 2024
+
+Serial recall with mixed+control lists:
+- Logan 2021
+
+Other serial recall:
+- Kahana Jacobs 2000
+
+One more serial recall dataset with control lists would be nice, but this is enough for thesis.
+
+## Benchmark Analyses
+
+SPC
+CRP
+PFR
+
+SPACING EFFECT
+SUPERADDITIVITY?
+
+
+
+## Diagnostic Measures of Cross‑Occurrence Interference
+
+## Results: Free Recall
+
+## Results: Serial Recall
+
+## Summary: Noninterference Across Tasks
+
+# The Instance-CMR Framework
+
+## Specification
+
+## Model Variants
+
+## Evaluation Approach
+
+# Simulation 1: Architectural Portability of Connectionist and Instance-based Models
+Where we show that Instance-CMR can reproduce CMR's behavior and fit to classic benchmarks.
+
+## Approach
+
+## Results
+
+## Discussion
+
+# Simulation 2: Clarifying the Role of Study-Phase Retrieval in CMR
+Where we show that CMR's study-phase retrieval mechanism does not help explain spacing effects, and produces associative interference between repeated items, and that these problems persist even when using CRU's "static" item-based contextual integration mechanism. 
+
+## Approach
+
+## Study-Phase Retrieval Does Not Boost Spacing Effects
+
+## Study-Phase Retrieval Predicts Associative Interference
+
+## Distinguishing Study-Phase Retrieval from the Item-Blend Rule
+
+# Simulation 3: Instance-CMR as a Solution to the Associative Interference
+Where we show that Instance-CMR can reproduce CMR's fit to classic benchmarks while avoiding the associative interference problem.
+
+## Approach
+
+## Addressing Associative Interference
+
+## Accounting for Classic Benchmarks
+
+## Discussion
+
+# General Discussion
+
+## Integration vs Specificity: Reconciling Composite and Trace Views
+
+## Implications for Spacing and Repetition Theories
+
+## Neural Plausibility: Pattern Separation and Contextual Drift
+
+## Abandoning the Item-Based Contextual Updating Mechanism?
+
+## Limitations and Future Directions

@@ -80,11 +80,13 @@ To address these limitations, we propose a new computational model of repetition
 Present CMR and retrieved-context theory as a framework for understanding benchmark phenomena in free and serial recall.
 
 ## Repetition Effects in Free and Serial Recall
-Present revised retrieved-context account of repetition effects in free recall, contrasting with Lohnas (2014) and other relevant work.
+Present revised retrieved-context account of repetition effects in free recall, contrasting with Lohnas (2014) and other relevant work. Two parts of the critique: study-phase retrieval doesn't actually work that well to address spacing effects, and the model predicts associative interference between repeated items.
 
 Discuss effects in serial recall, applying RCT framework to propose a new account of the effects.
 
-Focusing on: ranchberg effect, associative interference.
+distinguish ranschburg effect as likely a response suppression thing outside the scope of this work.
+
+Focusing on: associative interference.
 
 Conversely connect back the problem of associative interference to free recall: just as transition rates from recalls of repeated items to serial neighbors has provided an important constraint for models of serial recall (e.g., ruling out chaining models), we argue that the same is true for free recall.
 

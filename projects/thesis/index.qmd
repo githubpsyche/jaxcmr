@@ -1,0 +1,71 @@
+# Introduction  {.unnumbered}
+
+Episodic memory must satisfy two opposing demands.
+It must integrate related experiences that occur at different times so that a single cue can bridge gaps in time; yet it must also differentiate among those experiences, preserving which details belong to which moment.
+Failure on either front undermines adaptive behavior: without integration, we cannot generalize; without differentiation, we confuse the past.
+
+A visit to the neighborhood bakery illustrates the challenge.
+On Monday you step inside, inhale warm cinnamon, and buy a fresh loaf. 
+Ten days later you return and are greeted by the aroma of espresso and a new cashier. 
+Weeks later, a friend's mention of "the bakery down the street" retrieves both visits. 
+The cue has integrated the episodes -- it binds Monday's loaf and the later cappuccino to the same mental landmark -- yet you remember that the loaf purchase occurred on the first visit and the cappuccino on the second, demonstrating intact differentiation. 
+The cue links related episodes without collapsing their distinctive details.
+
+In the laboratory, this everyday tension can be distilled into a simple list-learning design. Participants study a single list in which a target word -- e.g., *canoe* -- appears twice, once early (position 5) and once later (position 15). 
+Each appearance is surrounded by different words that stand in for the cinnamon aroma or espresso smell: the items that come just before and after the early *canoe* (positions 4 and 6) differ from those flanking the late *canoe* (positions 14 and 16). 
+When the list must be reproduced serially, the correct output is unambiguous: *canoe* must be spoken twice and, after each instance, the word that truly followed it during study should come next. 
+If someone instead frequently substitutes the neighbor tied to the other occurrence, we learn that the two study moments were not kept fully distinct in memory [@henson1996unchained;@kahana2000interresponse].
+In free recall, response order is unconstrained, yet transition patterns remain informative.
+For example, if recalls often move from *canoe* or a first occurrence neighbor to the second occurrence's neighbor (or vice versa), contextual details of either occurrence were likely retrieved together [@siegel2014retrieved].
+Aggregating such transitions across many lists and participants yields a cumulative behavioral portrait of how the memory system stores and reinstates the contextual details tied to each repetition.
+
+Retrieved‑context theory (RCT) explains episodic recall by coupling a drifting temporal context with item‑driven reinstatement [@howard2002distributed; @kahana2020computational]. 
+Each time an item is studied, the contextual features present at that moment are blended into the ongoing state, leaving a recency‑weighted record of recent events. 
+Later, retrieving the same item reinstates that stored context wholesale, shifting the cue toward the list positions that originally surrounded it and giving their items the highest chance of being recalled next. 
+By repeating the same operation at every study and retrieval step, RCT provides a single mechanism that both bridges repeated presentations and preserves their distinctive details.
+
+Retrieved‑context theory principally addresses the temporal organization of memory search, the tendency even in free recall for items to be produced in study order. 
+Because each recalled item reinstates context from its own study position, the cue shifts toward the next serial position, naturally generating the forward‑skewed lag‑contiguity effect and the strong immediate‑recency advantage in short lists [@kahana1996associative; @howard2002distributed]. 
+Complete retrieved-context models of memory search such as the Context Maintenance and Retrieval (CMR) model [@howard2002distributed; @polyn2009context] extend this account to fully specify mechanisms for the initiation, progression, and termination of free recall. 
+For example, to account for trade-offs between primacy and recency in recall initiation and the overall serial position curve, CMR incorporates a primacy gradient that allocates extra attention to early list items while also positing that context is reset before retrieval, drifting the cue part-way back toward the list's start [@murdock1962serial; @polyn2009context].
+CMR and other retrieved-context models combine such mechanisms to explain a broad of benchmarks and has been successfully applied to address a broad range of episodic memory phenomena. 
+Closely related variants such as the sCMR [@lohnas2024retrieved] and Context Retrieval and Updating (CRU) [@logan2018automatic; @logan2021serial] models have extended or reformulated these same context-updating principles to address serial-order memory.
+
+In the most prominent implementation of RCT, the Context Maintenance and Retrieval model (CMR) [@howard2002distributed; @polyn2009context], item–context associations are stored in composite weight matrices that relate items to a single blended representation of contextual features across their occurrences.
+When an item is retrieved, the model effectively looks up that representation and reinstates it, requiring no additional selection step.
+This design dovetails naturally with RCT's mechanistic assumptions: item-driven reinstatement is implemented as a direct matrix operation, and wholesale reinstatement is guaranteed because every contextual feature tied to the item resides in the same location.
+A potential cost is rigidity: once blending has occurred, the model cannot choose to reinstate one occurrence's context without also reinstating the others.
+
+A contrasting strategy, long used in multi-trace or instance-based modeling [@hintzman1984minerva], allocates a new memory trace for every study event. 
+Each trace stores the item together with the contextual features present at that exact moment.
+At retrieval, the probe is compared with every trace; the resulting activations are combined -- often by a similarity-weighted average -- to guide recall.
+Thus retrieval can be selective: if a contextual cue is highly similar to the context of the first occurrence of an item but not the second, one trace is activated more than the other and more prominent in the output.
+Trace stores have proved effective in domains like category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons] and other episodic and semantic memory tasks [@cox2020similarity; @hintzman1988judgments; @jamieson2018instance; @shiffrin1997model]. 
+Yet, with the notable exception of the Context Retrieval and Updating (CRU) model for serial order memory [@logan2018automatic;@logan2021serial], they have played a limited role in retrieved-context modeling of episodic memory search.
+The under-representation is historical rather than principled; nothing in RCT prevents the item-driven, wholesale update rule from being realized over a growing set of traces.
+Yet whereas CMR's composite architecture converts RCT's assumptions into an architectural commitment, the instance-based framework's additional flexibility makes it an attractive testbed for exploring the nuances of context reinstatement.
+
+Differences between composite and instance-based architectures have been a source of theoretical tension across domains of memory research.
+Researchers in these areas frequently attribute differences in model performance to the distinct ways in which these approaches access associations [e.g., @nosofsky2002exemplar; @jamieson2018instance].
+If participants tend to or even demonstrate the capability to respond based on a cue's similarity to a specific study instance instead of a composite over applicable instances, then instance-based models may be favored over composite models.
+Yet other work has highlighted underlying similarities between the two approaches, tracing how composite and instance-based models can be made equivalent under a range of conditions rather than being fundamentally distinct [e.g., @turner2019toward; @kelly2017memory; @ramsauer2020hopfield; @anderson1995introduction].
+Clarifying how composite and instance architectures truly diverge and relate to one another is therefore essential. 
+Doing so would permit more effective comparisons between models that differ in other algorithmic respects, and would open the door to integrative frameworks that combine the strengths of both traditions.
+
+Clarifying architectural stakes helps leverage the strengths of the instance-based framework to return to the opening challenge: how can episodic memory integrate related experiences while preserving their distinctive details?
+In the present work, we show that retrieved context theory's item-driven, composite contextual evolution mechanism predicts associative interference across repetitions.
+Because RCT assumes that every presentation of an item deposits its contextual features into the context and that later retrieval reinstates that blend wholesale, the theory makes testable predictions for lists containing the same word in two positions.
+Standard composite implementations such as CMR forecast three signatures of cross‑occurrence interference: (i) in free recall, transitions between the neighbors of the two occurrences should be more common than transitions between similarly positioned control items; (ii) transition rates from twice-presented items to either set of neighbors should be more balanced than from either of two similarly positioned distinct items; and (iii) in serial recall, producing the first copy of a repeated word should often be followed by the forward neighbor that belongs to the second copy.
+I present simulations that confirm all three predictions but also present analyses of six published datasets that show that such cross‑links are rare.
+The discrepancy invites a systematic re‑examination of model assumptions that the flexible instance‑based framework can facilitate.
+
+This dissertation demonstrates that RCT is architecturally portable, shows that task success hinges on algorithmic rather than architectural choices, and applies these insights to identify and resolve a failure of its item-based contextual evolution mechanism to avoid associative interference across repetitions.
+**Chapter 1** introduces Instance‑CMR, an instance‑based reformulation that stores every item–context pairing as a separate trace. 
+When its parameters collapse those traces into a composite contextual input, Instance-CMR can reproduce CMR's behavior exactly, dissolving architecture as a theoretical boundary for RCT.
+**Chapter 2** leverages this equivalence to compare CMR, a connectionist model designed for free recall, with the Context Retrieval and Updating model (CRU), an instance‑based serial recall model.
+A factorial model‑selection analysis across free‑ and serial‑recall datasets shows that the models' divergent successes stem not from architectural differences but from algorithmic factors like item confusability, context‑drift rules, primacy/recency mechanisms, and retrieval‑termination criteria. 
+The exercise yields a common suite of benchmarks and model features across task domains that the final chapter exploits.
+**Chapter 3** tests an assumption shared by most retrieved‑context models: that repeated items always reinstate overlapping contextual features, a rule that produces associative interference across occurrence contexts.
+Re-analyzing six free- and serial-recall datasets, I find no evidence of such interference, contradicting predictions by either CMR or CRU.
+Within ICMR, allowing repetitions to reinstate non‑overlapping features and letting traces compete during retrieval for reinstatement eliminates the interference while preserving fits to key benchmarks, all without adding parameters.
+Collectively, the three chapters show that episodic memory can balance integration and specificity by storing distinct traces and adjudicating among them at retrieval, thereby retaining RCT's strengths while overcoming the limitations of composite, connectionist implementations.
