@@ -8,7 +8,7 @@ import markdown
 from IPython.display import HTML, display
 from jax import vmap
 from nbdev import show_doc as nbdev_show_doc
-import numpy as np
+import numpy as np # needed to evaluate some trila queries
 
 from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
 
