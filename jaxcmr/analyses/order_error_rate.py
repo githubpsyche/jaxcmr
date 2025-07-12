@@ -18,7 +18,7 @@ from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
-# %% ../../notebooks/order_error_rate.ipynb 5
+# %% ../../notebooks/order_error_rate.ipynb 4
 def trial_order_error_rate(
     recalls: Integer[Array, " recall_positions"],
     presentations: Integer[Array, " study_positions"],
@@ -80,7 +80,7 @@ def order_error_rate(
         size,
     ).mean(axis=0)
 
-# %% ../../notebooks/order_error_rate.ipynb 7
+# %% ../../notebooks/order_error_rate.ipynb 6
 def plot_order_error_rate(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
