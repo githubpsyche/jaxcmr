@@ -63,6 +63,7 @@ num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
 best_of = 3
+target_dir = "projects/Logan2021"
 
 # sim params
 experiment_count = 50
@@ -186,4 +187,4 @@ sim = simulate_h5_from_h5(
     rng=rng_iter,
 )
 
-save_dict_to_hdf5(sim, f"fits/{results['name']}.h5")
+save_dict_to_hdf5(sim, os.path.join(product_dirs['fits'], f"{results['name']}.h5"))

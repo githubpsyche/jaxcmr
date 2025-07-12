@@ -1,8 +1,19 @@
-# %%
+# %% [markdown]
+"""
+BroitmanKahana2024 OutlistCMRDE fitting notebook
 
-#!%load_ext autoreload
-#!%autoreload 2
+This notebook‑style script loads the Broitman & Kahana (2024) dataset, fits the OutlistCMRDE model via differential evolution (jaxcmr.ScipyDE), and then simulates data with the best‑fit parameters.
 
+Sections
+--------
+1. Imports & setup
+2. Analysis configuration
+3. Directory preparation
+4. Model fitting
+5. Simulation & saving
+"""
+
+ # %% Imports
 import json
 import os
 import warnings
@@ -63,6 +74,7 @@ num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
 best_of = 3
+target_dir = "projects/BroitmanKahana2024/"
 
 # sim params
 experiment_count = 50
@@ -99,7 +111,7 @@ query_parameters = [
     "learning_rate",
     "primacy_scale",
     "primacy_decay",
-    "mcf_trace_sensitivity",
+    "mfc_trace_sensitivity",
     "stop_probability_scale",
     "stop_probability_growth",
     "choice_sensitivity",
@@ -111,7 +123,7 @@ query_parameters = [
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
 for product in ["fits", "figures"]:  # , "simulations"]:
-    product_dir = os.path.join(product)
+    product_dir = os.path.join(target_dir, product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
         os.makedirs(product_dir)
@@ -188,4 +200,4 @@ sim = simulate_h5_from_h5(
     rng=rng_iter,
 )
 
-save_dict_to_hdf5(sim, f"fits/{results['name']}.h5")
+save_dict_to_hdf5(sim, f"{product_dirs['fits']}/{results['name']}.h5")

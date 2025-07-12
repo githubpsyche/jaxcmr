@@ -52,6 +52,7 @@ num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
 best_of = 1
+target_path = "projects/HealeyKahana2014"
 
 # sim params
 experiment_count = 50
@@ -96,7 +97,7 @@ query_parameters = [
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
 for product in ["fits", "figures"]:#, "simulations"]:
-    product_dir = os.path.join(product)
+    product_dir = os.path.join(target_path, product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
         os.makedirs(product_dir)
@@ -180,7 +181,7 @@ unique_list_lengths = np.unique(data["listLength"][trial_mask])
 for LL in unique_list_lengths:
     for analysis in comparison_analyses:
         figure_str = f"{results['name']}_{LL}_{analysis.__name__[5:]}.png"
-        figure_path = os.path.join("figures/fits/", figure_str)
+        figure_path = os.path.join(product_dirs['figures'], figure_str)
         print(figure_str)
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
         ll_trial_mask = generate_trial_mask(data, f"data['listLength'] == {LL}")

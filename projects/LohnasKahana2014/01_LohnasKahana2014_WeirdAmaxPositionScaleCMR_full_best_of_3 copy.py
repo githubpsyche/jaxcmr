@@ -55,6 +55,7 @@ num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
 best_of = 3
+target_dir = "projects/LohnasKahana2014"
 
 # sim params
 experiment_count = 50
@@ -103,7 +104,7 @@ query_parameters = [
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
 for product in ["fits", "figures"]:  # , "simulations"]:
-    product_dir = os.path.join(product)
+    product_dir = os.path.join(target_dir, product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
         os.makedirs(product_dir)
@@ -192,7 +193,7 @@ for combined_LT, lt_values in [
 ]:
     for analysis in comparison_analyses:
         figure_str = f"{results['name']}_LT{combined_LT}_{analysis.__name__[5:]}.png"
-        figure_path = os.path.join("figures/fits/", figure_str)
+        figure_path = os.path.join(product_dirs["figures"], figure_str)
         print(figure_str)
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
@@ -240,7 +241,7 @@ for combined_LT, lt_values in [
     ]):
         for analysis in single_analyses:
             figure_str = f"{results['name']}_LT{combined_LT}_{analysis.__name__[5:]}.png"
-            figure_path = os.path.join("figures/fits/", figure_str)
+            figure_path = os.path.join(product_dirs["figures"], figure_str)
             print(figure_str)
             color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 

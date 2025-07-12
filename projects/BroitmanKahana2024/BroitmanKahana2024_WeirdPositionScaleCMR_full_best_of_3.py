@@ -63,6 +63,7 @@ num_steps = 1000
 cross_rate = 0.9
 diff_w = 0.85
 best_of = 3
+target_dir = "projects/BroitmanKahana2024/"
 
 # sim params
 experiment_count = 50
@@ -109,7 +110,7 @@ query_parameters = [
 # add subdirectories for each product type: json, figures, h5
 product_dirs = {}
 for product in ["fits", "figures"]:  # , "simulations"]:
-    product_dir = os.path.join(product)
+    product_dir = os.path.join(target_dir, product)
     product_dirs[product] = product_dir
     if not os.path.exists(product_dir):
         os.makedirs(product_dir)
@@ -186,4 +187,4 @@ sim = simulate_h5_from_h5(
     rng=rng_iter,
 )
 
-save_dict_to_hdf5(sim, f"fits/{results['name']}.h5")
+save_dict_to_hdf5(sim, f"{product_dirs['fits']}/{results['name']}.h5")
