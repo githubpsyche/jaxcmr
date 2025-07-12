@@ -12,23 +12,23 @@ format:
 
 ::: {#fig-serial-srac layout-ncol="3"}
 
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL5.png)
 
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL6.png)
 
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_srac_LL7.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL5.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL6.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_srac_LL7.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL5.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL6.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_srac_LL7.png)
 
 Serial recall accuracy (SRAC) fits to @logan2021serial serial recall data for list lengths of 5 (**Left Column**), 6 (**Middle Column**), 7 (**Right Column**) of baseline CRU (**Top**), the best performing CRU variant with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters (**Middle**), and CMR with its default position-based recall termination mechanism and CRU's item identification confusability mechanism (**Bottom**).
 :::

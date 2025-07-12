@@ -17,11 +17,11 @@ format:
 ---
 
 ::: {#fig-cmr layout-ncol="3"}
-![](figures/bw_HealeyKahana2014_BaseCMR_Fitting_pnr.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_BaseCMR_Fitting_pnr.png)
 
-![](figures/bw_HealeyKahana2014_BaseCMR_Fitting_crp.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_BaseCMR_Fitting_crp.png)
 
-![](figures/bw_HealeyKahana2014_BaseCMR_Fitting_spc.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_BaseCMR_Fitting_spc.png)
 
 Summary statistic fits of the baseline CMR model to PEERS data.
 **Left**: probability of recall initiation by serial position.

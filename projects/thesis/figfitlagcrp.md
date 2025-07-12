@@ -11,23 +11,23 @@ format:
 ---
 
 ::: {#fig-fitlagcrp layout-ncol="3"}
-![](figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_pnr.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_pnr.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_crp.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_crp.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_spc.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Pre-Expt__Primacy__and_StartDrift_Fitting_spc.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_pnr.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_pnr.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_crp.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_crp.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_spc.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Primacy__and_StartDrift_Fitting_spc.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_pnr.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_pnr.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_crp.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_crp.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_spc.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy__and_StartDrift_Fitting_spc.png)
 
 Summary statistic fits of models to the PEERS free recall dataset [@healey2014memory].
 **Top**: CRU with free pre-experimental context-to-feature memory ($\alpha$, $\delta$), primacy gradient ($\phi_\text{s}$, $\phi_\text{d}$), and start context integration rate ($\beta_\text{start}$) parameters.

@@ -11,23 +11,23 @@ format:
 ---
 
 ::: {#fig-serial-crp layout-ncol="3"}
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL5.png)
 
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL6.png)
 
-![](figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCRU_Confusable_Fitting_crp_LL7.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL5.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL6.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_crp_LL7.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL5.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL6.png)
 
-![](figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_BaseCMR_Confusable_Fitting_crp_LL7.png)
 
 Lag-conditional response probability (lag-CRP) fits of baseline CRU (**Top**); best performing CRU variant with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters (**Middle**); and CMR with its default position-based recall termination mechanism and CRU's item identification confusability mechanism (**Bottom**) to @logan2021serial serial recall data.
 Lines compare observed lag-CRP with predicted lag-CRP for the applicable model variant.

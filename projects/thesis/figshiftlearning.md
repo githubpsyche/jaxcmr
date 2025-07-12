@@ -17,9 +17,9 @@ format:
 ---
 
 ::: {#fig-shiftlearning layout-nrow="1"}
-![](shifting/bw_BaseCMR_Learning_Rate_Parameter_Shifting_crp_HealeyKahana2014.png)
-
-![](shifting/bw_BaseCMR_Item_Support_Parameter_Shifting_crp_HealeyKahana2014.png)
+![](../cru_to_cmr/figures/shifting/bw_BaseCMR_Learning_Rate_Parameter_Shifting_crp_HealeyKahana2014.png)
+  
+![](../cru_to_cmr/figures/shifting/bw_BaseCMR_Item_Support_Parameter_Shifting_crp_HealeyKahana2014.png)
 
 Simulation of the impact of shifting CMR's $\gamma$ (**Left**) and $\delta$ (**Right**) parameters on the conditional response probability as a function of lag for CMR.
 Using parameters fit to @healey2014memory, the learning rate parameter $\gamma$ is shifted from 0 to 1 in increments of 0.1, and the item support parameter $\delta$ is shifted from 0 to 10 in increments of 1, with the color of the lines indicating the value of the parameter.

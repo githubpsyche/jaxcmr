@@ -17,9 +17,9 @@ format:
 ---
 
 ::: {#fig-shiftstart layout-nrow="1"}
-![](shifting/bw_BaseCMR_Start_Drift_Rate_Parameter_Shifting_pnr_HealeyKahana2014.png)
+![](../cru_to_cmr/figures/shifting/bw_BaseCMR_Start_Drift_Rate_Parameter_Shifting_pnr_HealeyKahana2014.png)
 
-![](shifting/bw_BaseCMR_Start_Drift_Rate_Parameter_Shifting_spc_HealeyKahana2014.png)
+![](../cru_to_cmr/figures/shifting/bw_BaseCMR_Start_Drift_Rate_Parameter_Shifting_spc_HealeyKahana2014.png)
 
 Simulation of the impact of shifting the start context integration rate parameter $\beta_\text{start}$ on the probability of starting recall by serial position (**Left**) and the recall probability by serial position (**Right**) for CMR.
 Using parameters fit to PEERS free recall data, $\beta_\text{start}$ is shifted from 0 to 1 in increments of 0.1, with the color of the lines indicating the value of the parameter.

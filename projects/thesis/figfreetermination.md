@@ -17,11 +17,11 @@ format:
 ---
 
 ::: {#fig-freetermination layout-ncol="3"}
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_pnr.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_pnr.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_crp.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_crp.png)
 
-![](figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_spc.png)
+![](../cru_to_cmr/figures/bw_HealeyKahana2014_CRU_with_Feature-to-Context__Pre-Expt__Primacy_StartDrift__and_ContextTerm_Fitting_spc.png)
 
 Summary statistic fits of CMR with CRU's context-based recall termination mechanism to @healey2014memory.
 **Left**: probability of starting recall by serial position.

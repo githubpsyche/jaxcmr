@@ -70,16 +70,17 @@ In doing so, ICMR bridges retrieved‑context theory with the multiple‑trace t
 The result is a theoretically parsimonious account that balances integration and specificity without adding parameters.
 
 The remainder of the paper is organized as follows. 
-First, we review the relevant literature on repetition memory and retrieved-context theory and outline the limitations of prior tests of RCT's repetition mechanism.
-Next, we describe the datasets and analyses that we conducted to constrain and evaluate model variants.
-Then, we formalize the Instance-CMR framework, outline the likelihood‑based fitting procedure, and present the behavioral results and quantitative model fits.
-Finally, we discuss the implications of our findings for retrieved-context theory, repetition memory, and the design of memory models more generally.
-All data, code, and model implementations are openly available at [repository link].
+<!-- Section 2 reviews theoretical background and presents our theoretical framework;
+Section 3 presents datasets and techniques for model evaluation and simulation;
+Sections 4 walk through each diagnostic analysis pairing CMR predictions with data;
+Section 5 explores mechanism variants of CMR to factorially probe conventional interpretations of its mechanisms and isolate deficiencies.
+Section 6 presents the Instance‑CMR solution and evaluates its performance across datasets; Section 8 concludes. -->
 
 ## Theoretical Framework
 
-### Repetition Effects in Free and Serial Recall
-Present CMR and retrieved-context theory as a framework for understanding repetition effects in free and serial recall, focusing on providing an updated interpretation of its assumptions that 1) questions the role of study-phase retrieval in addressing spacing effects, and 2) predicts associative interference between repeated items because of its study-phase retrieval mechanism.
+### Repetition Effects in Sequential Recall Tasks
+
+Present CMR and CRU and retrieved-context theory as a framework for understanding repetition effects in free and serial recall, focusing on providing an updated interpretation of its assumptions that 1) questions the role of study-phase retrieval in addressing spacing effects, and 2) predicts associative interference between repeated items because of its study-phase retrieval mechanism.
 
 Discuss effects in serial recall, applying RCT framework to propose a new account of the effects.
 
@@ -91,8 +92,9 @@ Conversely connect back the problem of associative interference to free recall: 
 
 Propose: CMR's specification of study-phase retrieval is dysfunctional and shares limitations with the chaining model, instantiating associative interference between contextual representations associated with different instances of a repeated item.
 
-### Instance Theory and Repetition Effects
-Cover literature contrasting instance theory with relevant frameworks.
+### Instance Theory and Selective-Trace Retrieval
+
+Cover literature contrasting instance theory with relevant frameworks, but this time with a focus on how it addresses repetition effects and associative interference.
 
 Focus on analysis by Anderson and otherwise distinguishing classical instance-based model architectures from instance-based retrieval.
 
@@ -102,13 +104,19 @@ Key idea: whether a model has this property depends on both the model's architec
 
 Relate to evidence that humans exhibit this capacity across a variety of tasks that contact memory, including free and serial recall.
 
+Final connection: back to sequential recall. What is instance-based retrieval in the context of serial and free recall? Review existing treatments (e.g., CRU).
+
+We therefore introduce Instance-CMR, a trace-storage implementation of RCT that can toggle alternative assumptions.
+
 ### An Instance-based Retrieved Context Model of Repetition Effects
 
-High-level presentation of the model with a diagram and everything wow.
+Diagram and verbal walkthrough; highlights two levers—non‑overlap encoding and trace competition—that will become critical later.
 
-## Empirical Re-Analysis of Archival Datasets
+Relating mechanism to predictions and everything.
 
-### Datasets
+## Methods and Materials
+
+### Archival Datasets
 
 Just control lists:
 - Healey Kahana 2024
@@ -128,93 +136,144 @@ Other serial recall:
 
 One more serial recall dataset with control lists would be nice, but this is enough for thesis.
 
-### What is a Repetition Effect?
+### Sequence-Based Likelihood Fitting
+To compare models we compute the log‑likelihood of each observed recall sequence given a fitted parameter set.
+
+### Generative Performance Assessment
+Once parameters are fitted, we can generate synthetic datasets for benchmarking.
+
+### Defining Repetition Effects
 
 What exactly counts as a repetition effect? 
-It is tempting to say that any change in recall that follows multiple presentations of an item qualifies. 
+It is tempting to say that any change in recall that follows multiple presentations of an item qualifies.
 Yet that definition confounds two influences: (i) the ordinary consequences of exposing participants to additional study material and (ii) the special consequences of encountering the same material twice.
-To isolate the latter we have to compare like with like.
-Formally, a repetition effect is the difference in recall performance that arises when a particular study event is a recurrence of an earlier item rather than the first appearance of a new item presented in the same serial position.
+We reserve the term **repetition effect** for the second influence alone. 
+Formally, it is the difference in recall performance that arises when a study event is a re-presentation of an earlier item rather than the first appearance of a new item presented in the same serial position.
 This definition invokes a counter‑factual baseline:
 *What would performance look like if the memory system processed the repetition in exactly the same way it would have processed a novel token, differing only in the arbitrary fact that the stimulus label is repeated?* 
 The difference between that baseline and observed performance constitutes the repetition effect proper.
 
-In practice, researchers have attempted to estimate this baseline via comparison to control lists which contain no item repetitions.
-Following @siegel2014retrieved, we build it by pairing each mixed‑list trial with many control‑list trials of identical length and presentation schedule and then designating the items that occupy the repeater's two serial positions ($i$, $j$) as pseudo‑repeaters.
-Sampling control trials with replacement and repeating the analysis over those samples yields a Monte‑Carlo distribution that estimates performance under the no‑special‑status hypothesis: what one would expect if a repeater were treated, internally, as just another novel word beyond labeling.
-This distribution is the baseline for repetition effects in our analyses.
+The baseline cannot be observed directly, so it must be estimated.
+Following the serial-position-matching strategy of @siegel2014retrieved, we build it by pairing each mixed‑list trial with many control‑list trials of identical length and presentation schedule.
+With every control list we designate the items occupying the repeater's two positions ($i$, $j$) as pseudo‑repeaters, and recompute the target statistic. 
+Repeating the analysis over 100 samples yields a null distribution that estimates performance under the no‑special‑status hypothesis -- that is, when the memory system treats the two positions as independent study events differing only in label.
 
-At this point an additional decision becomes critical. 
-In the mixed list, the two physical tokens of, say, *canoe* are treated as a single logical item; any analytic step that ignores that identity relation in the control lists changes the null hypothesis. 
-Our procedure therefore adopts a **symmetric scoring rule**: a recall from *either* matched position in a control list is counted as a recall of the pseudo‑repeater, and a second recall of that logical item is removed before computing transition probabilities. 
-The aim is to exactly mirror how true repeaters are scored in the mixed lists, so that the baseline transition probability is a fair comparison to the mixed-list data.
-If the memory system truly treats new and repeated tokens identically except for their label, then performance in that imaginary scenario represents the null hypothesis of no repetition effect. Departures from that baseline cannot be attributed to list structure, list length, or unequal opportunities for temporal clustering; they reflect consequences of item identity per se.
+A further decision determines how recalls from those matched positions are scored. 
+Just as the two occurrences of *canoe* in a mixed list are handled as a single item when recall performance is analyzed, so too must the two positions in control lists matched to repeaters from mixed lists.
+Any analytic step that ignores that identity relation in the control lists distorts characterization of the null hypothesis.
+We therefore adopt a symmetric scoring rule: a recall from *either* matched position counts as a recall of the pseudo‑repeater.
+A second recall of either position is treated as a repeated recall of the same item, and normally ignored during tabulation of transition statistics.
+Alternative conventions -- e.g., scoring only one position, tallying the two positions independently, or requiring retrieval of both positions to count as a successful recall -- can lower the baseline and inflate the apparent size of repetition effects.
+Such analytic choices, rather than psychological mechanisms, may underlie some discrepancies in our findings compared to earlier work.
 
-Violating this symmetry can systematically bias analysis outcomes and inflate reported effects.
-Under a null hypothesis about repetition effects, study events corresponding to a repeated item are encoded and retrieved just as if they were distinct items.
-Therefore for an item presented at positions $i$ and $j$, retrieval of either study event is tabulated to successful retrieval of both list positions.
-The same assumption must be enforced when generating a null distribution from control lists: retrieval of either item from matched positions $i$ or $j$ must similarly count as a successful recall of a single item that was presented at both positions.
-If instead either (a) successful recall for each position is tabulated independently, (b) retrieval of items from both positions is required for tabulation as a successful recall, or (c) only one of the two matched positions is scored as a pseudo-repeater, the comparison can be distorted.
+Our procedure therefore combines (i) serial‑position matching to preserve temporal structure and (ii) explicitly symmetric scoring to preserve logical identity.
+Comparison of performance in mixed lists to this symmetric baseline yields a clean isolation of genuine repetition effects.
+When applied in the analyses that follow, it markedly attenuates or eliminates patterns characterized as repetition effects in earlier work.
+By defining repetition effects in explicit counter-factual terms and operationalizing that definition with a rigorously matched control procedure, we obtain a cleaner test bed for the predictions of competing instantiations of retrieved-context theory.
 
-Differences in decision-making about these issues may explain differences in reported outcomes across studies, so here we contribute an explicit statement of our analytic procedure to draw attention to the importance of this choice.
-When applied to datasets analyzed in this chapter, comparison to the symmetric, duplicate-filtered baseline attenuates or eliminates patterns characterized as repetition effects in earlier work.
-These outcomes suggest that apparently robust repetition effects in free or serial recall may be artifacts of the analytic procedure rather than genuine signatures of special consequences of item repetition for memory.
-By defining repetition effects in counter‑factual terms and operationalizing that definition with a rigorously matched control procedure, we obtain a cleaner test bed for the theoretical claims evaluated in the remainder of the dissertation.
+## Reassessing Empirical Benchmarks Against Retrieved-Context Theory
 
-### Benchmark Analyses
+### Serial Position Effects
 
-SPC
-CRP
-PFR
+#### Consequences of Serial Position Matching
 
-SPACING EFFECT
-SUPERADDITIVITY?
+![Raw recall rates by serial position for mixed vs control list trials from @siegel2014retrieved. Without symmetric scoring over matched serial positions of repeated items, the control list baseline is artificially low, making recall rates for mid-list serial positions appear to be higher in mixed list trials than in control list trials.](../../figures/fits/LohnasKahana2014_mixedvscontrolB_data_Model_Comparison_LT4_spc.png)
 
-## Diagnostic Measures of Cross‑Occurrence Interference
+![Corrected recall rates by serial position for mixed vs control list trials from @siegel2014retrieved. With symmetric scoring over matched serial positions of repeated items, recall rates across study positions are more similar between mixed and control lists, and the serial position curve is flatter.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_spc.png)
 
-### Results: Free Recall
+#### CMR Predictions
 
-### Results: Serial Recall
+![Standard CMR, raw SPC contrast.](../../figures/fits/LohnasKahana2014_mixedvscontrolB_WeirdCMR_Model_Comparison_LT4_spc.png)
+
+![Standard CMR, corrected SPC contrast.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_WeirdCMR_Model_Comparison_LT4_spc.png)
+
+### Probability of First Recall
+
+![Raw first recall rates by serial position for mixed vs control list trials from @siegel2014retrieved.](../../figures/fits/LohnasKahana2014_mixedvscontrolB_data_Model_Comparison_LT4_pnr.png)
+]
+
+![Corrected first recall rates by serial position for mixed vs control list trials from @siegel2014retrieved.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_pnr.png)
+
+### The Spacing Effect
+Pending
+
+### The Lag-Contiguity Effect
+
+![Raw lag-contiguity effect contrast for mixed vs control list trials from @siegel2014retrieved.](../../figures/fits/LohnasKahana2014_mixedvscontrolB_data_Model_Comparison_LT4_crp.png)
+
+![Corrected lag-contiguity effect contrast for mixed vs control list trials from @siegel2014retrieved.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_crp.png)
+
+![Standard CMR, raw lag-contiguity effect contrast.](../../figures/fits/LohnasKahana2014_mixedvscontrolB_WeirdCMR_Model_Comparison_LT4_crp.png)
+
+![Standard CMR, corrected lag-contiguity effect contrast.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_WeirdCMR_Model_Comparison_LT4_crp.png)
+
+### Cross-Occurrence Neighbor Transitions
+
+#### Transitions From First Presentation Neighbors to Second Presentation Neighbors
+
+We stop showing the raw contrasts here, as they are not interpretable without symmetric scoring.
+
+![Data.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_repneighborcrp_i2j.png)
+
+![Standard CMR.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_WeirdCMR_Model_Comparison_LT4_repneighborcrp_i2j.png)
+
+#### Transitions From Second Presentation Neighbors to First Presentation Neighbors
+
+![Data.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_repneighborcrp_j2i.png)
+
+![Standard CMR.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_WeirdCMR_Model_Comparison_LT4_repneighborcrp_j2i.png)
+
+#### Aggregated Cross-Occurrence Neighbor Transitions
+
+![Data.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_data_Model_Comparison_LT4_repneighborcrp_both.png)
+
+![Standard CMR.](../../figures/fits/LohnasKahana2014_mixedvscontrolA_WeirdCMR_Model_Comparison_LT4_repneighborcrp_both.png)
+
+### The Repetition Lag-CRP
+
+![Data: Mixed Lists.](../../figures/fits/LohnasKahana2014_mixed_data_Model_Comparison_LT4_rep_crp.png)
+![Data: Control Lists.](../../figures/fits/LohnasKahana2014_control_data_Model_Comparison_LT4_rep_crp.png)
+
+![Standard CMR: Mixed Lists.](../../figures/fits/LohnasKahana2014_mixed_WeirdCMR_Model_Comparison_LT4_rep_crp.png)
+![Standard CMR: Control Lists.](../../figures/fits/LohnasKahana2014_control_WeirdCMR_Model_Comparison_LT4_rep_crp.png)
+
+### Forward Chaining in Serial Recall
 
 ### Summary: Noninterference Across Tasks
 
-## The Instance-CMR Framework
-Some language recapitulating details from Chapter 1, now relating to new variants under evaluation. 
+## Mechanistic Exploration: Decomposing CMR
+
+### Ablation Approach
+
+### Study-Phase Retrieval Does Not Boost Spacing Effects
+
+### Every Version of Item-Based Context Evolution Predicts Associative Interference
+
+### Encoding Non-Overlapping Contextual Features
+
+### Allowing Competition Between Traces for Retrieval and Reinstatement
+
+## Instance-CMR as a Solution to the Associative Interference
+Where we show that Instance-CMR can reproduce CMR's fit to classic benchmarks while avoiding the associative interference problem.
+
+### Non-Overlapping Contextual Features + Trace-Based Retrieval
+
+### Performance Across Datasets
+
+### Gaps and Puzzles
 
 ### Model Variants
 
 ### Evaluation Approach
 
-## Simulation 1: Clarifying the Role of Study-Phase Retrieval in CMR
-Where we show that CMR's study-phase retrieval mechanism does not help explain spacing effects, and produces associative interference between repeated items, and that these problems persist even when using CRU's "static" item-based contextual integration mechanism. 
-
-### Approach
-
-### Study-Phase Retrieval Does Not Boost Spacing Effects
-
-### Study-Phase Retrieval Predicts Associative Interference
-
-### Distinguishing Study-Phase Retrieval from the Item-Blend Rule
-
-## Simulation 3: Instance-CMR as a Solution to the Associative Interference
-Where we show that Instance-CMR can reproduce CMR's fit to classic benchmarks while avoiding the associative interference problem.
-
-### Approach
-
-### Addressing Associative Interference
-
-### Accounting for Classic Benchmarks
-
-### Discussion
-
 ## General Discussion
 
 ### Integration vs Specificity: Reconciling Composite and Trace Views
 
-### Implications for Spacing and Repetition Theories
-
-### Neural Plausibility: Pattern Separation and Contextual Drift
+### Rethinking Study-Phase Retrieval
 
 ### Abandoning the Item-Based Contextual Updating Mechanism?
 
-### Limitations and Future Directions
+### Neural Plausibility: Pattern Separation and Contextual Drift
+
+### Future Directions

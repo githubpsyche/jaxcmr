@@ -12,23 +12,23 @@ format:
 
 ::: {#fig-best-serial-errors layout-ncol="3"}
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL5.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL6.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_intrusion_error_rate_LL7.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL5.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL6.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_order_error_rate_LL7.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL5.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL5.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL6.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL6.png)
 
-![](figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL7.png)
+![](../cru_to_cmr/figures/bw_Gordon2021_CRU_with_Pre-Expt_and_Primacy_Confusable_Fitting_omission_error_rate_LL7.png)
 
 Intrusion, order, and omission error rates (top, middle, and bottom rows respectively) by serial position for list lengths 5, 6, and 7 (left, center, and right columns), in @logan2021serial serial recall data.
 Lines compare observed error rates with predicted error rates from best performing CRU variant with free pre-experimental context-to-feature memory ($\alpha$, $\delta$) and CMR-specific primacy gradient  ($\phi_\text{s}$, $\phi_\text{d}$) parameters.
