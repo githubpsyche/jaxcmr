@@ -17,6 +17,10 @@ def power_scale(value: Float_, scale: Float_) -> Float:
     )
 
 
+def simple_power_scale(value: Float_, scale: Float_) -> Float:
+    """Returns value raised to the specified power without logsumexp trick."""
+    return value ** scale
+
 def exponential_primacy_decay(
     study_index: Int_, primacy_scale: Float_, primacy_decay: Float_
 ):
