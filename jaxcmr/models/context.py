@@ -17,7 +17,20 @@ from ..typing import Array, Float, Float_
 
 
 class TemporalContext(Pytree):
-    """Temporal context representation for memory search models."""
+    """Temporal context representation for memory search models.
+
+    The `TemporalContext` class implements the drifting, unit-length context representation used by 
+    CMR-style models.
+
+    The vector starts with a *start-of-list* unit (index 0) set to 1.0 and one unit per study item
+    initialised to 0. On every call to `integrate`, the context drifts toward a normalised
+    input vector while remaining unit-length. This initial state is preserved to enable
+    drift back to the start-of-list context unit.
+
+    An optional out-of-list context unit (index `item_count + 1`) can be used to simulate post-study
+    drift, but unless the drift rate is near 1.0, it does not affect behavior: CMR relies on
+    relative differences between context units, which remain unchanged.
+    """
 
     def __init__(self, item_count: int, size: int):
         """Create a new temporal context model.
@@ -79,12 +92,12 @@ class TemporalContext(Pytree):
 
         encoded = base64.b64encode(buf.getvalue()).decode("utf-8")
         return f'<img src="data:image/png;base64,{encoded}" />'
-    
+
     @property
     def outlist_input(self) -> Float[Array, " context_feature_units"]:
         """Return the out-of-list context input."""
         return self.zeros.at[self.next_outlist_unit].set(1)
-    
+
     def integrate_with_outlist(
         self,
         inlist_input: Float[Array, " context_feature_units"],
@@ -101,16 +114,19 @@ class TemporalContext(Pytree):
             drift_rate: The drift rate parameter.
         """
         context_input = normalize_magnitude(
-            (normalize_magnitude(inlist_input) * ratio) + (self.outlist_input * (1 - ratio))
+            (normalize_magnitude(inlist_input) * ratio)
+            + (self.outlist_input * (1 - ratio))
         )
         rho = jnp.sqrt(
             1 + jnp.square(drift_rate) * (jnp.square(self.state * context_input) - 1)
         ) - (drift_rate * (self.state * context_input))
         return self.replace(
-            state=normalize_magnitude((rho * self.state) + (drift_rate * context_input)),
+            state=normalize_magnitude(
+                (rho * self.state) + (drift_rate * context_input)
+            ),
             next_outlist_unit=self.next_outlist_unit + 1,
         )
-    
+
     @classmethod
     def init_expanded(cls, item_count: int) -> "TemporalContext":
         """Initialize a new context model with room for out-of-list contexts.
@@ -119,3 +135,4 @@ class TemporalContext(Pytree):
             item_count: the number of items in the context model.
         """
         return cls(item_count, item_count + item_count + 1)
+

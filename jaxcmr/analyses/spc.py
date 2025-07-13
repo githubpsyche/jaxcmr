@@ -29,6 +29,7 @@ def fixed_pres_spc(
     """
     return jnp.bincount(recalls.flatten(), length=list_length + 1)[1:] / len(recalls)
 
+
 # %% ../../notebooks/spc.ipynb 8
 def spc(
     recalls: Integer[Array, " trial_count recall_positions"],
@@ -50,6 +51,7 @@ def spc(
 
     counts = jnp.bincount(expanded_recalls.flatten(), length=list_length + 1)[1:]
     return counts / len(expanded_recalls)
+
 
 # %% ../../notebooks/spc.ipynb 10
 def plot_spc(
@@ -110,3 +112,4 @@ def plot_spc(
 
     set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)
     return axis
+

@@ -18,6 +18,7 @@ from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
+
 # %% ../../notebooks/crp.ipynb 5
 class SimpleTabulation(Pytree):
     "A simple tabulation of transitions between items during recall of a study list."
@@ -48,6 +49,7 @@ class SimpleTabulation(Pytree):
         "Tabulate a transition if the choice is non-zero (i.e., a valid item)."
         return lax.cond(choice > 0, lambda: self._update(choice), lambda: self)
 
+
 # %% ../../notebooks/crp.ipynb 7
 def simple_tabulate_trial(
     trial: Integer[Array, " recall_events"], list_length: int
@@ -58,6 +60,7 @@ def simple_tabulate_trial(
         SimpleTabulation(list_length, trial[0]),
         trial[1:],
     )[0]
+
 
 # %% ../../notebooks/crp.ipynb 9
 def simple_crp(
@@ -169,6 +172,7 @@ class Tabulation(Pytree):
             lambda: self,
         )
 
+
 # %% ../../notebooks/crp.ipynb 14
 def tabulate_trial(
     trial: Integer[Array, " recall_events"],
@@ -178,6 +182,7 @@ def tabulate_trial(
     init = Tabulation(presentation, trial[0], size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return tab.actual_lags, tab.avail_lags
+
 
 # %% ../../notebooks/crp.ipynb 16
 def crp(
@@ -190,6 +195,7 @@ def crp(
         trials, presentations, size
     )
     return actual.sum(0) / possible.sum(0)
+
 
 # %% ../../notebooks/crp.ipynb 18
 def plot_crp(

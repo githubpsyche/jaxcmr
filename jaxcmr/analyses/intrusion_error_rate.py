@@ -62,6 +62,7 @@ def intrusion_error_rate(
         size,
     ).mean(axis=0)
 
+
 # %% ../../notebooks/intrusion_error_rate.ipynb 6
 def plot_intrusion_error_rate(
     datasets: Sequence[RecallDataset] | RecallDataset,
@@ -121,3 +122,4 @@ def plot_intrusion_error_rate(
 
     set_plot_labels(axis, "Study Position", "Serial Recall Accuracy", contrast_name)
     return axis
+

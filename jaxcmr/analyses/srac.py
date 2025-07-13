@@ -17,6 +17,7 @@ from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 from ..repetition import all_study_positions
 
+
 # %% ../../notebooks/srac.ipynb 5
 def trial_srac(
     recalls: Integer[Array, " recall_positions"],
@@ -57,6 +58,7 @@ def srac(
         presentations,
         size,
     ).mean(axis=0)
+
 
 # %% ../../notebooks/srac.ipynb 7
 def plot_srac(
@@ -117,3 +119,4 @@ def plot_srac(
 
     set_plot_labels(axis, "Study Position", "Serial Recall Accuracy", contrast_name)
     return axis
+

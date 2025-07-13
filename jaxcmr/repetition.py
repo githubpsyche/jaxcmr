@@ -56,6 +56,7 @@ def all_study_positions(
     )
     return item_to_study_positions(item, presentation, size)
 
+
 # %% ../notebooks/repetition.ipynb 6
 def filter_repeated_recalls(recalls: jnp.ndarray) -> jnp.ndarray:
     """Remove repeated recalls within each trial, retaining only the first occurrence.
@@ -219,3 +220,4 @@ def make_control_dataset(
         "pres_itemnos": jnp.vstack(pres_blocks),
         **{f: jnp.vstack(lst) for f, lst in other_fields_acc.items()},
     }  # type: ignore
+

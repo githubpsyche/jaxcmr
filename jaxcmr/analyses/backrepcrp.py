@@ -18,6 +18,7 @@ from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
+
 # %% ../../notebooks/backrepcrp.ipynb 4
 def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
     return lax.cond(i, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None))
@@ -130,6 +131,7 @@ class RepCRPTabulation(Pytree):
             lambda: self,
         )
 
+
 # %% ../../notebooks/backrepcrp.ipynb 6
 def tabulate_trial(
     trial: Integer[Array, " recall_events"],
@@ -140,6 +142,7 @@ def tabulate_trial(
     init = RepCRPTabulation(presentation, trial[0], min_lag, size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return tab.actual_lags, tab.avail_lags
+
 
 # %% ../../notebooks/backrepcrp.ipynb 8
 def repcrp(
@@ -162,6 +165,7 @@ def repcrp(
         trials, presentation, min_lag, size
     )
     return actual.sum(0) / possible.sum(0)
+
 
 # %% ../../notebooks/backrepcrp.ipynb 10
 def plot_back_rep_crp(
@@ -373,3 +377,4 @@ def plot_second_rep_crp(
         contrast_name=contrast_name,
         axis=axis,
     )
+
