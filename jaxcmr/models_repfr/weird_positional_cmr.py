@@ -49,6 +49,7 @@ class CMR(Pytree):
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
+        self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
         self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
         #! item representations on F now position representations
@@ -98,7 +99,8 @@ class CMR(Pytree):
             mcf=self.mcf.associate(
                 self.context.state, mfc_cue, self.mcf_learning_rate
             ),  #! updated
-            recallable=self.recallable.at[item_index].set(True),
+            #! also update recallable at the study position instead of item_index
+            recallable=self.recallable.at[self.study_index].set(True),
             #! track each item's study position(s)
             studied=self.studied.at[self.study_index].set(item_index + 1),
             study_index=self.study_index + 1,
@@ -128,15 +130,25 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
-        #! Pool item activation across the item's study positions
+        #! We don't know which trace was recalled,
+        #! so we use relative support from MCF to weight recall
+        item_activation = self.position_activations() * (self.studied == item_index + 1)
+        mfc_cue = power_scale(
+            item_activation / jnp.sum(item_activation), self.mfc_sensitivity
+        )
         new_context = self.context.integrate(
-            self.mfc.probe(self.studied == item_index + 1),
+            self.mfc.probe(mfc_cue),
             self.recall_drift_rate,
         )
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
+            #! Conditionally toggle recallability based on allow_repeated_recalls
+            recallable=lax.cond(
+                self.allow_repeated_recalls,
+                lambda: self.recallable,
+                lambda: self.recallable * (self.studied != item_index + 1),
+            ),
             recall_total=self.recall_total + 1,
         )
 
@@ -152,15 +164,20 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
+    def position_activations(self) -> Float[Array, " list_length"]:
+        """Returns relative support for retrieval of each study position given model state"""
+        #! refactored to get position activations separately
+        _activations = self.mcf.probe(self.context.state) * self.recallable
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
-        position_activations = self.mcf.probe(self.context.state)
-        item_activations = lax.map(
+        position_activations = self.position_activations()
+        return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
             self.item_ids,
         )
-        return (power_scale(item_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -182,8 +199,13 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve.
         """
-        item_activations = self.activations()
-        return item_activations[item_index] / jnp.sum(item_activations)
+        #! Since item activations are potentially distributed across position activations,
+        #! instead of indexing by item, we mask position activations by item then sum/normalize
+        position_activations = self.position_activations()
+        item_activation = jnp.sum(
+            position_activations * (self.studied == item_index + 1)
+        )
+        return item_activation / jnp.sum(position_activations)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
         """Return probability of the specified retrieval event.
@@ -294,16 +316,16 @@ class BaseCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
-        self,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters."""
-        return BaseCMR(self.max_list_length, parameters)
-
     def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return BaseCMR(self.max_list_length, parameters)
+
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -319,16 +341,16 @@ class InstanceCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
-        self,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters."""
-        return InstanceCMR(self.max_list_length, parameters)
-
     def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return InstanceCMR(self.max_list_length, parameters)
+
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
@@ -344,16 +366,16 @@ class MixedCMRFactory:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
 
-    def create_model(
-        self,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters."""
-        return MixedCMR(self.max_list_length, parameters)
-
     def create_trial_model(
         self,
         trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        return MixedCMR(self.max_list_length, parameters)
+
+    def create_model(
+        self,
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
