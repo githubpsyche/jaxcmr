@@ -1,5 +1,11 @@
 """
-Weird CMR, except instead of reinstating a blend of 
+Weird CMR, except instead of reinstating all an item's associated context features when it is encoded, we only reinstate its pre-experimentally associated context features.
+Critically, the model still learns novel feature-to-context associations in the study phase -- this is absolutely necessary to address free recall datasets where backward transitions are common (which is most of them). 
+Instead, the modification only influences the encoding phase -- how context drifts over the course of encoding a sequence of items.
+
+This is definitely not a better model of memory search than the original CMR specification, but it is useful for diagnosing whether CMR's study-phase retrieval mechanism is key or harmful for addressing a particular phenomenon. If a capacity is present in `weird_cmr` but not `weird_no_reinstate_cmr`, it suggests that the study-phase retrieval mechanism is important for that capacity. Vice versa if a capacity is present in `weird_no_reinstate_cmr` but not `weird_cmr`.
+
+We mostly find that this variant achieves similar fits to a range of datasets compared to the original model, but that makes clearly distinct predictions about how serial neighbors of repeatedly presented items are associated with one another in memory via overlapping contextual associations.
 """
 
 from typing import Mapping, Optional
