@@ -1,6 +1,6 @@
 """
 Weird CMR, except instead of reinstating all an item's associated context features when it is encoded, we only reinstate its pre-experimentally associated context features.
-Critically, the model still learns novel feature-to-context associations in the study phase -- this is absolutely necessary to address free recall datasets where backward transitions are common (which is most of them). 
+Critically, the model still learns novel feature-to-context associations in the study phase -- this is absolutely necessary to address free recall datasets where backward transitions are common (which is most of them).
 Instead, the modification only influences the encoding phase -- how context drifts over the course of encoding a sequence of items.
 
 This is definitely not a better model of memory search than the original CMR specification, but it is useful for diagnosing whether CMR's study-phase retrieval mechanism is key or harmful for addressing a particular phenomenon. If a capacity is present in `weird_cmr` but not `weird_no_reinstate_cmr`, it suggests that the study-phase retrieval mechanism is important for that capacity. Vice versa if a capacity is present in `weird_no_reinstate_cmr` but not `weird_cmr`.
@@ -18,7 +18,12 @@ from simple_pytree import Pytree
 from jaxcmr.models.context import TemporalContext
 from jaxcmr.models.instance_memory import InstanceMemory
 from jaxcmr.models.linear_memory import LinearMemory
-from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, power_scale, lb
+from jaxcmr.math import (
+    exponential_primacy_decay,
+    exponential_stop_probability,
+    power_scale,
+    lb,
+)
 from jaxcmr.typing import (
     Array,
     Context,
@@ -59,7 +64,7 @@ class CMR(Pytree):
         self._stop_probability = exponential_stop_probability(
             self.stop_probability_scale,
             self.stop_probability_growth,
-            jnp.arange(self.item_count),
+            jnp.arange(list_length),
         )
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
@@ -69,12 +74,12 @@ class CMR(Pytree):
         self.pre_exp_mfc = LinearMemory.init_mfc(
             list_length,
             self.context.size,
-            parameters['learning_rate'],
+            parameters["learning_rate"],
         )
         self.mfc = mfc
         self.mcf = mcf
-        self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recalls = jnp.zeros(list_length, dtype=int)
+        self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -97,8 +102,12 @@ class CMR(Pytree):
         #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(item, self.context.state, self.mfc_learning_rate), #! updated
-            mcf=self.mcf.associate(self.context.state, item, self.mcf_learning_rate), #! updated
+            mfc=self.mfc.associate(
+                item, self.context.state, self.mfc_learning_rate
+            ),  #! updated
+            mcf=self.mcf.associate(
+                self.context.state, item, self.mcf_learning_rate
+            ),  #! updated
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -162,9 +171,9 @@ class CMR(Pytree):
             jnp.logical_or(total_recallable == 0, ~self.is_active),
             true_fun=lambda: 1.0,
             false_fun=lambda: jnp.minimum(
-                    1.0 - (lb * total_recallable),
-                    self._stop_probability[self.recall_total],
-                ),
+                1.0 - (lb * total_recallable),
+                self._stop_probability[self.recall_total],
+            ),
         )
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
@@ -191,21 +200,21 @@ class CMR(Pytree):
             lambda: lax.cond(
                 jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
                 lambda: 0.0,
-                lambda: (1-p_stop) * self.item_probability(choice - 1),
+                lambda: (1 - p_stop) * self.item_probability(choice - 1),
             ),
         )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
         p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
+        item_activations = self.activations()
+        item_activation_sum = jnp.sum(item_activations)
         return jnp.hstack(
             (
                 p_stop,
                 (
                     (1 - p_stop)
-                    * item_activation
+                    * item_activations
                     / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
                 ),
             )
@@ -294,7 +303,7 @@ class BaseCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return BaseCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],
@@ -319,7 +328,7 @@ class InstanceCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return InstanceCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],
@@ -344,7 +353,7 @@ class MixedCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return MixedCMR(self.max_list_length, parameters)
-    
+
     def create_model(
         self,
         parameters: Mapping[str, Float_],

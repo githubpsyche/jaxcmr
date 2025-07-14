@@ -188,14 +188,14 @@ class CMR(Pytree):
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
         p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
+        item_activations = self.activations()
+        item_activation_sum = jnp.sum(item_activations)
         return jnp.hstack(
             (
                 p_stop,
                 (
                     (1 - p_stop)
-                    * item_activation
+                    * item_activations
                     / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
                 ),
             )

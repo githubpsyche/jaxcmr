@@ -1,13 +1,3 @@
-"""
-CMR except each studied item is associated with the current context state instead of the updated context state after each experience. In other words, the studied item's associated contextual features only become associated in memory with the *next* studied item, not the current one.
-
-This apparently a more common specification of CMR than the alternative variant where studied items are associated with the state of context after update. We've found that both variants have similar performance because they both achieve similar similarity structure between the context states associated with each studied item. However, there are nonetheless useful differences between the variants that can make them differently useful as starting points for further model development.
-
-For example, in the case of intra-list serial repetitionn, if an item gets associated with the current instead of the updated context state, this reduces the overlap in contextual states between two presentations of the same item, which can reduce associative interference between the two presentations, making it easier to retrieve details of one presentation without interference from the other. However, this is only relevant when it's possible to selectively reinstate contexts associated with specific presentations even when items are repeated -- something actually still impossible under the specification provided here. 
-
-In contexts like these, this specification can useful even thought it doesn't add new behavior on its own. It may similarly be possible for the original CMR specification to be a useful starting point in certain domains. 
-"""
-
 from typing import Mapping, Optional
 
 import numpy as np
@@ -61,20 +51,24 @@ class CMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
-        self.items = jnp.eye(self.item_count)
+        #! item representations on F now position representations
+        self.positions = jnp.eye(list_length)
         self._stop_probability = exponential_stop_probability(
             self.stop_probability_scale,
             self.stop_probability_growth,
-            jnp.arange(self.item_count),
+            jnp.arange(list_length),
         )
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
+        #! We track studied item for each study position
+        self.item_ids = jnp.arange(list_length)
+        self.studied = jnp.zeros(list_length, dtype=int)
         self.context = context
         self.mfc = mfc
         self.mcf = mcf
-        self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recalls = jnp.zeros(list_length, dtype=int)
+        self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -90,19 +84,23 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to experience. 0-indexed.
         """
-        item = self.items[item_index]
-        context_input = self.mfc.probe(item)
+        #! instead of probing and learning using item, we use the item's study position
+        mfc_cue = self.positions[self.study_index]  # item = self.items[item_index]
+        context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+
         #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(
-                item, self.context.state, self.mfc_learning_rate
+                mfc_cue, self.context.state, self.mfc_learning_rate
             ),  #! updated
             mcf=self.mcf.associate(
-                self.context.state, item, self.mcf_learning_rate
+                self.context.state, mfc_cue, self.mcf_learning_rate
             ),  #! updated
             recallable=self.recallable.at[item_index].set(True),
+            #! track each item's study position(s)
+            studied=self.studied.at[self.study_index].set(item_index + 1),
             study_index=self.study_index + 1,
         )
 
@@ -130,8 +128,9 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
+        #! Pool item activation across the item's study positions
         new_context = self.context.integrate(
-            self.mfc.probe(self.items[item_index]),
+            self.mfc.probe(self.studied == item_index + 1),
             self.recall_drift_rate,
         )
         return self.replace(
@@ -155,8 +154,13 @@ class CMR(Pytree):
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+        #! reworked to pool position activations by item
+        position_activations = self.mcf.probe(self.context.state)
+        item_activations = lax.map(
+            lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
+            self.item_ids,
+        )
+        return (power_scale(item_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -201,14 +205,14 @@ class CMR(Pytree):
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
         p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
+        item_activations = self.activations()
+        item_activation_sum = jnp.sum(item_activations)
         return jnp.hstack(
             (
                 p_stop,
                 (
                     (1 - p_stop)
-                    * item_activation
+                    * item_activations
                     / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
                 ),
             )

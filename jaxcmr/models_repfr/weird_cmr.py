@@ -3,9 +3,9 @@ CMR except each studied item is associated with the current context state instea
 
 This apparently a more common specification of CMR than the alternative variant where studied items are associated with the state of context after update. We've found that both variants have similar performance because they both achieve similar similarity structure between the context states associated with each studied item. However, there are nonetheless useful differences between the variants that can make them differently useful as starting points for further model development.
 
-For example, in the case of intra-list serial repetitionn, if an item gets associated with the current instead of the updated context state, this reduces the overlap in contextual states between two presentations of the same item, which can reduce associative interference between the two presentations, making it easier to retrieve details of one presentation without interference from the other. However, this is only relevant when it's possible to selectively reinstate contexts associated with specific presentations even when items are repeated -- something actually still impossible under the specification provided here. 
+For example, in the case of intra-list serial repetitionn, if an item gets associated with the current instead of the updated context state, this reduces the overlap in contextual states between two presentations of the same item, which can reduce associative interference between the two presentations, making it easier to retrieve details of one presentation without interference from the other. However, this is only relevant when it's possible to selectively reinstate contexts associated with specific presentations even when items are repeated -- something actually still impossible under the specification provided here.
 
-In contexts like these, this specification can useful even thought it doesn't add new behavior on its own. It may similarly be possible for the original CMR specification to be a useful starting point in certain domains. 
+In contexts like these, this specification can useful even thought it doesn't add new behavior on its own. It may similarly be possible for the original CMR specification to be a useful starting point in certain domains.
 """
 
 from typing import Mapping, Optional
@@ -65,7 +65,7 @@ class CMR(Pytree):
         self._stop_probability = exponential_stop_probability(
             self.stop_probability_scale,
             self.stop_probability_growth,
-            jnp.arange(self.item_count),
+            jnp.arange(list_length),
         )
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
@@ -73,8 +73,8 @@ class CMR(Pytree):
         self.context = context
         self.mfc = mfc
         self.mcf = mcf
-        self.recalls = jnp.zeros(self.item_count, dtype=int)
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recalls = jnp.zeros(list_length, dtype=int)
+        self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -201,14 +201,14 @@ class CMR(Pytree):
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
         p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
+        item_activations = self.activations()
+        item_activation_sum = jnp.sum(item_activations)
         return jnp.hstack(
             (
                 p_stop,
                 (
                     (1 - p_stop)
-                    * item_activation
+                    * item_activations
                     / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
                 ),
             )
