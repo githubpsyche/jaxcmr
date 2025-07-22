@@ -1,0 +1,7 @@
+|                                      |   Standard CMR |   Reinforced Positional CMR |   Reinforced Positional CMR (No Study) |   Full Positional CMR |   Positional CMR |
+|:-------------------------------------|---------------:|----------------------------:|---------------------------------------:|----------------------:|-----------------:|
+| Standard CMR                         |                |                    0.171429 |                               0.2      |              0.2      |         0.2      |
+| Reinforced Positional CMR            |       0.828571 |                             |                               0.571429 |              0.628571 |         0.628571 |
+| Reinforced Positional CMR (No Study) |       0.8      |                    0.428571 |                                        |              0.485714 |         0.571429 |
+| Full Positional CMR                  |       0.8      |                    0.371429 |                               0.514286 |                       |         0.571429 |
+| Positional CMR                       |       0.8      |                    0.371429 |                               0.428571 |              0.428571 |                  |

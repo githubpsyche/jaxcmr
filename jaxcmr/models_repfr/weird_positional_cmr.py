@@ -50,7 +50,7 @@ class CMR(Pytree):
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
-        self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
+        self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
         #! item representations on F now position representations
         self.positions = jnp.eye(list_length)
@@ -128,7 +128,7 @@ class CMR(Pytree):
         """Return model after simulating retrieval of item with the specified index.
 
         Args:
-            choice: the index of the item to retrieve (0-indexed)
+            item_index: the index of the item to retrieve (0-indexed)
         """
         #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
@@ -218,7 +218,10 @@ class CMR(Pytree):
             choice == 0,
             lambda: p_stop,
             lambda: lax.cond(
-                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
+                jnp.logical_or(
+                    p_stop == 1.0,
+                    jnp.all(self.recallable * (self.studied == choice) == 0)
+                ),
                 lambda: 0.0,
                 lambda: (1 - p_stop) * self.item_probability(choice - 1),
             ),

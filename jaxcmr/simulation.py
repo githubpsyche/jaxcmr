@@ -134,6 +134,7 @@ def preallocate_for_h5_dataset(
 
     Arrays are allocated for each key in the input data.
     For 'recalls', the array is initialized with zeros.
+    Note that replication of optional keys tied to recall behavior will be erroneous.
 
     Args:
         data: Dictionary containing dataset arrays.
