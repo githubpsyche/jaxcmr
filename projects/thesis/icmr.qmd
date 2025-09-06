@@ -1,41 +1,41 @@
 # An Instance-Based Retrieved-Context Model of Memory Search
 
-Computational models of the free recall task aim to specify the cognitive representations and processes that support human memory search.
-Within this literature, retrieved‑context theory (RCT) -- formalised in the Context Maintenance and Retrieval (CMR) model -- has achieved broad empirical coverage [@howard2002distributed; @polyn2009context; @kahana2020computational; @healey2019contiguity].
-Nearly all retrieved-context models are implemented as connectionist networks [@howard2002distributed; @polyn2009context; @lohnas2015expanding].
-Associations between items and contexts are stored in a set of adjustable weights that control the flow of activation in the network.
-The weight matrix has a fixed size which doesn't change with learning events.
-Instead, scalar values are adjusted to reflect the strength of association between item and contextual features.
-Retrieval in these models involves activating input features that then propagate through the network, activating output features based on how strongly connected they are to input features [@hebb1949organization].
+Computational models of free recall explain how people recover a sequence of studied items without an external cue.
+Within this literature, retrieved‑context theory (RCT) -- formalized in the Context Maintenance and Retrieval (CMR) model -- has achieved broad empirical coverage, capturing phenomena such as primacy and recency effects, lag‑contiguity, semantic clustering, and several population differences [@howard2002distributed; @sederberg2008context; @polyn2009context; @kahana2020computational; @healey2019contiguity].
+Here I ask whether the architectural choice between composite matrices and trace stores matters for a retrieved-context model's ability to explain free recall.
 
-A parallel tradition of instance‑based models stores each event as a separate trace that can be reactivated selectively [@hintzman1984minerva].
-At retrieval, traces are activated based on their similarity to a probe.
-Traces are then aggregated in a weighted mean such that the most similar traces are reflected the most strongly in the response.
-Models based on this framework are influential in a broad range of cognitive domains such as category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons] and other episodic and semantic memory tasks [@cox2020similarity; @hintzman1988judgments; @jamieson2018instance; @shiffrin1997model].
-Researchers in these areas frequently attribute differences in model performance to the distinct ways in which these approaches access associations [e.g., @nosofsky2002exemplar; @jamieson2018instance].
-Yet, other studies have shown that these theories share many similarities across these areas [e.g., @turner2019toward; @kelly2017memory; @ramsauer2020hopfield; @anderson1995introduction].
-Despite these exchanges, comparatively little work has been done to directly compare the implications of these approaches for the dynamics of memory search in free recall.
-This lack of direct comparison creates a gap in our understanding of how these theories interact.
-This gap hampers effective comparisons between models and hinders the development of integrative computational models of memory that incorporate elements from different modeling traditions.
+Almost every RCT implementation adopts a connectionist architecture: learning updates a fixed-size weight matrix that binds item features to a drifting temporal context, so information from many episodes is blended at storage.
+Retrieval multiplies a cue by that matrix and spreads activation along the shared weights [@hebb1949organization].
+Because blending occurs during learning, the resulting memory is usually event-blending: it tends to reinstate a composite of associations rather than a specific prior episode.
 
-This chapter closes that gap. 
-To bridge this gap, we adapted the connectionist Context Maintenance and Retrieval (CMR) model into an instance-based format [@polyn2009context].
-This Instance-CMR (ICMR) model allows us to merge the connectionist and instance modeling traditions within a single framework, helping us to clearly see how each approach affects memory search dynamics in free recall tasks.
-Whereas the original CMR model (ConnectionistCMR) uses a pair of linear associative memories to encode associations between items and contexts, our instance-based CMR model (InstanceCMR) creates a separate memory trace for each experience, combining the features of the current state of temporal context with the features of the item studied.
-We show analytically -- and by likelihood fits to three datasets -- that despite their architectural differences, the two variants are functionally equivalent, making identical predictions when their parameters are matched.
-In doing so, we demonstrate that RCT's core computations are architectually portable and map a general framework for interpreting memory search dynamics across different modeling approaches.
+A complementary tradition in cognitive modeling assumes that the memory system stores one trace per event. 
+In these instance-based architectures, a cue activates each trace in proportion to similarity and a similarity-weighted aggregation (an 'echo') forms the model's response [@hintzman1984minerva].
+When trace activations are exponentiated by a high trace‑sensitivity parameter, retrieval can focus on a single trace, yielding an event‑preserving memory that recalls one trace with minimal interference from other traces.
+Although architecture and retrieval regime are not independent, they are conceptually distinct: a connectionist network fed orthogonal inputs can behave event‑preservingly, and an instance system with nearly identical traces can blend events. 
+Instance models have proved useful in modeling category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons], recognition memory [@shiffrin1997model; @hintzman1988judgments], and semantic tasks such as word-sense disambiguation [@jamieson2018instance].
+They win out in these domains when the task requires retrieving a specific prior episode, such as classifying an exemplar that shares rare features with a previous training item [e.g., @nosofsky2002exemplar; @jamieson2018instance].
+Yet other studies have emphasized similarities between these frameworks across areas [e.g., @anderson1995introduction; @turner2019toward;@kelly2017memory; @ramsauer2020hopfield].
 
-This chapter is structured as follows.
-First, we review the connectionist and instance-based modeling traditions, focusing on a) clarifying how the frameworks have driven theoretical competition across various cognitive domains b) recasting the differences between these approaches in terms of functional consequences rather than specific architectural features, and c) relating these differences to the dynamics of memory search in free recall tasks.
-Next, we provide a detailed description of the Instance CMR model, comparing and contrasting it with a specification of the connectionist CMR model.
-In our initial simulations, we demonstrate the functional equivalence between Instance CMR and Connectionist CMR in their ability to explain benchmark phenomena in free recall tasks.
-We analyzed the memory structures' latent connectivity patterns to understand how the models equivalently encode and retrieve item-context associations to account for these phenomena.
-We also fit and formally compared both models to three free recall datasets that varied in list length and patterns of item repetition.
-Our findings showed that both models are equally effective at explaining well-known phenomena in free recall tasks.
-In our discussion, we examine the conditions under which Instance CMR and Connectionist CMR might behave differently, signposting developments in our successive chapters. 
-In particular, we focused on the unique strength of multi-trace models in selectively retrieving specific memory instances while ignoring others.
-While simulations confirm that these unique properties can influence model behavior, our results highlight the ambiguity of the distinction between instance and composite memory models in the context of free recall tasks.
-Together, these outcomes suggest that the core principles of retrieved-context theory, as used in CMR, are highly adaptable and can be implemented across various cognitive modeling frameworks.
+Despite these exchanges, comparatively little work has directly compared connectionist and instance architectures in the context of free recall.
+To address this gap, I focus on two questions: 
+(i) Does storing or retrieving event-preserving traces rather than blended weights change quantitative fits to serial‑position curves, lag-contiguity effects, or other phenomena; and
+(ii) Are RCT's contextual computations portable across storage formats?
+A positive answer to the first question would highlight an architectural ingredient previously overlooked, while a positive answer to the second would broaden RCT's reach.
+
+Competing frameworks such as SAM [@raaijmakers1981search] and CRU [@logan2018automatic] explore different retrieval mechanisms alongside their architectural differences.
+Here I focus narrowly on how storage format affects an otherwise unchanged CMR.
+I introduce Instance-CMR (ICMR), a trace-based translation of CMR that leaves every mechanism unchanged except storage.
+Each study event concatenates item features with the current temporal-context vector to form a new trace.
+Retrieval reinstates context and cues items, but the cue now accesses a trace stack rather than a weight matrix.
+When the trace-sensitivity parameter is set to a neutral value ($1.0$), ICMR is functionally equivalent to connectionist CMR, making identical predictions for all phenomena.
+Freeing the parameter enables event-preserving retrieval, allowing ICMR to amplify the few traces most consistent with a cue, potentially improving the fit in conditions where recalling a particular prior episode matters.
+ICMR thus provides a framework for comparing connectionist and instance-based retrieval in free recall tasks.
+
+The remainder of the chapter first contrasts connectionist and instance traditions, emphasizing functional consequences for memory search, then details the Instance‑CMR implementation and evaluates both models on three free‑recall datasets that vary in list length and repetition pattern.  
+Simulations demonstrate their functional equivalence when trace sensitivity is neutral and explore departures when selective‑trace retrieval is enabled.
+My discussion explores the implications of these findings for interpreting the theoretical competition between instance and prototype memory models and the adaptability of retrieved-context theory across different cognitive modeling frameworks.
+While simulations confirm that these unique properties can influence model behavior, my results show that the instance/composite distinction, while theoretically salient, does not by itself explain differences in model performance.
+These findings set the stage for Chapter 2, where architecture is held fixed and algorithmic components are factorially examined.
 
 ## Relating Connectionist and Instance Memory Models
 
@@ -54,7 +54,7 @@ M = \begin{bmatrix}
 \end{bmatrix}
 $$ {#eq-intro0}
 
-The model's memory is probed by a cue vector $cue$, which is compared to each memory trace $m$ using a dot product similarity function, $S$.
+The model's memory is probed by a cue vector $\mathbf{cue}$, which is compared to each memory trace $m$ using a dot product similarity function, $S$.
 Compared to the cosine similarity (another popular similarity mechanism for instance models), dot product is a useful similarity measure here because it does not normalize the vectors, allowing differences in learning rates to be directly reflected in trace magnitudes, simplifying model structure.
 This approach measures the product of the cue and memory trace vectors, providing a straightforward measure of their similarity:
 
@@ -62,7 +62,7 @@ $$
 S(cue, m_i) = cue \cdot m_i
 $$ {#eq-intro1}
 
-An important parameter, termed choice selectivity, influences how the activation $A_i$ from each trace diminishes based on its similarity, elevating the dot product to the power $\tau$:
+An important parameter, termed choice selectivity, influences how the activation $A_i$ from each trace diminishes based on its similarity, raising the dot product to the power $\tau$:
 
 $$
 A_i(cue, m_i) = S(cue, m_i)^\tau
@@ -116,16 +116,16 @@ This difference highlights two fundamental distinctions between these modeling a
 First, instance models organize and retrieve memory traces individually at the time of recall, whereas connectionist models integrate information during the learning phase, storing it in the weight matrix.
 Second, instance models can precisely target specific memories for retrieval via trace-based activation scaling.
 In contrast, connectionist linear associator networks used in CMR generate a response by combining the influences of all features learned, using the weight matrix, and cannot isolate individual memory traces under typical conditions.
-Because the weight matrix aggregates over memory traces during learning in this way, linear associators are normally classified as composite memories memory models -- or prototype models when contrasted with instance models [@nosofsky2002exemplar; @jamieson2018instance; @anderson1995introduction].
+Because the weight matrix aggregates over memory traces during learning in this way, linear associators are normally classified as composite memory models -- or prototype models when contrasted with instance models [@nosofsky2002exemplar; @jamieson2018instance; @anderson1995introduction].
 
 ### The Prototype Model Distinction
 
 This distinction has important caveats.
 The defining feature of an instance model is that it can retrieve records of specific experiences (instances) without interference from other experiences.
-This definition is behavior-based rather than architecture-based, and many different kinds of models can achieve realize it, even including connectionist models that implement separable memory traces [@anderson1995introduction].
+This definition is behavior-based rather than architecture-based, and many different kinds of models can realize it, even including connectionist models that implement separable memory traces [@anderson1995introduction].
 For example, while simplified connectionist models lack the flexibility of instance models to separately activate individual memory traces, more complex connectionist models can be designed to achieve this functionality [@kelly2017memory; @hintzman1988judgments] using hidden layer(s) to differentiate between memory traces.
 
-Even simple connectionist models' will depend on the nature of the input-output pairs encoded by the network.
+Even simple connectionist models will depend on the nature of the input-output pairs encoded by the network.
 If the inputs are highly differentiated—having few or no overlapping features—then the network will operate like an instance model.
 Instead, whether a linear associator network is a prototype model or an instance model depends on the nature of the input-output pairs that are encoded by the network.
 If the inputs are highly separated such that they share few or no overlapping features, then the network will behave like an instance model.
@@ -197,13 +197,13 @@ In contrast, instance models configured to retrieve specific instances from memo
 Across this and other comparisons [e.g., @nosofsky2002exemplar; @homa1981limitations], the consistent theme is that prototype models tend to make predictions that are more consistent with the average of experience over a label class, while instance models tend to make predictions that are more consistent with the most similar and relevant training instances.
 
 Instance and prototype models also differ in how they handle word-sense disambiguation, a process where the meaning of a word is clarified based on context [@jamieson2018instance].
-These models use orthographic (textual) cues to trigger semantic (meaning-based) memories.
+These models use orthographic cues to trigger semantic memories.
 A challenge arises with homonyms—words with the same spelling but different meanings depending on the context.
 Prototype models have been criticized for typically representing homonyms with a single, overarching semantic representation, despite their distinct meanings [@griffiths2007topics].
 
 In a study by @jamieson2018instance, the effectiveness of traditional prototype models was compared to a novel instance model of semantic memory, known as ITS, in a task of word-sense disambiguation.
 While prototype models generally performed well in distinguishing between common meanings of homonyms, ITS excelled at recognizing less common meanings through a dynamic activation of stored language instances.
-This model's strength was particularly evident when orthographic cues were linked with distinct contextual clusters, with one cluster being much more common than others.
+This model's strength was particularly evident when orthographic cues were linked with distinct contextual clusters, with one cluster being much more frequent than others.
 Under such conditions, prototype models often skew towards the dominant meanings, neglecting or losing access to lesser-known senses.
 This discrepancy leads to a mismatch with observed human behavior, where people can often discern less frequent meanings based on nuanced cues.
 

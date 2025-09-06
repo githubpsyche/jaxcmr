@@ -91,7 +91,7 @@ class CMR(Pytree):
         context_input = self.mfc.probe(mfc_cue)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
 
-        #! if studied item has been studied before, we reinforce its prexperimental context
+        #! if studied item has been studied before, we reinforce its experimental context
         item_studied = self.studied == item_index + 1
         already_studied = jnp.any(item_studied)
         associated_context = self.mfc.probe(item_studied)
