@@ -1,87 +1,62 @@
 # Introduction {.unnumbered}
 
-Episodic memory -- our ability to recall events anchored to a unique time and place [@tulving1972episodic] -- must satisfy two opposing demands in order to flexibly guide behavior [@mcclelland1995complementary; @dudai2009making].
-It must integrate related experiences that occur at different times so a single cue can bridge temporal gaps, yet it must also differentiate those experiences so one moment's details are not confused with another.
+Episodic memory -- our ability to recall events anchored to a unique time and place [@tulving1972episodic] -- must satisfy two opposing demands in order to flexibly guide behavior [@yassa2011pattern;@schlichting2015memory].
+It must integrate related experiences that occur at different times so a single cue can bridge temporal gaps, yet it must also differentiate those experiences so one moment's details are not confused with those of another.memo
 Failure on either front undermines adaptive behavior: without integration, we cannot generalize; without differentiation, we confuse the past.
 
 A visit to the neighborhood bakery illustrates the challenge.
-On Monday you inhale warm cinnamon and buy a loaf; ten days later you return to espresso and a new cashier offering a cappuccino.
-Weeks afterward, a friend's mention of "the bakery down the street" retrieves both visits.
-The cue integrates the episodes -- both the loaf and the cappuccino come to mind -- yet you still know which purchase happened when.
+On Monday you step inside, inhale warm cinnamon, and buy a fresh loaf. 
+Ten days later you return and are greeted by the aroma of espresso and a new cashier. 
+Weeks later, a friend's mention of "the bakery down the street" retrieves both visits. 
+The cue integrates the episodes -- both the loaf and the espresso come to mind -- yet you still know which purchase happened when.
 Memory links the related episodes without collapsing their distinctive details.
 
-In the laboratory, this everyday tension is distilled into a list-learning design.
+This dissertation examines these dynamics in a list-learning paradigm across free and serial recall.
 Participants study a single list in which a target word -- e.g., *canoe* -- appears twice, once early (position 5) and once later (position 15).
-Each appearance has its own temporal context: different neighbors flank the early and late *canoe*.
-In serial recall, the correct output is unambiguous: *canoe* must spoken twice and followed by the true neighbor from each study moment.
+Each occurrence has its own temporal context: different neighbors flank the early and late *canoe*.
+In serial recall, the correct output is unambiguous: *canoe* must be spoken twice, each time followed by the correct neighbor from its study position.
 Frequently substituting a neighbor tied to the other occurrence would indicate that the two study moments were not kept fully apart in memory [@henson1996unchained; @kahana2000interresponse].
-In free recall, order is unconstrained, but transitions remain diagnostic: frequent transitions from *canoe* or a first‑occurrence neighbor to the second occurrence's neighbor (and vice versa) suggest that contextual details of both occurrences were reinstated together [@siegel2014retrieved].
-Considering such transitions across tasks yields behavioral portraits of how memory stores and reinstates contextual details tied to each occurrence.
+In free recall, order is unconstrained, but transitions remain diagnostic: frequent transitions from *canoe* or a first‑occurrence neighbor to the second occurrence's neighbor (and vice versa) suggest that both occurrence contexts were reinstated [@lohnas2014retrieved].
+Across tasks, such transitions provide a behavioral portrait of how memory stores and reinstates contextual details tied to each occurrence.
 
-This dissertation examines such portraits through retrieved‑context theory (RCT) [@howard2002distributed; @kahana2020computational], which explains recall as the interaction of a drifting temporal context with item‑driven reinstatement.
-Each study or retrieval event blends its contextual features into the ongoing state, leaving a recency‑weighted record.
+Retrieved‑context theory (RCT) explains recall as the interaction of a drifting temporal context with item‑driven reinstatement [@howard2002distributed; @kahana2020computational].
+Each study or recall event blends associated features into a context state that evolves over time, leaving a recency‑weighted record.
 At study, states of this dynamic temporal context are associated with items in memory;
-at retrieval, temporal context is the primary cue for recall, prioritizing items that were studied in similar contexts.
-This process bridges repetitions and preserves their differences, allowing memory to integrate related experiences while keeping their distinctive details intact.
+at retrieval, it serves as the primary cue, prioritizing items studied in similar contexts.
+The theory's central claim is that reinstating the context associated with an item at retrieval allows the system to bridge the past and present.
 
-Most implementations of RCT assume that memory search is guided by a composite representation of an item's associated context, where each occurrence's contextual features are blended together into a single representation [e.g., @polyn2009context; @sederberg2008context].
-This dissertation interrogates these assumptions:
+Retrieved‑context theory principally addresses the temporal organization of memory search, the tendency for items to be recalled in study order.
+Because each recalled item reinstates context from its own study position, the cue shifts toward the next serial position, naturally generating the forward‑skewed lag‑contiguity effect and the strong immediate‑recency advantage in short lists [@kahana1996associative; @howard2002distributed].
+Implementations add control mechanisms for how recall is initiated, progresses, and terminates [@murdock1962serial; @polyn2009context], and related variants adapt the approach to serial-order memory [@logan2018automatic; @logan2021serial; @lohnas2024retrieved].
 
-- In **Chapter 1**, I formalize Instance-CMR, an instance-based reformulation of CMR that stores each item–context pairing as a separate trace.
+In the most prominent implementation of RCT, the Context Maintenance and Retrieval model (CMR) [@howard2002distributed; @polyn2009context], item-context associations are stored in composite weight matrices that map items to a single blended representation of contextual features across their occurrences.
+When an item is retrieved, the model looks up and reinstates that composite with no additional selection step.
+A contrasting instance-based strategy [@hintzman1984minerva] stores a separate trace for every study event, pairing the item with its occurrence-specific context.
+Within that framework, reinstatement is configurable along a continuum: it may reinstate a fixed, item-level composite (recovering classic CMR behavior), construct a cue-weighted mixture across occurrence-specific contexts at retrieval, or -- in the limiting case -- select the single best-matching occurrence.
+So whereas CMR's composite architecture converts one reinstatement approach into an architectural commitment, the instance-based framework's additional flexibility makes it an attractive testbed for exploring the nuances of context reinstatement.
+
+Instance-based approaches have been effective in domains from category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons] to episodic and semantic memory [@cox2020similarity; @hintzman1988judgments; @jamieson2018instance; @shiffrin1997model].
+However, aside from the Context Retrieval and Updating (CRU) model for serial-order memory [@logan2018automatic;@logan2021serial], they have played a limited role in retrieved-context modeling of episodic memory search.
+The under-representation appears to reflect modeling tradition rather than a theoretical barrier; nothing in RCT prevents applying the item-driven update rule to a growing set of traces.
+Work across domains also shows conditions under which composite and instance formulations become equivalent rather than distinct [@turner2019toward; @kelly2017memory; @ramsauer2020hopfield; @anderson1995introduction].
+
+This dissertation examines and leverages the flexibility of instance-based architectures to sharpen the architectural and algorithmic stakes for retrieved-context theory:
+
+In **Chapter 1**, I formalize Instance-CMR, an instance-based reformulation of CMR that stores each item–context pairing as a separate trace.
 By collapsing those traces, the model reproduces CMR's behavior exactly, demonstrating that RCT's core claims do not depend on composite storage.
-The chapter establishes architecture as an adjustable modeling choice rather than a theoretical boundary for RCT.
+The chapter establishes architecture as an adjustable modeling choice rather than a theoretical boundary within RCT.
 
-- In **Chapter 2**, I leverage this equivalence to compare CMR with the Context Retrieval and Updating (CRU) model, an instance-based account of serial recall.
-A factorial model-selection analysis across free- and serial-recall datasets shows that the models' divergent successes stem not from architectural differences but from algorithmic factors like item confusability, context-drift rules, primacy/recency mechanisms, and retrieval-termination criteria.
-The exercise yields a common suite of benchmarks and model features across task domains that the final chapter exploits.
+In **Chapter 2**, I compare CMR with the Context Retrieval and Updating (CRU) model, an instance-based account of serial recall.
+A factorial model-selection analysis across free- and serial-recall datasets shows that the models' divergent successes stem not from storage format but from process choices like item confusability, context-drift rules, primacy/recency mechanisms, and retrieval-termination criteria.
+The exercise clarifies the unique contributions of each model and yields a common suite of benchmarks and model features across task domains that the final chapter exploits.
 
-- In **Chapter 3**, I leverage the instance-based framework to test an assumption shared by most retrieved-context models: that presentation and retrieval of an item retrieves a composite of the contexts associated with the item's earlier occurrences.
+In **Chapter 3**, I test an assumption shared by most retrieved-context models: that presentation and retrieval of an item reinstates a composite of the contexts associated with the item's earlier occurrences.
 Because composite reinstatement blends contexts across occurrences, this rule predicts that recalling one occurrence of *canoe* should subsequently bias recall toward neighbors from all occurrences, a signature of associative interference that I show is absent in six published datasets.
-Allowing repetitions to reinstate distinct contextual features and letting individual traces compete for reinstatement during retrieval within ICMR eliminates the mismatch and improves fits to key benchmarks, all without adding parameters. 
+In Instance-CMR, allowing repetitions to reinstate distinct contextual features and letting individual traces compete for reinstatement eliminates the mismatch.
+This change improves fits to key benchmarks without adding parameters.
 The chapter re-evaluates established understanding of how retrieved-context theory addresses repetition effects, showing how selective reinstatement reconciles integration with specificity and resolves a long-standing empirical puzzle.
 
-Retrieved‑context theory principally addresses the temporal organization of memory search, the tendency for items to be produced in study order.
-Because each recalled item reinstates context from its own study position, the cue shifts toward the next serial position, naturally generating the forward‑skewed lag‑contiguity effect and the strong immediate‑recency advantage in short lists [@kahana1996associative; @howard2002distributed].
-CMR extends the framework with mechanisms for initiation, progression, and termination of free recall.
-For instance, a primacy gradient allocates extra attention to early items, while a context‑reset operation shifts the cue part‑way back toward the list's start [@murdock1962serial; @polyn2009context].
-CMR and other retrieved-context models combine such mechanisms to explain a broad range of benchmarks and have been successfully applied to address a broad range of episodic memory phenomena.
-Variants such as sCMR [@lohnas2024retrieved] and CRU [@logan2018automatic; @logan2021serial] adapt the same principles to serial‑order memory.
-
-In the most prominent implementation of RCT, the Context Maintenance and Retrieval model (CMR) [@howard2002distributed; @polyn2009context], item–context associations are stored in composite weight matrices that relate items to a single blended representation of contextual features across their occurrences.
-When an item is retrieved, the model effectively looks up that representation and reinstates it, requiring no additional selection step.
-This design dovetails naturally with RCT's mechanistic assumptions: item-driven reinstatement is implemented as a direct matrix operation, and wholesale reinstatement is guaranteed because every contextual feature tied to the item resides in the same location.
-A potential cost is rigidity: once blending has occurred, the model cannot choose to reinstate one occurrence's context without also reinstating the others.
-
-A contrasting strategy, long used in multi-trace or instance-based modeling [@hintzman1984minerva], allocates a new memory trace for every study event. 
-Each trace stores the item together with the contextual features present at that exact moment.
-At retrieval, the probe is compared with every trace; the resulting activations are combined -- often by a similarity-weighted average -- to guide recall.
-Thus retrieval can be selective: if a contextual cue is highly similar to the context of the first occurrence of an item but not the second, one trace is activated more than the other and more prominent in the output.
-Trace stores have proved effective in domains like category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons] and other episodic and semantic memory tasks [@cox2020similarity; @hintzman1988judgments; @jamieson2018instance; @shiffrin1997model]. 
-Yet, with the notable exception of the Context Retrieval and Updating (CRU) model for serial order memory [@logan2018automatic;@logan2021serial], they have played a limited role in retrieved-context modeling of episodic memory search.
-The under-representation is historical rather than principled; nothing in RCT prevents the item-driven, wholesale update rule from being realized over a growing set of traces.
-Yet whereas CMR's composite architecture converts RCT's assumptions into an architectural commitment, the instance-based framework's additional flexibility makes it an attractive testbed for exploring the nuances of context reinstatement.
-
-Differences between composite and instance-based architectures have been a source of theoretical tension across domains of memory research.
-Researchers in these areas frequently attribute differences in model performance to the distinct ways in which these approaches access associations [e.g., @nosofsky2002exemplar; @jamieson2018instance].
-If participants can respond based on a cue's similarity to a specific study instance instead of a composite over applicable instances, then instance-based models may be favored over composite models.
-Yet other work has highlighted underlying similarities between the two approaches, tracing how composite and instance-based models can be made equivalent under a range of conditions rather than being fundamentally distinct [e.g., @turner2019toward; @kelly2017memory; @ramsauer2020hopfield; @anderson1995introduction].
-Clarifying how composite and instance architectures truly diverge and relate to one another is therefore essential. 
-Doing so would permit more effective comparisons between models that differ in other algorithmic respects, and would open the door to integrative frameworks that combine the strengths of both traditions.
-Chapter 1 addresses this objective by reformulating CMR as an instance‑based model whose behavior collapses exactly to the composite version when traces are merged.
-
-Results from Chapter 1 indicate that the success of any retrieved‑context model ultimately hinges on how item and contextual information is accessed and updated.
-Chapter 2 builds on this foundation by comparing CMR with the Context Retrieval and Updating (CRU) model, an instance-based account of serial recall that differs from CMR in many ways despite sharing RCT's core assumptions.
-Wholesale comparison between models, especially when they differ in architecture, can be challenging to interpret because observed gaps in performance could be attributed to any given difference in assumptions between the two models.
-To address this, I develop a factorial model-selection framework that isolates algorithmic differences while holding architecture constant and systematically swapping algorithmic components across free- and serial-recall datasets.
-This approach identifies and helps interpret the exact algorithmic drivers of model performance across task domains, paving the way for an improved integrative understanding of how retrieved-context models can address memory search across task domains and de-emphasizing architectural differences as the primary source of divergence.
-
-Clarifying and distinguishing architectural and mechanistic stakes helps leverage the strengths of the instance-based framework to return to the opening challenge: how can episodic memory integrate related experiences while preserving their distinctive details?
-In Chapter 3, I show that retrieved context theory's item-driven, composite contextual evolution mechanism predicts associative interference across repetitions.
-Because RCT assumes that every presentation of an item deposits its contextual features into the context and that later retrieval reinstates that blend wholesale, the theory makes testable predictions for lists containing the same word in two positions.
-Standard composite implementations such as CMR predict three signatures of cross‑occurrence interference: (i) in free recall, transitions between the neighbors of the two occurrences should be more common than transitions between similarly positioned control items; (ii) transition rates from twice-presented items to either set of neighbors should be more balanced than from either of two similarly positioned distinct items; and (iii) in serial recall, producing the first copy of a repeated word should often be followed by the forward neighbor that belongs to the second copy.
-I present simulations that confirm all three predictions but also present analyses of six published datasets that show that such associative interference is rare if not absent.
-The discrepancy invites a systematic re‑examination of model assumptions that the flexible instance‑based framework can facilitate.
-
-Taken together, Chapters 1–3 sharpen the architectural and algorithmic stakes of retrieved‑context theory. 
-They demonstrate that, once storage format and processing rules are disentangled, the data favor a system that keeps contexts and traces distinct in memory at encoding, and selectively reinstates only the traces most similar to the current contextual cue at retrieval.
-In doing so, the dissertation offers an updated perspective on how episodic memory can integrate related experiences while preserving their distinctive details.
+Taken together, these chapters separate commitments from conveniences in retrieved-context accounts of recall.
+They show that the core regularities of free and serial recall do not require storage-side blending; instead, the levers that matter most are the rules that steer recall.
+For repetitions, the datasets analyzed are inconsistent with a composite-reinstatement assumption and are better explained when occurrences each reinstate unique contextual features and recall is dominated by the best-matching occurrence. 
+The result is a refined account of repetition in free and serial recall that reconciles integration with specificity and offers a configurable framework and shared benchmarks for future tests.

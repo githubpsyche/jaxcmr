@@ -3,6 +3,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from matplotlib.axes import Axes
+from matplotlib.ticker import MaxNLocator
 from scipy.stats import bootstrap
 
 from jaxcmr.typing import Array, Real
@@ -154,6 +155,12 @@ def plot_data(
         plot_with_error_bars(axis, x_values, y_values, y_mean, segments, label, color)
     else:
         plot_without_error_bars(axis, x_values, y_mean, segments, label, color)
+
+    x = jnp.asarray(x_values)
+    x = x[jnp.isfinite(x)]
+    if x.size and bool(jnp.allclose(x, jnp.round(x), atol=1e-9)):
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+
     return axis
 
 

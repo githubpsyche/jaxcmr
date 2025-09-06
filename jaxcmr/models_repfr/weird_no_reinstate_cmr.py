@@ -59,6 +59,7 @@ class CMR(Pytree):
         self.stop_probability_scale = parameters["stop_probability_scale"]
         self.stop_probability_growth = parameters["stop_probability_growth"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
+        self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self._stop_probability = exponential_stop_probability(
@@ -143,7 +144,7 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(False),
+            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
             recall_total=self.recall_total + 1,
         )
 

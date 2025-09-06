@@ -1,7 +1,5 @@
-|                                      |   Standard CMR |   Reinforced Positional CMR |   Reinforced Positional CMR (No Study) |   Full Positional CMR |   Positional CMR |
-|:-------------------------------------|---------------:|----------------------------:|---------------------------------------:|----------------------:|-----------------:|
-| Standard CMR                         |                |                    0.212121 |                               0.363636 |              0.151515 |         0.212121 |
-| Reinforced Positional CMR            |       0.787879 |                             |                               0.515152 |              0.454545 |         0.636364 |
-| Reinforced Positional CMR (No Study) |       0.636364 |                    0.484848 |                                        |              0.333333 |         0.545455 |
-| Full Positional CMR                  |       0.848485 |                    0.545455 |                               0.666667 |                       |         0.757576 |
-| Positional CMR                       |       0.787879 |                    0.363636 |                               0.454545 |              0.242424 |                  |
+|                          |   WeirdCMR |   WeirdCMRDistinctContexts |   WeirdPositionalCMR |
+|:-------------------------|-----------:|---------------------------:|---------------------:|
+| WeirdCMR                 |            |                   0.212121 |             0.212121 |
+| WeirdCMRDistinctContexts |   0.787879 |                            |             0.393939 |
+| WeirdPositionalCMR       |   0.787879 |                   0.606061 |                      |

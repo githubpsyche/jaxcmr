@@ -101,7 +101,7 @@ def relabel_trial_to_firstpos(
 def _shuffle_and_tile_controls(
     control_recalls: jnp.ndarray,  # [n_pure_trials, n_recalls]
     mixed_presentations: jnp.ndarray,  # [n_mixed_trials, n_pres]
-    n_shuffles: int,  # static
+    n_permutations: int,  # static
     prng_key: jnp.ndarray,  # single PRNGKey
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Generate shuffled control recalls and align them with mixed-list presentations.
@@ -121,16 +121,14 @@ def _shuffle_and_tile_controls(
             ``(n_mixed_trials * n_shuffles, n_pres)``.
         (Callers typically trim the first output to match the second.)
     """
-    n_pure, _ = control_recalls.shape
-    n_mixed, _ = mixed_presentations.shape
-    repeat_factor = math.ceil(n_mixed / n_pure)
-    n_permutations = n_shuffles * repeat_factor
-
     keys = random.split(prng_key, n_permutations)
     batched = jax.vmap(lambda k: random.permutation(k, control_recalls, axis=0))(keys)
     flat_shuffled = batched.reshape((-1, control_recalls.shape[1]))
 
-    tiled_pres = jnp.repeat(mixed_presentations, repeats=n_shuffles, axis=0)
+    tiled_pres = jnp.repeat(mixed_presentations, repeats=n_permutations, axis=0)[:flat_shuffled.shape[0]]
+    flat_shuffled = flat_shuffled[:tiled_pres.shape[0]]
+    # assert tiled_pres.shape[0] == flat_shuffled.shape[0]
+    # assert tiled_pres.shape[1] == mixed_presentations.shape[1]
     return flat_shuffled, tiled_pres
 
 
@@ -186,6 +184,7 @@ def make_control_dataset(
     }
 
     for i, subj in enumerate(subjects):
+
         sel_pure = (all_subject_ids == subj) & pure_mask
         sel_mixed = (all_subject_ids == subj) & mixed_mask
 
@@ -194,8 +193,13 @@ def make_control_dataset(
         if pure_recalls.shape[0] == 0 or mixed_pres.shape[0] == 0:
             continue
 
+        n_pure, _ = pure_recalls.shape
+        n_mixed, _ = mixed_pres.shape
+        repeat_factor = math.ceil(n_mixed / n_pure)
+        n_permutations = n_shuffles * repeat_factor
+
         new_recalls, new_pres = _shuffle_and_tile_controls(
-            pure_recalls, mixed_pres, n_shuffles, prng_keys[i]
+            pure_recalls, mixed_pres, n_permutations, prng_keys[i]
         )
         # Ensure identical items share a single positional code
         new_recalls = jax.vmap(relabel_trial_to_firstpos, in_axes=(0, 0))(
@@ -209,15 +213,16 @@ def make_control_dataset(
         subject_id_blocks.append(jnp.full((new_recalls.shape[0], 1), subj, dtype=int))
 
         # carry along all other fields, repeated to match new_recalls
-        n_rows = new_recalls.shape[0]
         for field, acc in other_fields_acc.items():
             arr = jnp.array(data[field])[sel_mixed]
-            acc.append(jnp.repeat(arr, repeats=n_rows // arr.shape[0], axis=0))
+            acc.append(jnp.repeat(arr, repeats=n_permutations, axis=0)[:new_recalls.shape[0]])
+            assert acc[-1].shape[0] == new_recalls.shape[0]
+            assert acc[-1].shape[0] == new_pres.shape[0]
 
     return {
         "subject": jnp.vstack(subject_id_blocks),
         "recalls": jnp.vstack(recalls_blocks),
         "pres_itemnos": jnp.vstack(pres_blocks),
         **{f: jnp.vstack(lst) for f, lst in other_fields_acc.items()},
-    }  # type: ignore
+    } # type: ignore
 

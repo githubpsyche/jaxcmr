@@ -1,7 +1,5 @@
-|    | Model                                |         AICw |
-|---:|:-------------------------------------|-------------:|
-|  1 | Reinforced Positional CMR            | 0.999998     |
-|  2 | Reinforced Positional CMR (No Study) | 1.51279e-06  |
-|  3 | Full Positional CMR                  | 4.72058e-16  |
-|  4 | Positional CMR                       | 5.87317e-31  |
-|  0 | Standard CMR                         | 1.90621e-140 |
+|    | Model                    |         AICw |
+|---:|:-------------------------|-------------:|
+|  2 | WeirdPositionalCMR       | 1            |
+|  1 | WeirdCMRDistinctContexts | 1.74345e-15  |
+|  0 | WeirdCMR                 | 3.24561e-110 |
