@@ -1,37 +1,75 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: -all
+#     formats: .jupytext-sync-ipynb//ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.16.7
+# ---
+
 # %% [markdown]
 # # Cohen & Kahana (2022) → `RecallDataset` loader (percent notebook)
-#  Used this to help with some steps: https://chatgpt.com/c/68c13121-02dc-8327-9060-bfeb7f3ed0c4?model=gpt-5
-# **Goal.** Build a clean, integer‑only dataset for jaxcmr with exactly these required fields:
 #
-# - `subject : (n_trials, 1)` — int subject code per trial
-# - `listLength : (n_trials, 1)` — count of non‑zero presented IDs per trial
-# - `pres_itemids : (n_trials, P)` — raw presented global item IDs (padded with 0)
-# - `pres_itemnos : (n_trials, P)` — within‑list positions 1..L, padded with 0
-# - `rec_itemids : (n_trials, R)` — raw recalled IDs after filtering intrusions (padded with 0)
-# - `recalls : (n_trials, R)` — within‑list positions of recalls, mapping **to the first presentation** (padded with 0)
+# This script prepares a rectangular, integer-only dataset from the raw 
+# Cohen & Kahana (2022) files for use in `jaxcmr`.  
 #
-# **Also load if available:**
-# - `valence : (n_trials, P)` — codes −1/0/+1 aligned with presentations
-# - `session : (n_trials, 1)` — 1‑based session index assuming exactly 24 lists/session
+# The **output `RecallDataset`** has one row per trial and the following fields:
 #
-# **Intrusion filtering rules (per spec):**
-# - Drop **negatives** (e.g., −1)
-# - Drop **zeros** anywhere in the recall sequence (treat like intrusions)
-# - Drop **ELIs** (positive recall IDs not present in that trial’s `pres_itemids`)
-# - **Perseverations:** configurable — keep or drop **immediate** repeats (A A). Non‑successive repeats (A B A) are preserved.
+# - **`subject : (n_trials, 1)`**  
+#   Integer subject code (e.g., 93 for “LTP093”).
 #
-# **Roadmap**
-# 1. Imports & dataset type
-# 2. Config toggles & invariants
-# 3. `RecallDataset` `TypedDict`
-# 4. Small utilities (CSV parsing, subject labels)
-# 5. **Preflight raw validation** — alignment checks that *raise* on fatal issues
-# 6. **Core loader** — builds padded integer arrays
-# 7. **Post‑hoc dataset validation** — sanity checks on the constructed dataset
-# 8. Quick‑start usage cell
+# - **`listLength : (n_trials, 1)`**  
+#   Actual number of non-zero presented items in the list.
+#
+# - **`pres_itemids : (n_trials, P)`**  
+#   Global item IDs presented on each trial, padded with zeros to the maximum list length.
+#
+# - **`pres_itemnos : (n_trials, P)`**  
+#   Within-list serial positions 1..L for each presented item, padded with zeros.
+#
+# - **`rec_itemids : (n_trials, R)`**  
+#   Raw recalled item IDs after filtering. Intrusions may be dropped or retained depending on config flags. Padded with zeros to the maximum recall length.
+#
+# - **`recalls : (n_trials, R)`**  
+#   Within-list serial positions of recalled items, padded with zeros.  
+#   - In-list recalls: positive serial position (1..L).  
+#   - Extra-list intrusions (ELIs) that are **kept**: `rec_itemids > 0` but `recalls == 0`.  
+#   - Padding: `rec_itemids == 0` and `recalls == 0`.
+#
+# - **`valence : (n_trials, P)`**  
+#   Emotional valence codes (−1, 0, +1) aligned with `pres_itemids`.
+#
+# - **`session : (n_trials, 1)`**  
+#   Session index (1-based), assuming exactly 24 lists per session.
+#
+# ## Conversion issues addressed
+#
+# - **Intrusions**  
+#   - **Negatives (−1)** and **zeros** in recall sequences are always dropped.  
+#   - **ELIs** (positive IDs not in the current list):  
+#     - If `FILTER_ELIS=True`, they are dropped.  
+#     - If `FILTER_ELIS=False`, they are preserved in `rec_itemids` and marked with `recalls == 0`.  
+#     This makes them distinguishable from padding by the joint condition:  
+#     `rec_itemids > 0 & recalls == 0`.
+#
+# - **Repeated recalls of the same item**  
+#   Controlled by `FILTER_REPEATED_RECALLS`.  
+#   - If `True`, only the first recall of an item is kept.  
+#   - If `False`, all repeats are retained.  
+#   This applies to **any** repeats, not just immediate ones.
+#
+# - **Mapping recalls to positions**  
+#   Each recalled ID is mapped to the **first** presentation of that ID within the study list.  
+#   This matches the CMR family’s convention. If the recalled ID was not presented in the list (ELI kept), its position is recorded as 0.
+#
+# - **Zeros in the middle of recall sequences**  
+#   These are treated as anomalies; the validator warns but the loader filters them like intrusions.
+#
 
 # %%
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -39,8 +77,6 @@ from typing import Dict, List
 
 import jax.numpy as jnp
 import numpy as np
-from jaxtyping import Array, Integer
-from typing_extensions import NotRequired, TypedDict
 
 from jaxcmr.helpers import save_dict_to_hdf5
 from jaxcmr.typing import RecallDataset
@@ -51,9 +87,12 @@ from jaxcmr.typing import RecallDataset
 # - `SESSION_LISTS`: hard assumption: every valid subject has `n_lists % 24 == 0`.
 
 # %%
-# If False, filter only successive repeats (A A -> keep first A, drop next A).
-# Non-successive repeats (A B A) are preserved.
-KEEP_SUCCESSIVE_PERSEVERATIONS: bool = True
+# If True, remove any repeated recall of the same item within a trial
+# (A ... A) — not just immediate repeats.
+FILTER_REPEATED_RECALLS: bool = True
+
+# If True, drop out-of-list intrusions (positive IDs not in the presented set).
+FILTER_ELIS: bool = True
 
 # Fatal guard: every subject must have lists multiple of this session size
 SESSION_LISTS: int = 24
@@ -172,13 +211,14 @@ def validate_raw_cohen_kahana_2022(raw_dir: Path | str) -> RawValidationReport:
         rec_path = rec_dir / f"rec_nos_{label}.txt"
         eval_path = eval_dir / f"eval_codes_{label}.txt"
 
-        # Missing files
+        missing_this = False
         for p in (pres_path, rec_path, eval_path):
             if not p.exists():
                 missing_files += 1
+                missing_this = True
                 fatal_issues.append(f"Missing file for {label}: {p}")
-        if missing_files:
-            continue
+        if missing_this:
+            continue  # skip this subject only
 
         pres_rows = _read_csv_matrix(pres_path)
         rec_rows = _read_csv_matrix(rec_path)
@@ -257,8 +297,8 @@ def validate_raw_cohen_kahana_2022(raw_dir: Path | str) -> RawValidationReport:
 # %%
 def load_cohen_kahana_2022(
     raw_dir: Path | str,
-    *,
-    keep_successive_perseverations: bool | None = None,
+    filter_repeated_recalls: bool | None = None,
+    filter_elis: bool | None = None,
 ) -> RecallDataset:
     """Load the dataset into a rectangular `RecallDataset` (integer arrays only).
 
@@ -276,8 +316,10 @@ def load_cohen_kahana_2022(
         Dict of 2D `jnp.int32` arrays with required and optional fields.
     """
     raw_path = Path(raw_dir)
-    if keep_successive_perseverations is None:
-        keep_successive_perseverations = KEEP_SUCCESSIVE_PERSEVERATIONS
+    if filter_repeated_recalls is None:
+        filter_repeated_recalls = FILTER_REPEATED_RECALLS
+    if filter_elis is None:
+        filter_elis = FILTER_ELIS
 
     valid_list_path = raw_path / "valid_subjects_list.txt"
     pres_dir = raw_path / "pres_files"
@@ -347,25 +389,31 @@ def load_cohen_kahana_2022(
                     if x not in first_pos:
                         first_pos[x] = pos_counter
 
-            # Filter recalls: drop negatives, zeros, ELIs; handle successive perseverations
+            # Filter recalls: drop negatives/zeros; optionally drop ELIs; optionally drop ANY repeats
             filtered_ids: List[int] = []
-            prev_id: int | None = None
+            seen_ids: set[int] = set()
             pset = set(first_pos.keys())
-            for rv in r_row:
-                if rv <= 0:
-                    continue  # drop negatives and zeros
-                if rv not in pset:
-                    continue  # ELI intrusion
-                if (
-                    not keep_successive_perseverations
-                    and prev_id is not None
-                    and rv == prev_id
-                ):
-                    continue  # drop immediate repeat
-                filtered_ids.append(rv)
-                prev_id = rv
 
-            mapped_pos = [first_pos[rv] for rv in filtered_ids]
+            for rv in r_row:
+                # negatives and zeros are always dropped
+                if rv <= 0:
+                    continue
+
+                # out-of-list intrusion?
+                if rv not in pset:
+                    if filter_elis:
+                        continue
+                    # else keep the ELI in rec_itemids; it will not map to a within-list position
+                    # (we'll handle its 'recalls' value as 0 below)
+                
+                # repeated recall?
+                if filter_repeated_recalls and rv in seen_ids:
+                    continue
+
+                filtered_ids.append(rv)
+                seen_ids.add(rv)
+
+            mapped_pos = [first_pos.get(rv, 0) for rv in filtered_ids]
 
             all_rec_filtered_ids.append(filtered_ids)
             all_rec_mapped_pos.append(mapped_pos)
@@ -457,19 +505,19 @@ def validate_RecallDataset(ds: RecallDataset) -> DatasetValidationReport:
                     first_pos[x] = pos
         for rid, rpos in zip(rec_ids[i], recalls[i]):
             if rid == 0 and rpos == 0:
-                continue
-            if rid == 0 and rpos != 0:
+                continue  # padding
+            elif rid == 0:
                 first_ok = False
                 break
-            if rid != 0 and rpos == 0:
-                first_ok = False
-                break
-            if rid != 0:
-                if first_pos.get(rid, None) != int(rpos):
+            elif rpos == 0:
+                # allow only if not an in-list ID (i.e., kept ELI)
+                if rid in first_pos:
                     first_ok = False
                     break
-        if not first_ok:
-            break
+            elif first_pos.get(rid) != int(rpos):
+                first_ok = False
+                break
+
 
     # We cannot directly count filtered tokens post-hoc; set sentinels
     filtered_neg = -1
@@ -499,7 +547,7 @@ if __name__ == "__main__":
     raw = Path("data/raw/CohenKahana2022")
     target_data_path = "data/CohenKahana2022.h5"
     preflight = validate_raw_cohen_kahana_2022(raw)  # raises on fatal issues
-    ds = load_cohen_kahana_2022(raw, keep_successive_perseverations=True)
+    ds = load_cohen_kahana_2022(raw)
     report = validate_RecallDataset(ds)
     save_dict_to_hdf5(ds, target_data_path)
     print(report)
