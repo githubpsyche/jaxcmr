@@ -13,59 +13,59 @@
 # %% [markdown]
 # # Cohen & Kahana (2022) → `RecallDataset` loader (percent notebook)
 #
-# This script prepares a rectangular, integer-only dataset from the raw 
-# Cohen & Kahana (2022) files for use in `jaxcmr`.  
+# This script prepares a rectangular, integer-only dataset from the raw
+# Cohen & Kahana (2022) files for use in `jaxcmr`.
 #
 # The **output `RecallDataset`** has one row per trial and the following fields:
 #
-# - **`subject : (n_trials, 1)`**  
+# - **`subject : (n_trials, 1)`**
 #   Integer subject code (e.g., 93 for “LTP093”).
 #
-# - **`listLength : (n_trials, 1)`**  
+# - **`listLength : (n_trials, 1)`**
 #   Actual number of non-zero presented items in the list.
 #
-# - **`pres_itemids : (n_trials, P)`**  
+# - **`pres_itemids : (n_trials, P)`**
 #   Global item IDs presented on each trial, padded with zeros to the maximum list length.
 #
-# - **`pres_itemnos : (n_trials, P)`**  
+# - **`pres_itemnos : (n_trials, P)`**
 #   Within-list serial positions 1..L for each presented item, padded with zeros.
 #
-# - **`rec_itemids : (n_trials, R)`**  
+# - **`rec_itemids : (n_trials, R)`**
 #   Raw recalled item IDs after filtering. Intrusions may be dropped or retained depending on config flags. Padded with zeros to the maximum recall length.
 #
-# - **`recalls : (n_trials, R)`**  
-#   Within-list serial positions of recalled items, padded with zeros.  
-#   - In-list recalls: positive serial position (1..L).  
-#   - Extra-list intrusions (ELIs) that are **kept**: `rec_itemids > 0` but `recalls == 0`.  
+# - **`recalls : (n_trials, R)`**
+#   Within-list serial positions of recalled items, padded with zeros.
+#   - In-list recalls: positive serial position (1..L).
+#   - Extra-list intrusions (ELIs) that are **kept**: `rec_itemids > 0` but `recalls == 0`.
 #   - Padding: `rec_itemids == 0` and `recalls == 0`.
 #
-# - **`valence : (n_trials, P)`**  
+# - **`valence : (n_trials, P)`**
 #   Emotional valence codes (−1, 0, +1) aligned with `pres_itemids`.
 #
-# - **`session : (n_trials, 1)`**  
+# - **`session : (n_trials, 1)`**
 #   Session index (1-based), assuming exactly 24 lists per session.
 #
 # ## Conversion issues addressed
 #
-# - **Intrusions**  
-#   - **Negatives (−1)** and **zeros** in recall sequences are always dropped.  
-#   - **ELIs** (positive IDs not in the current list):  
-#     - If `FILTER_ELIS=True`, they are dropped.  
-#     - If `FILTER_ELIS=False`, they are preserved in `rec_itemids` and marked with `recalls == 0`.  
-#     This makes them distinguishable from padding by the joint condition:  
+# - **Intrusions**
+#   - **Negatives (−1)** and **zeros** in recall sequences are always dropped.
+#   - **ELIs** (positive IDs not in the current list):
+#     - If `FILTER_ELIS=True`, they are dropped.
+#     - If `FILTER_ELIS=False`, they are preserved in `rec_itemids` and marked with `recalls == 0`.
+#     This makes them distinguishable from padding by the joint condition:
 #     `rec_itemids > 0 & recalls == 0`.
 #
-# - **Repeated recalls of the same item**  
-#   Controlled by `FILTER_REPEATED_RECALLS`.  
-#   - If `True`, only the first recall of an item is kept.  
-#   - If `False`, all repeats are retained.  
+# - **Repeated recalls of the same item**
+#   Controlled by `FILTER_REPEATED_RECALLS`.
+#   - If `True`, only the first recall of an item is kept.
+#   - If `False`, all repeats are retained.
 #   This applies to **any** repeats, not just immediate ones.
 #
-# - **Mapping recalls to positions**  
-#   Each recalled ID is mapped to the **first** presentation of that ID within the study list.  
+# - **Mapping recalls to positions**
+#   Each recalled ID is mapped to the **first** presentation of that ID within the study list.
 #   This matches the CMR family’s convention. If the recalled ID was not presented in the list (ELI kept), its position is recorded as 0.
 #
-# - **Zeros in the middle of recall sequences**  
+# - **Zeros in the middle of recall sequences**
 #   These are treated as anomalies; the validator warns but the loader filters them like intrusions.
 #
 
@@ -405,7 +405,7 @@ def load_cohen_kahana_2022(
                         continue
                     # else keep the ELI in rec_itemids; it will not map to a within-list position
                     # (we'll handle its 'recalls' value as 0 below)
-                
+
                 # repeated recall?
                 if filter_repeated_recalls and rv in seen_ids:
                     continue
@@ -518,7 +518,6 @@ def validate_RecallDataset(ds: RecallDataset) -> DatasetValidationReport:
                 first_ok = False
                 break
 
-
     # We cannot directly count filtered tokens post-hoc; set sentinels
     filtered_neg = -1
     filtered_zero = -1
@@ -545,11 +544,18 @@ def validate_RecallDataset(ds: RecallDataset) -> DatasetValidationReport:
 # %%
 if __name__ == "__main__":
     raw = Path("data/raw/CohenKahana2022")
-    target_data_path = "data/CohenKahana2022.h5"
+    data_tag = "CohenKahana2022"
     preflight = validate_raw_cohen_kahana_2022(raw)  # raises on fatal issues
-    ds = load_cohen_kahana_2022(raw)
-    report = validate_RecallDataset(ds)
-    save_dict_to_hdf5(ds, target_data_path)
-    print(report)
+
+    for filter_elis in (True, False):
+        filter_tag = "noELI" if filter_elis else "withELI"
+        ds = load_cohen_kahana_2022(
+            raw,
+            filter_repeated_recalls=FILTER_REPEATED_RECALLS,
+            filter_elis=filter_elis,
+        )
+        report = validate_RecallDataset(ds)
+        save_dict_to_hdf5(ds, f"data/{data_tag}_{filter_tag}.h5")
+        print(report)
 
 # %%
