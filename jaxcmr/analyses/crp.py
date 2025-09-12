@@ -1,3 +1,51 @@
+"""
+Lag-Conditional Response Probability (Lag-CRP).
+
+Overview:
+  Utilities to compute and plot Lag-CRP for free-recall data. CRP at serial lag
+  ℓ is defined as the proportion of *actual* transitions at lag ℓ divided by the
+  number of *available* transitions at lag ℓ.
+
+Definition:
+  CRP(ℓ) = actual_transitions(ℓ) / available_transitions(ℓ)
+
+Serial lag:
+  If the previously recalled item was studied at position X and the current item
+  at position Y (1-indexed), then ℓ = Y - X. Negative lags move backward in
+  study order; positive lags move forward.
+
+Conventions:
+  - list_length (L): Fixed study-list length within a call.
+  - trials (recalls): int array [n_trials, n_recall_events] of serial positions
+    in 1..L; 0 indicates padding after termination (ignored).
+  - presentations: int array [n_trials, L] of item IDs at study positions;
+    required only when items may repeat (0 permitted if your loader uses it).
+  - size: Upper bound on how many distinct study positions a single item can
+    occupy within a list (e.g., 3 → items may appear up to three times).
+  - Lag axis indexing: All CRP outputs are length (2*L - 1). Index i corresponds
+    to lag ℓ = i - (L - 1); the center (i = L - 1) is ℓ = 0.
+
+Design decisions:
+  - Padding & bounds: Zeros (pads) and out-of-range recalls are ignored via
+    guards in the tabulators.
+  - Division by zero: Lags with zero availability (often extreme lags) yield NaN.
+  - Repeats policy: A recall of a repeated item is treated as recalling all of
+    that item's study positions. For a transition from the previous item's study
+    positions to the current item's positions, we accumulate the set-union of
+    unique lags (each lag counted at most once per transition) to avoid
+    multiplicity inflation. If you need every pairwise combination instead,
+    consider a static `count_mode={"unique","pairwise"}` toggle.
+  - First recall: The first non-zero recall marks that item's study positions as
+    unavailable and defines the reference for the next transition lag.
+
+JAX compilation:
+  - All public functions are side-effect-free and JIT-safe.
+  - Use `jit(crp, static_argnames=("size",))`; keep shapes (e.g., L, number of
+    recall events) consistent within a compiled call to avoid recompiles.
+  - Ensure `size` ≥ the true maximum per-item repetition in your data; compute
+    it once outside JIT if needed.
+"""
+
 __all__ = [
     "SimpleTabulation",
     "simple_tabulate_trial",
@@ -24,7 +72,17 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
 class SimpleTabulation(Pytree):
-    "A simple tabulation of transitions between items during recall of a study list."
+    """
+    Uniform-list CRP tabulator.
+
+    Assumes:
+        - `trial[0] > 0` (first recall exists).
+        - Subsequent zeros are pads; ignored.
+
+    Behavior:
+        - Marks the first recall's item as unavailable for subsequent transitions.
+        - Bounds-checks choices to [1..L]; others are ignored.
+    """
 
     def __init__(self, list_length: int, first_recall: Int_):
         self.lag_range = list_length - 1
@@ -56,7 +114,20 @@ class SimpleTabulation(Pytree):
 def simple_tabulate_trial(
     trial: Integer[Array, " recall_events"], list_length: int
 ) -> SimpleTabulation:
-    "Tabulate transitions across a single trial."
+    """
+    Compute Lag-CRP for uniform study lists (no repeated items).
+
+    Args:
+        trials: int array [n_trials, n_recalls]; serial positions in 1..L, 0 pads.
+        list_length: L.
+
+    Returns:
+        1-D float array of length (2*L - 1), indexed by lag offset (lag + (L - 1)).
+
+    Conventions / Guards:
+        - Ignores zeros (pads) and out-of-range positions.
+        - Divides by available transitions; zero denominators -> NaN.
+    """
     return lax.scan(
         lambda tabulation, recall: (tabulation.update(recall), None),
         SimpleTabulation(list_length, trial[0]),
@@ -81,7 +152,26 @@ def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
 
 
 class Tabulation(Pytree):
-    "A tabulation of transitions between items during recall of a study list."
+    """
+    Maintains per-transition state for CRP with repeats.
+
+    State:
+        - previous_positions: study positions of previously recalled item
+        - avail_recalls: boolean [L], study positions still available
+        - actual_lags, avail_lags: int [2*L - 1], accumulated
+
+    Update steps executed on each valid recall (in order):
+        1) Previous item positions -> `previous_positions`.
+        2) Available positions -> `avail_recalls = available_recalls_after(recall)`.
+        3) Actual lags: union of unique lags from `previous_positions` to the
+           current item's study positions (`tabulate_actual_lags`).
+        4) Available lags: union of unique lags from each `previous_positions`
+           to all currently available positions (`tabulate_available_lags`).
+
+    Conventions:
+        - Zeros in `recall_study_positions` are padding; safely ignored.
+        - Indices are 1-based for positions; internal arrays use zero-based.
+    """
 
     def __init__(
         self,
@@ -108,14 +198,20 @@ class Tabulation(Pytree):
 
     # for updating avail_recalls: study positions still available for retrieval
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
-        "Updates the study positions available to retrieve after a transition."
+        """
+        Clear availability for all study positions of `recall`.
+        Safe with padding: zeros are ignored.
+        """
         study_positions = self.item_study_positions[recall - 1]
         return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
 
     # for updating actual_lags: lag-transitions actually made from the previous item
     def lags_from_previous(self, recall_pos: Int_) -> Bool[Array, " positions"]:
-        "Identifies `recall_pos`'s lag(s) from the study position(s) of the previous item."
-
+        """
+        One-hot(-ish) vector of unique lags from each previous study position to `recall_pos`.
+        Returns boolean union (unique lag set); use `count_mode="pairwise"` alternative
+        (not implemented here) to count all pair combinations.
+        """
         def f(prev):
             return lax.cond(
                 (recall_pos * prev) == 0,
@@ -145,7 +241,7 @@ class Tabulation(Pytree):
         )
 
     def tabulate_available_lags(self) -> Integer[Array, " lags"]:
-        "Tabulates available transitions after a transition."
+        "Union of lags from each previous position to all currently available positions."
         new_lags = (
             lax.map(self.available_lags_from, self.previous_positions)
             .sum(0)
@@ -156,6 +252,7 @@ class Tabulation(Pytree):
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
     def should_tabulate(self, recall: Int_) -> Bool:
         "Only consider transitions from items with study positions that have not been recalled yet."
+
         def _for_nonzero():
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
@@ -200,8 +297,24 @@ def crp(
     list_length: int,
     size: int = 3,
 ) -> Float[Array, " lags"]:
-    """Compute conditional response probabilities across trials."""
+    """
+    Lag-CRP with repeated items in the study list.
 
+    Args:
+        trials: [T, R] serial positions (1..L), 0 pads.
+        presentations: [T, L] item IDs (0 may indicate empty).
+        list_length: L (asserts consistency with `presentations` width).
+        size: max # of study positions an item can occupy (compile-time constant).
+
+    Repeats policy:
+        - A recall of a repeated item is treated as recalling *all* of that
+          item's study positions.
+        - Actual and available lags are computed as **unique** lag set unions
+          (boolean one-hot union per lag) to avoid over-counting.
+
+    Returns:
+        [2*L - 1] floats; NaN where denominator is zero.
+    """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None))(
         trials, presentations, size
     )
@@ -219,7 +332,8 @@ def plot_crp(
     axis: Optional[Axes] = None,
     size: int = 3,
 ) -> Axes:
-    """Returns Axes object with plotted prob of lag-CRP for datasets and trial masks.
+    """
+    Plot subject-wise Lag-CRP and their mean ± error.
 
     Args:
         datasets: Datasets containing trial data to be plotted.
@@ -231,6 +345,15 @@ def plot_crp(
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
         size: Maximum number of study positions an item can be presented at.
+
+    Returns:
+        Matplotlib Axes with the Lag-CRP plot.
+    
+    Notes:
+        - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
+        - `trial_masks` filters trials; lengths must match datasets.
+        - `distances` is ignored (kept for API compatibility).
+        - Color cycle wraps if more datasets than colors.
     """
     axis = init_plot(axis)
 
