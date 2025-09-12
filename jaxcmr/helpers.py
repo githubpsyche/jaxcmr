@@ -4,11 +4,8 @@ from typing import Callable, Iterable, List, Optional, Sequence
 
 import h5py
 import jax.numpy as jnp
-import markdown
-from IPython.display import HTML, display
 from jax import vmap
-from nbdev import show_doc as nbdev_show_doc
-import numpy as np # needed to evaluate some trila queries
+import numpy as np # preserved here in order to evaluate some trial queries
 
 from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
 
@@ -25,12 +22,6 @@ def have_common_nonzero(
     """
     values_equal = a[:, None] == b[None, :]
     return jnp.any(values_equal & (a > 0)[:, None] & (b > 0)[None, :])
-
-
-def show_doc(func):
-    """Decorator to show documentation for a function."""
-    html = markdown.markdown(str(nbdev_show_doc(func)), extensions=["tables"])
-    display(HTML(html))
 
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
