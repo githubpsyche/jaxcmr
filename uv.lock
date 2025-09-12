@@ -638,7 +638,7 @@ dependencies = [
     { name = "tqdm" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "ipykernel" },
     { name = "ipython" },
@@ -655,23 +655,27 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "h5py", specifier = ">=3.12.1" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
-    { name = "ipython", marker = "extra == 'dev'", specifier = ">=8.31.0" },
     { name = "jax", specifier = ">=0.4.38" },
     { name = "jaxtyping", specifier = ">=0.2.36" },
-    { name = "jupytext", marker = "extra == 'dev'", specifier = ">=1.16.7" },
-    { name = "line-profiler", marker = "extra == 'dev'", specifier = ">=4.2.0" },
     { name = "markdown", specifier = ">=3.7" },
-    { name = "nbdev", marker = "extra == 'dev'", specifier = ">=2.3.37" },
     { name = "numba", specifier = ">=0.61.0" },
-    { name = "papermill", marker = "extra == 'dev'", specifier = ">=2.6.0" },
-    { name = "psifr", marker = "extra == 'dev'", specifier = ">=0.9.3" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
     { name = "scipy", specifier = "==1.15.0" },
-    { name = "seaborn", marker = "extra == 'dev'", specifier = ">=0.13.2" },
-    { name = "sentence-transformers", marker = "extra == 'dev'", specifier = ">=5.1.0" },
     { name = "simple-pytree", specifier = ">=0.2.2" },
     { name = "tqdm", specifier = ">=4.67.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "ipython", specifier = ">=8.31.0" },
+    { name = "jupytext", specifier = ">=1.16.7" },
+    { name = "line-profiler", specifier = ">=4.2.0" },
+    { name = "nbdev", specifier = ">=2.3.37" },
+    { name = "papermill", specifier = ">=2.6.0" },
+    { name = "psifr", specifier = ">=0.9.3" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "sentence-transformers", specifier = ">=5.1.0" },
 ]
 
 [[package]]
