@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+import jax
 import pytest
 from jaxcmr.analyses import crp
 
@@ -6,6 +7,7 @@ from jaxcmr.analyses import crp
 # -----------------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------------
+
 
 def _lag_index(lags_len: int, lag: int) -> int:
     """Helper: map a signed lag value to an index in a lag vector.
@@ -30,6 +32,7 @@ def _lag_index(lags_len: int, lag: int) -> int:
 # -----------------------------------------------------------------------------
 # set_false_at_index tests
 # -----------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "vec,idx,expected",
@@ -106,8 +109,10 @@ def test_tabulate_zero_is_noop_for_actual_and_avail_lags():
     before_avail = list(map(int, tab.avail_lags))
 
     # Sentinel check
-    assert hasattr(tab, "should_tabulate"), "Missing 'should_tabulate' method on Tabulation"
-    assert tab.should_tabulate(0) is False, (
+    assert hasattr(tab, "should_tabulate"), (
+        "Missing 'should_tabulate' method on Tabulation"
+    )
+    assert tab.should_tabulate(0).item() is False, (
         "Expected tab.should_tabulate(0) to be False for 0 sentinel"
     )
 
@@ -145,17 +150,18 @@ def test_should_tabulate_validity_and_availability():
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
 
-    assert tab.should_tabulate(2) is True
-    assert tab.should_tabulate(1) is False
-    assert tab.should_tabulate(0) is False
+    assert tab.should_tabulate(2).item() is True
+    assert tab.should_tabulate(1).item() is False
+    assert tab.should_tabulate(0).item() is False
 
     tab2 = tab.tabulate(2)
-    assert tab2.should_tabulate(2) is False
+    assert tab2.should_tabulate(2).item() is False
 
 
 # -----------------------------------------------------------------------------
 # Tabulation: transition counting and invariants
 # -----------------------------------------------------------------------------
+
 
 def test_repeated_recall_is_ignored_counts_one_transition():
     """Behavior: repeated recalls are ignored; only valid transitions are counted.
@@ -202,7 +208,9 @@ def test_repeat_does_not_change_previous_positions_transitions():
         tab = tab.tabulate(int(r))
 
     final_lags = list(map(int, tab.actual_lags))
-    assert sum(final_lags) == 2, f"Expected two total transitions, got {sum(final_lags)}"
+    assert sum(final_lags) == 2, (
+        f"Expected two total transitions, got {sum(final_lags)}"
+    )
 
     neg2_idx = _lag_index(len(final_lags), -2)
     plus3_idx = _lag_index(len(final_lags), +3)
@@ -210,7 +218,9 @@ def test_repeat_does_not_change_previous_positions_transitions():
 
     assert final_lags[neg2_idx] == 1, f"Expected 1 at lag -2 (3→1), got {final_lags}"
     assert final_lags[plus3_idx] == 1, f"Expected 1 at lag +3 (1→4), got {final_lags}"
-    assert final_lags[plus1_idx] == 0, f"Did not expect transition at +1 (3→4). Got {final_lags}"
+    assert final_lags[plus1_idx] == 0, (
+        f"Did not expect transition at +1 (3→4). Got {final_lags}"
+    )
 
 
 def test_zero_padded_study_positions_not_indexed():
@@ -380,3 +390,41 @@ def test_crp_handles_single_item_without_crashing():
     out = crp.crp(trials, presentations, list_length=1, size=1)
     assert isinstance(out, jnp.ndarray)
     assert out.shape[0] == 1
+
+
+def test_crp_jit_with_static_argnames():
+    """Ensure `crp` works when jitted with static_argnames=("size","list_length").
+
+    We compute the non-jitted result and compare to the jitted result using
+    `jax.jit(..., static_argnames=("size","list_length"))` to ensure the
+    compiled version returns the same values and shape.
+    """
+    trials = jnp.array([[1, 2, 3], [1, 3, 2]], dtype=jnp.int32)
+    presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
+    list_length = 3
+    size = 1
+
+    expected = crp.crp(trials, presentations, list_length, size)
+    jitted_crp = jax.jit(crp.crp, static_argnames=("size", "list_length"))
+    result = jitted_crp(trials, presentations, list_length, size)
+
+    assert result.shape == expected.shape
+    assert jnp.allclose(result, expected, equal_nan=True)
+
+
+def test_crp_jit_with_different_size_compiles_and_runs():
+    """Sanity check that jitting with a different `size` value also runs.
+
+    This test compiles with a non-default `size` and verifies execution.
+    """
+    trials = jnp.array([[1, 2, 3]], dtype=jnp.int32)
+    presentations = jnp.array([[1, 2, 3]], dtype=jnp.int32)
+    list_length = 3
+    size = 2
+
+    expected = crp.crp(trials, presentations, list_length, size)
+    jitted_crp = jax.jit(crp.crp, static_argnames=("size", "list_length"))
+    result = jitted_crp(trials, presentations, list_length, size)
+
+    assert result.shape == expected.shape
+    assert jnp.allclose(result, expected, equal_nan=True)

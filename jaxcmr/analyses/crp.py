@@ -156,10 +156,17 @@ class Tabulation(Pytree):
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
     def should_tabulate(self, recall: Int_) -> Bool:
         "Only consider transitions from items with study positions that have not been recalled yet."
-        recall_study_positions = self.item_study_positions[recall - 1]
-        is_valid_study_position = recall_study_positions != 0
-        is_available_study_position = self.avail_recalls[recall_study_positions - 1]
-        return jnp.any(is_valid_study_position & is_available_study_position)
+        def _for_nonzero():
+            recall_study_positions = self.item_study_positions[recall - 1]
+            is_valid_study_position = recall_study_positions != 0
+            is_available_study_position = self.avail_recalls[recall_study_positions - 1]
+            return jnp.any(is_valid_study_position & is_available_study_position)
+
+        return lax.cond(
+            recall == 0,
+            lambda: jnp.array(False),
+            _for_nonzero,
+        )
 
     def tabulate(self, recall: Int_) -> "Tabulation":
         "Tabulates actual and possible serial lags of current from previous item."
