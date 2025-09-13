@@ -152,7 +152,9 @@ def simple_crp(
     return total_actual_transitions / total_possible_transitions
 
 
-def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
+def set_false_at_index(
+    vec: Bool[Array, " positions"], i: Int_
+) -> tuple[Bool[Array, " positions"], None]:
     """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
 
     Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
@@ -229,6 +231,7 @@ class Tabulation(Pytree):
         Returns boolean union (unique lag set); use `count_mode="pairwise"` alternative
         (not implemented here) to count all pair combinations.
         """
+
         def f(prev):
             return lax.cond(
                 (recall_pos * prev) == 0,
@@ -365,7 +368,7 @@ def plot_crp(
 
     Returns:
         Matplotlib Axes with the Lag-CRP plot.
-    
+
     Notes:
         - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
         - `trial_masks` filters trials; lengths must match datasets.
