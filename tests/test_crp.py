@@ -59,7 +59,7 @@ def test_flips_element_to_false_when_idx_positive(vec, idx, expected):
     updated, _ = crp.set_false_at_index(vec, idx)
 
     # Assert / Then
-    assert updated.tolist() == expected
+    assert jnp.array_equal(updated, jnp.array(expected, dtype=bool)).item()
 
 
 def test_returns_tuple_and_none_when_updating_index():
@@ -83,7 +83,7 @@ def test_returns_tuple_and_none_when_updating_index():
     # Assert / Then
     assert isinstance(updated, jnp.ndarray)
     assert flag is None
-    assert updated.tolist() == [True, False]
+    assert jnp.array_equal(updated, jnp.array([True, False], dtype=bool)).item()
 
 
 def test_set_false_at_index_out_of_range_is_noop():
