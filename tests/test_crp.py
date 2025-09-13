@@ -1,6 +1,8 @@
+import matplotlib
+matplotlib.use("Agg", force=True)
+import matplotlib.pyplot as plt
 import jax
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import pytest
