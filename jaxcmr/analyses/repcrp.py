@@ -1,4 +1,35 @@
-"""Repetition conditional response probability analysis and plotting utilities."""
+"""
+Repetition conditional response probability analysis and plotting utilities.
+
+The lag-CRP measures the probability of recalling an item at a particular lag **given the current recall position**, conditional on items that remain available for recall. Here we follow up on our previous repetition-robust implementation of the Lag-CRP analysis with a new implementation that allows us to calculate the **Repetition Lag-CRP**.
+
+In this analysis, we compare transition probabilities from repeated items to items studied near either their first or second presentation (or additional presentations if there are more). This means:
+
+1. We only tabulate lag-transitions from recalls of repeated items (though we still have to track available and actual transitions across trials to accomplish this).
+2. We separately tabulate lag-transitions relative to each presentation of the repeated item, so that we can calculate the Lag-CRP for each presentation of the repeated item.
+
+This analysis helps investigate whether transitions from repeated items during free recall are particularly likely to cluster around the first or later presentations of the repeated item, clarifying how item repetition affects the structure of episodic memory search.
+
+Our approach extends the repetition-robust implementation of the Lag-CRP analysis by adding a new `RepCRPTabulation` class that extends our existing `crp.Tabulation` class, which is used to tabulate the available and actual transitions for the Lag-CRP analysis. The `RepCRPTabulation` class is designed to 1) exclusively tabulate transitions from repeated items, and 2) separately tabulate transitions for each presentation of the repeated item. This allows us to calculate the Lag-CRP for each repetition index of repeated items.
+
+To exclusively focus on transitions from repeated items, we add a `RepCRPTabulation.should_tabulate` method that `tabulate` uses to determine based on the previous recalled item whether to tabulate the current recalled item or just update the available transitions (and the previous recalled item) to reflect the current recalled item.
+
+To separately tabulate a lag-CRP for each study position index of repeated items, first we use two-dimensional representations of `avail_lags` and `actual_lags`.
+In our original repetition-robust implementation of the lag-CRP analysis, our `tabulate_actual_lags` and `tabulate_available_lags` methods collapsed lag identification across study positions of previously recalled items into a single dimension, where the index of the lag was the lag value and the value at that index was `True` if that lag was made from the last recalled item to the current recalled item.
+For this implementation, we simply do not collapse the lag identification into a single dimension, and instead use a 2-D array of lags, where the first dimension is the study position of the last recalled item and the second dimension is the lag value.
+This resulting representation of lags is a 2-D array of booleans, where the first dimension is the study position of the last recalled item and the second dimension is the lag value.
+We can then use this 2-D array to tabulate the actual and available transitions for each lag at each recall attempt, and finally aggregate the counts of actual and available transitions across all trials to get the Lag-CRP for each lag.
+
+A new `min_lag` parameter is added across the implementation to allow the user to specify a minimum amount of serial lag between first and second presentations of repeated items as a filter for inclusion in the analysis.
+
+Just like in our original implementation, we include a `tabulate_trial` method that takes a trial and updates the `RepCRPTabulation` object with the actual and available transitions for each lag at each recall attempt. Unlike the previous implementation, we directly return actual and available lag tabulations across the trial.
+
+Finally, in our `repcrp` function, we aggregate the counts of actual and available transitions across all trials, and divide the actual transitions by the available transitions to get the Repetition Lag-CRP for each lag and each repetition index. 
+
+Our `plot_rep_crp` function is similar to the original `plot_crp` function, but draws separate lines for each repetition index of repeated items.
+
+We also include some variations of this analysis. `plot_first_rep_crp` and `plot_second_rep_crp` each plot just the CRP corresponding to the first or second presentation of repeated items, respectively. Furthermore, `plot_difference_rep_crp` plots the difference between first and second presentation CRPs for repeated items, which can help highlight the differences in transition probabilities between the first and second presentations of repeated items.
+"""
 
 __all__ = [
     "set_false_at_index",
