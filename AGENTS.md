@@ -14,7 +14,7 @@
 * **All functions must be fully type‑annotated** (every argument and the return type).
 * **Do not repeat types in docstrings.** Rely on annotations; docstrings explain meaning, shape, and units.
 * Start with an imperative **summary**. When it improves clarity/concision, start the summary with **“Returns …”** and **omit a separate Returns section**.
-* Include sections only as needed, in this order: **Args**, **Raises**, **Yields**, **Returns**.
+* Include sections only as needed, in this order: **Args**, **Yields**, **Raises**.
 * **Args** entries must match parameter names and order in the signature.
 * For arrays/structures, specify **shape/units** when non‑obvious from type annotations or context.
 * Keep examples brief and stable.
@@ -50,13 +50,13 @@ def bar(q: Array, axis: int) -> tuple[Array, Array]:
 
 ## 2) Class and module docstrings (Google style)
 
-Follow the Google Python Style Guide.
+Follow the Google Python Style Guide **except as noted here**.
 
 * Start with a one‑sentence summary.
 * Optionally add any needed paragraphs of context (what/why, not how).
 * Use optional sections **ONLY** when they add value that exceeds the cost of maintenance and complexity.
-* Never include "Examples" section in module docstrings.
-* Never include an "Attributes" section in class docstrings.
+* **Never include an “Attributes” section in class docstrings.**
+* **Never include an “Examples” section in module docstrings.**
 * Do not repeat types already present in annotations.
 
 **Class skeleton (minimal, optional sections)**
@@ -68,7 +68,6 @@ class Widget:
     <Optional extended summary>
 
     <Optional sections>
-    
     """
 ```
 
@@ -80,8 +79,6 @@ class Widget:
 <Optional extended summary>
 
 <Optional sections>
-
-  >>> ...
 """
 ```
 
