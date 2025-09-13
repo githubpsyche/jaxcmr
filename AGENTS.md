@@ -14,7 +14,7 @@
 * **All functions must be fully type‑annotated** (every argument and the return type).
 * **Do not repeat types in docstrings.** Rely on annotations; docstrings explain meaning, shape, and units.
 * Start with an imperative **summary**. When it improves clarity/concision, start the summary with **“Returns …”** and **omit a separate Returns section**.
-* Include sections only as needed, in this order: **Args**, **Yields**, **Raises**.
+* Include sections only as needed, in Google style order.
 * **Args** entries must match parameter names and order in the signature.
 * For arrays/structures, specify **shape/units** when non‑obvious from type annotations or context.
 * Keep examples brief and stable.
@@ -84,7 +84,7 @@ class Widget:
 
 ---
 
-## 3) Unit tests
+## 3) Unit tests (in tests/test_*.py files)
 
 **Naming**
 
@@ -122,3 +122,19 @@ def test_<behavior>_when_<condition>():
     # Assert / Then
     ...
 ```
+
+## 4) Example Notebooks (in examples/*.ipynb files)
+
+**Purpose:** example-driven, parameterizable demos or quick reports devoted to a single concept or deliverable. **Not** a source of truth for semantics (use module/function docstrings; link to the API if needed).
+
+Each notebook must run top-to-bottom with default parameters (no manual input).
+
+**Required structure (in order):**
+
+1. **Markdown — Title** (`# …`)
+2. **Markdown — One-line imperative summary**
+3. **Markdown — Short overview** (2–5 sentences for a non-technical scientist; basic mechanics & interpretation)
+4. **Code — Imports**
+5. **Code — Parameters** *(tag this cell `parameters`; plain assignments compatible with papermill)*
+6. **Code — Demo(s)** (clarifying demonstrations or typical usage examples; number/size **as needed**)
+7. **Markdown — `## Notes` (optional)** (scope **as needed**)
