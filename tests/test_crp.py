@@ -2,8 +2,10 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import pytest
 from jaxcmr.analyses import crp
+from jaxcmr.typing import RecallDataset
 
 
 # -----------------------------------------------------------------------------
@@ -87,6 +89,7 @@ def test_set_false_at_index_returns_tuple_and_none_flag():
 # -----------------------------------------------------------------------------
 # Tabulation: sentinel and validity tests
 # -----------------------------------------------------------------------------
+
 
 def test_tabulate_zero_is_noop_for_actual_and_avail_lags():
     """Behavior: `tab.tabulate(0)` is a no-op for both `actual_lags` and `avail_lags`.
@@ -434,7 +437,7 @@ def test_crp_jit_with_different_size_compiles_and_runs():
 
 def test_plot_crp_returns_axes():
     """`plot_crp` should return a Matplotlib ``Axes`` instance."""
-    dataset = {
+    dataset: RecallDataset = {
         "subject": jnp.array([[1], [1]], dtype=jnp.int32),
         "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
         "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
@@ -444,5 +447,6 @@ def test_plot_crp_returns_axes():
     trial_mask = jnp.array([True, True], dtype=bool)
     axis = crp.plot_crp(dataset, trial_mask, max_lag=1)
     assert isinstance(axis, Axes)
-    plt.close(axis.figure)
-
+    fig = axis.figure
+    assert isinstance(fig, Figure)
+    plt.close(fig)
