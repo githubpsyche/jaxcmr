@@ -153,9 +153,19 @@ def simple_crp(
 
 
 def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
-    """Set ``vec[i - 1]`` to ``False`` when ``i`` is non-zero."""
+    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
 
-    return lax.cond(i, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None))
+    Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
+    ``[1, vec.size]`` are ignored.
+
+    Returns:
+        Tuple of the (possibly updated) vector and ``None``.
+    """
+
+    should_update = (i > 0) & (i <= vec.size)
+    return lax.cond(
+        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
+    )
 
 
 class Tabulation(Pytree):
