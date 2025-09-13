@@ -86,6 +86,32 @@ def test_returns_tuple_and_none_when_updating_index():
     assert updated.tolist() == [True, False]
 
 
+def test_set_false_at_index_out_of_range_is_noop():
+    """Behavior: Out-of-range indices leave vector unchanged.
+
+    Given:
+      - A boolean vector.
+    When:
+      - ``set_false_at_index`` is called with negative or too-large index.
+    Then:
+      - The vector is unchanged and ``None`` is returned.
+    Why this matters:
+      - Prevents unintended updates for invalid positions.
+    """
+    # Arrange / Given
+    vec = jnp.array([True, True], dtype=bool)
+
+    # Act / When
+    updated_large, flag_large = crp.set_false_at_index(vec, 99)
+    updated_neg, flag_neg = crp.set_false_at_index(vec, -5)
+
+    # Assert / Then
+    assert updated_large.tolist() == vec.tolist()
+    assert updated_neg.tolist() == vec.tolist()
+    assert flag_large is None
+    assert flag_neg is None
+
+
 # -----------------------------------------------------------------------------
 # Tabulation: sentinel and validity tests
 # -----------------------------------------------------------------------------
