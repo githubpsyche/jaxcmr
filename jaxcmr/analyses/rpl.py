@@ -32,7 +32,7 @@ def infer_max_lag(
     presentations: Integer[Array, " trials study_events"],
     list_length: int,
 ) -> int:
-    """Return the largest first-to-second-presentation distance observed anywhere in ``presentations``."""
+    """Return the largest first-to-second-presentation distance observed in ``presentations``."""
     all_items = jnp.arange(1, list_length + 1)
     positions = vmap(
         vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(None, 0, None)
@@ -186,6 +186,7 @@ def plot_full_rpl(
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     max_lag = infer_max_lag(datasets[0]["pres_itemnos"], max_list_length)
+    xticklabels = ["N/A"] + [f"{i}" for i in range(max_lag + 1)]
     for data_index, data in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
@@ -202,12 +203,12 @@ def plot_full_rpl(
         color = color_cycle.pop(0)
         plot_data(
             axis,
-            ["N/A"] + [f"{i}" for i in range(max_lag + 1)],
+            jnp.arange(len(xticklabels)),
             subject_values,
             labels[data_index],
             color,
         )
-
+    axis.set_xticklabels(xticklabels) # type: ignore
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
 
@@ -250,6 +251,7 @@ def plot_rpl(
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     max_lag = infer_max_lag(datasets[0]["pres_itemnos"], max_list_length)
+    xticklabels = ["N/A", "0", "1-2", "3-5", "6-8"]
     for data_index, data in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
@@ -266,11 +268,12 @@ def plot_rpl(
         color = color_cycle.pop(0)
         plot_data(
             axis,
-            ["N/A", "0", "1-2", "3-5", "6-8"],
+            jnp.arange(5),
             subject_values,
             labels[data_index],
             color,
         )
 
+    axis.set_xticklabels(xticklabels) # type: ignore
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
