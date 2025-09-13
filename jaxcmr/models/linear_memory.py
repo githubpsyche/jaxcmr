@@ -34,8 +34,8 @@ class LinearMemory(Pytree):
         """Returns memory after associating input and output patterns.
 
         Args:
-            in_pattern: Input feature pattern. Shape (input_size,).
-            out_pattern: Output feature pattern. Shape (output_size,).
+            in_pattern: Input feature pattern.
+            out_pattern: Output feature pattern.
             learning_rate: Scaling factor for the association.
         """
         return self.replace(
@@ -49,7 +49,7 @@ class LinearMemory(Pytree):
         """Returns output pattern associated with the input pattern.
 
         Args:
-            in_pattern: Feature pattern to query. Shape (input_size,).
+            in_pattern: Feature pattern to query.
         """
         return jnp.dot(in_pattern, self.state)
 
