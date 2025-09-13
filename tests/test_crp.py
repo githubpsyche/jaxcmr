@@ -225,24 +225,28 @@ def test_preserves_prior_transitions_when_recall_repeated():
     )
 
 
-def test_ignores_padded_positions_when_recalled():
-    """Behavior: Zero-padded study positions are treated as invalid.
+def test_ignores_padded_study_positions():
+    """Behavior: Zero-padded presentation entries do not create transitions.
 
     Given:
-      - A ``Tabulation`` with padded study list entries.
+      - A ``Tabulation`` whose presentation vector ends with zeros
+        (e.g., ``[1, 2, 3, 4, 0, 0]``).
     When:
-      - A recall targets a padded position.
+      - A padded position is recalled before a valid position.
     Then:
-      - The transition is ignored.
+      - The padded recall yields no transition and the subsequent valid recall
+        counts exactly one transition.
     Why this matters:
-      - Avoids indexing artifacts from padding values.
+      - Ensures padding in presentation vectors does not inflate transition counts.
     """
     # Arrange / Given
-    presentation = jnp.array([10, 20, 30, 40], dtype=jnp.int32)
-    tab = crp.Tabulation(presentation=presentation, first_recall=1, size=3)
+    presentation = jnp.array([1, 2, 3, 4, 0, 0], dtype=jnp.int32)
+    tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
 
     # Act / When
-    tab = tab.tabulate(2)
+    tab = tab.tabulate(5)  # padded recall; ignored
+    assert jnp.sum(tab.actual_lags).item() == 0
+    tab = tab.tabulate(2)  # valid transition
 
     # Assert / Then
     total = jnp.sum(tab.actual_lags).item()
