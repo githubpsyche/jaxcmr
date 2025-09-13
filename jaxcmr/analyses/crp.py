@@ -137,7 +137,15 @@ def simple_tabulate_trial(
 def simple_crp(
     trials: Integer[Array, "trials recall_events"], list_length: int
 ) -> Float[Array, " lags"]:
-    "Tabulate transitions for multiple trials."
+    """Compute Lag-CRP across multiple recall trials.
+
+    Args:
+        trials: int array [n_trials, n_recall_events]; serial positions in 1..L, 0 pads.
+        list_length: L.
+
+    Returns:
+        1-D float array of length (2*L - 1), indexed by lag offset (lag + (L - 1)).
+    """
     tabulated_trials = lax.map(lambda t: simple_tabulate_trial(t, list_length), trials)
     total_actual_transitions = jnp.sum(tabulated_trials.actual_transitions, axis=0)
     total_possible_transitions = jnp.sum(tabulated_trials.avail_transitions, axis=0)
