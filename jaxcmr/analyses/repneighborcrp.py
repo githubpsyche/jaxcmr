@@ -1,4 +1,18 @@
-"""Repetition-neighbor lag-conditional response probability analyses."""
+"""Repetition-neighbor lag-conditional response probability analyses.
+
+The lag-CRP measures the probability of recalling an item at a particular lag **given the current recall position**, conditional on items that remain available for recall. 
+Here we follow up on our previous repetition-robust implementation of the Lag-CRP analysis, as well as our Repetition Lag-CRP analysis that separately tracks transitions from repeated items to their neighbors, with a new implementation that allows us to calculate the **Repetition-Neighbor Lag-CRP**.
+
+In this analysis, we calculate transition probabilities from neighbors of the second presentation of repeated items to neighbors of the first presentation of the same repeated items, and/or vice versa.
+This allows us to investigate how item repetition affects the contextual features associated with neighboring items in a study list as indicated in free recall.
+
+For repeated items studied at positions $i$ and $j$ with spacing of at least 4 study positions, in this version of the analysis:
+
+1. We only tabulate lag-transitions from recalls of items studied at position $j+1$ and/or $j+2$.
+2. We tabulate lags according to the study position of the first presentation of the repeated item, so that we can calculate associations with neighbors of position $i$.
+
+We optionally also or alternatively consider transitions from recalls of items studied at position $i+1$ and/or $i+2$ to neighbors of the repeated item at position $j$.
+"""
 
 __all__ = [
     "set_false_at_index",
