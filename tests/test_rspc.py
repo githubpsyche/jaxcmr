@@ -32,7 +32,6 @@ def test_flags_all_positions_when_recall_in_forward_order():
     # Assert / Then
     assert jnp.array_equal(flags, jnp.array([True, True, True])).item()
 
-
 def test_marks_only_forward_neighbors_when_start_out_of_order():
     """Behavior: Flag positions only for valid forward transitions.
 
@@ -132,3 +131,9 @@ def test_returns_axes_object_when_plotting_rspc():
     fig = axis.figure
     assert isinstance(fig, Figure)
     plt.close(fig)
+
+def test_repetitions():
+    # | code-summary: Repetitions, all satisfied
+  pres = jnp.array([1, 2, 1])
+  rec = jnp.array([1, 2, 1])
+  assert jnp.array_equal(rspc.tabulate_trial(rec, pres), jnp.array([True, True, True]))

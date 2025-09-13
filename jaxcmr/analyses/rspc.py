@@ -1,4 +1,10 @@
-"""Relative serial position curve utilities."""
+"""Relative serial position curve utilities.
+
+Compute a serial position curve where each recall is scored “correct” 
+if it is exactly one position after the previous recall (previous + 
+1), with the first recall scored relative to position 0 (so only a 
+recall of study position 1 is correct).
+"""
 
 __all__ = ["Tabulation", "tabulate_trial", "relative_spc", "plot_relative_spc"]
 
