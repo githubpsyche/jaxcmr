@@ -165,7 +165,7 @@ def _toy_dataset_for_controls():
             [1, 2, 3, 4],  # subj 1 pure
             [1, 2, 1, 4],  # subj 1 mixed (1 repeats)
             [1, 2, 3, 4],  # subj 2 pure
-            [2, 1, 2, 3],  # subj 2 mixed (2 repeats)
+            [1, 2, 2, 3],  # subj 2 mixed (2 repeats, canonical numbering)
         ],
         dtype=jnp.int32,
     )
