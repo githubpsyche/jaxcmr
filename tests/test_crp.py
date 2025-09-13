@@ -14,20 +14,14 @@ from jaxcmr.typing import RecallDataset
 
 
 def _lag_index(lags_len: int, lag: int) -> int:
-    """Helper: map a signed lag value to an index in a lag vector.
+    """Map a signed lag value to an index in a lag vector.
 
-    Arrange:
-    - `lags_len`: total length of the lag vector (odd; center is zero-lag).
-    - `lag`: signed lag (negative = backward, positive = forward).
+    Args:
+        lags_len: Total length of the lag vector (odd; center is zero-lag).
+        lag: Signed lag where negative is backward and positive is forward.
 
-    Act:
-    - Compute `center = lags_len // 2` and return `center + lag`.
-
-    Assert:
-    - Returns an integer index in `[0, lags_len - 1]` if `lag` is within range.
-
-    Why this matters:
-    - Keeps lag→index mapping explicit so tests remain readable and robust.
+    Returns:
+        Index in the lag vector corresponding to ``lag``.
     """
     center = lags_len // 2
     return center + lag
@@ -46,38 +40,28 @@ def _lag_index(lags_len: int, lag: int) -> int:
     ],
 )
 def test_set_false_at_index_behaves_for_zero_and_nonzero(vec, idx, expected):
-    """Behavior: correctly flips an index to False only when `idx > 0`.
+    """Flip an index to ``False`` only when ``idx`` is greater than zero.
 
-    Arrange:
-    - A boolean vector and an index `idx` (0 = sentinel / no-op).
-
-    Act:
-    - Call `set_false_at_index(vec, idx)`.
-
-    Assert:
-    - Returned first element is a JAX array with values matching `expected`.
-
-    Why this matters:
-    - Guards the sentinel convention and avoids accidental masking when `idx == 0`.
+    Given:
+        A boolean vector and an index where ``0`` is a sentinel.
+    When:
+        ``set_false_at_index`` is called.
+    Then:
+        The element at ``idx`` becomes ``False`` only if ``idx`` > 0.
     """
     updated, _ = crp.set_false_at_index(vec, idx)
     assert updated.tolist() == expected
 
 
 def test_set_false_at_index_returns_tuple_and_none_flag():
-    """Behavior: returns a tuple `(updated_vec, None)`.
+    """Return a tuple of the updated vector and ``None`` flag.
 
-    Arrange:
-    - A simple boolean vector and an in-range index.
-
-    Act:
-    - Call `set_false_at_index(vec, 2)`.
-
-    Assert:
-    - First element is a JAX array, second is `None`, and value at index 1 becomes False.
-
-    Why this matters:
-    - Confirms the public API shape and discourages callers from relying on a non-`None` flag.
+    Given:
+        A boolean vector and an index.
+    When:
+        ``set_false_at_index`` is invoked.
+    Then:
+        The function returns ``(updated_vec, None)``.
     """
     vec = jnp.array([True, True], dtype=bool)
     updated, flag = crp.set_false_at_index(vec, 2)
@@ -92,20 +76,14 @@ def test_set_false_at_index_returns_tuple_and_none_flag():
 
 
 def test_tabulate_zero_is_noop_for_actual_and_avail_lags():
-    """Behavior: `tab.tabulate(0)` is a no-op for both `actual_lags` and `avail_lags`.
+    """``tabulate(0)`` leaves ``actual_lags`` and ``avail_lags`` unchanged.
 
-    Arrange:
-    - Presentation `[1,2,3,4]`, `first_recall=1`, `size=2`.
-
-    Act:
-    - Capture `actual_lags` and `avail_lags` before calling `tab.tabulate(0)`.
-    - Also require `tab.should_tabulate(0)` to be `False`.
-
-    Assert:
-    - `actual_lags` and `avail_lags` are identical before vs after.
-
-    Why this matters:
-    - Enforces the sentinel convention for `0` to avoid accidental state mutation.
+    Given:
+        A ``Tabulation`` initialized with a presentation sequence.
+    When:
+        ``tabulate(0)`` is called.
+    Then:
+        ``actual_lags`` and ``avail_lags`` remain unchanged.
     """
     presentation = jnp.array([1, 2, 3, 4], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=2)
@@ -137,20 +115,14 @@ def test_tabulate_zero_is_noop_for_actual_and_avail_lags():
 
 
 def test_should_tabulate_validity_and_availability():
-    """Behavior: `should_tabulate` respects validity and availability of study positions.
+    """Respect validity and availability of study positions.
 
-    Arrange:
-    - Presentation `[1,2,3]`, `first_recall=1`, `size=1`.
-
-    Act:
-    - Query `should_tabulate` for items 2 (available), 1 (already consumed), and 0 (sentinel).
-    - Then consume item 2 and query again for 2.
-
-    Assert:
-    - True for 2 initially; False for 1 and 0; False for 2 after consuming it.
-
-    Why this matters:
-    - Protects the main gate that determines whether a recall event mutates state and counts.
+    Given:
+        A ``Tabulation`` with a study list.
+    When:
+        ``should_tabulate`` is queried for various positions.
+    Then:
+        Only valid, previously unrecalled positions return ``True``.
     """
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
@@ -169,19 +141,14 @@ def test_should_tabulate_validity_and_availability():
 
 
 def test_repeated_recall_is_ignored_counts_one_transition():
-    """Behavior: repeated recalls are ignored; only valid transitions are counted.
+    """Ignore repeated recalls and count only valid transitions.
 
-    Arrange:
-    - Presentation `[1,2,3,4]`, start at item 3.
-
-    Act:
-    - Attempt to recall 3 again (ignored), then recall 4 (valid 3→4 transition).
-
-    Assert:
-    - Sum of `actual_lags` equals 1.
-
-    Why this matters:
-    - Detects accidental double-counting when an already recalled item is repeated.
+    Given:
+        A ``Tabulation`` with an initial recall.
+    When:
+        The same item is recalled again.
+    Then:
+        Only the first valid transition is counted.
     """
     presentation = jnp.array([1, 2, 3, 4], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=3, size=1)
@@ -192,19 +159,14 @@ def test_repeated_recall_is_ignored_counts_one_transition():
 
 
 def test_repeat_does_not_change_previous_positions_transitions():
-    """Behavior: an ignored repeat must not rewrite earlier transitions.
+    """Ensure repeats do not rewrite earlier transitions.
 
-    Arrange:
-    - Presentation `[1,2,3,4]`, recalls `[3,1,3,4]`.
-
-    Act:
-    - Valid transitions: 3→1 (lag -2) and 1→4 (lag +3). The middle `3` is a repeat and ignored.
-
-    Assert:
-    - Exactly two total transitions; 1 count each at lags -2 and +3; 0 at +1 (no 3→4 from the repeat).
-
-    Why this matters:
-    - Guards against logic that retroactively mutates `previous_positions` or accepts repeats.
+    Given:
+        A sequence of recalls with a repeated item.
+    When:
+        ``tabulate`` processes each recall.
+    Then:
+        Earlier transition counts remain unchanged.
     """
     presentation = jnp.array([1, 2, 3, 4], dtype=jnp.int32)
     recalls = [3, 1, 3, 4]
@@ -229,19 +191,14 @@ def test_repeat_does_not_change_previous_positions_transitions():
 
 
 def test_zero_padded_study_positions_not_indexed():
-    """Behavior: zero-padded study positions are ignored as invalid.
+    """Ignore zero-padded study positions as invalid.
 
-    Arrange:
-    - Presentation `[10,20,30,40]`, `first_recall=1`, `size=3` (induces internal zero padding).
-
-    Act:
-    - Recall item 2.
-
-    Assert:
-    - Exactly one valid transition (1→2).
-
-    Why this matters:
-    - Prevents zeros used for padding from being misinterpreted as real study positions.
+    Given:
+        A ``Tabulation`` with a padded study list.
+    When:
+        A recall targets a padded position.
+    Then:
+        The transition is ignored as invalid.
     """
     presentation = jnp.array([10, 20, 30, 40], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=3)
@@ -251,19 +208,14 @@ def test_zero_padded_study_positions_not_indexed():
 
 
 def test_lags_from_previous_single_lag_location():
-    """Behavior: `lags_from_previous` marks exactly the correct lag bin.
+    """Mark exactly one lag bin from the previous position.
 
-    Arrange:
-    - Presentation `[1,2,3]`, `first_recall=1`, `size=1`.
-
-    Act:
-    - Compute mask for `recall_pos=2`.
-
-    Assert:
-    - The mask is boolean with exactly one True at the index for lag +1.
-
-    Why this matters:
-    - Ensures the core lag-to-index mapping inside the tabulation logic is correct.
+    Given:
+        A ``Tabulation`` on a short study list.
+    When:
+        ``lags_from_previous`` is called with a position.
+    Then:
+        Exactly one lag bin is set to ``True``.
     """
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
@@ -275,19 +227,14 @@ def test_lags_from_previous_single_lag_location():
 
 
 def test_available_lags_from_zero_and_nonzero():
-    """Behavior: `available_lags_from(0)` yields no lags; nonzero positions yield some.
+    """Compute available lags for zero and nonzero positions.
 
-    Arrange:
-    - Presentation `[1,2,3]`, `first_recall=1`, `size=1`.
-
-    Act:
-    - Query `available_lags_from(0)` and `available_lags_from(2)`.
-
-    Assert:
-    - Sum is 0 for position 0; strictly greater than 0 for a valid nonzero position.
-
-    Why this matters:
-    - Confirms the special-case for `pos == 0` and the basic availability computation.
+    Given:
+        A ``Tabulation`` object.
+    When:
+        ``available_lags_from`` is called for zero and nonzero positions.
+    Then:
+        The zero position yields no lags and the other yields at least one.
     """
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
@@ -298,19 +245,14 @@ def test_available_lags_from_zero_and_nonzero():
 
 
 def test_tabulate_returns_new_object_and_updates_counts():
-    """Behavior: `tabulate` is persistent (returns new) and updates counts.
+    """Return a new object and update counts when tabulating.
 
-    Arrange:
-    - Presentation `[1,2,3]`, `first_recall=1`, `size=1`.
-
-    Act:
-    - Call `tab.tabulate(2)`.
-
-    Assert:
-    - Returns a *new* object; `actual_lags` increases by 1; `avail_lags` does not decrease.
-
-    Why this matters:
-    - Confirms the functional update style and a basic counting invariant.
+    Given:
+        An initial ``Tabulation``.
+    When:
+        ``tabulate`` is called with a valid position.
+    Then:
+        A new object is returned and transition counts increase.
     """
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
     tab = crp.Tabulation(presentation=presentation, first_recall=1, size=1)
@@ -326,19 +268,14 @@ def test_tabulate_returns_new_object_and_updates_counts():
 
 
 def test_tabulate_trial_counts_transitions_ignoring_zeros():
-    """Behavior: `tabulate_trial` ignores zero recalls when counting transitions.
+    """Ignore zero recalls when counting trial transitions.
 
-    Arrange:
-    - Trial `[1,0,2,0,3]`, Presentation `[1,2,3]`, `size=1`.
-
-    Act:
-    - Run `tabulate_trial`.
-
-    Assert:
-    - Sum of `actual_lags` equals 2 (transitions 1→2 and 2→3 only).
-
-    Why this matters:
-    - Ensures trial-level API respects the zero sentinel contract.
+    Given:
+        A trial sequence containing zeros.
+    When:
+        ``tabulate_trial`` processes the trial.
+    Then:
+        Zero entries are ignored in the transition count.
     """
     trial = jnp.array([1, 0, 2, 0, 3], dtype=jnp.int32)
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
@@ -347,19 +284,14 @@ def test_tabulate_trial_counts_transitions_ignoring_zeros():
 
 
 def test_simple_and_full_tabulation_agree_on_total_actual_transitions():
-    """Behavior: simple and full tabulators agree on total transition count (basic case).
+    """Simple and full tabulators should agree on total transitions.
 
-    Arrange:
-    - Trial `[1,2,3]`, Presentation `[1,2,3]`, `size=1`.
-
-    Act:
-    - Run `simple_tabulate_trial` and `tabulate_trial`.
-
-    Assert:
-    - Sums of actual-transition vectors match and equal 2.
-
-    Why this matters:
-    - Protects against divergence between the simple and full implementations.
+    Given:
+        Matching trial and presentation sequences.
+    When:
+        Both simple and full tabulation methods are used.
+    Then:
+        The total number of transitions is identical.
     """
     trial = jnp.array([1, 2, 3], dtype=jnp.int32)
     presentation = jnp.array([1, 2, 3], dtype=jnp.int32)
@@ -375,20 +307,39 @@ def test_simple_and_full_tabulation_agree_on_total_actual_transitions():
     assert simple_count == full_count
 
 
+def test_crp_outcome_identical_with_and_without_repeats():
+    """Lag-CRP outcomes are unaffected by repeated recalls.
+
+    Given:
+        A recall trial containing a repeated item and the same trial without the
+        repeat.
+    When:
+        ``crp`` tabulates both trials.
+    Then:
+        The resulting Lag-CRP arrays are identical.
+    """
+
+    trials_with_repeat = jnp.array([[2, 3, 2, 4]], dtype=jnp.int32)
+    trials_without_repeat = jnp.array([[2, 3, 4, 0]], dtype=jnp.int32)
+    presentations = jnp.array([[1, 2, 3, 4]], dtype=jnp.int32)
+
+    with_repeat = crp.crp(trials_with_repeat, presentations, list_length=4, size=1)
+    without_repeat = crp.crp(
+        trials_without_repeat, presentations, list_length=4, size=1
+    )
+
+    assert jnp.allclose(with_repeat, without_repeat, equal_nan=True)
+
+
 def test_crp_handles_single_item_without_crashing():
-    """Behavior: `crp` handles degenerate one-item trials without raising.
+    """Handle one-item trials without raising an error.
 
-    Arrange:
-    - Trials `[[1]]`, Presentations `[[1]]`, `size=1`.
-
-    Act:
-    - Call `crp`.
-
-    Assert:
-    - Returns a JAX array of length 1 (no exception raised).
-
-    Why this matters:
-    - Ensures graceful behavior when possible transitions are zero.
+    Given:
+        A single-item trial and presentation.
+    When:
+        ``crp`` is computed.
+    Then:
+        The result is a valid JAX array with one row.
     """
     trials = jnp.array([[1]], dtype=jnp.int32)
     presentations = jnp.array([[1]], dtype=jnp.int32)
@@ -398,11 +349,14 @@ def test_crp_handles_single_item_without_crashing():
 
 
 def test_crp_jit_with_static_argnames():
-    """Ensure `crp` works when jitted with static_argnames=("size","list_length").
+    """Run ``crp`` jitted with ``static_argnames`` and compare results.
 
-    We compute the non-jitted result and compare to the jitted result using
-    `jax.jit(..., static_argnames=("size","list_length"))` to ensure the
-    compiled version returns the same values and shape.
+    Given:
+        Trials and presentations for two lists.
+    When:
+        ``crp`` is JIT-compiled with ``static_argnames``.
+    Then:
+        The compiled and uncompiled results are equal.
     """
     trials = jnp.array([[1, 2, 3], [1, 3, 2]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
@@ -418,9 +372,14 @@ def test_crp_jit_with_static_argnames():
 
 
 def test_crp_jit_with_different_size_compiles_and_runs():
-    """Sanity check that jitting with a different `size` value also runs.
+    """Compile and run ``crp`` with a different ``size`` value.
 
-    This test compiles with a non-default `size` and verifies execution.
+    Given:
+        Trials and presentations for one list.
+    When:
+        ``crp`` is JIT-compiled with a larger ``size``.
+    Then:
+        The compiled output matches the uncompiled result.
     """
     trials = jnp.array([[1, 2, 3]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3]], dtype=jnp.int32)
@@ -436,7 +395,15 @@ def test_crp_jit_with_different_size_compiles_and_runs():
 
 
 def test_plot_crp_returns_axes():
-    """`plot_crp` should return a Matplotlib ``Axes`` instance."""
+    """Return a Matplotlib ``Axes`` instance from ``plot_crp``.
+
+    Given:
+        A minimal ``RecallDataset``.
+    When:
+        ``plot_crp`` is called.
+    Then:
+        A Matplotlib ``Axes`` with a ``Figure`` is returned.
+    """
     dataset: RecallDataset = {
         "subject": jnp.array([[1], [1]], dtype=jnp.int32),
         "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
