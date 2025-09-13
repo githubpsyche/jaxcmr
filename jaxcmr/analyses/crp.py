@@ -114,19 +114,18 @@ class SimpleTabulation(Pytree):
 def simple_tabulate_trial(
     trial: Integer[Array, " recall_events"], list_length: int
 ) -> SimpleTabulation:
-    """
-    Compute Lag-CRP for uniform study lists (no repeated items).
+    """Compute Lag-CRP tabulation for a single trial with no repeated items.
 
     Args:
-        trials: int array [n_trials, n_recalls]; serial positions in 1..L, 0 pads.
-        list_length: L.
+        trial: int array [n_recall_events]; serial positions in 1..L with 0 pads.
+        list_length: Study-list length ``L``.
 
     Returns:
-        1-D float array of length (2*L - 1), indexed by lag offset (lag + (L - 1)).
+        SimpleTabulation tracking actual and available transitions.
 
-    Conventions / Guards:
-        - Ignores zeros (pads) and out-of-range positions.
-        - Divides by available transitions; zero denominators -> NaN.
+    Notes:
+        * Ignores zeros (pads) and out-of-range positions.
+        * Divides by available transitions; zero denominators yield NaN.
     """
     return lax.scan(
         lambda tabulation, recall: (tabulation.update(recall), None),
