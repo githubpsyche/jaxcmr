@@ -1,5 +1,7 @@
-import jax.numpy as jnp
 import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import pytest
 from jaxcmr.analyses import crp
 
@@ -428,3 +430,19 @@ def test_crp_jit_with_different_size_compiles_and_runs():
 
     assert result.shape == expected.shape
     assert jnp.allclose(result, expected, equal_nan=True)
+
+
+def test_plot_crp_returns_axes():
+    """`plot_crp` should return a Matplotlib ``Axes`` instance."""
+    dataset = {
+        "subject": jnp.array([[1], [1]], dtype=jnp.int32),
+        "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
+        "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
+        "recalls": jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32),
+        "pres_itemids": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
+    }
+    trial_mask = jnp.array([True, True], dtype=bool)
+    axis = crp.plot_crp(dataset, trial_mask, max_lag=1)
+    assert isinstance(axis, Axes)
+    plt.close(axis.figure)
+
