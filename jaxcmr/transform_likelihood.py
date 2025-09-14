@@ -1,7 +1,8 @@
-"""Likelihood-based loss function generator for memory-search models.
+"""Loss generator variant with a likelihood-transform hook.
 
-Provides utilities to simulate retrieval event likelihoods per trial and to
-aggregate them into a negative log-likelihood objective for fitting.
+Applies a user-specified transform to per-trial likelihood arrays before
+computing negative log-likelihood, enabling masking or exclusion of selected
+recall events without altering simulation behavior.
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type
@@ -25,7 +26,7 @@ from jaxcmr.typing import (
 def predict_and_simulate_recalls(
     model: MemorySearch, choices: Integer[Array, " recall_events"]
 ) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
-    """Returns updated model and event probabilities.
+    """Returns updated model and event probabilities for a retrieval chain.
 
     Args:
       model: Current memory search model.
@@ -37,21 +38,37 @@ def predict_and_simulate_recalls(
 
 
 class MemorySearchLikelihoodFnGenerator:
-    """Generates loss functions for a given dataset and model factory.
+    """Generates a loss function with a likelihood transformation hook.
 
-    Creates per-trial models, produces event likelihoods, and returns a callable
-    that evaluates negative log-likelihood for parameter vectors.
+    The transform runs on the per-trial likelihood matrix before aggregation
+    into negative log-likelihood, allowing masking or adjustment of selected
+    recall events while keeping simulation behavior unchanged.
     """
+
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        transform_likelihoods: Callable[
+            [Float[Array, " trials recall_events"]],
+            Float[Array, " trials recall_events"],
+        ],
     ) -> None:
-        """Initialize with dataset and connectivity for trial-conditioned models."""
+        """Initializes the generator with dataset, factory, and transform.
+
+        Args:
+          model_factory: Class implementing `MemorySearchModelFactory`.
+          dataset: Recall dataset with presentations and recalls.
+          connections: Optional connectivity matrix.
+          transform_likelihoods: Function applied to the per-trial likelihoods
+            before computing negative log-likelihood. Input and output shapes are
+            [trials, recall_events].
+        """
         self.factory = model_factory(dataset, connections)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
+        self.transform_likelihoods = transform_likelihoods
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -70,7 +87,7 @@ class MemorySearchLikelihoodFnGenerator:
         trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> MemorySearch:
-        """Returns a retrieval-ready model for a trial.
+        """Returns a retrieval-ready model for the trial's presentation list.
 
         Args:
           trial_index: Trial index to initialize.
@@ -90,8 +107,11 @@ class MemorySearchLikelihoodFnGenerator:
     ) -> Float[Array, " trials recall_events"]:
         """Returns event likelihoods using a single initialized model.
 
-        Predicts all selected trials without re-presenting items (valid only when
-        presentation lists are identical across the trials).
+        Only valid when all presentation lists match (no re-presenting).
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameter mapping.
         """
         model = self.init_model_for_retrieval(trial_indices[0], parameters)
         return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
@@ -103,7 +123,12 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, " trials recall_events"]:
-        """Returns event likelihoods with a fresh model per trial."""
+        """Returns event likelihoods with a fresh model per trial.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameter mapping.
+        """
 
         def present_and_predict_trial(i):
             model = self.init_model_for_retrieval(i, parameters)
@@ -116,18 +141,30 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach."""
-        return log_likelihood(self.base_predict_trials(trial_indices, parameters))
+        """Returns negative log-likelihood for the base approach after transform.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameter mapping.
+        """
+        raw = self.base_predict_trials(trial_indices, parameters)
+        transformed = self.transform_likelihoods(raw)
+        return log_likelihood(transformed)
 
     def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the present-and-predict approach."""
-        return log_likelihood(
-            self.present_and_predict_trials(trial_indices, parameters)
-        )
+        """Returns negative log-likelihood with per-trial models after transform.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameter mapping.
+        """
+        raw = self.present_and_predict_trials(trial_indices, parameters)
+        transformed = self.transform_likelihoods(raw)
+        return log_likelihood(transformed)
 
     def __call__(
         self,
@@ -137,8 +174,9 @@ class MemorySearchLikelihoodFnGenerator:
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
         """Returns a loss function specialized to trials and free parameters.
 
-        The loss function accepts either a single parameter vector or a matrix of
-        parameter vectors and returns corresponding negative log-likelihood values.
+        The returned function maps either a single parameter vector or a matrix of
+        parameter vectors to negative log-likelihood values, applying the
+        likelihood transformation inside the loss paths.
         """
         # Decide which approach to use, based on whether all present-lists match
         if all_rows_identical(self.present_lists[trial_indices]):
@@ -147,7 +185,11 @@ class MemorySearchLikelihoodFnGenerator:
             base_loss_fn = self.present_and_predict_trials_loss
 
         def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns negative log-likelihood for merged base and free params."""
+            """Returns negative log-likelihood for a merged parameter mapping.
+
+            Args:
+              params: Free parameter mapping to merge with `base_params`.
+            """
             return base_loss_fn(trial_indices, {**base_params, **params})
 
         @jit

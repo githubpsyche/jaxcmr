@@ -1,3 +1,9 @@
+"""Simulation utilities for memory-search models.
+
+Provides helpers to run study and free-recall simulations per trial and
+per subject, and to generate HDF5-shaped datasets from model outputs.
+"""
+
 from typing import Mapping, Optional, Sequence, Type
 
 import jax.numpy as jnp
@@ -23,12 +29,12 @@ def item_to_study_positions(
     presentation: Integer[Array, " list_length"],
     size: int,
 ) -> Integer[Array, " size"]:
-    """Return the one-indexed study positions of an item in a 1D presentation sequence.
+    """Returns one-indexed study positions for an item in a sequence.
 
     Args:
-        item: the item index.
-        presentation: the 1D presentation sequence.
-        size: number of non-zero entries to return.
+      item: Item index.
+      presentation: Presentation sequence for a single trial.
+      size: Number of nonzero matches to return.
     """
     return lax.cond(
         item == 0,
@@ -40,11 +46,11 @@ def item_to_study_positions(
 def _single_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
 ) -> tuple[MemorySearch, Integer[Array, ""]]:
-    """Return model state and choice after performing a free recall event.
+    """Returns model and choice after a free-recall event.
 
     Args:
-        model: the current memory search model, after starting retrieval.
-        rng: key for random number generation.
+      model: Retrieval-ready memory search model.
+      rng: Random key.
     """
     p_all = model.outcome_probabilities()
     choice = random.choice(rng, p_all.shape[0], p=p_all)
@@ -54,12 +60,7 @@ def _single_free_recall(
 def _maybe_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
 ) -> tuple[MemorySearch, Integer[Array, ""]]:
-    """Return model state and choice after performing a free recall event if the model is active.
-
-    Args:
-        model: the current memory search model, after starting retrieval.
-        rng: key for random number generation.
-    """
+    """Returns model and choice for a single step if active; otherwise no-op."""
     return lax.cond(
         model.is_active,
         _single_free_recall,
@@ -71,26 +72,26 @@ def _maybe_free_recall(
 
 def simulate_free_recall(
     model: MemorySearch, list_length: int, rng: PRNGKeyArray
-) -> tuple[MemorySearch, Integer[Array, ""] | PRNGKeyArray]:
-    """Return model state and choices after performing free recall events until termination.
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Returns model and choices from repeated free-recall steps.
 
     Args:
-        model: the current memory search model, after starting retrieval.
-        list_length: the length of the study and recall sequences.
-        rng: key for random number generation.
+      model: Retrieval-ready memory search model.
+      list_length: Upper bound on recall-event steps to simulate.
+      rng: Random key.
     """
     return lax.scan(_maybe_free_recall, model, random.split(rng, list_length))
 
 
 def simulate_study_and_free_recall(
     model: MemorySearch, present: Integer[Array, " study_events"], rng: PRNGKeyArray
-) -> tuple[MemorySearch, Integer[Array, ""]]:
-    """Return model state and choices after simulating a trial.
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Simulates study then free recall for a single trial.
 
     Args:
-        model: the current memory search model.
-        present: the indices of the items to present (1-indexed).
-        rng: key for random number generation.
+      model: Memory search model in study mode.
+      present: One-indexed study sequence for the trial.
+      rng: Random key.
     """
     model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
     model = model.start_retrieving()
@@ -98,7 +99,7 @@ def simulate_study_and_free_recall(
 
 
 class MemorySearchSimulator:
-    """Stateless wrapper that can be vmapped over **trials**."""
+    """Stateless trial-level simulator usable with vmap over trials."""
 
     def __init__(
         self,
@@ -106,7 +107,7 @@ class MemorySearchSimulator:
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
+        """Initializes trial-conditioned model creation from dataset and connections."""
         factory = model_factory(dataset, connections)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
@@ -118,7 +119,12 @@ class MemorySearchSimulator:
         subject_index: Integer[Array, " subject_count"],
         parameters: Mapping[str, Float_],
         rng: PRNGKeyArray,
-    ) -> Integer[Array, " recalls"]:
+    ) -> Integer[Array, " recall_events"]:
+        """Returns recalled item indices for a single trial.
+
+        Uses per-subject parameters to create the trial model and simulates
+        study plus free recall for that trial.
+        """
         model = self.create_model(
             trial_index, tree_map(lambda p: p[subject_index], parameters)
         )
@@ -130,16 +136,15 @@ class MemorySearchSimulator:
 def preallocate_for_h5_dataset(
     data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
 ) -> RecallDataset:
-    """Returns dict with same keys as `data`; each is an array replicated by `experiment_count`.
+    """Returns a dataset dict replicated by experiment_count for selected trials.
 
-    Arrays are allocated for each key in the input data.
-    For 'recalls', the array is initialized with zeros.
-    Note that replication of optional keys tied to recall behavior will be erroneous.
+    Arrays are replicated for each key in the input. Optional keys linked to
+    recall behavior may not generalize across replication.
 
     Args:
-        data: Dictionary containing dataset arrays.
-        trial_mask: Boolean array to select trials.
-        experiment_count: Number of times to replicate each array.
+      data: Input dataset.
+      trial_mask: Mask selecting trials to include.
+      experiment_count: Replication count per trial.
     """
     return tree_map(
         lambda x: jnp.repeat(x[trial_mask], experiment_count, axis=0),
@@ -157,18 +162,17 @@ def simulate_h5_from_h5(
     rng: PRNGKeyArray,
     size: int = 3,
 ) -> RecallDataset:
-    """
-    Simulates dataset from existing dataset using a memory search model parameterized by subject.
+    """Returns a simulated dataset using per-subject parameters from an H5-like dataset.
 
     Args:
-        model_factory: Factory class for creating memory search model instances.
-        dataset: Original H5 dataset containing trial data.
-        connections: Optional connectivity matrix between items in the word pool.
-        parameters: Dictionary of simulation parameters, parameterized per subject.
-        trial_mask: Boolean array specifying which trials to simulate.
-        experiment_count: Number of simulation iterations per trial.
-        rng: PRNGKeyArray for random number generation.
-        size: Maximum number of study positions to return for each item during reindexing.
+      model_factory: Factory class for memory search models.
+      dataset: Original dataset containing trial data.
+      connections: Optional connectivity among word-pool items.
+      parameters: Simulation parameters per subject.
+      trial_mask: Mask selecting trials to simulate.
+      experiment_count: Number of replications per selected trial.
+      rng: Random key.
+      size: Max number of study positions to keep when reindexing recalls.
     """
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
@@ -204,24 +208,19 @@ def parameter_shifted_simulate_h5_from_h5(
     rng: PRNGKeyArray,
     size: int = 3,
 ) -> Sequence[RecallDataset]:
-    """
-    Simulates multiple H5 datasets by systematically varying a specified parameter.
+    """Returns multiple simulated datasets by sweeping a single parameter.
 
     Args:
-        model_factory: Factory class for creating memory search model instances.
-        dataset: Original H5 dataset containing trial data.
-        connections: Optional connectivity matrix between items in the word pool.
-        parameters: Dictionary of simulation parameters, parameterized per subject.
-        trial_mask: Boolean array specifying which trials to simulate.
-        experiment_count: Number of simulation iterations per trial.
-        varied_parameter: The parameter key to be varied across simulations.
-        parameter_values: Sequence of values to assign to the varied parameter.
-        rng: PRNGKeyArray for random number generation.
-        size: Maximum number of study positions to return for each item during reindexing.
-
-    Returns:
-        A list of H5-like datasets (dictionaries), each corresponding to simulation results generated
-        with a different value for the varied parameter.
+      model_factory: Factory class for memory search models.
+      dataset: Original dataset containing trial data.
+      connections: Optional connectivity among word-pool items.
+      parameters: Simulation parameters per subject.
+      trial_mask: Mask selecting trials to simulate.
+      experiment_count: Number of replications per selected trial.
+      varied_parameter: Name of the parameter to sweep.
+      parameter_values: Values to assign to the swept parameter.
+      rng: Random key.
+      size: Max number of study positions to keep when reindexing recalls.
     """
 
     results: list[RecallDataset] = []
