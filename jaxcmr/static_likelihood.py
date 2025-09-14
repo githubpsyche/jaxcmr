@@ -124,7 +124,7 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
-        free_params: Iterable[str],
+        free_param_names: Iterable[str],
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
         """
         Return a loss function that:
@@ -148,7 +148,7 @@ class MemorySearchLikelihoodFnGenerator:
             """
             x is shape (n_params,) for a single set of free parameters.
             """
-            param_dict = {key: x[i] for i, key in enumerate(free_params)}
+            param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
             return specialized_loss_fn(param_dict)
 
         @jit
@@ -159,7 +159,7 @@ class MemorySearchLikelihoodFnGenerator:
             """
 
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_params)}
+                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
                 return specialized_loss_fn(param_dict)
 
             # vmap applies loss_for_one_sample across the leading dimension of x
