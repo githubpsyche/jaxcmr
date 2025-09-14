@@ -19,6 +19,7 @@ from jaxcmr.typing import (
     Integer,
     MemorySearch,
     MemorySearchModelFactory,
+    LossFnGenerator,
     RecallDataset,
 )
 
@@ -211,3 +212,31 @@ class MemorySearchLikelihoodFnGenerator:
 
         # Return a function that checks the dimensionality of x at runtime
         return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+
+class ExcludeFirstRecallLikelihoodFnGenerator:
+    """Returns loss while ignoring the first recall event in each trial.
+
+    Initializes a transform-enabled generator internally with a mask that
+    neutralizes the first event.
+    """
+
+    def __init__(
+        self,
+        model_factory: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        self._inner = MemorySearchLikelihoodFnGenerator(
+            model_factory,
+            dataset,
+            connections,
+            transform_likelihoods=lambda lik: lik.at[:, 0].set(1.0),
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+    ) -> Callable[[np.ndarray], Float[Array, ""]]:
+        return self._inner(trial_indices, base_params, free_param_names)
