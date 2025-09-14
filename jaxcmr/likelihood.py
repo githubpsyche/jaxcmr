@@ -73,7 +73,7 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
-    ) -> Integer[Array, " trials recall_events"]:
+    ) -> Float[Array, " trials recall_events"]:
         """
         Predict outcomes for each trial using a single initial model (from trial 0),
         skipping re-experiencing items for each subsequent trial.
@@ -88,7 +88,7 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
-    ) -> Integer[Array, " trials recall_events"]:
+    ) -> Float[Array, " trials recall_events"]:
         """
         Predict outcomes for each trial by creating a new model for each trial
         (re-experiencing items per trial).
