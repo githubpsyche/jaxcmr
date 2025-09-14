@@ -48,7 +48,13 @@ class MemorySearchLikelihoodFnGenerator:
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
-        """Initialize with dataset and connectivity for trial-conditioned models."""
+        """Initialize with dataset and connectivity for trial-conditioned models.
+
+        Args:
+          model_factory: Factory class for trial-conditioned memory-search models.
+          dataset: Trial-wise presentations and recalls.
+          connections: Optional connectivity among word-pool items.
+        """
         self.factory = model_factory(dataset, connections)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
@@ -92,6 +98,10 @@ class MemorySearchLikelihoodFnGenerator:
 
         Predicts all selected trials without re-presenting items (valid only when
         presentation lists are identical across the trials).
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameters.
         """
         model = self.init_model_for_retrieval(trial_indices[0], parameters)
         return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
@@ -103,7 +113,12 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, " trials recall_events"]:
-        """Returns event likelihoods with a fresh model per trial."""
+        """Returns event likelihoods with a fresh model per trial.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameters.
+        """
 
         def present_and_predict_trial(i):
             model = self.init_model_for_retrieval(i, parameters)
@@ -116,7 +131,12 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach."""
+        """Returns negative log-likelihood for the base approach.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameters.
+        """
         return log_likelihood(self.base_predict_trials(trial_indices, parameters))
 
     def present_and_predict_trials_loss(
@@ -124,7 +144,12 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the present-and-predict approach."""
+        """Returns negative log-likelihood for the present-and-predict approach.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameters.
+        """
         return log_likelihood(
             self.present_and_predict_trials(trial_indices, parameters)
         )
@@ -137,8 +162,13 @@ class MemorySearchLikelihoodFnGenerator:
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
         """Returns a loss function specialized to trials and free parameters.
 
-        The loss function accepts either a single parameter vector or a matrix of
+        The returned function accepts either one parameter vector or a matrix of
         parameter vectors and returns corresponding negative log-likelihood values.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          base_params: Fixed parameters.
+          free_param_names: Names and order of free parameters.
         """
         # Decide which approach to use, based on whether all present-lists match
         if all_rows_identical(self.present_lists[trial_indices]):
