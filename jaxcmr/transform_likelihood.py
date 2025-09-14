@@ -19,7 +19,6 @@ from jaxcmr.typing import (
     Integer,
     MemorySearch,
     MemorySearchModelFactory,
-    LossFnGenerator,
     RecallDataset,
 )
 

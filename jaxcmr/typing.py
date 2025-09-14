@@ -37,6 +37,7 @@ __all__ = [
     "LossFnGenerator",
     "FitResult",
     "FittingAlgorithm",
+    "TrialSimulator",
 ]
 
 
@@ -358,4 +359,31 @@ class FittingAlgorithm(Protocol):
         fit_to_subjects: bool = True,
     ) -> FitResult:
         """Convenience wrapper for either single-fit or subject-by-subject fitting."""
+        ...
+
+
+@runtime_checkable
+class TrialSimulator(Protocol):
+    """Returns model and recalled sequence for a single trial.
+
+    Encapsulates a trial-level simulation step that consumes a study sequence
+    and an initial recalls buffer, and produces the updated model alongside
+    the simulated recall events.
+    """
+
+    def __call__(
+        self,
+        model: MemorySearch,
+        present: Integer[Array, " study_events"],
+        trial: Integer[Array, " recalls"],
+        rng: PRNGKeyArray,
+    ) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+        """Returns model and simulated recall sequence.
+
+        Args:
+          model: Memory search model to update during the trial.
+          present: One-indexed study sequence for the trial.
+          trial: One-indexed recall sequence for the trial (same indexing as present).
+          rng: Random key.
+        """
         ...

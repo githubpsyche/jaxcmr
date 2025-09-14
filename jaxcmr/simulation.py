@@ -7,6 +7,7 @@ per subject, and to generate HDF5-shaped datasets from model outputs.
 from typing import Mapping, Optional, Sequence, Type
 
 import jax.numpy as jnp
+import numpy as np
 from jax import lax, random, vmap
 from jax.tree_util import tree_map
 
@@ -21,6 +22,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     PRNGKeyArray,
     RecallDataset,
+    TrialSimulator,
 )
 
 
@@ -84,18 +86,43 @@ def simulate_free_recall(
 
 
 def simulate_study_and_free_recall(
-    model: MemorySearch, present: Integer[Array, " study_events"], rng: PRNGKeyArray
+    model: MemorySearch,
+    present: Integer[Array, " study_events"],
+    trial: Integer[Array, " recalls"],
+    rng: PRNGKeyArray,
 ) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
     """Simulates study then free recall for a single trial.
 
     Args:
       model: Memory search model in study mode.
       present: One-indexed study sequence for the trial.
+      trial: One-indexed recall sequence for the trial (same indexing as present).
       rng: Random key.
     """
     model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
     model = model.start_retrieving()
     return simulate_free_recall(model, present.size, rng)
+
+
+def simulate_study_first_recall_and_free_recall(
+    model: MemorySearch,
+    present: Integer[Array, " study_events"],
+    trial: Integer[Array, " recalls"],
+    rng: PRNGKeyArray,
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Simulates study then first recall then free recall for a single trial.
+
+    Args:
+      model: Memory search model in study mode.
+      present: One-indexed study sequence for the trial.
+      trial: One-indexed recall sequence for the trial (same indexing as present).
+      rng: Random key.
+    """
+    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = model.start_retrieving()
+    model = model.retrieve(trial[0])
+    model, recalls = simulate_free_recall(model, present.size - 1, rng)
+    return model, jnp.concatenate((trial[:1], recalls))
 
 
 class MemorySearchSimulator:
@@ -106,12 +133,25 @@ class MemorySearchSimulator:
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
     ) -> None:
         """Initializes trial-conditioned model creation from dataset and connections."""
         factory = model_factory(dataset, connections)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.empty = jnp.zeros(dataset["recalls"].shape[-1], jnp.int32)
+        self._simulate_trial_fn = simulate_trial_fn
+
+        # Reindex the recalled items so they match the "present_lists" indexing
+        trials = np.array(dataset["recalls"])
+        for trial_index in range(trials.shape[0]):
+            present = self.present_lists[trial_index]
+            recall = trials[trial_index]
+            reindexed = np.array(
+                [(present[item - 1] if item else 0) for item in recall]
+            )
+            trials[trial_index] = reindexed
+
+        self.trials = jnp.array(trials)
 
     def simulate_trial(
         self,
@@ -122,14 +162,13 @@ class MemorySearchSimulator:
     ) -> Integer[Array, " recall_events"]:
         """Returns recalled item indices for a single trial.
 
-        Uses per-subject parameters to create the trial model and simulates
-        study plus free recall for that trial.
+        Uses per-subject parameters to create the trial model and simulates that trial.
         """
         model = self.create_model(
             trial_index, tree_map(lambda p: p[subject_index], parameters)
         )
-        return simulate_study_and_free_recall(
-            model, self.present_lists[trial_index], rng
+        return self._simulate_trial_fn(
+            model, self.present_lists[trial_index], self.trials[trial_index], rng
         )[1]
 
 
@@ -161,6 +200,7 @@ def simulate_h5_from_h5(
     experiment_count: int,
     rng: PRNGKeyArray,
     size: int = 3,
+    simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
 ) -> RecallDataset:
     """Returns a simulated dataset using per-subject parameters from an H5-like dataset.
 
@@ -173,10 +213,13 @@ def simulate_h5_from_h5(
       experiment_count: Number of replications per selected trial.
       rng: Random key.
       size: Max number of study positions to keep when reindexing recalls.
+      simulate_trial_fn: Trial-level simulation function to use.
     """
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
-    simulator = MemorySearchSimulator(model_factory, sim_h5, connections)
+    simulator = MemorySearchSimulator(
+        model_factory, sim_h5, connections, simulate_trial_fn
+    )
 
     # Flat trial + subject index vectors (static shapes)
     total_trials = sim_h5["subject"].size
@@ -207,6 +250,7 @@ def parameter_shifted_simulate_h5_from_h5(
     parameter_values: Sequence[float],
     rng: PRNGKeyArray,
     size: int = 3,
+    simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
 ) -> Sequence[RecallDataset]:
     """Returns multiple simulated datasets by sweeping a single parameter.
 
@@ -221,6 +265,7 @@ def parameter_shifted_simulate_h5_from_h5(
       parameter_values: Values to assign to the swept parameter.
       rng: Random key.
       size: Max number of study positions to keep when reindexing recalls.
+      simulate_trial_fn: Trial-level simulation function to use.
     """
 
     results: list[RecallDataset] = []
@@ -239,6 +284,7 @@ def parameter_shifted_simulate_h5_from_h5(
             experiment_count,
             this_rng,
             size,
+            simulate_trial_fn,
         )
         results.append(sim_data)
 

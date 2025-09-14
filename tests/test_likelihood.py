@@ -163,7 +163,7 @@ def test_call_uses_base_path_when_presentations_identical():
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
     free = ["encoding_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_params=free)
+    f = gen(trial_idx, base_params=params, free_param_names=free)
 
     # Act / When
     val = f(np.array([params["encoding_drift_rate"]], dtype=float))
@@ -195,7 +195,7 @@ def test_call_uses_present_and_predict_when_presentations_differ():
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
     free = ["encoding_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_params=free)
+    f = gen(trial_idx, base_params=params, free_param_names=free)
 
     # Act / When
     val = f(np.array([params["encoding_drift_rate"]], dtype=float))
@@ -227,7 +227,7 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
     free = ["encoding_drift_rate", "recall_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_params=free)
+    f = gen(trial_idx, base_params=params, free_param_names=free)
 
     x_single = np.array([params["encoding_drift_rate"], params["recall_drift_rate"]])
     # SciPy's vectorized DE calls expect shape (n_params, n_samples)
