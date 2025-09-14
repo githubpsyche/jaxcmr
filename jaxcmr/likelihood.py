@@ -157,7 +157,7 @@ class MemorySearchLikelihoodFnGenerator:
             """
 
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_params)}
+                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
                 return specialized_loss_fn(param_dict)
 
             # vmap applies loss_for_one_sample across the leading dimension of x

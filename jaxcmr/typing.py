@@ -1,6 +1,7 @@
 from typing import (
     Any,
     Callable,
+    Iterable,
     Mapping,
     NotRequired,
     Optional,
@@ -230,6 +231,7 @@ class Memory(Protocol):
         """
         ...
 
+
 @runtime_checkable
 class Context(Protocol):
     """Context representation for memory search models.
@@ -273,7 +275,7 @@ class LossFnGenerator(Protocol):
         self,
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
-        free_params: Mapping[str, list[float]],
+        free_param_names: Iterable[str],
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
         """Return the loss value for the specified model parameters."""
         ...
