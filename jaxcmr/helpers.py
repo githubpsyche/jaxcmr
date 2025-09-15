@@ -26,7 +26,7 @@ def have_common_nonzero(
 
 def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
     """Return whether all rows in the 2D array are identical."""
-    return jnp.all(arr == arr[0])  # type: ignore
+    return jnp.all(arr == arr[0]).item()
 
 
 def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array, ""]:
