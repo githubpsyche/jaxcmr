@@ -39,3 +39,45 @@ format:
       \usepackage{setspace,etoolbox}
       \AtBeginEnvironment{titlepage}{\begingroup\singlespacing}
       \AtEndEnvironment{titlepage}{\endgroup}
+      %% Remove header lines from pages ---------------------------
+      \setheadsepline{0pt}
+       % Move page number from header to centered footer
+      \clearpairofpagestyles   % clear head/foot for the current ('thesis') pagestyle
+      \cfoot{\pagemark}        % page number at bottom center
+      \setchapterpagestyle{thesis} % use same style on chapter-opening pages
+      % Chapter headings at exactly 12pt
+      \RenewDocumentCommand{\chapterfont}{}{%
+        \bfseries\fontsize{12pt}{14.4pt}\selectfont
+      }
+      \RenewDocumentCommand{\chapterprefixfont}{}{%
+        \bfseries\fontsize{12pt}{14.4pt}\selectfont
+      }
+
+      % (Optional) tighten spacing since the font is smaller
+      \RenewDocumentCommand{\abovechapterskip}{}{\vspace*{0pt}}
+      \RenewDocumentCommand{\chapterinbetweenskip}{}{\vspace*{8pt}}
+      \RenewDocumentCommand{\chapterbelowskip}{}{\vspace*{12pt}}
+
+      % 12pt for all sectioning levels
+      \usepackage{titlesec}
+
+      % 12pt headings (bold); change \bfseries -> \normalfont for non-bold
+      \titleformat{\section}
+        {\bfseries\fontsize{12pt}{14.4pt}\selectfont}{\thesection}{1em}{}
+      \titlespacing*{\section}{0pt}{12pt}{6pt}
+
+      \titleformat{\subsection}
+        {\bfseries\fontsize{12pt}{14.4pt}\selectfont}{\thesubsection}{1em}{}
+      \titlespacing*{\subsection}{0pt}{10pt}{5pt}
+
+      \titleformat{\subsubsection}
+        {\bfseries\fontsize{12pt}{14.4pt}\selectfont}{\thesubsubsection}{1em}{}
+      \titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
+
+      % Paragraphs are run-in by default; keep them 12pt too
+      \titleformat{\paragraph}[runin]
+        {\bfseries\fontsize{12pt}{14.4pt}\selectfont}{\theparagraph}{0.75em}{}[.]
+      \titlespacing*{\paragraph}{0pt}{6pt}{0.75em}
+
+      % Never insert a blank page when "clearing double page"
+      \let\cleardoublepage\clearpage
