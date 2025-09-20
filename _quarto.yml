@@ -1,0 +1,30 @@
+project:
+  type: website
+  # OPTION A (no CI): render locally into docs/ for GitHub Pages
+  output-dir: docs
+  # pre-render: scripts/render-projects.sh
+  resources:
+    - "projects/*/index.html"
+    - "projects/*/*_files/**"
+
+website:
+  title: "jaxcmr"
+  site-url: https://jordangunn.github.io/jaxcmr
+  navbar:
+    left:
+      - text: Posts
+        href: posts/index.qmd
+      - text: Projects
+        menu:
+          - text: Overview
+            href: projects/index.qmd
+          - text: Sample Paper
+            href: projects/first/index.html
+
+format:
+  html: default
+
+# Optional: if you want KB wikilinks stripped/linked in includes
+# filters:
+#   - filters/wikilinks.lua
+# wikilinks-mode: strip
