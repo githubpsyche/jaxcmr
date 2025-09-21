@@ -1,7 +1,7 @@
 project:
   type: website
   # OPTION A (no CI): render locally into docs/ for GitHub Pages
-  output-dir: docs
+  output-dir: docs/home
   # pre-render: scripts/render-projects.sh
   resources:
     - "projects/*/index.html"
@@ -12,19 +12,22 @@ project:
 
 website:
   title: "jaxcmr"
-  site-url: https://jordangunn.github.io/jaxcmr
+  site-url: https://githubpsyche.github.io/jaxcmr
   navbar:
     left:
       - text: Posts
         href: posts/index.qmd
       - text: Projects
-        href: projects/index.html
         menu:
           - text: CRU to CMR
-            href: projects/cru_to_cmr/index.html
+            href: ../projects/cru_to_cmr/index.html
+          - text: Thesis
+            href: ../projects/thesis/index.html
 
 format:
-  html: default
+  html: 
+    default: true
+    theme: darkly
 
 # Optional: if you want KB wikilinks stripped/linked in includes
 # filters:

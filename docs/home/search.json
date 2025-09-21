@@ -1,0 +1,58 @@
+[
+  {
+    "objectID": "posts/index.html",
+    "href": "posts/index.html",
+    "title": "Posts",
+    "section": "",
+    "text": "Have a look at the latest posts below.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello, World\n\n\n\n\n\nA quick hello and outline of what jaxcmr will cover.\n\n\n\n\n\nSep 17, 2025\n\n\nJordan Gunn\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "jaxcmr",
+    "section": "",
+    "text": "jaxcmr is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall. It includes utilities for simulation, likelihood evaluation, fitting, and common behavioral analyses.\nSee the Posts and Projects for background and applications."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "jaxcmr",
+    "section": "Installation",
+    "text": "Installation\npip install jaxcmr\nPython 3.12+ is required. The jax dependency installs automatically; consult JAX documentation if you need a specific accelerator build."
+  },
+  {
+    "objectID": "index.html#quick-start",
+    "href": "index.html#quick-start",
+    "title": "jaxcmr",
+    "section": "Quick start",
+    "text": "Quick start\nSimulate a single free-recall trial with a basic CMR model:\nfrom jax import random\nimport jax.numpy as jnp\nfrom jaxcmr.models.cmr import BaseCMR\nfrom jaxcmr.simulation import simulate_study_and_free_recall\n\n# Toy CMR parameters (example values)\nparams = {\n    \"encoding_drift_rate\": 0.5,\n    \"start_drift_rate\": 0.5,\n    \"recall_drift_rate\": 0.5,\n    \"shared_support\": 0.05,\n    \"item_support\": 0.25,\n    \"primacy_scale\": 1.0,\n    \"primacy_decay\": 0.6,\n    \"learning_rate\": 0.5,\n    \"stop_probability_scale\": 0.05,\n    \"stop_probability_growth\": 0.2,\n    \"choice_sensitivity\": 0.6,\n}\n\nlist_length = 5\npresent = jnp.arange(1, list_length + 1)  # [1,2,3,4,5]\nrng = random.PRNGKey(0)\n\nmodel = BaseCMR(list_length, params)\nmodel, recalls = simulate_study_and_free_recall(model, present, rng)\nprint(recalls)  # e.g., array of recalled within-list item numbers\nInspect outcome probabilities step-by-step:\nfrom jax import lax\n\n# Study the list, then enter retrieval mode\nmodel = BaseCMR(list_length, params)\nmodel = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)\nmodel = model.start_retrieving()\n\n# Probabilities for stopping (index 0) and recalling each item (1..list_length)\np0_and_items = model.outcome_probabilities()\nprint(p0_and_items)\n\n# After retrieving an item (e.g., item 5), update the model and recompute\nmodel = model.retrieve(5)\nprint(model.outcome_probabilities())"
+  },
+  {
+    "objectID": "index.html#documentation-and-issues",
+    "href": "index.html#documentation-and-issues",
+    "title": "jaxcmr",
+    "section": "Documentation and Issues",
+    "text": "Documentation and Issues\n\nDocs and examples: https://githubpsyche.github.io/jaxcmr/\nSource and issues: https://github.com/githubpsyche/jaxcmr"
+  },
+  {
+    "objectID": "posts/2025-09-17-hello-world/index.html",
+    "href": "posts/2025-09-17-hello-world/index.html",
+    "title": "Hello, World",
+    "section": "",
+    "text": "Welcome to jaxcmr! This first post sketches the project and what you can expect next."
+  },
+  {
+    "objectID": "posts/2025-09-17-hello-world/index.html#why-this-project",
+    "href": "posts/2025-09-17-hello-world/index.html#why-this-project",
+    "title": "Hello, World",
+    "section": "Why this project?",
+    "text": "Why this project?\nI am exploring how emotional context shapes the way we store and retrieve memories. Expect a mix of literature reviews, data deep dives, and modeling write-ups."
+  },
+  {
+    "objectID": "posts/2025-09-17-hello-world/index.html#coming-up",
+    "href": "posts/2025-09-17-hello-world/index.html#coming-up",
+    "title": "Hello, World",
+    "section": "Coming up",
+    "text": "Coming up\n\nSummaries of foundational papers on affect and memory\nWalkthroughs of the dataset powering jaxcmr\nNotes on the modeling experiments I’m running\n\nThanks for reading—more soon."
+  }
+]
