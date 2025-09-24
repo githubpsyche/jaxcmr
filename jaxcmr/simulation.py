@@ -125,6 +125,28 @@ def simulate_study_first_recall_and_free_recall(
     return model, jnp.concatenate((trial[:1], recalls))
 
 
+def simulate_study_free_recall_and_forced_stop(
+    model: MemorySearch,
+    present: Integer[Array, " study_events"],
+    trial: Integer[Array, " recalls"],
+    rng: PRNGKeyArray,
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Returns simulated recall events with stop timing fixed by the trial vector.
+
+    The returned model reflects the unconstrained simulation; recall events are
+    post-processed by zeroing indices wherever the observed trial encodes a stop
+    (i.e., `trial != 0`).
+
+    Args:
+      model: Memory search model in study mode.
+      present: One-indexed study sequence for the trial.
+      trial: Observed recall sequence whose first zero marks termination timing.
+      rng: Random key.
+    """
+    model, recalls = simulate_study_and_free_recall(model, present, trial, rng)
+    return model, recalls * (trial != 0)
+
+
 class MemorySearchSimulator:
     """Stateless trial-level simulator usable with vmap over trials."""
 
