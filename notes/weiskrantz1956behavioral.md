@@ -1,0 +1,5 @@
+# Weiskrantz, L. (1956). Behavioral changes associated with ablation of the amygdaloid complex in monkeys. Journal of comparative and physiological psychology, 49(4), 381.
+
+This seems to be the first demonstration of [[amygdala]] lesions impairing stimulus-reinforcement associations, cited whenever this topic is discussed. This is at least how it's characterized in the opening of [[CahillMcGaugh1999]].
+
+> Following lesions to the amygdala and medial temporal pole or control lesions in the inferior temporal convexity or sham operations, the following behavioral effects of amygdalar lesions were noted: (1) increased tameness and lessening or disappearance of previously acquired fear responses, (2) more rapid extinction of conditioned avoidance, the response having been established preoperatively, (3) no differences in retention of avoidance behavior, but a slower acquisition rate which they shared with the temporal control animals. "It is suggested that the effect of amygdalectomy is to make it difficult for animals to identify reinforcing stimuli." 
