@@ -1,8 +1,9 @@
-"""Loss generator variant with a likelihood-transform hook.
+"""Loss generator variant with a likelihood-masking hook.
 
-Applies a user-specified transform to per-trial likelihood arrays before
-computing negative log-likelihood, enabling masking or exclusion of selected
-recall events without altering simulation behavior.
+Applies a user-specified mask to per-trial likelihood arrays before computing
+negative log-likelihood, enabling exclusion of selected recall events without
+altering simulation behavior. Mask entries of 1 retain events; 0 neutralizes
+them.
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type
@@ -14,6 +15,7 @@ from jax import numpy as jnp
 from jaxcmr.helpers import all_rows_identical, log_likelihood
 from jaxcmr.typing import (
     Array,
+    Bool,
     Float,
     Float_,
     Integer,
@@ -21,6 +23,10 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     RecallDataset,
 )
+
+LikelihoodMaskFn = Callable[
+    [Integer[Array, " recall_events"]], Bool[Array, " recall_events"]
+]
 
 
 def predict_and_simulate_recalls(
@@ -37,12 +43,35 @@ def predict_and_simulate_recalls(
     )
 
 
-class MemorySearchLikelihoodFnGenerator:
-    """Generates a loss function with a likelihood transformation hook.
+def mask_trailing_terminations(
+    recalls: Integer[Array, " recall_events"],
+) -> Bool[Array, " recall_events"]:
+    """Returns keep-mask that retains nonzero recall events.
 
-    The transform runs on the per-trial likelihood matrix before aggregation
-    into negative log-likelihood, allowing masking or adjustment of selected
-    recall events while keeping simulation behavior unchanged.
+    Args:
+      recalls: Recall indices for a single trial.
+    """
+    return jnp.not_equal(recalls, 0)
+
+
+def mask_first_recall(
+    recalls: Integer[Array, " recall_events"],
+) -> Bool[Array, " recall_events"]:
+    """Returns keep-mask that drops the first recall event in a trial.
+
+    Args:
+      recalls: Recall indices for a single trial.
+    """
+    mask = jnp.ones_like(recalls, dtype=bool)
+    return mask.at[0].set(False)
+
+
+class MemorySearchLikelihoodFnGenerator:
+    """Generates a loss function with a likelihood masking hook.
+
+    The mask identifies recall events to retain before aggregation into
+    negative log-likelihood. Mask values of False neutralize the event while
+    keeping simulation behavior unchanged.
     """
 
     def __init__(
@@ -50,25 +79,20 @@ class MemorySearchLikelihoodFnGenerator:
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
-        transform_likelihoods: Callable[
-            [Float[Array, " trials recall_events"]],
-            Float[Array, " trials recall_events"],
-        ],
+        mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
-        """Initializes the generator with dataset, factory, and transform.
+        """Initializes the generator with dataset, factory, and mask.
 
         Args:
           model_factory: Class implementing `MemorySearchModelFactory`.
           dataset: Recall dataset with presentations and recalls.
           connections: Optional connectivity matrix.
-          transform_likelihoods: Function applied to the per-trial likelihoods
-            before computing negative log-likelihood. Input and output shapes are
-            [trials, recall_events].
+          mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
         self.factory = model_factory(dataset, connections)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.transform_likelihoods = transform_likelihoods
+        self.mask_likelihoods = vmap(mask_likelihoods)
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -136,35 +160,53 @@ class MemorySearchLikelihoodFnGenerator:
 
         return vmap(present_and_predict_trial)(trial_indices)
 
+    def _apply_mask(
+        self,
+        raw_likelihoods: Float[Array, " trials recall_events"],
+        trial_indices: Integer[Array, " trials"],
+    ) -> Float[Array, " trials recall_events"]:
+        """Returns likelihoods with masked events neutralized.
+
+        Mask entries set to True keep the original event likelihood; False
+        entries are replaced with 1.0 to neutralize their contribution.
+
+        Args:
+          raw_likelihoods: Per-trial event likelihoods prior to masking.
+          trial_indices: Trials associated with the likelihood rows.
+        """
+        recalls = self.trials[trial_indices]
+        mask = self.mask_likelihoods(recalls)
+        return raw_likelihoods * mask + (1.0 - mask)
+
     def base_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach after transform.
+        """Returns negative log-likelihood for the base approach after masking.
 
         Args:
           trial_indices: Trials to evaluate.
           parameters: Model parameter mapping.
         """
         raw = self.base_predict_trials(trial_indices, parameters)
-        transformed = self.transform_likelihoods(raw)
-        return log_likelihood(transformed)
+        masked = self._apply_mask(raw, trial_indices)
+        return log_likelihood(masked)
 
     def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood with per-trial models after transform.
+        """Returns negative log-likelihood with per-trial models after masking.
 
         Args:
           trial_indices: Trials to evaluate.
           parameters: Model parameter mapping.
         """
         raw = self.present_and_predict_trials(trial_indices, parameters)
-        transformed = self.transform_likelihoods(raw)
-        return log_likelihood(transformed)
+        masked = self._apply_mask(raw, trial_indices)
+        return log_likelihood(masked)
 
     def __call__(
         self,
@@ -176,7 +218,7 @@ class MemorySearchLikelihoodFnGenerator:
 
         The returned function maps either a single parameter vector or a matrix of
         parameter vectors to negative log-likelihood values, applying the
-        likelihood transformation inside the loss paths.
+        likelihood mask inside the loss paths.
         """
         # Decide which approach to use, based on whether all present-lists match
         if all_rows_identical(self.present_lists[trial_indices]):
@@ -212,10 +254,11 @@ class MemorySearchLikelihoodFnGenerator:
         # Return a function that checks the dimensionality of x at runtime
         return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
 
+
 class ExcludeFirstRecallLikelihoodFnGenerator:
     """Returns loss while ignoring the first recall event in each trial.
 
-    Initializes a transform-enabled generator internally with a mask that
+    Initializes a mask-enabled generator internally with a helper that
     neutralizes the first event.
     """
 
@@ -229,7 +272,37 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
             model_factory,
             dataset,
             connections,
-            transform_likelihoods=lambda lik: lik.at[:, 0].set(1.0),
+            mask_likelihoods=mask_first_recall,
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+    ) -> Callable[[np.ndarray], Float[Array, ""]]:
+        return self._inner(trial_indices, base_params, free_param_names)
+
+
+class ExcludeTerminationLikelihoodFnGenerator:
+    """Returns loss while ignoring trailing termination events.
+
+    Trailing zeros in the recall matrix denote explicit termination actions.
+    Neutralizing them avoids penalizing lists for padding or early stopping
+    conventions while keeping other recall events intact.
+    """
+
+    def __init__(
+        self,
+        model_factory: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    ) -> None:
+        self._inner = MemorySearchLikelihoodFnGenerator(
+            model_factory,
+            dataset,
+            connections,
+            mask_likelihoods=mask_trailing_terminations,
         )
 
     def __call__(
