@@ -5,7 +5,7 @@ from typing import Callable, Iterable, List, Optional, Sequence
 import h5py
 import jax.numpy as jnp
 from jax import vmap
-import numpy as np # preserved here in order to evaluate some trial queries
+import numpy as np  # preserved here in order to evaluate some trial queries
 
 from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
 
