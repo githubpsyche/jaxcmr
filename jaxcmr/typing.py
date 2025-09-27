@@ -35,6 +35,7 @@ __all__ = [
     "Memory",
     "Context",
     "LossFnGenerator",
+    "LikelihoodMaskFn",
     "FitResult",
     "FittingAlgorithm",
     "TrialSimulator",
@@ -256,6 +257,21 @@ class Context(Protocol):
         Args:
             context_input: the input representation to be integrated into the contextual state.
             drift_rate: The drift rate parameter.
+        """
+        ...
+
+
+@runtime_checkable
+class LikelihoodMaskFn(Protocol):
+    """Defines the callable signature for recall likelihood masking."""
+
+    def __call__(
+        self, recalls: Integer[Array, " recall_events"]
+    ) -> Bool[Array, " recall_events"]:
+        """Returns a keep-mask over recall events.
+
+        Args:
+          recalls: One-indexed recall events with zeros representing padding.
         """
         ...
 

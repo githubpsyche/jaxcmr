@@ -19,14 +19,11 @@ from jaxcmr.typing import (
     Float,
     Float_,
     Integer,
+    LikelihoodMaskFn,
     MemorySearch,
     MemorySearchModelFactory,
     RecallDataset,
 )
-
-LikelihoodMaskFn = Callable[
-    [Integer[Array, " recall_events"]], Bool[Array, " recall_events"]
-]
 
 
 def predict_and_simulate_recalls(
