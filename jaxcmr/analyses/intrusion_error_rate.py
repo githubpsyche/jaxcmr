@@ -105,7 +105,7 @@ def plot_intrusion_error_rate(
 
     for data_index, data_dict in enumerate(datasets):
         # We'll apply the accurate_spc function to each subject, then stack
-       subject_values = jnp.vstack(
+        subject_values = jnp.vstack(
            apply_by_subject(
                data_dict,
                trial_masks[data_index],
