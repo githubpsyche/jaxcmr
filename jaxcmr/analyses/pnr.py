@@ -124,26 +124,25 @@ def conditional_fixed_pres_pnr(
 
 
 def pnr(
-    recalls: Integer[Array, " trial_count recall_positions"],
-    presentations: Integer[Array, " trial_count study_positions"],
-    list_length: int,
+    dataset: RecallDataset,
     size: int = 3,
     query_recall_position: int = 0,
 ) -> Float[Array, " study_positions"]:
     """Returns probability of n-th recall allowing item repetitions.
 
     Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        presentations: Trial by study position array of presented items. 1-indexed.
-        list_length: Length of the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         size: Maximum number of study positions an item can be presented at.
         query_recall_position: Recall index (0-based) to analyze.
     """
-    # expanded_recalls: (trial_count, recall_positions, size) array
-    # where each recalled item is mapped to all its possible study positions.
+    presentations = dataset["pres_itemnos"]
+    list_length = presentations.shape[1]
+
+    # expanded_recalls: (trial_count, recall_positions, size) array where each
+    # recalled item is mapped to all its possible study positions.
     expanded_recalls = vmap(
         vmap(all_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )(recalls, presentations, size)
+    )(dataset["recalls"], presentations, size)
     return fixed_pres_pnr(expanded_recalls, list_length, query_recall_position)
 
 
@@ -202,9 +201,7 @@ def actual_recalls_with_repeats(
 
 
 def conditional_pnr_with_repeats(
-    recalls: Integer[Array, " trial recall_positions"],
-    presentations: Integer[Array, " trial list_length"],
-    list_length: int,
+    dataset: RecallDataset,
     size: int,
     query_recall_position: int,
 ) -> Float[Array, " list_length"]:
@@ -213,12 +210,14 @@ def conditional_pnr_with_repeats(
     Computes ``actual / available`` for each study position across trials.
 
     Args:
-        recalls: Trial by recall position array of recalled items.
-        presentations: Trial by study position array of presented items.
-        list_length: Length of the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         size: Maximum number of study positions an item can occupy.
         query_recall_position: Recall index (0-based) to analyze.
     """
+    recalls = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+    list_length = presentations.shape[1]
+
     actual = vmap(actual_recalls_with_repeats, in_axes=(0, 0, None, None, None))(
         recalls, presentations, query_recall_position, list_length, size
     )
@@ -230,6 +229,7 @@ def conditional_pnr_with_repeats(
     denominator = available.sum(axis=0)
 
     return jnp.where(denominator > 0, numerator / denominator, 0.0)
+
 
 def plot_pnr(
     datasets: Sequence[RecallDataset] | RecallDataset,
@@ -278,9 +278,12 @@ def plot_pnr(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(conditional_pnr_with_repeats, static_argnames=("size", "list_length", "query_recall_position")),
-                size,
-                query_recall_position,
+                jit(
+                    conditional_pnr_with_repeats,
+                    static_argnames=("size", "query_recall_position"),
+                ),
+                size=size,
+                query_recall_position=query_recall_position,
             )
         )
 

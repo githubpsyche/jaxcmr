@@ -95,20 +95,20 @@ def tabulate_trial(
 
 
 def relative_spc(
-    recalls: Integer[Array, " trial_count recall_positions"],
-    presentations: Integer[Array, " trial_count study_positions"],
-    list_length: Optional[int] = None,
+    dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
     """Returns relative serial position accuracy by study position.
 
     Args:
-        recalls: Trial-by-position recalled item numbers. 0 pads unused events.
-        presentations: Trial-by-position presented item numbers.
-        list_length: Length of the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         size: Maximum number of study positions an item may occupy.
     """
-    scores = vmap(tabulate_trial, in_axes=(0, 0, None))(recalls, presentations, size)
+    scores = vmap(tabulate_trial, in_axes=(0, 0, None))(
+        dataset["recalls"],
+        dataset["pres_itemnos"],
+        size,
+    )
     return jnp.mean(scores, axis=0)
 
 

@@ -1,57 +1,16 @@
+"""Compute distance-binned conditional response probabilities.
+
+The module mirrors the lag-based CRP workflow but replaces lags with semantic or
+spatial distances supplied by the caller. Each transition contributes to a
+single distance bin, and availability is tallied as the set of bins containing
+at least one unrecalled item at the moment of choice.
 """
-Lag-Conditional Response Probability (Lag-CRP).
 
-Overview:
-  Utilities to compute and plot Lag-CRP for free-recall data. CRP at serial lag
-  ℓ is defined as the proportion of *actual* transitions at lag ℓ divided by the
-  number of *available* transitions at lag ℓ.
-
-Definition:
-  CRP(ℓ) = actual_transitions(ℓ) / available_transitions(ℓ)
-
-Serial lag:
-  If the previously recalled item was studied at position X and the current item
-  at position Y (1-indexed), then ℓ = Y - X. Negative lags move backward in
-  study order; positive lags move forward.
-
-Conventions:
-  - list_length (L): Fixed study-list length within a call.
-  - trials (recalls): int array [n_trials, n_recall_events] of serial positions
-    in 1..L; 0 indicates padding after termination (ignored).
-  - presentations: int array [n_trials, L] of item IDs at study positions;
-    required only when items may repeat (0 permitted if your loader uses it).
-  - size: Upper bound on how many distinct study positions a single item can
-    occupy within a list (e.g., 3 → items may appear up to three times).
-  - Lag axis indexing: All CRP outputs are length (2*L - 1). Index i corresponds
-    to lag ℓ = i - (L - 1); the center (i = L - 1) is ℓ = 0.
-
-Design decisions:
-  - Padding & bounds: Zeros (pads) and out-of-range recalls are ignored via
-    guards in the tabulators.
-  - Division by zero: Lags with zero availability (often extreme lags) yield NaN.
-  - Repeats policy: A recall of a repeated item is treated as recalling all of
-    that item's study positions. For a transition from the previous item's study
-    positions to the current item's positions, we accumulate the set-union of
-    unique lags (each lag counted at most once per transition) to avoid
-    multiplicity inflation. If you need every pairwise combination instead,
-    consider a static `count_mode={"unique","pairwise"}` toggle.
-  - First recall: The first non-zero recall marks that item's study positions as
-    unavailable and defines the reference for the next transition lag.
-
-JAX compilation:
-  - All public functions are side-effect-free and JIT-safe.
-  - Use `jit(crp, static_argnames=("size",))`; keep shapes (e.g., L, number of
-    recall events) consistent within a compiled call to avoid recompiles.
-  - Ensure `size` ≥ the true maximum per-item repetition in your data; compute
-    it once outside JIT if needed.
-"""
+from __future__ import annotations
 
 __all__ = [
-    "SimpleTabulation",
-    "simple_tabulate_trial",
-    "simple_crp",
-    "set_false_at_index",
-    "Tabulation",
+    "compute_distance_bin_edges",
+    "DistanceTabulation",
     "tabulate_trial",
     "crp",
     "plot_crp",
@@ -60,202 +19,135 @@ __all__ = [
 from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
-from jax import numpy as jnp
+from jax import numpy as jnp, nn
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
 from ..plotting import init_plot, plot_data, set_plot_labels
-from ..repetition import all_study_positions
-from ..helpers import apply_by_subject
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from ..helpers import apply_by_subject
 
 
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
+def compute_distance_bin_edges(
+    distance_matrix: Float[Array, " item_count item_count"],
+    percentiles: Float[Array, " percentiles"],
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Return interior distance bin edges and representative bin centers.
 
-    Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
-    ``[1, vec.size]`` are ignored.
+    Args:
+      distance_matrix: Pairwise distances for the item vocabulary.
+      percentiles: Percentiles (0–100) that define interior bin edges.
 
     Returns:
-        Tuple of the (possibly updated) vector and ``None``.
+      Tuple ``(interior_edges, bin_centers)`` where ``interior_edges`` contains
+      the percentile cut points and ``bin_centers`` provides the midpoint of the
+      corresponding distance ranges.
     """
 
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
+    upper_indices = jnp.triu_indices(distance_matrix.shape[0], k=1)
+    upper_values = distance_matrix[upper_indices]
+    interior = jnp.percentile(upper_values, percentiles)
+    full_edges = jnp.concatenate(
+        (upper_values.min()[None], interior, upper_values.max()[None])
     )
+    centers = 0.5 * (full_edges[:-1] + full_edges[1:])
+    return interior, centers
 
 
-class Tabulation(Pytree):
-    """
-    Maintains per-transition state for CRP with repeats.
+class DistanceTabulation(Pytree):
+    """Accumulates per-bin transition counts for a single trial.
 
-    State:
-        - previous_positions: study positions of previously recalled item
-        - avail_recalls: boolean [L], study positions still available
-        - actual_lags, avail_lags: int [2*L - 1], accumulated
+    Assumes:
+        - ``trial[0] > 0`` (first recall exists).
+        - ``presentation`` supplies item identifiers compatible with the global
+          ``distance_matrix``.
+        - Subsequent zeros in ``trial`` are padding and ignored.
 
-    Update steps executed on each valid recall (in order):
-        1) Previous item positions -> `previous_positions`.
-        2) Available positions -> `avail_recalls = available_recalls_after(recall)`.
-        3) Actual lags: union of unique lags from `previous_positions` to the
-           current item's study positions (`tabulate_actual_lags`).
-        4) Available lags: union of unique lags from each `previous_positions`
-           to all currently available positions (`tabulate_available_lags`).
-
-    Conventions:
-        - Zeros in `recall_study_positions` are padding; safely ignored.
-        - Indices are 1-based for positions; internal arrays use zero-based.
+    Behavior:
+        - Tracks availability per study position, clearing positions as they are
+          recalled.
+        - Computes distances between the previously recalled item and each
+          unrecalled study item before binning.
     """
 
     def __init__(
         self,
-        presentation: Integer[Array, " study_events"],
+        present_ids: Integer[Array, " study_events"],
         first_recall: Int_,
-        size: int = 3,
+        distance_matrix: Float[Array, " item_count item_count"],
+        bin_edges: Float[Array, " edges"],
     ):
-        self.list_length = presentation.size
-        self.lag_range = self.list_length - 1
-        self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
-        self.base_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
-        self.size = size
-        self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
-            self.all_positions,
+        bin_count = bin_edges.shape[0] + 1
+        self.bin_edges = bin_edges
+        self.present_ids = present_ids
+        self.distance_matrix = distance_matrix
+        self.actual_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
+        self.avail_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
+        self.avail_items = self.present_ids > 0
+        self.avail_items = self.avail_items.at[first_recall - 1].set(False)
+        self.previous_item = first_recall
+
+    def _update(self, current_item: Int_) -> "DistanceTabulation":
+        """Update transition tallies for the supplied recall choice."""
+
+        previous_id = self.present_ids[self.previous_item - 1]
+        current_id = self.present_ids[current_item - 1]
+        distances_from_prev = self.distance_matrix[previous_id - 1]
+        actual_distance = distances_from_prev[current_id - 1]
+        actual_bin = jnp.digitize(actual_distance, self.bin_edges)
+        present_distances = distances_from_prev[self.present_ids - 1]
+        present_bins = jnp.digitize(present_distances, self.bin_edges)
+        one_hot_bins = nn.one_hot(present_bins, self.bin_edges.shape[0] + 1)
+        available_bins = jnp.logical_and(one_hot_bins, self.avail_items[:, None])
+        bin_flags = jnp.any(available_bins, axis=0).astype(jnp.int32)
+
+        return self.replace(
+            previous_item=current_item,
+            avail_items=self.avail_items.at[current_item - 1].set(False),
+            avail_transitions=self.avail_transitions + bin_flags,
+            actual_transitions=self.actual_transitions.at[actual_bin].add(1),
         )
 
-        self.actual_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
-        self.avail_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
-
-        self.previous_positions = self.item_study_positions[first_recall - 1]
-        self.avail_recalls = jnp.ones(self.list_length, dtype=bool)
-        self.avail_recalls = self.available_recalls_after(first_recall)
-
-    # for updating avail_recalls: study positions still available for retrieval
-    def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
-        """
-        Clear availability for all study positions of `recall`.
-        Safe with padding: zeros are ignored.
-        """
-        study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
-
-    # for updating actual_lags: lag-transitions actually made from the previous item
-    def lags_from_previous(self, recall_pos: Int_) -> Bool[Array, " positions"]:
-        """
-        One-hot(-ish) vector of unique lags from each previous study position to `recall_pos`.
-        Returns boolean union (unique lag set); use `count_mode="pairwise"` alternative
-        (not implemented here) to count all pair combinations.
-        """
-
-        def f(prev):
-            return lax.cond(
-                (recall_pos * prev) == 0,
-                lambda: self.base_lags,
-                lambda: self.base_lags.at[recall_pos - prev + self.lag_range].add(1),
-            )
-
-        return lax.map(f, self.previous_positions).sum(0).astype(bool)
-
-    def tabulate_actual_lags(self, recall: Int_) -> Integer[Array, " lags"]:
-        "Tabulates the actual transition after a transition."
-        recall_study_positions = self.item_study_positions[recall - 1]
-        new_lags = (
-            lax.map(self.lags_from_previous, recall_study_positions).sum(0).astype(bool)
-        )
-        return self.actual_lags + new_lags
-
-    # for updating avail_lags: lag-transitions available from the previous item
-    def available_lags_from(self, pos: Int_) -> Bool[Array, " lags"]:
-        "Identifies recallable lag transitions from the specified study position."
-        return lax.cond(
-            pos == 0,
-            lambda: self.base_lags,
-            lambda: self.base_lags.at[self.all_positions - pos + self.lag_range].add(
-                self.avail_recalls
-            ),
-        )
-
-    def tabulate_available_lags(self) -> Integer[Array, " lags"]:
-        "Union of lags from each previous position to all currently available positions."
-        new_lags = (
-            lax.map(self.available_lags_from, self.previous_positions)
-            .sum(0)
-            .astype(bool)
-        )
-        return self.avail_lags + new_lags
-
-    # unifying tabulation of actual/avail lags, previous positions, and avail recalls
-    def should_tabulate(self, recall: Int_) -> Bool:
-        "Only consider transitions from items with study positions that have not been recalled yet."
-
-        def _for_nonzero():
-            recall_study_positions = self.item_study_positions[recall - 1]
-            is_valid_study_position = recall_study_positions != 0
-            is_available_study_position = self.avail_recalls[recall_study_positions - 1]
-            return jnp.any(is_valid_study_position & is_available_study_position)
-
-        return lax.cond(
-            recall == 0,
-            lambda: jnp.array(False),
-            _for_nonzero,
-        )
-
-    def tabulate(self, recall: Int_) -> "Tabulation":
-        "Tabulates actual and possible serial lags of current from previous item."
-        return lax.cond(
-            self.should_tabulate(recall),
-            lambda: self.replace(
-                previous_positions=self.item_study_positions[recall - 1],
-                avail_recalls=self.available_recalls_after(recall),
-                actual_lags=self.tabulate_actual_lags(recall),
-                avail_lags=self.tabulate_available_lags(),
-            ),
-            lambda: self,
-        )
+    def tabulate(self, choice: Int_) -> "DistanceTabulation":
+        "Tabulate a transition if the choice is non-zero (i.e., a valid item)."
+        return lax.cond(choice > 0, lambda: self._update(choice), lambda: self)
 
 
 def tabulate_trial(
     trial: Integer[Array, " recall_events"],
-    presentation: Integer[Array, " study_events"],
-    size: int = 3,
-) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
-    """Tabulate actual and available lags for a single trial."""
+    present_ids: Integer[Array, " study_item_ids"],
+    distance_matrix: Float[Array, " item_count item_count"],
+    bin_edges: Float[Array, " edges"],
+) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
+    """Return actual and available bin counts for a single trial.
 
-    init = Tabulation(presentation, trial[0], size)
-    tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
-    return tab.actual_lags, tab.avail_lags
+    Args:
+      trial: Sequence of recall events encoded as study positions.
+      present_ids: Item identifiers presented at each study position.
+      distance_matrix: Pairwise distances indexed by item identifier.
+      bin_edges: Interior bin edges shared across trials.
+    """
+
+    init = DistanceTabulation(present_ids, trial[0], distance_matrix, bin_edges)
+    result = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
+    return result.actual_transitions, result.avail_transitions
 
 
 def crp(
-    trials: Integer[Array, "trials recall_events"],
-    presentations: Integer[Array, "trials study_events"],
-    list_length: int,
-    size: int = 3,
-) -> Float[Array, " lags"]:
-    """
-    Lag-CRP with repeated items in the study list.
+    dataset: RecallDataset,
+    distance_matrix: Float[Array, " item_count item_count"],
+    bin_edges: Float[Array, " edges"],
+) -> Float[Array, " bins"]:
+    """Return the distance-conditioned response probability.
 
     Args:
-        trials: [T, R] serial positions (1..L), 0 pads.
-        presentations: [T, L] item IDs (0 may indicate empty).
-        list_length: L (asserts consistency with `presentations` width).
-        size: max # of study positions an item can occupy (compile-time constant).
-
-    Repeats policy:
-        - A recall of a repeated item is treated as recalling *all* of that
-          item's study positions.
-        - Actual and available lags are computed as **unique** lag set unions
-          (boolean one-hot union per lag) to avoid over-counting.
-
-    Returns:
-        [2*L - 1] floats; NaN where denominator is zero.
+      dataset: recall dataset containing at least ``recalls`` and ``pres_itemids``
+      distance_matrix: Pairwise item distances.
+      bin_edges: Interior boundaries for distance bins.
     """
-    actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None))(
-        trials, presentations, size
+    actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
+        dataset["recalls"], dataset["pres_itemids"], distance_matrix, bin_edges
     )
     return actual.sum(0) / possible.sum(0)
 
@@ -263,39 +155,28 @@ def crp(
 def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    max_lag: int = 5,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
+    distances: Float[Array, "word_count word_count"],
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
-    size: int = 3,
+    size: Optional[int] = None,
 ) -> Axes:
-    """
-    Plot subject-wise Lag-CRP and their mean ± error.
+    """Plot distance-binned CRP curves aggregated by subject.
 
     Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum lag to plot.
-        color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        size: Maximum number of study positions an item can be presented at.
-
-    Returns:
-        Matplotlib Axes with the Lag-CRP plot.
-
-    Notes:
-        - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
-        - `trial_masks` filters trials; lengths must match datasets.
-        - `distances` is ignored (kept for API compatibility).
-        - Color cycle wraps if more datasets than colors.
+      datasets: Collection of recall datasets to contrast.
+      trial_masks: Boolean masks selecting trials per dataset.
+      distances: Distance matrix (or matrices) defining the metric.
+      percentiles: Percentiles used to derive bin edges when unspecified.
+      color_cycle: Colors used for successive datasets.
+      labels: Legend labels corresponding to ``datasets``.
+      contrast_name: Optional legend title.
+      axis: Optional matplotlib axis to draw on.
+      size: Unused, included for swappability with other plotting functions.
     """
-    axis = init_plot(axis)
 
+    axis = init_plot(axis)
     if color_cycle is None:
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
@@ -308,29 +189,29 @@ def plot_crp(
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks]
 
-    lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
+    percentiles = jnp.linspace(1, 99, 10)
+    bin_edges, bin_centers = compute_distance_bin_edges(distances, percentiles)
 
     for data_index, data in enumerate(datasets):
-        lag_range = (jnp.max(data["listLength"]) - 1).item()
         subject_values = apply_by_subject(
             data,
             trial_masks[data_index],
-            jit(crp, static_argnames=("size")),
-            size,
+            jit(crp),
+            distances,
+            bin_edges,
         )
         subject_values = jnp.vstack(subject_values)
-        subject_values = subject_values[
-            :, lag_range - max_lag : lag_range + max_lag + 1
-        ]
 
         color = color_cycle.pop(0)
         plot_data(
             axis,
-            lag_interval,
+            bin_centers,
             subject_values,
             labels[data_index],
             color,
         )
 
-    set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
+    set_plot_labels(
+        axis, "Distance (bin center)", "Conditional Resp. Prob.", contrast_name
+    )
     return axis

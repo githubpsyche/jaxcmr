@@ -8,6 +8,23 @@ from jaxcmr.analyses.pnr import (
     conditional_fixed_pres_pnr,
     pnr,
 )
+from jaxcmr.typing import RecallDataset
+
+
+def _make_dataset(
+    recalls: jnp.ndarray,
+    presentations: jnp.ndarray,
+) -> RecallDataset:
+    recalls = jnp.asarray(recalls, dtype=jnp.int32)
+    presentations = jnp.asarray(presentations, dtype=jnp.int32)
+    n_trials = recalls.shape[0]
+    list_length = presentations.shape[1]
+    return {
+        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
+        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
+        "pres_itemnos": presentations,
+        "recalls": recalls,
+    } # type: ignore
 
 
 def test_probability_vector_when_first_recall_analyzed():
@@ -93,8 +110,8 @@ def test_repetition_handling_when_items_repeat():
     presentations = jnp.array([[1, 2, 1], [1, 2, 1]])
 
     # Act / When
-    result = pnr(recalls, presentations, list_length=3, size=2)
+    dataset = _make_dataset(recalls, presentations)
+    result = pnr(dataset, size=2)
 
     # Assert / Then
     assert jnp.allclose(result, jnp.array([1.0, 0.0, 1.0]))
-

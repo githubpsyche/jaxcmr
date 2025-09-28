@@ -28,6 +28,22 @@ def _lag_index(lags_len: int, lag: int) -> int:
     center = lags_len // 2
     return center + lag
 
+def _make_dataset(
+    recalls: jnp.ndarray,
+    presentations: jnp.ndarray,
+) -> RecallDataset:
+    """Return minimal dataset keyed for the CRP analysis."""
+
+    recalls = jnp.asarray(recalls, dtype=jnp.int32)
+    presentations = jnp.asarray(presentations, dtype=jnp.int32)
+    n_trials, _ = recalls.shape
+    list_length = presentations.shape[1]
+    return {
+        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
+        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
+        "pres_itemnos": presentations,
+        "recalls": recalls,
+    } # type: ignore
 
 # -----------------------------------------------------------------------------
 # set_false_at_index tests
@@ -428,10 +444,11 @@ def test_produces_same_crp_when_repeats_removed():
     presentations = jnp.array([[1, 2, 3, 4]], dtype=jnp.int32)
 
     # Act / When
-    with_repeat = crp.crp(trials_with_repeat, presentations, list_length=4, size=1)
-    without_repeat = crp.crp(
-        trials_without_repeat, presentations, list_length=4, size=1
-    )
+    dataset_with_repeat = _make_dataset(trials_with_repeat, presentations)
+    dataset_without_repeat = _make_dataset(trials_without_repeat, presentations)
+
+    with_repeat = crp.crp(dataset_with_repeat, size=1)
+    without_repeat = crp.crp(dataset_without_repeat, size=1)
 
     # Assert / Then
     assert jnp.allclose(with_repeat, without_repeat, equal_nan=True)
@@ -454,7 +471,8 @@ def test_returns_array_when_single_trial_item():
     presentations = jnp.array([[1]], dtype=jnp.int32)
 
     # Act / When
-    out = crp.crp(trials, presentations, list_length=1, size=1)
+    dataset = _make_dataset(trials, presentations)
+    out = crp.crp(dataset, size=1)
 
     # Assert / Then
     assert isinstance(out, jnp.ndarray)
@@ -476,13 +494,13 @@ def test_matches_uncompiled_result_when_jitted_with_static_argnames():
     # Arrange / Given
     trials = jnp.array([[1, 2, 3], [1, 3, 2]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
-    list_length = 3
     size = 1
-    expected = crp.crp(trials, presentations, list_length, size)
+    dataset = _make_dataset(trials, presentations)
+    expected = crp.crp(dataset, size)
 
     # Act / When
-    jitted_crp = jax.jit(crp.crp, static_argnames=("size", "list_length"))
-    result = jitted_crp(trials, presentations, list_length, size)
+    jitted_crp = jax.jit(crp.crp, static_argnames=("size",))
+    result = jitted_crp(dataset, size)
 
     # Assert / Then
     assert result.shape == expected.shape
@@ -504,13 +522,13 @@ def test_runs_with_larger_size_when_jitted():
     # Arrange / Given
     trials = jnp.array([[1, 2, 3]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3]], dtype=jnp.int32)
-    list_length = 3
     size = 2
-    expected = crp.crp(trials, presentations, list_length, size)
+    dataset = _make_dataset(trials, presentations)
+    expected = crp.crp(dataset, size)
 
     # Act / When
-    jitted_crp = jax.jit(crp.crp, static_argnames=("size", "list_length"))
-    result = jitted_crp(trials, presentations, list_length, size)
+    jitted_crp = jax.jit(crp.crp, static_argnames=("size",))
+    result = jitted_crp(dataset, size)
 
     # Assert / Then
     assert result.shape == expected.shape

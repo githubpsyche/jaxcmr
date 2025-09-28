@@ -42,22 +42,18 @@ def trial_srac(
 
 
 def srac(
-    recalls: Integer[Array, " trial_count recall_positions"],
-    presentations: Integer[Array, " trial_count study_positions"],
-    list_length: int,
+    dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
     """Return the proportion of correct recalls for each study position.
 
     Args:
-      recalls: Trial by recall position array of recalled items. Shape
-        ``[trial_count, recall_positions]``; 1-indexed with 0 for no recall.
-      presentations: Trial by study position array of presented items. Shape
-        ``[trial_count, study_positions]``; 1-indexed.
-      list_length: Length of the study list. Included for API compatibility and
-        ignored.
+      dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
       size: Maximum number of study positions an item can occupy.
     """
+    recalls = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+
     return vmap(trial_srac, in_axes=(0, 0, None))(
         recalls,
         presentations,
@@ -72,6 +68,7 @@ def plot_srac(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    size: int = 3,
 ) -> Axes:
     """Plot serial recall accuracy curves for one or more datasets.
 
@@ -82,6 +79,7 @@ def plot_srac(
       labels: Legend entries corresponding to each dataset.
       contrast_name: Name of the contrast used in labeling.
       axis: Existing Matplotlib axes to draw on.
+      size: Maximum number of study positions an item may occupy.
 
     Returns:
       The Matplotlib axes containing the plot.
@@ -108,7 +106,8 @@ def plot_srac(
             apply_by_subject(
                 data_dict,
                 trial_masks[data_index],
-                jit(srac),
+                jit(srac, static_argnames=("size",)),
+                size=size,
             )
         )
 

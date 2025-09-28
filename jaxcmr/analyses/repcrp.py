@@ -167,7 +167,7 @@ class RepCRPTabulation(Pytree):
 def tabulate_trial(
     trial: Integer[Array, " recall_events"],
     presentation: Integer[Array, " study_events"],
-    min_lag=4,
+    min_lag: int = 4,
     size: int = 2,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
     """Return tabulations of observed and available lags for a trial.
@@ -183,23 +183,22 @@ def tabulate_trial(
     return tab.actual_lags, tab.avail_lags
 
 def repcrp(
-    trials: Integer[Array, "trials recall_events"],
-    presentation: Integer[Array, "trials study_events"],
-    list_length: int,
-    min_lag=4,
+    dataset: RecallDataset,
+    min_lag: int = 4,
     size: int = 2,
 ) -> Float[Array, " lags"]:
-    """Returns lag-CRP centered around each study position of repeated items across trials.
+    """Returns lag-CRP centered around each study position of repeated items.
 
     Args:
-        trials: Recall events for each trial.
-        presentation: Study events for each trial.
-        list_length: Number of study events in each trial; unused.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         min_lag: Minimum number of study positions between presentations.
         size: Maximum number of presentations per item.
     """
+    trials = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
-        trials, presentation, min_lag, size
+        trials, presentations, min_lag, size
     )
     return actual.sum(0) / possible.sum(0)
 

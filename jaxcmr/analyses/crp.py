@@ -86,7 +86,6 @@ class SimpleTabulation(Pytree):
 
     def __init__(self, list_length: int, first_recall: Int_):
         self.lag_range = list_length - 1
-        self.list_length = list_length
         self.all_items = jnp.arange(1, list_length + 1, dtype=int)
         self.actual_transitions = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
         self.avail_transitions = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
@@ -312,18 +311,14 @@ def tabulate_trial(
 
 
 def crp(
-    trials: Integer[Array, "trials recall_events"],
-    presentations: Integer[Array, "trials study_events"],
-    list_length: int,
+    dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " lags"]:
     """
     Lag-CRP with repeated items in the study list.
 
     Args:
-        trials: [T, R] serial positions (1..L), 0 pads.
-        presentations: [T, L] item IDs (0 may indicate empty).
-        list_length: L (asserts consistency with `presentations` width).
+        dataset: recall dataset containing at least ``recalls`` and ``pres_itemnos``
         size: max # of study positions an item can occupy (compile-time constant).
 
     Repeats policy:
@@ -336,7 +331,7 @@ def crp(
         [2*L - 1] floats; NaN where denominator is zero.
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None))(
-        trials, presentations, size
+        dataset["recalls"], dataset["pres_itemnos"], size
     )
     return actual.sum(0) / possible.sum(0)
 
@@ -397,7 +392,7 @@ def plot_crp(
             data,
             trial_masks[data_index],
             jit(crp, static_argnames=("size")),
-            size,
+            size=size,
         )
         subject_values = jnp.vstack(subject_values)
         subject_values = subject_values[

@@ -35,19 +35,19 @@ def fixed_pres_spc(
 
 
 def spc(
-    recalls: Integer[Array, " trial_count recall_positions"],
-    presentations: Integer[Array, " trial_count study_positions"],
-    list_length: int,
+    dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
     """Returns recall rate as a function of study position.
 
     Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        presentations: Trial by study position array of presented items. 1-indexed.
-        list_length: Length of the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         size: Maximum number of study positions an item can be presented at.
     """
+    recalls = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+    list_length = presentations.shape[1]
+
     expanded_recalls = vmap(
         vmap(all_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
     )(recalls, presentations, size)
@@ -98,8 +98,8 @@ def plot_spc(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(spc, static_argnames=("size", "list_length")),
-                size,
+                jit(spc, static_argnames=("size",)),
+                size=size,
             )
         )
 
@@ -114,4 +114,3 @@ def plot_spc(
 
     set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)
     return axis
-

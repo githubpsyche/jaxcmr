@@ -33,6 +33,7 @@ from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
+from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
@@ -238,19 +239,20 @@ def tabulate_trial(
 
 
 def repneighborcrp(
-    trials: Integer[Array, "trials recall_events"],
-    presentations: Integer[Array, "trials study_events"],
+    dataset: RecallDataset,
     direction: Literal["j2i", "i2j", "both"] = "both",
     use_lag2: bool = True,
 ) -> Float[Array, " lags"]:
     """Return repetition-neighbor lag-CRP probabilities per lag.
 
     Args:
-        trials: Recall event first-study positions for each trial (1-indexed; padding = 0).
-        presentations: Presented item indices for each trial (1-indexed; padding = 0).
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         direction: "j2i", "i2j", or "both".
         use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
     """
+
+    trials = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
 
     tabulate_trials = vmap(tabulate_trial, in_axes=(0, 0, None, None))
     actual, possible = tabulate_trials(trials, presentations, direction, use_lag2)

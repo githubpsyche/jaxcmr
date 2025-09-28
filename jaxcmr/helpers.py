@@ -146,28 +146,31 @@ def apply_by_subject(
     trial_mask: Bool[Array, " trial_count"],
     func: Callable,
     *args,
+    **kwargs,
 ) -> list[jnp.ndarray]:
-    """Returns result from applying `func` to each subject's data
+    """Apply ``func`` per subject using the entire masked dataset slice.
 
     Args:
-        data: Dataset containing recalls, presentations, etc., indexed by subject.
-        trial_mask: Boolean array specifying which trials to include.
-        func: Function to apply per subject. It should accept trials, presentations, list_length, and additional arguments.
-        *args: Additional positional arguments to pass to the function.
+        data: Dataset containing trial-indexed arrays (e.g., ``recalls``, ``pres_itemids``).
+        trial_mask: Boolean mask selecting trials to include.
+        func: Callable invoked as ``func(subject_data, *args, **kwargs)`` where
+          ``subject_data`` is a masked `RecallDataset`.
+        *args: Additional positional arguments forwarded to ``func``.
+        **kwargs: Additional keyword arguments forwarded to ``func``.
     """
-    trials = data["recalls"]
-    presentations = data["pres_itemnos"]
+
     subject_indices = data["subject"].flatten()
-    list_length = jnp.max(data["listLength"][trial_mask]).item()
-    results = []
+    results: list[jnp.ndarray] = []
 
     for subject in jnp.unique(data["subject"]):
         subject_mask = jnp.logical_and(subject_indices == subject, trial_mask)
         if jnp.sum(subject_mask) == 0:
             continue
-        results.append(
-            func(trials[subject_mask], presentations[subject_mask], list_length, *args)
-        )
+        subject_dataset: RecallDataset = {
+            key: value[subject_mask] for key, value in data.items() # type: ignore
+        }
+        results.append(func(subject_dataset, *args, **kwargs))
+
     return results
 
 

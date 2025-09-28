@@ -86,22 +86,21 @@ def _trial_lag_counts(
 
 
 def recall_probability_by_lag(
-    recalls: Integer[Array, " trials recall_events"],
-    presentations: Integer[Array, " trials study_events"],
-    list_length: int,
+    dataset: RecallDataset,
     max_lag: int = 8,
 ) -> Float[Array, " lag_bins"]:
     """Return recall probability for lag 0, 1, ..., ``max_lag``, plus once-presented items.
 
     Args:
-        recalls: First study positions of recalled items (1-indexed; 0 marks no recall).
-        presentations: Item IDs shown at each study position (1-indexed).
-        list_length: Number of items in the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         max_lag: Largest explicit lag bucket.
             - bin 0 → single presentation
             - bin k → k intervening items for 1 ≤ k ≤ ``max_lag``
             - bin ``max_lag + 1`` → lag exceeds ``max_lag``
     """
+    recalls = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+    list_length = presentations.shape[1]
     n_bins = max_lag + 2
     all_items = jnp.arange(1, list_length + 1)
 
@@ -116,23 +115,19 @@ def recall_probability_by_lag(
 
 
 def binned_recall_probability_by_lag(
-    recalls: Integer[Array, " trials recall_events"],
-    presentations: Integer[Array, " trials study_events"],
-    list_length: int,
+    dataset: RecallDataset,
     max_lag: int = 8,
 ) -> Float[Array, " lag_bins"]:
     """Return binned recall probability for lag 0, 1, ..., ``max_lag``, plus once-presented items.
 
     Args:
-        recalls: First study positions of recalled items (1-indexed; 0 marks no recall).
-        presentations: Item IDs shown at each study position (1-indexed).
-        list_length: Number of items in the study list.
+        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         max_lag: Largest explicit lag bucket.
             - bin 0 → single presentation
             - bin k → k intervening items for 1 ≤ k ≤ ``max_lag``
             - bin ``max_lag + 1`` → lag exceeds ``max_lag``
     """
-    result = recall_probability_by_lag(recalls, presentations, list_length, max_lag)
+    result = recall_probability_by_lag(dataset, max_lag)
     return (
         jnp.zeros(5)
         .at[0]
@@ -185,17 +180,16 @@ def plot_full_rpl(
         trial_masks = [trial_masks]
 
     max_list_length = find_max_list_length(datasets, trial_masks)
-    max_lag = infer_max_lag(datasets[0]["pres_itemnos"], max_list_length)
+    max_lag = infer_max_lag(
+        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
+    )
     xticklabels = ["N/A"] + [f"{i}" for i in range(max_lag + 1)]
     for data_index, data in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(
-                    recall_probability_by_lag,
-                    static_argnames=("max_lag", "list_length"),
-                ),
+                jit(recall_probability_by_lag, static_argnames=("max_lag",)),
                 max_lag,
             )
         )
@@ -250,17 +244,16 @@ def plot_rpl(
         trial_masks = [trial_masks]
 
     max_list_length = find_max_list_length(datasets, trial_masks)
-    max_lag = infer_max_lag(datasets[0]["pres_itemnos"], max_list_length)
+    max_lag = infer_max_lag(
+        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
+    )
     xticklabels = ["N/A", "0", "1-2", "3-5", "6-8"]
     for data_index, data in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(
-                    binned_recall_probability_by_lag,
-                    static_argnames=("list_length", "max_lag"),
-                ),
+                jit(binned_recall_probability_by_lag, static_argnames=("max_lag",)),
                 max_lag,
             )
         )

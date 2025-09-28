@@ -52,3 +52,17 @@ def normalize_magnitude(
 ) -> Float[Array, " features"]:
     """Return the input vector normalized to unit length."""
     return vector / jnp.sqrt(jnp.sum(vector**2) + lb)
+
+
+def cosine_similarity_matrix(
+    features: Float[Array, " items features"],
+) -> Float[Array, " items items"]:
+    """Returns pairwise cosine similarities for ``features``.
+
+    Args:
+      features: Matrix whose rows are item feature vectors.
+    """
+
+    norms = jnp.linalg.norm(features, axis=1, keepdims=True)
+    normalized = features / (norms + lb)
+    return jnp.clip(normalized @ normalized.T, -1.0, 1.0)
