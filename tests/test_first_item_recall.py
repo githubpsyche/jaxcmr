@@ -14,7 +14,7 @@ def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDat
         "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
         "pres_itemnos": pres_arr,
         "recalls": recalls_arr,
-    }
+    } # type: ignore
 
 
 def test_returns_expected_probabilities_when_using_simple_curve():
@@ -62,7 +62,7 @@ def test_ignores_second_occurrence_when_first_item_already_recalled():
     )
 
     # Act / When
-    curve = first_item_recall.first_item_recall_curve(dataset)
+    curve = first_item_recall.conditional_first_item_recall_curve(dataset)
 
     # Assert / Then
     expected = jnp.array([.5, 1.0, 0.0])
