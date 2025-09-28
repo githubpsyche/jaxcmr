@@ -301,29 +301,17 @@ def plot_rep_neighbor_crp(
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
     for data_index, data in enumerate(datasets):
-        lag_range = (jnp.max(data["listLength"]) - 1).item()
+        lag_range = int(jnp.max(data["listLength"][trial_masks[data_index]]).item()) - 1
 
-        func = jit(repneighborcrp, static_argnums=(2, 3))
-        trial_mask = trial_masks[data_index]
-        trials = data["recalls"]
-        presentations = data["pres_itemnos"]
-        subject_indices = data["subject"].flatten()
-        subject_values = []
-
-        for subject in jnp.unique(data["subject"]):
-            subject_mask = jnp.logical_and(subject_indices == subject, trial_mask)
-            if jnp.sum(subject_mask) == 0:
-                continue
-            subject_values.append(
-                func(
-                    trials[subject_mask],
-                    presentations[subject_mask],
-                    direction=direction,
-                    use_lag2=use_lag2,
-                )
+        subject_values = jnp.vstack(
+            apply_by_subject(
+                data,
+                trial_masks[data_index],
+                jit(repneighborcrp, static_argnames=("direction", "use_lag2")),
+                direction,
+                use_lag2,
             )
-
-        subject_values = jnp.vstack(subject_values)
+        )
         subject_values = subject_values[
             :, lag_range - max_lag : lag_range + max_lag + 1
         ]
