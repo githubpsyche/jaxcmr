@@ -134,7 +134,7 @@ def tabulate_trial(
     return result.actual_transitions, result.avail_transitions
 
 
-def crp(
+def dist_crp(
     dataset: RecallDataset,
     distance_matrix: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"],
@@ -152,7 +152,7 @@ def crp(
     return actual.sum(0) / possible.sum(0)
 
 
-def plot_crp(
+def plot_dist_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     distances: Float[Array, "word_count word_count"],
@@ -196,7 +196,7 @@ def plot_crp(
         subject_values = apply_by_subject(
             data,
             trial_masks[data_index],
-            jit(crp),
+            jit(dist_crp),
             distances,
             bin_edges,
         )
