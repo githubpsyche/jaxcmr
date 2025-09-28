@@ -32,7 +32,6 @@ def first_item_recall_curve(
       A 1-D float array whose ``i``-th entry is the probability that the first
       studied item was produced at recall position ``i``.
     """
-
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
     first_items = presentations[:, 0]
