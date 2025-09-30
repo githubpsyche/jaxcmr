@@ -19,8 +19,9 @@ from ..typing import Array, Bool, Float, RecallDataset
 
 __all__ = [
     "simple_first_item_recall_curve",
-    "first_item_recall_curve",
-    "plot_first_item_recall_curve",
+    "conditional_first_item_recall_curve",
+    "plot_simple_first_item_recall_curve",
+    "plot_conditional_first_item_recall_curve"
 ]
 
 
@@ -67,6 +68,7 @@ def conditional_first_item_recall_curve(
 def plot_conditional_first_item_recall_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -140,6 +142,7 @@ def plot_conditional_first_item_recall_curve(
 def plot_simple_first_item_recall_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,

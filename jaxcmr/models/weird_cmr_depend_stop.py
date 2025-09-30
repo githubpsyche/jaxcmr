@@ -59,6 +59,7 @@ class CMR(Pytree):
         self.mcf = mcf
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.studied = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -87,6 +88,7 @@ class CMR(Pytree):
                 self.context.state, item, self.mcf_learning_rate
             ),  #! updated
             recallable=self.recallable.at[item_index].set(True),
+            studied=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
 
@@ -145,13 +147,31 @@ class CMR(Pytree):
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state."""
         total_recallable = jnp.sum(self.recallable)
+
+        def compute_stop_probability() -> Float[Array, ""]:
+            "An exponential function of the ratio of support for recalled vs unrecalled items."
+            support = self.mcf.probe(self.context.state)
+            recalled_mask = jnp.logical_and(self.studied, ~self.recallable)
+            not_recalled_mask = jnp.logical_and(self.studied, self.recallable)
+            recalled_support = jnp.sum(support * recalled_mask)
+            not_recalled_support = jnp.sum(support * not_recalled_mask)
+            support_ratio = lax.cond(
+                recalled_support > 0,
+                lambda: not_recalled_support / recalled_support,
+                lambda: jnp.inf,
+            )
+            stop_probability = self.stop_probability_scale + jnp.exp(
+                -self.stop_probability_growth * support_ratio
+            )
+            return jnp.minimum(
+                stop_probability,
+                1.0 - (lb * total_recallable),
+            )
+
         return lax.cond(
             jnp.logical_or(total_recallable == 0, ~self.is_active),
             true_fun=lambda: 1.0,
-            false_fun=lambda: jnp.minimum(
-                1.0 - (lb * total_recallable),
-                self._stop_probability[self.recall_total],
-            ),
+            false_fun=compute_stop_probability,
         )
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
@@ -178,7 +198,7 @@ class CMR(Pytree):
             lambda: lax.cond(
                 jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
                 lambda: 0.0,
-                lambda: (1-p_stop) * self.item_probability(choice - 1),
+                lambda: (1 - p_stop) * self.item_probability(choice - 1),
             ),
         )
 
