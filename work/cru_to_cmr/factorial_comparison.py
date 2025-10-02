@@ -27,8 +27,8 @@ import jax.numpy as jnp
 from jax import random
 import numpy as np
 
-from jaxcmr.models.cmr_compterm import CMRFactory as compterm_model_factory
-from jaxcmr.models.cmr_compare import CMRFactory as base_model_factory
+from jaxcmr.models_cru_to_cmr.cmr_compterm import CMRFactory as compterm_model_factory
+from jaxcmr.models_cru_to_cmr.cmr_compare import CMRFactory as base_model_factory
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.likelihood import (
     MemorySearchLikelihoodFnGenerator as loss_fn_generator,

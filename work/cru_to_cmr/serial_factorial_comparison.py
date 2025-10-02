@@ -27,7 +27,7 @@ import jax.numpy as jnp
 from jax import random
 import numpy as np
 
-from jaxcmr.models.compterm_omnibus_cru_cmr import (
+from jaxcmr.models_cru_to_cmr.compterm_omnibus_cru_cmr import (
     BaseCMRFactory as compterm_model_factory,
 )
 from jaxcmr.models.omnibus_cru_cmr import BaseCMRFactory as base_model_factory

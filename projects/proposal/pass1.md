@@ -1,0 +1,54 @@
+SPECIFIC AIMS
+Research on episodic memory search and research on narrative comprehension have largely proceeded on separate tracks, so that the retrieved‑context mechanisms that explain how memories are accessed in sequence are rarely brought to bear on how readers connect nonadjacent story details to understand a text [@kahana2020computational; @graesser1994constructing; @kintsch1998comprehension]. This narrowing of focus limits theory, preventing unified accounts that tie recall dynamics to inference‑based understanding.
+
+<!-- 
+Below are some indictments from my major area paper, but they are vaguer than they could be. However, they specify the main underlying goals of my proposed work. That is, they specify a key critique of the existing standard of work in the comprehension modeling literature that I hope to address alongside evaluating this specific theoretical proposal and deploying analysis techniques demonstrated in my thesis. But at the same time, i think i need to center my theoretical proposal in this work even if the methodological transformation I seek for the field is also central. I think a memory-based angle is key rather than a nice opportunity for bridging fields here because the comprehension literature itself is consumed with questions about how memory underlies inference-making and about the structure of memory representations for narratives. To tackle these questions robustly and disentangle memory processes from other faculties enabling comprehension, we need to interpret narrative comprehension via formal specification and evaluation of memory search models. But i dunno, maybe this is just word salad. Can you help me clarify something that's a clear improvement as far as signaling the urgency/necessity of this proposed work.
+ -->
+
+The goal of this project is to develop and test a computational model of narrative comprehension and memory that uses retrieved‑context machinery—originally developed for episodic recall—to provide mechanistic explanations for both recall structure and inference/question‑answering in narrative tasks. The model reframes a core assumption of comprehension: rather than treating inference as a distinct, strategy‑initiated process decoupled from episodic retrieval, inference is realized as selective reinstatement of episodic context under a retrieved‑context theory (RCT) [@howard2002distributed; @polyn2009context; @zwaan1995dimensions]. By reaching across the divide between episodic memory search and discourse comprehension, this project seeks a principled unification that clarifies which overlaps in content (semantic, protagonist, causal) and which structural cues (event boundaries, goal shifts) enable reinstatement to support understanding, ultimately providing a quantitative foundation for process‑level models of narrative comprehension.
+
+<!-- 
+I think this is quite flawed.
+It is not true that it is a "core assumption of comprehension" to treat inference as a distinct, strategy‑initiated process decoupled from episodic retrieval.
+I'm not even sure what it means to refer to a "core assumption of comprehension". That's incoherent.
+If the idea is to refer to a common belief about how comprehension works, then work asserting this belief should be cited along with the claim.
+Instead though, I think it's quite debated in the text comprehension literature that inference is a memory-dependent behavior. For example, an influential ongoing disagreement in the literature is between constructionist and minimalist accounts of memory which respectively argue that memory availability does or does not reliably gate inference-drawing during reading comprehension. I'll share my review of this literature again to remind you.
+Furthermore, I don't think it's a good idea to imply that inference is realized simply as selective reinstatement of episodic context. 
+Simply recalling a piece of information related to the current information and associating the two in memory is a necessary but insufficient condition for inference -- to understand how the piece of information retrieved relates to what is being encoded now. 
+We must seek to tackle this distinction head-on in an integrated model and robust research program.
+
+Finally, I again think we need to do better than frame proposed work as achieving its goals "by reaching across the divide between episodic memory search and discourse comprehension". It is redundant and meaningless to say that I seek to a principled unification of episodic memory search and discourse comprehension "by reaching across the divide between episodic memory search and discourse comprehension" -- the reaching is implied by the goal. We need to say something more concrete about our approach here that forecasts how we're transforming the field with refined theory and methodology. 
+ -->
+
+Our approach is to collect behavioral data in narrative recall and comprehension (free recall sequences, online bridging/causal probes, and delayed question answering) and to iteratively refine a computational model (Fig. 1) of both performance and latent reinstatement dynamics. The core model is a long‑standing, well‑specified retrieved‑context account (TCM/CMR) in which a gradually evolving context representation is bound to each studied unit and reinstated to cue what comes next [@howard2002distributed; @polyn2009context]. We adapt this machinery to sentences/propositions and show how its temporal targeting and overlap sensitivity reinterpret benchmark narrative phenomena (contiguity of recalls, boundary effects on order, causal centrality in memory and Q&A) without invoking a separate inference engine [@sederberg2008context; @healey2019contiguity; @zacks2007event; @dubrow2016temporal; @graesser1994constructing]. The experiments are designed to challenge the framework, adjudicating selective‑ vs blended‑reinstatement variants and quantifying how coherence constraints gate inference [@mckoon1992inference; @kintsch1998comprehension; @van1999landscape]. We will deploy this approach to accomplish the following aims:
+
+<!-- 
+I don't like the "without a separate inference engine".
+Furthermore, I don't think it's a good idea to imply that inference can be characterized entirely in terms of memory coactivation.
+Simply recalling a piece of information related to the current information and associating the two in memory is a necessary but insufficient condition for inference -- to understand how the piece of information retrieved relates to what is being encoded now. 
+The goal of our proposal is to dissect the distinct contributions of memory and inference to the formation of coherent text representations, to clarify how how retrieval configures inference and vice versa to support comprehension.
+Next, I don't care about the adjudication of selective‑ vs blended‑reinstatement variants in this proposal. 
+That was a central theme of my thesis, but it's a less focal issue in this investigation. 
+The contributions from my thesis relevant for this proposal have to deal with its experimental and analysis methodology rather than distinctions between the specific models considered and evaluated.
+This paragraph repeats content from earlier paragraph, a list of phenomena/manipulations to address. We need to think about whether that's a good use of space or whether the two ideas can be more clearly distinguishes to avoid creating the appearance of redundancy.
+
+There's a phrase "he experiments are designed to challenge the framework", but "the framework" has not been meaningfully identified by this point. I assume it's referring to the notion that inference is independent of memory, but that is a straw man without evidence confirming that the view is influential in 2025 and defines a substantive alternative theory with concrete theoretical consequences that can diverge from RCT.
+ -->
+
+Aim 1: Test the selective‑reinstatement account of inference in narratives.
+In controlled stories where key content is repeated or replaced with overlap pairs (semantic similarity; shared protagonist via coreference; explicit causal links), we will measure sentence‑level sequence signatures (dual‑center lag‑CRPs; cross‑occurrence neighbor analyses; forward‑chaining analogs) and inference behavior (bridging/causal probes during and after reading). Selective‑reinstatement RCT predicts first‑over‑second preferences and graded integration (causal > protagonist > semantic) tied to probe success; blended CMR predicts balanced access and broader cross‑neighborhood linkage. Preliminary narrative‑recall analyses and Semantic‑CMR fits included.
+
+<!-- 
+First, I don't care about the adjudication of selective‑ vs blended‑reinstatement variants in this proposal. 
+That was a central theme of my thesis, but it's a less focal issue in this investigation even if my findings may be 
+We are testing a retrieved-context account of narrative comprehension and 
+ of accessibility in narrative comprehension
+-->
+
+Aim 2: Demonstrate the joint constraints between memory and inference using a linking model.
+We will develop a linking model from latent context state to both next‑step recall/inference and probe accuracy/RT, estimating shared parameters for reinstatement strength and coherence sensitivity on joint datasets (sequences + probes). We will design double‑dissociation tests that separate memory availability (reinstatement makes information accessible) from inference commitment (coherence gate accepts/rejects the link), and use cross‑validation and posterior predictive checks to arbitrate selective vs blended architectures [@kahana2020computational; @wilson2019ten]. Preliminary feasibility analyses for joint fitting included.
+
+Aim 3: Establish how narrative structure modulates reinstatement and inference (event boundaries and beyond).
+We will orthogonally manipulate event boundaries (scene/time/space changes), goal/intent shifts, and cohesion cues while holding overlap fixed. The model predicts boundary‑gated reinstatement—attenuated across‑boundary integration rescued by strong causal/goal links—whereas blended reinstatement predicts broader cross‑boundary linkage [@zacks2007event; @dubrow2016temporal; @graesser1994constructing]. We will quantify structure × overlap interactions on both sequence signatures and comprehension outcomes. Exploratory boundary‑sensitive sequence analyses included.
+
+Figure 1. Iterative cycle of model‑derived paradigm development and behavioral data collection (recall sequences, probes, Q&A), enabling empirical testing of model variants to distinguish selective vs blended reinstatement and to quantify coherence gating in narrative comprehension.
