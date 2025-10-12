@@ -44,7 +44,7 @@ def simple_nth_item_recall_curve(
     return counts / denominator
 
 
-def conditional_nth_item_recall_curve(
+def extra_conditional_nth_item_recall_curve(
     dataset: RecallDataset,
     query_study_position: int = 0,
 ) -> Float[Array, " recall_positions"]:
@@ -61,11 +61,44 @@ def conditional_nth_item_recall_curve(
     matches = recalls == queried_items[:, None]
     prior_recalls = jnp.cumsum(matches, axis=1) - matches
     availability = prior_recalls == 0
-    
-    valid = jnp.logical_and(availability, recalls != 0)
+    continuation = recalls != 0
+
+    valid = jnp.logical_and(availability, continuation)
     numerator = (matches & valid).sum(axis=0)
     denominator = valid.sum(axis=0)
-    return numerator/denominator
+    return numerator / denominator
+
+
+def conditional_nth_item_recall_curve(
+    dataset: RecallDataset,
+    query_study_position: int = 0,
+) -> Float[Array, " recall_positions"]:
+    """Returns nth-item recall rate by output position conditional on availability and a prior recall event.
+
+    Args:
+      dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
+      query_study_position: Zero-based study position to analyze.
+    """
+    recalls = dataset["recalls"]
+    presentations = dataset["pres_itemnos"]
+    queried_items = presentations[:, query_study_position]
+
+    matches = recalls == queried_items[:, None]
+    prior_recalls = jnp.cumsum(matches, axis=1) - matches
+    availability = prior_recalls == 0
+    # Previous recall must be an actual item (True for the first slot by convention).
+    previous_is_item = jnp.concatenate(
+        (
+            jnp.ones((recalls.shape[0], 1), dtype=bool),
+            recalls[:, :-1] != 0,
+        ),
+        axis=1,
+    )
+
+    valid = jnp.logical_and(availability, previous_is_item)
+    numerator = (matches & valid).sum(axis=0)
+    denominator = valid.sum(axis=0)
+    return numerator / denominator
 
 
 def plot_conditional_nth_item_recall_curve(
