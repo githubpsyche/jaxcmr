@@ -3,7 +3,6 @@ __all__ = ['trial_order_error_rate', 'order_error_rate', 'plot_order_error_rate'
 from typing import Optional, Sequence
 
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes

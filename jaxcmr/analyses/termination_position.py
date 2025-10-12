@@ -1,7 +1,7 @@
-"""First-item recall curves.
+"""Recall termination curves.
 
-Compute and visualize the probability that the first studied item is produced
-at each recall (output) position.
+Compute and visualize the probability of stopping recall at each output
+position.
 """
 
 from __future__ import annotations
@@ -18,54 +18,53 @@ from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, RecallDataset
 
 __all__ = [
-    "simple_first_item_recall_curve",
-    "conditional_first_item_recall_curve",
-    "plot_simple_first_item_recall_curve",
-    "plot_conditional_first_item_recall_curve"
+    "termination_position_curve",
+    "conditional_termination_position_curve",
+    "plot_termination_position_curve",
+    "plot_conditional_termination_position_curve",
 ]
 
 
-def simple_first_item_recall_curve(
+def termination_position_curve(
     dataset: RecallDataset,
 ) -> Float[Array, " recall_positions"]:
-    """Return the recall-position probability of the list's first item.
+    """Returns termination probability by recall position.
 
     Args:
-      dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-
-    Returns:
-      A 1-D float array whose ``i``-th entry is the probability that the first
-      studied item was produced at recall position ``i``.
+      dataset: Recall dataset containing ``recalls``.
     """
     recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    first_items = presentations[:, 0]
-    matches = recalls == first_items[:, None]
-    counts = matches.sum(axis=0)
-    denominator = matches.shape[0]
-    return counts.astype(jnp.float32) / denominator
+    zero_mask = recalls == 0
+    has_zero = jnp.any(zero_mask, axis=1)
+    first_zero = jnp.argmax(zero_mask, axis=1)
+    last_index = recalls.shape[1] - 1
+    termination_index = jnp.where(has_zero, first_zero, last_index)
+    counts = jnp.bincount(termination_index, length=recalls.shape[1])
+    return counts / recalls.shape[0]
 
 
-def conditional_first_item_recall_curve(
+def conditional_termination_position_curve(
     dataset: RecallDataset,
 ) -> Float[Array, " recall_positions"]:
-    """Return first-item recall probability by output position, gating availability."""
+    """Returns conditional termination probability by recall position.
 
+    Args:
+      dataset: Recall dataset containing ``recalls``.
+    """
     recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    first_items = presentations[:, 0]
+    zero_mask = recalls == 0
+    has_zero = jnp.any(zero_mask, axis=1)
+    first_zero = jnp.argmax(zero_mask, axis=1)
+    last_index = recalls.shape[1] - 1
+    termination_index = jnp.where(has_zero, first_zero, last_index)
+    stop_counts = jnp.bincount(termination_index, length=recalls.shape[1])
+    recall_positions = jnp.arange(recalls.shape[1])
+    reached_mask = recall_positions <= termination_index[:, None]
+    reached_counts = jnp.sum(reached_mask, axis=0)
+    return stop_counts / reached_counts
 
-    matches = recalls == first_items[:, None]
-    prior_recalls = jnp.cumsum(matches, axis=1) - matches
-    availability = prior_recalls == 0
-    numerator = (matches & availability).sum(axis=0)
-    denominator = availability.sum(axis=0)
-    safe_denominator = jnp.where(denominator > 0, denominator, 1)
-    probabilities = numerator.astype(jnp.float32) / safe_denominator.astype(jnp.float32)
-    return jnp.where(denominator > 0, probabilities, 0.0)
 
-
-def plot_conditional_first_item_recall_curve(
+def plot_termination_position_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     distances: Optional[Float[Array, "word_count word_count"]] = None,
@@ -74,11 +73,12 @@ def plot_conditional_first_item_recall_curve(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
 ) -> Axes:
-    """Plot the recall-position curve for the first studied item.
+    """Plot termination probability as a function of recall position.
 
     Args:
       datasets: Collection of recall datasets to plot.
       trial_masks: Boolean masks selecting trials in each dataset.
+      distances: Unused placeholder for API compatibility.
       color_cycle: Colors for successive datasets.
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
@@ -87,7 +87,6 @@ def plot_conditional_first_item_recall_curve(
     Returns:
       The Matplotlib axis containing the plot.
     """
-
     axis = init_plot(axis)
 
     if isinstance(datasets, dict):
@@ -108,7 +107,7 @@ def plot_conditional_first_item_recall_curve(
         if jnp.any(mask)
     )
 
-    curve_fn = jit(conditional_first_item_recall_curve)
+    curve_fn = jit(termination_position_curve)
 
     for index, data in enumerate(datasets):
         subject_curves = jnp.vstack(
@@ -134,12 +133,13 @@ def plot_conditional_first_item_recall_curve(
     set_plot_labels(
         axis,
         "Recall Position",
-        "P(First Item | Available)",
+        "P(Terminate)",
         contrast_name,
     )
     return axis
 
-def plot_simple_first_item_recall_curve(
+
+def plot_conditional_termination_position_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     distances: Optional[Float[Array, "word_count word_count"]] = None,
@@ -148,11 +148,12 @@ def plot_simple_first_item_recall_curve(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
 ) -> Axes:
-    """Plot the recall-position curve for the first studied item.
+    """Plot conditional termination probability as a function of recall position.
 
     Args:
       datasets: Collection of recall datasets to plot.
       trial_masks: Boolean masks selecting trials in each dataset.
+      distances: Unused placeholder for API compatibility.
       color_cycle: Colors for successive datasets.
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
@@ -161,7 +162,6 @@ def plot_simple_first_item_recall_curve(
     Returns:
       The Matplotlib axis containing the plot.
     """
-
     axis = init_plot(axis)
 
     if isinstance(datasets, dict):
@@ -182,7 +182,7 @@ def plot_simple_first_item_recall_curve(
         if jnp.any(mask)
     )
 
-    curve_fn = jit(simple_first_item_recall_curve)
+    curve_fn = jit(conditional_termination_position_curve)
 
     for index, data in enumerate(datasets):
         subject_curves = jnp.vstack(
@@ -208,7 +208,7 @@ def plot_simple_first_item_recall_curve(
     set_plot_labels(
         axis,
         "Recall Position",
-        "P(First Item)",
+        "P(Terminate | Reach)",
         contrast_name,
     )
     return axis

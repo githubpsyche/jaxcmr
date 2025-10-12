@@ -12,8 +12,8 @@ __all__ = [
     "compute_distance_bin_edges",
     "DistanceTabulation",
     "tabulate_trial",
-    "crp",
-    "plot_crp",
+    "dist_crp",
+    "plot_dist_crp",
 ]
 
 from typing import Optional, Sequence
@@ -100,7 +100,7 @@ class DistanceTabulation(Pytree):
         present_bins = jnp.digitize(present_distances, self.bin_edges)
         one_hot_bins = nn.one_hot(present_bins, self.bin_edges.shape[0] + 1)
         available_bins = jnp.logical_and(one_hot_bins, self.avail_items[:, None])
-        bin_flags = jnp.any(available_bins, axis=0).astype(jnp.int32)
+        bin_flags = jnp.any(available_bins, axis=0)
 
         return self.replace(
             previous_item=current_item,

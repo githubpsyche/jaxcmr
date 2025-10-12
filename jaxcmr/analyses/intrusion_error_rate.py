@@ -5,7 +5,6 @@ __all__ = ['trial_intrusion_error_rate', 'intrusion_error_rate', 'plot_intrusion
 from typing import Optional, Sequence
 
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes

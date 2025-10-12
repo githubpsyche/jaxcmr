@@ -110,9 +110,7 @@ def recall_probability_by_lag(
 
     presented_tot = presented_t.sum(0)
     recalled_tot = recalled_t.sum(0)
-
-    return jnp.where(presented_tot > 0, recalled_tot / presented_tot, 0.0)
-
+    return presented_tot / recalled_tot
 
 def binned_recall_probability_by_lag(
     dataset: RecallDataset,

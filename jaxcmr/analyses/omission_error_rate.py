@@ -3,7 +3,6 @@ __all__ = ['trial_omission_error_rate', 'omission_error_rate', 'plot_omission_er
 from typing import Optional, Sequence
 
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes

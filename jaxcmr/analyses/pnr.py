@@ -85,10 +85,10 @@ def actual_recalls(
         list_length: Length of the study list.
     """
     item = recalls[query_recall_position]
-    return jnp.where(
+    return lax.cond(
         item == 0,
-        jnp.zeros(list_length, dtype=bool),
-        jnp.arange(1, list_length + 1) == item,
+        lambda: jnp.zeros(list_length, dtype=bool),
+        lambda: jnp.arange(1, list_length + 1) == item,
     )
 
 
@@ -118,9 +118,7 @@ def conditional_fixed_pres_pnr(
 
     numerator = actual.sum(axis=0)  # times each pos was the nth recall
     denominator = available.sum(axis=0)  # times each pos was available
-
-    # Avoid divide-by-zero
-    return jnp.where(denominator > 0, numerator / denominator, 0.0)
+    return numerator/denominator
 
 
 def pnr(
@@ -227,9 +225,7 @@ def conditional_pnr_with_repeats(
 
     numerator = actual.sum(axis=0)
     denominator = available.sum(axis=0)
-
-    return jnp.where(denominator > 0, numerator / denominator, 0.0)
-
+    return numerator / denominator
 
 def plot_pnr(
     datasets: Sequence[RecallDataset] | RecallDataset,
