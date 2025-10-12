@@ -19,14 +19,14 @@ __all__ = [
 from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
-from jax import numpy as jnp, nn
+from jax import numpy as jnp
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
+from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
-from ..helpers import apply_by_subject
 
 
 def compute_distance_bin_edges(
@@ -73,34 +73,32 @@ class DistanceTabulation(Pytree):
 
     def __init__(
         self,
-        present_ids: Integer[Array, " study_events"],
+        availability_mask: Bool[Array, " study_events"],
         first_recall: Int_,
-        distance_matrix: Float[Array, " item_count item_count"],
+        trial_distances: Float[Array, "study_events study_events"],
         bin_edges: Float[Array, " edges"],
     ):
         bin_count = bin_edges.shape[0] + 1
         self.bin_edges = bin_edges
-        self.present_ids = present_ids
-        self.distance_matrix = distance_matrix
+        self.trial_distances = trial_distances
         self.actual_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
         self.avail_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
-        self.avail_items = self.present_ids > 0
+        self.avail_items = availability_mask
         self.avail_items = self.avail_items.at[first_recall - 1].set(False)
         self.previous_item = first_recall
 
     def _update(self, current_item: Int_) -> "DistanceTabulation":
         """Update transition tallies for the supplied recall choice."""
 
-        previous_id = self.present_ids[self.previous_item - 1]
-        current_id = self.present_ids[current_item - 1]
-        distances_from_prev = self.distance_matrix[previous_id - 1]
-        actual_distance = distances_from_prev[current_id - 1]
+        distances_from_prev = self.trial_distances[self.previous_item - 1]
+        actual_distance = distances_from_prev[current_item - 1]
         actual_bin = jnp.digitize(actual_distance, self.bin_edges)
-        present_distances = distances_from_prev[self.present_ids - 1]
-        present_bins = jnp.digitize(present_distances, self.bin_edges)
-        one_hot_bins = nn.one_hot(present_bins, self.bin_edges.shape[0] + 1)
-        available_bins = jnp.logical_and(one_hot_bins, self.avail_items[:, None])
-        bin_flags = jnp.any(available_bins, axis=0)
+
+        present_bins = jnp.digitize(distances_from_prev, self.bin_edges)
+        bin_count = self.bin_edges.shape[0] + 1
+        masked_bins = jnp.where(self.avail_items, present_bins, bin_count)
+        bin_flags = jnp.zeros(bin_count + 1, dtype=jnp.int32).at[masked_bins].set(1)
+        bin_flags = bin_flags[:-1]
 
         return self.replace(
             previous_item=current_item,
@@ -129,7 +127,16 @@ def tabulate_trial(
       bin_edges: Interior bin edges shared across trials.
     """
 
-    init = DistanceTabulation(present_ids, trial[0], distance_matrix, bin_edges)
+    valid = present_ids > 0
+    remapped = jnp.where(valid, present_ids - 1, 0)
+    trial_distances = distance_matrix[remapped[:, None], remapped[None, :]]
+    trial_distances = jnp.where(valid[:, None] & valid[None, :], trial_distances, 0.0)
+    init = DistanceTabulation(
+        availability_mask=valid,
+        first_recall=trial[0],
+        trial_distances=trial_distances,
+        bin_edges=bin_edges,
+    )
     result = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return result.actual_transitions, result.avail_transitions
 
@@ -147,7 +154,10 @@ def dist_crp(
       bin_edges: Interior boundaries for distance bins.
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
-        dataset["recalls"], dataset["pres_itemids"], distance_matrix, bin_edges
+        dataset["recalls"],
+        dataset["pres_itemids"],
+        distance_matrix,
+        bin_edges,
     )
     return actual.sum(0) / possible.sum(0)
 
@@ -168,7 +178,6 @@ def plot_dist_crp(
       datasets: Collection of recall datasets to contrast.
       trial_masks: Boolean masks selecting trials per dataset.
       distances: Distance matrix (or matrices) defining the metric.
-      percentiles: Percentiles used to derive bin edges when unspecified.
       color_cycle: Colors used for successive datasets.
       labels: Legend labels corresponding to ``datasets``.
       contrast_name: Optional legend title.
