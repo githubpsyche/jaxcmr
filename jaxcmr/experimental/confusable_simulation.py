@@ -1,5 +1,6 @@
 from typing import Mapping, Optional, Sequence, Type
 
+import numpy as np
 import jax.numpy as jnp
 from jax import lax, random, vmap
 from jax.tree_util import tree_map
@@ -127,6 +128,35 @@ class MemorySearchSimulator:
         )[1]
 
 
+def _parameter_indices_for_subjects(
+    subject_ids: Integer[Array, " trial_count"],
+    parameters: Mapping[str, Float_],
+) -> Integer[Array, " trial_count"]:
+    """Returns zero-based parameter indices aligned with subject identifiers.
+
+    Args:
+        subject_ids: Raw subject identifiers from the dataset.
+        parameters: Mapping of per-subject parameter arrays. When a ``'subject'``
+            entry is present, it is used to translate raw IDs to contiguous indices.
+    """
+    parameter_subjects = parameters.get("subject")
+    if parameter_subjects is None:
+        return subject_ids
+
+    parameter_subjects = jnp.asarray(parameter_subjects).reshape(-1)
+    sort_indices = jnp.argsort(parameter_subjects)
+    sorted_subjects = parameter_subjects[sort_indices]
+    lookup_positions = jnp.searchsorted(sorted_subjects, subject_ids)
+    matched_subjects = sorted_subjects[lookup_positions]
+
+    if not np.array_equal(np.array(matched_subjects), np.array(subject_ids)):
+        raise ValueError(
+            "Dataset subject IDs are not present in parameters['subject']."
+        )
+
+    return sort_indices[lookup_positions].astype(jnp.int32)
+
+
 def preallocate_for_h5_dataset(
     data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
 ) -> RecallDataset:
@@ -176,12 +206,13 @@ def simulate_h5_from_h5(
     # Flat trial + subject index vectors (static shapes)
     total_trials = sim_h5["subject"].size
     trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
-    subject_indices = sim_h5["subject"].flatten()
+    subject_ids = sim_h5["subject"].flatten()
+    parameter_indices = _parameter_indices_for_subjects(subject_ids, parameters)
     rngs = random.split(rng, total_trials)
 
     # One jit-compiled vmap over trials
     typed_ids = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
-        trial_indices, subject_indices, parameters, rngs
+        trial_indices, parameter_indices, parameters, rngs
     )
     sim_h5["rec_itemids"] = typed_ids
 
@@ -231,7 +262,7 @@ def parameter_shifted_simulate_h5_from_h5(
 
     results: list[RecallDataset] = []
     for value in parameter_values:
-        rng_key, this_rng = random.split(rng)
+        rng, this_rng = random.split(rng)
         swept_params = {
             **parameters,
             varied_parameter: jnp.full_like(parameters[varied_parameter], value),

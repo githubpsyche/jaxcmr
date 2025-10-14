@@ -4,6 +4,7 @@ from jax import random
 from jaxcmr.simulation import (
     MemorySearchSimulator,
     item_to_study_positions,
+    parameter_shifted_simulate_h5_from_h5,
     preallocate_for_h5_dataset,
     simulate_h5_from_h5,
 )
@@ -52,6 +53,36 @@ class _FakeModelFactory:
 
     def create_trial_model(self, trial_index, parameters):  # noqa: D401 - impl
         return _FakeMemorySearch(item_count=int(self.dataset["pres_itemnos"].shape[1]))
+
+
+class _IndexedMemorySearch(_FakeMemorySearch):
+    """Fake memory search storing a recall index driven by per-subject parameters."""
+
+    def __init__(self, item_count: int, recall_index: int):
+        super().__init__(item_count=item_count)
+        self.recall_index = recall_index
+
+
+class _IndexedFactory:
+    """Factory that encodes an integer recall index from the ``alpha`` parameter."""
+
+    def __init__(self, dataset, connections):
+        self.dataset = dataset
+        self.connections = connections
+
+    def create_model(self, parameters):
+        item_count = int(self.dataset["pres_itemnos"].shape[1])
+        return _IndexedMemorySearch(item_count, int(parameters["alpha"]))
+
+    def create_trial_model(self, trial_index, parameters):
+        item_count = int(self.dataset["pres_itemnos"].shape[1])
+        return _IndexedMemorySearch(item_count, int(parameters["alpha"]))
+
+
+def _recall_item_selected_by_parameter(model, present, trial, rng):
+    """Returns a single recalled item chosen by the model's encoded index."""
+    recall_item = present[int(model.recall_index)]
+    return model, jnp.array([recall_item, 0], dtype=jnp.int32)
 
 
 def test_returns_zeros_when_item_is_padding():
@@ -173,6 +204,98 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
     assert int(out["recalls"][0, 0]) == 2
 
 
+def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
+    """Behavior: Aligns per-subject parameters using subject identifiers.
+
+    Given:
+      - a dataset whose subject ids are sparse and nonconsecutive
+    When:
+      - simulating trials with a factory that encodes subject-specific recall slots
+    Then:
+      - the recalls reflect the parameter row associated with each subject id
+    Why this matters:
+      - regression: HealeyKahana2014 simulations rely on sparse subject numbering
+    """
+    # Arrange / Given
+    dataset = {
+        "subject": jnp.array([[63], [138]], dtype=jnp.int32),
+        "pres_itemnos": jnp.array([[10, 11], [20, 21]], dtype=jnp.int32),
+        "recalls": jnp.zeros((2, 2), dtype=jnp.int32),
+        "listLength": jnp.array([[2], [2]], dtype=jnp.int32),
+    }
+    params = {
+        "alpha": jnp.array([0, 1], dtype=jnp.int32),
+        "subject": jnp.array([63, 138], dtype=jnp.int32),
+    }
+    mask = jnp.array([True, True])
+    rng = random.PRNGKey(10)
+
+    # Act / When
+    out = simulate_h5_from_h5(
+        _IndexedFactory,
+        dataset,
+        connections=None,
+        parameters=params,
+        trial_mask=mask,
+        experiment_count=1,
+        rng=rng,
+        size=2,
+        simulate_trial_fn=_recall_item_selected_by_parameter,
+    )
+
+    # Assert / Then
+    assert out["recalls"].shape == (2, 2)
+    assert int(out["recalls"][0, 0]) == 1
+    assert int(out["recalls"][1, 0]) == 2
+
+
+def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
+    """Behavior: Applies subject-id mapping while sweeping parameters.
+
+    Given:
+      - a dataset with a single nonconsecutive subject id and subject-keyed parameters
+    When:
+      - sweeping the ``alpha`` parameter across two values
+    Then:
+      - each simulated dataset reflects the swept parameter for that subject id
+    Why this matters:
+      - regression: parameter sweeps must stay aligned with sparse subject ids
+    """
+    # Arrange / Given
+    dataset = {
+        "subject": jnp.array([[138]], dtype=jnp.int32),
+        "pres_itemnos": jnp.array([[30, 31]], dtype=jnp.int32),
+        "recalls": jnp.zeros((1, 2), dtype=jnp.int32),
+        "listLength": jnp.array([[2]], dtype=jnp.int32),
+    }
+    params = {
+        "alpha": jnp.array([0], dtype=jnp.int32),
+        "subject": jnp.array([138], dtype=jnp.int32),
+    }
+    mask = jnp.array([True])
+    rng = random.PRNGKey(11)
+
+    # Act / When
+    sims = parameter_shifted_simulate_h5_from_h5(
+        _IndexedFactory,
+        dataset,
+        connections=None,
+        parameters=params,
+        trial_mask=mask,
+        experiment_count=1,
+        varied_parameter="alpha",
+        parameter_values=[0, 1],
+        rng=rng,
+        size=2,
+        simulate_trial_fn=_recall_item_selected_by_parameter,
+    )
+
+    # Assert / Then
+    assert len(sims) == 2
+    assert int(sims[0]["recalls"][0, 0]) == 1
+    assert int(sims[1]["recalls"][0, 0]) == 2
+
+
 def test_replicates_selected_trials_when_preallocating_dataset():
     """Behavior: Replicates masked trials by experiment_count in all arrays.
 
@@ -201,4 +324,3 @@ def test_replicates_selected_trials_when_preallocating_dataset():
     assert out["subject"].shape[0] == 2
     assert jnp.all(out["pres_itemnos"] == jnp.array([[1, 2, 3], [1, 2, 3]]))
     assert jnp.all(out["recalls"] == jnp.array([[1, 0, 0], [1, 0, 0]]))
-
