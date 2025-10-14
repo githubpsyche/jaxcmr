@@ -45,6 +45,25 @@ def item_to_study_positions(
     )
 
 
+def _reindex_recalls(
+    recalls: Integer[Array, " trial_count recall_events"],
+    presentations: Integer[Array, " trial_count list_length"],
+    size: int,
+) -> Integer[Array, " trial_count recall_events"]:
+    """Returns recall indices expressed as study positions.
+
+    Args:
+      recalls: Simulated recall indices per trial.
+      presentations: Study sequences aligned with each trial.
+      size: Number of positions to retain while remapping.
+    """
+    return (
+        vmap(
+            vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
+        )(recalls, presentations, size)[:, :, 0]
+    )
+
+
 def _single_free_recall(
     model: MemorySearch, rng: PRNGKeyArray
 ) -> tuple[MemorySearch, Integer[Array, ""]]:
@@ -255,9 +274,7 @@ def simulate_h5_from_h5(
     )
 
     # Reindex study positions
-    sim_h5["recalls"] = vmap(
-        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )(recalls, sim_h5["pres_itemnos"], size)[:, :, 0]
+    sim_h5["recalls"] = _reindex_recalls(recalls, sim_h5["pres_itemnos"], size)
     return sim_h5
 
 
@@ -290,24 +307,35 @@ def parameter_shifted_simulate_h5_from_h5(
       simulate_trial_fn: Trial-level simulation function to use.
     """
 
+    template = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
+    simulator = MemorySearchSimulator(
+        model_factory, template, connections, simulate_trial_fn
+    )
+    total_trials = template["subject"].size
+    trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
+    subject_indices = template["subject"].flatten()
+    template_without_recalls = {
+        key: value for key, value in template.items() if key != "recalls"
+    }
+
+    def run_for_parameters(
+        param_map: Mapping[str, Float_], sweep_rng: PRNGKeyArray
+    ) -> RecallDataset:
+        rngs = random.split(sweep_rng, total_trials)
+        recalls = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
+            trial_indices, subject_indices, param_map, rngs
+        )
+        return template_without_recalls | {
+            "recalls": _reindex_recalls(recalls, template["pres_itemnos"], size)
+        } # type: ignore
+
     results: list[RecallDataset] = []
     for value in parameter_values:
-        rng_key, this_rng = random.split(rng)
+        rng, this_rng = random.split(rng)
         swept_params = {
             **parameters,
             varied_parameter: jnp.full_like(parameters[varied_parameter], value),
         }
-        sim_data = simulate_h5_from_h5(
-            model_factory,
-            dataset,
-            connections,
-            swept_params,
-            trial_mask,
-            experiment_count,
-            this_rng,
-            size,
-            simulate_trial_fn,
-        )
-        results.append(sim_data)
+        results.append(run_for_parameters(swept_params, this_rng))
 
     return results

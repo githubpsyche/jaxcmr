@@ -35,7 +35,7 @@ def wald_pdf(v: Float_) -> Float[Array, " timepoints"]:
 def wald_cdf_closed_form(v: Float_) -> Float[Array, " timepoints"]:
     t = jnp.maximum(t_vals, 1e-30)
     alpha = (v * t - theta) / jnp.sqrt(t)
-    beta  = -(v * t + theta) / jnp.sqrt(t)
+    beta = -(v * t + theta) / jnp.sqrt(t)
     exp_term = 2.0 * theta * v
     # Clip to avoid overflow/underflow
     exp_term = jnp.clip(exp_term, -60.0, 60.0)

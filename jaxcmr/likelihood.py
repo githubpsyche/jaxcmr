@@ -58,6 +58,7 @@ class MemorySearchLikelihoodFnGenerator:
         self.factory = model_factory(dataset, connections)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
+        self.has_connections = False if connections is None else jnp.any(connections).item()
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -171,7 +172,7 @@ class MemorySearchLikelihoodFnGenerator:
           free_param_names: Names and order of free parameters.
         """
         # Decide which approach to use, based on whether all present-lists match
-        if all_rows_identical(self.present_lists[trial_indices]):
+        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_connections:
             base_loss_fn = self.base_predict_trials_loss
         else:
             base_loss_fn = self.present_and_predict_trials_loss

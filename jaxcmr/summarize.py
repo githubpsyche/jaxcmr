@@ -1,5 +1,5 @@
 import json
-from typing import Mapping, Optional
+from typing import Callable, Mapping, Optional
 
 import numpy as np
 import pandas as pd
@@ -60,6 +60,68 @@ def calculate_ci(data: list[float], confidence=0.95) -> float:
     return stderr * t.ppf((1 + confidence) / 2.0, n - 1)
 
 
+def _normalize_variant(values: list[float]) -> Optional[np.ndarray]:
+    """Returns normalized variant values or None when no usable data is present.
+
+    Args:
+      values: Subject-level measurements for a single model variant.
+    """
+    variant_array = np.asarray(values, dtype=float)
+    if variant_array.size == 0 or np.isnan(variant_array).all():
+        return None
+    return variant_array
+
+
+def _format_row(parameter_label: str, statistic_label: str, values: list[str]) -> str:
+    """Returns a Markdown table row for the summary output.
+
+    Args:
+      parameter_label: Name of the parameter or metric for the row.
+      statistic_label: Statistic identifier (e.g., mean, std).
+      values: Formatted statistic values for each model variant.
+    """
+    cells = [parameter_label, statistic_label, *values]
+    sanitized = [cell or "" for cell in cells]
+    return "| " + " | ".join(sanitized) + " |\n"
+
+
+def _format_mean_cell(
+    array: Optional[np.ndarray], raw_values: list[float], include_ci: bool
+) -> str:
+    """Returns the formatted mean cell text, optionally with confidence intervals.
+
+    Args:
+      array: Prepared numeric data for a model variant.
+      raw_values: Original values for confidence interval calculation.
+      include_ci: Whether to append the confidence interval.
+    """
+    if array is None:
+        return ""
+    mean_value = np.mean(array)
+    if np.isnan(mean_value):
+        return ""
+    if include_ci:
+        return f"{mean_value:.2f} +/- {calculate_ci(raw_values):.2f}"
+    return f"{mean_value:.2f}"
+
+
+def _format_stat_cell(
+    array: Optional[np.ndarray], reducer: Callable[[np.ndarray], float]
+) -> str:
+    """Returns the formatted statistic cell using the provided reducer.
+
+    Args:
+      array: Prepared numeric data for a model variant.
+      reducer: Function that computes the statistic of interest.
+    """
+    if array is None:
+        return ""
+    value = reducer(array)
+    if np.isnan(value):
+        return ""
+    return f"{value:.2f}"
+
+
 def add_summary_lines(
     md_table: str,
     errors: list[list[float]],
@@ -67,43 +129,40 @@ def add_summary_lines(
     include_std=False,
     include_ci=False,
 ) -> str:
-    """Returns markdown table added lines for mean and errors of the values.
+    """Add summary statistics rows to a Markdown table segment.
 
     Args:
-        md_table: markdown table to add summary lines to.
-        errors: values to summarize.
-        label: label for the summary lines.
+      md_table: Markdown table fragment to extend.
+      errors: Values grouped by model variant.
+      label: Parameter or metric name for the new rows.
+      include_std: Whether to include standard deviation rows.
+      include_ci: Whether to include confidence interval text for means.
     """
-    # Add a line for the mean
-    md_table += f"| {label.replace('_', ' ')} "
-    if include_std:
-        md_table += "| mean "
-    for variant_values in errors:
-        if np.isnan(np.mean(variant_values)):
-            md_table += "| "
-        elif include_ci:
-            md_table += f"| {np.mean(variant_values):.2f} +/- {calculate_ci(variant_values):.2f} "
-        else:
-            md_table += f"| {np.mean(variant_values):.2f} "
-    md_table += "|\n"
+    display_label = label.replace("_", " ")
+    variant_arrays = [_normalize_variant(values) for values in errors]
 
-    # Add a line for the standard deviation
-    if include_std:
-        md_table += "| | std "
-        for variant_values in errors:
-            if np.isnan(np.std(variant_values)):
-                md_table += "| "
-                continue
-            md_table += f"| {np.std(variant_values):.2f} "
-        md_table += "|\n"
+    mean_values = [
+        _format_mean_cell(variant_array, raw_values, include_ci)
+        for variant_array, raw_values in zip(variant_arrays, errors)
+    ]
+    md_table += _format_row(display_label, "mean", mean_values)
 
-    # Add a line for the confidence interval, but just if label is 'fitness'
-    # if label != "fitness":
-    #     return md_table
-    # md_table += "| | ci "
-    # for variant_values in errors:
-    #     md_table += f"| +/- {calculate_ci(variant_values):.2f} "
-    # md_table += "|\n"
+    if include_std:
+        std_values = [
+            _format_stat_cell(variant_array, np.std) for variant_array in variant_arrays
+        ]
+        md_table += _format_row("", "std", std_values)
+
+    min_values = [
+        _format_stat_cell(variant_array, np.nanmin) for variant_array in variant_arrays
+    ]
+    md_table += _format_row("", "min", min_values)
+
+    max_values = [
+        _format_stat_cell(variant_array, np.nanmax) for variant_array in variant_arrays
+    ]
+    md_table += _format_row("", "max", max_values)
+
     return md_table
 
 
@@ -112,38 +171,32 @@ def summarize_parameters(
     query_parameters: Optional[list[str]] = None,
     include_std=False,
     include_ci=False,
-):
-    """Returns markdown table summarizing the parameters across model variants.
+) -> str:
+    """Returns a Markdown table of parameter statistics across model variants.
 
-    Computes the mean and confidence interval for each parameter across all subjects for each
-    model variant, with an option to specify which parameters to include in the table and t
-    their order.
+    The table includes the mean (with optional confidence intervals), standard deviation,
+    minimum, and maximum for each requested parameter.
 
     Args:
-    model_data : list[dict[str, dict[str, list]]]
-        A list of dictionaries with with dictionaries list values.
-        Each list corresponds to a model or fitting variant.
-        inner list is p
-    query_parameters : list[str], optional
+      model_data: Collection of model summaries containing `name`, `fitness`, and `fits`.
+      query_parameters: Ordered parameter identifiers to surface; defaults to all found.
+      include_std: Whether to include standard deviation rows.
+      include_ci: Whether to append confidence intervals to mean rows.
     """
-    # Extract model names from the first entry of each model variant list
-    model_names = [model_data[i]["name"] for i in range(len(model_data))]
+    # Extract model names in input order
+    model_names = [variant["name"] for variant in model_data]
 
     # identify query parameters; by default, is all unique fixed params across model variants
     if query_parameters is None:
-        query_parameters = list(
-            set().union(*[entry["fixed"].keys() for entry in model_data])
-        )
+        query_parameters = []
+        for entry in model_data:
+            for param in entry["fixed"].keys():
+                if param not in query_parameters:
+                    query_parameters.append(param)
 
-    if include_std:
-        md_table = (
-            "| | | " + " | ".join([n.replace("_", " ") for n in model_names]) + " |\n"
-        )
-    else:
-        md_table = (
-            "| | " + " | ".join([n.replace("_", " ") for n in model_names]) + " |\n"
-        )
-    md_table += "|---" + ("|---" * (len(model_data) + 1)) + "|\n"
+    header_names = [n.replace("_", " ") for n in model_names]
+    md_table = "| Parameter | Statistic | " + " | ".join(header_names) + " |\n"
+    md_table += "|---|---" + ("|---" * len(model_data)) + "|\n"
 
     # likelihood entry first
     values = [variant_data["fitness"] for variant_data in model_data]
@@ -155,10 +208,9 @@ def summarize_parameters(
     for param in query_parameters:
         values = []
         for variant_data in model_data:
-            try:
-                values.append(variant_data["fits"][param])
-            except KeyError:
-                values.append([np.nan for _ in range(len(variant_data["fitness"]))])
+            subject_count = len(variant_data["fitness"])
+            fallback = [np.nan] * subject_count
+            values.append(variant_data["fits"].get(param, fallback))
         md_table = add_summary_lines(
             md_table, values, param, include_std=include_std, include_ci=include_ci
         )
