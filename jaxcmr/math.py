@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 import jax.numpy as jnp
 from jax import lax
 
@@ -72,7 +73,7 @@ def cosine_similarity_matrix(
 
 
 def build_trial_connections(
-    present_lists: Array,
+    present_lists: np.ndarray,
     connections: Optional[Float[Array, " word_pool_items word_pool_items"]],
 ) -> Float[Array, " trials study_events study_events"]:
     """Returns per-trial connection matrices aligned to study lists.
@@ -97,7 +98,7 @@ def build_trial_connections(
     for trial_idx in range(present_lists.shape[0]):
         present = present_lists[trial_idx]
         valid = present > 0
-        zero_based = jnp.where(valid, present - 1, 0).astype(jnp.int32)
+        zero_based = jnp.array(jnp.where(valid, present - 1, 0), dtype=jnp.int32)
         block = zeroed[zero_based[:, None], zero_based[None, :]]
         keep_mask = jnp.logical_and(valid[:, None], valid[None, :])
         trial_blocks.append(jnp.where(keep_mask, block, 0.0).astype(jnp.float32))
