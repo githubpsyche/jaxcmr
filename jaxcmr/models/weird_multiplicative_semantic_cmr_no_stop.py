@@ -60,7 +60,7 @@ class CMRNoStop(Pytree):
         self.context = context
         self.mfc = mfc
         self.mcf = mcf
-        self.msem = trial_connections * self.semantic_scale
+        self.msem = trial_connections
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
@@ -143,16 +143,18 @@ class CMRNoStop(Pytree):
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for each recallable item."""
-        base_support = self.mcf.probe(self.context.state)
-        semantic_support = lax.cond(
-            self.recall_total == 0,
-            lambda: jnp.zeros_like(base_support),
-            lambda: self.msem[self.recalls[self.recall_total - 1] - 1]
+        base_support = self.mcf.probe(self.context.state) * self.recallable
+        semantic_support = (
+            lax.cond(
+                self.recall_total == 0,
+                lambda: jnp.ones_like(base_support),
+                lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
+            )
+            * self.recallable
         )
-        combined = power_scale(
-            (base_support + semantic_support) * self.recallable,
-            self.mcf_sensitivity,
-        )
+        scaled_base = power_scale(base_support, self.mcf_sensitivity)
+        scaled_semantic = power_scale(semantic_support, self.semantic_scale)
+        combined = scaled_base * scaled_semantic
         return (combined + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:

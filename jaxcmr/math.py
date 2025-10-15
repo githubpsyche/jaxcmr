@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+import numpy as np
 from jax import lax
 
 from jaxcmr.typing import Array, Float, Float_, Int_
@@ -19,7 +20,8 @@ def power_scale(value: Float_, scale: Float_) -> Float:
 
 def simple_power_scale(value: Float_, scale: Float_) -> Float:
     """Returns value raised to the specified power without logsumexp trick."""
-    return value ** scale
+    return value**scale
+
 
 def exponential_primacy_decay(
     study_index: Int_, primacy_scale: Float_, primacy_decay: Float_
@@ -66,3 +68,34 @@ def cosine_similarity_matrix(
     norms = jnp.linalg.norm(features, axis=1, keepdims=True)
     normalized = features / (norms + lb)
     return jnp.clip(normalized @ normalized.T, -1.0, 1.0)
+
+
+def build_trial_connections(
+    present_lists: Float[Array, " trials study_events"],
+    connections: Float[Array, " word_pool items word_pool_items"],
+) -> Float[Array, " trials study_events study_events"]:
+    """Returns per-trial connection matrices aligned to study lists.
+
+    Args:
+      present_lists: Study lists indexed by trial, containing 1-indexed item ids.
+      connections: Wordpool-wide similarity matrix.
+    """
+    lists_np = np.array(present_lists)
+
+    base = np.array(connections, dtype=np.float32)
+    np.fill_diagonal(base, 0.0)
+    base = np.maximum(base, float(lb))
+    np.fill_diagonal(base, 0.0)
+
+    trial_blocks = []
+    for present in lists_np:
+        valid = present > 0
+        zero_based = np.where(valid, present - 1, 0)
+        block = base[np.ix_(zero_based, zero_based)]
+        block = np.where(
+            np.logical_and(valid[:, None], valid[None, :]),
+            block,
+            0.0,
+        )
+        trial_blocks.append(jnp.array(block, dtype=jnp.float32))
+    return jnp.stack(trial_blocks)
