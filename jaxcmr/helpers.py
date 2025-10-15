@@ -94,7 +94,7 @@ def generate_trial_mask(
     return eval(trial_query).flatten()
 
 
-def load_data(data_path: str) -> RecallDataset:
+def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:
     """
     Loads and processes an HDF5 dataset from the specified file.
 
@@ -111,7 +111,32 @@ def load_data(data_path: str) -> RecallDataset:
     """
     with h5py.File(data_path, "r") as f:
         result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
-    return {key: jnp.array(value) for key, value in result.items()}  # type: ignore
+
+    if max_subjects == 0:
+        return result  # type: ignore
+    else:
+        return limit_to_first_subjects(
+            {key: jnp.array(value) for key, value in result.items()},  # type: ignore
+            max_subjects,
+        )
+
+
+def limit_to_first_subjects(
+    data: RecallDataset,
+    max_subjects: int,
+) -> RecallDataset:
+    """Returns dataset restricted to the first `max_subjects` unique subjects.
+
+    Args:
+      data: Trial-indexed arrays with a `subject` column shaped [trial_count, 1].
+      max_subjects: Maximum number of subjects to retain, preserving encounter order.
+    """
+    subject_ids = data["subject"].reshape(-1)
+    unique_subjects = np.unique(np.asarray(subject_ids))
+    cutoff_index = min(max_subjects, unique_subjects.size) - 1
+    subject_cutoff = unique_subjects[cutoff_index]
+    include_mask = subject_ids <= subject_cutoff
+    return {key: value[include_mask] for key, value in data.items()}  # type: ignore
 
 
 def save_dict_to_hdf5(data: dict, path: str):
@@ -167,7 +192,8 @@ def apply_by_subject(
         if jnp.sum(subject_mask) == 0:
             continue
         subject_dataset: RecallDataset = {
-            key: value[subject_mask] for key, value in data.items() # type: ignore
+            key: value[subject_mask]  # type: ignore
+            for key, value in data.items()
         }
         results.append(func(subject_dataset, *args, **kwargs))
 
