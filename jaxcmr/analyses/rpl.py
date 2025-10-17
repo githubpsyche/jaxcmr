@@ -107,10 +107,8 @@ def recall_probability_by_lag(
     presented_t, recalled_t = vmap(_trial_lag_counts, in_axes=(0, 0, None, None, None))(
         recalls, presentations, all_items, max_lag, n_bins
     )
+    return recalled_t.sum(0) / presented_t.sum(0)
 
-    presented_tot = presented_t.sum(0)
-    recalled_tot = recalled_t.sum(0)
-    return presented_tot / recalled_tot
 
 def binned_recall_probability_by_lag(
     dataset: RecallDataset,
@@ -177,7 +175,6 @@ def plot_full_rpl(
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks]
 
-    max_list_length = find_max_list_length(datasets, trial_masks)
     max_lag = infer_max_lag(
         datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
     )
@@ -200,7 +197,9 @@ def plot_full_rpl(
             labels[data_index],
             color,
         )
-    axis.set_xticklabels(xticklabels) # type: ignore
+
+    axis.set_xticks(range(len(xticklabels)))
+    axis.set_xticklabels(xticklabels)
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
 
@@ -241,7 +240,6 @@ def plot_rpl(
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks]
 
-    max_list_length = find_max_list_length(datasets, trial_masks)
     max_lag = infer_max_lag(
         datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
     )
@@ -265,6 +263,7 @@ def plot_rpl(
             color,
         )
 
-    axis.set_xticklabels(xticklabels) # type: ignore
+    axis.set_xticks(range(len(xticklabels)))
+    axis.set_xticklabels(xticklabels)
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
