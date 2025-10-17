@@ -59,7 +59,6 @@ def spc(
 def plot_spc(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -71,7 +70,6 @@ def plot_spc(
     Args:
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks selecting trials in each dataset.
-        distances: Unused placeholder for API compatibility.
         color_cycle: Colors for plotting each dataset.
         labels: Legend labels for each dataset.
         contrast_name: Legend title for contrasts.

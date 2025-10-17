@@ -13,7 +13,7 @@ from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
+from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..repetition import item_to_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
@@ -142,24 +142,20 @@ def binned_recall_probability_by_lag(
 def plot_full_rpl(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
-    size: int = 3,
 ) -> Axes:
     """Return ``Axes`` with repetition-lag curves for each dataset and mask.
 
     Args:
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Boolean masks to filter trials.
-        distances: Unused placeholder for interface compatibility.
         color_cycle: Colors for plotting each dataset.
         labels: Names for each dataset for the legend.
         contrast_name: Legend title for the plotted contrast.
         axis: Existing Matplotlib axes to plot on.
-        size: Maximum number of study positions an item can be presented at.
     """
     axis = init_plot(axis)
 
@@ -207,24 +203,20 @@ def plot_full_rpl(
 def plot_rpl(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
-    size: int = 3,
 ) -> Axes:
     """Return ``Axes`` with binned repetition-lag curves for each dataset and mask.
 
     Args:
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Boolean masks to filter trials.
-        distances: Unused placeholder for interface compatibility.
         color_cycle: Colors for plotting each dataset.
         labels: Names for each dataset for the legend.
         contrast_name: Legend title for the plotted contrast.
         axis: Existing Matplotlib axes to plot on.
-        size: Maximum number of study positions an item can be presented at.
     """
     axis = init_plot(axis)
 

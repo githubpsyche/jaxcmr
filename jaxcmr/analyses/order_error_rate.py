@@ -1,4 +1,4 @@
-__all__ = ['trial_order_error_rate', 'order_error_rate', 'plot_order_error_rate']
+__all__ = ["trial_order_error_rate", "order_error_rate", "plot_order_error_rate"]
 
 from typing import Optional, Sequence
 
@@ -26,13 +26,13 @@ def trial_order_error_rate(
     """
 
     list_len = presentations.shape[0]
-    study_pos_1 = jnp.arange(1, list_len + 1)          # 1-based indexes
+    study_pos_1 = jnp.arange(1, list_len + 1)  # 1-based indexes
 
     # 1. Token produced at each output slot i (pad with 0 if recall shorter)
     recall_tokens = jnp.where(
-        study_pos_1 - 1 < recalls.shape[0],   # convert to 0-based for slicing
+        study_pos_1 - 1 < recalls.shape[0],  # convert to 0-based for slicing
         recalls[:list_len],
-        0,                                    # no response → treat as 0
+        0,  # no response → treat as 0
     )
 
     # 2. Is that token on today’s list (and non-zero)?
@@ -47,12 +47,13 @@ def trial_order_error_rate(
     #    Use all_study_positions to map token → all study slots of that item.
     expanded = vmap(all_study_positions, in_axes=(0, None, None))(
         recall_tokens, presentations, size
-    )                          # shape: (list_len, size)
+    )  # shape: (list_len, size)
 
     correct_here = jnp.any(expanded == study_pos_1[:, None], axis=1)
 
     # 4. Order-error logic, ignoring padded study slots (presentations == 0)
     return token_on_list & (~correct_here) & (presentations != 0)
+
 
 def order_error_rate(
     dataset: RecallDataset,
@@ -73,6 +74,8 @@ def order_error_rate(
         presentations,
         size,
     ).mean(axis=0)
+
+
 def plot_order_error_rate(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
@@ -89,7 +92,6 @@ def plot_order_error_rate(
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks to filter trials in datasets.
         color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.

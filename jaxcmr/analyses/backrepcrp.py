@@ -166,7 +166,6 @@ def plot_back_rep_crp(
     size: int = 2,
     repetition_index: Optional[int] = None,
     color_cycle: Optional[list[str]] = None,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
@@ -180,7 +179,6 @@ def plot_back_rep_crp(
         min_lag: Minimum amount of study positions between two presentations of an item.
         size: Maximum number of study positions an item can be presented at.
         color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
@@ -242,7 +240,6 @@ def plot_difference_rep_crp(
     min_lag: int = 4,
     size: int = 2,
     color_cycle: Optional[list[str]] = None,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
@@ -256,7 +253,6 @@ def plot_difference_rep_crp(
         min_lag: Minimum amount of study positions between two presentations of an item.
         size: Maximum number of study positions an item can be presented at.
         color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
@@ -318,7 +314,6 @@ def plot_first_rep_crp(
     min_lag: int = 4,
     size: int = 2,
     color_cycle: Optional[list[str]] = None,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
@@ -332,7 +327,6 @@ def plot_first_rep_crp(
         size,
         repetition_index=0,  # first repetition
         color_cycle=color_cycle,
-        distances=distances,
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
@@ -346,7 +340,6 @@ def plot_second_rep_crp(
     min_lag: int = 4,
     size: int = 2,
     color_cycle: Optional[list[str]] = None,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
@@ -360,7 +353,6 @@ def plot_second_rep_crp(
         size,
         repetition_index=1,  # first repetition
         color_cycle=color_cycle,
-        distances=distances,
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,

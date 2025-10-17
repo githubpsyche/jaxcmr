@@ -340,7 +340,6 @@ def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -355,7 +354,6 @@ def plot_crp(
         trial_masks: Masks to filter trials in datasets.
         max_lag: Maximum lag to plot.
         color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
@@ -367,7 +365,6 @@ def plot_crp(
     Notes:
         - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
         - `trial_masks` filters trials; lengths must match datasets.
-        - `distances` is ignored (kept for API compatibility).
         - Color cycle wraps if more datasets than colors.
     """
     axis = init_plot(axis)

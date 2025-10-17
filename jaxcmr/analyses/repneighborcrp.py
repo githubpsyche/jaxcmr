@@ -264,7 +264,6 @@ def plot_rep_neighbor_crp(
     max_lag: int = 3,
     direction: str = "both",
     use_lag2: bool = True,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -279,7 +278,6 @@ def plot_rep_neighbor_crp(
         direction: Direction of neighbor transitions ("j2i", "i2j", or "both").
         use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
         color_cycle: Colors for plotting each dataset.
-        distances: Unused; kept for API compatibility.
         labels: Names for each dataset for legend.
         contrast_name: Name of contrast for legend labeling.
         axis: Existing Matplotlib ``Axes`` to plot on.
@@ -342,7 +340,6 @@ def plot_repneighborcrp_j2i(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -355,7 +352,6 @@ def plot_repneighborcrp_j2i(
         max_lag=max_lag,
         direction="j2i",
         use_lag2=True,
-        distances=distances,
         color_cycle=color_cycle,
         labels=labels,
         contrast_name=contrast_name,
@@ -365,7 +361,6 @@ def plot_repneighborcrp_i2j(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -378,7 +373,6 @@ def plot_repneighborcrp_i2j(
         max_lag=max_lag,
         direction="i2j",
         use_lag2=True,
-        distances=distances,
         color_cycle=color_cycle,
         labels=labels,
         contrast_name=contrast_name,
@@ -388,7 +382,6 @@ def plot_repneighborcrp_both(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -401,7 +394,6 @@ def plot_repneighborcrp_both(
         max_lag=max_lag,
         direction="both",
         use_lag2=True,
-        distances=distances,
         color_cycle=color_cycle,
         labels=labels,
         contrast_name=contrast_name,

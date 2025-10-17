@@ -231,7 +231,6 @@ def plot_pnr(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     query_recall_position: int = 0,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -244,7 +243,6 @@ def plot_pnr(
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks to filter trials in datasets.
         query_recall_position: Which recall index (0-based) to plot (e.g., 0 for first recall).
-        distances: Unused, included for compatibility with other plotting functions.
         color_cycle: List of colors for plotting each dataset.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.

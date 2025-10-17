@@ -114,7 +114,6 @@ def relative_srac(
 def plot_relative_srac(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    distances: Optional[Float[Array, " word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -126,7 +125,6 @@ def plot_relative_srac(
     Args:
         datasets: Trial data for plotting.
         trial_masks: Masks to filter trials in each dataset.
-        distances: Unused; kept for signature compatibility.
         color_cycle: Colors for each dataset.
         labels: Legend labels for datasets.
         contrast_name: Name of contrast for labeling.

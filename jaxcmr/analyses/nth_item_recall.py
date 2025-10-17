@@ -105,7 +105,6 @@ def plot_conditional_nth_item_recall_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     query_study_position: int = 0,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -117,7 +116,6 @@ def plot_conditional_nth_item_recall_curve(
       datasets: Collection of recall datasets to plot.
       trial_masks: Boolean masks selecting trials in each dataset.
       query_study_position: Zero-based study position to analyze.
-      distances: Precomputed item distances retained for backward compatibility.
       color_cycle: Colors for successive datasets.
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
@@ -184,7 +182,6 @@ def plot_simple_nth_item_recall_curve(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     query_study_position: int = 0,
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -196,7 +193,6 @@ def plot_simple_nth_item_recall_curve(
       datasets: Collection of recall datasets to plot.
       trial_masks: Boolean masks selecting trials in each dataset.
       query_study_position: Zero-based study position to analyze.
-      distances: Precomputed item distances retained for backward compatibility.
       color_cycle: Colors for successive datasets.
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.

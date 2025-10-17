@@ -378,7 +378,6 @@ def plot_dist_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
-    size: Optional[int] = None,
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
@@ -395,7 +394,6 @@ def plot_dist_crp(
       labels: Legend labels corresponding to ``datasets``.
       contrast_name: Optional legend title.
       axis: Optional matplotlib axis to draw on.
-      size: Unused, included for swappability with other plotting functions.
       bin_edges: Interior bin edges supplied by caller. If omitted, percentile-
         style bins are derived from the availability counts.
       bin_centers: Optional centers matching ``bin_edges``. Ignored when

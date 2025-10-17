@@ -71,7 +71,6 @@ def plot_omission_error_rate(
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks to filter trials in datasets.
         color_cycle: List of colors for plotting each dataset.
-        distances: Unused, included for compatibility with other plotting functions.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.

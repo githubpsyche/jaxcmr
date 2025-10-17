@@ -58,11 +58,11 @@ def conditional_termination_probability(
     reached_counts = jnp.sum(reached_mask, axis=0)
     return stop_counts / reached_counts
 
+
 def plot_termination_probability(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     mode: str = "conditional",
-    distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -74,7 +74,6 @@ def plot_termination_probability(
       datasets: Recall datasets to plot.
       trial_masks: Boolean masks selecting trials in each dataset.
       mode: `"conditional"` divides by reach counts; `"simple"` uses raw stops.
-      distances: Reserved for API compatibility.
       color_cycle: Colors for successive datasets.
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
