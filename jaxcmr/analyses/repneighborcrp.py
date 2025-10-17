@@ -262,7 +262,7 @@ def plot_rep_neighbor_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
-    direction: Literal["j2i", "i2j", "both"] = "both",
+    direction: str = "both",
     use_lag2: bool = True,
     distances: Optional[Float[Array, "word_count word_count"]] = None,
     color_cycle: Optional[list[str]] = None,
