@@ -1,5 +1,7 @@
+import json
 import time
-from typing import Any, Mapping, Optional, Type
+from pathlib import Path
+from typing import Any, Mapping, Optional, Sequence, Type
 
 import numpy as np
 from jax import numpy as jnp
@@ -10,12 +12,16 @@ from jaxcmr.typing import (
     Array,
     Bool,
     FitResult,
+    FittingAlgorithm,
     Float_,
     Integer,
     LossFnGenerator,
     MemorySearchModelFactory,
     RecallDataset,
 )
+
+
+ParameterBlock = Mapping[str, Mapping[str, Any]]
 
 
 def make_subject_trial_masks(
@@ -69,7 +75,7 @@ class ScipyDE:
         # Extract bounds for free params; store all hyperparams for convenience
         self.free_parameter_bounds = hyperparams.get("bounds", {})
         self.bounds = np.array(list(self.free_parameter_bounds.values()))
-        
+
         if hyperparams is None:
             hyperparams = {}
         self.all_hyperparams = {
@@ -184,12 +190,14 @@ class ScipyDE:
                 continue
 
             # Single-fit on the subject-specific mask
-            fit_result = self._fit_single_mask(subject_trial_masks[s], int(unique_subjects[s]))
+            fit_result = self._fit_single_mask(
+                subject_trial_masks[s], int(unique_subjects[s])
+            )
             all_results["fitness"] += fit_result["fitness"]
 
             # Show in tqdm progress bar
             if self.progress_bar:
-                subject_range.set_description( # type: ignore
+                subject_range.set_description(  # type: ignore
                     f"Subject={unique_subjects[s]}, Fitness={fit_result['fitness'][0]}"
                 )
 

@@ -355,20 +355,6 @@ class FittingAlgorithm(Protocol):
         """
         ...
 
-    def single_fit(
-        self,
-        trial_mask: Bool[Array, " trials"],
-    ) -> FitResult:
-        """Returns result of fitting the model to the trials specified by the mask."""
-        ...
-
-    def fit_to_subjects(
-        self,
-        trial_mask: Bool[Array, " trials"],
-    ) -> FitResult:
-        """Returns result of fitting the model separately to each subject present in the dataset."""
-        ...
-
     def fit(
         self,
         trial_mask: Bool[Array, " trials"],
