@@ -3,11 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from jaxcmr.analyses.termination_position import (
-    conditional_termination_position_curve,
-    plot_conditional_termination_position_curve,
-    plot_termination_position_curve,
-    termination_position_curve,
+from jaxcmr.analyses.termination_probability import (
+    plot_termination_probability,
+    termination_probability,
 )
 from jaxcmr.typing import RecallDataset
 
@@ -23,12 +21,12 @@ def _make_dataset(recalls: jnp.ndarray) -> RecallDataset:
 
 
 def test_returns_point_mass_when_all_trials_stop_together():
-    """Behavior: ``termination_position_curve`` concentrates mass at observed stop.
+    """Behavior: ``termination_probability`` concentrates mass at observed stop.
 
     Given:
       - Trials where recall halts immediately after the second output slot.
     When:
-      - ``termination_position_curve`` runs on the dataset.
+      - ``termination_probability`` runs in ``simple`` mode on the dataset.
     Then:
       - The termination probability vector equals [0.0, 1.0, 0.0, 0.0].
     Why this matters:
@@ -45,7 +43,7 @@ def test_returns_point_mass_when_all_trials_stop_together():
     )
 
     # Act / When
-    curve = termination_position_curve(dataset)
+    curve = termination_probability(dataset, mode="simple")
 
     # Assert / Then
     expected = jnp.array([0.0, 1.0, 0.0, 0.0])
@@ -53,12 +51,12 @@ def test_returns_point_mass_when_all_trials_stop_together():
 
 
 def test_uses_final_slot_when_trials_never_enter_padding():
-    """Behavior: ``termination_position_curve`` defaults to final slot when no zeros occur.
+    """Behavior: ``termination_probability`` defaults to final slot when no zeros occur.
 
     Given:
       - Trials where one recall stream fills every slot while another stops after the first recall.
     When:
-      - ``termination_position_curve`` runs on the dataset.
+      - ``termination_probability`` runs in ``simple`` mode on the dataset.
     Then:
       - The termination probabilities split mass between the second and final slots.
     Why this matters:
@@ -75,7 +73,7 @@ def test_uses_final_slot_when_trials_never_enter_padding():
     )
 
     # Act / When
-    curve = termination_position_curve(dataset)
+    curve = termination_probability(dataset, mode="simple")
 
     # Assert / Then
     expected = jnp.array([0.0, 0.5, 0.0, 0.5])
@@ -83,12 +81,12 @@ def test_uses_final_slot_when_trials_never_enter_padding():
 
 
 def test_returns_hazard_when_trials_drop_out():
-    """Behavior: ``conditional_termination_position_curve`` divides by reach count.
+    """Behavior: ``termination_probability`` divides by reach count in conditional mode.
 
     Given:
       - Trials where one stream ends at the third slot while another fills all slots.
     When:
-      - ``conditional_termination_position_curve`` runs on the dataset.
+      - ``termination_probability`` runs in ``conditional`` mode on the dataset.
     Then:
       - The conditional probability equals [0.0, 0.5, 0.0, 1.0].
     Why this matters:
@@ -105,7 +103,7 @@ def test_returns_hazard_when_trials_drop_out():
     )
 
     # Act / When
-    hazard = conditional_termination_position_curve(dataset)
+    hazard = termination_probability(dataset, mode="conditional")
 
     # Assert / Then
     expected = jnp.array([0.0, 0.5, 0.0, 1.0])
@@ -136,8 +134,8 @@ def test_plot_functions_return_axes():
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When
-    axis_uncond = plot_termination_position_curve(dataset, trial_mask)
-    axis_cond = plot_conditional_termination_position_curve(dataset, trial_mask)
+    axis_uncond = plot_termination_probability(dataset, trial_mask, mode="simple")
+    axis_cond = plot_termination_probability(dataset, trial_mask, mode="conditional")
 
     # Assert / Then
     for axis in (axis_uncond, axis_cond):
