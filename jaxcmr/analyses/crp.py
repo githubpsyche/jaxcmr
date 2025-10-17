@@ -378,11 +378,11 @@ def plot_crp(
     if labels is None:
         labels = [""] * len(datasets)
 
-    if isinstance(datasets, dict):
+    if not isinstance(datasets, Sequence):
         datasets = [datasets]
 
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
+    if not isinstance(trial_masks, Sequence):
+        trial_masks = [jnp.array(trial_masks)]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 

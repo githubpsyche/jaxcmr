@@ -110,15 +110,12 @@ def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:
         a jax.numpy array containing the transposed data.
     """
     with h5py.File(data_path, "r") as f:
-        result = {key: f["/data"][key][()].T for key in f["/data"].keys()}  # type: ignore
+        result = {key: jnp.array(f["/data"][key][()].T) for key in f["/data"].keys()}  # type: ignore
 
     if max_subjects == 0:
         return result  # type: ignore
     else:
-        return limit_to_first_subjects(
-            {key: jnp.array(value) for key, value in result.items()},  # type: ignore
-            max_subjects,
-        )
+        return limit_to_first_subjects(result, max_subjects)  # type: ignore
 
 
 def limit_to_first_subjects(
