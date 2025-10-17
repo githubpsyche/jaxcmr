@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from jaxcmr.analyses import rspc
+from jaxcmr.analyses import relative_srac
 from jaxcmr.typing import RecallDataset
 
 
@@ -40,7 +40,7 @@ def test_flags_all_positions_when_recall_in_forward_order():
     trial = jnp.array([1, 2, 3], dtype=jnp.int32)
 
     # Act / When
-    flags = rspc.tabulate_trial(trial, presentation)
+    flags = relative_srac.tabulate_trial(trial, presentation)
 
     # Assert / Then
     assert jnp.array_equal(flags, jnp.array([True, True, True])).item()
@@ -62,7 +62,7 @@ def test_marks_only_forward_neighbors_when_start_out_of_order():
     trial = jnp.array([2, 3, 1], dtype=jnp.int32)
 
     # Act / When
-    flags = rspc.tabulate_trial(trial, presentation)
+    flags = relative_srac.tabulate_trial(trial, presentation)
 
     # Assert / Then
     assert jnp.array_equal(flags, jnp.array([False, False, True])).item()
@@ -85,7 +85,7 @@ def test_ignores_zero_padding_when_recall_list_padded_with_zeros():
     trial = jnp.array([1, 2, 3, 4, 0, 0], dtype=jnp.int32)
 
     # Act / When
-    flags = rspc.tabulate_trial(trial, presentation, size=1)
+    flags = relative_srac.tabulate_trial(trial, presentation, size=1)
 
     # Assert / Then
     assert jnp.array_equal(flags, jnp.array([True, True, True, True])).item()
@@ -97,7 +97,7 @@ def test_computes_mean_accuracy_when_multiple_trials():
     Given:
       - Recall and presentation matrices for two trials.
     When:
-      - ``relative_spc`` is computed.
+      - ``relative_srac`` is computed.
     Then:
       - Mean accuracy per position is returned.
     Why this matters:
@@ -109,19 +109,19 @@ def test_computes_mean_accuracy_when_multiple_trials():
     dataset = _make_dataset(recalls, presentations)
 
     # Act / When
-    scores = rspc.relative_spc(dataset)
+    scores = relative_srac.relative_srac(dataset)
 
     # Assert / Then
     assert jnp.allclose(scores, jnp.array([1.0, 1.0, 0.5])).item()
 
 
 def test_returns_axes_object_when_plotting_rspc():
-    """Behavior: ``plot_relative_spc`` yields a Matplotlib ``Axes``.
+    """Behavior: ``plot_relative_srac`` yields a Matplotlib ``Axes``.
 
     Given:
       - A minimal ``RecallDataset`` and trial mask.
     When:
-      - ``plot_relative_spc`` is called.
+      - ``plot_relative_srac`` is called.
     Then:
       - A Matplotlib ``Axes`` with a ``Figure`` is returned.
     Why this matters:
@@ -138,7 +138,7 @@ def test_returns_axes_object_when_plotting_rspc():
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When
-    axis = rspc.plot_relative_spc(dataset, trial_mask)
+    axis = relative_srac.plot_relative_srac(dataset, trial_mask)
 
     # Assert / Then
     assert isinstance(axis, Axes)
@@ -150,4 +150,4 @@ def test_repetitions():
     # | code-summary: Repetitions, all satisfied
   pres = jnp.array([1, 2, 1])
   rec = jnp.array([1, 2, 1])
-  assert jnp.array_equal(rspc.tabulate_trial(rec, pres), jnp.array([True, True, True]))
+  assert jnp.array_equal(relative_srac.tabulate_trial(rec, pres), jnp.array([True, True, True]))

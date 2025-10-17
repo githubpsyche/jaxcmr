@@ -1,12 +1,11 @@
-"""Relative serial position curve utilities.
+"""Relative serial recall accuracy utilities.
 
-Compute a serial position curve where each recall is scored “correct” 
-if it is exactly one position after the previous recall (previous + 
-1), with the first recall scored relative to position 0 (so only a 
-recall of study position 1 is correct).
+Compute an accuracy curve where a recall is “correct” when it immediately
+follows its predecessor in the study list. The first recall is scored relative
+to position 0, so only study position 1 counts as correct at the first output slot.
 """
 
-__all__ = ["Tabulation", "tabulate_trial", "relative_spc", "plot_relative_spc"]
+__all__ = ["Tabulation", "tabulate_trial", "relative_srac", "plot_relative_srac"]
 
 from typing import Optional, Sequence
 
@@ -94,11 +93,11 @@ def tabulate_trial(
     return tab.recalled
 
 
-def relative_spc(
+def relative_srac(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """Returns relative serial position accuracy by study position.
+    """Returns relative serial recall accuracy by study position.
 
     Args:
         dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
@@ -112,7 +111,7 @@ def relative_spc(
     return jnp.mean(scores, axis=0)
 
 
-def plot_relative_spc(
+def plot_relative_srac(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     distances: Optional[Float[Array, " word_count word_count"]] = None,
@@ -122,7 +121,7 @@ def plot_relative_spc(
     axis: Optional[Axes] = None,
     size: int = 3,
 ) -> Axes:
-    """Returns axis with plotted relative serial position curve.
+    """Returns axis with plotted relative serial recall accuracy curve.
 
     Args:
         datasets: Trial data for plotting.
@@ -154,7 +153,7 @@ def plot_relative_spc(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(relative_spc, static_argnames=("size")),
+                jit(relative_srac, static_argnames=("size")),
                 size,
             )
         )
