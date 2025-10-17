@@ -382,6 +382,8 @@ def plot_dist_crp(
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
+    bin_edges: Optional[Float[Array, " edges"]] = None,
+    bin_centers: Optional[Float[Array, " bins"]] = None,
 ) -> Axes:
     """Plot distance-binned CRP curves aggregated by subject.
 
@@ -394,6 +396,10 @@ def plot_dist_crp(
       contrast_name: Optional legend title.
       axis: Optional matplotlib axis to draw on.
       size: Unused, included for swappability with other plotting functions.
+      bin_edges: Interior bin edges supplied by caller. If omitted, percentile-
+        style bins are derived from the availability counts.
+      bin_centers: Optional centers matching ``bin_edges``. Ignored when
+        ``bin_edges`` is ``None``.
       min_transitions_per_subject: Minimum number of available transitions per
         bin, averaged across subjects, used when defining distance bins.
       bin_step: Distance increment applied while expanding each bin.
@@ -414,13 +420,21 @@ def plot_dist_crp(
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks]
 
-    bin_edges, bin_centers = compute_distance_bins_min_count(
-        datasets[bin_source_index],
-        distances,
-        min_transitions_per_subject=min_transitions_per_subject,
-        step=bin_step,
-        trial_mask=trial_masks[bin_source_index],
-    )
+    if bin_edges is None:
+        bin_edges, bin_centers = compute_distance_bins_min_count(
+            datasets[bin_source_index],
+            distances,
+            min_transitions_per_subject=min_transitions_per_subject,
+            step=bin_step,
+            trial_mask=trial_masks[bin_source_index],
+        )
+    elif bin_centers is None:
+        min_distance = jnp.min(distances)
+        max_distance = jnp.max(distances)
+        full_edges = jnp.concatenate(
+            (min_distance[None], bin_edges, max_distance[None])
+        )
+        bin_centers = 0.5 * (full_edges[:-1] + full_edges[1:])
 
     for data_index, data in enumerate(datasets):
         subject_values = apply_by_subject(
