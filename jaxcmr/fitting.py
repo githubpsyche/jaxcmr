@@ -14,8 +14,8 @@ from jaxcmr.typing import (
     Float_,
     Integer,
     LossFnGenerator,
-    MemorySearchModelFactory,
     RecallDataset,
+    MemorySearchCreateFn
 )
 
 
@@ -38,7 +38,7 @@ class ScipyDE:
         dataset: RecallDataset,
         features: Optional[Float[Array, "word_count features_count"]],
         base_params: Mapping[str, Float_],
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         loss_fn_generator: Type[LossFnGenerator],
         hyperparams: Optional[dict[str, Any]] = None,
     ):
@@ -49,7 +49,7 @@ class ScipyDE:
             dataset: The dataset containing trial data (including 'subject').
             features: Optional feature matrix aligned to the vocabulary.
             base_params: A dictionary of parameters that are held fixed.
-            model_factory: Class implementing MemorySearchModelFactory.
+            model_create_fn: Function to create a memory search model.
             loss_fn_generator: Class implementing LossFnGenerator.
             hyperparams: Optional dictionary of hyperparameters for the fitting routine.
                 May include 'bounds' (dict[str, list[float]]) and other keys
@@ -82,7 +82,7 @@ class ScipyDE:
             "best_of": hyperparams.get("best_of", 1),
         }
 
-        self.loss_fn_generator = loss_fn_generator(model_factory, dataset, features)
+        self.loss_fn_generator = loss_fn_generator(model_create_fn, dataset, features)
 
     def _fit_single_mask(
         self, trial_mask: Bool[Array, " trials"], subject_id: int = -1

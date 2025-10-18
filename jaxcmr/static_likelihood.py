@@ -1,17 +1,18 @@
-from typing import Callable, Iterable, Mapping, Optional, Type
+from typing import Callable, Iterable, Mapping, Optional
 
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import all_rows_identical, log_likelihood
+from jaxcmr.model_helpers import MemorySearchModelFactory
 from jaxcmr.typing import (
     Array,
     Float,
     Float_,
     Integer,
     MemorySearch,
-    MemorySearchModelFactory,
+    MemorySearchCreateFn,
     RecallDataset,
 )
 
@@ -33,12 +34,12 @@ def predict_and_simulate_recalls(
 class MemorySearchLikelihoodFnGenerator:
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
-        self.factory = model_factory(dataset, connections)
+        self.factory = MemorySearchModelFactory(dataset, connections, model_create_fn)
         self.create_model = self.factory.create_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
 

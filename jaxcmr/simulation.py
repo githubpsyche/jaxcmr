@@ -4,13 +4,14 @@ Provides helpers to run study and free-recall simulations per trial and
 per subject, and to generate HDF5-shaped datasets from model outputs.
 """
 
-from typing import Mapping, Optional, Sequence, Type
+from typing import Mapping, Optional, Sequence
 
 import jax.numpy as jnp
 import numpy as np
 from jax import lax, random, vmap
 from jax.tree_util import tree_map
 
+from jaxcmr.model_helpers import MemorySearchModelFactory
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -19,7 +20,7 @@ from jaxcmr.typing import (
     Int_,
     Integer,
     MemorySearch,
-    MemorySearchModelFactory,
+    MemorySearchCreateFn,
     PRNGKeyArray,
     RecallDataset,
     TrialSimulator,
@@ -57,11 +58,9 @@ def _reindex_recalls(
       presentations: Study sequences aligned with each trial.
       size: Number of positions to retain while remapping.
     """
-    return (
-        vmap(
-            vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-        )(recalls, presentations, size)[:, :, 0]
-    )
+    return vmap(
+        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
+    )(recalls, presentations, size)[:, :, 0]
 
 
 def _single_free_recall(
@@ -171,13 +170,13 @@ class MemorySearchSimulator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
         simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
     ) -> None:
         """Initializes trial-conditioned model creation from dataset and features."""
-        factory = model_factory(dataset, features)
+        factory = MemorySearchModelFactory(dataset, features, model_create_fn)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self._simulate_trial_fn = simulate_trial_fn
@@ -262,7 +261,7 @@ def preallocate_for_h5_dataset(
 
 
 def simulate_h5_from_h5(
-    model_factory: Type[MemorySearchModelFactory],
+    model_create_fn: MemorySearchCreateFn,
     dataset: RecallDataset,
     features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
@@ -275,7 +274,7 @@ def simulate_h5_from_h5(
     """Returns a simulated dataset using per-subject parameters from an H5-like dataset.
 
     Args:
-      model_factory: Factory class for memory search models.
+      model_create_fn: Function to create memory search models.
       dataset: Original dataset containing trial data.
       features: Optional feature matrix for the word pool.
       parameters: Simulation parameters per subject.
@@ -288,7 +287,7 @@ def simulate_h5_from_h5(
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
-        model_factory, sim_h5, features, simulate_trial_fn
+        model_create_fn, sim_h5, features, simulate_trial_fn
     )
 
     # Flat trial + subject index vectors (static shapes)
@@ -309,7 +308,7 @@ def simulate_h5_from_h5(
 
 
 def parameter_shifted_simulate_h5_from_h5(
-    model_factory: Type[MemorySearchModelFactory],
+    model_create_fn: MemorySearchCreateFn,
     dataset: RecallDataset,
     features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
@@ -324,7 +323,7 @@ def parameter_shifted_simulate_h5_from_h5(
     """Returns multiple simulated datasets by sweeping a single parameter.
 
     Args:
-      model_factory: Factory class for memory search models.
+      model_create_fn: Function to create memory search models.
       dataset: Original dataset containing trial data.
       features: Optional feature matrix for the word pool.
       parameters: Simulation parameters per subject.
@@ -339,7 +338,7 @@ def parameter_shifted_simulate_h5_from_h5(
 
     template = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
-        model_factory, template, features, simulate_trial_fn
+        model_create_fn, template, features, simulate_trial_fn
     )
     total_trials = template["subject"].size
     trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
@@ -358,7 +357,7 @@ def parameter_shifted_simulate_h5_from_h5(
         )
         return template_without_recalls | {
             "recalls": _reindex_recalls(recalls, template["pres_itemnos"], size)
-        } # type: ignore
+        }  # type: ignore
 
     results: list[RecallDataset] = []
     for value in parameter_values:

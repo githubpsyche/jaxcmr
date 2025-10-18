@@ -1,8 +1,33 @@
-import numpy as np
+from typing import Callable, Mapping, Optional
+
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 
-__all__ = ["matrix_heatmap", "instance_memory_heatmap"]
+from jaxcmr.typing import Array, Float, Float_, Integer, MemorySearch, RecallDataset
+
+__all__ = ["matrix_heatmap", "instance_memory_heatmap", "MemorySearchModelFactory"]
+
+
+class MemorySearchModelFactory:
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+        model_create_fn: Callable[[int, Mapping[str, Float_]], MemorySearch],
+    ):
+        self.model_create_fn = model_create_fn
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        return self.model_create_fn(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        return self.create_model(parameters)
 
 
 def matrix_heatmap(
@@ -11,7 +36,7 @@ def matrix_heatmap(
     axis=None,
     label_font_size=32,
     annot_font_size=14,
-    print_threshold=.005,
+    print_threshold=0.005,
     title="",
 ):
     """Plots an array of model states as a value-annotated heatmap with an arbitrary title. Omits annotations for cells
@@ -38,7 +63,10 @@ def matrix_heatmap(
 
     annot = np.array(
         [
-            ["" if -print_threshold < val < print_threshold else f"{val:.2f}" for val in row]
+            [
+                "" if -print_threshold < val < print_threshold else f"{val:.2f}"
+                for val in row
+            ]
             for row in matrix
         ]
     )
@@ -50,7 +78,7 @@ def matrix_heatmap(
         annot_kws={"size": annot_font_size},
         linewidths=0.5,
         ax=axis,
-        cbar=True
+        cbar=True,
     )
 
     axis.set_xlabel("Feature Index", fontsize=label_font_size)
@@ -68,9 +96,9 @@ def instance_memory_heatmap(
     include_preexperimental=True,
     title="Memory Traces",
 ):
-    assert (
-        include_inputs or include_outputs
-    ), "At least one of inputs or outputs must be included"
+    assert include_inputs or include_outputs, (
+        "At least one of inputs or outputs must be included"
+    )
     memory_shape = np.shape(memory_state)
     fig_size = list(reversed(memory_shape))
     plotted_memory = memory_state.copy()

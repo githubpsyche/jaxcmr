@@ -32,7 +32,6 @@ __all__ = [
     "PRNGKeyArray",
     "MemorySearch",
     "MemorySearchCreateFn",
-    "MemorySearchModelFactory",
     "Memory",
     "Context",
     "LossFnGenerator",
@@ -42,6 +41,9 @@ __all__ = [
     "FittingAlgorithm",
     "TrialSimulator",
     "TerminationPolicy",
+    "ContextCreateFn",
+    "MemoryCreateFn",
+    "TerminationPolicyCreateFn",
 ]
 
 
@@ -159,58 +161,6 @@ class MemorySearch(Protocol):
 
 
 @runtime_checkable
-class TerminationPolicy(Protocol):
-    """Define termination policies for memory search models."""
-
-    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]:
-        """Returns stop probability for the provided model.
-
-        Args:
-          model: Memory search model under evaluation.
-        """
-        ...
-
-
-@runtime_checkable
-class MemorySearchCreateFn(Protocol):
-    """A factory for creating memory search models."""
-
-    def __call__(
-        self,
-        list_length: int,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters."""
-        ...
-
-
-@runtime_checkable
-class MemorySearchModelFactory(Protocol):
-    def __init__(
-        self,
-        dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
-    ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
-        ...
-
-    def create_model(
-        self,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
-
-    def create_trial_model(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
-
-
-@runtime_checkable
 class Memory(Protocol):
     state: Float[Array, " input_size output_size"]
 
@@ -282,6 +232,65 @@ class Context(Protocol):
 
 
 @runtime_checkable
+class TerminationPolicy(Protocol):
+    """Define termination policies for memory search models."""
+
+    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]:
+        """Returns stop probability for the provided model.
+
+        Args:
+          model: Memory search model under evaluation.
+        """
+        ...
+
+
+class ContextCreateFn(Protocol):
+    """Callable that returns a context instance."""
+
+    def __call__(self, item_count: int) -> Context:
+        """Return a context instance for the given configuration."""
+        ...
+
+
+class MemoryCreateFn(Protocol):
+    """Callable that returns the MFC and MCF memories."""
+
+    def __call__(
+        self,
+        list_length: int,
+        parameters: Mapping[str, Float_],
+        context: Context,
+    ) -> Memory:
+        """Return the memories for the given configuration."""
+        ...
+
+
+class TerminationPolicyCreateFn(Protocol):
+    """Callable that returns a termination policy instance."""
+
+    def __call__(
+        self,
+        list_length: int,
+        parameters: Mapping[str, Float_],
+    ) -> TerminationPolicy:
+        """Return a termination policy instance."""
+        ...
+
+
+@runtime_checkable
+class MemorySearchCreateFn(Protocol):
+    """A factory for creating memory search models."""
+
+    def __call__(
+        self,
+        list_length: int,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters."""
+        ...
+
+
+@runtime_checkable
 class LikelihoodMaskFn(Protocol):
     """Defines the callable signature for recall likelihood masking."""
 
@@ -302,7 +311,7 @@ class LossFnGenerator(Protocol):
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory: MemorySearchModelFactory,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:

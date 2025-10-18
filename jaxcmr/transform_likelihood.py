@@ -6,13 +6,14 @@ altering simulation behavior. Mask entries of 1 retain events; 0 neutralizes
 them.
 """
 
-from typing import Callable, Iterable, Mapping, Optional, Type
+from typing import Callable, Iterable, Mapping, Optional
 
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import all_rows_identical, log_likelihood
+from jaxcmr.model_helpers import MemorySearchModelFactory
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -21,7 +22,7 @@ from jaxcmr.typing import (
     Integer,
     LikelihoodMaskFn,
     MemorySearch,
-    MemorySearchModelFactory,
+    MemorySearchCreateFn,
     RecallDataset,
 )
 
@@ -73,7 +74,7 @@ class MemorySearchLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
         mask_likelihoods: LikelihoodMaskFn,
@@ -81,12 +82,12 @@ class MemorySearchLikelihoodFnGenerator:
         """Initializes the generator with dataset, factory, and mask.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
+          model_create_fn: Function to create a new `MemorySearch` model.
           dataset: Recall dataset with presentations and recalls.
           features: Optional feature matrix for word-pool items.
           mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        self.factory = model_factory(dataset, features)
+        self.factory = MemorySearchModelFactory(dataset, features, model_create_fn)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.mask_likelihoods = vmap(mask_likelihoods)
@@ -262,12 +263,12 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         self._inner = MemorySearchLikelihoodFnGenerator(
-            model_factory,
+            model_create_fn,
             dataset,
             features,
             mask_likelihoods=mask_first_recall,
@@ -292,12 +293,12 @@ class ExcludeTerminationLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         self._inner = MemorySearchLikelihoodFnGenerator(
-            model_factory,
+            model_create_fn,
             dataset,
             features,
             mask_likelihoods=mask_trailing_terminations,
