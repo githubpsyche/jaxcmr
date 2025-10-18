@@ -1,4 +1,4 @@
-from typing import Mapping
+from typing import Mapping, Optional
 
 from jax import lax
 from jax import numpy as jnp
@@ -9,10 +9,10 @@ from jaxcmr.math import (
     lb,
     power_scale,
 )
-from jaxcmr.models.context import TemporalContext
-from jaxcmr.models.instance_memory import InstanceMemory
-from jaxcmr.models.linear_memory import LinearMemory
-from jaxcmr.models.termination import NoStopTermination, PositionalTermination
+from jaxcmr.components.context import TemporalContext
+from jaxcmr.components.instance_memory import InstanceMemory
+from jaxcmr.components.linear_memory import LinearMemory
+from jaxcmr.components.termination import NoStopTermination, PositionalTermination
 from jaxcmr.typing import (
     Array,
     ContextCreateFn,
@@ -77,15 +77,10 @@ class CMR(Pytree):
         item = self.items[item_index]
         context_input = self.mfc.probe(item)
         new_context = self.context.integrate(context_input, self.encoding_drift_rate)
-        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(
-                item, self.context.state, self.mfc_learning_rate
-            ),  #! updated
-            mcf=self.mcf.associate(
-                self.context.state, item, self.mcf_learning_rate
-            ),  #! updated
+            mfc=self.mfc.associate(item, new_context.state, self.mfc_learning_rate),
+            mcf=self.mcf.associate(new_context.state, item, self.mcf_learning_rate),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -191,7 +186,11 @@ class CMR(Pytree):
         )
 
 
-def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def BaseCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create a base CMR model with linear memory and positional termination."""
     return CMR(
         list_length,
@@ -203,7 +202,11 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
     )
 
 
-def BaseCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def BaseCMRNoStop(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create a base CMR model with linear memory and no stopping."""
     return CMR(
         list_length,
@@ -215,7 +218,11 @@ def BaseCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
     )
 
 
-def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def InstanceCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create an instance CMR model with instance memory and positional termination."""
     return CMR(
         list_length,
@@ -227,7 +234,11 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
     )
 
 
-def InstanceCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def InstanceCMRNoStop(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create an instance CMR model with instance memory and no stopping."""
     return CMR(
         list_length,
@@ -239,7 +250,11 @@ def InstanceCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR
     )
 
 
-def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def MixedCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create a mixed CMR model with linear MFC, instance MCF, and positional termination."""
     return CMR(
         list_length,
@@ -251,7 +266,11 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
     )
 
 
-def MixedCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+def MixedCMRNoStop(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    connections: Optional[Float[Array, " trials study_events study_events"]] = None,
+) -> CMR:
     """Create a mixed CMR model with linear MFC, instance MCF, and no stopping."""
     return CMR(
         list_length,

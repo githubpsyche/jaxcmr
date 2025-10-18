@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jaxcmr.models.context import TemporalContext
+from jaxcmr.components.context import TemporalContext
 
 
 def test_preserves_unit_length_when_integrating_input():

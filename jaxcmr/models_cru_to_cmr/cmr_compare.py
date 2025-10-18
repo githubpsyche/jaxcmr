@@ -11,8 +11,8 @@ from jaxcmr.math import (
     lb,
     power_scale,
 )
-from jaxcmr.models.context import TemporalContext
-from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.components.context import TemporalContext
+from jaxcmr.components.linear_memory import LinearMemory
 from jaxcmr.typing import (
     Array,
     Context,

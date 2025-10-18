@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.components.linear_memory import LinearMemory
 
 
 def test_updates_state_when_associating_patterns():

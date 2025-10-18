@@ -285,6 +285,7 @@ class MemorySearchCreateFn(Protocol):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
+        connections: Optional[Float[Array, " trials study_events study_events"]],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters."""
         ...

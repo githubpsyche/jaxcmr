@@ -5,8 +5,8 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-from jaxcmr.models.context import TemporalContext
-from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.components.context import TemporalContext
+from jaxcmr.components.linear_memory import LinearMemory
 from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, power_scale, lb
 from jaxcmr.typing import (
     Array,
