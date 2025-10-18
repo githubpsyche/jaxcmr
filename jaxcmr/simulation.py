@@ -173,11 +173,11 @@ class MemorySearchSimulator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
         simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
     ) -> None:
-        """Initializes trial-conditioned model creation from dataset and connections."""
-        factory = model_factory(dataset, connections)
+        """Initializes trial-conditioned model creation from dataset and features."""
+        factory = model_factory(dataset, features)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self._simulate_trial_fn = simulate_trial_fn
@@ -264,7 +264,7 @@ def preallocate_for_h5_dataset(
 def simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
@@ -277,7 +277,7 @@ def simulate_h5_from_h5(
     Args:
       model_factory: Factory class for memory search models.
       dataset: Original dataset containing trial data.
-      connections: Optional connectivity among word-pool items.
+      features: Optional feature matrix for the word pool.
       parameters: Simulation parameters per subject.
       trial_mask: Mask selecting trials to simulate.
       experiment_count: Number of replications per selected trial.
@@ -288,7 +288,7 @@ def simulate_h5_from_h5(
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
-        model_factory, sim_h5, connections, simulate_trial_fn
+        model_factory, sim_h5, features, simulate_trial_fn
     )
 
     # Flat trial + subject index vectors (static shapes)
@@ -311,7 +311,7 @@ def simulate_h5_from_h5(
 def parameter_shifted_simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
@@ -326,7 +326,7 @@ def parameter_shifted_simulate_h5_from_h5(
     Args:
       model_factory: Factory class for memory search models.
       dataset: Original dataset containing trial data.
-      connections: Optional connectivity among word-pool items.
+      features: Optional feature matrix for the word pool.
       parameters: Simulation parameters per subject.
       trial_mask: Mask selecting trials to simulate.
       experiment_count: Number of replications per selected trial.
@@ -339,7 +339,7 @@ def parameter_shifted_simulate_h5_from_h5(
 
     template = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
-        model_factory, template, connections, simulate_trial_fn
+        model_factory, template, features, simulate_trial_fn
     )
     total_trials = template["subject"].size
     trial_indices = jnp.arange(total_trials, dtype=jnp.int32)

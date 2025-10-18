@@ -1,4 +1,4 @@
-from typing import Mapping, Optional
+from typing import Callable, Mapping, Optional
 
 import numpy as np
 from jax import lax
@@ -7,13 +7,13 @@ from simple_pytree import Pytree
 
 from jaxcmr.math import (
     exponential_primacy_decay,
-    exponential_stop_probability,
     lb,
     power_scale,
 )
 from jaxcmr.models.context import TemporalContext
 from jaxcmr.models.instance_memory import InstanceMemory
 from jaxcmr.models.linear_memory import LinearMemory
+from jaxcmr.models.termination import NoStopTermination, PositionalTermination
 from jaxcmr.typing import (
     Array,
     Context,
@@ -23,6 +23,7 @@ from jaxcmr.typing import (
     Memory,
     MemorySearch,
     RecallDataset,
+    TerminationPolicy,
 )
 
 
@@ -36,6 +37,7 @@ class CMR(Pytree):
         mfc: Memory,
         mcf: Memory,
         context: Context,
+        termination_policy: TerminationPolicy,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -51,17 +53,13 @@ class CMR(Pytree):
         self.allow_repeated_recalls = parameters.get("allow_repeated_recalls", False)
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
-        self._stop_probability = exponential_stop_probability(
-            self.stop_probability_scale,
-            self.stop_probability_growth,
-            jnp.arange(self.item_count),
-        )
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = context
         self.mfc = mfc
         self.mcf = mcf
+        self.termination_policy = termination_policy
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
@@ -149,15 +147,7 @@ class CMR(Pytree):
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
-        total_recallable = jnp.sum(self.recallable)
-        return lax.cond(
-            jnp.logical_or(total_recallable == 0, ~self.is_active),
-            true_fun=lambda: 1.0,
-            false_fun=lambda: jnp.minimum(
-                1.0 - (lb * total_recallable),
-                self._stop_probability[self.recall_total],
-            ),
-        )
+        return self.termination_policy.stop_probability(self)
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
         """Return the probability of retrieval of an item at the specified index.
@@ -204,9 +194,29 @@ class CMR(Pytree):
         )
 
 
-def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
-    """Creates a regular CMR model with linear associative $M^{FC}$ and $M^{CF}$ memories."""
+_MemoryFactory = Callable[[int, Mapping[str, Float_], Context], tuple[Memory, Memory]]
+_TerminationFactory = Callable[[Mapping[str, Float_], int], TerminationPolicy]
+
+
+def _build_cmr(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    memory_factory: _MemoryFactory,
+    termination_factory: _TerminationFactory,
+) -> CMR:
+    """Returns a CMR instance using the supplied memory and termination builders."""
     context = TemporalContext.init(list_length)
+    mfc, mcf = memory_factory(list_length, parameters, context)
+    termination_policy = termination_factory(parameters, list_length)
+    return CMR(list_length, parameters, mfc, mcf, context, termination_policy)
+
+
+def _linear_memories(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    context: Context,
+) -> tuple[Memory, Memory]:
+    """Returns linear MFC and MCF memories."""
     mfc = LinearMemory.init_mfc(
         list_length,
         context.size,
@@ -218,17 +228,15 @@ def BaseCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         parameters["item_support"],
         parameters["shared_support"],
     )
-    return CMR(list_length, parameters, mfc, mcf, context)
+    return mfc, mcf
 
 
-def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
-    """
-    Creates InstanceCMR model with instance-based $M^{FC}$ and $M^{CF}$ memories.
-
-    Equivalent to the original CMR model when `mcf_trace_sensitivity` is set to 1.0.
-    Usually slower than the linear version, but often more interpretable and flexible.
-    """
-    context = TemporalContext.init(list_length)
+def _instance_memories(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    context: Context,
+) -> tuple[Memory, Memory]:
+    """Returns instance-based MFC and MCF memories."""
     mfc = InstanceMemory.init_mfc(
         list_length,
         context.size,
@@ -244,22 +252,21 @@ def InstanceCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         parameters["shared_support"],
         parameters["mcf_trace_sensitivity"],
     )
-    return CMR(list_length, parameters, mfc, mcf, context)
+    return mfc, mcf
 
 
-def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
-    """
-    Creates MixedCMR model with linear $M^{FC}$ and instance-based $M^{CF}$ memories.
-
-    Equivalent to InstanceCMR but faster feature-to-context memory.
-    """
-    context = TemporalContext.init(list_length)
+def _mixed_memories(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    context: Context,
+) -> tuple[Memory, Memory]:
+    """Returns linear MFC with instance-based MCF memories."""
     mfc = LinearMemory.init_mfc(
         list_length,
         context.size,
         parameters["learning_rate"],
     )
-    mcf = InstanceMemory.init_mcf(
+    instance_mcf = InstanceMemory.init_mcf(
         list_length,
         context.size,
         list_length,
@@ -267,7 +274,73 @@ def MixedCMR(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
         parameters["shared_support"],
         parameters["mcf_trace_sensitivity"],
     )
-    return CMR(list_length, parameters, mfc, mcf, context)
+    return mfc, instance_mcf
+
+
+def _positional_termination(
+    parameters: Mapping[str, Float_],
+    list_length: int,
+) -> TerminationPolicy:
+    """Returns the positional termination policy for the supplied parameters."""
+    return PositionalTermination(
+        parameters["stop_probability_scale"],
+        parameters["stop_probability_growth"],
+        list_length,
+    )
+
+
+def _no_stop_termination(
+    parameters: Mapping[str, Float_],
+    list_length: int,
+) -> TerminationPolicy:
+    """Returns the no-stop termination policy."""
+    del parameters, list_length
+    return NoStopTermination()
+
+
+def BaseCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    termination_factory: Optional[_TerminationFactory] = None,
+) -> CMR:
+    """Creates a CMR model with linear associative $M^{FC}$ and $M^{CF}$ memories."""
+    factory = termination_factory or _positional_termination
+    return _build_cmr(list_length, parameters, _linear_memories, factory)
+
+
+def InstanceCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    termination_factory: Optional[_TerminationFactory] = None,
+) -> CMR:
+    """Creates a CMR model with instance-based $M^{FC}$ and $M^{CF}$ memories."""
+    factory = termination_factory or _positional_termination
+    return _build_cmr(list_length, parameters, _instance_memories, factory)
+
+
+def MixedCMR(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    termination_factory: Optional[_TerminationFactory] = None,
+) -> CMR:
+    """Creates a CMR model with linear $M^{FC}$ and instance-based $M^{CF}$ memories."""
+    factory = termination_factory or _positional_termination
+    return _build_cmr(list_length, parameters, _mixed_memories, factory)
+
+
+def BaseCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """Creates a CMR model with linear associative memories and no-stop termination."""
+    return BaseCMR(list_length, parameters, termination_factory=_no_stop_termination)
+
+
+def InstanceCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """Creates a CMR model with instance associative memories and no-stop termination."""
+    return InstanceCMR(list_length, parameters, termination_factory=_no_stop_termination)
+
+
+def MixedCMRNoStop(list_length: int, parameters: Mapping[str, Float_]) -> CMR:
+    """Creates a CMR model with mixed associative memories and no-stop termination."""
+    return MixedCMR(list_length, parameters, termination_factory=_no_stop_termination)
 
 
 class BaseCMRFactory:
@@ -343,3 +416,78 @@ class MixedCMRFactory:
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         return MixedCMR(self.max_list_length, parameters)
+
+
+class BaseCMRNoStopFactory:
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a no-stop memory search model with the specified parameters."""
+        return BaseCMRNoStop(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
+        trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a no-stop memory search model with the specified parameters for the specified trial."""
+        return BaseCMRNoStop(self.max_list_length, parameters)
+
+
+class InstanceCMRNoStopFactory:
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create an instance-memory no-stop model with the specified parameters."""
+        return InstanceCMRNoStop(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
+        trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create an instance-memory no-stop model with the specified parameters for the specified trial."""
+        return InstanceCMRNoStop(self.max_list_length, parameters)
+
+
+class MixedCMRNoStopFactory:
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        self.max_list_length = np.max(dataset["listLength"]).item()
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a mixed-memory no-stop model with the specified parameters."""
+        return MixedCMRNoStop(self.max_list_length, parameters)
+
+    def create_trial_model(
+        self,
+        trial_index: Int_,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a mixed-memory no-stop model with the specified parameters for the specified trial."""
+        return MixedCMRNoStop(self.max_list_length, parameters)

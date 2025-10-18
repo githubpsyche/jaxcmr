@@ -41,6 +41,7 @@ __all__ = [
     "AnalysisConfig",
     "FittingAlgorithm",
     "TrialSimulator",
+    "TerminationPolicy",
 ]
 
 
@@ -110,10 +111,14 @@ class MemorySearch(Protocol):
     Attributes:
         item_count: the number of item slots reserved in the model.
         is_active: indicates whether the model is active or not.
+        recallable: indicates whether each item can currently be recalled.
+        recall_total: the number of recalled items so far.
     """
 
     item_count: int
     is_active: Bool[Array, ""]
+    recallable: Bool[Array, " item_count"]
+    recall_total: Integer[Array, ""]
 
     def experience(self, choice: Int_) -> "MemorySearch":
         """Returns model after experiencing the specified study item.
@@ -150,6 +155,19 @@ class MemorySearch(Protocol):
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return probabilities of all possible retrieval events."""
+        ...
+
+
+@runtime_checkable
+class TerminationPolicy(Protocol):
+    """Define termination policies for memory search models."""
+
+    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]:
+        """Returns stop probability for the provided model.
+
+        Args:
+          model: Memory search model under evaluation.
+        """
         ...
 
 
