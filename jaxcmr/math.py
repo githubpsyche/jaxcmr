@@ -74,20 +74,22 @@ def cosine_similarity_matrix(
 
 def build_trial_connections(
     present_lists: np.ndarray,
-    connections: Optional[Float[Array, " word_pool_items word_pool_items"]],
+    features: Optional[Float[Array, " word_pool_items features_count"]],
 ) -> Float[Array, " trials study_events study_events"]:
     """Returns per-trial connection matrices aligned to study lists.
 
     Args:
       present_lists: Study lists indexed by trial, containing 1-indexed item ids.
-      connections: Wordpool-wide similarity matrix or ``None`` to disable semantics.
+      features: Wordpool-wide feature matrix or ``None`` to disable semantics.
     """
 
     # If no connections are provided, return zero matrices
-    if connections is None:
+    if features is None:
         list_length = present_lists.shape[1]
         blank = jnp.zeros((list_length, list_length))
         return jnp.stack([blank] * present_lists.shape[0])
+
+    connections = cosine_similarity_matrix(features)
 
     # Clip to non-negative values and zero the diagonal
     clipped = jnp.clip(connections, a_min=lb, a_max=None)

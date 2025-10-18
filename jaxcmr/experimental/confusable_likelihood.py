@@ -35,14 +35,14 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         
         assert "pres_itemids" in dataset
         assert "rec_itemids" in dataset
 
-        self.factory = model_factory(dataset, connections)
+        self.factory = model_factory(dataset, features)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemids"])
         self.trials = jnp.array(dataset["rec_itemids"])

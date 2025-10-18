@@ -105,10 +105,10 @@ class MemorySearchSimulator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
-        factory = model_factory(dataset, connections)
+        factory = model_factory(dataset, features)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemids"])
         self.empty = jnp.zeros(dataset["recalls"].shape[-1], jnp.int32)
@@ -179,7 +179,7 @@ def preallocate_for_h5_dataset(
 def simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
@@ -192,7 +192,7 @@ def simulate_h5_from_h5(
     Args:
         model_factory: Factory class for creating memory search model instances.
         dataset: Original H5 dataset containing trial data.
-        connections: Optional connectivity matrix between items in the word pool.
+        features: Optional feature matrix describing word-pool items.
         parameters: Dictionary of simulation parameters, parameterized per subject.
         trial_mask: Boolean array specifying which trials to simulate.
         experiment_count: Number of simulation iterations per trial.
@@ -201,7 +201,7 @@ def simulate_h5_from_h5(
     """
 
     sim_h5 = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
-    simulator = MemorySearchSimulator(model_factory, sim_h5, connections)
+    simulator = MemorySearchSimulator(model_factory, sim_h5, features)
 
     # Flat trial + subject index vectors (static shapes)
     total_trials = sim_h5["subject"].size
@@ -231,7 +231,7 @@ def simulate_h5_from_h5(
 def parameter_shifted_simulate_h5_from_h5(
     model_factory: Type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+    features: Optional[Float[Array, " word_pool_items features_count"]],
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
@@ -246,7 +246,7 @@ def parameter_shifted_simulate_h5_from_h5(
     Args:
         model_factory: Factory class for creating memory search model instances.
         dataset: Original H5 dataset containing trial data.
-        connections: Optional connectivity matrix between items in the word pool.
+        features: Optional feature matrix describing word-pool items.
         parameters: Dictionary of simulation parameters, parameterized per subject.
         trial_mask: Boolean array specifying which trials to simulate.
         experiment_count: Number of simulation iterations per trial.
@@ -270,7 +270,7 @@ def parameter_shifted_simulate_h5_from_h5(
         sim_data = simulate_h5_from_h5(
             model_factory,
             dataset,
-            connections,
+            features,
             swept_params,
             trial_mask,
             experiment_count,

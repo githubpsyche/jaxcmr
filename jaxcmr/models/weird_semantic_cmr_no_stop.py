@@ -22,7 +22,6 @@ from jaxcmr.typing import (
     Float,
     Float_,
     Int_,
-    Integer,
     Memory,
     MemorySearch,
     RecallDataset,
@@ -291,13 +290,13 @@ class BaseCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
         self.trial_connections = build_trial_connections(
-            self.present_lists, connections
+            self.present_lists, features
         )
 
     def create_model(
@@ -330,13 +329,13 @@ class InstanceCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
         self.trial_connections = build_trial_connections(
-            self.present_lists, connections
+            self.present_lists, features
         )
 
     def create_model(
@@ -369,13 +368,13 @@ class MixedCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
         self.trial_connections = build_trial_connections(
-            self.present_lists, connections
+            self.present_lists, features
         )
 
     def create_model(

@@ -1,7 +1,5 @@
-import json
 import time
-from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, Type
+from typing import Any, Mapping, Optional, Type
 
 import numpy as np
 from jax import numpy as jnp
@@ -12,16 +10,13 @@ from jaxcmr.typing import (
     Array,
     Bool,
     FitResult,
-    FittingAlgorithm,
+    Float,
     Float_,
     Integer,
     LossFnGenerator,
     MemorySearchModelFactory,
     RecallDataset,
 )
-
-
-ParameterBlock = Mapping[str, Mapping[str, Any]]
 
 
 def make_subject_trial_masks(
@@ -41,7 +36,7 @@ class ScipyDE:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, "word_count features_count"]],
         base_params: Mapping[str, Float_],
         model_factory: Type[MemorySearchModelFactory],
         loss_fn_generator: Type[LossFnGenerator],
@@ -52,7 +47,7 @@ class ScipyDE:
 
         Args:
             dataset: The dataset containing trial data (including 'subject').
-            connections: Optional connectivity matrix.
+            features: Optional feature matrix aligned to the vocabulary.
             base_params: A dictionary of parameters that are held fixed.
             model_factory: Class implementing MemorySearchModelFactory.
             loss_fn_generator: Class implementing LossFnGenerator.
@@ -62,7 +57,6 @@ class ScipyDE:
         """
         # Store essential data
         self.dataset = dataset
-        self.connections = connections
         self.base_params = base_params
         self.subjects = dataset["subject"].flatten()
 
@@ -88,7 +82,7 @@ class ScipyDE:
             "best_of": hyperparams.get("best_of", 1),
         }
 
-        self.loss_fn_generator = loss_fn_generator(model_factory, dataset, connections)
+        self.loss_fn_generator = loss_fn_generator(model_factory, dataset, features)
 
     def _fit_single_mask(
         self, trial_mask: Bool[Array, " trials"], subject_id: int = -1

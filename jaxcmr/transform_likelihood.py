@@ -75,7 +75,7 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
         mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
         """Initializes the generator with dataset, factory, and mask.
@@ -83,14 +83,14 @@ class MemorySearchLikelihoodFnGenerator:
         Args:
           model_factory: Class implementing `MemorySearchModelFactory`.
           dataset: Recall dataset with presentations and recalls.
-          connections: Optional connectivity matrix.
+          features: Optional feature matrix for word-pool items.
           mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        self.factory = model_factory(dataset, connections)
+        self.factory = model_factory(dataset, features)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.mask_likelihoods = vmap(mask_likelihoods)
-        self.has_connections = False if connections is None else jnp.any(connections).item()
+        self.has_features = False if features is None else jnp.any(features).item()
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -219,7 +219,7 @@ class MemorySearchLikelihoodFnGenerator:
         likelihood mask inside the loss paths.
         """
         # Decide which approach to use, based on whether all present-lists match
-        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_connections:
+        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_features:
             base_loss_fn = self.base_predict_trials_loss
         else:
             base_loss_fn = self.present_and_predict_trials_loss
@@ -264,12 +264,12 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         self._inner = MemorySearchLikelihoodFnGenerator(
             model_factory,
             dataset,
-            connections,
+            features,
             mask_likelihoods=mask_first_recall,
         )
 
@@ -294,12 +294,12 @@ class ExcludeTerminationLikelihoodFnGenerator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         self._inner = MemorySearchLikelihoodFnGenerator(
             model_factory,
             dataset,
-            connections,
+            features,
             mask_likelihoods=mask_trailing_terminations,
         )
 

@@ -6,6 +6,7 @@ from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from jaxcmr.math import (
+    build_trial_connections,
     exponential_primacy_decay,
     exponential_stop_probability,
     lb,
@@ -300,45 +301,16 @@ def MixedCMR(
     trial_connections = connections * (1.0 - zero_diag)
     return CMR(list_length, parameters, mfc, mcf, context, trial_connections)
 
-
-def _build_trial_connections(
-    present_lists: np.ndarray,
-    connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
-) -> jnp.ndarray:
-    """Return per-trial connectivity matrices aligned to study lists."""
-
-    if connections is None:
-        zeros = [
-            jnp.zeros((present.shape[0], present.shape[0]), dtype=jnp.float32)
-            for present in present_lists
-        ]
-        return jnp.stack(zeros)
-
-    base_connections = np.array(connections)
-    trial_blocks = []
-    for present in present_lists:
-        valid = present > 0
-        zero_based = np.where(valid, present - 1, 0)
-        block = base_connections[np.ix_(zero_based, zero_based)]
-        block = np.where(
-            np.logical_and(valid[:, None], valid[None, :]),
-            block,
-            0.0,
-        )
-        trial_blocks.append(jnp.array(block))
-    return jnp.stack(trial_blocks)
-
-
 class BaseCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
-        self.trial_connections = _build_trial_connections(self.present_lists, connections)
+        self.trial_connections = build_trial_connections(self.present_lists, features)
 
     def create_model(
         self,
@@ -369,12 +341,12 @@ class InstanceCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
-        self.trial_connections = _build_trial_connections(self.present_lists, connections)
+        self.trial_connections = build_trial_connections(self.present_lists, features)
 
     def create_model(
         self,
@@ -405,12 +377,12 @@ class MixedCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.present_lists = np.array(dataset["pres_itemids"])
         self.max_list_length = np.max(dataset["listLength"]).item()
-        self.trial_connections = _build_trial_connections(self.present_lists, connections)
+        self.trial_connections = build_trial_connections(self.present_lists, features)
 
     def create_model(
         self,

@@ -46,19 +46,19 @@ class MemorySearchLikelihoodFnGenerator:
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
-        """Initialize with dataset and connectivity for trial-conditioned models.
+        """Initialize with dataset and optional feature embeddings.
 
         Args:
           model_factory: Factory class for trial-conditioned memory-search models.
           dataset: Trial-wise presentations and recalls.
-          connections: Optional connectivity among word-pool items.
+          features: Optional feature matrix describing word-pool items.
         """
-        self.factory = model_factory(dataset, connections)
+        self.factory = model_factory(dataset, features)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.has_connections = False if connections is None else jnp.any(connections).item()
+        self.has_features = False if features is None else jnp.any(features).item()
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -172,7 +172,7 @@ class MemorySearchLikelihoodFnGenerator:
           free_param_names: Names and order of free parameters.
         """
         # Decide which approach to use, based on whether all present-lists match
-        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_connections:
+        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_features:
             base_loss_fn = self.base_predict_trials_loss
         else:
             base_loss_fn = self.present_and_predict_trials_loss

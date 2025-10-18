@@ -171,7 +171,7 @@ class MemorySearchModelFactory(Protocol):
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         ...
@@ -286,7 +286,7 @@ class LossFnGenerator(Protocol):
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
 
@@ -336,7 +336,7 @@ class FittingAlgorithm(Protocol):
     def __init__(
         self,
         dataset: RecallDataset,
-        connections: Optional[Integer[Array, " word_pool_items word_pool_items"]],
+        features: Optional[Float[Array, " word_pool_items features_count"]],
         base_params: Mapping[str, Float_],
         model_factory: Type["MemorySearchModelFactory"],
         loss_fn_generator: Type["LossFnGenerator"],
@@ -347,7 +347,7 @@ class FittingAlgorithm(Protocol):
 
         Args:
             dataset: The dataset containing trial data (including 'subject').
-            connections: Optional connectivity matrix.
+            features: Optional feature matrix aligned to the vocabulary.
             base_params: A dictionary of parameters that are held fixed.
             model_factory: Class implementing MemorySearchModelFactory.
             loss_fn_generator: Class implementing LossFnGenerator.

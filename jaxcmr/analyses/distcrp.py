@@ -18,6 +18,7 @@ __all__ = [
     "tabulate_trial",
     "dist_crp",
     "plot_dist_crp",
+    "plot_cat_crp",
 ]
 
 from typing import Optional, Sequence
@@ -32,6 +33,7 @@ from simple_pytree import Pytree
 from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from ..math import cosine_similarity_matrix
 
 
 def compute_distance_bins_percentiles(
@@ -373,7 +375,7 @@ def dist_crp(
 def plot_dist_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    distances: Float[Array, "word_count word_count"],
+    features: Float[Array, "word_count features_count"],
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -389,7 +391,7 @@ def plot_dist_crp(
     Args:
       datasets: Collection of recall datasets to contrast.
       trial_masks: Boolean masks selecting trials per dataset.
-      distances: Distance matrix (or matrices) defining the metric.
+      features: Feature matrix whose rows align with the vocabulary items
       color_cycle: Colors used for successive datasets.
       labels: Legend labels corresponding to ``datasets``.
       contrast_name: Optional legend title.
@@ -417,6 +419,8 @@ def plot_dist_crp(
 
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks]
+
+    distances = 1 - cosine_similarity_matrix(features)
 
     if bin_edges is None:
         bin_edges, bin_centers = compute_distance_bins_min_count(
@@ -455,5 +459,84 @@ def plot_dist_crp(
 
     set_plot_labels(
         axis, "Distance (bin center)", "Conditional Resp. Prob.", contrast_name
+    )
+    return axis
+
+
+def plot_cat_crp(
+    datasets: Sequence[RecallDataset] | RecallDataset,
+    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    features: Float[Array, "word_count features_count"],
+    feature_column: int = 0,
+    feature_label: str = "Category",
+    color_cycle: Optional[list[str]] = None,
+    labels: Optional[Sequence[str]] = None,
+    contrast_name: Optional[str] = None,
+    axis: Optional[Axes] = None,
+) -> Axes:
+    """Plot category-binned CRP curves using a single feature column.
+
+    Args:
+      datasets: Recall datasets to compare.
+      trial_masks: Boolean trial-selection masks aligned with ``datasets``.
+      features: Matrix whose rows align with the vocabulary; the specified column
+        encodes categorical assignments.
+      feature_column: Zero-based index of ``features`` used to derive categories.
+      feature_label: Human-readable label for the feature column.
+      color_cycle: Matplotlib-compatible color sequence used per dataset.
+      labels: Legend labels corresponding to ``datasets``.
+      contrast_name: Optional legend title.
+      axis: Existing Matplotlib axis to plot on.
+    """
+
+    axis = init_plot(axis)
+    if color_cycle is None:
+        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+
+    if labels is None:
+        labels = [""] * len(datasets)
+    
+    if isinstance(datasets, dict):
+        datasets = [datasets]
+
+    if isinstance(trial_masks, jnp.ndarray):
+        trial_masks = [trial_masks]
+
+    feature_values = jnp.asarray(
+        features if features.ndim == 1 else features[:, feature_column],
+        dtype=jnp.float32,
+    )
+    distances = jnp.abs(feature_values[:, None] - feature_values[None, :])
+
+    bin_edges = jnp.array([0.5], dtype=jnp.float32)
+    bin_centers = jnp.array([0.0, 1.0], dtype=jnp.float32)
+
+    for data_index, data in enumerate(datasets):
+        subject_values = apply_by_subject(
+            data,
+            trial_masks[data_index],
+            jit(dist_crp),
+            distances,
+            bin_edges,
+        )
+        subject_values = jnp.vstack(subject_values)
+
+        color = color_cycle.pop(0)
+        plot_data(
+            axis,
+            bin_centers,
+            subject_values,
+            labels[data_index],
+            color,
+        )
+
+    axis.set_xticks(np.array(bin_centers))
+    axis.set_xticklabels(["Same", "Different"])
+
+    set_plot_labels(
+        axis,
+        f"{feature_label}",
+        "Conditional Resp. Prob.",
+        contrast_name,
     )
     return axis
