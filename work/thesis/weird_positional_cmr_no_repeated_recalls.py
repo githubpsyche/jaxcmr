@@ -36,7 +36,7 @@ from jaxcmr.helpers import (
     load_data,
     save_dict_to_hdf5,
 )
-from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.models_repfr.weird_positional_cmr import BaseCMRFactory as model_factory
 from jaxcmr import repetition
 from jaxcmr.simulation import simulate_h5_from_h5

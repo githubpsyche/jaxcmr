@@ -1,10 +1,6 @@
-"""Likelihood-based loss function generator for memory-search models.
+"""Summed-permutation loss generator for order-free recall data."""
 
-Provides utilities to approximate recall-order likelihoods by exploring high
-probability recall permutations via a beam search and aggregating their
-probabilities into a negative log-likelihood objective for fitting.
-"""
-
+import itertools
 from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np
@@ -40,11 +36,8 @@ def predict_and_simulate_recalls(
 
 
 class MemorySearchLikelihoodFnGenerator:
-    """Generates loss functions for a given dataset and model factory.
+    """Generates loss functions that sum likelihoods across recall permutations."""
 
-    Creates per-trial models, produces event likelihoods, and returns a callable
-    that evaluates negative log-likelihood for parameter vectors.
-    """
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
@@ -73,9 +66,34 @@ class MemorySearchLikelihoodFnGenerator:
             )
             trials[trial_index] = reindexed
 
-        self.recall_length = trials.shape[1]
-        self.beam_width = self.recall_length
-        self.trials = jnp.array(trials)
+        permutation_rows: list[np.ndarray] = []
+        permutation_counts: list[int] = []
+        max_permutations = 1
+
+        for recall in trials:
+            positives = recall[recall > 0]
+            if positives.size == 0:
+                padded = np.zeros((1, recall.shape[0]), dtype=int)
+            else:
+                unique = list(
+                    dict.fromkeys(itertools.permutations(positives.tolist()))
+                )
+                perms = np.asarray(unique, dtype=int)
+                padded = np.zeros((perms.shape[0], recall.shape[0]), dtype=int)
+                padded[:, : positives.size] = perms
+            permutation_rows.append(padded)
+            permutation_counts.append(padded.shape[0])
+            max_permutations = max(max_permutations, padded.shape[0])
+
+        permutation_tensor = np.zeros(
+            (trials.shape[0], max_permutations, trials.shape[1]), dtype=int
+        )
+        for idx, padded in enumerate(permutation_rows):
+            permutation_tensor[idx, : padded.shape[0], :] = padded
+
+        self.permutations = jnp.array(permutation_tensor)
+        self.permutation_counts = jnp.array(permutation_counts, dtype=jnp.int32)
+        self.max_permutations = int(max_permutations)
 
     def init_model_for_retrieval(
         self,
@@ -95,119 +113,53 @@ class MemorySearchLikelihoodFnGenerator:
         )
         return model.start_retrieving()
 
-    def _beam_expand_step(
+    def _sequence_log_probabilities(
         self,
         model: MemorySearch,
-        bag: Integer[Array, " recall_events"],
-        step: Integer[Array, ""],
-        state: tuple[
-            Integer[Array, " beam recall_events"],
-            Bool[Array, " beam recall_events"],
-            Float[Array, " beam"],
-        ],
-    ) -> tuple[
-        Integer[Array, " beam recall_events"],
-        Bool[Array, " beam recall_events"],
-        Float[Array, " beam"],
-    ]:
-        """Returns updated beam state after selecting candidates for one depth."""
-        sequences, used, log_probs = state
-        total_slots = self.recall_length
-        beam = self.beam_width
-
-        seq_candidates = jnp.repeat(sequences, total_slots, axis=0)
-        used_candidates = jnp.repeat(used, total_slots, axis=0)
-        logp_candidates = jnp.repeat(log_probs, total_slots, axis=0)
-
-        slot_indices = jnp.tile(jnp.arange(total_slots), beam)
-        slot_items = bag[slot_indices]
-
-        used_at_slot = jnp.take_along_axis(
-            used_candidates, slot_indices[:, None], axis=1
-        )[:, 0]
-        valid = (
-            (slot_items > 0)
-            & (~used_at_slot)
-            & (logp_candidates > -jnp.inf)
-        )
-
-        seq_candidates = seq_candidates.at[:, step].set(slot_items)
-        used_candidates = used_candidates.at[
-            jnp.arange(beam * total_slots), slot_indices
-        ].set(True)
-
+        sequences: Integer[Array, " permutations recall_events"],
+    ) -> Float[Array, " permutations"]:
+        """Returns log probabilities for each recall sequence."""
         _, probabilities = vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
-            model, seq_candidates
+            model, sequences
         )
-        depth = step + 1
-        log_likelihoods = jnp.sum(jnp.log(probabilities[:, : depth]), axis=1)
-        logp_candidates = jnp.where(valid, log_likelihoods, -jnp.inf)
+        return jnp.sum(jnp.log(probabilities), axis=1)
 
-        top_logp, top_indices = lax.top_k(logp_candidates, beam)
-        sequences_next = seq_candidates[top_indices]
-        used_next = used_candidates[top_indices]
-        return sequences_next, used_next, top_logp
-
-    def _beam_trial_log_likelihood(
-        self,
-        model: MemorySearch,
-        bag: Integer[Array, " recall_events"],
-    ) -> Float[Array, ""]:
-        """Returns log-likelihood estimate via beam search over recall permutations."""
-        depth = jnp.sum((bag > 0).astype(jnp.int32))
-
-        sequences0 = jnp.zeros(
-            (self.beam_width, self.recall_length), dtype=jnp.int32
-        )
-        used0 = jnp.zeros(
-            (self.beam_width, self.recall_length), dtype=bool
-        )
-        log_probs0 = jnp.full((self.beam_width,), -jnp.inf)
-        log_probs0 = log_probs0.at[0].set(0.0)
-        initial_state = (sequences0, used0, log_probs0)
-
-        def body(step, state):
-            return lax.cond(
-                step < depth,
-                lambda s: self._beam_expand_step(model, bag, step, s),
-                lambda s: s,
-                state,
-            )
-
-        final_state = lax.fori_loop(
-            0, self.recall_length, body, initial_state
-        )
-        _, _, log_probs = final_state
-        return logsumexp(log_probs)
+    def _mask_permutations(
+        self, counts: Integer[Array, " trials"]
+    ) -> Bool[Array, " trials permutations"]:
+        """Returns mask indicating valid permutations per trial."""
+        return jnp.arange(self.max_permutations) < counts[:, None]
 
     def base_predict_trials(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, " trials"]:
-        """Returns log-likelihoods using a single initialized model.
-
-        Predicts all selected trials without re-presenting items (valid only when
-        presentation lists are identical across the trials).
-        """
+        """Returns log-likelihoods summed across permutations for each trial."""
         model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        bags = self.trials[trial_indices]
-
-        def evaluate(bag):
-            return self._beam_trial_log_likelihood(model, bag)
-
-        return vmap(evaluate)(bags)
+        perms = self.permutations[trial_indices]
+        counts = self.permutation_counts[trial_indices]
+        flat_perms = perms.reshape(-1, perms.shape[-1])
+        log_probs = self._sequence_log_probabilities(model, flat_perms)
+        mask = self._mask_permutations(counts).reshape(-1)
+        log_probs = jnp.where(mask, log_probs, -jnp.inf)
+        log_probs = log_probs.reshape(perms.shape[0], self.max_permutations)
+        return logsumexp(log_probs, axis=1)
 
     def present_and_predict_trials(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, " trials"]:
-        """Returns log-likelihoods with a fresh model per trial."""
+        """Returns log-likelihoods summed across permutations with per-trial models."""
 
         def per_trial(i):
             model = self.init_model_for_retrieval(i, parameters)
-            return self._beam_trial_log_likelihood(model, self.trials[i])
+            perms = self.permutations[i]
+            log_probs = self._sequence_log_probabilities(model, perms)
+            mask = jnp.arange(self.max_permutations) < self.permutation_counts[i]
+            log_probs = jnp.where(mask, log_probs, -jnp.inf)
+            return logsumexp(log_probs)
 
         return vmap(per_trial)(trial_indices)
 
@@ -217,6 +169,7 @@ class MemorySearchLikelihoodFnGenerator:
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
         """Returns negative log-likelihood for the base approach."""
+
         return -jnp.sum(self.base_predict_trials(trial_indices, parameters))
 
     def present_and_predict_trials_loss(
@@ -225,9 +178,7 @@ class MemorySearchLikelihoodFnGenerator:
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
         """Returns negative log-likelihood for the present-and-predict approach."""
-        return -jnp.sum(
-            self.present_and_predict_trials(trial_indices, parameters)
-        )
+        return -jnp.sum(self.present_and_predict_trials(trial_indices, parameters))
 
     def __call__(
         self,

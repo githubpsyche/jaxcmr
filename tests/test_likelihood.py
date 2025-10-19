@@ -1,7 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 
-from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator
+from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator
 from jaxcmr.models_repfr.cmr import BaseCMRFactory
 from jaxcmr.typing import RecallDataset
 

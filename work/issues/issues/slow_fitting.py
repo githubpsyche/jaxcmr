@@ -15,7 +15,7 @@ import numpy as np
 from jaxcmr.helpers import load_data, generate_trial_mask
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.models.weird_cmr import BaseCMRFactory as model_factory
-from jaxcmr.likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 
 warnings.filterwarnings("ignore")
 
