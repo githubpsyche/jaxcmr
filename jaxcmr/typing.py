@@ -285,7 +285,7 @@ class MemorySearchCreateFn(Protocol):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-        connections: Optional[Float[Array, " trials study_events study_events"]],
+        connections: Optional[Float[Array, " study_events study_events"]],
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters."""
         ...
@@ -312,7 +312,7 @@ class LossFnGenerator(Protocol):
 
     def __init__(
         self,
-        model_factory: MemorySearchModelFactory,
+        model_create_fn: MemorySearchCreateFn,
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
@@ -351,6 +351,32 @@ class FitResult(TypedDict):
 
 
 @runtime_checkable
+class MemorySearchModelFactory(Protocol):
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        ...
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+    def create_trial_model(
+        self,
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+
+@runtime_checkable
 class FittingAlgorithm(Protocol):
     """Protocol describing a fitting algorithm for memory search models.
 
@@ -366,8 +392,8 @@ class FittingAlgorithm(Protocol):
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
         base_params: Mapping[str, Float_],
-        model_factory: Type["MemorySearchModelFactory"],
-        loss_fn_generator: Type["LossFnGenerator"],
+        model_factory: Type[MemorySearchModelFactory],
+        loss_fn_generator: Type[LossFnGenerator],
         hyperparams: Optional[dict[str, Any]] = None,
     ):
         """

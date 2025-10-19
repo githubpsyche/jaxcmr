@@ -4,14 +4,13 @@ Provides utilities to simulate retrieval event likelihoods per trial and to
 aggregate them into a negative log-likelihood objective for fitting.
 """
 
-from typing import Callable, Iterable, Mapping, Optional
+from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import all_rows_identical, log_likelihood
-from jaxcmr.model_helpers import MemorySearchModelFactory
 from jaxcmr.typing import (
     Array,
     Float,
@@ -19,7 +18,7 @@ from jaxcmr.typing import (
     Integer,
     MemorySearch,
     RecallDataset,
-    MemorySearchCreateFn
+    MemorySearchModelFactory
 )
 
 
@@ -45,18 +44,18 @@ class MemorySearchLikelihoodFnGenerator:
     """
     def __init__(
         self,
-        model_create_fn: MemorySearchCreateFn,
+        model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
 
         Args:
-          model_create_fn: Function to create a memory search model.
+          model_factory: Class implementing `MemorySearchModelFactory`.
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
-        self.factory = MemorySearchModelFactory(dataset, features, model_create_fn)
+        self.factory = model_factory(dataset, features)
         self.create_model = self.factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.has_features = False if features is None else jnp.any(features).item()

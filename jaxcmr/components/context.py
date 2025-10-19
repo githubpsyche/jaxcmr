@@ -10,22 +10,22 @@ from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from ..math import normalize_magnitude
-from ..model_helpers import matrix_heatmap
+from ..state_analysis import matrix_heatmap
 from ..typing import Array, Float, Float_
 
 
 class TemporalContext(Pytree):
     """Drifting, unit-length context representation.
 
-    The vector starts with a *start-of-list* unit (index ``0``) set to ``1`` and 
-    one unit per study item initialised to ``0``. On every call to 
-    :meth:`integrate`, the context drifts toward a normalised input vector while 
-    remaining unit-length. This initial state is preserved to enable drift back 
-    to the start-of-list context unit. 
-    
-    An optional out-of-list context unit (index ``item_count + 1``) can be used 
-    to simulate post-study drift, but unless the drift rate is near ``1``, it 
-    does not affect behavior because CMR relies on relative differences between 
+    The vector starts with a *start-of-list* unit (index ``0``) set to ``1`` and
+    one unit per study item initialised to ``0``. On every call to
+    :meth:`integrate`, the context drifts toward a normalised input vector while
+    remaining unit-length. This initial state is preserved to enable drift back
+    to the start-of-list context unit.
+
+    An optional out-of-list context unit (index ``item_count + 1``) can be used
+    to simulate post-study drift, but unless the drift rate is near ``1``, it
+    does not affect behavior because CMR relies on relative differences between
     context units.
     """
 
@@ -41,15 +41,6 @@ class TemporalContext(Pytree):
         self.state = self.zeros.at[0].set(1)
         self.initial_state = self.zeros.at[0].set(1)
         self.next_outlist_unit = item_count + 1
-
-    @classmethod
-    def init(cls, item_count: int) -> "TemporalContext":
-        """Returns context sized for ``item_count`` items.
-
-        Args:
-            item_count: Number of items in the context model.
-        """
-        return cls(item_count, item_count + 1)
 
     def integrate(
         self,
@@ -133,3 +124,11 @@ class TemporalContext(Pytree):
         """
         return cls(item_count, item_count + item_count + 1)
 
+
+def init(item_count: int) -> "TemporalContext":
+    """Returns context sized for ``item_count`` items.
+
+    Args:
+        item_count: Number of items in the context model.
+    """
+    return TemporalContext(item_count, item_count + 1)

@@ -77,7 +77,7 @@ class InstanceMemory(Pytree):
             input_pattern: the input feature pattern.
         """
         t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
-        return jnp.dot(t, self.state)[in_pattern.size :]    
+        return jnp.dot(t, self.state)[in_pattern.size :]
 
     def probe_without_scale(
         self,
@@ -90,7 +90,7 @@ class InstanceMemory(Pytree):
         """
         t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
         return jnp.dot(t, self.state)[in_pattern.size :]
-    
+
     def zero_out(
         self,
         index: Int_,
@@ -102,87 +102,83 @@ class InstanceMemory(Pytree):
         """
         ...
 
-    @classmethod
-    def init_mfc(
-        cls,
-        list_length: int,
-        parameters: Mapping[str, Float_],
-        context: Context,
-    ) -> "InstanceMemory":
-        """Return a new instance-based item-to-context memory model.
 
-        Initially, all items are associated with a unique context unit by
-        `1-learning_rate`. We pre-allocate for `list_length` study events.
-        `mfc_trace_sensitivity` sets the trace activation power.
+def init_mfc(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    context: Context,
+) -> "InstanceMemory":
+    """Return a new instance-based item-to-context memory model.
 
-        Args:
-            list_length: the max number of study events that could occur.
-            parameters: mapping of parameter names to values.
-            context: context instance supplying feature dimension.
-        """
-        context_feature_count = context.size
-        size = list_length
-        learning_rate = parameters["learning_rate"]
-        trace_activation_scale = parameters.get("mfc_trace_sensitivity", 1.0)
+    Initially, all items are associated with a unique context unit by
+    `1-learning_rate`. We pre-allocate for `list_length` study events.
+    `mfc_trace_sensitivity` sets the trace activation power.
 
-        item_feature_count = list_length
-        items = jnp.eye(list_length)
-        contexts = jnp.eye(list_length, context_feature_count, 1) * (1 - learning_rate)
-        presentations = (
-            jnp.zeros((list_length + size, item_feature_count + context_feature_count))
-            .at[:list_length, :item_feature_count]
-            .set(items)
-        )
+    Args:
+        list_length: the max number of study events that could occur.
+        parameters: mapping of parameter names to values.
+        context: context instance supplying feature dimension.
+    """
+    context_feature_count = context.size
+    size = list_length
+    learning_rate = parameters["learning_rate"]
+    trace_activation_scale = parameters.get("mfc_trace_sensitivity", 1.0)
 
-        return cls(
-            state=presentations.at[:list_length, item_feature_count:].set(contexts),
-            probe=jnp.zeros(item_feature_count + context_feature_count),
-            study_index=list_length,
-            input_size=item_feature_count,
-            output_size=context_feature_count,
-            trace_activation_scale=trace_activation_scale,
-        )
+    item_feature_count = list_length
+    items = jnp.eye(list_length)
+    contexts = jnp.eye(list_length, context_feature_count, 1) * (1 - learning_rate)
+    presentations = (
+        jnp.zeros((list_length + size, item_feature_count + context_feature_count))
+        .at[:list_length, :item_feature_count]
+        .set(items)
+    )
 
-    @classmethod
-    def init_mcf(
-        cls,
-        list_length: int,
-        parameters: Mapping[str, Float_],
-        context: Context,
-    ) -> "InstanceMemory":
-        """Return a new instance-based context-to-item memory model.
+    return InstanceMemory(
+        state=presentations.at[:list_length, item_feature_count:].set(contexts),
+        probe=jnp.zeros(item_feature_count + context_feature_count),
+        study_index=list_length,
+        input_size=item_feature_count,
+        output_size=context_feature_count,
+        trace_activation_scale=trace_activation_scale,
+    )
 
-        Initially, in-list context units are associated with all items according to shared_support.
-        They are also associated with a unique item according to item_support.
-        Start-of-list and out-of-list context units receive no initial associations.
-        We pre-allocate for `list_length` study events.
-        
-        Args:
-            list_length: the maximum number of study events that could occur.
-            parameters: mapping of parameter names to values.
-            context: context instance supplying feature dimension.
-        """
-        context_feature_count = context.size
-        size = list_length
-        item_support = parameters["item_support"]
-        shared_support = parameters["shared_support"]
-        trace_activation_scale = parameters["mcf_trace_sensitivity"]
 
-        item_feature_count = list_length
-        contexts = jnp.eye(list_length, context_feature_count, 1)
-        items = (
-            jnp.eye(list_length) * (item_support - shared_support)
-        ) + shared_support
-        presentations = (
-            jnp.zeros((size + list_length, context_feature_count + item_feature_count))
-            .at[:list_length, :context_feature_count]
-            .set(contexts)
-        )
-        return cls(
-            state=presentations.at[:list_length, context_feature_count:].set(items),
-            probe=jnp.zeros(item_feature_count + context_feature_count),
-            study_index=list_length,
-            input_size=context_feature_count,
-            output_size=item_feature_count,
-            trace_activation_scale=trace_activation_scale,
-        )
+def init_mcf(
+    list_length: int,
+    parameters: Mapping[str, Float_],
+    context: Context,
+) -> "InstanceMemory":
+    """Return a new instance-based context-to-item memory model.
+
+    Initially, in-list context units are associated with all items according to shared_support.
+    They are also associated with a unique item according to item_support.
+    Start-of-list and out-of-list context units receive no initial associations.
+    We pre-allocate for `list_length` study events.
+
+    Args:
+        list_length: the maximum number of study events that could occur.
+        parameters: mapping of parameter names to values.
+        context: context instance supplying feature dimension.
+    """
+    context_feature_count = context.size
+    size = list_length
+    item_support = parameters["item_support"]
+    shared_support = parameters["shared_support"]
+    trace_activation_scale = parameters["mcf_trace_sensitivity"]
+
+    item_feature_count = list_length
+    contexts = jnp.eye(list_length, context_feature_count, 1)
+    items = (jnp.eye(list_length) * (item_support - shared_support)) + shared_support
+    presentations = (
+        jnp.zeros((size + list_length, context_feature_count + item_feature_count))
+        .at[:list_length, :context_feature_count]
+        .set(contexts)
+    )
+    return InstanceMemory(
+        state=presentations.at[:list_length, context_feature_count:].set(items),
+        probe=jnp.zeros(item_feature_count + context_feature_count),
+        study_index=list_length,
+        input_size=context_feature_count,
+        output_size=item_feature_count,
+        trace_activation_scale=trace_activation_scale,
+    )

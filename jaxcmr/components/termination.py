@@ -8,6 +8,7 @@ from jax import lax
 from jax import numpy as jnp
 
 from jaxcmr.math import lb
+from simple_pytree import Pytree
 from jaxcmr.typing import Array, Float, Float_, MemorySearch, TerminationPolicy
 
 __all__ = [
@@ -18,7 +19,7 @@ __all__ = [
 ]
 
 
-class NoStopTermination(TerminationPolicy):
+class NoStopTermination(Pytree):
     """Termination probability is always zero as long as recalls remain."""
 
     def __init__(
@@ -37,7 +38,7 @@ class NoStopTermination(TerminationPolicy):
         )
 
 
-class PositionalTermination(TerminationPolicy):
+class PositionalTermination(Pytree):
     """Termination probability is an exponential function of recall position."""
 
     def __init__(
@@ -61,7 +62,7 @@ class PositionalTermination(TerminationPolicy):
         )
 
 
-class RetrievalDependentTermination(TerminationPolicy):
+class RetrievalDependentTermination(Pytree):
     """Termination probability is the probability of retrieving a STOP item."""
 
     def __init__(
@@ -83,7 +84,7 @@ class RetrievalDependentTermination(TerminationPolicy):
         )
 
 
-class SupportRatioTermination(TerminationPolicy):
+class SupportRatioTermination(Pytree):
     """Termination probability is based on ratio of recalled to not recalled support."""
 
     def __init__(
