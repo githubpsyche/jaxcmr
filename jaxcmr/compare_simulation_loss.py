@@ -51,7 +51,7 @@ class MemorySearchLikelihoodFnGenerator:
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.list_length = self.present_lists.shape[1]
         self.has_features = False if features is None else jnp.any(features).item()
-        self.simulation_count = 10
+        self.simulation_count = 20
         self.base_key = random.PRNGKey(0)
 
         # Reindex the recalled items so they match the "present_lists" indexing
