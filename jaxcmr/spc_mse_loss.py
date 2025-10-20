@@ -1,7 +1,8 @@
-"""Likelihood-based loss function generator for memory-search models.
+"""Serial-position-curve MSE loss for memory-search models.
 
-Approximates recall likelihoods by simulating retrieval chains and tallying the
-frequency with which simulated recall bags match observed recall sets.
+Computes an average squared error between observed and simulated serial position
+curves by simulating recall chains per trial and aggregating the results with
+``fixed_pres_spc``.
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type
@@ -10,12 +11,11 @@ import numpy as np
 from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import all_rows_identical, log_likelihood
-from jaxcmr.math import lb
+from jaxcmr.analyses.spc import fixed_pres_spc
+from jaxcmr.helpers import all_rows_identical
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
     Array,
-    Bool,
     Float,
     Float_,
     Integer,
@@ -26,12 +26,27 @@ from jaxcmr.typing import (
 )
 
 
-class MemorySearchLikelihoodFnGenerator:
-    """Generates loss functions for a given dataset and model factory.
-
-    Creates per-trial models, produces event likelihoods, and returns a callable
-    that evaluates negative log-likelihood for parameter vectors.
+def simulate_masked_free_recall(
+    model: MemorySearch,
+    list_length: int,
+    mask: jnp.ndarray,
+    keys: PRNGKeyArray,
+) -> Integer[Array, " recall_length"]:
+    """Simulate free recall once and zero-out slots beyond the observed recall total.
+    
+    Args:
+      model: Retrieval-ready memory search model.
+      list_length: Length of the study list.
+      mask: Boolean mask indicating valid recall positions.
+      key: PRNG key for simulation.
     """
+    def simulate_once(key: PRNGKeyArray) -> Integer[Array, " recall_length"]:
+        _, recalls = simulate_free_recall(model, list_length, key)
+        return recalls * mask
+    return vmap(simulate_once)(keys)
+
+class MemorySearchSpcMseFnGenerator:
+    """Generates SPC-based MSE loss functions for a dataset and model factory."""
 
     def __init__(
         self,
@@ -51,36 +66,25 @@ class MemorySearchLikelihoodFnGenerator:
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.list_length = self.present_lists.shape[1]
         self.has_features = False if features is None else jnp.any(features).item()
-        self.simulation_count = 100
-        self.base_key = random.PRNGKey(0)
+        dataset_recalls = jnp.array(dataset["recalls"], dtype=jnp.int32)
+        self.simulation_count = 10
 
-        # Reindex the recalled items so they match the "present_lists" indexing
-        trials = np.array(dataset["recalls"])
-        for trial_index in range(trials.shape[0]):
-            present = self.present_lists[trial_index]
-            recall = trials[trial_index]
-            reindexed = np.array(
-                [(present[item - 1] if item else 0) for item in recall]
-            )
-            trials[trial_index] = reindexed
-
-        trials = jnp.array(trials, dtype=jnp.int32)
-
-        self.trial_counts = vmap(
-            lambda trial: jnp.bincount(trial, length=self.list_length + 1)[1:],
-            in_axes=0,
-        )(trials).astype(jnp.int32)
-
-        self.trial_totals = self.trial_counts.sum(axis=1).astype(jnp.int32)
-        trial_count = int(trials.shape[0])
-        shared_key, per_trial_key = random.split(self.base_key)
+        trial_count = int(dataset_recalls.shape[0])
+        base_key = random.PRNGKey(0)
+        shared_key, per_trial_key = random.split(base_key)
         self.shared_simulation_keys = random.split(shared_key, self.simulation_count)
         per_trial_subkeys = random.split(per_trial_key, trial_count)
         self.simulation_keys = vmap(
             lambda key: random.split(key, self.simulation_count)
         )(per_trial_subkeys)
+
+        self.trial_position_counts = vmap(
+            lambda trial: jnp.bincount(trial, length=self.list_length + 1)[1:]
+        )(dataset_recalls).astype(jnp.float32)
+        self.trial_totals = self.trial_position_counts.sum(axis=1).astype(jnp.int32)
         prefix = jnp.arange(self.list_length, dtype=jnp.int32)
         self.trial_masks = prefix[None, :] < self.trial_totals[:, None]
+
 
     def init_model_for_retrieval(
         self,
@@ -100,66 +104,42 @@ class MemorySearchLikelihoodFnGenerator:
         )
         return model.start_retrieving()
 
-    def estimate_bag_probability(
-        self,
-        model: MemorySearch,
-        trial_index: Integer[Array, ""],
-        keys: PRNGKeyArray,
-    ) -> Float[Array, ""]:
-        """Returns Monte Carlo estimate of bag probability for a trial.
-
-        Args:
-          model: Initialized retrieval model for the trial.
-          trial_index: Trial index to evaluate.
-          keys: Simulation keys to use for the Monte Carlo estimate.
-        """
-        target_counts = self.trial_counts[trial_index]
-        mask = self.trial_masks[trial_index].astype(jnp.int32)
-
-        def simulate_and_match(key: PRNGKeyArray) -> Bool[Array, ""]:
-            _, recalls = simulate_free_recall(model, self.list_length, key)
-            recalls = recalls * mask
-            counts = jnp.bincount(recalls, length=self.list_length + 1)[1:]
-            return jnp.all(counts == target_counts)
-
-        matches = vmap(simulate_and_match)(keys)
-        return jnp.mean(matches.astype(jnp.float32))
-
-    def base_predict_trials_loss(
+    def base_spc_mse(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
+        """Returns SPC MSE for identical study lists using shared simulations."""
+        counts = self.trial_position_counts[trial_indices].sum(axis=0)
+        target_spc = counts / trial_indices.size
         model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        raw_probabilities = vmap(
-            self.estimate_bag_probability, in_axes=(None, 0, None)
-        )(model, trial_indices, self.shared_simulation_keys)
-        return log_likelihood(raw_probabilities + lb)
+        simulated = vmap(simulate_masked_free_recall, in_axes=(None, None, 0, None))(
+            model, self.list_length, self.trial_masks[trial_indices], self.shared_simulation_keys
+        ).reshape(-1, self.list_length)
+        simulated_spc = fixed_pres_spc(simulated, self.list_length)
+        return jnp.mean(jnp.square(simulated_spc - target_spc))
 
-    def present_and_predict_trials_loss(
+    def present_and_predict_spc_mse(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the present-and-predict approach.
+        """Returns SPC mean-squared error for the specified trials.
 
         Args:
           trial_indices: Trials to evaluate.
           parameters: Model parameters.
         """
+        counts = self.trial_position_counts[trial_indices].sum(axis=0)
+        target_spc = counts / trial_indices.size
         models = vmap(self.init_model_for_retrieval, in_axes=(0, None))(
             trial_indices, parameters
         )
-        raw_probabilities = vmap(self.estimate_bag_probability, in_axes=(0, 0, 0))(
-            models, trial_indices, self.simulation_keys[trial_indices]
-        )
-        return log_likelihood(raw_probabilities + lb)
+        simulated = vmap(simulate_masked_free_recall, in_axes=(0, None, 0, 0))(
+            models, self.list_length, self.trial_masks[trial_indices], self.simulation_keys[trial_indices]
+        ).reshape(-1, self.list_length)
+        simulated_spc = fixed_pres_spc(simulated, self.list_length)
+        return jnp.mean(jnp.square(simulated_spc - target_spc))
 
     def __call__(
         self,
@@ -169,37 +149,33 @@ class MemorySearchLikelihoodFnGenerator:
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
         """Returns a loss function specialized to trials and free parameters.
 
-        The returned function accepts either one parameter vector or a matrix of
-        parameter vectors and returns corresponding negative log-likelihood values.
-
         Args:
           trial_indices: Trials to evaluate.
           base_params: Fixed parameters.
           free_param_names: Names and order of free parameters.
         """
-        # Decide which approach to use, based on whether all present-lists match
+
         if (
             all_rows_identical(self.present_lists[trial_indices])
             and not self.has_features
         ):
-            base_loss_fn = self.base_predict_trials_loss
+            base_loss_fn = self.base_spc_mse
         else:
-            base_loss_fn = self.present_and_predict_trials_loss
+            base_loss_fn = self.present_and_predict_spc_mse
 
         def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns negative log-likelihood for merged base and free params."""
+            """Returns loss for the merged base and free parameters."""
             return base_loss_fn(trial_indices, {**base_params, **params})
 
         @jit
         def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-            """Returns loss for one parameter vector."""
+            """Returns loss for a single parameter vector."""
             param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
             return specialized_loss_fn(param_dict)
 
         @jit
         def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
             """Returns one loss per parameter vector."""
-
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
                 param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
                 return specialized_loss_fn(param_dict)
