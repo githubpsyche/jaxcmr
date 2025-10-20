@@ -89,6 +89,19 @@ def _maybe_free_recall(
     )
 
 
+def _maybe_free_recall_count(
+    model: MemorySearch, rng: PRNGKeyArray, recall_count: Int_
+) -> tuple[MemorySearch, Integer[Array, ""]]:
+    """Returns model and choice for a single step if under recall count; otherwise no-op."""
+    return lax.cond(
+        model.recall_total < recall_count,
+        _single_free_recall,
+        lambda m, _: (m, 0),
+        model,
+        rng,
+    )
+
+
 def simulate_free_recall(
     model: MemorySearch, list_length: int, rng: PRNGKeyArray
 ) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
@@ -100,6 +113,28 @@ def simulate_free_recall(
       rng: Random key.
     """
     return lax.scan(_maybe_free_recall, model, random.split(rng, list_length))
+
+
+def simulate_free_recall_count(
+    model: MemorySearch,
+    recall_count: Int_,
+    list_length: int,
+    rng: PRNGKeyArray,
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Returns model and recall vector truncated to ``recall_count`` events.
+
+    Args:
+      model: Retrieval-ready memory search model.
+      recall_count: Maximum number of retrieval events to simulate.
+      list_length: Total recall slots (output remains this length).
+      rng: Random key.
+    """
+
+    return lax.scan(
+        lambda m, rng: _maybe_free_recall_count(m, rng, recall_count),
+        model,
+        random.split(rng, list_length),
+    )
 
 
 def simulate_study_and_free_recall(
