@@ -94,8 +94,8 @@ class CMR(Pytree):
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, item, mcf_lr),
-            emotionality=self.emotional_mcf.at[item_index].multiply(mcf_lr),
+            mcf=self.mcf.associate(learning_state, item, self.primacy[self.study_index]),
+            emotional_mcf=self.emotional_mcf.at[item_index].multiply(mcf_lr),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -147,23 +147,26 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def activations(self):
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        emotion_support = lax.cond(
-            self.recall_total == 0,
-            lambda: jnp.zeros(self.item_count),
-            lambda: lax.cond(
-                self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] == 0,
-                lambda: jnp.zeros(self.item_count),
-                lambda: self.emotional_mcf,
-            ),
-        )
+    # def activations(self):
+    #     _activations = self.mcf.probe(self.context.state) * self.recallable
+        
+    #     last_emotional = lax.cond(
+    #         self.recall_total > 0,
+    #         lambda: self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] > 0,
+    #         lambda: False,
+    #     )
+    #     emotion_support = last_emotional * self.emotional_mcf
 
-        merged_support = power_scale(
-            _activations + emotion_support,
-            self.mcf_sensitivity,
-        )
-        return (merged_support + lb) * self.recallable
+    #     merged_support = power_scale(
+    #         _activations + emotion_support,
+    #         self.mcf_sensitivity,
+    #     )
+    #     return (merged_support + lb) * self.recallable
+
+    def activations(self) -> Float[Array, " item_count"]:
+        """Returns relative support for retrieval of each item given model state"""
+        _activations = self.mcf.probe(self.context.state) * self.recallable
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -235,12 +238,12 @@ def make_factory(
             def model_create_fn(
                 list_length: int,
                 parameters: Mapping[str, Float_],
-                emotionality: Integer[Array, " study_events"],
+                is_emotional: Integer[Array, " study_events"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
                     parameters,
-                    emotionality,
+                    is_emotional,
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
