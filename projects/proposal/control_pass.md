@@ -1,16 +1,10 @@
-Below is a tight, NIH‑style **Specific Aims** page aligned to your three‑aim structure. It’s written to fit on one page when formatted in standard NIH margins/fonts.
-
----
-
 **Project Title:** Retrieval Intentionality in Episodic Memory: Control, Task Policy, and Neurocognitive Constraints in Retrieved‑Context Models
 
-**Overall Objective.** Build and test a mechanistic account of the distinction between **voluntary** and **involuntary** recall within an emotion/reward‑sensitive retrieved‑context framework. We will adjudicate competing computational accounts, formalize “strategic” recall as a task‑dependent policy that adapts with practice, and link EEG signals to model parameters governing control and stopping.
-
-**Central Hypothesis.** Recall events arise from a shared cue‑driven generator; the voluntary/involuntary distinction primarily reflects **control (gating/monitoring)** and **stopping policies** that are conditioned on goals and experience. An item‑independent temporal context component and state‑dependent failures of control together explain “spontaneous” intrusions. EEG indices track these control and policy states.
+**Overall Objective.** Build and test a mechanistic account of the distinction between voluntary and involuntary recall within an emotion/reward‑sensitive retrieved‑context framework. We will adjudicate competing computational accounts, formalize “strategic” recall as a task‑dependent policy that adapts with practice, and link EEG signals to model parameters governing control and stopping.
 
 **Significance.** The field lacks a decisive, mechanistic account of retrieval intentionality. Clarifying whether involuntary recall requires a distinct route (vs. failures of control/policy) bears directly on models of intrusive memory and on how reward/emotion reshape memory performance. This project provides falsifiable tests, unifies explanations across free, reward‑weighted, and suppression instructions, and grounds interpretation in neurocognitive signals.
 
-**Innovation.** (i) Formal, head‑to‑head comparison of **three** mechanistic families for intentionality; (ii) a **normative policy** layer (ordering and stopping) that predicts strategic recall and practice effects across tasks; (iii) a **neurocognitive** model in which EEG dynamically modulates control/stop parameters **within** the same retrieved‑context pipeline—rather than as a separate decoder.
+**Innovation.** (i) Formal, head‑to‑head comparison of three mechanistic families for intentionality; (ii) a normative policy layer (ordering and stopping) that predicts strategic recall and practice effects across tasks; (iii) a neurocognitive model in which EEG dynamically modulates control/stop parameters within the same retrieved‑context pipeline, rather than as a separate memory system.
 
 ---
 

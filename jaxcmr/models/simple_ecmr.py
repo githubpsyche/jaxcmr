@@ -59,9 +59,9 @@ class CMR(Pytree):
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
 
-        self.arousal = (
-            jnp.ones(list_length) + is_emotional * parameters["emotion_attention"]
-        )
+        # self.arousal = (
+        #     jnp.ones(list_length) + is_emotional * parameters["emotion_attention"]
+        # )
         self.primacy = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
@@ -90,7 +90,7 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        mcf_lr = self.primacy[self.study_index] * self.arousal[item_index]
+        mcf_lr = self.primacy[self.study_index]# * self.arousal[item_index]
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
@@ -147,26 +147,26 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    # def activations(self):
-    #     _activations = self.mcf.probe(self.context.state) * self.recallable
-        
-    #     last_emotional = lax.cond(
-    #         self.recall_total > 0,
-    #         lambda: self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] > 0,
-    #         lambda: False,
-    #     )
-    #     emotion_support = last_emotional * self.emotional_mcf
-
-    #     merged_support = power_scale(
-    #         _activations + emotion_support,
-    #         self.mcf_sensitivity,
-    #     )
-    #     return (merged_support + lb) * self.recallable
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
+    def activations(self):
         _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+        
+        last_emotional = lax.cond(
+            self.recall_total > 0,
+            lambda: self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] > 0,
+            lambda: False,
+        )
+        emotion_support = last_emotional * self.emotional_mcf
+
+        merged_support = power_scale(
+            _activations + emotion_support,
+            self.mcf_sensitivity,
+        )
+        return (merged_support + lb) * self.recallable
+
+    # def activations(self) -> Float[Array, " item_count"]:
+    #     """Returns relative support for retrieval of each item given model state"""
+    #     _activations = self.mcf.probe(self.context.state) * self.recallable
+    #     return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""

@@ -85,6 +85,3 @@ My thesis advances the claim and a set of results/methods evincing that states o
 For a one-year project where I won't collect new data, these constraints can be addressed with a multi-paper modeling effort where my specific aims are...?
 
 Well, it's clear that the optimal policy stuff is only relevant to the extent that we want to 1) address how strategic recall might look differently across task specifications, and 2) specify a meta-cognitive control mechanism that regulates encoding and/or retrieval to address our findings. It looks like even CMR2. 
-
-
-

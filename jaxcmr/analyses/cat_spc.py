@@ -94,7 +94,7 @@ def plot_cat_spc(
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
 
-        for category_value in category_values:
+        for label_index, category_value in enumerate(category_values):
 
             subject_values = jnp.vstack(
                 apply_by_subject(
@@ -112,7 +112,7 @@ def plot_cat_spc(
                 axis,
                 jnp.arange(max_list_length, dtype=int) + 1,
                 subject_values,
-                labels[data_index],
+                labels[label_index],
                 color,
             )
 
