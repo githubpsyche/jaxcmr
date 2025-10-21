@@ -12,7 +12,6 @@ from simple_pytree import Pytree
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.components.factory import build_trial_connections
 from jaxcmr.math import (
     exponential_primacy_decay,
     lb,
@@ -23,6 +22,7 @@ from jaxcmr.typing import (
     ContextCreateFn,
     Float,
     Float_,
+    Bool,
     Int_,
     Integer,
     MemoryCreateFn,
@@ -40,7 +40,7 @@ class CMR(Pytree):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-        connections: Float[Array, " study_events study_events"],
+        is_emotional: Bool[Array, " study_events"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -53,29 +53,28 @@ class CMR(Pytree):
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.semantic_scale = parameters["semantic_scale"]
+        self.emotion_scale = parameters["emotion_scale"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
-        self._mcf_learning_rate = exponential_primacy_decay(
+
+        self.arousal = (
+            jnp.ones(list_length) + is_emotional * parameters["emotion_attention"]
+        )
+        self.primacy = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.msem = connections * self.semantic_scale
+        self.emotional_mcf = is_emotional * self.emotion_scale
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
-
-    @property
-    def mcf_learning_rate(self) -> Float[Array, ""]:
-        """The learning rate for the MCF memory under its current state."""
-        return self._mcf_learning_rate[self.study_index]
 
     def experience_item(self, item_index: Int_) -> "CMR":
         """Return the model after experiencing item with the specified index.
@@ -91,10 +90,12 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+        mcf_lr = self.primacy[self.study_index] * self.arousal[item_index]
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, item, self.mcf_learning_rate),
+            mcf=self.mcf.associate(learning_state, item, mcf_lr),
+            emotionality=self.emotional_mcf.at[item_index].multiply(mcf_lr),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -146,16 +147,20 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
+    def activations(self):
         _activations = self.mcf.probe(self.context.state) * self.recallable
-        semantic_support = lax.cond(
+        emotion_support = lax.cond(
             self.recall_total == 0,
             lambda: jnp.zeros(self.item_count),
-            lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
+            lambda: lax.cond(
+                self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] == 0,
+                lambda: jnp.zeros(self.item_count),
+                lambda: self.emotional_mcf,
+            ),
         )
+
         merged_support = power_scale(
-            _activations + semantic_support,
+            _activations + emotion_support,
             self.mcf_sensitivity,
         )
         return (merged_support + lb) * self.recallable
@@ -223,19 +228,19 @@ def make_factory(
         ):
             self.present_lists = np.array(dataset["pres_itemids"])
             self.max_list_length = np.max(dataset["listLength"]).item()
-            self.trial_connections = build_trial_connections(
-                self.present_lists, features
-            )
+
+            # 0 for neutral study events, 1 for emotional study events
+            self.trial_emotions = (2 - dataset["condition"]).astype(bool)
 
             def model_create_fn(
                 list_length: int,
                 parameters: Mapping[str, Float_],
-                connections: Float[Array, "study_events study_events"],
+                emotionality: Integer[Array, " study_events"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
                     parameters,
-                    connections,
+                    emotionality,
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
@@ -246,7 +251,7 @@ def make_factory(
 
         def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
             return self.model_create_fn(
-                self.max_list_length, parameters, self.trial_connections[0]
+                self.max_list_length, parameters, self.trial_emotions[0]
             )
 
         def create_trial_model(
@@ -255,7 +260,7 @@ def make_factory(
             parameters: Mapping[str, Float_],
         ) -> MemorySearch:
             return self.model_create_fn(
-                self.max_list_length, parameters, self.trial_connections[trial_index]
+                self.max_list_length, parameters, self.trial_emotions[trial_index]
             )
 
     return CMRModelFactory
