@@ -67,7 +67,7 @@ class MemorySearchSpcMseFnGenerator:
         self.list_length = self.present_lists.shape[1]
         self.has_features = False if features is None else jnp.any(features).item()
         dataset_recalls = jnp.array(dataset["recalls"], dtype=jnp.int32)
-        self.simulation_count = 10
+        self.simulation_count = 20
 
         trial_count = int(dataset_recalls.shape[0])
         base_key = random.PRNGKey(0)
