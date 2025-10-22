@@ -13,10 +13,10 @@ from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["cat_spc", "plot_cat_spc"]
+__all__ = ["category_recall_counts", "cat_spc", "plot_cat_spc"]
 
 
-def _category_recall_counts(
+def category_recall_counts(
     recalls: Integer[Array, " recall_events"],
     categories: Integer[Array, " study_positions"],
     category_value: int,
@@ -26,6 +26,29 @@ def _category_recall_counts(
     position_counts = jnp.bincount(recalls, length=list_length + 1)[1:]
     return position_counts * (categories == category_value)
 
+def fixed_pres_cat_spc(
+    recalls: Integer[Array, " trial_count recall_positions"],
+    categories: Integer[Array, " trial_count study_positions"],
+    category_value: int,
+    list_length: int,
+) -> Float[Array, " study_positions"]:
+    """Returns category-filtered recall rate as a function of study position.
+
+    Args:
+        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
+        categories: Trial by study position array of item categories.
+        category_value: Category value to compute the SPC over.
+        list_length: Length of the study list.
+    """
+
+    recall_counts = vmap(
+        category_recall_counts,
+        in_axes=(0, 0, None, None),
+    )(recalls, categories, category_value, list_length)
+
+    numerator = recall_counts.sum(axis=0)
+    denominator = jnp.sum(categories == category_value, axis=0)
+    return jnp.where(denominator > 0, numerator / denominator, 0.0)
 
 def cat_spc(
     dataset: RecallDataset,
@@ -43,16 +66,7 @@ def cat_spc(
     categories = dataset[category_field]
     list_length = categories.shape[1]
 
-    recall_counts = vmap(_category_recall_counts, in_axes=(0, 0, None, None))(
-        recalls,
-        categories,
-        category_value,
-        list_length,
-    )
-
-    numerator = recall_counts.sum(axis=0)
-    denominator = jnp.sum(categories == category_value, axis=0)
-    return jnp.where(denominator > 0, numerator / denominator, 0.0)
+    return fixed_pres_cat_spc(recalls, categories, category_value, list_length)
 
 
 def plot_cat_spc(
