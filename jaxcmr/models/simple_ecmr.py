@@ -59,16 +59,13 @@ class CMR(Pytree):
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
 
-        # self.arousal = (
-        #     jnp.ones(list_length) + is_emotional * parameters["emotion_attention"]
-        # )
         self.primacy = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.emotional_mcf = is_emotional * self.emotion_scale
+        self.emotional_mcf = jnp.array(is_emotional, dtype=jnp.float32)
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -90,12 +87,12 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        mcf_lr = self.primacy[self.study_index]# * self.arousal[item_index]
+        emcf_lr = self.emotion_scale * self.primacy[self.study_index]
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
             mcf=self.mcf.associate(learning_state, item, self.primacy[self.study_index]),
-            emotional_mcf=self.emotional_mcf.at[item_index].multiply(mcf_lr),
+            emotional_mcf=self.emotional_mcf.at[item_index].multiply(emcf_lr),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -148,6 +145,7 @@ class CMR(Pytree):
         )
 
     def activations(self):
+        """Returns relative support for retrieval of each item given model state"""
         _activations = self.mcf.probe(self.context.state) * self.recallable
         
         last_emotional = lax.cond(

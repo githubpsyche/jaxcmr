@@ -71,9 +71,9 @@ class MemorySearchCatSpcMseFnGenerator:
         self.has_features = False if features is None else jnp.any(features).item()
         dataset_recalls = jnp.array(dataset["recalls"], dtype=jnp.int32)
 
-        self.simulation_count = 20
+        self.simulation_count = 10
         self.category_values = [1, 2]
-        self.categories = jnp.array(dataset["Condition"], dtype=jnp.int32)
+        self.categories = jnp.array(dataset["condition"], dtype=jnp.int32)
 
         trial_count = int(dataset_recalls.shape[0])
         base_key = random.PRNGKey(0)
@@ -173,7 +173,7 @@ class MemorySearchCatSpcMseFnGenerator:
         )
         categories = self.categories[trial_indices]
         simulated_cat_spc = self._simulated_cat_spc(simulated, categories)
-        return jnp.mean(
+        return jnp.nanmean(
             jnp.square(simulated_cat_spc.reshape(-1) - target_cat_spc.reshape(-1))
         )
 
