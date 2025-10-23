@@ -45,6 +45,7 @@ class CMR(Pytree):
         termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
+        self.delay_drift_rate = parameters["delay_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
         self.primacy_scale = parameters["primacy_scale"]
@@ -110,8 +111,12 @@ class CMR(Pytree):
 
     def start_retrieving(self) -> "CMR":
         """Returns model after transitioning from study to retrieval mode."""
+
+        delay_input = jnp.ones_like(self.context.initial_state)
         start_input = self.context.initial_state
-        start_context = self.context.integrate(start_input, self.start_drift_rate)
+        start_context = self.context.integrate(
+            delay_input, self.delay_drift_rate
+        ).integrate(start_input, self.start_drift_rate)
         return self.replace(context=start_context)
 
     def retrieve_item(self, item_index: Int_) -> "CMR":
