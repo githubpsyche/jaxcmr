@@ -56,6 +56,7 @@ class CMR(Pytree):
         self.emotion_scale = parameters["emotion_scale"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
+        self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
 
@@ -87,7 +88,11 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        emcf_lr = self.emotion_scale * self.primacy[self.study_index]
+        emcf_lr = lax.cond(
+            self.modulate_emotion_by_primacy,
+            lambda: self.emotion_scale * self.primacy[self.study_index],
+            lambda: self.emotion_scale,
+        )
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),

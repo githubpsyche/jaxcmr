@@ -67,7 +67,7 @@ def plot_cat_splpp(
         category_values: Category values to compute the LPP over.
         lpp_field: Key in ``dataset`` providing LPP values per study position.
         color_cycle: Colors for plotting each dataset.
-        labels: Legend labels for each dataset.
+        labels: Labels per dataset or category. Assumed per-category if multiple values provided.
         contrast_name: Legend title for contrasts.
         axis: Existing Matplotlib ``Axes`` to plot on.
     """
@@ -77,7 +77,8 @@ def plot_cat_splpp(
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
     if labels is None:
-        labels = [""] * len(datasets)
+        size = len(category_values) if len(category_values) > 1 else len(datasets)
+        labels = [""] * size
 
     if isinstance(datasets, dict):
         datasets = [datasets]
@@ -111,7 +112,7 @@ def plot_cat_splpp(
                 axis,
                 jnp.arange(max_list_length, dtype=int) + 1,
                 subject_values,
-                labels[label_index],
+                labels[label_index] if len(category_values) > 1 else labels[data_index],
                 color,
             )
 
