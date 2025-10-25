@@ -166,11 +166,6 @@ class CMR(Pytree):
         )
         return (merged_support + lb) * self.recallable
 
-    # def activations(self) -> Float[Array, " item_count"]:
-    #     """Returns relative support for retrieval of each item given model state"""
-    #     _activations = self.mcf.probe(self.context.state) * self.recallable
-    #     return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
-
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
         return self.termination_policy.stop_probability(self)
