@@ -49,7 +49,7 @@ def fixed_pres_cat_spc(
 
     numerator = recall_counts.sum(axis=0)
     denominator = jnp.sum(categories == category_value, axis=0)
-    return jnp.where(denominator > 0, numerator / denominator, 0.0)
+    return numerator/denominator
 
 
 def cat_spc(
