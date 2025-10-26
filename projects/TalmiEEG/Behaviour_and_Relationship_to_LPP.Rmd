@@ -1,0 +1,622 @@
+---
+title: "Behaviour Analysis and Relation Between EEG and Behaviour"
+author: "Robin Hellerstedt"
+date: "29/11/2021"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    number-sections: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include = FALSE}
+library(readr)
+library(ez)
+library(tidyverse)
+library(yarrr) # https://bookdown.org/ndphillips/YaRrr/pirateplot.html, https://www.rdocumentation.org/packages/yarrr/versions/0.1.5/topics/pirateplot
+library(ggplot2) # https://ggplot2.tidyverse.org
+library(ggbeeswarm) # https://cran.r-project.org/web/packages/ggbeeswarm/vignettes/usageExamples.pdf
+library(Rmisc) # https://www.rdocumentation.org/packages/Rmisc/versions/1.5
+library(yarrr)
+library(RColorBrewer)
+library(lsr)
+library(afex)
+library(emmeans)
+library(magrittr)
+library(lme4)
+library(optimx)
+library(BayesFactor)
+library(effects)
+source("R_rainclouds.R") # https://wellcomeopenresearch.org/articles/4-63. Requires R_rainclouds.r in your project folder.
+
+```
+
+## Introduction
+
+This document contains behavioural analyses for the secondary data analysis project. Thirty eight subjects from the mixed lists group are included in the analyses. The data was extracted from the preprocessed EEG files to make sure that the same data was included in the behavioural analysis as in the EEG analysis to increase the chance to find a relationship between the measures and to enable analysis with linear mixed models.
+
+```{r load_data, include = FALSE}
+Data <- read_csv("Extracted_Behavioural_and_LPP_Data/Single_Trial_Behavioural_and_EEG_Data_Z.csv", col_names = FALSE)
+
+# Add header to data files
+Headers <- c("Participant", "List", "ThreeConds", "Condition", "TrialNumber", "PresentationOrder", "ImgName", "Memory", "EarlyLPP", "LateLPP")
+colnames(Data)<- Headers
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Behavioural Performance  across the whole experiment two conditions (Negative and Neutral)
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Calculate the number of remembered and forgotten trials in each condition
+NumberOfResponsesAllTrials <- Data %>%
+  dplyr::group_by(Participant,Condition,Memory) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(Memory, count) %>%
+  dplyr::ungroup()
+
+MemoryColnames <- c( "participant", "condition", "forgotten", "remembered") # Rename column names so that they are words rather than numbers to facilitate indexing
+colnames(NumberOfResponsesAllTrials) <- MemoryColnames
+
+# Calculate proportion remembered and proportion forgotten trials
+ProportionCorrAllTrials <- NumberOfResponsesAllTrials %>% 
+  dplyr::mutate(ForgottenProp = round(forgotten/(remembered + forgotten), digits = 2),
+                RememberedProp = round(remembered/(remembered + forgotten), digits = 2))
+
+```
+
+## Behaviour Analysis, Two Conditions
+
+### Descriptive stats
+
+Means and standard deviations are shown for the two conditions.
+
+```{r descriptives two conditions, echo=FALSE}
+# Calculate means and sd for conditions
+ProportionRememberedSummary <- ProportionCorrAllTrials %>%
+  dplyr::group_by(condition) %>% 
+  dplyr::summarise(PropRememberedMean = mean(RememberedProp), ProportionRememberedSD = sd(RememberedProp))
+
+ProportionRememberedSummary
+
+```
+
+### Violin plots. 
+The black cirlce shows the mean and the error bars shows the 95% confidence interval.  
+
+```{r violin plot of decriptives two conditions, echo=FALSE}
+
+# Create a violin plot for visualisation
+ProportionCorrAllTrials %>%
+  ggplot(aes(x = condition, y = RememberedProp, fill = condition)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_manual(values = c("#FF0000","#000000")) +
+  scale_y_continuous(name = "Proportion Remembered",
+                     limits = c(-0.1,1.0),
+                     breaks = c(0, 0.25, 0.5, 0.75, 1)) +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Condition", y="Proportion Remembered")+
+  theme_classic()
+
+```
+### T-Test
+
+```{r stats two conditions, echo=FALSE}
+ProportionCorrAllTrialsTTest <- stats::t.test(RememberedProp ~ condition, data = ProportionCorrAllTrials, paired = TRUE)
+ProportionCorrAllTrialsTTest
+```
+
+## Behaviour Analysis, Three Conditions
+
+### Descriptive stats
+
+```{r descriptives three conditions, echo=FALSE}
+# Calculate the number of remembered and forgotten trials in each condition
+NumberOfResponsesAllTrialsThreeConds <- Data %>%
+  dplyr::group_by(Participant,ThreeConds,Memory) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(Memory, count) %>%
+  dplyr::ungroup()
+
+MemoryColnames <- c( "participant", "condition", "forgotten", "remembered") # Rename column names so that they are words rather than numbers to facilitate indexing
+colnames(NumberOfResponsesAllTrialsThreeConds) <- MemoryColnames
+
+# Calculate proportion remembered and proportion forgotten trials
+ProportionCorrAllTrialsThreeConds <- NumberOfResponsesAllTrialsThreeConds %>% 
+  dplyr::mutate(ForgottenProp = round(forgotten/(remembered + forgotten), digits = 2),
+                RememberedProp = round(remembered/(remembered + forgotten), digits = 2))
+
+# Calculate means and sd for conditions
+ProportionRememberedSummaryThreeConds <- ProportionCorrAllTrialsThreeConds %>%
+  dplyr::group_by(condition) %>% 
+  dplyr::summarise(PropRememberedMean = mean(RememberedProp), ProportionRememberedSD = sd(RememberedProp))
+
+ProportionRememberedSummaryThreeConds
+
+```
+
+### Violin plots. 
+The black cirlce shows the mean and the error bars shows the 95% confidence interval.  
+
+```{r violin plot of decriptives three conditions, echo=FALSE}
+
+# Create a violin plot for visualisation
+ProportionCorrAllTrialsThreeConds %>%
+  mutate(condition = fct_relevel(condition, "Negative", "Category", "Neutral")) %>% 
+  ggplot(aes(x = condition, y = RememberedProp, fill = condition)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_brewer(palette="Set1") +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Condition", y="Proportion Remembered")+
+  theme_classic()
+
+```
+
+### One-Way Repeated Measures ANOVA
+
+```{r stats three conditions, echo=FALSE}
+# Conduct a one-way repeated measures ANOVA
+ProportionRememberedThreeConds_aov = afex::aov_4(RememberedProp ~ condition + (condition|participant) , data = ProportionCorrAllTrialsThreeConds)
+anova(object = ProportionRememberedThreeConds_aov, es = "pes")
+
+ProportionRememberedThreeCondsMainEffect <- emmeans(ProportionRememberedThreeConds_aov, ~ condition) # Calculate emmeans
+pairs(ProportionRememberedThreeCondsMainEffect, adjust = "fdr") # Note that correction makes no difference in 2x2 design as theres is only one test "per family", but this is how to control for unplanned follow up tests in more complex designs
+
+# Pattern of results. Negative > Category > Neutral
+```
+
+## Between Subject Correlation
+The Bayesian Pearson correlations were conducted in JASP. Surprisingly, the Bayesian Pearson correlation showed moderate evidence for no correlation for both the early time window (r = –.018, BF01 = 4.925) and the late time window (r = –.028, BF01 = 4.885).
+
+```{r between subjects correlation, echo=FALSE}
+# First calculate average performance per memory condition for all subjects
+ProportionRememberedSummaryMemory <- ProportionCorrAllTrials %>%
+  dplyr::group_by(participant,condition) %>% 
+  dplyr::summarise(PropRememberedMean = mean(RememberedProp))
+
+# Calculate average amplitude per early LPP condition for all subjects
+ProportionRememberedSummaryEarlyLPP <- Data %>%
+  dplyr::group_by(Participant,Condition) %>% 
+  dplyr::summarise(EarlyLPPMean = mean(EarlyLPP))
+
+# Calculate average amplitude per late LPP condition for all subjects
+ProportionRememberedSummaryLateLPP <- Data %>%
+  dplyr::group_by(Participant,Condition) %>% 
+  dplyr::summarise(LateLPPMean = mean(LateLPP))
+
+# Pivot wider for JASP, compute the difference score and change column names
+ProportionCorrAllTrialsWide <- ProportionRememberedSummaryMemory %>% 
+  tidyr::pivot_wider(names_from = c(condition), values_from = PropRememberedMean) %>% 
+  dplyr::mutate(EmotionEnhancedMemory = Negative - Neutral) %>% 
+  magrittr::set_colnames(c( "Participant", "MemNegative", "MemNeutral", "EmotionEnhancedMemory"))
+
+EarlyLPPWide <- ProportionRememberedSummaryEarlyLPP %>% 
+  tidyr::pivot_wider(names_from = c(Condition), values_from = EarlyLPPMean) %>% 
+  dplyr::mutate(EarlyLPPDiff = Negative - Neutral) %>% 
+  magrittr::set_colnames(c( "Participant", "EarlyLPPNegative", "EarlyLPPNeutral", "EarlyLPPDiff"))
+  
+LateLPPWide <- ProportionRememberedSummaryLateLPP %>% 
+  tidyr::pivot_wider(names_from = c(Condition), values_from = LateLPPMean) %>% 
+  dplyr::mutate(LateLPPDiff = Negative - Neutral) %>% 
+  magrittr::set_colnames(c( "Participant", "LateLPPNegative", "LateLPPNeutral", "LateLPPDiff"))
+
+JASPdata <- dplyr::bind_cols(ProportionCorrAllTrialsWide, EarlyLPPWide, LateLPPWide) # COmbine the data frames horizontally
+JASPdata <- dplyr::select(JASPdata, -c(Participant...5, Participant...9)) # Remove the extra participant columns
+
+cor(JASPdata$EarlyLPPNegative,JASPdata$MemNegative)
+cor.test(JASPdata$EarlyLPPNegative,JASPdata$MemNegative)
+cor(JASPdata$EarlyLPPNeutral,JASPdata$MemNeutral)
+cor.test(JASPdata$EarlyLPPNeutral,JASPdata$MemNeutral)
+
+ #write.csv(JASPdata, 'JASPdata_Z.csv') # save as .csv file.
+```
+
+### Early LPP scatter plot
+
+```{r early lpp scatter plot, echo=FALSE}
+JASPdata %>%
+  ggplot(aes(x=EmotionEnhancedMemory,y=EarlyLPPDiff)) +
+  geom_point(alpha=0.5, colour = "#00008B") +
+  labs(x= "Emotion Enhanced Memory, Negative - Neutral", y="Early LPP Z, Negative - Neutral")+
+  geom_smooth(method=lm , color="#00008B", fill="#00008B", alpha = 0.2, se=TRUE) +
+  theme_minimal()
+```
+### Early LPP scatter plot within negative condition
+
+```{r early lpp negative scatter plot, echo=FALSE}
+JASPdata %>%
+  ggplot(aes(x=MemNegative,y=EarlyLPPNegative)) +
+  geom_point(alpha=0.5, colour = "#00008B") +
+  labs(x= "Memory, Negative Condition", y="Early LPP Z, Negative Condition")+
+  geom_smooth(method=lm , color="#00008B", fill="#00008B", alpha = 0.2, se=TRUE) +
+  theme_minimal()
+```
+
+
+### Late LPP scatter plot
+
+```{r late lpp scatter plot, echo=FALSE}
+# Create a scatter plot with a fitted regression line with ribbon (standard deviation)
+JASPdata %>%
+  ggplot(aes(x=EmotionEnhancedMemory,y=LateLPPDiff)) +
+  geom_point(alpha=0.5, colour = "#006400") +
+  labs(x= "Emotion Enhanced Memory, Negative - Neutral", y="Late LPP Z, Negative - Neutral")+
+  geom_smooth(method=lm , color="#006400", fill="#006400",alpha = 0.2, se=TRUE) +
+  theme_minimal()
+```
+
+### Late LPP scatter plot, within negative condition
+
+```{r late lpp negative scatter plot, echo=FALSE}
+# Create a scatter plot with a fitted regression line with ribbon (standard deviation)
+JASPdata %>%
+  ggplot(aes(x=MemNegative,y=LateLPPNegative)) +
+  geom_point(alpha=0.5, colour = "#006400") +
+  labs(x= "Memory, Negative condition", y="Late LPP Z, Negative Condition")+
+  geom_smooth(method=lm , color="#006400", fill="#006400",alpha = 0.2, se=TRUE) +
+  theme_minimal()
+```
+
+
+## Predicting memory based on LPP amplitude, Generalized Linear Mixed Effect Model
+
+We analysed the relationship between LPP amplitude (z transformed) and memory using a GLMM with subsequent memory as the dependent variable (0 = forgotten, 1 = remembered),  z-transformed LPP amplitude as a continous fixed effect, condition (Negative vs Neutral) as a categorical fixed effect and participant ID as a random effect with random intercept and random slope.
+
+### Early LPP time window (400-1000ms)
+
+```{r predicting memory based on LPP GLMM early Model, echo=FALSE}
+# Model with Memory as dependent variable, Condidion/Emotion and EarlyLPP as fixed effects and Participant as random intercept and random slope effect.
+
+Data$Condition <- as.factor(Data$Condition)
+contrasts(Data$Condition) <- contr.sum(levels(Data$Condition))
+
+EarlyLPP_Memory_Model <- lme4::glmer(Memory ~ 1 + Condition * EarlyLPP + (1 + Condition * EarlyLPP|Participant), data = Data, family = binomial) # Fit model
+summary(EarlyLPP_Memory_Model)
+car::Anova(EarlyLPP_Memory_Model, type=3)
+
+```
+
+
+```{r predicting memory based on LPP GLMM early LRT, echo=FALSE}
+afex::mixed(Memory ~ 1 + Condition * EarlyLPP + (1 + Condition * EarlyLPP|Participant), data = Data, family = binomial, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+As predicted and in line with the subsequent memory focal ERP analysis, Likelihood Ratio Test (LRT) showed that the predicted Condition x EarlyLPP interaction was significant. I also ran the model with intercept only random effect of Participant ID given that this was the only effect that converged in the later time window. The intercation and both main effects were significant in this model as well.
+
+```{r plot GLMM interaction, echo=FALSE}
+
+CondEarlyLPPInt <- data.frame(effect("Condition*EarlyLPP", EarlyLPP_Memory_Model))
+
+CondEarlyLPPIntPlot <-ggplot(CondEarlyLPPInt,aes(EarlyLPP, fit, fill = Condition,
+                                 color = Condition, ymin = lower, ymax = upper))+
+  geom_line(position = position_dodge(width = .1), size = 1.5) + 
+  geom_ribbon(aes(ymin=lower, ymax=upper), linetype=1, alpha=0.1)+
+  xlab("Entropy") +
+  scale_y_continuous(name = "Memory") +
+  scale_x_continuous(name = "Early LPP") +
+  ggtitle("Condition x Early LPP")+
+  scale_color_manual(values = c("Negative" = "#FF0000","Neutral" = "#000000"))+
+  scale_fill_manual(values = c("Negative" = "#FF0000","Neutral" = "#000000"))+
+  theme_classic()+theme(plot.title = element_text(hjust = 0.5), text = element_text(size=14))
+
+CondEarlyLPPIntPlot
+
+ggsave(file="Condition_x_EarlyLPP.svg", plot=CondEarlyLPPIntPlot, width=6, height=4)
+
+
+
+```
+
+
+
+```{r figure early lpp, echo=FALSE}
+
+# Create new columns for the two factors Emotion and Subsequent memory
+Data <- Data %>%
+    dplyr::mutate(SubMemCond = "NA",
+         SubMemCond = ifelse(Data$Condition == "Negative" & Data$Memory == 1, "NegativeRemembered", SubMemCond),
+         SubMemCond = ifelse(Data$Condition == "Negative" & Data$Memory == 0, "NegativeForgotten", SubMemCond),
+         SubMemCond = ifelse(Data$Condition == "Neutral" & Data$Memory == 1, "NeutralRemembered", SubMemCond),
+         SubMemCond = ifelse(Data$Condition == "Neutral" & Data$Memory == 0, "NeutralForgotten", SubMemCond))
+
+EarlyLPPSummary <- Data %>% 
+  dplyr::group_by(Participant, SubMemCond) %>%
+  dplyr::summarise(EarlyLPPMean = mean(EarlyLPP), LateLPPMean = mean(LateLPP))
+  
+
+# Create a violin plot for visualisation
+EarlyLPPSummary %>%
+  ggplot(aes(x = SubMemCond, y = EarlyLPPMean, fill = SubMemCond)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_manual(values = c("#FF7F7F","#FF0000", "#808080", "#000000")) +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Condition", y="Early LPP Amplitude Z")+
+  theme_classic()
+
+```
+I have also extracted the beta values (slopes) for each participant for the Emotion x LPP interaction. They are plotted below. In addition to the plot I also tested if these slopes were different from 0 with a one sample t-test and as expected given the results of the GLMM, the slopes are significantly different from 0. Finally, I tested if the slopes for the neutralcondition x LPPamplitude interaction correlates with the emotion enhanced memory effect. The correlation is -.67, p < .001. Note that this correlation is circular given that memory performance is used to estimate the slopes. This does however show that it might be worth trying to estimate slopes based on half of the data and use this value as phiEmo in the eCMR to predict behaviour in the other half of the data.
+
+
+```{r Create a figure with each participants beta for the interaction, echo=FALSE}
+
+# Extract the betas from the model and save it in a new data frame
+EarlyLPP_Memory_Model_beta <- coef(EarlyLPP_Memory_Model)$Participant
+colnames(EarlyLPP_Memory_Model_beta) <- c("Intercept", "SlopeConditionNeutral", "SlopeEarlyLPP", "SlopeConditionNeutralxEarlyLPP")
+EarlyLPP_Memory_Model_beta <- EarlyLPP_Memory_Model_beta %>% 
+  dplyr::mutate(TimeWindow = "EarlyLPP")
+
+# Merge the slope data frame with the JASPdata frame which contains summarised memory data
+JASPdataWithSlopes <- dplyr::bind_cols(JASPdata,EarlyLPP_Memory_Model_beta)
+
+cor(JASPdataWithSlopes$EmotionEnhancedMemory,JASPdataWithSlopes$SlopeConditionNeutralxEarlyLPP)
+cor.test(JASPdataWithSlopes$EmotionEnhancedMemory,JASPdataWithSlopes$SlopeConditionNeutralxEarlyLPP)
+
+#write.csv(JASPdata, 'JASPdata_Z.csv') # save as .csv file.
+
+
+# Create a violin plot for visualisation
+EarlyLPP_Memory_Model_beta %>%
+  ggplot(aes(x = TimeWindow, y = SlopeConditionNeutralxEarlyLPP, fill = TimeWindow)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_brewer(palette="Paired") +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Time Window", y="Beta for Emotion Condition Neutral x LPP Interaction ")+
+  theme_classic()
+
+```
+
+
+
+```{r beta one sample t-test, echo=FALSE}
+stats::t.test(EarlyLPP_Memory_Model_beta$SlopeConditionNeutralxEarlyLPP,mu = 0)
+```
+
+#### Only Negative Items (Predicting memory based on LPP amplitude Early time Window)
+
+We next ran a mixed effects model where we only included the negative trials to see if the LPP predicts memory within the negative trials. Replicating the results from the focal and global ERP analysis we found that LPP amplitude predicts memory within the negative condition
+
+```{r predicting memory based on LPP GLMM early Model Only Negative Items, echo=FALSE}
+
+# Filter out negative trials
+DataNegativeTrials <- Data %>% 
+  dplyr::filter(Condition == 'Negative')
+
+EarlyLPP_Memory_Model_Neg_Trials <- lme4::glmer(Memory ~ 1 + EarlyLPP + (1 + EarlyLPP|Participant), data = DataNegativeTrials, family = binomial) # Fit model
+afex::mixed(Memory ~ 1 + EarlyLPP + (1 + EarlyLPP|Participant), data = DataNegativeTrials, family = binomial, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+```{r predicting memory based on LPP GLMM early negative Items LRT, echo=FALSE}
+afex::mixed(Memory ~ 1 + EarlyLPP + (1 + EarlyLPP|Participant), data = DataNegativeTrials, family = binomial, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+#### Only Neutral Items (Predicting memory based on LPP amplitude Early time Window)
+We also tested if LPP amplitude predicted memory for neutral trials. Replicating the focal and global ERP analyses we found no significant relationship between LPP amplitude for neutral items and memory for neutral items. 
+
+```{r predicting memory based on LPP GLMM early Model Only Neutral Items, echo=FALSE}
+
+# Filter out neutral trials
+DataNeutralTrials <- Data %>% 
+  dplyr::filter(Condition == 'Neutral')
+
+EarlyLPP_Memory_Model_Neutral_Trials <- lme4::glmer(Memory ~ 1 + EarlyLPP + (1 + EarlyLPP|Participant), data = DataNeutralTrials, family = binomial) # Fit model
+
+summary(EarlyLPP_Memory_Model_Neutral_Trials)
+```
+
+```{r predicting memory based on LPP GLMM early neutral Items LRT, echo=FALSE}
+afex::mixed(Memory ~ 1 + EarlyLPP + (1 + EarlyLPP|Participant), data = DataNeutralTrials, family = binomial, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+### Late LPP time window (1000-2000ms)
+
+I tried to fit the same model as above for the late time window, but it failed to converge so I reduced the random effect structure to a intercept only random effect of participant. The only significant effect was the main effect of condition. Showing that LPP amplitude was higher for negative than neutral items. The lack of an interaction between Condition and LPP suggest that there is no correlation between emotion enhanced LPP and memory in this time window. 
+
+```{r predicting memory based on LPP GLMM late model, echo=FALSE}
+# Model with Memory as dependent variable, Condidion/Emotion and EarlyLPP as fixed effects and Participant as random intercept and random slope effect.
+LateLPP_Memory_Model <- lme4::glmer(Memory ~ 1 + Condition * LateLPP + (1|Participant), data = Data, family = binomial) # Fit model
+LateLPP_Memory_Model
+```
+
+```{r predicting memory based on LPP GLMM late LRT, echo=FALSE}
+afex::mixed(Memory ~ 1 + Condition * LateLPP + (1|Participant), data = Data, family = binomial, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+```{r figure late lpp, echo=FALSE}
+
+# Create a violin plot for visualisation
+EarlyLPPSummary %>%
+  ggplot(aes(x = SubMemCond, y = LateLPPMean, fill = SubMemCond)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_manual(values = c("#FF7F7F","#FF0000", "#808080", "#000000")) +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Condition", y="Late LPP Amplitude Z")+
+  theme_classic()
+```
+
+## Predicting LPP amplitude based on Emotion and Memory, Linear Mixed Effect Model
+
+Next, we changed the model to predict LPP amplitude to double check that we get the same results. The model included LPP amplitude (z transformed) as dependent variable, Memory and Condition as fixed effects and participant ID as a random effect.The model failed to converge with random slopes for the random effect of participant ID on the condition x memory interaction. I therefore simplified the model to only include random intercept for subject.
+ 
+### Early LPP time window (400-1000ms)
+
+```{r predicting LPP based on memory LMM early model, echo=FALSE}
+# Model with Memory as dependent variable, Condidion/Emotion and EarlyLPP as fixed effects and Participant as random intercept and random slope effect.
+Predict_EarlyLPP_with_Memory_Model <- lme4::lmer(EarlyLPP ~ 1 + Condition * Memory + (1 + Condition * Memory |Participant), data = Data) # Fit model
+Predict_EarlyLPP_with_Memory_Model
+
+car::Anova(Predict_EarlyLPP_with_Memory_Model, type = 3)
+
+Predict_EarlyLPP_with_Memory_Model_Interaction <- emmeans(Predict_EarlyLPP_with_Memory_Model, ~ Memory|Condition) # Calculate emmeans
+pairs(Predict_EarlyLPP_with_Memory_Model_Interaction, adjust = "fdr") # Note that correction makes no difference in 2x2 design as there is only one test "per family", but this is how to control for unplanned follow up tests in more complex designs
+
+```
+
+There was a significant Condition x Memory interaction, replicating the previous analysis and showing that there was a relation between emotion enhanced memory and LPP amplitude in the early time window.
+
+### Late LPP time window (1000-2000ms)
+
+```{r predicting LPP based on memory LMM late model, echo=FALSE}
+# Model with Memory as dependent variable, Condidion/Emotion and LateLPP as fixed effects and Participant as random intercept and random slope effect.
+Predict_LateLPP_with_Memory_Model <- lme4::lmer(LateLPP ~ 1 + Condition * Memory + (1|Participant), data = Data) # Fit model
+Predict_LateLPP_with_Memory_Model
+
+car::Anova(Predict_LateLPP_with_Memory_Model, type = 3)
+
+```
+
+```{r predicting LPP based on memory LMM late LRT, echo=FALSE}
+afex::mixed(LateLPP ~ 1 + Condition * Memory + (1|Participant), data = Data, method = 'LRT') # Test significance of fixed effects and their interactionwith likelihhod ratio test (LRT)
+```
+
+There was a borderline significant Condition x Memory interaction. The only significant effect was a main effect of Condition showing that LPP amplitude was higher for negative than neutral stimuli.
+
+## Within-subject correlation between emotion enhanced LPP (Negative - Neutral) and emotion enhanced memory (negative - neutral)
+
+We next tested if there was a within subject correlation between the LPP and Memory. In this analysis we first computed the average LPP and proportion recalled items per list and then correlated these measures within each participant with Spearman correlation. Next, Bayesian one-sample t-tests against zero were computed to test if the correlation was larger than 0 on the group level. Surpirsingly the Bayesfactor provided moderate evidence for no correlation for all comparisons (BF01 Difference measure = 5.107177; BF01 Negative items = 5.175983, BF01 Neutral Items =  3.732619). THe same pattern of results were found if Pearson correlations were used instead (see results in the R-markdown document).
+
+```{r prepare data for within subject correlation, echo=FALSE}
+
+# Compute average of LPP separately for each list 
+EarlyLPPPerList <- Data %>% 
+  group_by(Participant,List,Condition) %>% 
+  dplyr::summarise(EarlyLPPMean = mean(EarlyLPP)) 
+  
+# Change to wide format to facilitate the calculation of the difference score
+EarlyLPPPerListWide <- tidyr::pivot_wider(data = EarlyLPPPerList, names_from = Condition, values_from = EarlyLPPMean)
+
+# Compute difference score
+EarlyLPPPerListDifference <- EarlyLPPPerListWide %>% 
+  dplyr::mutate(EarlyLPPDiff = Negative-Neutral)
+
+EarlyLPPColnamesPerList <- c( "Participant", "List", "NegativeLPP", "NeutralLPP", "LPPDiff") # Rename column names so that they are words rather than numbers to facilitate indexing
+colnames(EarlyLPPPerListDifference) <- EarlyLPPColnamesPerList
+
+# Now compute the memory measures
+
+# Compute proportion remembered items per list separately for negative and neutral items
+NumberOfResponsesPerList <- Data %>%
+  dplyr::group_by(Participant,List,Condition,Memory) %>% 
+  dplyr::summarise(count = n()) %>% 
+  tidyr::spread(Memory, count) %>%
+  dplyr::ungroup()
+
+MemoryColnamesPerList <- c( "Participant", "List", "Condition", "Forgotten", "Remembered") # Rename column names so that they are words rather than numbers to facilitate indexing
+colnames(NumberOfResponsesPerList) <- MemoryColnamesPerList
+
+# Change NAs to 0
+NumberOfResponsesPerList <- NumberOfResponsesPerList %>% 
+dplyr::mutate_all(~replace(., is.na(.), 0))
+
+# Calculate proportion remembered and proportion forgotten trials
+ProportionCorrPerList <- NumberOfResponsesPerList %>% 
+  dplyr::mutate(PropRemembered = round(Remembered/(Remembered + Forgotten), digits = 2))  
+  
+# Remove Forgotten and Remembered trials to facilitate pivot wider  
+ProportionCorrPerList <- dplyr::select(ProportionCorrPerList,-c(Forgotten,Remembered))
+
+# Change to wide format to facilitate the calculation of the difference score
+ProportionCorrPerListWide <- tidyr::pivot_wider(data = ProportionCorrPerList, names_from = Condition, values_from = PropRemembered)
+
+PropRememberedPerListDifference <- ProportionCorrPerListWide %>% 
+  dplyr::mutate(PropRememberedDiff = Negative-Neutral)
+
+WithinSubCorrDataEarlyLPP <- dplyr::bind_cols(EarlyLPPPerListDifference,PropRememberedPerListDifference) # COmbine the data frames horizontally
+WithinSubCorrDataEarlyLPP <- dplyr::select(WithinSubCorrDataEarlyLPP, -c(Participant...6, List...7)) # Remove the extra participant columns
+
+EarlyLPPColnamesPerList <- c("Participant", "List", "NegativeLPP", "NeutralLPP", "LPPDiff", "NegativePropRemembered","NeutralPropRemembered", "PropRememberedDiff") # Rename column names
+colnames(WithinSubCorrDataEarlyLPP) <- EarlyLPPColnamesPerList
+
+
+# Perform the correlation on
+WithinSubCorrelationCoefficientsEarlyLPP <- WithinSubCorrDataEarlyLPP %>%
+  dplyr::group_by(Participant) %>%
+  dplyr::summarize(PearsonDiffCor=stats::cor(LPPDiff,PropRememberedDiff, method = "pearson"), PearsonNegativeCor = stats::cor(NegativeLPP,NegativePropRemembered, method = "pearson"), PearsonNeutralCor = stats::cor(NeutralLPP,NeutralPropRemembered, method = "pearson"), SpearmanDiffCor=stats::cor(LPPDiff,PropRememberedDiff, method = "spearman"), SpearmanNegativeCor = stats::cor(NegativeLPP,NegativePropRemembered, method = "spearman"), SpearmanNeutralCor = stats::cor(NeutralLPP,NeutralPropRemembered, method = "spearman"))
+
+# Perform one sample t-tests
+
+PearsonDiffTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$PearsonDiffCor, mu = 0)
+SpearmanDiffTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanDiffCor, mu = 0)
+
+PearsonNegativeTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$PearsonNegativeCor, mu = 0)
+SpearmanNegativeTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanNegativeCor, mu = 0)
+
+PearsonNeutralTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$PearsonNeutralCor, mu = 0)
+SpearmanNeutralTTest <- stats::t.test(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanNeutralCor, mu = 0)
+
+# Perform Bayesian one sample t-tests
+
+PearsonDiffTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$PearsonDiffCor, mu = 0)
+SpearmanDiffTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanDiffCor, mu = 0)
+
+PearsonNegativeTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$PearsonNegativeCor, mu = 0)
+SpearmanNegativeTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanNegativeCor, mu = 0)
+
+PearsonNeutralTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$PearsonNeutralCor, mu = 0)
+SpearmanNeutralTTestBayesian <- BayesFactor::ttestBF(WithinSubCorrelationCoefficientsEarlyLPP$SpearmanNeutralCor, mu = 0)
+
+# To convert to from BF10 to BF01: take 1/BF10. 
+
+#write.csv(WithinSubCorrelationCoefficientsEarlyLPP, 'WithinSubCorrelationCoefficientsEarlyLPP.csv') # save as .csv file.
+```
+
+### Violin plot for within subject correlations
+
+```{r violin plot for within subjects correlations, echo=FALSE}
+
+# Take out the columns you do not want to include in the plot
+WithinSubjectCorrPlotData <- dplyr::select(WithinSubCorrelationCoefficientsEarlyLPP, -c(SpearmanDiffCor, SpearmanNegativeCor,SpearmanNeutralCor, PearsonDiffCor)) # Remove the extra participant columns
+
+#Change to long format
+WithinSubjectCorrPlotData <- WithinSubjectCorrPlotData %>% 
+  tidyr::pivot_longer(data = WithinSubjectCorrPlotData, cols = c(PearsonNegativeCor,PearsonNeutralCor), names_to = "Measure", values_to = "CorrelationCoefficient")
+
+# Create a violin plot for visualisation
+WithinSubjectCorrPlotData %>%
+  ggplot(aes(x = Measure, y = CorrelationCoefficient, fill = Measure)) +
+  geom_violin(trim = FALSE, alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  ggbeeswarm::geom_quasirandom(size = 2,
+              alpha = 0.2)  +
+  stat_summary(geom = "point", size = 3, fun = mean) +
+  # add 95% CI errorbars
+  stat_summary(geom = "errorbar", fun.data = mean_cl_boot,
+               width = .1) +
+  scale_fill_brewer(palette="Set1") +
+  guides(fill = FALSE, colour = FALSE)+
+  labs(x= "Measure", y="Correlation Coefficient")+
+  theme_classic()
+
+```
+

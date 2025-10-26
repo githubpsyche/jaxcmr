@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-    <title>Reference Category-SPC</title>
+    <title>Categorized Serial Position Curve</title>
     <style>
       code{white-space: pre-wrap;}
       span.smallcaps{font-variant: small-caps;}
@@ -171,7 +171,7 @@
     <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
       
       <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
-      <h6><i class="bi bi-journal-code"></i> Reference Category-SPC</h6>
+      <h6><i class="bi bi-journal-code"></i> Categorized Serial Position Curve</h6>
 
             <a href="./render.ipynb" class="btn btn-primary quarto-download-embed" download="render.ipynb">Download Notebook</a>
           </div>
@@ -179,7 +179,7 @@
      <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Reference Category-SPC</h1>
+      <h1 class="title">Categorized Serial Position Curve</h1>
           </div>
 
     
@@ -203,55 +203,212 @@
     </div>  </div>
 </header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
 <div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#categorized-lpp-by-study-position" id="toc-categorized-lpp-by-study-position" class="nav-link active" data-scroll-target="#categorized-lpp-by-study-position">Categorized LPP by Study Position</a></li>
+  <li><a href="#categorized-recall-rate-by-lpp" id="toc-categorized-recall-rate-by-lpp" class="nav-link" data-scroll-target="#categorized-recall-rate-by-lpp">Categorized Recall Rate by LPP</a></li>
+  </ul>
+</nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
 <main class="content quarto-banner-title-block" id="quarto-document-content">      
 
-     <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div id="666319fd" class="cell" data-execution_count="1">
+       <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div id="666319fd" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> papermill <span class="im">as</span> pm</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div>
+<div id="2d3077c8" class="cell markdown">
 <p>Plot SPC curves factored by categorical features (e.g., emotion tags).</p>
-<div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div id="a4542eca" class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_name <span class="op">=</span> <span class="st">"TalmiEEG"</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data_query <span class="op">=</span>  <span class="st">"data['subject'] &gt; 0"</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>category_field <span class="op">=</span> <span class="st">"condition"</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>contrast_name <span class="op">=</span> <span class="st">"condition"</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>category_values <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>]</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="st">"Negative"</span>, <span class="st">"Neutral"</span>]</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>color_cycle <span class="op">=</span> [<span class="st">"red"</span>, <span class="st">"black"</span>]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ylim <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">1</span>]</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>output_path <span class="op">=</span> <span class="st">"projects/TalmiEEG/results/figures/reference_catspc.png"</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>pm.execute_notebook(</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/templates/cat_spc.ipynb"</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/projects/TalmiEEG/cat_spc.ipynb"</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    parameters<span class="op">=</span><span class="bu">dict</span>(</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        data_name<span class="op">=</span>data_name,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        data_query<span class="op">=</span>data_query,</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        category_field<span class="op">=</span>category_field,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        contrast_name<span class="op">=</span>contrast_name,</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        category_values<span class="op">=</span>category_values,</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        labels<span class="op">=</span>labels,</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        color_cycle<span class="op">=</span>color_cycle,</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        ylim<span class="op">=</span>ylim,</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        output_path<span class="op">=</span>output_path,</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>display(Image(filename<span class="op">=</span>output_path))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div id="a4542eca" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_name"</span>: <span class="st">"TalmiEEG"</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_query"</span>: <span class="st">"data['subject'] &gt; 0"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_field"</span>: <span class="st">"condition"</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"contrast_name"</span>: <span class="st">"condition"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_values"</span>: [<span class="dv">1</span>, <span class="dv">2</span>],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"labels"</span>: [<span class="st">"Negative"</span>, <span class="st">"Neutral"</span>],</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"color_cycle"</span>: [<span class="st">"red"</span>, <span class="st">"black"</span>],</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ylim"</span>: [<span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"output_path"</span>: <span class="st">"projects/TalmiEEG/results/figures/reference_catspc.png"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>pm.execute_notebook(</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/templates/cat_spc.ipynb"</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/projects/TalmiEEG/cat_spc.ipynb"</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    parameters<span class="op">=</span>params,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"![](</span><span class="sc">{</span>params[<span class="st">"output_path"</span>]<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>display(Image(filename<span class="op">=</span>params[<span class="st">"output_path"</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/Users/jordangunn/jaxcmr/.venv/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
-Executing: 100%|██████████| 7/7 [00:03&lt;00:00,  1.88cell/s]</code></pre>
+Executing: 100%|██████████| 7/7 [00:04&lt;00:00,  1.46cell/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/reference_catspc.png)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div class="">
 <figure class="figure">
-<p class=""><a href="render_files/figure-html/cell-3-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="render_files/figure-html/cell-3-output-2.png" class="img-fluid figure-img"></a></p>
+<p class=""><a href="render_files/figure-html/cell-3-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="render_files/figure-html/cell-3-output-4.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div></div>
+<div id="db5d86c9" class="cell markdown">
+<section id="categorized-lpp-by-study-position" class="level1">
+<h1>Categorized LPP by Study Position</h1>
+<p>Plot LPP amplitude by study position, factored by categorical features (e.g., emotion tags).</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div id="597f19ed" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_name"</span>: <span class="st">"TalmiEEG"</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_query"</span>: <span class="st">"data['subject'] &gt; 0"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_field"</span>: <span class="st">"condition"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_values"</span>: [<span class="dv">1</span>, <span class="dv">2</span>],</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"labels"</span>: [<span class="st">"Negative"</span>, <span class="st">"Neutral"</span>],</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"color_cycle"</span>: [<span class="st">"red"</span>, <span class="st">"black"</span>],</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ylim"</span>: [<span class="dv">0</span>, <span class="fl">1.5</span>],</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"output_path"</span>: <span class="st">"projects/TalmiEEG/results/figures/cat_lpp_spc_</span><span class="sc">{}</span><span class="st">.png"</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lpp_field <span class="kw">in</span> [<span class="st">"EarlyLPP"</span>, <span class="st">"LateLPP"</span>]:</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    pm.execute_notebook(</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/templates/cat_lpp_spc.ipynb"</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/projects/TalmiEEG/cat_lpp_spc_</span><span class="sc">{</span>lpp_field<span class="sc">}</span><span class="ss">.ipynb"</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        parameters<span class="op">=</span>params</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> {</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>            <span class="st">"lpp_field"</span>: lpp_field,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>            <span class="st">"output_path"</span>: params[<span class="st">"output_path"</span>].<span class="bu">format</span>(lpp_field),</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"![](</span><span class="sc">{</span>params[<span class="st">"output_path"</span>]<span class="sc">.</span><span class="bu">format</span>(lpp_field)<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    display(Image(filename<span class="op">=</span>params[<span class="st">"output_path"</span>].<span class="bu">format</span>(lpp_field)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Executing: 100%|██████████| 6/6 [00:04&lt;00:00,  1.45cell/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_lpp_spc_EarlyLPP.png)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-4-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="render_files/figure-html/cell-4-output-4.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Executing: 100%|██████████| 6/6 [00:04&lt;00:00,  1.49cell/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_lpp_spc_LateLPP.png)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-4-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="render_files/figure-html/cell-4-output-8.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div></div>
+<div id="7ac170c0" class="cell markdown">
+<section id="categorized-recall-rate-by-lpp" class="level1">
+<h1>Categorized Recall Rate by LPP</h1>
+<p>Plot the recall rate as a function of binned LPP amplitude for different categories.</p>
+</section>
+</div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div id="5685a4cf" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_name"</span>: <span class="st">"TalmiEEG"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data_query"</span>: <span class="st">"data['subject'] &gt; 0"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_field"</span>: <span class="st">"condition"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"category_values"</span>: [<span class="dv">1</span>, <span class="dv">2</span>],</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"labels"</span>: [<span class="st">"Negative"</span>, <span class="st">"Neutral"</span>],</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"color_cycle"</span>: [<span class="st">"red"</span>, <span class="st">"black"</span>],</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ylim"</span>: [<span class="dv">0</span>, <span class="fl">.8</span>],</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"output_path"</span>: <span class="st">"projects/TalmiEEG/results/figures/cat_recall_by_lpp_</span><span class="sc">{}</span><span class="st">.png"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lpp_field <span class="kw">in</span> [<span class="st">"EarlyLPP"</span>, <span class="st">"LateLPP"</span>]:</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    pm.execute_notebook(</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/templates/cat_recall_by_lpp.ipynb"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/projects/TalmiEEG/cat_recall_by_lpp_</span><span class="sc">{</span>lpp_field<span class="sc">}</span><span class="ss">.ipynb"</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        parameters<span class="op">=</span>params</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> {</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>            <span class="st">"lpp_field"</span>: lpp_field,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>            <span class="st">"output_path"</span>: params[<span class="st">"output_path"</span>].<span class="bu">format</span>(lpp_field),</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"![](</span><span class="sc">{</span>params[<span class="st">"output_path"</span>]<span class="sc">.</span><span class="bu">format</span>(lpp_field)<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    display(Image(filename<span class="op">=</span>params[<span class="st">"output_path"</span>].<span class="bu">format</span>(lpp_field)))</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"![](</span><span class="sc">{</span>params[<span class="st">"output_path"</span>]<span class="sc">.</span>replace(<span class="st">'.png'</span>, <span class="st">'_counts.png'</span>)<span class="sc">.</span><span class="bu">format</span>(lpp_field)<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    display(Image(filename<span class="op">=</span>params[<span class="st">"output_path"</span>].replace(<span class="st">'.png'</span>, <span class="st">'_counts.png'</span>).<span class="bu">format</span>(lpp_field)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Executing:   0%|          | 0/9 [00:00&lt;?, ?cell/s]Executing: 100%|██████████| 9/9 [00:05&lt;00:00,  1.79cell/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_recall_by_lpp_EarlyLPP.png)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-5-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="render_files/figure-html/cell-5-output-4.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_recall_by_lpp_EarlyLPP_counts.png)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-5-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="render_files/figure-html/cell-5-output-6.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Executing: 100%|██████████| 9/9 [00:04&lt;00:00,  1.93cell/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_recall_by_lpp_LateLPP.png)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code></code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-5-output-10.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="render_files/figure-html/cell-5-output-10.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>![](projects/TalmiEEG/results/figures/cat_recall_by_lpp_LateLPP_counts.png)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="render_files/figure-html/cell-5-output-12.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="render_files/figure-html/cell-5-output-12.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -676,7 +833,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
 });
-</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","openEffect":"zoom","selector":".lightbox","loop":false,"descPosition":"bottom"});
+</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"selector":".lightbox","closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

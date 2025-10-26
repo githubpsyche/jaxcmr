@@ -152,11 +152,16 @@
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+     <script async="" src="https://hypothes.is/embed.js"></script>
+<script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>  
       </head>
@@ -249,7 +254,7 @@
 </div></div>
 <div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div id="d267c46d" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>DATA_DIR <span class="op">=</span> Path(<span class="st">'data/raw/talmieeg'</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>EEG_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">'Single_Trial_Behavioural_and_EEG_Data_Z.csv'</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>EEG_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">'Single_Trial_Behavioural_and_EEG_Data_Z 2.csv'</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>BEHAVIOR_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">'All_Included_Subjects.csv'</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>eeg_df <span class="op">=</span> pd.read_csv(EEG_PATH)</span>
@@ -307,19 +312,6 @@
 <td data-quarto-table-cell-role="th">1</td>
 <td>202</td>
 <td>1</td>
-<td>Neutral</td>
-<td>Neutral</td>
-<td>4</td>
-<td>2</td>
-<td>neut2</td>
-<td>1</td>
-<td>0.66242</td>
-<td>-0.23096</td>
-</tr>
-<tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
-<td>202</td>
-<td>1</td>
 <td>Negative</td>
 <td>Negative</td>
 <td>5</td>
@@ -329,8 +321,8 @@
 <td>-0.56351</td>
 <td>-0.30037</td>
 </tr>
-<tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
 <td>202</td>
 <td>1</td>
 <td>Negative</td>
@@ -342,18 +334,31 @@
 <td>0.72071</td>
 <td>0.91095</td>
 </tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>202</td>
+<td>1</td>
+<td>Negative</td>
+<td>Negative</td>
+<td>10</td>
+<td>8</td>
+<td>neg130</td>
+<td>1</td>
+<td>-2.31810</td>
+<td>0.73814</td>
+</tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">4</td>
 <td>202</td>
 <td>1</td>
-<td>Category</td>
-<td>Neutral</td>
-<td>7</td>
-<td>5</td>
-<td>cat124</td>
+<td>Negative</td>
+<td>Negative</td>
+<td>15</td>
+<td>13</td>
+<td>neg137</td>
 <td>0</td>
-<td>-0.64235</td>
-<td>0.51120</td>
+<td>1.75000</td>
+<td>-0.58144</td>
 </tr>
 </tbody>
 </table>

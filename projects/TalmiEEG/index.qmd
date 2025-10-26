@@ -18,7 +18,7 @@ Initially I prepared `Single_Trial_Behavioural_and_EEG_Data_Z.csv` from the lab 
 
 It's important to highlight that participants actually studied 22 items per trials, but the first two items from each trial were excluded from analysis to mitigate primacy effects. This is regrettable for model evaluation since CMR-style models often rely on early list items to establish context dynamics. Nonetheless, we will carefully navigate this limitation in the final version of our analyses.
 
-Even more critically, the dataset does not record the order in which participants recalled items, only whether each item was recalled or not. This limitation requires custom-designed loss functions for model fitting, as detailed later.
+Even more critically, the dataset does not record the order in which participants recalled items, only whether each item was recalled or not. This limitation requires custom-designed loss functions for model fitting even at the prototyping stage.
 
 # Benchmark Analyses
 
@@ -30,9 +30,9 @@ Our core behavioral analysis to address it on a categorized-serial position curv
 The analysis involves taking the ratio of recalled to total items matching the category label and studied at each serial position.
 
 ::: {#fig-reference_catspc layout-ncol="2"}
-![](daw_meeting_slide5.png)
+![](results/figures/daw_meeting_slide5.png)
 
-![](reference_catspc.png)
+![](results/figures/reference_catspc.png)
 
 Recall rate by study position and item type. Left: From slides. Right: Reproduction. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each study position.
 :::
@@ -46,10 +46,10 @@ The match between shared and generated categorized serial position curves confir
 I drew these plots to help interpret the relationship between LPP and serial position / emotionality.
 Most approaches we're considering for augmenting eCMR with LPP data will make variation across factors of the category-SPC look more like variation across factors of this plot.
 
-::: {#fig-reference_catspc layout-ncol="2"}
-![](cat_splpp_early.png)
+::: {#fig-cat_lpp_spc layout-ncol="2"}
+![](results/figures/cat_lpp_spc_EarlyLPP.png)
 
-![](cat_splpp_late.png)
+![](results/figures/cat_lpp_spc_LateLPP.png)
 
 LPP amplitude by study position. Left: Early LPP. Right: Late LPP. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each study position.
 :::
@@ -61,22 +61,34 @@ These plots also confirm that both early and late LPP signals vary with item emo
 A successful neurally-informed extension of eCMR should not just identify emotional and neutral items, but provide additional information beyond these labels about how and whether emotional and neutral items will be recalled.
 We thus plot the relationship between LPP values and recall rate across item categories.
 
-::: {#fig-cat_lpp_spc layout-ncol="2"}
+::: {#fig-cat_recall_by_early_lpp layout-ncol="2"}
 
-![](cat_lpp_spc_early.png)
+![](results/figures/reference_cat_recall_by_lpp.png)
 
-![](cat_lpp_spc_late.png)
+![](results/figures/cat_recall_by_lpp_EarlyLPP.png)
 
-Recall rate by LPP amplitude and item type. Left: Early LPP. Right: Late LPP. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each LPP bin.
+Recall rate by early LPP amplitude and item type. Left: From reference. Right: Generated. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each LPP bin.
 :::
 
-::: {#fig-lpp_misc layout-ncol="2"}
+::: {#fig-cat_recall_by_late_lpp}
+![](results/figures/cat_recall_by_lpp_LateLPP.png){width="50%"}
 
-![](cat_lpp_spc_early_counts.png)
+Recall rate by Late LPP amplitude and item type. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each LPP bin.
+:::
 
-![](amplitude_by_cat_by_recalled.png){width="50%"}
+::: {#fig- layout-ncol="2"}
 
-Left: Counts of observations per LPP bin. Right: LPP by time, recall status, and item type.
+![](results/figures/cat_recall_by_lpp_EarlyLPP_counts.png)
+
+![](results/figures/cat_recall_by_lpp_LateLPP_counts.png)
+
+Counts of observations per LPP bin. Left: Early LPP. Right: Late LPP. 
+:::
+
+::: {#fig-amplitude_by_cat_by_recalled}
+![](results/figures/amplitude_by_cat_by_recalled.png)
+
+LPP by time, recall status, and item type.
 :::
 
 Previous analyses of the relationship between LPP and recall rate seem to have assumed that any relationship would be linear.
@@ -105,6 +117,8 @@ However, the number of possible recall orders increases exponentially with the n
 A potential compromise involves estimating the sequence probability via **Monte Carlo sampling**: drawing a constrained sample of recall sequences consistent with the observed recall set and averaging their model probabilities.
 This method specifies a speed–accuracy trade-off: increasing the number of sampled sequences improves the stability of the loss estimate but sharply increases computation time.
 Because reliable estimation would require a large number of samples per trial, we reserve this approach for more advanced stages of the project.
+
+<!-- TODO: debug why current set likelihood function doesn't work -->
 
 ## Mean Squared Error (MSE) Over Summary Statistics
 
@@ -160,7 +174,7 @@ This means that the emotional context at each step of either encoding or retriev
 
 The emotional context-to-feature memory (eMCF) is represented as a vector where:
 
--   Cells corresponding to neutral items hold a value of 0.\
+-   Cells corresponding to neutral items hold a value of 0.
 -   Cells corresponding to emotional items hold a value scaled by an emotional-attention parameter
 
 An additional parameter sometimes used in eCMR to scale the relative contribution of temporal vs emotional context during retrieval is redundant under this specification, since the emotional-attention parameter already modulates that balance.
@@ -169,10 +183,12 @@ With specialized drift rates and feature-to-context memory learning rates also e
 ### Parameter Sensitivity Tests
 
 To confirm that the model's extra parameter can address the emotional category-spc, we fit the base model to the dataset then simulate simple-ECMR with different configurations of its arousal parameter, plotting the emotional category-spc for each set of simulations.
-Here we generated one category-spc for negative items and one for neutral items from the simulated data:\
+Here we generated one category-spc for negative items and one for neutral items from the simulated data:
+
 \![
 \]\[image11\]\![
 \]\[image12\]\
+
 The LEFT plot shows how the recall rates for NEGATIVE items change with configurations of `emotion_scale`.
 The RIGHT plot shows how the recall rates for NEUTRAL items change.
 
@@ -335,8 +351,3 @@ To overcome this limitation, I tested a modified approach where post-study conte
 This adjustment removes temporal directionality from the final cue, effectively making recall initiation reflect just the differences in relative strength across context-to-item associations.
 
 This didn't help either, so I'm leaving this problem for later.
-
-# Other Notes
-
-Preference: Warm color for emotional.
-Black or whatever for neutral.
