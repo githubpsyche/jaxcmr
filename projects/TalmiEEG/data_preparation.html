@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Talmi EEG Data Preparation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="data_preparation_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data_preparation_files/libs/quarto-html/quarto.js"></script>
+<script src="data_preparation_files/libs/quarto-html/popper.min.js"></script>
+<script src="data_preparation_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data_preparation_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data_preparation_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data_preparation_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data_preparation_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data_preparation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data_preparation_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Talmi EEG Data Preparation</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Prepare the Talmi EEG study events for RecallDataset ingestion while tracking data quality decisions.</p>
+<section id="preprocessing-decisions" class="level2">
+<h2 class="anchored" data-anchor-id="preprocessing-decisions">Preprocessing Decisions</h2>
+<ul>
+<li>Use the behavioral CSV to supply the full 20 study events for every subject/list before merging EEG features.</li>
+<li>Derive presentation order as TrialNumber - 2 and drop EEG rows with PresentationOrder == 99 whenever the trial already has 20 observations.</li>
+<li>Map rater codes so (1,1)→1.0, (2,2)→0.0, and (3,2)→0.5; store a lenient recalls array (0.5→recalled) and a strict ambiguous_recalls array (0.5→not recalled), both sorted by study position with trailing zeros.</li>
+<li>Preserve recorded item identities; otherwise generate deterministic placeholders and flag them in imputed_mask.</li>
+<li>Factorize study-level columns with fixed codes (ImgName via pd.factorize; Condition Negative→1, Neutral→2; ThreeConds Negative→1, Neutral→2, Category→3).</li>
+<li>Impute missing Early/Late LPP values using within-list, within-condition means, falling back to list means and then global condition means; mark those cells in lpp_imputed.</li>
+<li>Omit TrialNumber in the final dataset but retain subject, list (as column vectors), and listLength to satisfy the RecallDataset schema.</li>
+<li>Export per-position arrays (EarlyLPP, LateLPP, condition, cond3, imputed_mask, lpp_imputed, ambiguous_recalls) alongside the standard RecallDataset fields, accepting float types where needed.</li>
+<li>Confirm every participant contributes the modal nine lists so downstream code can rely on consistent trial counts.</li>
+</ul>
+</section>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<div id="e1f1f798" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> save_dict_to_hdf5, find_project_root, generate_trial_mask</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="d267c46d" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>DATA_DIR <span class="op">=</span> Path(<span class="st">'data/raw/talmieeg'</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>EEG_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">'Single_Trial_Behavioural_and_EEG_Data_Z.csv'</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>BEHAVIOR_PATH <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">'All_Included_Subjects.csv'</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>eeg_df <span class="op">=</span> pd.read_csv(EEG_PATH)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>behavior_df_raw <span class="op">=</span> pd.read_csv(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    BEHAVIOR_PATH,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    header<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    names<span class="op">=</span>[</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Participant'</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">'List'</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">'TrialNumber'</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">'ThreeCondsCode'</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">'ConditionCode'</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">'ThreeConds'</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Recalled'</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="9b939fa2" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>eeg_df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Participant</th>
+<th data-quarto-table-cell-role="th">List</th>
+<th data-quarto-table-cell-role="th">3Conds</th>
+<th data-quarto-table-cell-role="th">Condition</th>
+<th data-quarto-table-cell-role="th">TrialNumber</th>
+<th data-quarto-table-cell-role="th">PresentationOrder</th>
+<th data-quarto-table-cell-role="th">ImgName</th>
+<th data-quarto-table-cell-role="th">Recalled</th>
+<th data-quarto-table-cell-role="th">EarlyLPP</th>
+<th data-quarto-table-cell-role="th">LateLPP</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>202</td>
+<td>1</td>
+<td>Negative</td>
+<td>Negative</td>
+<td>3</td>
+<td>1</td>
+<td>neg139</td>
+<td>1</td>
+<td>-3.95610</td>
+<td>-1.84030</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>202</td>
+<td>1</td>
+<td>Neutral</td>
+<td>Neutral</td>
+<td>4</td>
+<td>2</td>
+<td>neut2</td>
+<td>1</td>
+<td>0.66242</td>
+<td>-0.23096</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>202</td>
+<td>1</td>
+<td>Negative</td>
+<td>Negative</td>
+<td>5</td>
+<td>3</td>
+<td>neg138</td>
+<td>1</td>
+<td>-0.56351</td>
+<td>-0.30037</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>202</td>
+<td>1</td>
+<td>Negative</td>
+<td>Negative</td>
+<td>6</td>
+<td>4</td>
+<td>neg132</td>
+<td>0</td>
+<td>0.72071</td>
+<td>0.91095</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>202</td>
+<td>1</td>
+<td>Category</td>
+<td>Neutral</td>
+<td>7</td>
+<td>5</td>
+<td>cat124</td>
+<td>0</td>
+<td>-0.64235</td>
+<td>0.51120</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="ce590a86" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>behavior_df_raw.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Participant</th>
+<th data-quarto-table-cell-role="th">List</th>
+<th data-quarto-table-cell-role="th">TrialNumber</th>
+<th data-quarto-table-cell-role="th">ThreeCondsCode</th>
+<th data-quarto-table-cell-role="th">ConditionCode</th>
+<th data-quarto-table-cell-role="th">ThreeConds</th>
+<th data-quarto-table-cell-role="th">Recalled</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>202</td>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>202</td>
+<td>1</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>Neutral</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>202</td>
+<td>1</td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>202</td>
+<td>1</td>
+<td>6</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>202</td>
+<td>1</td>
+<td>7</td>
+<td>3</td>
+<td>2</td>
+<td>Category</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="helper-functions" class="level2">
+<h2 class="anchored" data-anchor-id="helper-functions">Helper Functions</h2>
+<div id="36ac9815" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>TARGET_LIST_LENGTH <span class="op">=</span> <span class="dv">20</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> factorize_series(values: pd.Series, <span class="op">*</span>, categories: <span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">tuple</span>[pd.Series, <span class="bu">list</span>[<span class="bu">str</span>]]:</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Returns 1-based factor codes for provided series.</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">      values: Column to convert into categorical codes.</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">      categories: Explicit category order assigning 1-based codes.</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">      Tuple of the 1-based codes aligned with the input index and the category labels.</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> categories <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        codes, derived <span class="op">=</span> pd.factorize(values, sort<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.Series(codes <span class="op">+</span> <span class="dv">1</span>, index<span class="op">=</span>values.index), <span class="bu">list</span>(derived)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    mapping <span class="op">=</span> {label: index <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> index, label <span class="kw">in</span> <span class="bu">enumerate</span>(categories)}</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    mapped <span class="op">=</span> values.<span class="bu">map</span>(mapping)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> mapped.isna().<span class="bu">any</span>():</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        unknown <span class="op">=</span> values[mapped.isna()].unique().tolist()</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"Encountered unexpected categories: </span><span class="sc">{</span>unknown<span class="sc">!r}</span><span class="ss">"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mapped.astype(<span class="bu">int</span>), categories</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> prepare_behavioral_dataframe(path: Path) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Returns behavioral events with presentation order and recall flags.</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">      path: Location of the behavioral CSV without headers.</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> pd.read_csv(</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        path,</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        header<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        names<span class="op">=</span>[</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>            <span class="st">'Participant'</span>,</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>            <span class="st">'List'</span>,</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>            <span class="st">'TrialNumber'</span>,</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>            <span class="st">'ThreeCondsCode'</span>,</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>            <span class="st">'ConditionCode'</span>,</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>            <span class="st">'ThreeConds'</span>,</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>            <span class="st">'Recalled'</span>,</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">'PresentationOrder'</span>] <span class="op">=</span> df[<span class="st">'TrialNumber'</span>] <span class="op">-</span> <span class="dv">2</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> df[df[<span class="st">'PresentationOrder'</span>].between(<span class="dv">1</span>, TARGET_LIST_LENGTH)].copy()</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">'Condition'</span>] <span class="op">=</span> df[<span class="st">'ConditionCode'</span>].<span class="bu">map</span>({<span class="dv">1</span>: <span class="st">'Negative'</span>, <span class="dv">2</span>: <span class="st">'Neutral'</span>})</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">'Recalled'</span>] <span class="op">=</span> df[<span class="st">'Recalled'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merge_behavior_and_eeg(behavior_df: pd.DataFrame, eeg_df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Merge behavioral events with EEG features on presentation order.</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="co">      behavior_df: Prepared behavioral rows with presentation order and recall flags.</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="co">      eeg_df: EEG rows including `ImgName`, `EarlyLPP`, and `LateLPP`.</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>    usable_eeg <span class="op">=</span> eeg_df[eeg_df[<span class="st">'PresentationOrder'</span>].between(<span class="dv">1</span>, TARGET_LIST_LENGTH)]</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> behavior_df.merge(</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>        usable_eeg[[</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>            <span class="st">'Participant'</span>,</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>            <span class="st">'List'</span>,</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>            <span class="st">'PresentationOrder'</span>,</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>            <span class="st">'ImgName'</span>,</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>            <span class="st">'EarlyLPP'</span>,</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>            <span class="st">'LateLPP'</span>,</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>        ]],</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span>[<span class="st">'Participant'</span>, <span class="st">'List'</span>, <span class="st">'PresentationOrder'</span>],</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>        how<span class="op">=</span><span class="st">'left'</span>,</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> assign_img_placeholders(merged_df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Fill missing image names with deterministic placeholders.</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="co">      merged_df: Rows after aligning behavior and EEG tables.</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> merged_df.copy()</span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>    missing_mask <span class="op">=</span> df[<span class="st">'ImgName'</span>].isna()</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>    df.loc[missing_mask, <span class="st">'ImgName'</span>] <span class="op">=</span> df.loc[missing_mask].<span class="bu">apply</span>(</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lambda</span> row: <span class="ss">f"missing_</span><span class="sc">{</span><span class="bu">int</span>(row.Participant)<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span><span class="bu">int</span>(row.List)<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span><span class="bu">int</span>(row.PresentationOrder)<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>        axis<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">'imputed_mask'</span>] <span class="op">=</span> missing_mask.astype(<span class="bu">int</span>)</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> impute_lpp_by_condition(df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Impute missing LPP values using within-list condition averages.</span></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a><span class="co">      df: Aligned study events containing LPP columns and condition labels.</span></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> df.copy()</span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>    initial_missing <span class="op">=</span> result[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].isna().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>    cond_means <span class="op">=</span> result.groupby([<span class="st">'Participant'</span>, <span class="st">'List'</span>, <span class="st">'Condition'</span>])[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].transform(<span class="st">'mean'</span>)</span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>    list_means <span class="op">=</span> result.groupby([<span class="st">'Participant'</span>, <span class="st">'List'</span>])[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].transform(<span class="st">'mean'</span>)</span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>    global_means <span class="op">=</span> result.groupby(<span class="st">'Condition'</span>)[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].mean()</span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> column <span class="kw">in</span> [<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]:</span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a>        result[column] <span class="op">=</span> result[column].fillna(cond_means[column])</span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>        result[column] <span class="op">=</span> result[column].fillna(list_means[column])</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>        result[column] <span class="op">=</span> result[column].fillna(result[<span class="st">'Condition'</span>].<span class="bu">map</span>(global_means[column]))</span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>        result[column] <span class="op">=</span> result[column].fillna(<span class="fl">0.0</span>)</span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a>    result[<span class="st">'lpp_imputed'</span>] <span class="op">=</span> (</span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a>        initial_missing <span class="op">|</span> result[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].isna().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a>    ).astype(<span class="bu">int</span>)</span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_recall_dataset(completed_df: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">str</span>, np.ndarray]:</span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Returns RecallDataset-aligned arrays including recall tracks.</span></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="co">      completed_df: Study events with factorized identifiers and imputation flags.</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a>    ordered <span class="op">=</span> completed_df.sort_values([<span class="st">'Participant'</span>, <span class="st">'List'</span>, <span class="st">'PresentationOrder'</span>])</span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a>    trial_groups <span class="op">=</span> <span class="bu">list</span>(ordered.groupby([<span class="st">'Participant'</span>, <span class="st">'List'</span>], sort<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a>    trial_count <span class="op">=</span> <span class="bu">len</span>(trial_groups)</span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a>    subject <span class="op">=</span> np.zeros((trial_count, <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a>    list_ids <span class="op">=</span> np.zeros((trial_count, <span class="dv">1</span>), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a>    list_length <span class="op">=</span> np.full((trial_count, <span class="dv">1</span>), TARGET_LIST_LENGTH, dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a>    pres_itemnos <span class="op">=</span> np.tile(np.arange(<span class="dv">1</span>, TARGET_LIST_LENGTH <span class="op">+</span> <span class="dv">1</span>, dtype<span class="op">=</span><span class="bu">int</span>), (trial_count, <span class="dv">1</span>))</span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a>    pres_itemids <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a>    early_lpp <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a>    late_lpp <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a>    condition <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a>    cond3 <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a>    imputed_mask <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a>    lpp_mask <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a>    recalls <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a>    restricted_recalls <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a>    rec_itemids <span class="op">=</span> np.zeros((trial_count, TARGET_LIST_LENGTH), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> trial_index, ((participant, list_id), block) <span class="kw">in</span> <span class="bu">enumerate</span>(trial_groups):</span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a>        block <span class="op">=</span> block.sort_values(<span class="st">'PresentationOrder'</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a>        subject[trial_index, <span class="dv">0</span>] <span class="op">=</span> <span class="bu">int</span>(participant)</span>
+<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a>        list_ids[trial_index, <span class="dv">0</span>] <span class="op">=</span> <span class="bu">int</span>(list_id)</span>
+<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a>        pres_itemids[trial_index, :] <span class="op">=</span> block[<span class="st">'item_id_code'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a>        early_lpp[trial_index, :] <span class="op">=</span> block[<span class="st">'EarlyLPP'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a>        late_lpp[trial_index, :] <span class="op">=</span> block[<span class="st">'LateLPP'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a>        condition[trial_index, :] <span class="op">=</span> block[<span class="st">'condition'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a>        cond3[trial_index, :] <span class="op">=</span> block[<span class="st">'cond3'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a>        imputed_mask[trial_index, :] <span class="op">=</span> block[<span class="st">'imputed_mask'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a>        lpp_mask[trial_index, :] <span class="op">=</span> block[<span class="st">'lpp_imputed'</span>].to_numpy(dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a>        recalled_positions <span class="op">=</span> block.loc[block[<span class="st">'Recalled'</span>] <span class="op">==</span> <span class="dv">1</span>, <span class="st">'PresentationOrder'</span>].astype(<span class="bu">int</span>).tolist()</span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a>        recalled_item_ids <span class="op">=</span> block.loc[block[<span class="st">'Recalled'</span>] <span class="op">==</span> <span class="dv">1</span>, <span class="st">'item_id_code'</span>].astype(<span class="bu">int</span>).tolist()</span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> recall_index, position <span class="kw">in</span> <span class="bu">enumerate</span>(recalled_positions):</span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a>            recalls[trial_index, recall_index] <span class="op">=</span> position</span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a>            restricted_recalls[trial_index, recall_index] <span class="op">=</span> position</span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a>            rec_itemids[trial_index, recall_index] <span class="op">=</span> recalled_item_ids[recall_index]</span>
+<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a>        <span class="st">'subject'</span>: subject,</span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a>        <span class="st">'list'</span>: list_ids,</span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a>        <span class="st">'listLength'</span>: list_length,</span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a>        <span class="st">'pres_itemnos'</span>: pres_itemnos,</span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a>        <span class="st">'pres_itemids'</span>: pres_itemids,</span>
+<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a>        <span class="st">'recalls'</span>: recalls,</span>
+<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a>        <span class="st">'restricted_recalls'</span>: restricted_recalls,</span>
+<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a>        <span class="st">'rec_itemids'</span>: rec_itemids,</span>
+<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a>        <span class="st">'EarlyLPP'</span>: early_lpp,</span>
+<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a>        <span class="st">'LateLPP'</span>: late_lpp,</span>
+<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a>        <span class="st">'condition'</span>: condition,</span>
+<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a>        <span class="st">'cond3'</span>: cond3,</span>
+<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a>        <span class="st">'lpp_imputed'</span>: lpp_mask,</span>
+<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a>    }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="diagnostics">Diagnostics</h2>
+<div id="7b000813" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>presentation_order_99 <span class="op">=</span> (</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    eeg_df[eeg_df[<span class="st">'PresentationOrder'</span>] <span class="op">==</span> <span class="dv">99</span>]</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    .groupby([<span class="st">'Participant'</span>, <span class="st">'List'</span>])</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    .size()</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    .reset_index(name<span class="op">=</span><span class="st">'count_presentationorder_99'</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    .sort_values([<span class="st">'Participant'</span>, <span class="st">'List'</span>])</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>presentation_order_99</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Participant</th>
+<th data-quarto-table-cell-role="th">List</th>
+<th data-quarto-table-cell-role="th">count_presentationorder_99</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>202</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>203</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>204</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>205</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>206</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>207</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>210</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>211</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>212</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td>213</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td>214</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">11</td>
+<td>215</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">12</td>
+<td>216</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">13</td>
+<td>217</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">14</td>
+<td>218</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">15</td>
+<td>219</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">16</td>
+<td>220</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">17</td>
+<td>220</td>
+<td>9</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">18</td>
+<td>221</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">19</td>
+<td>222</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">20</td>
+<td>223</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">21</td>
+<td>224</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">22</td>
+<td>225</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">23</td>
+<td>226</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">24</td>
+<td>227</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">25</td>
+<td>229</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">26</td>
+<td>230</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">27</td>
+<td>231</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">28</td>
+<td>232</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">29</td>
+<td>233</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">30</td>
+<td>234</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">31</td>
+<td>235</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">32</td>
+<td>237</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">33</td>
+<td>238</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">34</td>
+<td>239</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">35</td>
+<td>239</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">36</td>
+<td>240</td>
+<td>7</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">37</td>
+<td>242</td>
+<td>7</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="eb3a8fb8" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>behavior_df <span class="op">=</span> prepare_behavioral_dataframe(BEHAVIOR_PATH)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>merged_preview <span class="op">=</span> merge_behavior_and_eeg(behavior_df, eeg_df)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>behavior_df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Participant</th>
+<th data-quarto-table-cell-role="th">List</th>
+<th data-quarto-table-cell-role="th">TrialNumber</th>
+<th data-quarto-table-cell-role="th">ThreeCondsCode</th>
+<th data-quarto-table-cell-role="th">ConditionCode</th>
+<th data-quarto-table-cell-role="th">ThreeConds</th>
+<th data-quarto-table-cell-role="th">Recalled</th>
+<th data-quarto-table-cell-role="th">PresentationOrder</th>
+<th data-quarto-table-cell-role="th">Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>202</td>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>202</td>
+<td>1</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>Neutral</td>
+<td>1</td>
+<td>2</td>
+<td>Neutral</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>202</td>
+<td>1</td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+<td>3</td>
+<td>Negative</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>202</td>
+<td>1</td>
+<td>6</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>0</td>
+<td>4</td>
+<td>Negative</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>202</td>
+<td>1</td>
+<td>7</td>
+<td>3</td>
+<td>2</td>
+<td>Category</td>
+<td>0</td>
+<td>5</td>
+<td>Neutral</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="09eeecc5" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>behavior_df[<span class="st">'Recalled'</span>].value_counts().to_dict()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<pre><code>{0: 3766, 1: 3074}</code></pre>
+</div>
+</div>
+<div id="feb1deba" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>recalled_mask <span class="op">=</span> behavior_df[<span class="st">'Recalled'</span>] <span class="op">==</span> <span class="dv">1</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>lpp_missing_mask <span class="op">=</span> merged_preview[[<span class="st">'EarlyLPP'</span>, <span class="st">'LateLPP'</span>]].isna().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>lpp_presence_summary <span class="op">=</span> {</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'recalled_total'</span>: <span class="bu">int</span>(recalled_mask.<span class="bu">sum</span>()),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'recalled_without_eeg'</span>: <span class="bu">int</span>((recalled_mask <span class="op">&amp;</span> lpp_missing_mask).<span class="bu">sum</span>()),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'recalled_with_eeg'</span>: <span class="bu">int</span>((recalled_mask <span class="op">&amp;</span> <span class="op">~</span>lpp_missing_mask).<span class="bu">sum</span>()),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'not_recalled_without_eeg'</span>: <span class="bu">int</span>((<span class="op">~</span>recalled_mask <span class="op">&amp;</span> lpp_missing_mask).<span class="bu">sum</span>()),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'not_recalled_with_eeg'</span>: <span class="bu">int</span>((<span class="op">~</span>recalled_mask <span class="op">&amp;</span> <span class="op">~</span>lpp_missing_mask).<span class="bu">sum</span>()),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>lpp_presence_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>{'recalled_total': 3074,
+ 'recalled_without_eeg': 140,
+ 'recalled_with_eeg': 2934,
+ 'not_recalled_without_eeg': 231,
+ 'not_recalled_with_eeg': 3534}</code></pre>
+</div>
+</div>
+<div id="6b3b59ba" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>behavior_df.groupby(<span class="st">'Condition'</span>)[<span class="st">'Recalled'</span>].mean().to_dict()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<pre><code>{'Negative': 0.5322153574580759, 'Neutral': 0.40839527765631833}</code></pre>
+</div>
+</div>
+</section>
+<section id="dataset-preparation" class="level2">
+<h2 class="anchored" data-anchor-id="dataset-preparation">Dataset Preparation</h2>
+<div id="bb2c0dd9" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>aligned_df <span class="op">=</span> assign_img_placeholders(merged_preview)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'item_id_code'</span>], item_categories <span class="op">=</span> factorize_series(aligned_df[<span class="st">'ImgName'</span>])</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'item_id_code'</span>] <span class="op">=</span> aligned_df[<span class="st">'item_id_code'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'condition'</span>], condition_categories <span class="op">=</span> factorize_series(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    aligned_df[<span class="st">'Condition'</span>], categories<span class="op">=</span>[<span class="st">'Negative'</span>, <span class="st">'Neutral'</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'cond3'</span>], cond3_categories <span class="op">=</span> factorize_series(</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    aligned_df[<span class="st">'ThreeConds'</span>], categories<span class="op">=</span>[<span class="st">'Negative'</span>, <span class="st">'Neutral'</span>, <span class="st">'Category'</span>]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'condition'</span>] <span class="op">=</span> aligned_df[<span class="st">'condition'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>aligned_df[<span class="st">'cond3'</span>] <span class="op">=</span> aligned_df[<span class="st">'cond3'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>imputed_df <span class="op">=</span> impute_lpp_by_condition(aligned_df)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>imputed_df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Participant</th>
+<th data-quarto-table-cell-role="th">List</th>
+<th data-quarto-table-cell-role="th">TrialNumber</th>
+<th data-quarto-table-cell-role="th">ThreeCondsCode</th>
+<th data-quarto-table-cell-role="th">ConditionCode</th>
+<th data-quarto-table-cell-role="th">ThreeConds</th>
+<th data-quarto-table-cell-role="th">Recalled</th>
+<th data-quarto-table-cell-role="th">PresentationOrder</th>
+<th data-quarto-table-cell-role="th">Condition</th>
+<th data-quarto-table-cell-role="th">ImgName</th>
+<th data-quarto-table-cell-role="th">EarlyLPP</th>
+<th data-quarto-table-cell-role="th">LateLPP</th>
+<th data-quarto-table-cell-role="th">imputed_mask</th>
+<th data-quarto-table-cell-role="th">item_id_code</th>
+<th data-quarto-table-cell-role="th">condition</th>
+<th data-quarto-table-cell-role="th">cond3</th>
+<th data-quarto-table-cell-role="th">lpp_imputed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>202</td>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>neg139</td>
+<td>-3.95610</td>
+<td>-1.84030</td>
+<td>0</td>
+<td>465</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>202</td>
+<td>1</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>Neutral</td>
+<td>1</td>
+<td>2</td>
+<td>Neutral</td>
+<td>neut2</td>
+<td>0.66242</td>
+<td>-0.23096</td>
+<td>0</td>
+<td>514</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>202</td>
+<td>1</td>
+<td>5</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>1</td>
+<td>3</td>
+<td>Negative</td>
+<td>neg138</td>
+<td>-0.56351</td>
+<td>-0.30037</td>
+<td>0</td>
+<td>464</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>202</td>
+<td>1</td>
+<td>6</td>
+<td>1</td>
+<td>1</td>
+<td>Negative</td>
+<td>0</td>
+<td>4</td>
+<td>Negative</td>
+<td>neg132</td>
+<td>0.72071</td>
+<td>0.91095</td>
+<td>0</td>
+<td>461</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>202</td>
+<td>1</td>
+<td>7</td>
+<td>3</td>
+<td>2</td>
+<td>Category</td>
+<td>0</td>
+<td>5</td>
+<td>Neutral</td>
+<td>cat124</td>
+<td>-0.64235</td>
+<td>0.51120</td>
+<td>0</td>
+<td>18</td>
+<td>2</td>
+<td>3</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="0ffecee1" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>talmi_dataset <span class="op">=</span> build_recall_dataset(imputed_df)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>talmi_metadata <span class="op">=</span> {</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'item_categories'</span>: item_categories,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'condition_categories'</span>: condition_categories,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'cond3_categories'</span>: cond3_categories,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>trial_count <span class="op">=</span> <span class="bu">int</span>(talmi_dataset[<span class="st">'subject'</span>].shape[<span class="dv">0</span>])</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>list_length <span class="op">=</span> <span class="bu">int</span>(talmi_dataset[<span class="st">'listLength'</span>][<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>recall_density <span class="op">=</span> <span class="bu">float</span>(np.count_nonzero(talmi_dataset[<span class="st">'recalls'</span>]) <span class="op">/</span> talmi_dataset[<span class="st">'recalls'</span>].size)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>restricted_recall_density <span class="op">=</span> <span class="bu">float</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    np.count_nonzero(talmi_dataset[<span class="st">'restricted_recalls'</span>]) <span class="op">/</span> talmi_dataset[<span class="st">'restricted_recalls'</span>].size</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>dataset_summary <span class="op">=</span> {</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'trial_count'</span>: trial_count,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'list_length'</span>: list_length,</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'recalls_shape'</span>: talmi_dataset[<span class="st">'recalls'</span>].shape,</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'recall_density'</span>: recall_density,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'restricted_recall_density'</span>: restricted_recall_density,</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'lpp_imputed_items'</span>: <span class="bu">int</span>(talmi_dataset[<span class="st">'lpp_imputed'</span>].<span class="bu">sum</span>()),</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>save_dict_to_hdf5(talmi_dataset, <span class="ss">f'</span><span class="sc">{</span>find_project_root()<span class="sc">}</span><span class="ss">/data/TalmiEEG.h5'</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>dataset_summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>{'trial_count': 342,
+ 'list_length': 20,
+ 'recalls_shape': (342, 20),
+ 'recall_density': 0.44941520467836255,
+ 'restricted_recall_density': 0.44941520467836255,
+ 'lpp_imputed_items': 371}</code></pre>
+</div>
+</div>
+<div id="793e5a84" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>talmi_dataset[<span class="st">'lpp_imputed'</span>].size</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<pre><code>6840</code></pre>
+</div>
+</div>
+<div id="81cfe9df" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>subject_mask <span class="op">=</span> generate_trial_mask(talmi_dataset, <span class="st">"data['subject'] == 202"</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, value <span class="kw">in</span> talmi_dataset.items():</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>key<span class="sc">}</span><span class="ch">\n</span><span class="sc">{</span>value[subject_mask]<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>subject
+[[202]
+ [202]
+ [202]
+ [202]
+ [202]
+ [202]
+ [202]
+ [202]
+ [202]]
+
+list
+[[1]
+ [2]
+ [3]
+ [4]
+ [5]
+ [6]
+ [7]
+ [8]
+ [9]]
+
+listLength
+[[20]
+ [20]
+ [20]
+ [20]
+ [20]
+ [20]
+ [20]
+ [20]
+ [20]]
+
+pres_itemnos
+[[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]
+ [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20]]
+
+pres_itemids
+[[465 514 464 461  18  22  19 459 505   1  67  25 463  20 515 462 466  21
+  513 460]
+ [ 44 439 441 475 506   4  10 512 443 442 510 519  68 509   7   9 516   8
+   12 438]
+ [ 61  69  70 560 556 559  52 491  65 490 473 565 550  28 492 494  62 545
+  489   3]
+ [500  54 562 503  71 548  72  50  64 563 499 502  60  63 498 569 567 564
+  497  55]
+ [  5  42 446 528 507 540 520  26  73 448 530 529 444 451 447   2  23 450
+  526  11]
+ [ 48  46  29 488 480  31 533  38 471 521 535  74 472  75 532 469 468 539
+  538 522]
+ [ 76 546 527  33 523  40 486 525  13 482 456 487  17 483 524 543 484  15
+   16  30]
+ [477 478  78 552 474  59  79  80 547 558 470 479  56  36 561 453 549  77
+   57 481]
+ [ 41 501 457 531 476 536 504  84 534 537  81  43 495 541 455 454  82  83
+   32  37]]
+
+recalls
+[[ 1  2  3  8 11 17  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+ [ 1  2  3  4  5 10 11 13 15 17 18 19 20  0  0  0  0  0  0  0]
+ [ 4  6  7  8  9 11 13 15 16 17 19 20  0  0  0  0  0  0  0  0]
+ [ 1  2  3  4  6  8  9 11 13 14 15 17 18 19 20  0  0  0  0  0]
+ [ 2  4  6  7  8  9 10 11 12 13 14 15 16 18  0  0  0  0  0  0]
+ [ 1  2  3  5  6  8  9 10 11 12 13 17 19 20  0  0  0  0  0  0]
+ [ 1  2  4  6  8  9 10 11 13 14 15 16 17 19 20  0  0  0  0  0]
+ [ 1  2  5  6  8  9 11 12 13 15 17 19  0  0  0  0  0  0  0  0]
+ [ 1  2  4  5  6  7  9 10 12 20  0  0  0  0  0  0  0  0  0  0]]
+
+restricted_recalls
+[[ 1  2  3  8 11 17  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+ [ 1  2  3  4  5 10 11 13 15 17 18 19 20  0  0  0  0  0  0  0]
+ [ 4  6  7  8  9 11 13 15 16 17 19 20  0  0  0  0  0  0  0  0]
+ [ 1  2  3  4  6  8  9 11 13 14 15 17 18 19 20  0  0  0  0  0]
+ [ 2  4  6  7  8  9 10 11 12 13 14 15 16 18  0  0  0  0  0  0]
+ [ 1  2  3  5  6  8  9 10 11 12 13 17 19 20  0  0  0  0  0  0]
+ [ 1  2  4  6  8  9 10 11 13 14 15 16 17 19 20  0  0  0  0  0]
+ [ 1  2  5  6  8  9 11 12 13 15 17 19  0  0  0  0  0  0  0  0]
+ [ 1  2  4  5  6  7  9 10 12 20  0  0  0  0  0  0  0  0  0  0]]
+
+rec_itemids
+[[465 514 464 459  67 466   0   0   0   0   0   0   0   0   0   0   0   0
+    0   0]
+ [ 44 439 441 475 506 442 510  68   7 516   8  12 438   0   0   0   0   0
+    0   0]
+ [560 559  52 491  65 473 550 492 494  62 489   3   0   0   0   0   0   0
+    0   0]
+ [500  54 562 503 548  50  64 499  60  63 498 567 564 497  55   0   0   0
+    0   0]
+ [ 42 528 540 520  26  73 448 530 529 444 451 447   2 450   0   0   0   0
+    0   0]
+ [ 48  46  29 480  31  38 471 521 535  74 472 468 538 522   0   0   0   0
+    0   0]
+ [ 76 546  33  40 525  13 482 456  17 483 524 543 484  16  30   0   0   0
+    0   0]
+ [477 478 474  59  80 547 470 479  56 561 549  57   0   0   0   0   0   0
+    0   0]
+ [ 41 501 531 476 536 504 534 537  43  37   0   0   0   0   0   0   0   0
+    0   0]]
+
+EarlyLPP
+[[-3.95610000e+00  6.62420000e-01 -5.63510000e-01  7.20710000e-01
+  -6.42350000e-01  4.59200000e-01 -4.62430000e+00 -2.31810000e+00
+   1.60860000e+00 -2.30440000e-01 -6.45210945e-01 -1.88230000e-02
+   1.75000000e+00 -1.03390000e+00 -2.81790000e-01 -1.10460000e-01
+   5.64220000e-01 -3.00120000e+00  5.26260000e-03 -2.05100000e+00]
+ [-2.98940000e+00 -1.53130000e+00 -2.80080000e+00  1.16350000e+00
+   6.31710000e-01 -1.96410000e+00  4.07130000e+00 -1.45010000e+00
+  -9.16470000e-01 -1.14620000e+00 -1.91110000e+00  2.25530000e+00
+  -6.69361667e-01  9.51750000e+00 -7.89660000e-01  2.00270000e-01
+  -1.68610000e+00 -1.12210000e+00 -1.84050000e-01  1.21510000e+00]
+ [ 1.18530000e+00  8.81595000e-01 -3.79755833e-01  1.72370000e-01
+  -5.90810000e-01 -1.92500000e+00 -3.38300000e+00  3.62350000e-01
+  -1.19340000e+00 -7.18780000e-01  3.31740000e+00  3.91670000e+00
+   1.31430000e+00 -2.18210000e+00  3.39510000e+00 -4.04040000e+00
+   2.48760000e-01  4.48510000e-01  2.97390000e+00 -2.56870000e+00]
+ [ 1.31560000e+00 -2.23890000e+00  1.08790000e-01  2.12720000e+00
+   2.49520000e-01  4.76130000e-01  2.49520000e-01  1.01240000e+00
+   1.31000000e+00  2.86930000e+00 -1.29430000e+00  7.77760000e-01
+  -1.81640000e-01  1.99160000e-01 -2.45090000e-01  3.65740000e+00
+   1.03940000e+00 -1.45810000e+00  3.12040000e-01 -3.79970000e+00]
+ [ 8.95250000e-01 -4.60290000e-02  3.45220000e-01  1.12960000e+00
+   8.77130000e-01 -3.10370000e-01  3.79360000e+00  3.71700000e-02
+   8.92955000e-01 -1.70770000e+00  1.84430000e-01  1.45310000e+00
+   5.83210000e-01  2.75700000e+00  2.96660000e+00 -2.96070000e+00
+  -1.31640000e+00  4.13400000e-01 -1.87190000e+00  1.61990000e+00]
+ [ 1.11690000e+00  4.73080000e-02  1.14270000e+00  4.80180000e-01
+   1.70810000e+00  9.22820000e-01 -1.94300000e+00  3.31620000e+00
+   1.61540000e+00  6.80190000e-01  5.87090000e-01  7.39106667e-01
+   2.01140000e-01  6.79472333e-01  1.78710000e-01  7.99090000e-01
+  -3.69270000e-01  7.50050000e-01 -1.05540000e+00  2.41010000e+00]
+ [ 4.92073077e-01 -1.87190000e+00 -1.17270000e+00  2.19980000e+00
+   5.44440000e-01 -3.34450000e-01  1.31090000e+00  1.67420000e+00
+   2.38670000e+00 -2.61330000e+00 -2.22560000e+00  3.59090000e+00
+  -2.09020000e+00  4.33200000e-01 -1.53650000e-01 -8.24560000e-01
+   3.24650000e+00  4.03590000e-01 -3.77670000e-01  3.16380000e+00]
+ [-4.44640000e+00 -1.61350000e-01  4.78574889e-01 -5.23230000e-02
+  -1.30220000e+00 -5.30810000e-01  4.78574889e-01  4.78574889e-01
+   8.42370000e-01  3.66600000e+00 -3.67350000e-01  1.65720000e+00
+  -1.87620000e+00 -5.66130000e-02 -1.36930000e+00  1.52890000e+00
+   6.70950000e-01  4.78574889e-01  3.01310000e+00  2.40410000e+00]
+ [ 1.20880000e+00 -1.86240000e+00  1.95310000e+00  5.44530000e-01
+  -1.66700000e-01 -1.62330000e+00  1.49220000e+00  4.94990000e-02
+  -1.03760000e-01  3.64560000e-01  4.94990000e-02 -8.81340000e-01
+  -1.64640000e-01 -1.26160000e+00  9.72920000e-01 -1.92370000e+00
+   4.94990000e-02 -1.98570000e-01  2.12180000e+00 -1.36690000e+00]]
+
+LateLPP
+[[-1.8403     -0.23096    -0.30037     0.91095     0.5112      0.92493
+   5.469       0.73814     1.6848     -4.3718      0.06368091  1.4111
+  -0.58144    -1.3471     -1.8238      0.31522     0.96377    -2.4013
+   0.87442    -3.0868    ]
+ [-3.2948     -4.1626     -3.3067      1.055       4.6349     -2.1548
+   1.6179     -2.4116     -0.91788    -2.263      -1.2416      1.9552
+  -1.04278     4.8191     -2.5677      1.9973     -0.16835     0.6839
+  -1.0947      3.3385    ]
+ [ 1.0006      0.74393667 -0.30081083 -0.44838    -0.75107    -2.4525
+  -4.6358      1.6066     -0.5878      0.38968     0.93594     4.0224
+   1.1514     -0.95152     3.6602     -4.0981     -0.30656     1.9099
+   1.9693     -1.5604    ]
+ [ 1.6759     -2.3048      0.076236    0.36634     0.25680742  1.7561
+   0.25680742  0.76058     2.2377      3.5446      1.3508      3.2647
+  -0.62119    -0.26748     0.72065     3.3244      0.41957     0.057873
+   2.6075     -5.9019    ]
+ [ 0.13294    -0.26079     2.1002      0.035657    0.8125     -1.034
+   7.7875      0.71406     1.83672167 -0.84971     0.14229     1.7396
+   2.6421      5.1921      0.32984    -2.2004     -1.8333      1.6058
+  -1.6971     -4.1587    ]
+ [ 0.98919    -0.90785     0.89095     0.95959     2.7275     -0.1655
+  -1.4513      3.3864      2.1181     -2.8027      1.6507      1.25715133
+  -0.088492    0.42595     0.50911     1.2835      0.54271     2.1966
+  -1.0015      1.8173    ]
+ [ 0.47356538 -3.0313     -2.3425      3.2159      0.64089     2.6505
+   2.9602      0.94795     1.5985     -0.83089    -3.3718      4.0923
+  -1.0686      0.74307    -0.32319    -3.8126      0.87315     1.3315
+  -1.2404      4.7862    ]
+ [-3.6214      0.13195     0.98048267  1.6644     -0.62942    -0.82545
+   0.98048267  0.98048267  1.0433      2.0831      1.2182      2.0362
+   0.069894    1.7469     -0.808       0.27846     1.4274      0.98048267
+   2.4228      7.6979    ]
+ [ 2.4438     -3.413       2.2022     -1.7141      2.2411     -2.8201
+  -0.51646    -0.39664     1.0035      2.1985     -0.39664    -0.41565
+   0.61412    -2.778      -0.84141    -1.8373     -0.39664    -0.17238167
+   0.25061    -1.6185    ]]
+
+condition
+[[1 2 1 1 2 2 2 1 2 2 2 2 1 2 2 1 1 2 2 1]
+ [2 1 1 1 2 2 2 2 1 1 2 2 1 2 2 2 2 2 2 1]
+ [2 1 2 2 2 2 2 1 2 1 1 2 2 2 1 1 2 2 1 2]
+ [1 2 2 1 2 2 2 2 2 2 1 1 2 2 1 2 2 2 1 2]
+ [2 2 1 2 2 2 2 2 1 1 2 2 1 1 1 2 2 1 2 2]
+ [2 2 2 1 1 2 2 2 1 2 2 1 1 2 2 1 1 2 2 2]
+ [2 2 2 2 2 1 2 2 1 1 1 2 2 1 2 2 1 2 2 2]
+ [1 1 2 2 1 2 2 2 2 2 1 1 2 2 2 1 2 2 2 1]
+ [2 1 1 2 1 2 2 2 2 2 2 2 1 2 1 1 2 1 2 2]]
+
+cond3
+[[1 2 1 1 3 3 3 1 2 3 2 3 1 3 2 1 1 3 2 1]
+ [3 1 1 1 2 3 3 2 1 1 2 2 1 2 3 3 2 3 3 1]
+ [3 1 2 2 2 2 3 1 3 1 1 2 2 3 1 1 3 2 1 3]
+ [1 3 2 1 2 2 3 3 3 2 1 1 3 3 1 2 2 2 1 3]
+ [3 3 1 2 2 2 2 3 1 1 2 2 1 1 1 3 3 1 2 3]
+ [3 3 3 1 1 3 2 3 1 2 2 1 1 3 2 1 1 2 2 2]
+ [2 2 3 2 3 1 2 3 1 1 1 3 3 1 2 2 1 3 3 3]
+ [1 1 3 2 1 3 2 3 2 2 1 1 3 3 2 1 2 2 3 1]
+ [3 1 1 2 1 2 2 3 2 2 2 3 1 2 1 1 3 1 3 3]]
+
+lpp_imputed
+[[0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0]
+ [0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0]
+ [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0]
+ [0 0 0 0 0 0 0 1 0 0 1 0 0 0 0 0 1 1 0 0]]
+</code></pre>
+</div>
+</div>
+<div id="4138946b" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>talmi_metadata</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<pre><code>{'item_categories': ['cat1',
+  'cat10',
+  'cat102',
+  'cat103',
+  'cat104',
+  'cat105',
+  'cat106',
+  'cat107',
+  'cat110',
+  'cat112',
+  'cat114',
+  'cat115',
+  'cat116',
+  'cat117',
+  'cat12',
+  'cat120',
+  'cat122',
+  'cat124',
+  'cat126',
+  'cat128',
+  'cat129',
+  'cat13',
+  'cat130',
+  'cat133',
+  'cat135',
+  'cat138',
+  'cat141',
+  'cat143',
+  'cat145',
+  'cat146',
+  'cat147',
+  'cat149',
+  'cat15',
+  'cat16',
+  'cat17',
+  'cat21',
+  'cat22',
+  'cat24',
+  'cat27',
+  'cat28',
+  'cat33',
+  'cat4',
+  'cat41',
+  'cat43',
+  'cat44',
+  'cat46',
+  'cat47',
+  'cat49',
+  'cat51',
+  'cat52',
+  'cat54',
+  'cat59',
+  'cat62',
+  'cat66',
+  'cat70',
+  'cat73',
+  'cat8',
+  'cat86',
+  'cat88',
+  'cat89',
+  'cat9',
+  'cat92',
+  'cat93',
+  'cat94',
+  'cat95',
+  'cat98',
+  'missing_202_1_11',
+  'missing_202_2_13',
+  'missing_202_3_2',
+  'missing_202_3_3',
+  'missing_202_4_5',
+  'missing_202_4_7',
+  'missing_202_5_9',
+  'missing_202_6_12',
+  'missing_202_6_14',
+  'missing_202_7_1',
+  'missing_202_8_18',
+  'missing_202_8_3',
+  'missing_202_8_7',
+  'missing_202_8_8',
+  'missing_202_9_11',
+  'missing_202_9_17',
+  'missing_202_9_18',
+  'missing_202_9_8',
+  'missing_203_3_10',
+  'missing_203_5_18',
+  'missing_203_5_20',
+  'missing_203_7_1',
+  'missing_203_7_15',
+  'missing_203_7_6',
+  'missing_203_9_12',
+  'missing_204_2_10',
+  'missing_204_2_8',
+  'missing_204_3_12',
+  'missing_204_3_13',
+  'missing_204_5_20',
+  'missing_204_6_2',
+  'missing_204_7_1',
+  'missing_204_7_20',
+  'missing_204_8_20',
+  'missing_204_8_3',
+  'missing_204_8_6',
+  'missing_204_9_15',
+  'missing_204_9_19',
+  'missing_204_9_2',
+  'missing_204_9_9',
+  'missing_205_1_1',
+  'missing_205_1_3',
+  'missing_205_2_12',
+  'missing_205_5_16',
+  'missing_205_7_1',
+  'missing_205_8_1',
+  'missing_205_8_2',
+  'missing_205_8_3',
+  'missing_205_9_11',
+  'missing_206_2_11',
+  'missing_206_3_3',
+  'missing_206_4_15',
+  'missing_206_4_19',
+  'missing_206_4_4',
+  'missing_206_4_9',
+  'missing_206_7_1',
+  'missing_206_8_18',
+  'missing_206_8_6',
+  'missing_206_9_16',
+  'missing_206_9_20',
+  'missing_207_1_11',
+  'missing_207_2_12',
+  'missing_207_3_6',
+  'missing_207_4_11',
+  'missing_207_5_7',
+  'missing_207_7_1',
+  'missing_207_7_11',
+  'missing_207_7_17',
+  'missing_207_8_12',
+  'missing_207_8_15',
+  'missing_207_8_19',
+  'missing_210_1_20',
+  'missing_210_7_1',
+  'missing_210_8_18',
+  'missing_211_3_19',
+  'missing_211_3_20',
+  'missing_211_4_15',
+  'missing_211_4_8',
+  'missing_211_5_20',
+  'missing_211_7_1',
+  'missing_212_2_12',
+  'missing_212_2_7',
+  'missing_212_5_1',
+  'missing_212_5_2',
+  'missing_212_5_3',
+  'missing_212_5_4',
+  'missing_212_6_20',
+  'missing_212_6_8',
+  'missing_212_6_9',
+  'missing_212_7_1',
+  'missing_213_1_10',
+  'missing_213_1_16',
+  'missing_213_2_13',
+  'missing_213_2_5',
+  'missing_213_2_8',
+  'missing_213_3_4',
+  'missing_213_4_14',
+  'missing_213_6_3',
+  'missing_213_7_1',
+  'missing_213_7_4',
+  'missing_213_8_11',
+  'missing_213_8_19',
+  'missing_213_8_8',
+  'missing_213_9_12',
+  'missing_213_9_13',
+  'missing_213_9_14',
+  'missing_213_9_17',
+  'missing_213_9_8',
+  'missing_214_2_8',
+  'missing_214_5_19',
+  'missing_214_5_7',
+  'missing_214_6_20',
+  'missing_214_6_9',
+  'missing_214_7_1',
+  'missing_214_7_13',
+  'missing_214_8_19',
+  'missing_214_9_11',
+  'missing_214_9_12',
+  'missing_214_9_19',
+  'missing_215_1_4',
+  'missing_215_2_4',
+  'missing_215_2_6',
+  'missing_215_4_20',
+  'missing_215_4_5',
+  'missing_215_5_9',
+  'missing_215_6_18',
+  'missing_215_6_5',
+  'missing_215_7_1',
+  'missing_215_8_6',
+  'missing_215_8_7',
+  'missing_215_9_1',
+  'missing_215_9_7',
+  'missing_216_1_4',
+  'missing_216_2_12',
+  'missing_216_2_19',
+  'missing_216_6_3',
+  'missing_216_6_8',
+  'missing_216_7_1',
+  'missing_216_7_20',
+  'missing_217_1_15',
+  'missing_217_1_4',
+  'missing_217_4_1',
+  'missing_217_4_16',
+  'missing_217_4_18',
+  'missing_217_5_17',
+  'missing_217_6_14',
+  'missing_217_6_18',
+  'missing_217_7_1',
+  'missing_217_7_20',
+  'missing_217_7_9',
+  'missing_217_8_4',
+  'missing_217_9_8',
+  'missing_217_9_9',
+  'missing_218_3_14',
+  'missing_218_7_1',
+  'missing_219_1_13',
+  'missing_219_2_2',
+  'missing_219_3_1',
+  'missing_219_3_16',
+  'missing_219_4_11',
+  'missing_219_7_1',
+  'missing_219_8_3',
+  'missing_219_9_17',
+  'missing_220_1_14',
+  'missing_220_7_1',
+  'missing_220_7_16',
+  'missing_220_8_2',
+  'missing_220_8_7',
+  'missing_220_9_12',
+  'missing_221_1_15',
+  'missing_221_1_16',
+  'missing_221_1_17',
+  'missing_221_1_18',
+  'missing_221_1_5',
+  'missing_221_7_1',
+  'missing_221_7_18',
+  'missing_222_4_20',
+  'missing_222_5_19',
+  'missing_222_7_1',
+  'missing_222_7_10',
+  'missing_222_7_11',
+  'missing_222_7_9',
+  'missing_223_3_19',
+  'missing_223_3_20',
+  'missing_223_4_18',
+  'missing_223_4_5',
+  'missing_223_4_6',
+  'missing_223_6_17',
+  'missing_223_6_18',
+  'missing_223_7_1',
+  'missing_223_7_4',
+  'missing_223_8_1',
+  'missing_223_8_2',
+  'missing_223_8_20',
+  'missing_223_8_3',
+  'missing_223_8_8',
+  'missing_223_9_9',
+  'missing_224_3_10',
+  'missing_224_3_2',
+  'missing_224_5_1',
+  'missing_224_5_11',
+  'missing_224_5_12',
+  'missing_224_5_3',
+  'missing_224_5_4',
+  'missing_224_5_5',
+  'missing_224_7_1',
+  'missing_224_9_8',
+  'missing_225_1_13',
+  'missing_225_1_5',
+  'missing_225_1_9',
+  'missing_225_2_12',
+  'missing_225_2_15',
+  'missing_225_3_18',
+  'missing_225_5_3',
+  'missing_225_5_5',
+  'missing_225_5_9',
+  'missing_225_7_1',
+  'missing_225_9_8',
+  'missing_226_1_20',
+  'missing_226_2_6',
+  'missing_226_3_1',
+  'missing_226_5_19',
+  'missing_226_5_7',
+  'missing_226_6_11',
+  'missing_226_6_16',
+  'missing_226_6_3',
+  'missing_226_7_1',
+  'missing_226_9_3',
+  'missing_227_7_1',
+  'missing_227_7_2',
+  'missing_229_1_15',
+  'missing_229_1_6',
+  'missing_229_2_19',
+  'missing_229_3_1',
+  'missing_229_3_11',
+  'missing_229_4_11',
+  'missing_229_7_1',
+  'missing_229_8_10',
+  'missing_229_8_17',
+  'missing_229_8_3',
+  'missing_229_8_9',
+  'missing_229_9_3',
+  'missing_230_2_4',
+  'missing_230_3_11',
+  'missing_230_3_13',
+  'missing_230_3_14',
+  'missing_230_3_4',
+  'missing_230_4_12',
+  'missing_230_4_16',
+  'missing_230_4_6',
+  'missing_230_5_1',
+  'missing_230_5_12',
+  'missing_230_5_15',
+  'missing_230_5_17',
+  'missing_230_5_5',
+  'missing_230_7_1',
+  'missing_230_7_19',
+  'missing_230_7_2',
+  'missing_230_7_4',
+  'missing_230_9_18',
+  'missing_230_9_2',
+  'missing_231_3_1',
+  'missing_231_3_3',
+  'missing_231_3_4',
+  'missing_231_4_18',
+  'missing_231_4_19',
+  'missing_231_4_9',
+  'missing_231_5_11',
+  'missing_231_5_6',
+  'missing_231_7_1',
+  'missing_231_9_1',
+  'missing_231_9_19',
+  'missing_232_1_19',
+  'missing_232_2_7',
+  'missing_232_6_12',
+  'missing_232_7_1',
+  'missing_232_7_19',
+  'missing_232_7_8',
+  'missing_232_9_20',
+  'missing_233_1_11',
+  'missing_233_1_7',
+  'missing_233_3_11',
+  'missing_233_3_3',
+  'missing_233_5_8',
+  'missing_233_5_9',
+  'missing_233_6_19',
+  'missing_233_7_1',
+  'missing_233_7_12',
+  'missing_233_7_7',
+  'missing_233_8_16',
+  'missing_233_8_7',
+  'missing_233_9_16',
+  'missing_234_1_19',
+  'missing_234_3_12',
+  'missing_234_7_1',
+  'missing_234_7_13',
+  'missing_234_8_14',
+  'missing_234_9_3',
+  'missing_234_9_4',
+  'missing_235_1_1',
+  'missing_235_5_3',
+  'missing_235_7_1',
+  'missing_235_9_10',
+  'missing_235_9_2',
+  'missing_236_1_17',
+  'missing_236_1_6',
+  'missing_236_4_19',
+  'missing_236_4_2',
+  'missing_236_7_1',
+  'missing_236_7_17',
+  'missing_236_7_5',
+  'missing_236_8_20',
+  'missing_237_1_14',
+  'missing_237_5_8',
+  'missing_237_7_1',
+  'missing_237_7_6',
+  'missing_237_8_15',
+  'missing_237_8_20',
+  'missing_237_9_15',
+  'missing_237_9_7',
+  'missing_237_9_8',
+  'missing_238_4_11',
+  'missing_238_7_1',
+  'missing_238_7_6',
+  'missing_238_8_6',
+  'missing_238_8_7',
+  'missing_238_9_12',
+  'missing_239_1_19',
+  'missing_239_1_20',
+  'missing_239_2_2',
+  'missing_239_2_20',
+  'missing_239_3_11',
+  'missing_239_3_13',
+  'missing_239_3_16',
+  'missing_239_4_15',
+  'missing_239_4_2',
+  'missing_239_4_6',
+  'missing_239_6_11',
+  'missing_239_7_1',
+  'missing_239_7_6',
+  'missing_239_8_3',
+  'missing_239_8_4',
+  'missing_239_9_19',
+  'missing_239_9_20',
+  'missing_240_3_17',
+  'missing_240_3_20',
+  'missing_240_3_3',
+  'missing_240_6_10',
+  'missing_240_6_11',
+  'missing_240_6_9',
+  'missing_240_7_1',
+  'missing_240_8_11',
+  'missing_241_1_16',
+  'missing_241_2_10',
+  'missing_241_2_15',
+  'missing_241_4_17',
+  'missing_241_4_18',
+  'missing_241_7_1',
+  'missing_241_9_15',
+  'missing_241_9_3',
+  'missing_241_9_7',
+  'missing_242_1_1',
+  'missing_242_1_9',
+  'missing_242_2_20',
+  'missing_242_3_12',
+  'missing_242_3_20',
+  'missing_242_4_12',
+  'missing_242_6_7',
+  'missing_242_7_1',
+  'missing_242_8_6',
+  'missing_242_9_7',
+  'neg102',
+  'neg104',
+  'neg109',
+  'neg110',
+  'neg111',
+  'neg112',
+  'neg113',
+  'neg114',
+  'neg115',
+  'neg117',
+  'neg118',
+  'neg12',
+  'neg120',
+  'neg121',
+  'neg122',
+  'neg123',
+  'neg124',
+  'neg126',
+  'neg127',
+  'neg128',
+  'neg129',
+  'neg130',
+  'neg131',
+  'neg132',
+  'neg134',
+  'neg137',
+  'neg138',
+  'neg139',
+  'neg14',
+  'neg140',
+  'neg141',
+  'neg143',
+  'neg144',
+  'neg145',
+  'neg146',
+  'neg150',
+  'neg2',
+  'neg20',
+  'neg24',
+  'neg28',
+  'neg3',
+  'neg30',
+  'neg35',
+  'neg37',
+  'neg39',
+  'neg40',
+  'neg43',
+  'neg46',
+  'neg49',
+  'neg55',
+  'neg57',
+  'neg6',
+  'neg60',
+  'neg63',
+  'neg64',
+  'neg65',
+  'neg69',
+  'neg8',
+  'neg80',
+  'neg83',
+  'neg84',
+  'neg90',
+  'neg92',
+  'neg96',
+  'neg98',
+  'neg99',
+  'neut1',
+  'neut100',
+  'neut11',
+  'neut13',
+  'neut14',
+  'neut15',
+  'neut16',
+  'neut17',
+  'neut18',
+  'neut19',
+  'neut2',
+  'neut21',
+  'neut22',
+  'neut23',
+  'neut25',
+  'neut26',
+  'neut27',
+  'neut28',
+  'neut29',
+  'neut3',
+  'neut30',
+  'neut31',
+  'neut32',
+  'neut33',
+  'neut34',
+  'neut36',
+  'neut37',
+  'neut38',
+  'neut39',
+  'neut4',
+  'neut40',
+  'neut41',
+  'neut42',
+  'neut43',
+  'neut44',
+  'neut45',
+  'neut46',
+  'neut48',
+  'neut49',
+  'neut50',
+  'neut51',
+  'neut58',
+  'neut59',
+  'neut6',
+  'neut62',
+  'neut63',
+  'neut69',
+  'neut7',
+  'neut71',
+  'neut74',
+  'neut75',
+  'neut77',
+  'neut79',
+  'neut8',
+  'neut80',
+  'neut84',
+  'neut87',
+  'neut88',
+  'neut89',
+  'neut9',
+  'neut90',
+  'neut91',
+  'neut93',
+  'neut95',
+  'neut97',
+  'neut98'],
+ 'condition_categories': ['Negative', 'Neutral'],
+ 'cond3_categories': ['Negative', 'Neutral', 'Category']}</code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
