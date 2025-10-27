@@ -55,7 +55,6 @@ class CMR(Pytree):
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.emotion_scale = parameters["emotion_scale"]
-        self.lpp_scale = parameters["lpp_scale"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
@@ -68,8 +67,16 @@ class CMR(Pytree):
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.lpp = lpp * self.lpp_scale
-        self.emotional_mcf = jnp.array(is_emotional, dtype=jnp.float32)
+        self.is_emotional = jnp.array(is_emotional, dtype=jnp.float32)
+
+        # Center LPP within emotional items so boosts reflect relative differences.
+        lpp_values = jnp.array(lpp, dtype=jnp.float32)
+        emotional_lpp_sum = jnp.sum(lpp_values * is_emotional)
+        emotional_item_count = jnp.sum(is_emotional)
+        emotional_lpp_mean = emotional_lpp_sum / jnp.maximum(emotional_item_count, 1)
+        normalized_lpp = is_emotional * (lpp_values - emotional_lpp_mean)
+        self.lpp = normalized_lpp * parameters["lpp_scale"]
+        self.emotional_mcf = self.is_emotional
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -91,16 +98,16 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+        base_emotion_strength = jnp.maximum(0.0, self.emotion_scale + self.lpp[self.study_index])
         emcf_lr = lax.cond(
             self.modulate_emotion_by_primacy,
-            lambda: self.emotion_scale * self.primacy[self.study_index],
-            lambda: self.emotion_scale,
+            lambda: self.primacy[self.study_index] * base_emotion_strength,
+            lambda: base_emotion_strength,
         )
-        mcf_lr = self.lpp[self.study_index] + self.primacy[self.study_index]
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, item, mcf_lr),
+            mcf=self.mcf.associate(learning_state, item, self.primacy[self.study_index]),
             emotional_mcf=self.emotional_mcf.at[item_index].multiply(emcf_lr),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
@@ -159,7 +166,7 @@ class CMR(Pytree):
         
         last_emotional = lax.cond(
             self.recall_total > 0,
-            lambda: self.emotional_mcf[self.recalls[self.recall_total - 1] - 1] > 0,
+            lambda: self.is_emotional[self.recalls[self.recall_total - 1] - 1],
             lambda: False,
         )
         emotion_support = last_emotional * self.emotional_mcf
@@ -236,9 +243,7 @@ def make_factory(
 
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
-            lpp = dataset["EarlyLPP"]
-            global_minimum = jnp.abs(jnp.min(lpp))
-            self.lpp = jnp.array(lpp + global_minimum, dtype=jnp.float32)
+            self.lpp = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
 
             def model_create_fn(
                 list_length: int,
@@ -270,7 +275,10 @@ def make_factory(
             parameters: Mapping[str, Float_],
         ) -> MemorySearch:
             return self.model_create_fn(
-                self.max_list_length, parameters, self.trial_emotions[trial_index], self.lpp[trial_index]
+                self.max_list_length,
+                parameters,
+                self.trial_emotions[trial_index],
+                self.lpp[trial_index],
             )
 
     return CMRModelFactory
