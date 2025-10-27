@@ -166,7 +166,7 @@ class CMR(Pytree):
         
         last_emotional = lax.cond(
             self.recall_total > 0,
-            lambda: self.is_emotional[self.recalls[self.recall_total - 1] - 1],
+            lambda: self.is_emotional[self.recalls[self.recall_total - 1] - 1] > 0,
             lambda: False,
         )
         emotion_support = last_emotional * self.emotional_mcf

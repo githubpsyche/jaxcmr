@@ -369,6 +369,9 @@ Overall serial position curve across item types. Left column: Two-Context eCMR. 
 :::
 
 #### Notes
+The Two-Context eCMR variant seems to produce a slightly better fit to the emotion-enhanced memory effect than the Pure-Attention variant, but only if you squint your eyes a bit; broad issues with under-prediction of recall rates for negative items and over-prediction for neutral items remain.
+
+For now, we use both variants as candidates for neurally-informed extensions of eCMR.
 
 ## Neurally Informed Extension
 
@@ -376,13 +379,153 @@ We now turn to exploring how a neural signature known to carry information about
 Our focus for the moment is an initial prototype that efficiently demonstrates that such improvement using present data is *possible*.
 Downstream work can attempt to identify the *best* approach.
 
-### Emotion Enhanced LPP
+To extend the Pure-Attention simplified eCMR model, we let Early LPP perturb each emotional item’s learning rate.
+For every trial we center Early LPP within emotional study events, zeroing neutral items and measuring only the deviation from the emotional mean.
+During encoding this deviation is scaled by `lpp_scale` and added to the primacy-driven learning rate.
+The sum is clamped at zero so low-LPP emotional items never become stronger than neutral items, while high-LPP items enjoy proportionally higher associations.
+This additive term is the only change relative to the Pure-Attention eCMR model described above, giving the global `emotion_scale` the same role as before and using LPP to redistribute recall probability across emotional list items.
+Here, the goal is to exploit the relationship between EarlyLPP and recall probability for emotional items observed in the data, allowing the model to reduce support in the model for emotional items that were not recalled in the data, while boosting support for emotional items that were recalled.
 
-Before settling on a specification, here we seek to clarify what we know about the LPP signal that we'll be using to extend eCMR:
+A similar approach can be taken to extend the Two-Context simplified eCMR model.
+Here, Early LPP again perturbs each emotional item’s learning rate during encoding but only for the emotional context-to-item associations stored in eMCF.
+Modulation is scaled by `lpp_scale`, and the sum is again clamped at zero.
+This change specifically allows the model to redistribute the ability of emotional items to be cued for by emotional context during retrieval, based on their Early LPP values.
 
--   Early LPP values are consistently higher for NEGATIVE items than for NEUTRAL items.\
--   For NEGATIVE items, LPP values are consistently higher for RECALLED items\
--   For NEUTRAL ITEMS, LPP values are do not consistently index whether an item will be recalled
+### Parameter Sensitivity Tests
+
+Both neurally-informed eCMR variants introduce a new `lpp_scale` parameter that scales the influence of Early LPP on emotional item learning rates during encoding.
+To confirm that this parameter can help the models capture the relationship between LPP amplitude and recall probability, we simulate each model variant across a range of `lpp_scale` values, plotting the emotional category-spc and Early LPP by recall status for negative items for each configuration.
+Both variants seem to make similar use of the new parameter to adjust recall rates for emotional items based on their LPP values.
+
+#### Neurally-Informed Pure-Attention eCMR
+
+::: {#fig-eeg_attention_emcr_cat_spc_parameter_sensitivity layout-ncol="2"}
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png)
+
+![](/results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png)
+
+Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+:::
+
+::: {#fig-eeg_attention_emcr_negative_lpp_by_recall layout-ncol="2"}
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png)
+
+Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+:::
+
+#### Neurally-Informed Two-Context eCMR
+
+::: {#fig-eeg_attention_emcr_cat_spc_parameter_sensitivity layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png)
+
+![](/results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png)
+
+Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+:::
+
+::: {#fig-eeg_attention_emcr_negative_lpp_by_recall layout-ncol="2"}
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png)
+
+Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+:::
+
+### Comparison of Fits to Benchmark Statistics
+
+#### Negative + Neutral Category SPC
+
+::: {#fig-eeg_attention_emcr_cat_spc_comparison}
+![](results/figures/reference_catspc.png){width="50%"}
+
+Recall rate by study position and item type from reference materials.
+:::
+
+::: {#fig-eegemcr_cat_spc layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+:::
+
+#### Negative-Category SPC
+
+::: {#fig-eegemcr_cat_spc_negative layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+
+![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+
+Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+:::
+
+#### Neutral-Category SPC
+
+::: {#fig-eegemcr_cat_spc_neutral layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+:::
+
+#### Regular Serial Position Curve
+
+::: {#fig-eegemcr_spc layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+
+![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+
+Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+:::
+
+#### Early LPP by Recall Status and Item-Category
+
+::: {#fig-eegecmr_lpp_by_recall_reference layout-ncol="2"}
+
+![](results/figures/cat_lpp_by_recall_EarlyLPP_Negative.png)
+
+LPP amplitude by recall status for NEGATIVE items from reference materials.
+:::
+
+::: {#fig-eegecmr_lpp_by_recall layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+
+![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+
+![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+
+Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+:::
+
+### Notes
 
 # Side Issues
 
@@ -410,9 +553,9 @@ Here we draw separate plots for data and each model variant.
 
 ![](results/figures/reference_catspc.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
 Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT).
 :::

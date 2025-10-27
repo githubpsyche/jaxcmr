@@ -128,7 +128,9 @@ ul.task-list li input[type="checkbox"] {
   </ul></li>
   <li><a href="#neurally-informed-extension" id="toc-neurally-informed-extension" class="nav-link" data-scroll-target="#neurally-informed-extension"><span class="header-section-number">4.3</span> Neurally Informed Extension</a>
   <ul class="collapse">
-  <li><a href="#emotion-enhanced-lpp" id="toc-emotion-enhanced-lpp" class="nav-link" data-scroll-target="#emotion-enhanced-lpp"><span class="header-section-number">4.3.1</span> Emotion Enhanced LPP</a></li>
+  <li><a href="#parameter-sensitivity-tests-2" id="toc-parameter-sensitivity-tests-2" class="nav-link" data-scroll-target="#parameter-sensitivity-tests-2"><span class="header-section-number">4.3.1</span> Parameter Sensitivity Tests</a></li>
+  <li><a href="#comparison-of-fits-to-benchmark-statistics-2" id="toc-comparison-of-fits-to-benchmark-statistics-2" class="nav-link" data-scroll-target="#comparison-of-fits-to-benchmark-statistics-2"><span class="header-section-number">4.3.2</span> Comparison of Fits to Benchmark Statistics</a></li>
+  <li><a href="#notes-2" id="toc-notes-2" class="nav-link" data-scroll-target="#notes-2"><span class="header-section-number">4.3.3</span> Notes</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#side-issues" id="toc-side-issues" class="nav-link" data-scroll-target="#side-issues"><span class="header-section-number">5</span> Side Issues</a>
@@ -589,22 +591,263 @@ Figure&nbsp;19: Overall serial position curve across item types. Left column: Tw
 </section>
 <section id="notes-1" class="level4" data-number="4.2.2.5">
 <h4 data-number="4.2.2.5" class="anchored" data-anchor-id="notes-1"><span class="header-section-number">4.2.2.5</span> Notes</h4>
+<p>The Two-Context eCMR variant seems to produce a slightly better fit to the emotion-enhanced memory effect than the Pure-Attention variant, but only if you squint your eyes a bit; broad issues with under-prediction of recall rates for negative items and over-prediction for neutral items remain.</p>
+<p>For now, we use both variants as candidates for neurally-informed extensions of eCMR.</p>
 </section>
 </section>
 </section>
 <section id="neurally-informed-extension" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="neurally-informed-extension"><span class="header-section-number">4.3</span> Neurally Informed Extension</h2>
 <p>We now turn to exploring how a neural signature known to carry information about whether negative items will be recalled or not can further augment model performance. Our focus for the moment is an initial prototype that efficiently demonstrates that such improvement using present data is <em>possible</em>. Downstream work can attempt to identify the <em>best</em> approach.</p>
-<section id="emotion-enhanced-lpp" class="level3" data-number="4.3.1">
-<h3 data-number="4.3.1" class="anchored" data-anchor-id="emotion-enhanced-lpp"><span class="header-section-number">4.3.1</span> Emotion Enhanced LPP</h3>
-<p>Before settling on a specification, here we seek to clarify what we know about the LPP signal that we’ll be using to extend eCMR:</p>
-<ul>
-<li>Early LPP values are consistently higher for NEGATIVE items than for NEUTRAL items.<br>
-</li>
-<li>For NEGATIVE items, LPP values are consistently higher for RECALLED items<br>
-</li>
-<li>For NEUTRAL ITEMS, LPP values are do not consistently index whether an item will be recalled</li>
-</ul>
+<p>To extend the Pure-Attention simplified eCMR model, we let Early LPP perturb each emotional item’s learning rate. For every trial we center Early LPP within emotional study events, zeroing neutral items and measuring only the deviation from the emotional mean. During encoding this deviation is scaled by <code>lpp_scale</code> and added to the primacy-driven learning rate. The sum is clamped at zero so low-LPP emotional items never become stronger than neutral items, while high-LPP items enjoy proportionally higher associations. This additive term is the only change relative to the Pure-Attention eCMR model described above, giving the global <code>emotion_scale</code> the same role as before and using LPP to redistribute recall probability across emotional list items. Here, the goal is to exploit the relationship between EarlyLPP and recall probability for emotional items observed in the data, allowing the model to reduce support in the model for emotional items that were not recalled in the data, while boosting support for emotional items that were recalled.</p>
+<p>A similar approach can be taken to extend the Two-Context simplified eCMR model. Here, Early LPP again perturbs each emotional item’s learning rate during encoding but only for the emotional context-to-item associations stored in eMCF. Modulation is scaled by <code>lpp_scale</code>, and the sum is again clamped at zero. This change specifically allows the model to redistribute the ability of emotional items to be cued for by emotional context during retrieval, based on their Early LPP values.</p>
+<section id="parameter-sensitivity-tests-2" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="parameter-sensitivity-tests-2"><span class="header-section-number">4.3.1</span> Parameter Sensitivity Tests</h3>
+<p>Both neurally-informed eCMR variants introduce a new <code>lpp_scale</code> parameter that scales the influence of Early LPP on emotional item learning rates during encoding. To confirm that this parameter can help the models capture the relationship between LPP amplitude and recall probability, we simulate each model variant across a range of <code>lpp_scale</code> values, plotting the emotional category-spc and Early LPP by recall status for negative items for each configuration. Both variants seem to make similar use of the new parameter to adjust recall rates for emotional items based on their LPP values.</p>
+<section id="neurally-informed-pure-attention-ecmr" class="level4" data-number="4.3.1.1">
+<h4 data-number="4.3.1.1" class="anchored" data-anchor-id="neurally-informed-pure-attention-ecmr"><span class="header-section-number">4.3.1.1</span> Neurally-Informed Pure-Attention eCMR</h4>
+<div id="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-39" title="Figure&nbsp;20: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="./results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-40" title="Figure&nbsp;20: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items."><img src="./results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+</figcaption>
+</figure>
+</div>
+<div id="fig-eeg_attention_emcr_negative_lpp_by_recall" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eeg_attention_emcr_negative_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-41" title="Figure&nbsp;21: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-42" title="Figure&nbsp;21: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eeg_attention_emcr_negative_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="neurally-informed-two-context-ecmr" class="level4" data-number="4.3.1.2">
+<h4 data-number="4.3.1.2" class="anchored" data-anchor-id="neurally-informed-two-context-ecmr"><span class="header-section-number">4.3.1.2</span> Neurally-Informed Two-Context eCMR</h4>
+<div id="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-43" title="Figure&nbsp;22: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="./results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-44" title="Figure&nbsp;22: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items."><img src="./results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eeg_attention_emcr_cat_spc_parameter_sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;22: Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+</figcaption>
+</figure>
+</div>
+<div id="fig-eeg_attention_emcr_negative_lpp_by_recall" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eeg_attention_emcr_negative_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-45" title="Figure&nbsp;23: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-46" title="Figure&nbsp;23: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eeg_attention_emcr_negative_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;23: Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="comparison-of-fits-to-benchmark-statistics-2" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="comparison-of-fits-to-benchmark-statistics-2"><span class="header-section-number">4.3.2</span> Comparison of Fits to Benchmark Statistics</h3>
+<section id="negative-neutral-category-spc-2" class="level4" data-number="4.3.2.1">
+<h4 data-number="4.3.2.1" class="anchored" data-anchor-id="negative-neutral-category-spc-2"><span class="header-section-number">4.3.2.1</span> Negative + Neutral Category SPC</h4>
+<div id="fig-eeg_attention_emcr_cat_spc_comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eeg_attention_emcr_cat_spc_comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="results/figures/reference_catspc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-47" title="Figure&nbsp;24: Recall rate by study position and item type from reference materials."><img src="results/figures/reference_catspc.png" class="img-fluid figure-img" style="width:50.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eeg_attention_emcr_cat_spc_comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;24: Recall rate by study position and item type from reference materials.
+</figcaption>
+</figure>
+</div>
+<div id="fig-eegemcr_cat_spc" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegemcr_cat_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-48" title="Figure&nbsp;25: Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-49" title="Figure&nbsp;25: Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-50" title="Figure&nbsp;25: Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-51" title="Figure&nbsp;25: Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegemcr_cat_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;25: Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="negative-category-spc-1" class="level4" data-number="4.3.2.2">
+<h4 data-number="4.3.2.2" class="anchored" data-anchor-id="negative-category-spc-1"><span class="header-section-number">4.3.2.2</span> Negative-Category SPC</h4>
+<div id="fig-eegemcr_cat_spc_negative" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegemcr_cat_spc_negative-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="lightbox" data-gallery="quarto-lightbox-gallery-52" title="Figure&nbsp;26: Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="lightbox" data-gallery="quarto-lightbox-gallery-53" title="Figure&nbsp;26: Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="lightbox" data-gallery="quarto-lightbox-gallery-54" title="Figure&nbsp;26: Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="lightbox" data-gallery="quarto-lightbox-gallery-55" title="Figure&nbsp;26: Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegemcr_cat_spc_negative-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;26: Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="neutral-category-spc-1" class="level4" data-number="4.3.2.3">
+<h4 data-number="4.3.2.3" class="anchored" data-anchor-id="neutral-category-spc-1"><span class="header-section-number">4.3.2.3</span> Neutral-Category SPC</h4>
+<div id="fig-eegemcr_cat_spc_neutral" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegemcr_cat_spc_neutral-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="lightbox" data-gallery="quarto-lightbox-gallery-56" title="Figure&nbsp;27: Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="lightbox" data-gallery="quarto-lightbox-gallery-57" title="Figure&nbsp;27: Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="lightbox" data-gallery="quarto-lightbox-gallery-58" title="Figure&nbsp;27: Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="lightbox" data-gallery="quarto-lightbox-gallery-59" title="Figure&nbsp;27: Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegemcr_cat_spc_neutral-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;27: Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="regular-serial-position-curve-1" class="level4" data-number="4.3.2.4">
+<h4 data-number="4.3.2.4" class="anchored" data-anchor-id="regular-serial-position-curve-1"><span class="header-section-number">4.3.2.4</span> Regular Serial Position Curve</h4>
+<div id="fig-eegemcr_spc" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegemcr_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-60" title="Figure&nbsp;28: Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-61" title="Figure&nbsp;28: Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-62" title="Figure&nbsp;28: Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-63" title="Figure&nbsp;28: Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegemcr_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;28: Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="early-lpp-by-recall-status-and-item-category" class="level4" data-number="4.3.2.5">
+<h4 data-number="4.3.2.5" class="anchored" data-anchor-id="early-lpp-by-recall-status-and-item-category"><span class="header-section-number">4.3.2.5</span> Early LPP by Recall Status and Item-Category</h4>
+<div id="fig-eegecmr_lpp_by_recall_reference" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegecmr_lpp_by_recall_reference-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<a href="results/figures/cat_lpp_by_recall_EarlyLPP_Negative.png" class="lightbox" data-gallery="quarto-lightbox-gallery-64" title="Figure&nbsp;29: LPP amplitude by recall status for NEGATIVE items from reference materials."><img src="results/figures/cat_lpp_by_recall_EarlyLPP_Negative.png" class="img-fluid figure-img"></a>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegecmr_lpp_by_recall_reference-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29: LPP amplitude by recall status for NEGATIVE items from reference materials.
+</figcaption>
+</figure>
+</div>
+<div id="fig-eegecmr_lpp_by_recall" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-eegecmr_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-65" title="Figure&nbsp;30: Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-66" title="Figure&nbsp;30: Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-67" title="Figure&nbsp;30: Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-68" title="Figure&nbsp;30: Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT)."><img src="results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eegecmr_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30: Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="notes-2" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="notes-2"><span class="header-section-number">4.3.3</span> Notes</h3>
 </section>
 </section>
 </section>
@@ -623,18 +866,18 @@ Figure&nbsp;19: Overall serial position curve across item types. Left column: Tw
 <div aria-describedby="fig-additive_vs_multiplicative_cat_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<p><a href="results/figures/reference_catspc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-39" title="Figure&nbsp;20: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/reference_catspc.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/reference_catspc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-69" title="Figure&nbsp;31: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/reference_catspc.png" class="img-fluid figure-img"></a></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-40" title="Figure&nbsp;20: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-70" title="Figure&nbsp;31: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<p><a href="results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-41" title="Figure&nbsp;20: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="lightbox" data-gallery="quarto-lightbox-gallery-71" title="Figure&nbsp;31: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT)."><img src="results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png" class="img-fluid figure-img"></a></p>
 </div>
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-additive_vs_multiplicative_cat_spc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;20: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT).
+Figure&nbsp;31: Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT).
 </figcaption>
 </figure>
 </div>
@@ -1074,7 +1317,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"loop":false,"selector":".lightbox","descPosition":"bottom","openEffect":"zoom","closeEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","selector":".lightbox","closeEffect":"zoom","loop":false,"descPosition":"bottom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
