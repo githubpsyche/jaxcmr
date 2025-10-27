@@ -57,7 +57,14 @@ class CMR(Pytree):
         self.emotion_scale = jnp.array(
             is_emotional * parameters["emotion_scale"], dtype=jnp.float32
         )
-        self.lpp = jnp.array(is_emotional * lpp * parameters["lpp_scale"], dtype=jnp.float32)
+
+        # Center LPP within emotional items so boosts reflect relative differences.
+        lpp_values = jnp.array(lpp, dtype=jnp.float32)
+        emotional_lpp_sum = jnp.sum(lpp_values * is_emotional)
+        emotional_item_count = jnp.sum(is_emotional)
+        emotional_lpp_mean = emotional_lpp_sum / jnp.maximum(emotional_item_count, 1)
+        normalized_lpp = is_emotional * (lpp_values - emotional_lpp_mean)
+        self.lpp = normalized_lpp * parameters["lpp_scale"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
@@ -91,13 +98,14 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+        primacy_value = self.primacy[self.study_index]
+        emotion_plus_lpp = self.emotion_scale[item_index] + self.lpp[item_index]
+        additive_lr = primacy_value + jnp.maximum(-primacy_value, emotion_plus_lpp)
+        multiplicative_lr = primacy_value * jnp.maximum(0.0, emotion_plus_lpp)
         mcf_lr = lax.cond(
             self.modulate_emotion_by_primacy,
-            lambda: self.primacy[self.study_index]
-            * (self.emotion_scale[item_index] + self.lpp[item_index]),
-            lambda: self.primacy[self.study_index]
-            + self.emotion_scale[item_index]
-            + self.lpp[item_index],
+            lambda: multiplicative_lr,
+            lambda: additive_lr,
         )
         return self.replace(
             context=new_context,
@@ -225,9 +233,7 @@ def make_factory(
 
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
-            lpp = dataset["EarlyLPP"]
-            global_minimum = jnp.abs(jnp.min(lpp))
-            self.lpp = jnp.array(lpp + global_minimum, dtype=jnp.float32)
+            self.lpp = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
 
             def model_create_fn(
                 list_length: int,

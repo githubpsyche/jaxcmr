@@ -45,7 +45,7 @@ def plot_cat_lpp_by_recall(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     category_field: str,
-    category_value: int,
+    category_value: int | Sequence[int],
     lpp_field: str = "LateLPP",
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
@@ -89,9 +89,12 @@ def plot_cat_lpp_by_recall(
         )
 
         # Select both recalled and unrecalled versions of the category value
-        category_values = [category_value * 2, category_value * 2 - 1]
+        if type(category_value) is int:
+            category_values = [category_value * 2, category_value * 2 - 1]
+        else:
+            category_values = category_value
 
-        for label_index, category_value in enumerate(category_values):
+        for label_index, _category_value in enumerate(category_values):
             subject_values = jnp.vstack(
                 apply_by_subject(
                     data,
@@ -105,7 +108,7 @@ def plot_cat_lpp_by_recall(
                         ),
                     ),
                     category_field=category_field,
-                    category_value=category_value,
+                    category_value=_category_value,
                     lpp_field=lpp_field,
                 )
             )

@@ -108,7 +108,7 @@ Or we might just plot variables a different way.
 
 <!-- TODO: Balance the number of observations per bin by refactoring implementation of procedure from Morton & Polyn (2016) -->
 
-# LPP by Recall Status and Item-Category
+## LPP by Recall Status and Item-Category
 To further validate the relationship between LPP and recall outcomes, I plotted LPP amplitudes separately for recalled and unrecalled items within each emotional category.
 Since we avoid binning LPP values in this analysis, this approach provides a cleaner view of how LPP varies with recall status across item types.
 
@@ -212,15 +212,15 @@ In Pure-Attention eCMR, an `emotion_scale` parameter scales the strength of cont
 
 To confirm that the model's extra parameter can address the emotional category-spc, we fit the base model to the dataset then simulate pure-attention eCMR with different configurations of its `emotion_scale` parameter, plotting the emotional category-spc for each set of simulations.
 
-::: {#fig-attention_emcr_parameter_sensitivity layout-ncol="3"}
+::: {#fig-attention_emcr_parameter_sensitivity layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_spc_shift_emotion_scale.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc_shift_emotion_scale.png)
 
-Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in pure-attention eCMR. Left: NEGATIVE items. Middle: NEUTRAL items. Right: ALL items.
+Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in pure-attention eCMR. Left: NEGATIVE items. Right: NEUTRAL items. Bottom: ALL items.
 :::
 
 These results show that scaling up the parameter increases recall rates for negative items while reducing recall rates for neutral items, building confidence that the parameter can improve the baseline model's ability to address the emotion-enhanced memory effect.
@@ -230,26 +230,53 @@ However, specific assumptions made by the model about issues like the interactio
 
 #### Negative + Neutral Category SPC
 
-::: {#fig-attention_emcr_cat_spc layout-ncol="2"}
+::: {#fig-attention_emcr_cat_spc_comparison layout-ncol="2"}
 
 ![](results/figures/reference_catspc.png)
 
-![](results/figures/TalmiEEG_WeirdCMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+Recall rate by study position and item type from reference materials (LEFT) and Pure-Attention eCMR simulation (RIGHT).
+:::
 
-Recall rate by study position and item type for data (LEFT) and Baseline CMR (MIDDLE) and Pure-Attention eCMR simulation (RIGHT). 
+::: {#fig-baseline_mcr_cat_spc}
+
+![](results/figures/TalmiEEG_WeirdCMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png){width="50%"}
+
+Recall rate by study position and item type for Baseline CMR.
 :::
 
 #### Single-Category SPC
 
-::: {#fig-attention_emcr_single_cat_spc layout-ncol="2"}
+::: {#fig-attention_emcr_negative_cat_spc layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/TalmiEEG_WeirdCMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-Recall rate by study position for NEGATIVE items (LEFT) and NEUTRAL items (RIGHT). 
+
+Recall rate by study position for NEGATIVE items. Left column: Pure-Attention eCMR. Right column: Baseline CMR.
+:::
+
+::: {#fig-attention_emcr_neutral_cat_spc layout-ncol="2"}
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+![](results/figures/TalmiEEG_WeirdCMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+Recall rate by study position for NEUTRAL items. Left column: Pure-Attention eCMR. Right column: Baseline CMR.
+:::
+
+#### LPP by Recall Status and Item-Category
+
+It's also possible to examine how well pure-attention eCMR captures the relationship between LPP amplitude and recall probability for emotional and neutral items.
+This sets a higher bar for model performance, since the model must not only capture the emotion-enhanced memory effect but also the graded relationship between LPP and recall probability within each item category.
+
+::: {#fig-attention_emcr_cat_recall_by_early_lpp layout-ncol="2"}
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEUTRAL_EARLYLPP.png)
+
+Early LPP by recall status for NEGATIVE items (LEFT) and NEUTRAL items (RIGHT) under Pure-Attention eCMR.
 :::
 
 ### Notes
@@ -260,6 +287,8 @@ But both variants struggled to capture the emotion-enhanced memory effect adequa
 The deficiency was biggest for negative items in later study positions, and for neutral items in study positions up through position 8. 
 
 The data exhibits considerable variability in recall rates for both item types across positions, and the model is maybe only able to capture the general trend beyond boosts in early and late positions characteristic of a U-shaped serial position effect.
+
+Crucially, the pure-attention eCMR variant does not incorporate any mechanisms to capture the relationship between LPP amplitude and recall probability within each item category.
 
 ## Simplified Two-Context eCMR
 
@@ -274,6 +303,26 @@ An additional parameter sometimes used in eCMR to scale the relative contributio
 Whereas the pure-attention eCMR variant postulates that emotional-attention modulates context-to-item associations directly, the two-context eCMR variant predicts that the boost in recall for emotional items arises from their ability to reinstate emotional context, which then preferentially cues other emotional items. We can't directly evaluate this mechanism with the present dataset since we lack recall order data. Nonetheless, the model may still make different predictions about overall recall rates for emotional and neutral items than the pure-attention variant and at minimum can be evaluated for its ability to capture the emotion-enhanced memory effect.
 
 ### Parameter Sensitivity Tests
+
+::: {#fig-two_context_emcr_parameter_sensitivity layout-ncol="2"}
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+
+![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
+
+Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in Two-Context eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+:::
+
+::: {#fig-attention_emcr_parameter_sensitivity layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
+
+**Reproduced for comparison**: Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in pure-attention eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+:::
+
+Compared to pure-attention eCMR, the two-context eCMR variant shows a similar sensitivity to changes in the emotional-attention scaling parameter, with increases in the parameter boosting recall rates for negative items while reducing recall rates for neutral items.
+The Two-Context eCMR variant appears to produce a bigger boost to recall rates for the first and last study positions for negative items, while the pure-attention variant seems to apply some kind of soft ceiling on recall rates for negative items in the first and last study positions.
 
 ### Comparison of Fits to Benchmark Statistics
 
@@ -357,4 +406,4 @@ Context moves equally far from all studied items, preserving their relative stre
 To overcome this limitation, I tested a modified approach where post-study context drifts not toward an external or out-of-list context, but toward all in-list contexts, where the input vector is essentially a ones mask over context units that are linked to any studied item.
 This adjustment removes temporal directionality from the final cue, effectively making recall initiation reflect just the differences in relative strength across context-to-item associations.
 
-This didn't help either, so I'm leaving this problem for later.
+This didn't help either, so I'm leaving this problem for later..
