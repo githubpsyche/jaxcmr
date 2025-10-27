@@ -447,12 +447,12 @@ class TrialSimulator(Protocol):
         ...
 
 
-@dataclass(slots=True)
-class AnalysisConfig:
-    """Store callable analysis configuration and visualization metadata."""
+# @dataclass(slots=True)
+# class AnalysisConfig:
+#     """Store callable analysis configuration and visualization metadata."""
 
-    target: Callable[..., Any]
-    figure_suffix: str
-    labels: tuple[str, ...] = ("Model", "Data")
-    contrast_name: str = "Source"
-    kwargs: dict[str, Any] = field(default_factory=dict)
+#     target: Callable[..., Any]
+#     figure_suffix: str
+#     labels: tuple[str, ...] = ("Model", "Data")
+#     contrast_name: str = "Source"
+#     kwargs: dict[str, Any] = field(default_factory=dict)

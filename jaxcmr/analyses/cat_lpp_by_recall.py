@@ -1,135 +1,64 @@
-"""Category-filtered LPP by recall outcome analyses."""
+"""Category-filtered LPP analyses."""
 
 from __future__ import annotations
 
 from typing import Optional, Sequence
 
 import jax.numpy as jnp
-from jax import jit, vmap
+from jax import jit
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject
+from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import init_plot, plot_data, set_plot_labels
-from ..typing import Array, Bool, Float, Integer, RecallDataset
+from ..typing import Array, Bool, Integer, RecallDataset
+from .cat_lpp_spc import cat_lpp_spc
 
-__all__ = [
-    "trial_category_lpp_recall_sums",
-    "category_lpp_recall_means",
-    "cat_lpp_recall",
-    "plot_cat_lpp_recall",
-]
+__all__ = ["plot_cat_lpp_by_recall", "expand_categories_by_recall"]
 
 
-def trial_category_lpp_recall_sums(
-    recalls: Integer[Array, " recall_positions"],
-    lpp: Float[Array, " study_positions"],
-    categories: Integer[Array, " study_positions"],
-    category_value: int,
-    list_length: int,
-) -> tuple[Float[Array, " recall_outcome"], Float[Array, " recall_outcome"]]:
-    """Returns LPP sums and counts per recall outcome for one trial.
 
-    Args:
-        recalls: Recall events for a trial. 1-indexed; 0 for no recall.
-        lpp: LPP values per study position for the trial.
-        categories: Item category codes per study position.
-        category_value: Category value to aggregate over.
-        list_length: Length of the study list.
-    """
-    category_mask = (categories == category_value).astype(lpp.dtype)
-    recall_counts = jnp.bincount(recalls, length=list_length + 1)[1:]
-    recall_flags = (recall_counts > 0).astype(lpp.dtype)
-    recalled_mask = category_mask * recall_flags
-    not_recalled_mask = category_mask - recalled_mask
-
-    lpp_sums = jnp.stack(
-        [
-            (lpp * not_recalled_mask).sum(),
-            (lpp * recalled_mask).sum(),
-        ]
-    )
-    counts = jnp.stack(
-        [
-            not_recalled_mask.sum(),
-            recalled_mask.sum(),
-        ]
-    )
-    return lpp_sums, counts
-
-
-def category_lpp_recall_means(
-    recalls: Integer[Array, " trial_count recall_positions"],
-    lpp: Float[Array, " trial_count study_positions"],
-    categories: Integer[Array, " trial_count study_positions"],
-    category_value: int,
-    list_length: int,
-) -> Float[Array, " recall_outcome"]:
-    """Returns mean LPP per recall outcome restricted to a category.
-
-    Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        lpp: Trial by study position array of LPP values.
-        categories: Trial by study position array of item categories.
-        category_value: Category value to aggregate over.
-        list_length: Length of the study list.
-    """
-    lpp_sums, counts = vmap(
-        trial_category_lpp_recall_sums,
-        in_axes=(0, 0, 0, None, None),
-    )(recalls, lpp, categories, category_value, list_length)
-
-    total_sums = lpp_sums.sum(axis=0)
-    total_counts = counts.sum(axis=0)
-    return jnp.where(total_counts > 0, total_sums / total_counts, 0.0)
-
-
-def cat_lpp_recall(
+def expand_categories_by_recall(
     dataset: RecallDataset,
     category_field: str,
-    category_value: int,
-    lpp_field: str = "LateLPP",
-) -> Float[Array, " recall_outcome"]:
-    """Returns category-filtered mean LPP by recall outcome.
+) -> Integer[Array, " trial_count study_positions"]:
+    """Returns category labels split by recall outcome.
 
     Args:
-        dataset: Recall dataset containing per-item LPP metadata.
-        category_field: Key in ``dataset`` providing item categories per study position.
-        category_value: Category value to compute means over.
-        lpp_field: Key in ``dataset`` providing LPP values per study position.
+      dataset: Recall dataset providing study event metadata.
+      category_field: Key in ``dataset`` with per-item category labels.
     """
-    recalls = dataset["recalls"]
-    lpp = dataset[lpp_field]
     categories = dataset[category_field]
-    list_length = categories.shape[1]
+    presentations = dataset["pres_itemnos"]
+    recalls = dataset["recalls"]
 
-    return category_lpp_recall_means(
-        recalls,
-        lpp,
-        categories,
-        category_value,
-        list_length,
+    recall_hits = jnp.any(
+        (recalls[:, :, None] == presentations[:, None, :]) & (recalls[:, :, None] > 0),
+        axis=1,
     )
+    recall_flags = recall_hits.astype(categories.dtype)
+    remapped = categories * 2 - 1 + recall_flags
+    return jnp.array(jnp.where(categories > 0, remapped, 0), dtype=jnp.int32)
 
 
-def plot_cat_lpp_recall(
+def plot_cat_lpp_by_recall(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     category_field: str,
-    category_values: Sequence[int],
+    category_value: int,
     lpp_field: str = "LateLPP",
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with category-filtered LPP by recall outcome.
+    """Returns Matplotlib ``Axes`` with recall-filtered LPP curves for specified category.
 
     Args:
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks selecting trials in each dataset.
         category_field: Keys providing item categories per study position.
-        category_values: Category values to compute the means over.
+        category_value: Category value to compute the LPPs over.
         lpp_field: Key in ``dataset`` providing LPP values per study position.
         color_cycle: Colors for plotting each dataset.
         labels: Labels per dataset or category. Assumed per-category if multiple values provided.
@@ -142,8 +71,7 @@ def plot_cat_lpp_recall(
         color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
     if labels is None:
-        size = len(category_values) if len(category_values) > 1 else len(datasets)
-        labels = [""] * size
+        labels = [""] * 2
 
     if isinstance(datasets, dict):
         datasets = [datasets]
@@ -151,15 +79,25 @@ def plot_cat_lpp_recall(
     if isinstance(trial_masks, jnp.ndarray):
         trial_masks = [trial_masks] * len(datasets)
 
-    x_positions = jnp.array([0.0, 1.0])
-    for data_index, data in enumerate(datasets):
+    max_list_length = find_max_list_length(datasets, trial_masks)
+    for data_index, _data in enumerate(datasets):
+
+        # Expand category labels by recall outcome
+        data = _data.copy()
+        data[category_field] = expand_categories_by_recall(
+            data, category_field
+        )
+
+        # Select both recalled and unrecalled versions of the category value
+        category_values = [category_value * 2, category_value * 2 - 1]
+
         for label_index, category_value in enumerate(category_values):
             subject_values = jnp.vstack(
                 apply_by_subject(
                     data,
                     trial_masks[data_index],
                     jit(
-                        cat_lpp_recall,
+                        cat_lpp_spc,
                         static_argnames=(
                             "category_field",
                             "category_value",
@@ -175,11 +113,11 @@ def plot_cat_lpp_recall(
             color = color_cycle.pop(0)
             plot_data(
                 axis,
-                x_positions,
+                jnp.arange(max_list_length, dtype=int) + 1,
                 subject_values,
                 labels[label_index] if len(category_values) > 1 else labels[data_index],
                 color,
             )
 
-    set_plot_labels(axis, "Recall Outcome", f"{lpp_field} (uV)", contrast_name)
+    set_plot_labels(axis, "Study Position", f"{lpp_field} (uV)", contrast_name)
     return axis

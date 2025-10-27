@@ -65,7 +65,7 @@ def category_lpp_recall_histogram(
     exposure_counts = (matches[..., None] * bin_one_hot).sum(axis=(0, 1))
     recall_bin_counts = (recall_counts[..., None] * bin_one_hot).sum(axis=(0, 1))
     exposure_counts = exposure_counts.astype(lpp.dtype)
-    return jnp.where(exposure_counts > 0, recall_bin_counts / exposure_counts, 0.0)
+    return recall_bin_counts / exposure_counts
 
 
 def cat_recall_by_lpp(

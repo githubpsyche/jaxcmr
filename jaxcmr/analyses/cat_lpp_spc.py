@@ -25,8 +25,7 @@ def category_lpp_values(
     matches = categories == category_value
     numerator = jnp.where(matches, lpp, 0.0).sum(axis=0)
     denominator = matches.sum(axis=0)
-    return jnp.where(denominator > 0, numerator / denominator, 0.0)
-
+    return numerator/denominator
 
 def cat_lpp_spc(
     dataset: RecallDataset,

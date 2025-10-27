@@ -14,15 +14,23 @@ Future phases may explore alternative model specifications, fitting procedures, 
 
 # Data Preparation
 
-Initially I prepared `Single_Trial_Behavioural_and_EEG_Data_Z.csv` from the lab drive, but missing study events and retrieval-success fields limited its value for model evaluation. I combined that partial LPP dataset with the more complete behavioral file `All_Included_Subjects.csv`. The file lacks Early/Late LPP scores but supplies full study-event records. For study events without LPP data, I imputed missing values using within-subject, within-trial averages for items in the same emotional category. Finally, I verified the completeness of this compiled dataset: 9 trials per participant, 20 study events per trial, each with a recall outcome.
+Initially I prepared `Single_Trial_Behavioural_and_EEG_Data_Z.csv` from the lab drive, but missing study events and retrieval-success fields limited its value for model evaluation.
+I combined that partial LPP dataset with the more complete behavioral file `All_Included_Subjects.csv`.
+The file lacks Early/Late LPP scores but supplies full study-event records.
+For study events without LPP data, I imputed missing values using within-subject, within-trial averages for items in the same emotional category.
+Finally, I verified the completeness of this compiled dataset: 9 trials per participant, 20 study events per trial, each with a recall outcome.
 
-It's important to highlight that participants actually studied 22 items per trials, but the first two items from each trial were excluded from analysis to mitigate primacy effects. This is regrettable for model evaluation since CMR-style models often rely on early list items to establish context dynamics. Nonetheless, we will carefully navigate this limitation in the final version of our analyses.
+It's important to highlight that participants actually studied 22 items per trials, but the first two items from each trial were excluded from analysis to mitigate primacy effects.
+This is regrettable for model evaluation since CMR-style models often rely on early list items to establish context dynamics.
+Nonetheless, we will carefully navigate this limitation in the final version of our analyses.
 
-Even more critically, the dataset does not record the order in which participants recalled items, only whether each item was recalled or not. This limitation requires custom-designed loss functions for model fitting even at the prototyping stage.
+Even more critically, the dataset does not record the order in which participants recalled items, only whether each item was recalled or not.
+This limitation requires custom-designed loss functions for model fitting even at the prototyping stage.
 
 # Benchmark Analyses
 
 Benchmark analyses serve two purposes: validating data preparation and defining concrete targets for model development.
+Across plots, error bars reflect between-subjects 95%-bootstrapped confidence intervals unless otherwise noted.
 
 ## Recall Rate by Study Position and Item-Condition / Category-SPC
 
@@ -34,10 +42,11 @@ The analysis involves taking the ratio of recalled to total items matching the c
 
 ![](results/figures/reference_catspc.png)
 
-Recall rate by study position and item type. Left: From slides. Right: Reproduction. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each study position.
+Recall rate by study position and item type from reference materials (LEFT) and as generated from the present dataset (RIGHT).
+
 :::
 
-<!-- TODO: Switch to a hierarchical confidence interval over subjects and trials -->
+<!-- TODO: Switch to a hierarchical confidence interval over subjects and trials. Hmm, this might not be as necessary as I thought it would be. -->
 
 The match between shared and generated categorized serial position curves confirms the integrity of data preprocessing.
 
@@ -51,7 +60,7 @@ Most approaches we're considering for augmenting eCMR with LPP data will make va
 
 ![](results/figures/cat_lpp_spc_LateLPP.png)
 
-LPP amplitude by study position. Left: Early LPP. Right: Late LPP. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each study position.
+LPP amplitude by study position and item type for Early LPP (LEFT) and Late LPP (RIGHT).
 :::
 
 These plots also confirm that both early and late LPP signals vary with item emotionality across study positions.
@@ -62,27 +71,25 @@ A successful neurally-informed extension of eCMR should not just identify emotio
 We thus plot the relationship between LPP values and recall rate across item categories.
 
 ::: {#fig-cat_recall_by_early_lpp layout-ncol="2"}
-
 ![](results/figures/reference_cat_recall_by_lpp.png)
 
 ![](results/figures/cat_recall_by_lpp_EarlyLPP.png)
 
-Recall rate by early LPP amplitude and item type. Left: From reference. Right: Generated. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each LPP bin.
+Recall rate by early LPP amplitude and item type as plotted in reference materials (LEFT) and as generated from the present dataset (RIGHT).
 :::
 
 ::: {#fig-cat_recall_by_late_lpp}
 ![](results/figures/cat_recall_by_lpp_LateLPP.png){width="50%"}
 
-Recall rate by Late LPP amplitude and item type. Error bars reflect a between-subjects 95%-bootstrapped confidence interval at each LPP bin.
+Recall rate by Late LPP amplitude and item type.
 :::
 
 ::: {#fig- layout-ncol="2"}
-
 ![](results/figures/cat_recall_by_lpp_EarlyLPP_counts.png)
 
 ![](results/figures/cat_recall_by_lpp_LateLPP_counts.png)
 
-Counts of observations per LPP bin. Left: Early LPP. Right: Late LPP. 
+Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT) analyses.
 :::
 
 ::: {#fig-amplitude_by_cat_by_recalled}
@@ -91,115 +98,129 @@ Counts of observations per LPP bin. Left: Early LPP. Right: Late LPP.
 LPP by time, recall status, and item type.
 :::
 
-Previous analyses of the relationship between LPP and recall rate seem to have assumed that any relationship would be linear.
-But these results suggest that this assumption could miss a clear non-linear relationship between the two variables.
+We observe that there are few observations at high (above 4.86) and low (below -3.25) LPP bins in our version of the analysis.
+In an early version of this analysis, I found that the relationship between LPP and recall rate was nonlinear.
+In fact, I was accidentally assigning a value 0 to subject-level bin value measurements when no observations were found in that bin.
+This led to the underestimation of recall rates in bins with few observations.
+With this issue corrected, a relatively positive trend can be observed between LPP values and recall rate, though variability in observation count across bins produces wide confidence intervals at high LPP amplitudes.
+An updated version of the analysis may seek to define bins so that the number of observations per bin is more balanced.
+Or we might just plot variables a different way.
 
-But how many observations do we have per bin per subject?
-Hardly any at all, suggesting that only study events between the LPP bins centered at -3.25 and 4.86 is relevant for modeling.
-Between these bins, there's a clear positive relationship between (early) LPP and recall rate for emotional items but not for neutral items, matching reports in the reference slides.
+<!-- TODO: Balance the number of observations per bin by refactoring implementation of procedure from Morton & Polyn (2016) -->
+
+# LPP by Recall Status and Item-Category
+To further validate the relationship between LPP and recall outcomes, I plotted LPP amplitudes separately for recalled and unrecalled items within each emotional category.
+Since we avoid binning LPP values in this analysis, this approach provides a cleaner view of how LPP varies with recall status across item types.
+
+::: {#fig-cat_lpp_by_recall layout-ncol="2"}
+
+![](results/figures/cat_lpp_by_recall_EarlyLPP_Negative.png)
+
+![](results/figures/cat_lpp_by_recall_EarlyLPP_Neutral.png)
+
+![](results/figures/cat_lpp_by_recall_LateLPP_Negative.png)
+
+![](results/figures/cat_lpp_by_recall_LateLPP_Neutral.png)
+
+LPP amplitude by recall status and item type for Early LPP (TOP row) and Late LPP (BOTTOM row), split by NEGATIVE items (LEFT column) and NEUTRAL items (RIGHT column).
+:::
+
+These plots broadly confirm that higher LPP amplitudes are associated with recalled items, but specifically for NEGATIVE items, with no clear relationship for NEUTRAL items. 
+The pattern is also much clearer for Early LPP than Late LPP, supporting our focus on Early LPP for neurally-informed model extensions.
 
 # Loss Functions For Model Fitting
 
-Because the dataset does not record the order in which participants recalled items, we cannot compute the full likelihood of recall sequences, which is the best approach for fitting memory search models.
+We face two main challenges when defining loss functions for fitting memory search models to the present dataset.
+First, memory search models like CMR and eCMR typically generate predictions about the order in which items are recalled, but the dataset only records whether each item was recalled or not.
 This limitation forces us to focus on a simpler question: **does the composition of recalled items match what the model predicts**?
 
-For now, we ignore recall termination and treat the number of recalled items as given.
-That means the loss function should measure how well the model reproduces what was recalled rather than how much or in what order.
+Second, the first two studied items from each study list were excluded from the prepared dataset. This omission was intended to keep primacy effects from impacting analyses of the emotion-enhanced memory effect, but for fitting memory search models, it removes important information about how study lists were encoded and retrieved. 
 
-<!-- TODO: Address Talmi comment about this section:  I agree with the conclusion but I think you could motivate not caring about 'how much' by saying we want to capture the encoding effects that lead to recall, so it's about identity rather than reproducing the same average recall. -->
+These two issues together mean that we cannot use standard likelihood-based loss functions that evaluate the probability of observed recall sequences under the model.
+For now, we ignore the excluded items, focusing on fitting models to predict the set of recalled and unrecalled items from each trial which we do have data for.
+To simplify model evaluation further, we also exclude evaluation of how models predict the total number of recalled items per trial.
+Neither CMR nor eCMR makes strong predictions about recall counts and addressing them requires additional parameters and mechanisms controlling recall termination.
+By excluding recall counts as a factor in loss functions and model evaluation, we reduce the complexity of the fitting process, focus squarely on neurally-augmented retrieved-context models' ability to capture which items are recalled (rather than how many or in what order), clarifying the interpretability of model comparisons.
 
 ## Set Likelihood
 
-The most formally precise approach would involve enumerating every possible recall sequence consistent with the observed set of recalled items.
-The probability of the data under the model would then be the **sum of the probabilities assigned to all compatible recall sequences**.
-However, the number of possible recall orders increases exponentially with the number of recalled items, making this approach computationally infeasible for all but the smallest datasets.
+Without recall order data, we must evaluate models based on the probability they assign to the **set** of recalled items in each trial.
+The challenge is that memory search models are designed to generate predictions about the order of recalls, and multiple recall sequences are compatible with any given set of recalled items.
 
-A potential compromise involves estimating the sequence probability via **Monte Carlo sampling**: drawing a constrained sample of recall sequences consistent with the observed recall set and averaging their model probabilities.
-This method specifies a speed–accuracy trade-off: increasing the number of sampled sequences improves the stability of the loss estimate but sharply increases computation time.
-Because reliable estimation would require a large number of samples per trial, we reserve this approach for more advanced stages of the project.
+The most formally exact approach to overcome this challenge is to enumerate all possible recall sequences consistent with the observed set of recalled items and compute the probability of each sequence under the model.
+The probability of the observed data would then be the **sum of the probabilities assigned to all compatible recall sequences**.
+However, the number of possible recall orders increases factorially with the number of recalled items, making this approach computationally infeasible for all but the smallest datasets.
+
+To sidestep this combinatorial explosion, a leading approach is to estimate the set likelihood using Monte Carlo sampling: drawing a constrained sample of recall sequences consistent with the observed recall set and averaging their model probabilities.
+This yields an unbiased estimate of the set likelihood but introduces sampling variability.
+By increasing the number of sampled sequences, the estimate can be made arbitrarily precise, albeit at the cost of increased computation time.
+Because reliable estimation would require a large number of samples per trial, we reserve this a complete examination of the approach for more advanced stages of the project.
 
 <!-- TODO: debug why current set likelihood function doesn't work -->
 
 ## Mean Squared Error (MSE) Over Summary Statistics
 
 Given these constraints, we instead adopt a mean squared error (MSE) loss between an observed summary statistic and the same statistic generated by simulated data.
-This approach is widely used in computational memory modeling when full likelihood estimation is infeasible.
+This approach is widely used in evaluation of retrieved-context models, but is especially appropriate here given the limitations of our dataset.
 
 The procedure is as follows:
 
-1.  Compute a summary statistic from the experimental data.\
-2.  Simulate the model repeatedly using a given parameter set.\
-3.  Compute the same statistic from the simulated outcomes.\
+1.  Compute a summary statistic from the experimental data.
+2.  Simulate the model repeatedly using a given parameter set.
+3.  Compute the same statistic from the simulated outcomes.
 4.  Compute the mean squared difference between the observed and simulated statistics.
 
 This MSE provides an interpretable measure of how well a given parameter set allows the model to reproduce the behavioral pattern of interest.
-While this method does not yield a true likelihood or a maximum-likelihood estimate of parameters—and discards trial-level prediction detail—it offers a practical, scalable, and transparent evaluation metric.
-Model comparisons can still be made statistically by contrasting best-fitting MSE values across models within subjects.
+In principle, if the model with the best-fitting parameters cannot reproduce the observed statistic well, we can conclude that the model is inadequate for explaining the data.
+While an MSE-based approach does not yield an unbiased estimate of the true likelihood or a maximum-likelihood estimate of parameters and discards trial-level prediction detail, it offers a practical, scalable, and transparent evaluation metric.
 
-In the first implementation, the summary statistic was the serial position curve (SPC)—the recall probability of items as a function of study position.
+In initial evaluations, I experimented with different summary statistics to guide model fitting.
+First, I tried using the overall serial position curve (SPC) as the target statistic.
 This approach provides a straightforward test of whether the model captures overall primacy and recency trends across the list, ignoring differences between emotional and neutral items.
+However, this approach proved insufficient for evaluating the model's ability to capture the emotion-enhanced memory effect, as it does not differentiate between item types.
 
-In the end, though, it made sense to focus directly on capturing the Category-SPC introduced in the Benchmark Analyses section.
+We thus settled on using the **category-SPC** as the target statistic for model fitting.
 Here, recall probability is computed separately for **negative** and **neutral** items at each study position, allowing the model to be evaluated on its ability to reproduce both serial position effects and the emotion-enhanced memory effect simultaneously.
+Therefore, the category-SPC provides a more sensitive and relevant benchmark for assessing the performance of neurally-augmented eCMR models in this context.
 
-## Current Approach
+# Modeling
 
-For the current analyses, model fitting minimized the mean-squared error over a combination of the negative and neutral category-SPCs in the data, as visualized in the Benchmark Analyses plots.
-Once initial modeling is completed, we will shift to a likelihood-based loss function where models are evaluated based on the probability they assign across a random sample of recall sequences consistent with observed recalls in a trial.
+As a baseline, we begin evaluation with regular CMR, insensitive to item emotionality or LPP data.
+We evaluate this model to confirm that the emotion-enhanced memory effect cannot be captured without additional emotional-attention mechanisms.
 
-# Modeling 
+Next, we implement a simplified version of eCMR that introduces emotional-attention mechanisms with minimal complexity.
+Rather than incorporate all parameters and mechanisms from eCMR, we seek to use only enough details to achieve adequate capture of our behavioral benchmark statistics.
 
-The goal of the current modeling pass is to determine whether incorporating LPP data can, in principle, improve a retrieved-context model's ability to account for the **emotion-enhanced memory effect**.
-Our strategy is thus to clearly characterize model performance across three scenarios:
+From there, we will implement a neurally-informed extension of eCMR that uses event-level LPP measures as modulators of emotional-attentional strength.
+We will have two goals for this model.
+First, the model should outperform both baseline CMR and simplified eCMR at capturing the emotion-enhanced memory effect.
+Second, the model should adequately capture the relationship between event-level LPP values and recall probability for emotional _and_ neutral items.
+Accomplishing these two goals together will produce a baseline neurocognitive model of the emotion-enhanced memory effect that can be further refined in future work using higher-quality datasets and more sophisticated model fitting procedures.
 
-1.  **Baseline CMR:** CMR without sensitivity to item emotionality or LPP data.
-2.  **Simplified eCMR**: A minimal extension of CMR that makes it sensitive to item emotionality in line with eCMR's commitments. Rather than incorporate all parameters and mechanisms from eCMR, we only use enough details to achieve adequate capture of our benchmark statistics.
-3.  **Neurally Informed Extension**: We use event-level LPP measures as modulators of emotional-attentional strength in addition to simplified-eCMR's selected parameters.
+## Simplified Pure-Attention eCMR
+As an initial step beyond baseline CMR, we postulate that the emotion-enhanced memory effect arises entirely from differential allocation of attention during encoding, enhancing their context-to-item associations. We label this variant "pure-attention eCMR" to distinguish it from the complete eCMR specification.
 
-Right now, we're still focused on settling on the best specification for simplified eCMR; the neurally-informed extension is still pending.
+The complete eCMR specification includes a separate emotional context and corresponding emotional feature-to-context and context-to-feature memories (eMFC and eMCF), with emotion-enhanced attention primarily modulating learning rates within these memory structures.
+They thus predict that emotion-enhanced attention primarily strengthens the association between items and emotion states during encoding.
+During recall, when emotional context is reinstated, it preferentially cues emotional items via these strengthened associations.
 
-Furthermore, across model variants, mechanisms controlling recall termination are excluded, with the total number of items instead matched to the number of observed recalls in a matched trial.
-This reduces the number of parameters to fit and evaluate, making models easier and faster to evaluate and interpret.
-In general, we seek a narrow space of parameters and mechanisms to evaluate at this stage in the interests of maximizing the interpretability, efficiency, and modularity of our comparison.
-The trade-off is that some dynamic features of fuller versions of our models are deferred to future modeling stages.
-
-## Simplified eCMR
-
-The simplified eCMR variant introduces a minimal emotional-attention mechanism while maintaining tractable parameterization and interpretability.
-It serves as a bridge between baseline CMR and the more complex neurally informed model planned for later stages.
-Additional complexity to the model will be added as needed to capture benchmarks valued for this study.
-
-The key simplification embraced is that the integration rate of emotional context is fixed to 1.0.
-This means that the emotional context at each step of either encoding or retrieval is determined entirely by the most recently processed item, removing the need for a separate emotional feature-to-context memory (eMFC).
-
-The emotional context-to-feature memory (eMCF) is represented as a vector where:
-
--   Cells corresponding to neutral items hold a value of 0.
--   Cells corresponding to emotional items hold a value scaled by an emotional-attention parameter
-
-An additional parameter sometimes used in eCMR to scale the relative contribution of temporal vs emotional context during retrieval is redundant under this specification, since the emotional-attention parameter already modulates that balance.
-With specialized drift rates and feature-to-context memory learning rates also excluded, **simplified eCMR addresses the emotion-enhanced memory effect with only one additional free parameter beyond those specified in baseline CMR**.
+We exclude these dynamics at this stage, instead allowing emotional-attention to directly scale the strength of temporal context-to-item associations during encoding.
+We predict that this extension from baseline CMR alone is sufficient to capture the emotion-enhanced memory effect in our dataset, and will evaluate this prediction against more complex multi-component specifications in subsequent evaluations.
 
 ### Parameter Sensitivity Tests
+In Pure-Attention eCMR, an `emotion_scale` parameter scales the strength of context-to-item associations during encoding for emotional items.
 
-To confirm that the model's extra parameter can address the emotional category-spc, we fit the base model to the dataset then simulate simple-ECMR with different configurations of its arousal parameter, plotting the emotional category-spc for each set of simulations.
-Here we generated one category-spc for negative items and one for neutral items from the simulated data:
+To confirm that the model's extra parameter can address the emotional category-spc, we fit the base model to the dataset then simulate pure-attention eCMR with different configurations of its `emotion_scale` parameter, plotting the emotional category-spc for each set of simulations.
 
-\![
-\]\[image11\]\![
-\]\[image12\]\
+::: {#fig-attention_emcr_parameter_sensitivity layout-ncol="3"}
 
-The LEFT plot shows how the recall rates for NEGATIVE items change with configurations of `emotion_scale`.
-The RIGHT plot shows how the recall rates for NEUTRAL items change.
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
 
-::: {#fig-parameter_sensitivity layout-ncol="2"}
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
 
-![](../../results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_spc_shift_emotion_scale.png)
 
-![](../../results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
-
-
-Figure: Sensitivity of category-SPC to changes in the emotional-attention scaling parameter in simplified eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in pure-attention eCMR. Left: NEGATIVE items. Middle: NEUTRAL items. Right: ALL items.
 :::
 
 These results show that scaling up the parameter increases recall rates for negative items while reducing recall rates for neutral items, building confidence that the parameter can improve the baseline model's ability to address the emotion-enhanced memory effect.
@@ -209,54 +230,62 @@ However, specific assumptions made by the model about issues like the interactio
 
 #### Negative + Neutral Category SPC
 
-Data:\
-\![
-\]\[image13\]\
-Baseline CMR (LEFT) vs Simple-eCMR (RIGHT):\
-\![
-\]\[image14\]\![
-\]\[image15\]\
-Finding: Simple-eCMR simulates a consistent emotion-enhanced memory effect; baseline CMR doesn't.
+::: {#fig-attention_emcr_cat_spc layout-ncol="2"}
+
+![](results/figures/reference_catspc.png)
+
+![](results/figures/TalmiEEG_WeirdCMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
+
+Recall rate by study position and item type for data (LEFT) and Baseline CMR (MIDDLE) and Pure-Attention eCMR simulation (RIGHT). 
+:::
+
+#### Single-Category SPC
+
+::: {#fig-attention_emcr_single_cat_spc layout-ncol="2"}
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+
+Recall rate by study position for NEGATIVE items (LEFT) and NEUTRAL items (RIGHT). 
+:::
+
+### Notes
+While this text focus on just one specification, we considered two variants of pure-attention eCMR: one where emotional-attention scales context-to-item associations multiplicatively with primacy-based attention, and one where the two forms of attention combine additively.
+Preliminary simulations suggested that the additive variant better captured the emotion-enhanced memory effect without over-predicting recall rates for negative items in early study positions.
+
+But both variants struggled to capture the emotion-enhanced memory effect adequately, both underestimating recall rates for negative items and overestimating recall rates for neutral items.
+The deficiency was biggest for negative items in later study positions, and for neutral items in study positions up through position 8. 
+
+The data exhibits considerable variability in recall rates for both item types across positions, and the model is maybe only able to capture the general trend beyond boosts in early and late positions characteristic of a U-shaped serial position effect.
+
+## Simplified Two-Context eCMR
+
+Another approach to simplifying eCMR is to retain its two-context structure but pare down the number of free parameters and mechanisms.
+In this approach, we retain the emotional and temporal contexts, but make the key simplification of fixing the integration rate of emotional context to 1.0.
+This means that the emotional context at each step of either encoding or retrieval is determined entirely by the most recently processed item, making emotional feature-to-context memory (eMFC) effectively redundant since emotional context can be updated directly from item features.
+
+The emotional context-to-feature memory (eMCF) is retained and represented as a vector where cells corresponding to emotional items hold a value scaled by a `emotion_scale` parameter, while cells corresponding to neutral items hold a value of 0.
+
+An additional parameter sometimes used in eCMR to scale the relative contribution of temporal vs emotional context during retrieval is redundant under this specification, since the `emotion_scale` parameter already modulates that balance. With specialized drift rates and feature-to-context memory learning rates also excluded, this simplified two-layer eCMR addresses the emotion-enhanced memory effect with still just one additional free parameter beyond those specified in baseline CMR.
+
+Whereas the pure-attention eCMR variant postulates that emotional-attention modulates context-to-item associations directly, the two-context eCMR variant predicts that the boost in recall for emotional items arises from their ability to reinstate emotional context, which then preferentially cues other emotional items. We can't directly evaluate this mechanism with the present dataset since we lack recall order data. Nonetheless, the model may still make different predictions about overall recall rates for emotional and neutral items than the pure-attention variant and at minimum can be evaluated for its ability to capture the emotion-enhanced memory effect.
+
+### Parameter Sensitivity Tests
+
+### Comparison of Fits to Benchmark Statistics
+
+#### Negative + Neutral Category SPC
 
 #### Negative-Category SPC
 
-For direct comparison between data and model simulations, it's often useful to draw lines directly on top of each other.
-This becomes a challenge to interpret when an analysis draws two lines per dataset, so we focus on each component of the category-spc individually.
-
-Baseline CMR (LEFT) vs Simple-eCMR (RIGHT):\
-\![
-\]\[image16\]\![
-\]\[image17\]\
-Finding: Simple-eCMR does a visibly better job than Baseline CMR of capturing recall rates for NEGATIVE items.
-Both models do better capturing recall rates for early study positions than for later study positions.
-
 #### Neutral-Category SPC
-
-Baseline CMR (LEFT) vs Simple-eCMR (RIGHT):\
-\![
-\]\[image18\]\![
-\]\[image19\]\
-Finding: Simple-eCMR's improvement over Baseline CMR at capturing recall rates for NEUTRAL items is less evident than its improvement at capturing NEGATIVE item recall rates, but there's still a clear improvement.
 
 #### Regular Serial Position Curve
 
-Baseline CMR (LEFT) vs Simple-eCMR (RIGHT):\
-\![
-\]\[image20\]\![
-\]\[image21\]\
-Finding: Simple-eCMR and Baseline CMR produce strikingly similar simulations of the overall serial position effect.
-Again, we observe gaps in both models' ability to capture recall rates for late study positions but also for study positions 3-6.
-
-#### Conclusion
-
-Simple-eCMR does a visibly better job than Baseline CMR of capturing recall rates for NEGATIVE items across study positions.
-Differences are less evident in simulations of recall rates for NEUTRAL items and all item types across study positions.
-Both models do better capturing recall rates for early study positions than for later study positions.
-
-Further work could use a likelihood-based loss function to fit models (instead of fitting to a specified summary statistic) and include outcomes of a formal model comparison instead of visual comparison of summary statistics.
-Additional model development could seek to improve these baselines by investigating reduced recall rates for late study positions but also for study positions 3-6, or by implementing and evaluating more assumptions from the complete eCMR specification.
-
-Despite limitations, Simplified eCMR provides an adequate improvement over baseline eCMR for capturing the emotion-enhanced memory effect.
+#### Notes
 
 ## Neurally Informed Extension
 
@@ -276,7 +305,6 @@ Before settling on a specification, here we seek to clarify what we know about t
 
 ## Do arousal and serial position additively or interactively influence memory strength?
 
-\![\]\[image22\]\
 The specification for eCMR seems to configure a multiplicative relationship between emotional-attention and primacy-attention.
 I think that leads to the prediction that the recall rate gap for emotional vs neutral items depends on the compared items' study positions: higher for items studied near the beginning of a list than elsewhere.
 
@@ -292,45 +320,24 @@ The difference in attention for emotional vs neutral items is just 2.
 That's ten times lower than the emotional vs neutral boost at study position 1!
 So according to this specification, the attentional boost that drives the emotion-enhanced memory effect is stronger for early study positions than late study positions.
 
-The present data and model evaluation pipeline an opportunity to examine whether emotion and primacy independently/additively or interactively/multiplicatively configure emotional context-to-item memory strengths.
-Fitting and simulating versions of eCMR implementing these two hypotheses produces the following observations:
-
-### Negative + Neutral Category SPC
-
+The present data and model evaluation pipeline present only a limited opportunity to examine whether emotion and primacy independently/additively or interactively/multiplicatively configure emotional context-to-item memory strengths.
 Here we draw separate plots for data and each model variant.
 
-Data:\
-\![
-\]\[image13\]\
-Multiplicative (LEFT) vs Additive (RIGHT) variants:\
-\![
-\]\[image23\]\![
-\]\[image15\]
+::: {#fig-additive_vs_multiplicative_cat_spc layout-ncol="3"}
 
-### Negative-Category SPC
+![](results/figures/reference_catspc.png)
 
-Here we compare model and data directly in each plot, with one plot per model.
+![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-Multiplicative (LEFT) vs Additive (RIGHT) variants:\
-\![
-\]\[image24\]\![
-\]\[image25\]
+![](results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-### Neutral-Category SPC
-
-Here we compare model and data directly in each plot, with one plot per model.
-
-Multiplicative (LEFT) vs Additive (RIGHT) variants:\
-\![
-\]\[image26\]\![
-\]\[image19\]
-
-### Conclusion
+Recall rate by study position and item type for data (LEFT), Additive eCMR simulation (MIDDLE), and Multiplicative eCMR simulation (RIGHT).
+:::
 
 These simulations suggest that primacy and emotionality *independently* rather than interactively modulate memory strength.
 The gap between the two variants seems localized to their predictions about recall rates for negative items in early study positions.
 The multiplicative model tends to predict a much higher recall rate for these items than observed in the data, while the additive model produces no such discrepancy.
-**We thus use the additive model for simulations going forward, and propose pursuing a paper focused on this distinction as a future project.**
+We thus use the additive model for simulations going forward, and propose pursuing a paper focused on this distinction as a future project.
 
 ## Improving Trade-Off Between Recency and Primacy
 

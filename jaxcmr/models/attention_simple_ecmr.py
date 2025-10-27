@@ -75,34 +75,6 @@ class CMR(Pytree):
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
 
-    # def experience_item(self, item_index: Int_) -> "CMR":
-    #     """Return the model after experiencing item with the specified index.
-
-    #     Args:
-    #         item_index: the index of the item to experience. 0-indexed.
-    #     """
-    #     item = self.items[item_index]
-    #     context_input = self.mfc.probe(item)
-    #     new_context = self.context.integrate(context_input, self.encoding_drift_rate)
-    #     learning_state = lax.cond(
-    #         self.learn_after_context_update,
-    #         lambda: new_context.state,
-    #         lambda: self.context.state,
-    #     )
-    #     emcf_lr = lax.cond(
-    #         self.modulate_emotion_by_primacy,
-    #         lambda: self.emotion_scale * self.primacy[self.study_index],
-    #         lambda: self.emotion_scale,
-    #     )
-    #     return self.replace(
-    #         context=new_context,
-    #         mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
-    #         mcf=self.mcf.associate(learning_state, item, self.primacy[self.study_index]),
-    #         emotional_mcf=self.emotional_mcf.at[item_index].multiply(emcf_lr),
-    #         recallable=self.recallable.at[item_index].set(True),
-    #         study_index=self.study_index + 1,
-    #     )
-
     def experience_item(self, item_index: Int_) -> "CMR":
         """Return the model after experiencing item with the specified index.
 

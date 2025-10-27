@@ -134,7 +134,7 @@ class MemorySearchCatSpcMseFnGenerator:
         """Returns category-filtered SPC target for selected trials."""
         counts = self.trial_category_counts[:, trial_indices].sum(axis=1)
         denominator = self.trial_category_masks[:, trial_indices].sum(axis=1)
-        return counts / denominator #jnp.where(denominator > 0, counts / denominator, 0.0)
+        return counts / denominator
 
     def _simulated_cat_spc(
         self,
