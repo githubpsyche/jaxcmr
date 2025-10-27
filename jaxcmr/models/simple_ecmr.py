@@ -90,7 +90,7 @@ class CMR(Pytree):
         )
         emcf_lr = lax.cond(
             self.modulate_emotion_by_primacy,
-            lambda: self.emotion_scale * self.primacy[self.study_index],
+            lambda: self.emotion_scale + self.primacy[self.study_index],
             lambda: self.emotion_scale,
         )
         return self.replace(
