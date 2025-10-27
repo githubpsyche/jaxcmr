@@ -54,23 +54,17 @@ class CMR(Pytree):
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.emotion_scale = jnp.array(
-            is_emotional * parameters["emotion_scale"], dtype=jnp.float32
-        )
-
-        # Center LPP within emotional items so boosts reflect relative differences.
-        lpp_values = jnp.array(lpp, dtype=jnp.float32)
-        emotional_lpp_sum = jnp.sum(lpp_values * is_emotional)
-        emotional_item_count = jnp.sum(is_emotional)
-        emotional_lpp_mean = emotional_lpp_sum / jnp.maximum(emotional_item_count, 1)
-        normalized_lpp = is_emotional * (lpp_values - emotional_lpp_mean)
-        self.lpp = normalized_lpp * parameters["lpp_scale"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
+
+        # Apply a slope/threshold transform m * (x - tau) to emotional LPP traces.
+        lpp_slope = parameters["lpp_slope"]
+        lpp_threshold = parameters["lpp_threshold"]
+        self.emotion_modulation = lpp_slope * (lpp - lpp_threshold) * is_emotional
+
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
-
         self.primacy = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
@@ -98,15 +92,17 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        primacy_value = self.primacy[self.study_index]
-        emotion_plus_lpp = self.emotion_scale[item_index] + self.lpp[item_index]
-        additive_lr = primacy_value + jnp.maximum(-primacy_value, emotion_plus_lpp)
-        multiplicative_lr = primacy_value * jnp.maximum(0.0, emotion_plus_lpp)
+        
+        # mcf learning rate is at least 0, 
+        # either an additive or multiplicative function of primacy and emotion
+        primacy = self.primacy[self.study_index]
+        emotion_modulation = self.emotion_modulation[item_index]
         mcf_lr = lax.cond(
             self.modulate_emotion_by_primacy,
-            lambda: multiplicative_lr,
-            lambda: additive_lr,
+            lambda: primacy * jnp.maximum(0.0, emotion_modulation),
+            lambda: primacy + jnp.maximum(-primacy, emotion_modulation),
         )
+
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
@@ -233,7 +229,10 @@ def make_factory(
 
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
-            self.lpp = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
+
+            # some LPP values are below zero; shift them all to be non-negative
+            offset = jnp.abs(jnp.min(dataset["LateLPP"]))
+            self.lpp = jnp.array(dataset["EarlyLPP"] + offset, dtype=jnp.float32)
 
             def model_create_fn(
                 list_length: int,
