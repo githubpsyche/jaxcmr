@@ -17,7 +17,7 @@ from jaxcmr.models.weird_cmr import BaseCMRFactory as model_factory
 from jaxcmr.experimental.array import to_numba_typed_dict
 from jaxcmr.fitting import ScipyDE as fitting_method
 from jaxcmr.helpers import generate_trial_mask, import_from_string, load_data
-from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
 

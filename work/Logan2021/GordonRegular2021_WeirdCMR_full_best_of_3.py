@@ -21,7 +21,7 @@ from jaxcmr.helpers import (
     load_data,
     save_dict_to_hdf5,
 )
-from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator as loss_fn_generator
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator as loss_fn_generator
 from jaxcmr.simulation import simulate_h5_from_h5
 from jaxcmr.summarize import summarize_parameters
 from jaxcmr.models.weird_cmr import BaseCMRFactory as model_factory

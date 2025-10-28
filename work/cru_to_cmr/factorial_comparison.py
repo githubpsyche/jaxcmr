@@ -30,7 +30,7 @@ import numpy as np
 from jaxcmr.models_cru_to_cmr.cmr_compterm import CMRFactory as compterm_model_factory
 from jaxcmr.models_cru_to_cmr.cmr_compare import CMRFactory as base_model_factory
 from jaxcmr.fitting import ScipyDE as fitting_method
-from jaxcmr.likelihood_loss import (
+from jaxcmr.loss.sequence_likelihood import (
     MemorySearchLikelihoodFnGenerator as loss_fn_generator,
 )
 from jaxcmr.summarize import summarize_parameters

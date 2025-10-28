@@ -18,7 +18,7 @@ from tqdm import trange
 from jaxcmr.models.cmr import BaseCMRFactory as model_factory
 from jaxcmr.fitting import make_subject_trial_masks
 from jaxcmr.helpers import generate_trial_mask, load_data
-from jaxcmr.likelihood_loss import MemorySearchLikelihoodFnGenerator as LikelihoodFnGenerator
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator as LikelihoodFnGenerator
 
 # %%
 # | CONFIG / PARAMETERS
