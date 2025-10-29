@@ -91,8 +91,10 @@ def plot_cat_lpp_by_recall(
         # Select both recalled and unrecalled versions of the category value
         if type(category_value) is int:
             category_values = [category_value * 2, category_value * 2 - 1]
-        else:
+        elif type(category_value) is list:
             category_values = category_value
+        else:
+            raise ValueError("category_value must be int or list of int")
 
         for label_index, _category_value in enumerate(category_values):
             subject_values = jnp.vstack(
