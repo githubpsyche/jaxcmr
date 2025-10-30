@@ -41,7 +41,7 @@ class CMR(Pytree):
         list_length: int,
         parameters: Mapping[str, Float_],
         is_emotional: Bool[Array, " study_events"],
-        lpp: Float[Array, " study_events"],
+        lpp_centered: Float[Array, " study_events"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -69,13 +69,12 @@ class CMR(Pytree):
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
         self.is_emotional = jnp.array(is_emotional, dtype=jnp.float32)
 
-        # Center LPP within emotional items so boosts reflect relative differences.
-        lpp_values = jnp.array(lpp, dtype=jnp.float32)
-        emotional_lpp_sum = jnp.sum(lpp_values * is_emotional)
-        emotional_item_count = jnp.sum(is_emotional)
-        emotional_lpp_mean = emotional_lpp_sum / jnp.maximum(emotional_item_count, 1)
-        normalized_lpp = is_emotional * (lpp_values - emotional_lpp_mean)
-        self.lpp = normalized_lpp * parameters["lpp_scale"]
+        # Centered LPP provided by factory so slope/threshold shape relative boosts.
+        lpp_slope = parameters["lpp_slope"]
+        lpp_threshold = parameters["lpp_threshold"]
+        self.emotion_modulation = (
+            lpp_slope * (lpp_centered - lpp_threshold) * self.is_emotional
+        )
         self.emotional_mcf = self.is_emotional
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
@@ -98,7 +97,9 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        base_emotion_strength = jnp.maximum(0.0, self.emotion_scale + self.lpp[self.study_index])
+        base_emotion_strength = jnp.maximum(
+            0.0, self.emotion_scale + self.emotion_modulation[self.study_index]
+        )
         emcf_lr = lax.cond(
             self.modulate_emotion_by_primacy,
             lambda: self.primacy[self.study_index] * base_emotion_strength,
@@ -243,19 +244,29 @@ def make_factory(
 
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
-            self.lpp = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
+            lpp_raw = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
+            valid_lpp = jnp.where(self.trial_emotions, lpp_raw, 0.0)
+            emotional_count = jnp.maximum(
+                jnp.sum(self.trial_emotions, axis=1, keepdims=True),
+                1.0,
+            )
+            emotional_mean = jnp.sum(valid_lpp, axis=1, keepdims=True) / emotional_count
+            centered_lpp = jnp.where(
+                self.trial_emotions, valid_lpp - emotional_mean, 0.0
+            )
+            self.lpp_centered = centered_lpp
 
             def model_create_fn(
                 list_length: int,
                 parameters: Mapping[str, Float_],
-                is_emotional: Integer[Array, " study_events"],
-                lpp: Float[Array, " study_events"],
+                is_emotional: Bool[Array, " study_events"],
+                lpp_centered: Float[Array, " study_events"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
                     parameters,
                     is_emotional,
-                    lpp,
+                    lpp_centered,
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
@@ -266,7 +277,10 @@ def make_factory(
 
         def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
             return self.model_create_fn(
-                self.max_list_length, parameters, self.trial_emotions[0], self.lpp[0]
+                self.max_list_length,
+                parameters,
+                self.trial_emotions[0],
+                self.lpp_centered[0],
             )
 
         def create_trial_model(
@@ -278,7 +292,7 @@ def make_factory(
                 self.max_list_length,
                 parameters,
                 self.trial_emotions[trial_index],
-                self.lpp[trial_index],
+                self.lpp_centered[trial_index],
             )
 
     return CMRModelFactory

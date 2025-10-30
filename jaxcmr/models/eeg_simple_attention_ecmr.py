@@ -41,7 +41,7 @@ class CMR(Pytree):
         list_length: int,
         parameters: Mapping[str, Float_],
         is_emotional: Bool[Array, " study_events"],
-        lpp: Float[Array, " study_events"],
+        lpp_centered: Float[Array, " study_events"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -58,10 +58,11 @@ class CMR(Pytree):
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
 
-        # Apply a slope/threshold transform m * (x - tau) to emotional LPP traces.
+        # Apply a slope/threshold transform to emotional LPP traces after centering
+        # them within each trial so slope controls relative differences.
         lpp_slope = parameters["lpp_slope"]
         lpp_threshold = parameters["lpp_threshold"]
-        self.emotion_modulation = lpp_slope * (lpp - lpp_threshold) * is_emotional
+        self.emotion_modulation = lpp_slope * (lpp_centered - lpp_threshold) * is_emotional
 
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
@@ -229,22 +230,30 @@ def make_factory(
 
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
+            lpp_raw = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
+            valid_lpp = jnp.where(self.trial_emotions, lpp_raw, 0.0)
+            emotional_count = jnp.maximum(
+                jnp.sum(self.trial_emotions, axis=1, keepdims=True),
+                1.0,
+            )
+            emotional_mean = jnp.sum(valid_lpp, axis=1, keepdims=True) / emotional_count
+            centered_lpp = jnp.where(
+                self.trial_emotions, valid_lpp - emotional_mean, 0.0
+            )
 
-            # some LPP values are below zero; shift them all to be non-negative
-            offset = jnp.abs(jnp.min(dataset["LateLPP"]))
-            self.lpp = jnp.array(dataset["EarlyLPP"] + offset, dtype=jnp.float32)
+            self.lpp_centered = centered_lpp
 
             def model_create_fn(
                 list_length: int,
                 parameters: Mapping[str, Float_],
-                is_emotional: Integer[Array, " study_events"],
-                lpp: Float[Array, " study_events"],
+                is_emotional: Bool[Array, " study_events"],
+                lpp_centered: Float[Array, " study_events"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
                     parameters,
                     is_emotional,
-                    lpp,
+                    lpp_centered,
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
@@ -255,7 +264,10 @@ def make_factory(
 
         def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
             return self.model_create_fn(
-                self.max_list_length, parameters, self.trial_emotions[0], self.lpp[0]
+                self.max_list_length,
+                parameters,
+                self.trial_emotions[0],
+                self.lpp_centered[0],
             )
 
         def create_trial_model(
@@ -267,7 +279,7 @@ def make_factory(
                 self.max_list_length,
                 parameters,
                 self.trial_emotions[trial_index],
-                self.lpp[trial_index],
+                self.lpp_centered[trial_index],
             )
 
     return CMRModelFactory
