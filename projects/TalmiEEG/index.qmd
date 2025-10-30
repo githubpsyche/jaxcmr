@@ -8,7 +8,7 @@ format: html
 
 This document records our progress and key decisions as we build a brain-based version of eCMR using EEG data from Zarubin et al. (2020).
 
-Right now, we are making a simple prototype to test if item-level LPP signals (an EEG measure) can improve eCMR's predictions of the emotion boost to memory.
+Right now, we are making a simple prototype to demonstrate item-level LPP signals (an EEG measure) can improve a retrieved context model's predictions of the emotion boost to memory.
 
 Later, we may try other model designs, fitting methods, and ways to evaluate the results.
 
@@ -16,11 +16,11 @@ Later, we may try other model designs, fitting methods, and ways to evaluate the
 
 I began with `Single_Trial_Behavioural_and_EEG_Data_Z.csv`, which was missing some study events and their recall results. I merged it with `All_Included_Subjects.csv`, which has all study events but no Early or Late LPP scores.
 
-For study events still missing LPP, I filled values using each person's average for items of the same emotion in the same trial. I then checked the final dataset. It has 9 trials per participant, 20 study events per trial, and a recall outcome for every event.
+For study events still missing LPP scores, I filled values using each person's average for items of the same emotion in the same trial. I then checked the final dataset. It has 9 trials per participant, 20 study events per trial, and a recall outcome for every event.
 
-Each trial originally had 22 items. The first two were removed during preprocessing to reduce primacy effects and cannot be retrieved. This is not ideal for CMR-style models, which often use early items to shape context, but we will work around it.
+Each trial originally had 22 items. The first two were removed during preprocessing to reduce primacy effects and cannot be retrieved. This is not ideal for CMR-style models, which often use early items to shape context. For now, we will just ignore the missing items, treating each list as having 20 items.
 
-The dataset does not include recall order. It only marks whether each item was recalled. Because of this, even early prototypes need custom loss functions for model fitting.
+The dataset does not include recall order. It only marks whether each item was recalled. Because of this, even early prototypes require specifying custom loss functions for model fitting that do not rely on recall order information.
 
 # Benchmark Analyses
 
@@ -58,7 +58,7 @@ Both Early and Late LPP vary with emotionality across positions. Still, error ba
 
 ## Recall Rate by LPP and Item-Condition
 
-A useful neural add-on to eCMR should go beyond labeling items as emotional or neutral. It should also use LPP to predict recall within each label. We therefore plot recall rate against LPP within categories.
+A useful neural add-on to eCMR should go beyond labeling items as emotional or neutral. It should also use LPP to predict recall within each label. To confirm that LPP relates to recall, we bin items by LPP amplitude and plot recall rate within each bin.
 
 ::: {#fig-cat_recall_by_early_lpp layout-ncol="2"}
 ![](results/figures/reference_cat_recall_by_lpp.png)
@@ -82,13 +82,9 @@ Recall rate by Late LPP amplitude and item type.
 Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
 :::
 
-::: {#fig-amplitude_by_cat_by_recalled}
-![](results/figures/amplitude_by_cat_by_recalled.png)
+An earlier bug set subject bin values to 0 when a bin had no items. That lowered recall estimates for sparse bins. After fixing this, we see a positive link between LPP and recall, with wide intervals at high amplitudes due to low counts.
 
-LPP by time, recall status, and item type.
-:::
-
-There are few cases in very high LPP bins above 4.86 and very low bins below -3.25. An earlier bug set subject bin values to 0 when a bin had no items. That lowered recall estimates for sparse bins. After fixing this, we see a positive link between LPP and recall, with wide intervals at high amplitudes due to low counts. A future revision may either set bin edges to balance counts or otherwise drop binning entirely. Still, we preserve this analysis for comparison against a similar plot from prior work.
+Still, this approach for visualizing the relationship between LPP and recall seems flawed because of differences in the number of observations available in each bin. There are few cases in very high LPP bins above 4.86 and very low bins below -3.25. Error bars help show uncertainty, but the uneven counts make it hard to interpret the trends. A future revision may either set bin edges to balance counts or otherwise drop binning entirely. Still, we preserve this analysis for comparison against a similar plot from prior work. Similarities in trends help confirm that our data preparation worked as intended.
 
 <!-- TODO: Balance the number of observations per bin by refactoring implementation of procedure from Morton & Polyn (2016). -->
 
@@ -119,6 +115,22 @@ These plots suggest that higher LPP is tied to recall for NEGATIVE items, with n
 
 The pattern is clearer for Early LPP than for Late LPP, which supports focusing on Early LPP in the model. The pattern also suggests that we only use LPP to modulate recall for NEGATIVE items, leaving NEUTRAL items unaffected.
 
+## Key Carried-Over Results
+
+::: {#fig-amplitude_by_cat_by_recalled}
+![](results/figures/amplitude_by_cat_by_recalled.png)
+
+LPP by time, recall status, and item type.
+:::
+
+::: {#fig-reference_gmm}
+![](results/figures/reference_gmm.png)
+
+Description of a generalized mixed effects model predicting recall as a function of condition, earlyLPP, and their interaction.
+:::
+
+These plots from prior work on this project motivate our choice to focus on Early LPP, to use LPP only for NEGATIVE items, and to treat the relationship between EarlyLPP and recall rate for NEGATIVE items as roughly linear in initial model designs.
+
 # Loss Functions For Model Fitting
 
 We face two main challenges when defining loss functions for this dataset. First, models like CMR and eCMR predict the order of recalls, but our data only say whether each item was recalled. This forces a simpler question: does the set of recalled items match what the model predicts?
@@ -131,15 +143,24 @@ Together, these issues prevent standard likelihood tests on recall sequences. Fo
 
 The best way to evaluate models is to compute the likelihood of the observed data under each model. We normally do this by comparing predicted and observed recall sequences. But our data lack recall order information.
 
-Without recall order, we must rate models by the probability they give to the set of recalled items. Many recall orders can lead to the same set. The exact solution would sum the probabilities of all orders that match the set. That grows too fast to compute for real data.
+Without recall order, we must rate models by the probability they give to the set of recalled items. Many recall orders can lead to the same set. A complete set likelihood function would thus compute and sum the probabilities of all recall sequences that produce the observed set. This is possible in theory, but it is very costly in practice. The number of possible recall sequences grows factorially with the number of recalled items. Summing over all sequences quickly becomes infeasible.
 
-A practical fix is Monte Carlo sampling. For each trial and subject, we repeatedly simulate the model under candidate parameters and track the proportion of simulated recalls that match the observed set. This gives an unbiased estimate of set likelihood, but it adds sampling noise and can be costly. Because reliable results need many samples per trial, we leave a full test of this method for later stages.
+A Monte-Carlo approach sidesteps this problem by evaluating only a sample of possible recall sequences.
+But there are many ways to implement this idea.
+The approach I first considered focused sampling on simulations from the model.
+For each subject and trial, we can simulate many recall sequences. We can then check how many simulated sequences match the observed set of recalled items. The proportion of matching sequences gives an unbiased estimate of the set likelihood given the model and parameter set.
+
+The problem with this approach is that it often gives zero likelihood to reasonable parameter sets. If no simulated sequence matches the observed set exactly, the estimated likelihood is zero. This is especially likely when many items are recalled, since the number of possible recall sequences grows quickly with the number of recalled items. Even when some simulated sequences match the observed set, the estimate can be noisy unless many simulations are run per subject and trial. This makes fitting costly and slow.
+
+I'm now exploring a cleaner approach. Instead of sampling model simulations of a given trial, we can sample permutations of the observed set of recalled items. Each permutation is a possible recall sequence that produces the observed set. For each permutation, we can compute its likelihood under the model. Aggregating these likelihoods gives an estimate of the set likelihood.
+
+This approach avoids zero likelihoods for reasonable parameter sets, since every permutation of the observed set has some non-zero likelihood under the model. It also supports Monte-Carlo estimation to control cost, since we can choose how many permutations to sample per subject and trial. Finally, it preserves the advantages of likelihood-based model fitting and comparison over alternatives like mean squared error (MSE). Once initial prototyping is done, I'll implement this approach for model fitting and evaluation.
 
 <!-- TODO: debug why current set likelihood function doesn't work -->
 
 ## Mean Squared Error (MSE) Over Summary Statistics
 
-Given these limits, we use mean squared error between a chosen summary statistic in the data and the same statistic from simulations. This is common in retrieved-context model evaluation and fits our constraints.
+Given initial challenges implementing a set-likelihood-based fitting procedure, we are starting with a simpler approach for prototyping. We instead use mean squared error between a chosen summary statistic in the data and the same statistic from simulations. This is common in retrieved-context model evaluation and fits our constraints.
 
 The procedure is simple. We choose a summary statistic from the experiment. We simulate the model with a parameter set. We compute the same statistic on the simulations. We then compute the mean squared difference between the two numbers.
 
@@ -147,7 +168,7 @@ This score tells us how well a parameter set for the model reproduces the patter
 
 We currently use the category serial position curve for model fitting and evaluation. It computes recall by position separately for negative and neutral items. This tests both position effects and the emotion boost at the same time and is a better target for neurally informed eCMR.
 
-The MSE can compose over multiple statistics if needed. We may add a neural-behavioral link statistic later to ensure the model captures LPP-recall relationships. For now, we keep it simple.
+The MSE can compose over multiple statistics if needed. We may add a neural-behavioral link statistic later to ensure the model captures LPP-recall relationships. For now, we keep it simple. And we expect to switch back to likelihood-based fitting anyway once basic prototypes work.
 
 <!-- TODO: evaluate a loss function combining category-spc and neural-behavioral link statistics -->
 
@@ -176,18 +197,18 @@ Pure-attention eCMR says attention directly strengthens context-to-item links. T
 ### Parameter Sensitivity Tests
 
 ::: {#fig-two_context_emcr_parameter_sensitivity layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+![](results/figures/shifting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
+![](results/figures/shifting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
 
 Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in Two-Context eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
 :::
 
 ::: {#fig-attention_emcr_parameter_sensitivity layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
+![](results/figures/shifting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_emotion_scale.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
+![](results/figures/shifting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_emotion_scale.png)
 
 Sensitivity of serial position curve to changes in the emotional-attention scaling parameter in pure-attention eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
 :::
@@ -201,16 +222,16 @@ The Two-Context eCMR variant appears to produce a bigger boost to recall rates f
 #### Negative + Neutral Category SPC
 
 ::: {#fig-two_context_vs_attention_cat_spc layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
 Category-SPC for NEGATIVE and NEUTRAL items combined. Left column: Two-Context eCMR. Right column: Pure-Attention eCMR.
 :::
 
 ::: {#fig-baseline_mcr_cat_spc}
 
-![](results/figures/TalmiEEG_WeirdCMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png){width="50%"}
+![](results/figures/fitting/TalmiEEG_WeirdCMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png){width="50%"}
 
 Recall rate by study position and item type for Baseline CMR.
 :::
@@ -218,9 +239,9 @@ Recall rate by study position and item type for Baseline CMR.
 #### Negative-Category SPC
 
 ::: {#fig-two_context_vs_attention_cat_spc_negative layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
 Category-SPC for NEGATIVE items. Left column: Two-Context eCMR. Right column: Pure-Attention eCMR.
 :::
@@ -228,9 +249,9 @@ Category-SPC for NEGATIVE items. Left column: Two-Context eCMR. Right column: Pu
 #### Neutral-Category SPC
 
 ::: {#fig-two_context_vs_attention_cat_spc_neutral layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
 Category-SPC for NEUTRAL items. Left column: Two-Context eCMR. Right column: Pure-Attention eCMR.
 :::
@@ -238,9 +259,9 @@ Category-SPC for NEUTRAL items. Left column: Two-Context eCMR. Right column: Pur
 #### Overall Serial Position Curve
 
 ::: {#fig-two_context_vs_attention_spc layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
 Overall serial position curve across item types. Left column: Two-Context eCMR. Right column: Pure-Attention eCMR.
 :::
@@ -252,9 +273,9 @@ It's also possible to examine how well pure-attention eCMR captures the relation
 This sets a higher bar for model performance, since the model must not only capture the emotion-enhanced memory effect but also the graded relationship between LPP and recall probability within each item category.
 
 ::: {#fig-attention_emcr_cat_recall_by_early_lpp layout-ncol="2"}
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEUTRAL_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEUTRAL_EARLYLPP.png)
 
 Early LPP by recall status for NEGATIVE items (LEFT) and NEUTRAL items (RIGHT) under Pure-Attention eCMR.
 :::
@@ -266,21 +287,21 @@ Neither model makes substantially better predictions of the emotion-enhanced mem
 ## Additive vs Multiplicative Interaction Between Primacy and Emotional Attention
 
 The specifications for eCMR and CMR3 both seem to configure a multiplicative relationship between emotional-attention and primacy-attention.
-That means their effects combine by multiplying rather than adding. 
-If primacy attention is high at the start of the list and the emotion scale is also high, the total boost for an early emotional item is large. 
+That means their effects combine by multiplying rather than adding.
+If primacy attention is high at the start of the list and the emotion scale is also high, the total boost for an early emotional item is large.
 For a late item where primacy is low, the same emotion scale gives a much smaller boost. This predicts a larger gap between emotional and neutral recall early in the list than later.
 
-Here is an example. Suppose primacy at position 1 equals 10 and the emotion scale equals 3. The boost for an emotional item is 10 times 3 which is 30. The boost for a neutral item is 10. The gap is 20. At a later position where primacy equals 1, the emotional boost is 3 and the neutral boost is 1. The gap is 2. The early gap is ten times larger. 
+Here is an example. Suppose primacy at position 1 equals 10 and the emotion scale equals 3. The boost for an emotional item is 10 times 3 which is 30. The boost for a neutral item is 10. The gap is 20. At a later position where primacy equals 1, the emotional boost is 3 and the neutral boost is 1. The gap is 2. The early gap is ten times larger.
 
-Our data and current pipeline give only a limited test of this question because we lack recall order and recall data for the first two list items in each trial. Still, we can still compare additive and multiplicative fits to recall rates by position and category. Initial tests apply an MSE-based fit to a simple extension of baseline CMR where emotional items get either a multiplicative or additive boost to context-to-item associations during encoding (pure-attention eCMR). 
+Our data and current pipeline give only a limited test of this question because we lack recall order and recall data for the first two list items in each trial. Still, we can still compare additive and multiplicative fits to recall rates by position and category. Initial tests apply an MSE-based fit to a simple extension of baseline CMR where emotional items get either a multiplicative or additive boost to context-to-item associations during encoding (pure-attention eCMR).
 
 ::: {#fig-additive_vs_multiplicative_cat_spc layout-ncol="3"}
 
 ![](results/figures/reference_catspc.png)
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_MultiplicativeAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStopMultiplicative_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
 Recall rate by study position and item type for data (LEFT), Additive Pure-Attention eCMR simulation (MIDDLE), and Multiplicative Pure-Attention eCMR simulation (RIGHT).
 :::
@@ -291,21 +312,16 @@ Since two-context eCMR has two context-to-item memory structures (temporal and e
 
 ## Neurally-Informed Extension
 
-We now turn to exploring how a neural signal that hints at whether negative items will be recalled can lift model performance. Our goal is to show that the current data can support such an improvement, leaving the search for the best long term solution for later work.
+We want our neurally-informed eCMR to use item-level Early LPP data to both:
 
-We ground this prototype in earlier results. A generalized mixed effects model predicted recall from item emotionality and single trial Early LPP amplitude: 
+1. Improve model fits to the emotion-enhanced memory effect; and
+2. Capture how LPP relates to recall within each item category.
 
-Memory ~ 1 + Condition * EarlyLPP + (1 + Condition * EarlyLPP | Participant)
+To constrain the design of this extension, we lean on the linearity assumptions embodied in earlier generalized mixed effects model results. The model predicted recall from item emotionality and single trial Early LPP amplitude, finding strong effects of both predictors and their interaction. Recalled negative items had higher Early LPP than unrecalled negative items, while neutral items showed little difference. From the GLMM results, we make two working assumptions. First, LPP affects recall for emotional items in a roughly linear way. Second, the context to feature learning rate configures recall rate.
 
-Tests showed strong effects of Condition, Early LPP, and their interaction. Recalled negative items had higher Early LPP than unrecalled negative items. Neutral items showed little difference. Our plots of LPP by recall status match this pattern.
+We thus design a simple neurally-informed eCMR extension that uses Early LPP to scale the emotional-attention parameter for emotional items only. Neutral items remain unaffected. We use a `lpp_slope` parameter to set how strongly Early LPP spreads recall rates apart for emotional items. An `lpp_threshold` parameter replaces `emotion_scale` from earlier variants and sets the cutoff between recalled and unrecalled emotional items. Depending on whether Early LPP is above or below this threshold, emotional attention increases or decreases relative to the neutral baseline.
 
-These results suggest an eCMR extension that changes learning for emotional items only, using Early LPP as the driver and leaving neutral items unchanged. If Early LPP separates recalled from unrecalled negative items, the model may ideally reduce learning for negative items with low LPP, even below the neutral baseline.
-
-From the GLMM results, we make two working assumptions. First, LPP affects recall for emotional items in a roughly linear way. Second, the context to feature learning rate configures recall rate. To configure learning rates for emotional items based on LPP, we thus use a simple emod = m*x + b linear function.
-
-Here x is the LPP value, m is the parameter `lpp_slope`, b is the parameter `lpp_threshold` which replaces emotion_scale, and emod is the adjusted learning rate for emotional items. In a good fit, the cutoff implied by `lpp_threshold` falls between unrecalled and recalled negative items. Items below the cutoff get a negative emod and items above it get a positive emod. On the other hand, `lpp_slope` sets how strongly LPP spreads their recall rates apart.
-
-This slope and threshold approach gives a clear, data grounded starting point for testing approaches for relating LPP to memory in eCMR. After it works, we can try nonlinear features.
+This slope and threshold approach gives a clear, data grounded starting point for testing approaches for relating LPP to memory in eCMR. After it works, we can explore nonlinear features if we want.
 
 ### Parameter Sensitivity Tests
 
@@ -313,38 +329,54 @@ This slope and threshold approach gives a clear, data grounded starting point fo
 
 ::: {#fig-eeg_attention_emcr_cat_spc_parameter_sensitivity layout-ncol="2"}
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_slope.png)
 
-![](/results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_slope.png)
 
-Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_threshold.png)
+
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_threshold.png)
+
+Sensitivity of negative-category (LEFT column) and neutral-category (RIGHT column) serial position curve to changes in the `lpp_slope` (TOP row) and `lpp_threshold` (BOTTOM row) parameters in Neurally-Informed Pure-Attention eCMR.
 :::
 
 ::: {#fig-eeg_attention_emcr_negative_lpp_by_recall layout-ncol="2"}
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_slope.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_slope.png)
 
-Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_threshold.png)
+
+![](results/figures/shifting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_threshold.png)
+
+Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the `lpp_slope` (TOP) and `lpp_threshold` (BOTTOM) parameters in Neurally-Informed Pure-Attention eCMR. Left: UNRECALLED items. Right: RECALLED items.
 :::
 
 #### Neurally-Informed Two-Context eCMR
 
-::: {#fig-eeg_attention_emcr_cat_spc_parameter_sensitivity layout-ncol="2"}
+::: {#fig-eeg_twolayer_emcr_cat_spc_parameter_sensitivity layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_slope.png)
 
-![](/results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_slope.png)
 
-Sensitivity of serial position curve to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
+![](results/figures/shifting/TalmiEEG_EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative_shift_lpp_threshold.png)
+
+![](results/figures/shifting/TalmiEEG_EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral_shift_lpp_threshold.png)
+
+Sensitivity of serial position curve to changes in the `lpp_slope` (TOP) and `lpp_threshold` (BOTTOM) parameters in Neurally-Informed Pure-Attention eCMR. Left: NEGATIVE items. Right: NEUTRAL items.
 :::
 
-::: {#fig-eeg_attention_emcr_negative_lpp_by_recall layout-ncol="2"}
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_scale.png)
+::: {#fig-eeg_twolayer_emcr_negative_lpp_by_recall layout-ncol="2"}
+![](results/figures/shifting/TalmiEEG_EEGSimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_slope.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_scale.png)
+![](results/figures/shifting/TalmiEEG_EEGSimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_slope.png)
 
-Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the LPP scaling parameter in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
+![](results/figures/shifting/TalmiEEG_EEGSimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_UNRECALLED_shift_lpp_threshold.png)
+
+![](results/figures/shifting/TalmiEEG_EEGSimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_RECALLED_shift_lpp_threshold.png)
+
+Sensitivity of Early LPP by recall status for NEGATIVE items to changes in the `lpp_slope` (TOP) and `lpp_threshold` (BOTTOM) parameters in Neurally-Informed eCMR. Left: UNRECALLED items. Right: RECALLED items.
 :::
 
 ### Comparison of Fits to Benchmark Statistics
@@ -359,13 +391,13 @@ Recall rate by study position and item type from reference materials.
 
 ::: {#fig-eegemcr_cat_spc layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
-![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
+![](results/figures/fitting/TalmiEEG_2EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc.png)
 
 Recall rate by study position and item type for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
 :::
@@ -374,13 +406,13 @@ Recall rate by study position and item type for Regular/Neurally-Informed Pure-A
 
 ::: {#fig-eegemcr_cat_spc_negative layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
-![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
+![](results/figures/fitting/TalmiEEG_2EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_negative.png)
 
 Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
 :::
@@ -389,13 +421,13 @@ Recall rate for NEGATIVE items by study position, for Regular/Neurally-Informed 
 
 ::: {#fig-eegemcr_cat_spc_neutral layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
-![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
+![](results/figures/fitting/TalmiEEG_2EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_spc_neutral.png)
 
 Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
 :::
@@ -404,40 +436,40 @@ Recall rate for NEUTRAL items by study position, for Regular/Neurally-Informed P
 
 ::: {#fig-eegemcr_spc layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
-![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
+![](results/figures/fitting/TalmiEEG_2EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_spc.png)
 
 Recall rate for ALL items by study position, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
 :::
 
 #### Early LPP by Recall Status and Item-Category
 
-::: {#fig-eegecmr_lpp_by_recall_reference layout-ncol="2"}
+::: {#fig-eegecmr_lpp_by_recall_reference}
 
-![](results/figures/cat_lpp_by_recall_EarlyLPP_Negative.png)
+![](results/figures/analyses/cat_lpp_by_recall_EarlyLPP_Negative.png){width="50%"}
 
 LPP amplitude by recall status for NEGATIVE items from reference materials.
 :::
 
 ::: {#fig-eegecmr_lpp_by_recall layout-ncol="2"}
 
-![](results/figures/TalmiEEG_AttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_SimpleAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
 
-![](results/figures/TalmiEEG_EEGAttentionSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_2EEGAttentionECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
 
-![](results/figures/TalmiEEG_AdditiveIsolatedArousalSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_SimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
 
-![](results/figures/TalmiEEG_EEGTwoLayerSimpleECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
+![](results/figures/fitting/TalmiEEG_2EEGSimpleTwoLayerECMRNoStop_cat_spc_mse_fixed_term_best_of_3_cat_lpp_by_recall_NEGATIVE_EARLYLPP.png)
 
 Early LPP by recall status for NEGATIVE items, for Regular/Neurally-Informed Pure-Attention eCMR (TOP LEFT/RIGHT), and Regular/Neurally-Informed Two-Context eCMR (BOTTOM LEFT/RIGHT).
 :::
 
-# Misc
+<!-- # Misc
 
 ## Improving Trade-Off Between Recency and Primacy
 
@@ -457,4 +489,4 @@ Context moves equally far from all studied items, preserving their relative stre
 To overcome this limitation, I tested a modified approach where post-study context drifts not toward an external or out-of-list context, but toward all in-list contexts, where the input vector is essentially a ones mask over context units that are linked to any studied item.
 This adjustment removes temporal directionality from the final cue, effectively making recall initiation reflect just the differences in relative strength across context-to-item associations.
 
-This didn't help either, so I'm leaving this problem for later..
+This didn't help either, so I'm leaving this problem for later.. -->

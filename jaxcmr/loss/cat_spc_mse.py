@@ -11,7 +11,7 @@ import numpy as np
 from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.analyses.cat_spc import fixed_pres_cat_spc, category_recall_counts
+from jaxcmr.analyses.cat_spc import category_recall_counts
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
     Array,
@@ -45,6 +45,32 @@ def simulate_masked_free_recall(
         return recalls * mask
 
     return vmap(simulate_once)(keys)
+
+
+def fixed_pres_cat_spc(
+    recalls: Integer[Array, " trial_count recall_positions"],
+    categories: Integer[Array, " trial_count study_positions"],
+    category_value: int,
+    list_length: int,
+) -> Float[Array, " study_positions"]:
+    """Returns category-filtered recall rate as a function of study position.
+
+    Args:
+        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
+        categories: Trial by study position array of item categories.
+        category_value: Category value to compute the SPC over.
+        list_length: Length of the study list.
+    """
+
+    recall_counts = vmap(
+        category_recall_counts,
+        in_axes=(0, 0, None, None),
+    )(recalls, categories, category_value, list_length)
+
+    numerator = recall_counts.sum(axis=0)
+    denominator = jnp.sum(categories == category_value, axis=0)
+    safe_denominator = jnp.where(denominator == 0, 1.0, denominator)
+    return numerator / safe_denominator
 
 
 class MemorySearchCatSpcMseFnGenerator:
@@ -136,7 +162,8 @@ class MemorySearchCatSpcMseFnGenerator:
         """Returns category-filtered SPC target for selected trials."""
         counts = self.trial_category_counts[:, trial_indices].sum(axis=1)
         denominator = self.trial_category_masks[:, trial_indices].sum(axis=1)
-        return counts / denominator
+        safe_denominator = jnp.where(denominator == 0, 1.0, denominator)
+        return counts / safe_denominator
 
     def _simulated_cat_spc(
         self,
@@ -202,7 +229,9 @@ class MemorySearchCatSpcMseFnGenerator:
 
         def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
             """Returns loss for the merged base and free parameters."""
-            return self.present_and_predict_spc_mse(trial_indices, {**base_params, **params})
+            return self.present_and_predict_spc_mse(
+                trial_indices, {**base_params, **params}
+            )
 
         @jit
         def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
