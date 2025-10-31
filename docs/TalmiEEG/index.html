@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jordan Gunn">
-<meta name="dcterms.date" content="2025-10-30">
+<meta name="dcterms.date" content="2025-10-31">
 
 <title>EEG-ECMR Progress</title>
 <style>
@@ -48,10 +48,10 @@ ul.task-list li input[type="checkbox"] {
 
 <meta name="citation_title" content="EEG-ECMR Progress">
 <meta name="citation_author" content="Jordan Gunn">
-<meta name="citation_publication_date" content="2025-10-30">
-<meta name="citation_cover_date" content="2025-10-30">
+<meta name="citation_publication_date" content="2025-10-31">
+<meta name="citation_cover_date" content="2025-10-31">
 <meta name="citation_year" content="2025">
-<meta name="citation_online_date" content="2025-10-30">
+<meta name="citation_online_date" content="2025-10-31">
 <meta name="citation_language" content="en">
 </head>
 
@@ -79,7 +79,7 @@ ul.task-list li input[type="checkbox"] {
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">October 30, 2025</p>
+              <p class="date">October 31, 2025</p>
             </div>
           </div>
           
@@ -129,6 +129,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#comparison-of-fits-to-benchmark-statistics-1" id="toc-comparison-of-fits-to-benchmark-statistics-1" class="nav-link" data-scroll-target="#comparison-of-fits-to-benchmark-statistics-1"><span class="header-section-number">4.3.2</span> Comparison of Fits to Benchmark Statistics</a></li>
   </ul></li>
   </ul></li>
+  <li><a href="#discussion-and-next-steps" id="toc-discussion-and-next-steps" class="nav-link" data-scroll-target="#discussion-and-next-steps"><span class="header-section-number">5</span> Discussion and Next Steps</a></li>
   </ul>
 </nav>
 </div>
@@ -338,7 +339,7 @@ Figure&nbsp;9: Description of a generalized mixed effects model predicting recal
 <p>This score tells us how well a parameter set for the model reproduces the pattern we care about. If the best score is still poor, the model is likely not adequate. Fitting by MSE does not find the maximum-likelihood parameters and loses trial-level detail, but it is practical, scalable, and clear.</p>
 <p>We currently use the category serial position curve for model fitting and evaluation. It computes recall by position separately for negative and neutral items. This tests both position effects and the emotion boost at the same time and is a better target for neurally informed eCMR.</p>
 <p>The MSE can compose over multiple statistics if needed. We may add a neural-behavioral link statistic later to ensure the model captures LPP-recall relationships. For now, we keep it simple. And we expect to switch back to likelihood-based fitting anyway once basic prototypes work.</p>
-<!-- TODO: evaluate a loss function combining category-spc and neural-behavioral link statistics -->
+<!-- TODO: evaluate a loss function combining category-spc and neural-behavioral link statistics... -->
 </section>
 </section>
 <section id="modeling" class="level1" data-number="4">
@@ -819,30 +820,31 @@ Figure&nbsp;29: Early LPP by recall status for NEGATIVE items, for Regular/Neura
 </figcaption>
 </figure>
 </div>
-<!-- # Misc
-
-## Improving Trade-Off Between Recency and Primacy
-
-Baseline and eCMR fits seem to give low recall rates to the last few study positions in our serial position curves.
-One possible reason is that CMR lacks a mechanism to eliminate recency effects without boosting the strength of the primacy effect (through start-of-list context reinstatement).
-Since the data exhibits neither a strong recency nor a strong primacy effect, the model struggles to capture it.
-
-On the other hand, it could be that eCMR's complete specification is necessary to avoid this down-modulation of the serial position effect.
-However, since eCMR's eMCF only affects recall rates for emotional items, I think it unlikely to help address the down-modulation observed for the neutral-SPC.
-
-A common approach in retrieved-context models to attenuate the recency effect is to introduce a delay drift rate following the study phase, causing context to drift toward an out-of-list context before retrieval begins.
-The rationale is that by shifting the contextual cue away from its final study state, recently studied items will receive less contextual overlap and hence less retrieval advantage.
-
-However, this mechanism generally fails to balance primacy and recency because it does not alter the relative similarity between the contextual cue and the study-phase contexts of individual items.
-Context moves equally far from all studied items, preserving their relative strengths as retrieval cues.
-
-To overcome this limitation, I tested a modified approach where post-study context drifts not toward an external or out-of-list context, but toward all in-list contexts, where the input vector is essentially a ones mask over context units that are linked to any studied item.
-This adjustment removes temporal directionality from the final cue, effectively making recall initiation reflect just the differences in relative strength across context-to-item associations.
-
-This didn't help either, so I'm leaving this problem for later.. -->
 </section>
 </section>
 </section>
+</section>
+<section id="discussion-and-next-steps" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Discussion and Next Steps</h1>
+<p>Our goals for this stage of our modeling were twofold. First, we wanted to build a simple eCMR variant that could capture the emotion-enhanced memory effect in our data. Second, we wanted to extend that model to use item-level Early LPP data to both improve fits to the emotion effect and capture how LPP relates to recall within each item category.</p>
+<p>In this stage of the project, we focused on two benchmark statistics: the category-split serial position curve and the relationship between Early LPP and recall for negative items. We used mean squared error between simulated and observed statistics as our loss function for model fitting and evaluation. We compared baseline CMR, two simple eCMR variants (pure-attention and two-context), and neurally-informed extensions of those eCMR variants. We found that both eCMR variants but not baseline CMR could capture the emotion-enhanced memory effect to a reasonably high degree. The neurally-informed extensions primarily additionally gained the ability to capture the relationship between Early LPP and recall for negative items, with small or no improvements to fits to the emotion effect. We thus partially met both our goals for this stage of the project.</p>
+<p>Our most ambiguous result is that none of the presented eCMR variants, not even neurally-informed extensions, clearly outperformed the other when fitting the behavioral emotion-enhanced memory effect. This outcome probably reflects three realities:</p>
+<ul>
+<li><strong>Limited information in LPP signal</strong>. Early LPP data captures differences in recall rate for emotional items. However, the category-split serial position curve measures differences in recall rate between emotional and neutral items. Thus, Early LPP data may not directly inform fits to that statistic. It is best suited for configuring predictions about which emotional items are most likely to be recalled, rather than how emotional items differ from neutral items overall.</li>
+<li><strong>Lack of theoretical constraint in order-free data and summary statistics</strong>. The primary difference between pure-attention and two-context eCMR is in their predictions about how emotional items cluster together in recall sequences. Two-layer eCMR predicts that boosted recall for emotional items is contingent on reinstating emotional context that cues other emotional items. Pure-attention eCMR predicts that emotional items are recalled more often regardless of whether the last recalled item was emotional or neutral. Without recall order data, we cannot test this key theoretical difference. Both models can make similar predictions about overall recall rates for emotional and neutral items, making it hard to distinguish them.</li>
+<li><strong>Informal model fitting and evaluation procedure</strong>. Our current fitting procedure uses mean squared error between simulated and observed summary statistics. We primarily compare models by visually inspecting fits to those statistics. Even if we directly compared final MSE scores, differences in the number of parameters per model and the lack of formal likelihoods would hamper strong conclusions.</li>
+</ul>
+<p>We aren’t necessarily interested in selecting between possible eCMR specifications with this project. Instead, our goal is to point the way toward neurally-informed retrieved-context models of emotional memory. But as is, we haven’t clearly shown that adding LPP data to eCMR helps capture behavioral patterns of recall beyond what eCMR can already do.</p>
+<p>While some of these problems cannot be overcome with the present dataset, others can probably be resolved by shifting the focus of model fitting and evaluation. We can directly optimize and test models for their ability to predict (give higher likelihoods) to the specific items recalled or not recalled in each trial. This shift would better align our modeling goals with the signal we understand LPP to provide. It would also better distinguish between eCMR variants by comparing their ability to predict trial-level data rather than summary statistics and enabling formal comparison tests that account for differences in model complexity.</p>
+<p>We <em>know</em> that LPP relates to recall at the item level, and that pure-attention and two-context eCMR variants give different probability distributions over possible recall sets of mixed emotional and neutral item lists. But our current benchmarks do not directly test these relationships. Moving to a trial-level, likelihood-based approach for model fitting and evaluation should help clarify whether adding LPP data to eCMR improves its ability to capture emotional memory effects, and whether this dataset is useful for distinguishing between eCMR variants more generally.</p>
+<p>So here are the remaining steps as I see them:</p>
+<ol type="1">
+<li>Swap to a set-likelihood-based fitting and evaluation procedure as described earlier. Redo model fitting with this new procedure and simulate summary statistics with the best-fitting parameters.</li>
+<li>Compare model fits to both summary statistics and trial-level set likelihoods. Check whether adding LPP data improves eCMR’s ability to capture the emotion-enhanced memory effect and whether trial likelihoods help distinguish between eCMR variants after accounting for model complexity.</li>
+<li>Optional: Refocus evaluation on the complete eCMR specification, contrasting it against a neurally-informed extension and against baseline CMR. Unnecessary if goal is just to prove a neurally-informed baseline.</li>
+<li>Optional: Refine bootstrapped confidence intervals for summary statistics to better capture uncertainty in model predictions. Unnecessary since current approach already matches standard practice and other results (e.g., GMM outcomes) already confirm existing patterns.</li>
+<li>Write up results for internal review and eventual publication, Methods-focused talk, grant materials, etc.</li>
+</ol>
 </section>
 
 </main>
@@ -1268,7 +1270,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"loop":false,"descPosition":"bottom","openEffect":"zoom","closeEffect":"zoom","selector":".lightbox"});
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","selector":".lightbox","descPosition":"bottom","closeEffect":"zoom","loop":false});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
