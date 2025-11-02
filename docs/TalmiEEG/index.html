@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jordan Gunn">
-<meta name="dcterms.date" content="2025-10-31">
+<meta name="dcterms.date" content="2025-11-02">
 
 <title>EEG-ECMR Progress</title>
 <style>
@@ -31,10 +31,10 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -48,10 +48,10 @@ ul.task-list li input[type="checkbox"] {
 
 <meta name="citation_title" content="EEG-ECMR Progress">
 <meta name="citation_author" content="Jordan Gunn">
-<meta name="citation_publication_date" content="2025-10-31">
-<meta name="citation_cover_date" content="2025-10-31">
+<meta name="citation_publication_date" content="2025-11-02">
+<meta name="citation_cover_date" content="2025-11-02">
 <meta name="citation_year" content="2025">
-<meta name="citation_online_date" content="2025-10-31">
+<meta name="citation_online_date" content="2025-11-02">
 <meta name="citation_language" content="en">
 </head>
 
@@ -79,7 +79,7 @@ ul.task-list li input[type="checkbox"] {
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">October 31, 2025</p>
+              <p class="date">November 2, 2025</p>
             </div>
           </div>
           
@@ -147,10 +147,25 @@ ul.task-list li input[type="checkbox"] {
 <p>Later, we may try other model designs, fitting methods, and ways to evaluate the results.</p>
 <section id="data-preparation" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Data Preparation</h1>
-<p>I began with <code>Single_Trial_Behavioural_and_EEG_Data_Z.csv</code>, which was missing some study events and their recall results. I merged it with <code>All_Included_Subjects.csv</code>, which has all study events but no Early or Late LPP scores.</p>
-<p>For study events still missing LPP scores, I filled values using each person’s average for items of the same emotion in the same trial. I then checked the final dataset. It has 9 trials per participant, 20 study events per trial, and a recall outcome for every event.</p>
+<p>The primary table comes from <code>Single_Trial_Behavioural_and_EEG_Data_Z.csv</code> located at <code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\</code>.</p>
+<p>This was missing some study events and their recall results. So I merged it with the behavioral log <code>All_Included_Subjects.csv</code> located at <code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\</code>. This file has recall data for every non-buffer item but no LPP scores. Before merging, I confirmed no data present in the EEG file disagreed with the behavioral log. For example, no items marked as recalled in the EEG file were marked as not recalled in the behavioral log.</p>
+<p>The merged frame contains 6,840 study events (342 participant × list trials, 20 items per list after trimming the two primacy buffer items). Among these, 371 study events (5.42 %) lacked EEG measurements. The gaps affected both valence conditions: negative lists contributed 125 of 2,266 events (5.52 %; mean 0.37 ± 0.65 items per trial), whereas neutral lists contributed 246 of 4,574 events (5.38 %; mean 0.72 ± 0.93 items per trial). Overall, 202 of 342 lists (59.1 %) needed at least one interpolated observation, with 1.84 +/- 1.01 missing items among impacted trials (median 2; maximum 6). Subject-level exposure ranged from 2 to 19 items (3.9 to 10 % of each participant’s 180 study events), so the imputation step is methodologically substantive.</p>
+<p>LPP amplitudes were interpolated hierarchically. For study events still missing LPP scores, I filled values using each person’s average for items of the same emotion in the same trial.</p>
 <p>Each trial originally had 22 items. The first two were removed during preprocessing to reduce primacy effects and cannot be retrieved. This is not ideal for CMR-style models, which often use early items to shape context. For now, we will just ignore the missing items, treating each list as having 20 items.</p>
 <p>The dataset does not include recall order. It only marks whether each item was recalled. Because of this, even early prototypes require specifying custom loss functions for model fitting that do not rely on recall order information.</p>
+<!-- 
+> Data prep: please let's eliminate this step by using the files Robin prepared in a specific folder that I pointed you to when I read the document last time.
+
+The file in the folder you pointed me to turned out to be identical to the one I was using, so these steps (merging with behavioral data in `All_Included_Subjects.csv`, imputing missing LPP scores) are still necessary. I believe that Robin's file deliberately excluded behavioral data that were missing (reliable) LPP scores, so merging with the behavioral data file was needed to restore those missing events. I've updated the text to clarify the provenance of the files used.
+
+> Primacy buffers: does the orig paper explain about them? does robin's method explain? I think their recall was not recorded by the authors or they were different items, please check these sources and if not i'll have a look also.
+
+These were excluded because the authors worried that primacy effects would interfere with analyses of the relationship between emotion and memory. I believe they were excluded before Robin received the data, but the gap is discussed repeatedly across notes in the shared folder. Recall data for these study events is not available in any of the files I have.
+
+> Missing data: interpolation good, but please list how many trials were missing, per condition, on average + SD.
+
+These details have been added to the text.
+ -->
 </section>
 <section id="benchmark-analyses" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Benchmark Analyses</h1>
@@ -220,6 +235,17 @@ Figure&nbsp;3: Recall rate by Early LPP amplitude and item type in reference mat
 </figcaption>
 </figure>
 </div>
+<!-- 
+> Figure 3: I don't understand why your figure is different from robin's. To clarify Robin's figure, this is not raw data - it's data from the mixed model which will have removed some random effects. The early LPP values you used may be raw, while his may be z-scores? 
+
+I am confident that Robin and I both used the same Z-normalized LPP values. However, Robin's figure represents lines of best fit from a mixed effects model predicting recall from LPP and item type, while my figure shows directly observed recall rates within percentile-defined LPP value bins. The fitted model uses observations across the full range of LPP values to estimate recall rates at value bands with few observations, while my binned approach estimates recall rates only from items within each bin. Therefore, the two figures differ in how they estimate recall rates at extreme LPP values with few observations.
+
+I believe my figure would align more with Robin's if I used model predictions rather than raw recall rates, or if I improved binning to balance counts across bins. However, I think the best path forward is configure analyses of the relationship between LPP and recall that avoid binning entirely, as in my LPP by Recall Status and Item-Category plots below. If your concern is focused more on whether my data practices match Robin's, I can take steps to confirm this by replicating his mixed effects model analysis and plotting procedure. 
+
+For reference, Robin included a note about the the Z-transformation applied to LPP values in a corresponding README file:
+
+> Z indicates that the amplitudes have been z-normalised. Please note that this normalisation is done by separately for every trial and electrode and involves subtracting the baseline (-200-oms) from each data point after 0 and dividing by the SD of the -200-0ms time window. In other words it is similar to a standard ERP baseline correction with the only difference of dividing with the SD of the baseline. The z normalisation gives change in amplitude from baseline on a z-scale where M = 0 and SD = 1.
+ -->
 <div id="fig-cat_recall_by_late_lpp" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-cat_recall_by_late_lpp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -247,6 +273,12 @@ Figure&nbsp;5: Counts of observations per bin for Early LPP (LEFT) and Late LPP 
 </figcaption>
 </figure>
 </div>
+<!-- 
+> Figure 5: I don't understand how it's possible to have so many more occurrences of LPP for neutral items than negative ones at every level of LPP and still have higher memory/LPP for negative?
+
+There are more neutral items than negative items in the dataset overall, which leads to higher counts in each LPP bin for neutral items. However, recall rates are computed as the proportion of recalled items within each bin, so higher counts do not directly translate to higher recall rates. 
+Once we account for this count imbalance, we still observe 1) that LPP amplitudes for negative items tend to be higher on average than for neutral items and 2) that recall rates scale more strongly with LPP amplitude for negative items than for neutral items.
+ -->
 <p>An earlier bug set subject bin values to 0 when a bin had no items. That lowered recall estimates for sparse bins. After fixing this, we see a positive link between LPP and recall, with wide intervals at high amplitudes due to low counts.</p>
 <p>Still, this approach for visualizing the relationship between LPP and recall seems flawed because of differences in the number of observations available in each bin. There are few cases in very high LPP bins above 4.86 and very low bins below -3.25. Error bars help show uncertainty, but the uneven counts make it hard to interpret the trends. A future revision may either set bin edges to balance counts or otherwise drop binning entirely. Still, we preserve this analysis for comparison against a similar plot from prior work. Similarities in trends help confirm that our data preparation worked as intended.</p>
 <!-- TODO: Balance the number of observations per bin by refactoring implementation of procedure from Morton & Polyn (2016). -->
@@ -353,8 +385,22 @@ Figure&nbsp;9: Description of a generalized mixed effects model predicting recal
 <h2 data-number="4.1" class="anchored" data-anchor-id="single-vs-dual-context-representations"><span class="header-section-number">4.1</span> Single vs Dual Context Representations</h2>
 <p>Full eCMR adds a separate emotional context and memories that link emotion to items and back to context. In that setup, attention mainly raises the learning rates in those emotion links. At recall, reinstating the emotional context then favors emotional items.</p>
 <p>A simpler specification may be enough to capture the emotion-enhanced memory effect in our data. This specification matches baseline CMR and has only one context (temporal). This version skips emotional context and memories linking emotion to items and back to context. An emotional-attention parameter directly scales the strength of temporal context-to-item links during study. Just one extra parameter beyond baseline CMR controls this scaling. We call this version <strong>pure-attention eCMR</strong>.</p>
+<!-- 
+> pure-attention eCMR: I didn't know how to 'tell' the model that an item was emotional without telling it that the context of the item was emotional. how is this solved here?
+
+Rather than 'tell' the model that an item is emotional, pure-attention eCMR posits that the only difference between how emotional and neutral items are encoded for later recall is how much attention they receive during study. Emotional items receive more attention, which strengthens the associations between temporal context and those items. This differentiation works similarly to how CMR scales context-to-item associations based on primacy effects, where early list items receive more attention and thus stronger associations.
+ -->
 <p>An alternative simplification called <strong>two-context eCMR</strong> keeps two contexts but but fixes the emotional context to fully track the most recent item. That removes the need to learn emotion feature to context links or configure an emotional context integration rate. Emotional context-to-feature memory is maintained with a emotional-attention parameter that sets how strongly emotional context cues emotional items. Thus, like pure-attention eCMR, this version only adds one parameter beyond baseline CMR.</p>
-<p>Pure-attention eCMR says attention directly strengthens context-to-item links. The two-context version says emotional items help reinstate emotional context, which then favors other emotional items. Both models thus propose that attention during study drives the emotion effect, but the two-context version explicitly proposes that emotional items cluster together at recall via emotional context reinstatement. We cannot compare these proposals directly because the present dataset lacks recall order. Even so, this model can still make different predictions about overall recall for emotional and neutral items. We can at least compare their ability to capture the emotion-enhanced memory effect.</p>
+<!-- 
+> two-context eCMR: it's not clear here which context-to-item parameter is increased with emotion, temporal or emotional. 
+
+In two-context eCMR, the learning rate for emotional context-to-item associations (not temporal context-to-item associations) is scaled up for emotional items. This means that when emotional context is reinstated during recall, it more strongly cues emotional items due to the enhanced associations formed during encoding.
+
+> "fixes the emotional context to fully track the most recent item" - what parameter is fixed here?
+
+The drift rate ($\beta_{enc}$) specifically for emotional context is set to 1 during encoding. This means that emotional context fully updates to reflect the features of the most recently studied item, effectively making it a direct representation of the last item's emotional features. This is in contrast to standard eCMR, where emotional context can reflect a recency-weighted history of the emotional features of multiple prior items. 
+ -->
+<p>Pure-attention eCMR says attention directly strengthens context-to-item links. The two-context version says emotional items help reinstate emotional context, which then favors other emotional items. Both models thus propose that attention during study drives the emotion effect, but the two-context version explicitly proposes that emotional items cluster together at recall via emotional context reinstatement. We cannot compare these proposals directly because the present dataset lacks recall order. Even so, this model can still make different predictions about the composition of recalled items for lists with mixed emotional and neutral items. We can at least compare their ability to capture the emotion-enhanced memory effect.</p>
 <section id="parameter-sensitivity-tests" class="level3" data-number="4.1.1">
 <h3 data-number="4.1.1" class="anchored" data-anchor-id="parameter-sensitivity-tests"><span class="header-section-number">4.1.1</span> Parameter Sensitivity Tests</h3>
 <div id="fig-two_context_emcr_parameter_sensitivity" class="quarto-layout-panel">
@@ -391,7 +437,12 @@ Figure&nbsp;11: Sensitivity of serial position curve to changes in the emotional
 </figcaption>
 </figure>
 </div>
-<p>These results show that scaling up the parameter increases recall rates for negative items while reducing recall rates for neutral items, building confidence that the parameter can improve the baseline model’s ability to address the emotion-enhanced memory effect. Compared to pure-attention eCMR, the two-context eCMR variant shows a similar sensitivity to changes in the emotional-attention scaling parameter, with increases in the parameter boosting recall rates for negative items while reducing recall rates for neutral items. The Two-Context eCMR variant appears to produce a bigger boost to recall rates for the first and last study positions for negative items, while the pure-attention variant seems to apply some kind of soft ceiling on recall rates for negative items in the first and last study positions.</p>
+<!-- 
+> Figures 10-11: " The Two-Context eCMR variant appears to produce a bigger boost to recall rates for the first and last study positions for negative items" - I didn't see this in the graph
+
+You are right. My comments were about an older version of the plots where differences were apparent. I'll update the text to remove that claim. Instead, I think the broad conclusion is that both models are hard to distinguish at all based on our comparisons in this document.
+ -->
+<p>These results show that scaling up the parameter increases recall rates for negative items while reducing recall rates for neutral items, building confidence that the parameter can improve the baseline model’s ability to address the emotion-enhanced memory effect. Both model variants show similar sensitivity to changes in the emotional-attention scaling parameter, despite their different mechanisms. This suggests that either model could potentially capture the emotion-enhanced memory effect with appropriate parameter settings.</p>
 </section>
 <section id="comparison-of-fits-to-benchmark-statistics" class="level3" data-number="4.1.2">
 <h3 data-number="4.1.2" class="anchored" data-anchor-id="comparison-of-fits-to-benchmark-statistics"><span class="header-section-number">4.1.2</span> Comparison of Fits to Benchmark Statistics</h3>
@@ -505,15 +556,32 @@ Figure&nbsp;17: Early LPP by recall status for NEGATIVE items (LEFT) and NEUTRAL
 </figcaption>
 </figure>
 </div>
+<!-- 
+> 4.1.2.5 here you seem to use LPP in the model but how did you do this? where is it discussed? I didn't understand what's plotted in fig 17. might be useful to say 'simulated recall rate' in figures that are from models, like in fig 17 (which otherwise looked too much like fig 6) and also in fig 20 and 29. Sorry I'm being thick; I didn't immediately understand why LPP (a measured number) changes when you change model parameters. Later, I thought it's because the model changes recall rates at each SPC; this could be stated in the legend - simulated recall rate at each SPC - just as a reminder.
+
+I did not use LPP in these models. LPP values at each study event do not change model behavior at all in pure-attention eCMR or two-context eCMR. I generated this plot anyway by simulating each subject's trials (study and recall events) using the model and parameters fitted to those subjects. I then plotted the relationship between studied items' LPP values and whether those items were recalled in the model's simulations. This helps us see whether the model can capture the *observed* interactive relationship between emotionality, LPP, and recall, even without using LPP as an input. The plots show that they cannot. Despite reproducing an emotion-enhanced memory effect, neither model reproduces the observed relationship between LPP and recall within each item category. This outcome is key because it motivates the need for a neurally-informed extension that captures this relationship.
+ -->
 </section>
 </section>
 <section id="discussion" class="level3" data-number="4.1.3">
 <h3 data-number="4.1.3" class="anchored" data-anchor-id="discussion"><span class="header-section-number">4.1.3</span> Discussion</h3>
-<p>Neither model makes substantially better predictions of the emotion-enhanced memory effect as measured by category-SPC than the other. Both models struggle to capture the emotion-enhanced memory effect adequately. Most critically, they underestimate recall rates for negative items past study position 10. They also overestimate recall rates for neutral items, particularly in early study positions between 3 and 8. We hope that adding neural data will help fix these issues. For now, we default to using pure-attention eCMR as our base model because of its relative simplicity. If initial neural extensions do not help, we can revisit this choice later. (In practice, both models are usually evaluated, but reports in this document focus on pure-attention eCMR unless the two-context variant shows a different pattern of results.)</p>
+<p>Neither model makes substantially better predictions of the emotion-enhanced memory effect as measured by category-SPC than the other. Both models improve substantially over baseline CMR, which cannot capture the effect at all. For now, we default to using pure-attention eCMR as our base model because of its relative simplicity. If initial neural extensions do not help, we can revisit this choice later. (In practice, both models are usually evaluated, but reports in this document focus on pure-attention eCMR unless the two-context variant shows a different pattern of results.)</p>
+<!-- 
+> 4.1.3 "Both models struggle to capture the emotion-enhanced memory effect adequately. Most critically, they underestimate recall rates for negative items past study position 10. They also overestimate recall rates for neutral items, particularly in early study positions between 3 and 8." I didn't see this in the graph
+
+You are right. Those sentences were based on an earlier version of the plots where these discrepancies were apparent. After some further tuning, I was happily able to eliminate those specific issues. I'll update the text to remove those claims. 
+-->
 </section>
 </section>
 <section id="additive-vs-multiplicative-interaction-between-primacy-and-emotional-attention" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="additive-vs-multiplicative-interaction-between-primacy-and-emotional-attention"><span class="header-section-number">4.2</span> Additive vs Multiplicative Interaction Between Primacy and Emotional Attention</h2>
+<!-- 
+> 4.2 please add equations to clarify what emotion_scale does. Good point about multiplicative effects. I think I naively thought: if a neutral item is attended at level x (whether primacy, or not) I will make the emotional one 2x. That what would matter is that you always boost the emotional item to the same degree relative to what it would have been. I didn't care if in SPC4 emotion boost is 3x and SPC 1 30x, because this preserved the relationship of 10x and 1x for neutral. I didn't notice that there was a special misfitting to the early positions. Is it possible that because I only used the emotion boost for the emotional context, and the primacy is for temporal context, I didn't see this issue?
+
+In the specifications and code I've seen for both eCMR and CMR3, primacy was applied to both emotional context- AND temporal context-to-item learning rates. So I think it's more likely that the multiplicative interaction is easier to overlook when hand-fitting parameters than when using an automated fitting procedure. On the other hand, it's also possible that a multiplicative interaction between primacy and emotional attention is actually a really good model, and that this dataset is atypical in showing a misfit in early positions. This possibility is especially salient given that we lack recall data for the first two list items in each trial, which limits our ability to measure primacy effects directly. In any case, I'll support these model specification sections with equations going forward to make the implementation decisions clearer.
+
+TODO: Provide equations for all model variants discussed in this document.
+ -->
 <p>The specifications for eCMR and CMR3 both seem to configure a multiplicative relationship between emotional-attention and primacy-attention. That means their effects combine by multiplying rather than adding. If primacy attention is high at the start of the list and the emotion scale is also high, the total boost for an early emotional item is large. For a late item where primacy is low, the same emotion scale gives a much smaller boost. This predicts a larger gap between emotional and neutral recall early in the list than later.</p>
 <p>Here is an example. Suppose primacy at position 1 equals 10 and the emotion scale equals 3. The boost for an emotional item is 10 times 3 which is 30. The boost for a neutral item is 10. The gap is 20. At a later position where primacy equals 1, the emotional boost is 3 and the neutral boost is 1. The gap is 2. The early gap is ten times larger.</p>
 <p>Our data and current pipeline give only a limited test of this question because we lack recall order and recall data for the first two list items in each trial. Still, we can still compare additive and multiplicative fits to recall rates by position and category. Initial tests apply an MSE-based fit to a simple extension of baseline CMR where emotional items get either a multiplicative or additive boost to context-to-item associations during encoding (pure-attention eCMR).</p>
@@ -542,6 +610,13 @@ Figure&nbsp;18: Recall rate by study position and item type for data (LEFT), Add
 </section>
 <section id="neurally-informed-extension" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="neurally-informed-extension"><span class="header-section-number">4.3</span> Neurally-Informed Extension</h2>
+<!-- 
+> 4.3 please add equations. Please also explain about the threshold - not sure what that does, and why.
+
+I'll add equations to clarify the implementation of the neurally-informed extension. I think I can go a little further in explaining the threshold here as well.
+
+TODO: Add equations and further explanation of the threshold parameter.
+ -->
 <p>We want our neurally-informed eCMR to use item-level Early LPP data to both:</p>
 <ol type="1">
 <li>Improve model fits to the emotion-enhanced memory effect; and</li>
@@ -782,6 +857,21 @@ Figure&nbsp;27: Recall rate for ALL items by study position, for Regular/Neurall
 </figcaption>
 </figure>
 </div>
+<!-- 
+> Fig 26, all 4 panels look the same, I am guessing the two models are the same, neurally-informed did nothing?
+
+Yes, my apologies for not adding commentary in the text. The neurally-informed extensions did not improve fits to category-specific or general serial position curves compared to their regular eCMR counterparts. This outcome suggests that while the neurally-informed models help capture how LPP relates to recall at the item level, they do not enhance the models' ability to fit the overall emotion-enhanced memory effect as measured by serial position curves. 
+
+It is hard to assess how surprising this result is, roughly for the reasons I've already enumerated in the Discussion section.
+
+- The GMM results don't necessarily imply that adding LPP data will improve fits to summary statistics like category-SPC. They don't show that LPP gives us much more information about overall recall rates for emotional vs neutral items than we already get from simply using the labels. Instead, the GMM results mainly show that LPP can help us distinguish which emotional items are more likely to be recalled.
+
+- Our neurally informed extensions are designed to capture the relationship between LPP and recall at the item level in the same way that the GMM does. The `lpp_threshold` parameter is fitted to capture the average boost in attention received by emotional items compared to neutral items. It thus directly addresses the emotion-enhanced memory effect in practically the same way as the `emotion_scale` parameter configuring emotional attention in regular eCMR. I think we confirmed resoundingly that the emotion-enhanced memory effect can be captured by an additive emotional attention mechanism. 
+
+- On the other hand, the `lpp_slope` parameter is not really designed to configure differences in overall recall rates between emotional and neutral items at all. Instead, it attempts to capture variability in emotional attention between items as a function of their LPP values. It can shift around _which_ emotional items are recalled or not, but it does not necessarily change _how many_ emotional items are recalled overall compared to neutral items. Again, this is the outcome we should have expected coming in based on the GMM results, which show that LPP relates to recall within emotional items but not neutral items.
+
+So as long as we 1) are assessing models based on their ability to predict how much more frequently emotional items are recalled compared to neutral items, and 2) stick to GMM-style hypotheses about the relationship between LPP and recall, we should therefore not expect the neurally-informed extensions to outperform regular eCMR variants. We will only find differences when we assess models based on their ability to predict which specific emotional items are recalled or not, which is the next step in our modeling pipeline.
+ -->
 </section>
 <section id="early-lpp-by-recall-status-and-item-category" class="level4" data-number="4.3.2.5">
 <h4 data-number="4.3.2.5" class="anchored" data-anchor-id="early-lpp-by-recall-status-and-item-category"><span class="header-section-number">4.3.2.5</span> Early LPP by Recall Status and Item-Category</h4>
@@ -826,6 +916,19 @@ Figure&nbsp;29: Early LPP by recall status for NEGATIVE items, for Regular/Neura
 </section>
 <section id="discussion-and-next-steps" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Discussion and Next Steps</h1>
+<!-- 
+> Remaining steps: 1 makes sense; perhaps the fit will look more obvious when it's not about the SPC , although the current approach made sense to me. Still, as no evidence was found, we need to show that we didn’t find it even when we used the most rigorous approach. 
+
+I think it's maybe misleading to frame the difference between the two approaches as a matter of rigor. Either can be appropriate depending on the modeling goals and data available, so neither is inherently more rigorous than the other.
+
+The current approach makes _the most_ sense if your goal is to assess whether LPP provides additional information about overall recall rates for emotional vs neutral items beyond what eCMR already captures. But if you have the broader objective to assess whether adding LPP data to eCMR improves its ability to explain why certain items are recalled or not in a given trial, then the current approach is misaligned with that goal.
+
+Of course, I do think the broader objective is more valuable for building psychological theory about how LPP and emotion relate to memory. 
+
+> “Refocus evaluation on the complete eCMR specification” – that also made, because we don’t have data here to evaluate which eCMR version is better, might as well use what worked before, unless we have a reason not to – although it made sense to me also to use the simplest version.
+
+For now, I still think we should seek the simplest model that does the job. Since both pure-attention and two-context eCMR variants are special cases of the complete eCMR specification, any successes we find with those simpler models should generalize to the complete specification. If we find that neither simpler variant can capture the data adequately, then we can revisit the complete specification later. I don't think we've yet reached that point!
+ -->
 <p>Our goals for this stage of our modeling were twofold. First, we wanted to build a simple eCMR variant that could capture the emotion-enhanced memory effect in our data. Second, we wanted to extend that model to use item-level Early LPP data to both improve fits to the emotion effect and capture how LPP relates to recall within each item category.</p>
 <p>In this stage of the project, we focused on two benchmark statistics: the category-split serial position curve and the relationship between Early LPP and recall for negative items. We used mean squared error between simulated and observed statistics as our loss function for model fitting and evaluation. We compared baseline CMR, two simple eCMR variants (pure-attention and two-context), and neurally-informed extensions of those eCMR variants. We found that both eCMR variants but not baseline CMR could capture the emotion-enhanced memory effect to a reasonably high degree. The neurally-informed extensions primarily additionally gained the ability to capture the relationship between Early LPP and recall for negative items, with small or no improvements to fits to the emotion effect. We thus partially met both our goals for this stage of the project.</p>
 <p>Our most ambiguous result is that none of the presented eCMR variants, not even neurally-informed extensions, clearly outperformed the other when fitting the behavioral emotion-enhanced memory effect. This outcome probably reflects three realities:</p>
@@ -845,6 +948,25 @@ Figure&nbsp;29: Early LPP by recall status for NEGATIVE items, for Regular/Neura
 <li>Optional: Refine bootstrapped confidence intervals for summary statistics to better capture uncertainty in model predictions. Unnecessary since current approach already matches standard practice and other results (e.g., GMM outcomes) already confirm existing patterns.</li>
 <li>Write up results for internal review and eventual publication, Methods-focused talk, grant materials, etc.</li>
 </ol>
+<!-- 
+
+So my plan for this document?
+
+Tell a clear story about addressing the behavioral effect without a neurally informed model or likelihood-based fitting.
+Then show how the neurally informed model fits into the story, but makes likelihood-based loss salient.
+Then show how the likelihood-based fitting procedure can help us distinguish between models and better capture the behavioral effect.
+
+What is the story without a neurally informed model or likelihood-based fitting?
+Sets baseline. We have an effect. We have this model. How can we assess whether the model captures the effect? Answer: MSE-based fitting to summary statistics. Baseline CMR can't do it. If you let attention/learning rates vary by emotion, you can capture the effect. Can stick to just pure-attention eCMR for this story.
+
+Then bring in LPP data, describing its complex relationship with recall. Propose a neural linking hypothesis based on GMM results and eCMR: that LPP and emotion interact to configure emotional attention during encoding. So again. We have an effect, this time about LPP. We have a model. How can we assess whether the model captures the effect? 
+
+First we tackle with the same MSE-based approch as before. Key result: we can now predict a relationship between LPP and recall within emotional items. This is the chief object of a neurocognitive model: to express a concrete and testable mechanistic account of the link between neural activity and behavior. However, LPP doesn't help much with the emotion effect since our linking hypothesis suggest LPP configures differences in recall between emotional items, not in recall between emotional and neutral items overall.
+
+This result is dissatisfying because we expect a neurocognitive model to allow us to predict behavior better than a purely cognitive model when neural data is on hand. But to assess this properly, we need to shift to a likelihood-based fitting procedure that better aligns with our modeling goals. We switch from asking whether a model can capture a specific pattern in free recall to asking whether a model can capture which specific items are recalled or not in each trial. This shift better aligns with our modeling goals and the signal LPP provides. We redo model fitting with this new procedure and simulate summary statistics with the best-fitting parameters. Most importantly, we compare the likelihoods of the data under each model, accounting for differences in model complexity.
+
+Hmm, this is maybe too complicated a story.
+ -->
 </section>
 
 </main>
@@ -1270,7 +1392,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","openEffect":"zoom","descPosition":"bottom","selector":".lightbox","loop":false});
+<script>var lightboxQuarto = GLightbox({"selector":".lightbox","descPosition":"bottom","loop":false,"closeEffect":"zoom","openEffect":"zoom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
