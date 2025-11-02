@@ -1,6 +1,12 @@
 Personal Statement
 500 Words
 
+Please provide a personal statement detailing your research career to date including prizes and achievements, and your career and research aspirations in the long term.
+
+Please provide a personal statement about your career and research aspirations in the long term. You should state why the aims of the fellowship will be beneficial to you to date at this stage in your career, how you intend to build a bridge to the next step in your career and how the fellowship will help you to reach your goals.
+
+Please use the personal statement to provide details of research-related contributions, prizes and achievements as well as any additional activities you have undertaken to demonstrate your contribution to the wider scientific endeavour (e.g. conferences, generation of new ideas, tools and methodologies workshops, public engagement activities, public communication of science, etc). You can also use this statement to describe any activities beyond traditional academic outputs that would demonstrate your ability to successfully carry out your proposed project.
+
 ---
 
 Applicant Career History

@@ -11,8 +11,6 @@ from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import all_rows_identical, log_likelihood
-from jaxcmr.math import lb
-from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
     Array,
     Float,
@@ -23,6 +21,26 @@ from jaxcmr.typing import (
     PRNGKeyArray,
     RecallDataset,
 )
+
+
+def predict_and_simulate_recalls(
+    model: MemorySearch, choices: Integer[Array, " recall_events"]
+) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
+    """Returns updated model and event probabilities.
+
+    Args:
+      model: Current memory search model.
+      choices: Retrieval indices (1-indexed) or 0 to stop.
+    """
+    return lax.scan(
+        lambda m, c: lax.cond(
+            c > 0,
+            lambda: (m.retrieve(c), m.outcome_probability(c)),
+            lambda: (m, jnp.array(1.0, dtype=jnp.float32)),
+        ),
+        model,
+        choices,
+    )
 
 
 class MemorySearchLikelihoodFnGenerator:
@@ -62,20 +80,13 @@ class MemorySearchLikelihoodFnGenerator:
                 [(present[item - 1] if item else 0) for item in recall]
             )
             trials[trial_index] = reindexed
-
         trials = jnp.array(trials, dtype=jnp.int32)
-
-        self.trial_counts = vmap(
-            lambda trial: jnp.bincount(trial, length=self.list_length + 1)[1:],
-            in_axes=0,
-        )(trials).astype(jnp.int32)
-
-        self.trial_totals = self.trial_counts.sum(axis=1).astype(jnp.int32)
         self.trial_items = trials
-        trial_count = int(trials.shape[0])
+
+        # Store RNG scaffolding so we can sample permutations with static shapes
         shared_key, per_trial_key = random.split(self.base_key)
         self.shared_simulation_keys = random.split(shared_key, self.simulation_count)
-        per_trial_subkeys = random.split(per_trial_key, trial_count)
+        per_trial_subkeys = random.split(per_trial_key, trials.shape[0])
         self.simulation_keys = vmap(
             lambda key: random.split(key, self.simulation_count)
         )(per_trial_subkeys)
@@ -111,43 +122,15 @@ class MemorySearchLikelihoodFnGenerator:
           trial_index: Trial index to evaluate.
           keys: Simulation keys to use for the Monte Carlo estimate.
         """
-        total = self.trial_totals[trial_index]
         items = self.trial_items[trial_index]
 
         def permutation_probability(key: PRNGKeyArray) -> Float[Array, ""]:
             perm = random.permutation(key, items)
+            _, event_probs = predict_and_simulate_recalls(model, perm)
+            return jnp.prod(event_probs)
 
-            def step(carry, item):
-                current_model, prob, remaining = carry
-
-                def on_true(_):
-                    outcome_prob = current_model.outcome_probability(item)
-                    next_prob = prob * outcome_prob
-                    next_state = current_model.retrieve(item)
-                    return next_state, next_prob, remaining - 1
-
-                def on_false(_):
-                    return current_model, prob, remaining
-
-                state, next_prob, next_remaining = lax.cond(
-                    jnp.logical_and(remaining > 0, item > 0),
-                    on_true,
-                    on_false,
-                    operand=0,
-                )
-                return (state, next_prob, next_remaining), None
-
-            ( _, final_prob, _ ), _ = lax.scan(
-                step,
-                (model, jnp.array(1.0, dtype=jnp.float32), total),
-                perm,
-            )
-            return final_prob
-
-        return lax.cond(
-            total == 0,
-            lambda: jnp.array(1.0, dtype=jnp.float32),
-            lambda: jnp.mean(vmap(permutation_probability)(keys)),
+        return jnp.mean(
+            vmap(permutation_probability)(keys)
         )
 
     def base_predict_trials_loss(
@@ -155,7 +138,10 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach.
+        """Returns bag likelihoods using a single initialized model.
+
+        Predicts all selected trials without re-presenting items (valid only when
+        presentation lists are identical across the trials).
 
         Args:
           trial_indices: Trials to evaluate.
@@ -165,7 +151,7 @@ class MemorySearchLikelihoodFnGenerator:
         raw_probabilities = vmap(
             self.estimate_bag_probability, in_axes=(None, 0, None)
         )(model, trial_indices, self.shared_simulation_keys)
-        return log_likelihood(raw_probabilities + lb)
+        return log_likelihood(raw_probabilities)
 
     def present_and_predict_trials_loss(
         self,
@@ -178,13 +164,14 @@ class MemorySearchLikelihoodFnGenerator:
           trial_indices: Trials to evaluate.
           parameters: Model parameters.
         """
-        models = vmap(self.init_model_for_retrieval, in_axes=(0, None))(
-            trial_indices, parameters
-        )
-        raw_probabilities = vmap(self.estimate_bag_probability, in_axes=(0, 0, 0))(
-            models, trial_indices, self.simulation_keys[trial_indices]
-        )
-        return log_likelihood(raw_probabilities + lb)
+
+        def present_and_predict_trial(i):
+            model = self.init_model_for_retrieval(i, parameters)
+            keys = self.simulation_keys[i]
+            return self.estimate_bag_probability(model, i, keys)
+
+        raw_probabilities = vmap(present_and_predict_trial)(trial_indices)
+        return log_likelihood(raw_probabilities)
 
     def __call__(
         self,
