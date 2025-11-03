@@ -10,7 +10,7 @@ import numpy as np
 from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import all_rows_identical, log_likelihood
+from jaxcmr.helpers import log_likelihood
 from jaxcmr.typing import (
     Array,
     Float,
@@ -67,7 +67,6 @@ class MemorySearchLikelihoodFnGenerator:
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.list_length = self.present_lists.shape[1]
-        self.has_features = False if features is None else jnp.any(features).item()
         self.simulation_count = 40
         self.base_key = random.PRNGKey(0)
 
@@ -83,13 +82,18 @@ class MemorySearchLikelihoodFnGenerator:
         trials = jnp.array(trials, dtype=jnp.int32)
         self.trial_items = trials
 
-        # Store RNG scaffolding so we can sample permutations with static shapes
-        shared_key, per_trial_key = random.split(self.base_key)
-        self.shared_simulation_keys = random.split(shared_key, self.simulation_count)
-        per_trial_subkeys = random.split(per_trial_key, trials.shape[0])
-        self.simulation_keys = vmap(
-            lambda key: random.split(key, self.simulation_count)
-        )(per_trial_subkeys)
+        # Pre-sample permutations for each trial
+        def sample_permutations(
+            trial_key: PRNGKeyArray,
+            items: Integer[Array, " recall_events"],
+        ) -> Integer[Array, " simulation_count recall_events"]:
+            keys = random.split(trial_key, self.simulation_count)
+            return vmap(lambda k: random.permutation(k, items))(keys)
+
+        trial_keys = random.split(self.base_key, trials.shape[0])
+        self.trial_permutations: Integer[Array, "trials simulations list_length"] = (
+            vmap(sample_permutations)(trial_keys, self.trial_items)
+        )
 
     def init_model_for_retrieval(
         self,
@@ -112,46 +116,37 @@ class MemorySearchLikelihoodFnGenerator:
     def estimate_bag_probability(
         self,
         model: MemorySearch,
-        trial_index: Integer[Array, ""],
-        keys: PRNGKeyArray,
+        permutations: Integer[Array, " simulation_count recall_events"],
     ) -> Float[Array, ""]:
         """Returns Monte Carlo estimate of bag probability for a trial.
 
         Args:
           model: Initialized retrieval model for the trial.
-          trial_index: Trial index to evaluate.
-          keys: Simulation keys to use for the Monte Carlo estimate.
+          permutations: Pre-sampled permutations of the trial recall vector.
         """
-        items = self.trial_items[trial_index]
 
-        def permutation_probability(key: PRNGKeyArray) -> Float[Array, ""]:
-            perm = random.permutation(key, items)
-            _, event_probs = predict_and_simulate_recalls(model, perm)
+        def permutation_probability(
+            sequence: Integer[Array, " recall_events"],
+        ) -> Float[Array, ""]:
+            _, event_probs = predict_and_simulate_recalls(model, sequence)
             return jnp.prod(event_probs)
 
-        return jnp.mean(
-            vmap(permutation_probability)(keys)
-        )
+        return jnp.mean(vmap(permutation_probability)(permutations))
 
-    def base_predict_trials_loss(
+    def predict_trial(
         self,
-        trial_indices: Integer[Array, " trials"],
+        trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns bag likelihoods using a single initialized model.
-
-        Predicts all selected trials without re-presenting items (valid only when
-        presentation lists are identical across the trials).
+        """Returns Monte Carlo estimate of one trial's recall-bag probability.
 
         Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
+          trial_index: Trial index to simulate.
+          parameters: Model parameters supplied to the factory.
         """
-        model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        raw_probabilities = vmap(
-            self.estimate_bag_probability, in_axes=(None, 0, None)
-        )(model, trial_indices, self.shared_simulation_keys)
-        return log_likelihood(raw_probabilities)
+        model = self.init_model_for_retrieval(trial_index, parameters)
+        permutations = self.trial_permutations[trial_index]
+        return self.estimate_bag_probability(model, permutations)
 
     def present_and_predict_trials_loss(
         self,
@@ -164,14 +159,8 @@ class MemorySearchLikelihoodFnGenerator:
           trial_indices: Trials to evaluate.
           parameters: Model parameters.
         """
-
-        def present_and_predict_trial(i):
-            model = self.init_model_for_retrieval(i, parameters)
-            keys = self.simulation_keys[i]
-            return self.estimate_bag_probability(model, i, keys)
-
-        raw_probabilities = vmap(present_and_predict_trial)(trial_indices)
-        return log_likelihood(raw_probabilities)
+        raw = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
+        return log_likelihood(raw)
 
     def __call__(
         self,
@@ -189,24 +178,14 @@ class MemorySearchLikelihoodFnGenerator:
           base_params: Fixed parameters.
           free_param_names: Names and order of free parameters.
         """
-        # Decide which approach to use, based on whether all present-lists match
-        if (
-            all_rows_identical(self.present_lists[trial_indices])
-            and not self.has_features
-        ):
-            base_loss_fn = self.base_predict_trials_loss
-        else:
-            base_loss_fn = self.present_and_predict_trials_loss
-
-        def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns negative log-likelihood for merged base and free params."""
-            return base_loss_fn(trial_indices, {**base_params, **params})
 
         @jit
         def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
             """Returns loss for one parameter vector."""
             param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
-            return specialized_loss_fn(param_dict)
+            return self.present_and_predict_trials_loss(
+                trial_indices, {**base_params, **param_dict}
+            )
 
         @jit
         def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
@@ -214,7 +193,9 @@ class MemorySearchLikelihoodFnGenerator:
 
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
                 param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return specialized_loss_fn(param_dict)
+                return self.present_and_predict_trials_loss(
+                    trial_indices, {**base_params, **param_dict}
+                )
 
             # vmap applies loss_for_one_sample across the leading dimension of x
             return vmap(loss_for_one_sample, in_axes=1)(x)

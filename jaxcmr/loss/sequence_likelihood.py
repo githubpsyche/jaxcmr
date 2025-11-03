@@ -10,30 +10,15 @@ import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import all_rows_identical, log_likelihood
+from jaxcmr.helpers import log_likelihood
 from jaxcmr.typing import (
     Array,
     Float,
     Float_,
     Integer,
-    MemorySearch,
     RecallDataset,
-    MemorySearchModelFactory
+    MemorySearchModelFactory,
 )
-
-
-def predict_and_simulate_recalls(
-    model: MemorySearch, choices: Integer[Array, " recall_events"]
-) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
-    """Returns updated model and event probabilities.
-
-    Args:
-      model: Current memory search model.
-      choices: Retrieval indices (1-indexed) or 0 to stop.
-    """
-    return lax.scan(
-        lambda m, c: (m.retrieve(c), m.outcome_probability(c)), model, choices
-    )
 
 
 class MemorySearchLikelihoodFnGenerator:
@@ -42,6 +27,7 @@ class MemorySearchLikelihoodFnGenerator:
     Creates per-trial models, produces event likelihoods, and returns a callable
     that evaluates negative log-likelihood for parameter vectors.
     """
+
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
@@ -55,10 +41,9 @@ class MemorySearchLikelihoodFnGenerator:
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
-        self.factory = model_factory(dataset, features)
-        self.create_model = self.factory.create_trial_model
+        factory = model_factory(dataset, features)
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.has_features = False if features is None else jnp.any(features).item()
+        self.create_model = factory.create_trial_model
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
@@ -72,88 +57,38 @@ class MemorySearchLikelihoodFnGenerator:
 
         self.trials = jnp.array(trials)
 
-    def init_model_for_retrieval(
+    def predict_trial(
         self,
         trial_index: Integer[Array, ""],
         parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Returns a retrieval-ready model for a trial.
+    ) -> Float[Array, " recall_events"]:
+        """Returns recall-event probabilities for one trial.
 
         Args:
-          trial_index: Trial index to initialize.
-          parameters: Model parameter mapping.
+          trial_index: Index identifying which trial to simulate.
+          parameters: Model parameters specific to the trial simulation.
         """
         present = self.present_lists[trial_index]
         model = self.create_model(trial_index, parameters)
         model = lax.fori_loop(
             0, present.size, lambda i, m: m.experience(present[i]), model
         )
-        return model.start_retrieving()
-
-    def base_predict_trials(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, " trials recall_events"]:
-        """Returns event likelihoods using a single initialized model.
-
-        Predicts all selected trials without re-presenting items (valid only when
-        presentation lists are identical across the trials).
-
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
-        model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        return vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
-            model, self.trials[trial_indices]
+        model = model.start_retrieving()
+        return lax.scan(
+            lambda m, c: (m.retrieve(c), m.outcome_probability(c)),
+            model,
+            self.trials[trial_index],
         )[1]
-
-    def present_and_predict_trials(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, " trials recall_events"]:
-        """Returns event likelihoods with a fresh model per trial.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
-
-        def present_and_predict_trial(i):
-            model = self.init_model_for_retrieval(i, parameters)
-            return predict_and_simulate_recalls(model, self.trials[i])[1]
-
-        return vmap(present_and_predict_trial)(trial_indices)
-
-    def base_predict_trials_loss(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
-        return log_likelihood(self.base_predict_trials(trial_indices, parameters))
 
     def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the present-and-predict approach.
+        """Returns negative log likelihood across specified trials."""
 
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
-        return log_likelihood(
-            self.present_and_predict_trials(trial_indices, parameters)
-        )
+        raw = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
+        return log_likelihood(raw)
 
     def __call__(
         self,
@@ -171,21 +106,14 @@ class MemorySearchLikelihoodFnGenerator:
           base_params: Fixed parameters.
           free_param_names: Names and order of free parameters.
         """
-        # Decide which approach to use, based on whether all present-lists match
-        if all_rows_identical(self.present_lists[trial_indices]) and not self.has_features:
-            base_loss_fn = self.base_predict_trials_loss
-        else:
-            base_loss_fn = self.present_and_predict_trials_loss
-
-        def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns negative log-likelihood for merged base and free params."""
-            return base_loss_fn(trial_indices, {**base_params, **params})
 
         @jit
         def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
             """Returns loss for one parameter vector."""
             param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
-            return specialized_loss_fn(param_dict)
+            return self.present_and_predict_trials_loss(
+                trial_indices, {**base_params, **param_dict}
+            )
 
         @jit
         def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
@@ -193,7 +121,9 @@ class MemorySearchLikelihoodFnGenerator:
 
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
                 param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return specialized_loss_fn(param_dict)
+                return self.present_and_predict_trials_loss(
+                    trial_indices, {**base_params, **param_dict}
+                )
 
             # vmap applies loss_for_one_sample across the leading dimension of x
             return vmap(loss_for_one_sample, in_axes=1)(x)

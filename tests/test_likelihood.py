@@ -48,18 +48,16 @@ def _params():
 
 
 def test_preserves_recalls_when_item_ids_match_canonical_positions():
-    """Behavior: Recalls remain unchanged when item IDs are canonical positions.
+    """Behavior: Reindexing keeps canonical item IDs unchanged.
 
     Given:
-      - A presentation that assigns item IDs canonically: ``[1, 2, 3]``.
-      - Recalls provided as those item IDs ``[1, 3, 2]`` (i.e., serial positions).
+      - A single trial with canonical presentation IDs ``[1, 2, 3]``.
     When:
-      - The likelihood generator initializes and performs its reindex step.
+      - The generator reindexes the recall sequence ``[1, 3, 2]``.
     Then:
-      - Recalls are unchanged: ``[1, 3, 2]``.
+      - The stored recalls equal the original input.
     Why this matters:
-      - Presentations follow the invariant (start at 1, then 2, ... with repeats allowed);
-        thus item IDs equal serial positions and reindexing is a no-op.
+      - Confirms canonical presentations survive preprocessing unchanged.
     """
     # Arrange / Given
     dataset = _make_dataset(
@@ -79,16 +77,16 @@ def test_preserves_recalls_when_item_ids_match_canonical_positions():
 
 
 def test_preserves_recalls_when_already_serial_positions():
-    """Behavior: Keep recalls unchanged when already serial positions.
+    """Behavior: Reindexing keeps serial-position recalls unchanged.
 
     Given:
-      - A trial with canonical presentation ``[1, 2, 3]`` and recalls by position ``[2, 1, 3]``.
+      - A canonical presentation ``[1, 2, 3]`` with recall positions ``[2, 1, 3]``.
     When:
-      - The likelihood generator initializes.
+      - The generator performs its reindexing step.
     Then:
-      - Recalls remain ``[2, 1, 3]``.
+      - The stored recalls match the serial-position input.
     Why this matters:
-      - Ensures the reindexing step is a no-op when input is positions.
+      - Ensures position-based inputs persist through preprocessing.
     """
     # Arrange / Given
     dataset = _make_dataset(
@@ -108,52 +106,51 @@ def test_preserves_recalls_when_already_serial_positions():
 
 
 # -----------------------------------------------------------------------------
-# Path selection and equivalence tests
+# Likelihood tests
 # -----------------------------------------------------------------------------
 
 
-def test_base_equals_present_and_predict_when_presentations_identical():
-    """Behavior: Base and present-and-predict losses are equal when lists match.
+def test_predict_trial_returns_positive_probabilities_when_single_trial():
+    """Behavior: Trial simulation yields probabilistic outcomes.
+
+    Given:
+      - One trial with canonical presentations and recalls.
+    When:
+      - `predict_trial` simulates recall probabilities.
+    Then:
+      - Each probability lies within ``(0, 1]``.
+    Why this matters:
+      - Ensures trial-level predictions remain valid probabilities.
+    """
+    # Arrange / Given
+    dataset = _make_dataset(
+        presents=[[1, 2, 3]],
+        recalls=[[1, 2, 0]],
+        list_length=3,
+    )
+    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    params = _params()
+
+    # Act / When
+    probabilities = gen.predict_trial(0, params)
+
+    # Assert / Then
+    assert probabilities.shape == (3,)
+    assert jnp.all(probabilities > 0).item()
+    assert jnp.all(probabilities <= 1).item()
+
+
+def test_present_and_predict_loss_matches_manual_when_lists_identical():
+    """Behavior: Loss helper matches manual log-likelihood.
 
     Given:
       - Two trials with identical presentation lists.
     When:
-      - Loss is computed via both base and present-and-predict paths.
+      - Loss is computed via the helper and by manual aggregation.
     Then:
-      - The negative log-likelihoods match.
+      - The results are numerically equivalent.
     Why this matters:
-      - Confirms branch equivalence under identical present lists.
-    """
-    # Arrange / Given
-    presents = [[1, 2, 3], [1, 2, 3]]
-    # Serial-position recalls (1-based)
-    recalls = [[1, 2, 0], [2, 3, 0]]
-    dataset = _make_dataset(presents, recalls, list_length=3)
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
-    params = _params()
-    idx = jnp.array([0, 1], dtype=jnp.int32)
-
-    # Act / When
-    base_ll = gen.base_predict_trials_loss(idx, params)
-    pap_ll = gen.present_and_predict_trials_loss(idx, params)
-
-    # Assert / Then
-    assert jnp.allclose(base_ll, pap_ll).item(), (
-        f"Expected equal losses, base={float(base_ll)}, present+predict={float(pap_ll)}"
-    )
-
-
-def test_call_uses_base_path_when_presentations_identical():
-    """Behavior: __call__ selects base path when present lists match.
-
-    Given:
-      - Two trials with identical presentations and a free parameter.
-    When:
-      - The returned loss function is evaluated.
-    Then:
-      - Its value equals ``base_predict_trials_loss``.
-    Why this matters:
-      - Verifies branch selection in the loss generator.
+      - Validates the helper after removal of the base path.
     """
     # Arrange / Given
     presents = [[1, 2, 3], [1, 2, 3]]
@@ -162,62 +159,39 @@ def test_call_uses_base_path_when_presentations_identical():
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
-    free = ["encoding_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_param_names=free)
 
     # Act / When
-    val = f(np.array([params["encoding_drift_rate"]], dtype=float))
-    expected = gen.base_predict_trials_loss(trial_idx, params)
-
-    # Assert / Then
-    assert np.isclose(float(val), float(expected)), (
-        f"Expected base path loss {float(expected)}, got {float(val)}"
+    helper = getattr(gen, "present_and_predict_trials_loss", gen.present_and_predict_trials_loss)
+    helper_loss = float(helper(trial_idx, params))
+    manual_loss = float(
+        -jnp.sum(
+            jnp.log(
+                jnp.stack(
+                    [gen.predict_trial(int(i), params) for i in trial_idx.tolist()],
+                    axis=0,
+                )
+            )
+        )
     )
 
-
-def test_call_uses_present_and_predict_when_presentations_differ():
-    """Behavior: __call__ selects present-and-predict when lists differ.
-
-    Given:
-      - Two trials with differing presentations and a free parameter.
-    When:
-      - The returned loss function is evaluated.
-    Then:
-      - Its value equals ``present_and_predict_trials_loss``.
-    Why this matters:
-      - Ensures correct branch selection for non-identical lists.
-    """
-    # Arrange / Given
-    presents = [[1, 2, 3], [1, 2, 1]]  # differing but canonical
-    recalls = [[1, 3, 0], [3, 1, 0]]  # positions per trial
-    dataset = _make_dataset(presents, recalls, list_length=3)
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
-    params = _params()
-    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
-    free = ["encoding_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_param_names=free)
-
-    # Act / When
-    val = f(np.array([params["encoding_drift_rate"]], dtype=float))
-    expected = gen.present_and_predict_trials_loss(trial_idx, params)
-
     # Assert / Then
-    assert np.isclose(float(val), float(expected)), (
-        f"Expected present+predict loss {float(expected)}, got {float(val)}"
+    assert np.isclose(helper_loss, manual_loss), (
+        f"Expected helper loss {manual_loss}, got {helper_loss}"
     )
 
 
 def test_vectorized_and_scalar_loss_agree_when_batching_params():
-    """Behavior: Batched loss equals repeated scalar loss.
+    """Behavior: Vectorized evaluation equals repeated scalar loss.
 
     Given:
-      - Identical presentations across trials and two identical param vectors.
+      - Identical presentations across two trials.
+      - Two identical parameter vectors supplied in batch format.
     When:
-      - The loss function is evaluated for a batch and a scalar input.
+      - The specialized loss function is called for scalar and batched inputs.
     Then:
-      - Each batch entry equals the scalar loss value.
+      - Each batched entry equals the scalar loss.
     Why this matters:
-      - Validates the vectorized DE interface (`vectorized=True`).
+      - Confirms compatibility with vectorized differential evolution APIs.
     """
     # Arrange / Given
     presents = [[1, 2, 3], [1, 2, 3]]
@@ -236,7 +210,6 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
     # Act / When
     scalar_val = float(f(x_single))
     batched_vals = np.array(f(x_batch))
-
     # Assert / Then
     assert batched_vals.shape == (2,)
     assert np.allclose(batched_vals, scalar_val)

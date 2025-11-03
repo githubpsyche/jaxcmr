@@ -10,7 +10,7 @@ import numpy as np
 from jax import jit, lax, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import all_rows_identical, log_likelihood
+from jaxcmr.helpers import log_likelihood
 from jaxcmr.math import lb
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
@@ -50,7 +50,6 @@ class MemorySearchLikelihoodFnGenerator:
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.list_length = self.present_lists.shape[1]
-        self.has_features = False if features is None else jnp.any(features).item()
         self.simulation_count = 40
         self.base_key = random.PRNGKey(0)
 
@@ -73,8 +72,7 @@ class MemorySearchLikelihoodFnGenerator:
 
         self.trial_totals = self.trial_counts.sum(axis=1).astype(jnp.int32)
         trial_count = int(trials.shape[0])
-        shared_key, per_trial_key = random.split(self.base_key)
-        self.shared_simulation_keys = random.split(shared_key, self.simulation_count)
+        _, per_trial_key = random.split(self.base_key)
         per_trial_subkeys = random.split(per_trial_key, trial_count)
         self.simulation_keys = vmap(
             lambda key: random.split(key, self.simulation_count)
@@ -125,23 +123,6 @@ class MemorySearchLikelihoodFnGenerator:
         matches = vmap(simulate_and_match)(keys)
         return jnp.mean(matches.astype(jnp.float32))
 
-    def base_predict_trials_loss(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Returns negative log-likelihood for the base approach.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          parameters: Model parameters.
-        """
-        model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        raw_probabilities = vmap(
-            self.estimate_bag_probability, in_axes=(None, 0, None)
-        )(model, trial_indices, self.shared_simulation_keys)
-        return log_likelihood(raw_probabilities + lb)
-
     def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
@@ -177,14 +158,7 @@ class MemorySearchLikelihoodFnGenerator:
           base_params: Fixed parameters.
           free_param_names: Names and order of free parameters.
         """
-        # Decide which approach to use, based on whether all present-lists match
-        if (
-            all_rows_identical(self.present_lists[trial_indices])
-            and not self.has_features
-        ):
-            base_loss_fn = self.base_predict_trials_loss
-        else:
-            base_loss_fn = self.present_and_predict_trials_loss
+        base_loss_fn = self.present_and_predict_trials_loss
 
         def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
             """Returns negative log-likelihood for merged base and free params."""
