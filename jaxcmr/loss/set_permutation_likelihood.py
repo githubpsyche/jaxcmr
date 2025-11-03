@@ -95,44 +95,6 @@ class MemorySearchLikelihoodFnGenerator:
             vmap(sample_permutations)(trial_keys, self.trial_items)
         )
 
-    def init_model_for_retrieval(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Returns a retrieval-ready model for a trial.
-
-        Args:
-          trial_index: Trial index to initialize.
-          parameters: Model parameter mapping.
-        """
-        present = self.present_lists[trial_index]
-        model = self.create_model(trial_index, parameters)
-        model = lax.fori_loop(
-            0, present.size, lambda i, m: m.experience(present[i]), model
-        )
-        return model.start_retrieving()
-
-    def estimate_bag_probability(
-        self,
-        model: MemorySearch,
-        permutations: Integer[Array, " simulation_count recall_events"],
-    ) -> Float[Array, ""]:
-        """Returns Monte Carlo estimate of bag probability for a trial.
-
-        Args:
-          model: Initialized retrieval model for the trial.
-          permutations: Pre-sampled permutations of the trial recall vector.
-        """
-
-        def permutation_probability(
-            sequence: Integer[Array, " recall_events"],
-        ) -> Float[Array, ""]:
-            _, event_probs = predict_and_simulate_recalls(model, sequence)
-            return jnp.prod(event_probs)
-
-        return jnp.mean(vmap(permutation_probability)(permutations))
-
     def predict_trial(
         self,
         trial_index: Integer[Array, ""],
@@ -144,9 +106,21 @@ class MemorySearchLikelihoodFnGenerator:
           trial_index: Trial index to simulate.
           parameters: Model parameters supplied to the factory.
         """
-        model = self.init_model_for_retrieval(trial_index, parameters)
+        # build and present to the model
+        present = self.present_lists[trial_index]
+        model = self.create_model(trial_index, parameters)
+        model = lax.fori_loop(
+            0, present.size, lambda i, m: m.experience(present[i]), model
+        )
+        model = model.start_retrieving()
+
+        # predict across pre-sampled permutations
         permutations = self.trial_permutations[trial_index]
-        return self.estimate_bag_probability(model, permutations)
+        event_probs = vmap(
+            predict_and_simulate_recalls,
+            in_axes=(None, 0),
+        )(model, permutations)[1]
+        return jnp.mean(jnp.prod(event_probs, axis=-1))
 
     def present_and_predict_trials_loss(
         self,
