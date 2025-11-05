@@ -9,23 +9,15 @@ from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
-import jaxcmr.components.context as TemporalContext
-import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.math import (
-    exponential_primacy_decay,
-    lb,
-    power_scale,
-)
+from jaxcmr.math import exponential_primacy_decay, lb, power_scale
 from jaxcmr.typing import (
     Array,
-    ContextCreateFn,
+    Bool,
     Float,
     Float_,
-    Bool,
     Int_,
     Integer,
-    MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
     RecallDataset,
@@ -33,8 +25,8 @@ from jaxcmr.typing import (
 )
 
 
-class CMR(Pytree):
-    """The Context Maintenance and Retrieval (CMR) model of memory search."""
+class StrengthSearch(Pytree):
+    """Represents a strength-based memory search without retrieved context."""
 
     def __init__(
         self,
@@ -42,24 +34,14 @@ class CMR(Pytree):
         parameters: Mapping[str, Float_],
         is_emotional: Bool[Array, " study_events"],
         lpp_centered: Float[Array, " study_events"],
-        mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
-        mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
-        context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
     ):
-        self.encoding_drift_rate = parameters["encoding_drift_rate"]
-        self.start_drift_rate = parameters["start_drift_rate"]
-        self.recall_drift_rate = parameters["recall_drift_rate"]
         self.primacy_scale = parameters["primacy_scale"]
         self.primacy_decay = parameters["primacy_decay"]
-        self.mfc_learning_rate = parameters["learning_rate"]
-        self.mcf_sensitivity = parameters["choice_sensitivity"]
-        self.learn_after_context_update = parameters["learn_after_context_update"]
+        self.choice_sensitivity = parameters["choice_sensitivity"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
 
-        # Apply a slope/threshold transform to emotional LPP traces after centering
-        # them within each trial so slope controls relative differences.
         lpp_slope = parameters["lpp_slope"]
         lpp_threshold = parameters["lpp_threshold"]
         self.emotion_modulation = lpp_slope * (lpp_centered - lpp_threshold) * is_emotional
