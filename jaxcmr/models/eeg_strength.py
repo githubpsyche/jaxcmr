@@ -1,6 +1,4 @@
-"""
-CMR: Context Maintenance and Retrieval model of memory search.
-"""
+"""Plain attentional-strength memory search model."""
 
 from typing import Mapping, Optional, Type
 
@@ -47,13 +45,10 @@ class StrengthSearch(Pytree):
         self.emotion_modulation = lpp_slope * (lpp_centered - lpp_threshold) * is_emotional
 
         self.item_count = list_length
-        self.items = jnp.eye(self.item_count)
         self.primacy = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
-        self.context = context_create_fn(list_length)
-        self.mfc = mfc_create_fn(list_length, parameters, self.context)
-        self.mcf = mcf_create_fn(list_length, parameters, self.context)
+        self.strengths = jnp.zeros(self.item_count, dtype=jnp.float32)
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -61,44 +56,31 @@ class StrengthSearch(Pytree):
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
 
-    def experience_item(self, item_index: Int_) -> "CMR":
-        """Return the model after experiencing item with the specified index.
+    def experience_item(self, item_index: Int_) -> "StrengthSearch":
+        """Returns model after encoding the specified item.
 
         Args:
-            item_index: the index of the item to experience. 0-indexed.
+            item_index: Index of the studied item (0-indexed).
         """
-        item = self.items[item_index]
-        context_input = self.mfc.probe(item)
-        new_context = self.context.integrate(context_input, self.encoding_drift_rate)
-        learning_state = lax.cond(
-            self.learn_after_context_update,
-            lambda: new_context.state,
-            lambda: self.context.state,
-        )
-        
-        # mcf learning rate is at least 0, 
-        # either an additive or multiplicative function of primacy and emotion
         primacy = self.primacy[self.study_index]
         emotion_modulation = self.emotion_modulation[item_index]
-        mcf_lr = lax.cond(
+        total_strength = lax.cond(
             self.modulate_emotion_by_primacy,
             lambda: primacy * jnp.maximum(0.0, emotion_modulation),
             lambda: primacy + jnp.maximum(-primacy, emotion_modulation),
         )
 
         return self.replace(
-            context=new_context,
-            mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, item, mcf_lr),
+            strengths=self.strengths.at[item_index].set(total_strength),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
 
-    def experience(self, choice: Int_) -> "CMR":
+    def experience(self, choice: Int_) -> "StrengthSearch":
         """Returns model after simulating the specified study event.
 
         Args:
-            choice: the index of the item to experience (1-indexed). 0 is ignored.
+            choice: Index of the studied item (1-indexed). Zero is ignored.
         """
         return lax.cond(
             choice == 0,
@@ -106,34 +88,27 @@ class StrengthSearch(Pytree):
             lambda: self.experience_item(choice - 1),
         )
 
-    def start_retrieving(self) -> "CMR":
-        """Returns model after transitioning from study to retrieval mode."""
-        start_input = self.context.initial_state
-        start_context = self.context.integrate(start_input, self.start_drift_rate)
-        return self.replace(context=start_context)
+    def start_retrieving(self) -> "StrengthSearch":
+        """Returns model after preparing for retrieval."""
+        return self
 
-    def retrieve_item(self, item_index: Int_) -> "CMR":
-        """Return model after simulating retrieval of item with the specified index.
+    def retrieve_item(self, item_index: Int_) -> "StrengthSearch":
+        """Returns model after recalling the specified item.
 
         Args:
-            choice: the index of the item to retrieve (0-indexed)
+            item_index: Index of the recalled item (0-indexed).
         """
-        new_context = self.context.integrate(
-            self.mfc.probe(self.items[item_index]),
-            self.recall_drift_rate,
-        )
         return self.replace(
-            context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
             recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
             recall_total=self.recall_total + 1,
         )
 
-    def retrieve(self, choice: Int_) -> "CMR":
-        """Return model after simulating the specified retrieval event.
+    def retrieve(self, choice: Int_) -> "StrengthSearch":
+        """Returns model after simulating the specified retrieval event.
 
         Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
+            choice: Index of the recalled item (1-indexed) or zero to stop.
         """
         return lax.cond(
             choice == 0,
@@ -142,30 +117,28 @@ class StrengthSearch(Pytree):
         )
 
     def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+        """Returns relative support for recalling each item."""
+        _activations = self.strengths * self.recallable
+        return (power_scale(_activations, self.choice_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
-        """Returns probability of stopping retrieval given model state"""
+        """Returns probability of stopping retrieval given model state."""
         return self.termination_policy.stop_probability(self)
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return the probability of retrieval of an item at the specified index.
-
-        Assumes that some items are recallable, with at least the minimum recall probability.
+        """Returns probability of recalling the specified item.
 
         Args:
-            item_index: the index of the item to retrieve.
+            item_index: Index of the recalled item (0-indexed).
         """
         item_activations = self.activations()
         return item_activations[item_index] / jnp.sum(item_activations)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
+        """Returns probability of the specified retrieval outcome.
 
         Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
+            choice: Recall choice (1-indexed) or zero to stop.
         """
         p_stop = self.stop_probability()
         return lax.cond(
@@ -179,7 +152,7 @@ class StrengthSearch(Pytree):
         )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return the outcome probabilities of all recall events."""
+        """Returns probabilities for stop and item recall choices."""
         p_stop = self.stop_probability()
         item_activation = self.activations()
         item_activation_sum = jnp.sum(item_activation)
@@ -196,21 +169,29 @@ class StrengthSearch(Pytree):
 
 
 def make_factory(
-    mfc_create_fn: MemoryCreateFn,
-    mcf_create_fn: MemoryCreateFn,
-    context_create_fn: ContextCreateFn,
+    mfc_create_fn,
+    mcf_create_fn,
+    context_create_fn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
 ) -> Type[MemorySearchModelFactory]:
-    class CMRModelFactory:
+    """Returns a factory that builds strength-based memory search models.
+
+    Args:
+        mfc_create_fn: Unused associative-memory factory (ignored).
+        mcf_create_fn: Unused associative-memory factory (ignored).
+        context_create_fn: Unused context factory (ignored).
+        termination_policy_create_fn: Factory that creates termination policies.
+    """
+    del mfc_create_fn, mcf_create_fn, context_create_fn
+
+    class StrengthModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
             features: Optional[Float[Array, " word_pool_items features_count"]],
         ):
-            self.present_lists = np.array(dataset["pres_itemids"])
             self.max_list_length = np.max(dataset["listLength"]).item()
 
-            # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
             lpp_raw = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
             valid_lpp = jnp.where(self.trial_emotions, lpp_raw, 0.0)
@@ -219,11 +200,7 @@ def make_factory(
                 1.0,
             )
             emotional_mean = jnp.sum(valid_lpp, axis=1, keepdims=True) / emotional_count
-            centered_lpp = jnp.where(
-                self.trial_emotions, valid_lpp - emotional_mean, 0.0
-            )
-
-            self.lpp_centered = centered_lpp
+            self.lpp_centered = jnp.where(self.trial_emotions, valid_lpp - emotional_mean, 0.0)
 
             def model_create_fn(
                 list_length: int,
@@ -231,14 +208,11 @@ def make_factory(
                 is_emotional: Bool[Array, " study_events"],
                 lpp_centered: Float[Array, " study_events"],
             ) -> MemorySearch:
-                return CMR(
+                return StrengthSearch(
                     list_length,
                     parameters,
                     is_emotional,
                     lpp_centered,
-                    mfc_create_fn,
-                    mcf_create_fn,
-                    context_create_fn,
                     termination_policy_create_fn,
                 )
 
@@ -264,4 +238,4 @@ def make_factory(
                 self.lpp_centered[trial_index],
             )
 
-    return CMRModelFactory
+    return StrengthModelFactory
