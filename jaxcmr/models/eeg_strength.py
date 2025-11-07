@@ -66,7 +66,7 @@ class StrengthSearch(Pytree):
         emotion_modulation = self.emotion_modulation[item_index]
         total_strength = lax.cond(
             self.modulate_emotion_by_primacy,
-            lambda: primacy * jnp.maximum(0.0, emotion_modulation),
+            lambda: primacy * jnp.maximum(1, 1 + emotion_modulation),
             lambda: primacy + jnp.maximum(-primacy, emotion_modulation),
         )
 
