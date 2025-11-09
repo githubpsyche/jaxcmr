@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jordan Gunn">
-<meta name="dcterms.date" content="2025-11-02">
+<meta name="dcterms.date" content="2025-11-09">
 
 <title>EEG-ECMR Progress</title>
 <style>
@@ -48,10 +48,10 @@ ul.task-list li input[type="checkbox"] {
 
 <meta name="citation_title" content="EEG-ECMR Progress">
 <meta name="citation_author" content="Jordan Gunn">
-<meta name="citation_publication_date" content="2025-11-02">
-<meta name="citation_cover_date" content="2025-11-02">
+<meta name="citation_publication_date" content="2025-11-09">
+<meta name="citation_cover_date" content="2025-11-09">
 <meta name="citation_year" content="2025">
-<meta name="citation_online_date" content="2025-11-02">
+<meta name="citation_online_date" content="2025-11-09">
 <meta name="citation_language" content="en">
 </head>
 
@@ -79,7 +79,7 @@ ul.task-list li input[type="checkbox"] {
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">November 2, 2025</p>
+              <p class="date">November 9, 2025</p>
             </div>
           </div>
           
@@ -277,6 +277,7 @@ Figure&nbsp;5: Counts of observations per bin for Early LPP (LEFT) and Late LPP 
 > Figure 5: I don't understand how it's possible to have so many more occurrences of LPP for neutral items than negative ones at every level of LPP and still have higher memory/LPP for negative?
 
 There are more neutral items than negative items in the dataset overall, which leads to higher counts in each LPP bin for neutral items. However, recall rates are computed as the proportion of recalled items within each bin, so higher counts do not directly translate to higher recall rates. 
+
 Once we account for this count imbalance, we still observe 1) that LPP amplitudes for negative items tend to be higher on average than for neutral items and 2) that recall rates scale more strongly with LPP amplitude for negative items than for neutral items.
  -->
 <p>An earlier bug set subject bin values to 0 when a bin had no items. That lowered recall estimates for sparse bins. After fixing this, we see a positive link between LPP and recall, with wide intervals at high amplitudes due to low counts.</p>
@@ -362,7 +363,6 @@ Figure&nbsp;9: Description of a generalized mixed effects model predicting recal
 <p>The problem with this approach is that it often gives zero likelihood to reasonable parameter sets. If no simulated sequence matches the observed set exactly, the estimated likelihood is zero. This is especially likely when many items are recalled, since the number of possible recall sequences grows quickly with the number of recalled items. Even when some simulated sequences match the observed set, the estimate can be noisy unless many simulations are run per subject and trial. This makes fitting costly and slow.</p>
 <p>I’m now exploring a cleaner approach. Instead of sampling model simulations of a given trial, we can sample permutations of the observed set of recalled items. Each permutation is a possible recall sequence that produces the observed set. For each permutation, we can compute its likelihood under the model. Aggregating these likelihoods gives an estimate of the set likelihood.</p>
 <p>This approach avoids zero likelihoods for reasonable parameter sets, since every permutation of the observed set has some non-zero likelihood under the model. It also supports Monte-Carlo estimation to control cost, since we can choose how many permutations to sample per subject and trial. Finally, it preserves the advantages of likelihood-based model fitting and comparison over alternatives like mean squared error (MSE). Once initial prototyping is done, I’ll implement this approach for model fitting and evaluation.</p>
-<!-- TODO: debug why current set likelihood function doesn't work -->
 </section>
 <section id="mean-squared-error-mse-over-summary-statistics" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="mean-squared-error-mse-over-summary-statistics"><span class="header-section-number">3.2</span> Mean Squared Error (MSE) Over Summary Statistics</h2>
@@ -371,7 +371,6 @@ Figure&nbsp;9: Description of a generalized mixed effects model predicting recal
 <p>This score tells us how well a parameter set for the model reproduces the pattern we care about. If the best score is still poor, the model is likely not adequate. Fitting by MSE does not find the maximum-likelihood parameters and loses trial-level detail, but it is practical, scalable, and clear.</p>
 <p>We currently use the category serial position curve for model fitting and evaluation. It computes recall by position separately for negative and neutral items. This tests both position effects and the emotion boost at the same time and is a better target for neurally informed eCMR.</p>
 <p>The MSE can compose over multiple statistics if needed. We may add a neural-behavioral link statistic later to ensure the model captures LPP-recall relationships. For now, we keep it simple. And we expect to switch back to likelihood-based fitting anyway once basic prototypes work.</p>
-<!-- TODO: evaluate a loss function combining category-spc and neural-behavioral link statistics... -->
 </section>
 </section>
 <section id="modeling" class="level1" data-number="4">
@@ -1392,7 +1391,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","descPosition":"bottom","loop":false,"closeEffect":"zoom","openEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"descPosition":"bottom","closeEffect":"zoom","openEffect":"zoom","loop":false,"selector":".lightbox"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

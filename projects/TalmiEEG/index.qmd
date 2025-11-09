@@ -132,6 +132,7 @@ Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
 > Figure 5: I don't understand how it's possible to have so many more occurrences of LPP for neutral items than negative ones at every level of LPP and still have higher memory/LPP for negative?
 
 There are more neutral items than negative items in the dataset overall, which leads to higher counts in each LPP bin for neutral items. However, recall rates are computed as the proportion of recalled items within each bin, so higher counts do not directly translate to higher recall rates. 
+
 Once we account for this count imbalance, we still observe 1) that LPP amplitudes for negative items tend to be higher on average than for neutral items and 2) that recall rates scale more strongly with LPP amplitude for negative items than for neutral items.
  -->
 
@@ -209,8 +210,6 @@ I'm now exploring a cleaner approach. Instead of sampling model simulations of a
 
 This approach avoids zero likelihoods for reasonable parameter sets, since every permutation of the observed set has some non-zero likelihood under the model. It also supports Monte-Carlo estimation to control cost, since we can choose how many permutations to sample per subject and trial. Finally, it preserves the advantages of likelihood-based model fitting and comparison over alternatives like mean squared error (MSE). Once initial prototyping is done, I'll implement this approach for model fitting and evaluation.
 
-<!-- TODO: debug why current set likelihood function doesn't work -->
-
 ## Mean Squared Error (MSE) Over Summary Statistics
 
 Given initial challenges implementing a set-likelihood-based fitting procedure, we are starting with a simpler approach for prototyping. We instead use mean squared error between a chosen summary statistic in the data and the same statistic from simulations. This is common in retrieved-context model evaluation and fits our constraints.
@@ -222,8 +221,6 @@ This score tells us how well a parameter set for the model reproduces the patter
 We currently use the category serial position curve for model fitting and evaluation. It computes recall by position separately for negative and neutral items. This tests both position effects and the emotion boost at the same time and is a better target for neurally informed eCMR.
 
 The MSE can compose over multiple statistics if needed. We may add a neural-behavioral link statistic later to ensure the model captures LPP-recall relationships. For now, we keep it simple. And we expect to switch back to likelihood-based fitting anyway once basic prototypes work.
-
-<!-- TODO: evaluate a loss function combining category-spc and neural-behavioral link statistics... -->
 
 # Modeling
 
