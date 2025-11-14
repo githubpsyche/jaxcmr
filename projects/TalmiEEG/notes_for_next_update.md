@@ -58,3 +58,38 @@ and highlighting the importance of an emotion-label interaction for capturing th
 key convo starts with:
 
 > projects/TalmiEEG/index.qmd records most of my work on TalmiEEG project.
+
+
+What's the first step?
+I could just port over the likelihood-based fits, but she's not quite interested. 
+I could do the reply letter, but it's not quite relevant to what she cares about now.
+
+Is it multiple documents? 
+One that addresses her questions, one that adds likelihood-based fitting and her requested details, one that adds the new modeling she suggested, one that prepares for my methods day talk, one that advances the project overall?
+That feels pretty inefficient.
+
+Should I just go in order of presentation? 
+I'll update the report and address her comments.
+Then I'll add the likelihood-based fitting.
+Then I'll implement the new model variant she suggested.
+Then I'll prepare for my methods day talk.
+
+Why doesn't that immediately work for me?
+She wants report before/after her comments.
+I've already done lots of other stuff that she hasn't seen yet but makes some of her comments obsolete.
+Furthermore, she wants me to fit some models, while I want to fit other models.
+Finally, there's the need to work toward a paper, as well as the methods day talk.
+
+I guess for the sake of efficiency, I need to sort details she still needs addressed and details that are no longer relevant.
+
+HMMM. But I already address most of her comments. What do I do?
+Uh, let's try to move my reply into a single document.
+
+#
+
+I want to address comments in the true next version, not just in a reply letter focused on the old document.
+
+What can I get away with?
+
+For data preparation figures, I'll just clarify the applicable details in the next version of the report.
+That includes which dataset I used (and confirming it's the same as Robin's), details about primacy buffers, and clarifying the LPP normalization procedure.
