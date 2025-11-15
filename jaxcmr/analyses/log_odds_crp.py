@@ -1,49 +1,12 @@
 """
-Lag-Conditional Response Probability (Lag-CRP).
+Lag-CRP log-odds contrasts.
 
-Overview:
-  Utilities to compute and plot Lag-CRP for free-recall data. CRP at serial lag
-  ℓ is defined as the proportion of *actual* transitions at lag ℓ divided by the
-  number of *available* transitions at lag ℓ.
-
-Definition:
-  CRP(ℓ) = actual_transitions(ℓ) / available_transitions(ℓ)
-
-Serial lag:
-  If the previously recalled item was studied at position X and the current item
-  at position Y (1-indexed), then ℓ = Y - X. Negative lags move backward in
-  study order; positive lags move forward.
-
-Conventions:
-  - list_length (L): Fixed study-list length within a call.
-  - trials (recalls): int array [n_trials, n_recall_events] of serial positions
-    in 1..L; 0 indicates padding after termination (ignored).
-  - presentations: int array [n_trials, L] of item IDs at study positions;
-    required only when items may repeat (0 permitted if your loader uses it).
-  - size: Upper bound on how many distinct study positions a single item can
-    occupy within a list (e.g., 3 → items may appear up to three times).
-  - Lag axis indexing: All CRP outputs are length (2*L - 1). Index i corresponds
-    to lag ℓ = i - (L - 1); the center (i = L - 1) is ℓ = 0.
-
-Design decisions:
-  - Padding & bounds: Zeros (pads) and out-of-range recalls are ignored via
-    guards in the tabulators.
-  - Division by zero: Lags with zero availability (often extreme lags) yield NaN.
-  - Repeats policy: A recall of a repeated item is treated as recalling all of
-    that item's study positions. For a transition from the previous item's study
-    positions to the current item's positions, we accumulate the set-union of
-    unique lags (each lag counted at most once per transition) to avoid
-    multiplicity inflation. If you need every pairwise combination instead,
-    consider a static `count_mode={"unique","pairwise"}` toggle.
-  - First recall: The first non-zero recall marks that item's study positions as
-    unavailable and defines the reference for the next transition lag.
-
-JAX compilation:
-  - All public functions are side-effect-free and JIT-safe.
-  - Use `jit(crp, static_argnames=("size",))`; keep shapes (e.g., L, number of
-    recall events) consistent within a compiled call to avoid recompiles.
-  - Ensure `size` ≥ the true maximum per-item repetition in your data; compute
-    it once outside JIT if needed.
+Utilities to compute Lag-Conditional Response Probability (Lag-CRP) counts and
+express them as log-odds differences relative to a reference lag. Serial lag ℓ
+is defined by the study positions of successive recalls (ℓ = Y - X for recalls
+at positions X then Y). All outputs retain the standard Lag-CRP axis
+conventions—length ``2*L - 1`` with index ``i`` corresponding to lag
+``ℓ = i - (L - 1)``.
 """
 
 __all__ = [
@@ -53,8 +16,8 @@ __all__ = [
     "set_false_at_index",
     "Tabulation",
     "tabulate_trial",
-    "crp",
-    "plot_crp",
+    "log_odds_crp",
+    "plot_log_odds_crp",
 ]
 
 from typing import Optional, Sequence
@@ -310,33 +273,39 @@ def tabulate_trial(
     return tab.actual_lags, tab.avail_lags
 
 
-def crp(
+def log_odds_crp(
     dataset: RecallDataset,
+    reference_lag: int = 10,
+    epsilon: float = 1e-6,
     size: int = 3,
 ) -> Float[Array, " lags"]:
     """
-    Lag-CRP with repeated items in the study list.
+    Returns Lag-CRP log-odds relative to a reference lag.
 
     Args:
-        dataset: recall dataset containing at least ``recalls`` and ``pres_itemnos``
-        size: max # of study positions an item can occupy (compile-time constant).
-
-    Repeats policy:
-        - A recall of a repeated item is treated as recalling *all* of that
-          item's study positions.
-        - Actual and available lags are computed as **unique** lag set unions
-          (boolean one-hot union per lag) to avoid over-counting.
-
-    Returns:
-        [2*L - 1] floats; NaN where denominator is zero.
+        dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
+        reference_lag: Lag (ℓ) used as the zero-log-odds baseline.
+        epsilon: Lower/upper bound for probabilities before taking the logit.
+        size: Max number of study positions an item can occupy (compile-time constant).
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None))(
         dataset["recalls"], dataset["pres_itemnos"], size
     )
-    return actual.sum(0) / possible.sum(0)
+    total_actual = actual.sum(0)
+    total_possible = possible.sum(0)
+    probabilities = total_actual / total_possible
+    # Lags with zero availability stay NaN here so they never fabricate odds.
+    clipped = jnp.clip(probabilities, epsilon, 1 - epsilon)
+    # Clipping avoids ±inf when actual counts hit the bounds but keeps NaNs intact.
+    logits = jnp.log(clipped) - jnp.log1p(-clipped)
+    lag_range = dataset["pres_itemnos"].shape[1] - 1
+    reference_index = reference_lag + lag_range
+    reference_value = logits[reference_index]
+    # Subtracting the reference lag removes subject-level baseline differences.
+    return logits - reference_value
 
 
-def plot_crp(
+def plot_log_odds_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
@@ -344,10 +313,12 @@ def plot_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    reference_lag: int = 10,
+    epsilon: float = 1e-6,
     size: int = 3,
 ) -> Axes:
     """
-    Plot subject-wise Lag-CRP and their mean ± error.
+    Plot subject-wise Lag-CRP log-odds and their mean ± error.
 
     Args:
         datasets: Datasets containing trial data to be plotted.
@@ -357,6 +328,8 @@ def plot_crp(
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
+        reference_lag: Lag that defines the zero log-odds baseline.
+        epsilon: Probability clamp used inside the logit transform.
         size: Maximum number of study positions an item can be presented at.
 
     Returns:
@@ -388,7 +361,15 @@ def plot_crp(
         subject_values = apply_by_subject(
             data,
             trial_masks[data_index],
-            jit(crp, static_argnames=("size")),
+            jit(
+                log_odds_crp,
+                static_argnames=(
+                    "reference_lag",
+                    "size",
+                ),
+            ),
+            reference_lag=reference_lag,
+            epsilon=epsilon,
             size=size,
         )
         subject_values = jnp.vstack(subject_values)
@@ -405,5 +386,10 @@ def plot_crp(
             color,
         )
 
-    set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
+    set_plot_labels(
+        axis,
+        "Lag",
+        f"Log-Odds CRP (vs lag {reference_lag})",
+        contrast_name,
+    )
     return axis
