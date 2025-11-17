@@ -155,7 +155,7 @@ This aligns with the plots: a baseline recall advantage for emotional items, an 
 Description of a generalized mixed effects model predicting recall as a function of condition, earlyLPP, and their interaction.
 :::
 
-### Recall Sets Show Limited Temporal Clustering
+### Recall Sets Show Little to No Temporal Clustering
 
 Classic work on free recall shows that successive recalls tend to come from nearby study positions, a temporal contiguity effect. 
 Standard analyses quantify this with the lag-conditional response probability (lag-CRP), which requires recall order. 
@@ -201,7 +201,7 @@ Item type and LPP must be treated as distinct inputs whose effects interact: emo
 The mixed-effects cross-check confirms this pattern, showing main effects of condition and Early LPP as well as a significant interaction.
 
 In particular, @fig-cat_lpp_by_recall and @fig-cat_lpp_by_recall_split argue against two simple linking hypotheses about how LPP relates to item type and recall.
-The first is that LPP is essentially an emotion index: emotional items have higher LPPs, and this graded “emotion strength” drives their recall advantage.
+The first is that LPP is essentially an emotion index: emotional items have higher LPPs, and this graded "emotion strength" drives their recall advantage.
 We do observe higher average LPPs for emotional than neutral items, but distributions overlap substantially.
 Moreover, if LPP simply encoded item type, recalled and unrecalled items of the same type should show similar LPPs.
 Instead, within both emotional and neutral items, LPPs split by recall status diverge, and unrecalled emotional items overlap strongly with both recalled and unrecalled neutral items.
@@ -227,7 +227,88 @@ We also test whether the observed LPP × emotion pattern can be captured by main
 Finally, we show that models omitting LPP, emotion, or both fail to reproduce the observed recall sets and key benchmarks, confirming that both signals are necessary to explain the data in this framework.
 We then discuss these results and their theoretical implications in the final section, highlighting limitations and directions for future work.
 
-## 
+# Loss Functions for Model Fitting
+
+Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
+Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
+Two properties of the Zarubin dataset shape how we define this likelihood.
+First, models like CMR and eCMR naturally predict recall sequences, but our data only say whether each item was recalled.
+This forces us to score models on how well they predict the *set* of recalled items on each list.
+Second, the first two items of each list were removed from the data to reduce primacy confounds in the emotion analyses.
+This omission removes some information about how context evolved early in the list; for the present purposes, we ignore the missing buffer items and treat each list as a 20-item sequence.
+
+## Set-Based Likelihood
+
+In a standard likelihood analysis with full recall order, we would compute, for each trial, the probability that the model generates the exact observed recall sequence, and then maximize the product of those probabilities across trials.
+Here we replace the sequence with the unordered set of recalled items.
+Let $S_t$ denote the set of items recalled on trial $t$, and let $r$ range over recall sequences that produce the same set $S_t$ (possibly with different orders and stopping points).
+We define the *set likelihood* as
+
+$$
+P(S_t \mid \theta) = \sum_{r:\, r\ \text{yields}\ S_t} P(r \mid \theta),
+$$
+
+where $\theta$ are the model parameters.
+For each list and parameter setting, this quantity assigns higher probability to sets that are frequently produced by the model’s cue-dependent, competitive retrieval dynamics, regardless of the order in which items are recalled.
+
+Evaluating this sum exactly is infeasible for lists with many recalled items, because the number of sequences that yield a given set grows rapidly with set size.
+We therefore approximate $P(S_t \mid \theta)$ with a Monte Carlo estimate based on permutations of the observed set.
+For each trial, we sample a fixed number of random permutations of $S_t$, treat each permutation as a possible recall sequence, and compute its probability under the model.
+Averaging these probabilities over permutations yields an unbiased estimate of the set likelihood for that trial.
+We then sum log likelihoods across trials and participants, and choose parameter values that maximize this approximate set-based log likelihood.
+All model fits reported in the Results section use this set-likelihood objective.
+
+This approach uses trial-level information about which items were recalled on which lists and respects the full generative structure of eCMR: the same parameters that govern encoding and cue-dependent retrieval are used both to generate recall sets and to score their likelihood.
+It also aligns with our substantive aims.
+The neurally informed extensions are intended to explain *which* emotional items are more likely to be recalled as a function of their LPP values, not to change the overall magnitude of the emotional enhancement of memory summarized by the Category-SPC.
+A loss function that evaluates models directly on the recalled sets is therefore more sensitive to the LPP-dependent mechanisms we wish to test.
+
+For comparison, an alternative is to fit models by minimizing mean squared error between summary statistics (for example, between the empirical Category-SPC and the Category-SPC produced by simulations).
+This summary-statistic MSE approach is simple and effective for testing whether a model reproduces coarse patterns such as overall position effects and the average recall advantage for emotional over neutral items.
+However, it discards trial-level structure and is relatively insensitive to mechanisms that rearrange _which_ items within a condition are recalled without changing average rates.
+It ignores patterns in data that are not explicitly targeted by the chosen summary statistics, potentially allowing models to fit benchmarks while mispredicting other aspects of the data.
+In contrast, the set-likelihood approach evaluates models on their ability to reproduce the full recalled sets, eliminating these deficiencies and providing a more stringent test of mechanistic hypotheses.
+Our primary questions directly address the effects of item-level variation in LPP and emotion on recall, so we prioritize a loss function that is sensitive to these item-level patterns.
+We thus rely on the set-likelihood framework for the fits and model comparisons reported below.
+
+## Modeling Questions and Model Variants
+
+The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items.
+These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model.
+In a retrieved-context framework, recall probabilities are not set directly by "emotion + LPP" terms; they emerge from how learning rates and trace features shape context, activation, and competition among items.
+It is therefore not trivial that the linear logit relationship estimated by the GMM can or should be imposed directly at the encoding level.
+
+To make this concrete, consider a simplified "spotlight" view of retrieved-context dynamics.
+At encoding, each item acquires an association strength or learning rate $S_i$.
+At retrieval, the activation of item $i$ is roughly proportional to a product of its trace strength and its match to the current cue, for example
+
+$$
+A_i \propto (\text{cue–trace similarity}_i \times S_i)^\tau,
+$$
+
+followed by normalization across items.
+Importantly a sensitivity parameter $\tau > 1$ introduces nonlinear competition: items with higher activation get disproportionately favored during recall.
+
+If Emotion and LPP each contribute linearly to these ingredients (for instance, adding to the learning rate and to the cue–trace match), then the product contains an interaction term even when the encoding rule itself includes only main effects.
+In other words, nonlinear cue-dependent competition can generate an effective LPP × emotion dependence in recall probabilities even without an explicit interaction term in the learning-rate equation.
+This observation makes it a modeling question, not a foregone conclusion, whether the interaction term estimated by the GMM reflects a corresponding interaction term at encoding, or whether it could arise as a side-effect of retrieved-context dynamics.
+
+Within this framework, we use an eCMR-style model to address three modeling questions that the GMM alone cannot resolve.
+First, we ask whether a simple linear learning-rate rule that mirrors the GMM — with additive contributions of Emotion and LPP and an explicit Emotion × LPP term — remains compatible with the behavioral and EEG benchmarks once it is embedded in a full retrieved-context process.
+This tests whether the GMM-inspired encoding rule "works" when it has to drive a cue-dependent competition among many items on each list, rather than just predicting recall probability for isolated items.
+
+Second, we ask whether the explicit interaction term at encoding is actually needed, or whether nonlinear competitive dynamics are sufficient to generate the observed LPP × emotion pattern in recall.
+To do so, we compare the interaction model to an eCMR variant in which LPP modulates learning rate only through main effects of Emotion and LPP, with no explicit Emotion × LPP factor in the learning rule.
+We then examine whether this main-effects-only model can reproduce the observed LPP × emotion pattern once its outputs are passed through the same analysis pipeline as the data.
+If nonlinear competitive dynamics are sufficient to generate the empirical interaction, a main-effects-only encoding rule should yield similar itemwise LPP–emotion–recall relationships; if not, an explicit interaction term at encoding is required.
+
+Finally, we include a baseline eCMR model in which LPP is not used at all and only the emotion labels modulate encoding.
+Even an emotion-sensitive eCMR model that never sees LPP as an input might, in principle, produce recall sets in which high-LPP emotional items are recalled more often than low-LPP emotional items, simply because LPP covaries with other factors the model already uses (such as position, list condition, or semantic similarity).
+To test this possibility, we fit the baseline emotion-only eCMR to the recall sets and then apply the same GMM analysis to its simulated outputs as we do to the empirical data.
+If this baseline model already reproduces the empirical pattern in which LPP is strongly predictive of recall for emotional items and only weakly predictive for neutral items, then the LPP signal does not add mechanistic information beyond what the existing eCMR mechanisms capture.
+If it fails to do so, this supports the claim that LPP carries additional information about emotional memory that is not reducible to the basic eCMR structure.
+
+Together, these comparisons let us test whether neurally informed encoding rules that combine emotion and LPP can be integrated into eCMR in a way that respects both the behavioral and EEG constraints, and whether the interaction structure seen in the GMM must be present at encoding or can be explained by standard competitive dynamics.
 
 ## Appendix
 
@@ -273,3 +354,40 @@ The plots are retained only as qualitative checks against the reference analysis
 
 Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
 :::
+
+### Alternative Fitting Approaches Considered
+
+#### Simulation-Based Estimates of Set Likelihood
+
+Before settling on the permutation-based set-likelihood procedure described in the main text, we explored a more direct Monte Carlo approach based on model-generated recall sequences.
+For each subject and trial, we simulated many recall sequences from the model and then asked how many of those simulations produced exactly the same recalled set as observed in the data.
+The proportion of matching simulations provides an unbiased Monte Carlo estimate of the set likelihood for that trial under a given parameter setting.
+
+In principle, this approach aligns closely with the generative structure of the model: it directly samples from the joint distribution over recall sequences induced by the encoding and retrieval dynamics.
+In practice, however, it proved problematic.
+If no simulated sequence happens to match the observed recalled set, the estimated likelihood for that trial is zero, even when the parameter setting is reasonable.
+This is particularly likely when many items are recalled on a list, because the number of possible recall sequences that yield a given set grows very quickly with set size.
+Even when some simulations do match the observed set, the resulting likelihood estimates can be noisy unless a large number of simulations are run per subject and trial, which makes fitting costly and slow.
+These issues led us to favor the permutation-based estimator used in the main analyses, which operates over permutations of the observed set rather than over full simulated sequences and thus avoids exact-match sparsity.
+
+#### Mean Squared Error Over Summary Statistics
+
+We also experimented with a mean squared error (MSE) approach that fits models to summary statistics rather than to trial-level recall sets.
+In this scheme, we select one or more summary measures from the data (for example, the Category-SPC), simulate the model under a candidate parameter setting, compute the same statistics on the simulations, and then score the fit by the mean squared difference between empirical and simulated values.
+This approach is common in retrieved-context modeling and is straightforward to implement and scale.
+
+For the present dataset, fitting to the Category-SPC mainly tests whether a model captures overall position effects and the average recall advantage for emotional relative to neutral items.
+It is well suited to assessing whether a neurally uninformed eCMR variant can reproduce the emotional enhancement of memory (EEM), and indeed our neurally informed extensions did not substantially improve fits to the Category-SPC relative to their standard eCMR counterparts.
+This outcome is consistent with what the mixed-effects analyses already suggest.
+The GMM results do not imply that LPP should add much explanatory power for overall recall rates of emotional versus neutral items beyond what is already captured by the emotion labels themselves.
+Instead, they show that LPP is most informative for distinguishing which *emotional* items are more likely to be recalled, with little additional predictive value for neutral items.
+
+Our neurally informed extensions were designed with this itemwise target in mind.
+Parameters that act like a static emotional attention boost (such as an "emotion scale" in standard eCMR or an LPP threshold used to approximate an emotional boost) can capture EEM at the serial-position-curve level.
+In contrast, parameters that link trial-to-trial variations in LPP to variations in recall (such as an LPP slope that modulates attention or binding strength) primarily influence *which* emotional items are recalled, not *how many* emotional items are recalled on average.
+As a result, MSE-based fits to summary statistics like the Category-SPC are relatively insensitive to the mechanisms we wish to test: they can confirm that emotional attention mechanisms capture the EEM effect, but they are not well positioned to detect improvements in explaining which items are recalled as a function of LPP.
+
+From this perspective, MSE over summary statistics is not "less rigorous" than likelihood-based fitting, but it targets a different question.
+It is most appropriate when the modeling goal is to match coarse patterns such as overall recall rates and serial-position effects.
+Our primary aim, however, is to evaluate neurally informed LPP mechanisms that are intended to explain itemwise differences in recall probability within the emotional condition.
+For that goal, a trial-level set-likelihood objective, as described in the main text, provides a more direct and sensitive test.
