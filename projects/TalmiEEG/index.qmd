@@ -24,7 +24,7 @@ Our evaluation instantiates these hypotheses within the retrieved-context framew
 Emotional items bind more strongly to emotion-specific context and attract more attention, increasing their odds of retrieval. 
 We compare ways LPPs could modulate these processes and assess which specification renders the observed recalled sets most probable, moving beyond correlation toward mechanism.
 
-## Data Preparation
+# Data Preparation
 
 The primary analysis table is `Single_Trial_Behavioural_and_EEG_Data_Z.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\`).
 That table, identical across server copies, omits study events that lack reliable EEG measurements.
@@ -47,14 +47,14 @@ The dataset indicates which items were recalled but not their order.
 Accordingly, model fitting must use loss functions defined over the recalled set per trial, and our likelihood-based evaluation scores models by the probability they assign to the observed recalled sets rather than to output sequences.
 Similarly, analyses of recall structure cannot use standard measures like lag-CRP that require output order; we therefore develop an order-agnostic alternatives with similar interpretive goals.
 
-## Benchmark Analyses
+# Benchmark Analyses
 
 These benchmarks both define concrete targets for model development and verify that data preparation preserved known effects.
 Unless noted, error bars show 95% bootstrap confidence intervals across participants.
 
 <!--#TODO: We may switch to hierarchical (subject and trial level) confidence intervals later to better account for data structure.-->
 
-### Emotional Items Are Recalled More Often
+## Emotional Items Are Recalled More Often
 
 The central behavioral pattern is the emotional enhancement of memory (EEM): emotionally negative items are recalled more often than neutral items.
 We benchmark EEM with a categorized serial position curve (Category-SPC).
@@ -70,7 +70,7 @@ Effect summary: mean recall difference (emotional – neutral), averaged across 
 Recall rate by study position and item type from reference materials (LEFT) and from the present dataset (RIGHT).
 :::
 
-### LPP Is Higher for Emotional Items
+## LPP Is Higher for Emotional Items
 
 We examine LPP amplitudes by study position and item type, separately for Early LPP (400–700 ms) and Late LPP (700–1,000 ms). 
 In both windows, mean LPPs are higher for emotional items than for neutral items across positions. 
@@ -85,13 +85,13 @@ Effect summary: mean Early-LPP difference (emotional − neutral) across positio
 LPP by study position and item type. Early window (LEFT), Late window (RIGHT).
 :::
 
-### LPP Predicts Recall More Strongly for Emotional Items
+## LPP Predicts Recall More Strongly for Emotional Items
 
 To relate LPP to behavior, we plot LPP by study position and recall status, drawing separate plots by item type and LPP window [@fig-cat_lpp_by_recall_split].
 The clearest separation is in the Early window for emotional items: recalled emotional items show higher Early LPPs than unrecalled emotional items. 
 For neutral items, the recalled vs unrecalled difference is small. 
 Thus, Early LPP is clearly related to recall for emotional items, whereas any effect for neutral items is small and not statistically reliable.
-Effect summary: EEarly-LPP difference (recalled − unrecalled) for emotional items = 0.43 µV, 95% CI [0.27, 0.58]; for neutral items the corresponding estimate is 0.10 µV, 95% CI [−0.07, 0.28], consistent with at most a weak effect.
+Effect summary: Early-LPP difference (recalled − unrecalled) for emotional items = 0.43 µV, 95% CI [0.27, 0.58]; for neutral items the corresponding estimate is 0.10 µV, 95% CI [−0.07, 0.28], consistent with at most a weak effect.
 Late-window differences (emotional, neutral) are smaller: 0.20 µV [0.04, 0.38] and 0.03 µV [−0.14, 0.20], respectively.
 
 ::: {#fig-cat_lpp_by_recall_split layout-ncol="2"}
@@ -143,7 +143,7 @@ Early LPP contrasts (mean ΔµV with 95% CIs).
 
 <!-- TODO: add another figure that shows cat_lpp_by_recall pooled across item types? -->
 
-#### Statistical Cross-Check
+### Statistical Cross-Check
 Prior work using generalized mixed-effects models provides an alternative perspective on these relationships.
 @fig-reference_gmm predicts recall via a logistic link from condition (emotional vs. neutral), Early LPP, and their interaction.
 It shows significant main effects of both factors and a significant interaction.
@@ -155,7 +155,7 @@ This aligns with the plots: a baseline recall advantage for emotional items, an 
 Description of a generalized mixed effects model predicting recall as a function of condition, earlyLPP, and their interaction.
 :::
 
-### Recall Sets Show Little to No Temporal Clustering
+## Recall Sets Show Little to No Temporal Clustering
 
 Classic work on free recall shows that successive recalls tend to come from nearby study positions, a temporal contiguity effect. 
 Standard analyses quantify this with the lag-conditional response probability (lag-CRP), which requires recall order. 
@@ -194,7 +194,7 @@ In contrast to the PEERS subset, this paradigm therefore shows at most a weak te
 Order-agnostic conditional co-recall by lag for the Zarubin EEG dataset. Conditional co-recall probabilities vary little with lag, indicating weak temporal clustering of recalled items in this paradigm.
 :::
 
-### Implications for Model Development
+## Implications for Model Development
 
 Taken together, these benchmarks place clear constraints on any mechanistic account of how LPP relates to emotion and memory.
 Item type and LPP must be treated as distinct inputs whose effects interact: emotional items enjoy a baseline recall advantage (EEM), and Early LPP further modulates recall likelihood, with a much stronger association for emotional items than for neutral items.
@@ -310,9 +310,9 @@ If it fails to do so, this supports the claim that LPP carries additional inform
 
 Together, these comparisons let us test whether neurally informed encoding rules that combine emotion and LPP can be integrated into eCMR in a way that respects both the behavioral and EEG constraints, and whether the interaction structure seen in the GMM must be present at encoding or can be explained by standard competitive dynamics.
 
-## Appendix
+# Appendix
 
-### LPP by Item Type and Recall Status
+## LPP by Item Type and Recall Status
 
 ::: {#fig-amplitude_by_cat_by_recalled}
 ![](results/figures/amplitude_by_cat_by_recalled.png)
@@ -320,7 +320,7 @@ Together, these comparisons let us test whether neurally informed encoding rules
 LPP by time, recall status, and item type.
 :::
 
-### Recall Rate by Early LPP
+## Recall Rate by Early LPP
 
 This analysis is deprecated. 
 It binned items by LPP amplitude within item category and plotted recall rates per bin to check whether LPP predicts recall beyond the emotional/neutral label. Bins were defined by percentiles of the pooled LPP distribution, and results were shown separately for Early LPP (400–700 ms) and Late LPP (700–1,000 ms). 
@@ -355,9 +355,9 @@ The plots are retained only as qualitative checks against the reference analysis
 Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
 :::
 
-### Alternative Fitting Approaches Considered
+## Alternative Fitting Approaches Considered
 
-#### Simulation-Based Estimates of Set Likelihood
+### Simulation-Based Estimates of Set Likelihood
 
 Before settling on the permutation-based set-likelihood procedure described in the main text, we explored a more direct Monte Carlo approach based on model-generated recall sequences.
 For each subject and trial, we simulated many recall sequences from the model and then asked how many of those simulations produced exactly the same recalled set as observed in the data.
@@ -370,7 +370,7 @@ This is particularly likely when many items are recalled on a list, because the 
 Even when some simulations do match the observed set, the resulting likelihood estimates can be noisy unless a large number of simulations are run per subject and trial, which makes fitting costly and slow.
 These issues led us to favor the permutation-based estimator used in the main analyses, which operates over permutations of the observed set rather than over full simulated sequences and thus avoids exact-match sparsity.
 
-#### Mean Squared Error Over Summary Statistics
+### Mean Squared Error Over Summary Statistics
 
 We also experimented with a mean squared error (MSE) approach that fits models to summary statistics rather than to trial-level recall sets.
 In this scheme, we select one or more summary measures from the data (for example, the Category-SPC), simulate the model under a candidate parameter setting, compute the same statistics on the simulations, and then score the fit by the mean squared difference between empirical and simulated values.

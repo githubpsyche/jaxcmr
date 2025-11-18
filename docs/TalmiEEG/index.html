@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jordan Gunn">
-<meta name="dcterms.date" content="2025-11-14">
+<meta name="dcterms.date" content="2025-11-18">
 
 <title>EEG-ECMR</title>
 <style>
@@ -77,10 +77,10 @@ window.Quarto = {
 
 <meta name="citation_title" content="EEG-ECMR">
 <meta name="citation_author" content="Jordan Gunn">
-<meta name="citation_publication_date" content="2025-11-14">
-<meta name="citation_cover_date" content="2025-11-14">
+<meta name="citation_publication_date" content="2025-11-18">
+<meta name="citation_cover_date" content="2025-11-18">
 <meta name="citation_year" content="2025">
-<meta name="citation_online_date" content="2025-11-14">
+<meta name="citation_online_date" content="2025-11-18">
 <meta name="citation_language" content="en">
 </head>
 
@@ -108,7 +108,7 @@ window.Quarto = {
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">November 14, 2025</p>
+              <p class="date">November 18, 2025</p>
             </div>
           </div>
           
@@ -132,16 +132,29 @@ window.Quarto = {
   <li><a href="#data-preparation" id="toc-data-preparation" class="nav-link active" data-scroll-target="#data-preparation"><span class="header-section-number">1</span> Data Preparation</a></li>
   <li><a href="#benchmark-analyses" id="toc-benchmark-analyses" class="nav-link" data-scroll-target="#benchmark-analyses"><span class="header-section-number">2</span> Benchmark Analyses</a>
   <ul class="collapse">
-  <li><a href="#emotional-enhancement-of-memory" id="toc-emotional-enhancement-of-memory" class="nav-link" data-scroll-target="#emotional-enhancement-of-memory"><span class="header-section-number">2.1</span> Emotional Enhancement of Memory</a></li>
+  <li><a href="#emotional-items-are-recalled-more-often" id="toc-emotional-items-are-recalled-more-often" class="nav-link" data-scroll-target="#emotional-items-are-recalled-more-often"><span class="header-section-number">2.1</span> Emotional Items Are Recalled More Often</a></li>
   <li><a href="#lpp-is-higher-for-emotional-items" id="toc-lpp-is-higher-for-emotional-items" class="nav-link" data-scroll-target="#lpp-is-higher-for-emotional-items"><span class="header-section-number">2.2</span> LPP Is Higher for Emotional Items</a></li>
-  <li><a href="#lpp-predicts-recall-more-strongly-for-emotional-items" id="toc-lpp-predicts-recall-more-strongly-for-emotional-items" class="nav-link" data-scroll-target="#lpp-predicts-recall-more-strongly-for-emotional-items"><span class="header-section-number">2.3</span> LPP Predicts Recall More Strongly for Emotional Items</a></li>
-  <li><a href="#recall-sets-reflect-a-temporal-contiguity-effect" id="toc-recall-sets-reflect-a-temporal-contiguity-effect" class="nav-link" data-scroll-target="#recall-sets-reflect-a-temporal-contiguity-effect"><span class="header-section-number">2.4</span> Recall Sets Reflect a Temporal Contiguity Effect</a></li>
+  <li><a href="#lpp-predicts-recall-more-strongly-for-emotional-items" id="toc-lpp-predicts-recall-more-strongly-for-emotional-items" class="nav-link" data-scroll-target="#lpp-predicts-recall-more-strongly-for-emotional-items"><span class="header-section-number">2.3</span> LPP Predicts Recall More Strongly for Emotional Items</a>
+  <ul class="collapse">
+  <li><a href="#statistical-cross-check" id="toc-statistical-cross-check" class="nav-link" data-scroll-target="#statistical-cross-check"><span class="header-section-number">2.3.1</span> Statistical Cross-Check</a></li>
+  </ul></li>
+  <li><a href="#recall-sets-show-little-to-no-temporal-clustering" id="toc-recall-sets-show-little-to-no-temporal-clustering" class="nav-link" data-scroll-target="#recall-sets-show-little-to-no-temporal-clustering"><span class="header-section-number">2.4</span> Recall Sets Show Little to No Temporal Clustering</a></li>
   <li><a href="#implications-for-model-development" id="toc-implications-for-model-development" class="nav-link" data-scroll-target="#implications-for-model-development"><span class="header-section-number">2.5</span> Implications for Model Development</a></li>
   </ul></li>
-  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">3</span> Appendix</a>
+  <li><a href="#loss-functions-for-model-fitting" id="toc-loss-functions-for-model-fitting" class="nav-link" data-scroll-target="#loss-functions-for-model-fitting"><span class="header-section-number">3</span> Loss Functions for Model Fitting</a>
   <ul class="collapse">
-  <li><a href="#lpp-by-item-type-and-recall-status" id="toc-lpp-by-item-type-and-recall-status" class="nav-link" data-scroll-target="#lpp-by-item-type-and-recall-status"><span class="header-section-number">3.1</span> LPP by Item Type and Recall Status</a></li>
-  <li><a href="#recall-rate-by-early-lpp" id="toc-recall-rate-by-early-lpp" class="nav-link" data-scroll-target="#recall-rate-by-early-lpp"><span class="header-section-number">3.2</span> Recall Rate by Early LPP</a></li>
+  <li><a href="#set-based-likelihood" id="toc-set-based-likelihood" class="nav-link" data-scroll-target="#set-based-likelihood"><span class="header-section-number">3.1</span> Set-Based Likelihood</a></li>
+  <li><a href="#modeling-questions-and-model-variants" id="toc-modeling-questions-and-model-variants" class="nav-link" data-scroll-target="#modeling-questions-and-model-variants"><span class="header-section-number">3.2</span> Modeling Questions and Model Variants</a></li>
+  </ul></li>
+  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">4</span> Appendix</a>
+  <ul class="collapse">
+  <li><a href="#lpp-by-item-type-and-recall-status" id="toc-lpp-by-item-type-and-recall-status" class="nav-link" data-scroll-target="#lpp-by-item-type-and-recall-status"><span class="header-section-number">4.1</span> LPP by Item Type and Recall Status</a></li>
+  <li><a href="#recall-rate-by-early-lpp" id="toc-recall-rate-by-early-lpp" class="nav-link" data-scroll-target="#recall-rate-by-early-lpp"><span class="header-section-number">4.2</span> Recall Rate by Early LPP</a></li>
+  <li><a href="#alternative-fitting-approaches-considered" id="toc-alternative-fitting-approaches-considered" class="nav-link" data-scroll-target="#alternative-fitting-approaches-considered"><span class="header-section-number">4.3</span> Alternative Fitting Approaches Considered</a>
+  <ul class="collapse">
+  <li><a href="#simulation-based-estimates-of-set-likelihood" id="toc-simulation-based-estimates-of-set-likelihood" class="nav-link" data-scroll-target="#simulation-based-estimates-of-set-likelihood"><span class="header-section-number">4.3.1</span> Simulation-Based Estimates of Set Likelihood</a></li>
+  <li><a href="#mean-squared-error-over-summary-statistics" id="toc-mean-squared-error-over-summary-statistics" class="nav-link" data-scroll-target="#mean-squared-error-over-summary-statistics"><span class="header-section-number">4.3.2</span> Mean Squared Error Over Summary Statistics</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -158,21 +171,21 @@ window.Quarto = {
 <p>This document records our progress and key decisions as we build a brain-based version of eCMR using EEG data from Zarubin et al.&nbsp;(2020).</p>
 <p>Prior analyses provide two anchors. First, emotionally negative items are recalled more often than neutral items. Second, late positive potential (LPP) amplitudes during study predict later recall for emotional items but not neutral items. These patterns relate brain signals and emotion to performance but do not specify mechanisms that generate recall.</p>
 <p>We address this with computational neurocognitive models that formalize hypotheses about how LPPs interact with attention and context binding at encoding. We simulate trials and score models by the likelihood they assign to the full recalled set on each list, asking how probable the observed data are under each mechanism as specified. Good fits provide evidence that a mechanism can produce the behavior; poor fits indicate the specification is insufficient.</p>
-<p>Our evaluation instantiates these hypotheses within the retrieved-context framework of eCMR (Talmi et al., 2019), where item–context associations guide recall. Emotional items bind more strongly to emotion-specific context and attract more attention, increasing their odds of retrieval. We compare ways LPPs modulate these processes and assess which specification renders the observed recalled sets most probable, moving beyond correlation toward mechanism.</p>
-<section id="data-preparation" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="data-preparation"><span class="header-section-number">1</span> Data Preparation</h2>
-<p>The primary analysis table is <code>Single_Trial_Behavioural_and_EEG_Data_Z.csv</code> (<code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\</code>). That table, identical across server copies, omits study events that lack reliable EEG measurements. To restore those events, we merged it with the behavioral log <code>All_Included_Subjects.csv</code> (<code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\</code>). This log contains no LPP scores but records recall status for all study events beyond a primacy buffer of the first two items per list. Recall data for buffer items were excluded by the original authors to avoid confounding primacy effects with emotion–memory effects, and could be recovered.</p>
+<p>Our evaluation instantiates these hypotheses within the retrieved-context framework of eCMR (Talmi et al., 2019), where item–context associations guide recall. Emotional items bind more strongly to emotion-specific context and attract more attention, increasing their odds of retrieval. We compare ways LPPs could modulate these processes and assess which specification renders the observed recalled sets most probable, moving beyond correlation toward mechanism.</p>
+<section id="data-preparation" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Data Preparation</h1>
+<p>The primary analysis table is <code>Single_Trial_Behavioural_and_EEG_Data_Z.csv</code> (<code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\</code>). That table, identical across server copies, omits study events that lack reliable EEG measurements. To restore those events, we merged it with the behavioral log <code>All_Included_Subjects.csv</code> (<code>Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\</code>). This log contains no LPP scores but records recall status for all study events beyond a primacy buffer of the first two items per list. Recall data for buffer items were excluded by the original authors to avoid confounding primacy effects with emotion–memory effects. Unfortunately, recall data for buffer items cannot be recovered; accordingly, lists are analyzed as 20‑item sequences, despite originally being 22 items long.</p>
 <p>Before merging, we verified label consistency across sources, confirming there were no conflicts in recalled versus not-recalled designations. The merged dataset comprises 6,840 study events from 342 list trials with 20 analyzable items per list. Of these events, 371 (5.42%) lack EEG measurements. Missingness is comparable across valence conditions: negative lists contribute 125 of 2,266 events (5.52%; mean 0.37 ± 0.65 items missing per trial) and neutral lists contribute 246 of 4,574 events (5.38%; mean 0.72 ± 0.93 items missing per trial). Overall, 202 of 342 lists (59.1%) include at least one missing LPP value; among affected lists, 1.84 ± 1.01 items are missing (median 2; maximum 6). Across participants, missing exposure ranges from 2 to 19 items (3.9–10% of each person’s 180 study events), so imputation methodologically substantive.</p>
 <p>LPP amplitudes are imputed using within-person, within-trial emotion-matched means. For any study event still missing an LPP value after merging, we fill that participant’s average for items of the same emotion within the same trial. This preserves within‑person, within‑trial, and emotion‑specific structure and avoids borrowing information across trials or valence conditions.</p>
-<p>The dataset indicates which items were recalled but not their order. Accordingly, model fitting uses loss functions defined over the recalled set per trial, and our likelihood-based evaluation scores models by the probability they assign to the observed recalled sets rather than to output sequences. Because primacy buffers cannot be recovered, lists are analyzed as 20‑item sequences, despite originally being 22 items long.</p>
+<p>The dataset indicates which items were recalled but not their order. Accordingly, model fitting must use loss functions defined over the recalled set per trial, and our likelihood-based evaluation scores models by the probability they assign to the observed recalled sets rather than to output sequences. Similarly, analyses of recall structure cannot use standard measures like lag-CRP that require output order; we therefore develop an order-agnostic alternatives with similar interpretive goals.</p>
 </section>
-<section id="benchmark-analyses" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="benchmark-analyses"><span class="header-section-number">2</span> Benchmark Analyses</h2>
-<p>These benchmarks both define concrete targets for model development and verify that data preparation preserved known effects. Unless noted, error bars show 95% bootstrapped confidence intervals across participants.</p>
+<section id="benchmark-analyses" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Benchmark Analyses</h1>
+<p>These benchmarks both define concrete targets for model development and verify that data preparation preserved known effects. Unless noted, error bars show 95% bootstrap confidence intervals across participants.</p>
 <!--#TODO: We may switch to hierarchical (subject and trial level) confidence intervals later to better account for data structure.-->
-<section id="emotional-enhancement-of-memory" class="level3" data-number="2.1">
-<h3 data-number="2.1" class="anchored" data-anchor-id="emotional-enhancement-of-memory"><span class="header-section-number">2.1</span> Emotional Enhancement of Memory</h3>
-<p>The central behavioral pattern is the emotional enhancement of memory (EEM): emotionally negative items are recalled more often than neutral items. We benchmark EEM with a categorized serial position curve (Category-SPC): for each study position (1–20), we tabulate recall rates separately for emotional and neutral items. Emotional items are recalled more often across all study positions, replicating the reference analysis used in the Daw meeting slides and confirming our data pipeline. Effect summary: mean recall difference (emotional – neutral), averaged across positions = 0.125, 95% CI [0.090, 0.162]; positions with emotional &gt; neutral = 20/20.</p>
+<section id="emotional-items-are-recalled-more-often" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="emotional-items-are-recalled-more-often"><span class="header-section-number">2.1</span> Emotional Items Are Recalled More Often</h2>
+<p>The central behavioral pattern is the emotional enhancement of memory (EEM): emotionally negative items are recalled more often than neutral items. We benchmark EEM with a categorized serial position curve (Category-SPC). For each study position (1–20), we tabulate recall rates separately for emotional and neutral items. Emotional items are recalled more often across all study positions, replicating the reference analysis used in the Daw meeting slides and confirming our data pipeline. Effect summary: mean recall difference (emotional – neutral), averaged across positions = 0.125, 95% CI [0.090, 0.162]; positions with emotional &gt; neutral = 20/20.</p>
 <div id="fig-reference_catspc" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-reference_catspc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -191,8 +204,8 @@ Figure&nbsp;1: Recall rate by study position and item type from reference materi
 </figure>
 </div>
 </section>
-<section id="lpp-is-higher-for-emotional-items" class="level3" data-number="2.2">
-<h3 data-number="2.2" class="anchored" data-anchor-id="lpp-is-higher-for-emotional-items"><span class="header-section-number">2.2</span> LPP Is Higher for Emotional Items</h3>
+<section id="lpp-is-higher-for-emotional-items" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="lpp-is-higher-for-emotional-items"><span class="header-section-number">2.2</span> LPP Is Higher for Emotional Items</h2>
 <p>We examine LPP amplitudes by study position and item type, separately for Early LPP (400–700 ms) and Late LPP (700–1,000 ms). In both windows, mean LPPs are higher for emotional items than for neutral items across positions. However, variability is large and position-wise means fluctuate, so distributions overlap substantially; this motivates treating LPP and item type as distinct signals. Effect summary: mean Early-LPP difference (emotional − neutral) across positions = 0.405 µV, 95% CI [0.280, 0.516]; Late-LPP difference = 0.354 µV, 95% CI [0.219, 0.484]; standardized difference (Cohen’s d_Early, d_Late) = 0.23, 0.18.</p>
 <div id="fig-cat_lpp_spc" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
@@ -212,9 +225,9 @@ Figure&nbsp;2: LPP by study position and item type. Early window (LEFT), Late wi
 </figure>
 </div>
 </section>
-<section id="lpp-predicts-recall-more-strongly-for-emotional-items" class="level3" data-number="2.3">
-<h3 data-number="2.3" class="anchored" data-anchor-id="lpp-predicts-recall-more-strongly-for-emotional-items"><span class="header-section-number">2.3</span> LPP Predicts Recall More Strongly for Emotional Items</h3>
-<p>To relate LPP to behavior, we plot LPP by study position and recall status, drawing separate plots by item type and LPP window <a href="#fig-cat_lpp_by_recall_split" class="quarto-xref">Figure&nbsp;3</a>. The clearest separation is in the Early window for emotional items: recalled emotional items show higher Early LPPs than unrecalled emotional items. For neutral items, the recalled vs unrecalled difference is small. Thus, Early LPP relates to recall in both types but more strongly for emotional items. Effect summary: Early-LPP difference (recalled − unrecalled) for emotional items = 0.43 µV, 95% CI [0.27, 0.58]; for neutral items = 0.10 µV, 95% CI [−0.07, 0.28]. Late-window differences (emotional, neutral) = 0.20 µV [0.04, 0.38], 0.03 µV [−0.14, 0.20].</p>
+<section id="lpp-predicts-recall-more-strongly-for-emotional-items" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="lpp-predicts-recall-more-strongly-for-emotional-items"><span class="header-section-number">2.3</span> LPP Predicts Recall More Strongly for Emotional Items</h2>
+<p>To relate LPP to behavior, we plot LPP by study position and recall status, drawing separate plots by item type and LPP window <a href="#fig-cat_lpp_by_recall_split" class="quarto-xref">Figure&nbsp;3</a>. The clearest separation is in the Early window for emotional items: recalled emotional items show higher Early LPPs than unrecalled emotional items. For neutral items, the recalled vs unrecalled difference is small. Thus, Early LPP is clearly related to recall for emotional items, whereas any effect for neutral items is small and not statistically reliable. Effect summary: Early-LPP difference (recalled − unrecalled) for emotional items = 0.43 µV, 95% CI [0.27, 0.58]; for neutral items the corresponding estimate is 0.10 µV, 95% CI [−0.07, 0.28], consistent with at most a weak effect. Late-window differences (emotional, neutral) are smaller: 0.20 µV [0.04, 0.38] and 0.03 µV [−0.14, 0.20], respectively.</p>
 <div id="fig-cat_lpp_by_recall_split" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-cat_lpp_by_recall_split-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -240,7 +253,7 @@ Figure&nbsp;3: LPP by recall status and item type: Early LPP (TOP row) and Late 
 </figcaption>
 </figure>
 </div>
-<p>In <a href="#fig-cat_lpp_by_recall" class="quarto-xref">Figure&nbsp;4</a>, we also superimpose Early-LPP curves to highlight joint structure: recalled emotional items have the highest Early LPPs. Unrecalled emotional items overlap with both recalled and unrecalled neutral items. If LPP simply encoded item type, curves for recalled and unrecalled items of the same type would align. If it encoded recall probability alone, curves for recalled items across types would align. Neither pattern holds, indicating an interation between LPP and item type.</p>
+<p>In <a href="#fig-cat_lpp_by_recall" class="quarto-xref">Figure&nbsp;4</a>, we superimpose Early-LPP curves to highlight joint structure. Recalled emotional items have the highest Early LPPs. Unrecalled emotional items overlap with both recalled and unrecalled neutral items. Two simple linking stories are inconsistent with this pattern. First, if LPP simply reflected item type, recalled and unrecalled items of the same type would have similar LPPs; instead, recall status clearly separates Early LPP within the emotional condition. Second, if LPP simply reflected recall probability, recalled items across item types would align; instead, recalled emotional items have higher LPPs than recalled neutral items. Neither pattern holds, indicating an interation between LPP and item type.</p>
 <div id="fig-cat_lpp_by_recall" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-cat_lpp_by_recall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -251,7 +264,7 @@ Figure&nbsp;4: Early LPP by recall status and item type. CIs omitted for clarity
 </figcaption>
 </figure>
 </div>
-<p>Finally, we summarize Early-LPP contrasts with mean differences and 95% confidence intervals in <a href="#fig-early-lpp-contrasts" class="quarto-xref">Figure&nbsp;5</a>. The pairwise contrasts underscore that Early LPP peaks only when both emotion and later recall line up. Recalled negatives sit significantly above every other group, and even unrecalled negatives stay elevated relative to unrecalled neutrals, so emotional encoding leaves a residual boost. But the key null result is that unrecalled negatives are statistically indistinguishable from recalled neutrals: once we hold recall constant, the emotion tag alone no longer guarantees higher LPP. Likewise, neutral recalled vs.&nbsp;unrecalled items overlap. Together these patterns show that Early LPP is neither a pure emotion marker nor a pure recall marker. <strong>It primarily signals the conjunction of the two!</strong></p>
+<p>Finally, we summarize Early-LPP contrasts with mean differences and 95% confidence intervals in <a href="#fig-early-lpp-contrasts" class="quarto-xref">Figure&nbsp;5</a>. The pairwise contrasts underscore that Early LPP peaks only when both emotion and later recall line up. Recalled emotional items sit significantly above every other group, and unrecalled emotional items are elevated relative to unrecalled neutral items. In contrast, recalled vs unrecalled neutral items do not differ reliably. Together, these contrasts indicate that Early LPP is not well described as a pure “emotion tag” (since recall status matters within item type) or a pure “recall tag” (since item type matters within recall status). Instead, Early LPP reflects both item type and subsequent recall, with the largest elevations for recalled emotional items.</p>
 <div id="fig-early-lpp-contrasts" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-early-lpp-contrasts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -310,9 +323,9 @@ Figure&nbsp;5: Early LPP contrasts (mean ΔµV with 95% CIs).
 </figure>
 </div>
 <!-- TODO: add another figure that shows cat_lpp_by_recall pooled across item types? -->
-<section id="statistical-cross-check" class="level4" data-number="2.3.1">
-<h4 data-number="2.3.1" class="anchored" data-anchor-id="statistical-cross-check"><span class="header-section-number">2.3.1</span> Statistical Cross-Check</h4>
-<p>Prior work using generalized mixed-effects models provides an alternative perspective on these relationships. <a href="#fig-reference_gmm" class="quarto-xref">Figure&nbsp;6</a> predicts recall as a linear function of condition (emotional vs.&nbsp;neutral), Early LPP, and their interaction. It shows significant main effects of both factors and a significant interaction. This aligns with the plots: a baseline recall advantage for emotional items, an additional boost from early LPP, and a stronger LPP effect for emotional items than for neutral items.</p>
+<section id="statistical-cross-check" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="statistical-cross-check"><span class="header-section-number">2.3.1</span> Statistical Cross-Check</h3>
+<p>Prior work using generalized mixed-effects models provides an alternative perspective on these relationships. <a href="#fig-reference_gmm" class="quarto-xref">Figure&nbsp;6</a> predicts recall via a logistic link from condition (emotional vs.&nbsp;neutral), Early LPP, and their interaction. It shows significant main effects of both factors and a significant interaction. This aligns with the plots: a baseline recall advantage for emotional items, an additional boost from early LPP, and a stronger LPP effect for emotional items than for neutral items.</p>
 <div id="fig-reference_gmm" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-reference_gmm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -325,85 +338,115 @@ Figure&nbsp;6: Description of a generalized mixed effects model predicting recal
 </div>
 </section>
 </section>
-<section id="recall-sets-reflect-a-temporal-contiguity-effect" class="level3" data-number="2.4">
-<h3 data-number="2.4" class="anchored" data-anchor-id="recall-sets-reflect-a-temporal-contiguity-effect"><span class="header-section-number">2.4</span> Recall Sets Reflect a Temporal Contiguity Effect</h3>
-<p>Classic work on free recall shows that successive recalls tend to come from nearby study positions, a temporal contiguity effect. Although recall order is not available here, we can still ask whether recalled <em>sets</em> show an analogous structure: are items studied close together more likely to be recalled together than items studied far apart? To quantify this, we compute an order-agnostic co-recall curve. For each list and each unordered pair of study positions separated by lag <span class="math inline">\(d = |j - i|\)</span>, we estimate the probability that both items are recalled, <span class="math inline">\(\text{CoRec}(d)\)</span>, as the proportion of such pairs where both positions were marked as recalled. This yields, for lags 1–19, a temporal contiguity curve describing how often pairs of items separated by a given study lag co-occur in the recalled set.</p>
-<p>As shown in <a href="#fig-corec_by_lag" class="quarto-xref">Figure&nbsp;7</a>, co-recall probabilities are highest for short lags and decline monotonically with increasing separation, indicating that recall sets are temporally clustered even when we ignore output order. airs of items studied one or two positions apart are much more likely to be recalled together than pairs separated by eight or more positions. Effect summary: mean co-recall for lags 1–3 is [X₁], 95% CI [L₁, U₁], compared with [X₂], 95% CI [L₂, U₂], for lags 8–10; the difference (=) [X₁ − X₂], 95% CI [LΔ, UΔ], confirms a robust temporal contiguity effect at the level of recalled sets. This benchmark sets a clear target for model development: candidate mechanisms must not only reproduce itemwise recall probabilities but also the tendency for nearby items in the study list to be recalled together.</p>
-<div id="fig-corec_by_lag" class="quarto-float quarto-figure quarto-figure-center anchored">
+<section id="recall-sets-show-little-to-no-temporal-clustering" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="recall-sets-show-little-to-no-temporal-clustering"><span class="header-section-number">2.4</span> Recall Sets Show Little to No Temporal Clustering</h2>
+<p>Classic work on free recall shows that successive recalls tend to come from nearby study positions, a temporal contiguity effect. Standard analyses quantify this with the lag-conditional response probability (lag-CRP), which requires recall order. Because recall order is unavailable in the present EEG dataset, we developed an order-agnostic alternative that asks a closely related question: given that a studied item was recalled, how likely is it that items at nearby study positions were also recalled?</p>
+<p>For each list, each recalled item at position <span class="math inline">\(i\)</span>, and each absolute lag <span class="math inline">\(d = 1,\dots,19\)</span>, we examine the item at position <span class="math inline">\((i+d)\)</span> (when it exists) and estimate the conditional co-recall probability,</p>
+<p><span class="math display">\[
+\text{CoRec}(d) = P(r_{i+d}=1 \mid r_i=1,\ |j-i|=d),
+\]</span></p>
+<p>as the probability that the item at lag <span class="math inline">\(d\)</span> is recalled given that the reference item at position <span class="math inline">\(i\)</span> is recalled. Averaging <span class="math inline">\(\text{CoRec}(d)\)</span> across lists yields an order-agnostic temporal contiguity curve that parallels the lag-CRP but does not require output sequences.</p>
+<p>To validate this measure, we first applied it to a dataset where recall order is available. For this comparison we used a subset of PEERS <span class="citation" data-cites="healey2014memory">[@healey2014memory]</span>: 126 participants aged 17–30 completed 112 trials in which they studied lists of 16 unique words and then immediately recalled them. Words were sampled without replacement from the Toronto Word Pool <span class="citation" data-cites="friendly1982toronto">[@friendly1982toronto]</span>, a set of high-frequency nouns, adjectives, and verbs with low interitem similarity. The left panel of <a href="#fig-peers_lagcrp_condcorec" class="quarto-xref">Figure&nbsp;7</a> shows the standard lag-CRP for this dataset, with a strong contiguity effect: recall transitions are most likely at lag +1, somewhat less likely at lag −1, and fall off rapidly for larger <span class="math inline">\(|lag|\)</span>. The right panel shows the corresponding conditional co-recall curve <span class="math inline">\(\text{CoRec}(d)\)</span>, collapsed over lag sign. Conditional co-recall is highest for short lags and decreases steadily with distance, closely mirroring the lag-CRP gradient despite ignoring recall order. These results confirm that the conditional co-recall analysis is sensitive to temporal contiguity when it is present.</p>
+<div id="fig-peers_lagcrp_condcorec" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-corec_by_lag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="results/figures/analyses/corec_by_lag.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;7: Probability that both items in a pair are recalled as a function of their study lag (absolute serial lag between study positions)."><img src="results/figures/analyses/corec_by_lag.png" class="img-fluid figure-img"></a>
+<div aria-describedby="fig-peers_lagcrp_condcorec-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/analyses/peers_lagcrp.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;7: Standard lag-CRP (LEFT) and order-agnostic conditional co-recall by lag (RIGHT) for a subset of the PEERS dataset [@healey2014memory]. The conditional co-recall curve reproduces the short-lag advantage observed in the lag-CRP despite not using recall order information."><img src="results/figures/analyses/peers_lagcrp.png" class="img-fluid figure-img"></a></p>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-corec_by_lag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7: Probability that both items in a pair are recalled as a function of their study lag (absolute serial lag between study positions).
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="results/figures/analyses/peers_condcorec_by_lag.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;7: Standard lag-CRP (LEFT) and order-agnostic conditional co-recall by lag (RIGHT) for a subset of the PEERS dataset [@healey2014memory]. The conditional co-recall curve reproduces the short-lag advantage observed in the lag-CRP despite not using recall order information."><img src="results/figures/analyses/peers_condcorec_by_lag.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-peers_lagcrp_condcorec-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Standard lag-CRP (LEFT) and order-agnostic conditional co-recall by lag (RIGHT) for a subset of the PEERS dataset <span class="citation" data-cites="healey2014memory">[@healey2014memory]</span>. The conditional co-recall curve reproduces the short-lag advantage observed in the lag-CRP despite not using recall order information.
+</figcaption>
+</figure>
+</div>
+<p>We then applied the same conditional co-recall analysis to the Zarubin EEG dataset. As shown in <a href="#fig-zarubin_condcorec_by_lag" class="quarto-xref">Figure&nbsp;8</a>, the conditional co-recall curve is nearly flat: items at lag 1 are only slightly more likely to be recalled than items at lags 4–5, and the difference is small relative to the bootstrap confidence intervals. In contrast to the PEERS subset, this paradigm therefore shows at most a weak temporal contiguity effect in recall sets, and provides only limited constraint on the temporal-context dynamics in our models.</p>
+<div id="fig-zarubin_condcorec_by_lag" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-zarubin_condcorec_by_lag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="results/figures/analyses/zarubin_condcorec_by_lag.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;8: Order-agnostic conditional co-recall by lag for the Zarubin EEG dataset. Conditional co-recall probabilities vary little with lag, indicating weak temporal clustering of recalled items in this paradigm."><img src="results/figures/analyses/zarubin_condcorec_by_lag.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-zarubin_condcorec_by_lag-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Order-agnostic conditional co-recall by lag for the Zarubin EEG dataset. Conditional co-recall probabilities vary little with lag, indicating weak temporal clustering of recalled items in this paradigm.
 </figcaption>
 </figure>
 </div>
 </section>
-<section id="implications-for-model-development" class="level3" data-number="2.5">
-<h3 data-number="2.5" class="anchored" data-anchor-id="implications-for-model-development"><span class="header-section-number">2.5</span> Implications for Model Development</h3>
-<p>Benchmarks imply that item type and LPP should be treated as distinct inputs whose effects interact. Item type confers a baseline recall advantage (EEM), and early LPP further modulates recall likelihood, more strongly for emotional items. Mechanistic models should therefore allow LPP to influence attention and/or context binding in a way that depends on item type. In turn, they can be evaluated by the probability they assign to the full recalled set on each list. Our GMM cross-check supports this interpretation and specifically confirm significant linear relationships between predictors, recall, and their interaction. To keep initial model development tractable, we can similarly assume linearity in how LPP interacts with item type to modulate attention and/or context binding.</p>
-<p><a href="#fig-cat_lpp_by_recall" class="quarto-xref">Figure&nbsp;4</a> and <a href="#fig-cat_lpp_by_recall_split" class="quarto-xref">Figure&nbsp;3</a> rules out two attractive accounts of how LPP relates to item type and recall. The first is that LPP reflects item type: emotional items have higher LPPs, and this drives their recall advantage. We do observe higher average LPPs for emotional items, but distributions overlap substantially. Furthermore, if LPP simply encoded item type, recalled and unrecalled items of the same type would show aligned LPPs. This does not hold: LPP curves split by recall status diverge within item types, even to the extent that LPPs for unrecalled emotional items largely overlap with those for both recalled and unrecalled neutral items.</p>
-<p>The second attractive account ruled out by <a href="#fig-cat_lpp_by_recall" class="quarto-xref">Figure&nbsp;4</a> and and <a href="#fig-cat_lpp_by_recall_split" class="quarto-xref">Figure&nbsp;3</a> is that LPP reflects recall probability: items with higher LPPs are more likely to be recalled, regardless of item type. If this were true, recalled items across item types would show aligned LPPs. This also does not hold: LPP curves split by item type diverge within recall status, with recalled emotional items showing the highest LPPs. Instead, LPP appears to signal the conjunction of item type and recall status, predicting recall more strongly for emotional items than for neutral items. Our models should therefore incorporate both item type and LPP signals as distinct, interacting influences on recall in order to avoid mispredicting either unrecalled emotional items or recalled neutral items.</p>
-<!-- Our analyses clarify that LPP signals cannot simply substitute for item type in models of EEM.
-While LPP amplitudes are on average higher for emotional items than for neutral items, there is substantial overlap in value distributions across item types.
-Furthermore, the relationship between LPP and recall differs from that between item type and recall.
-In particular, LPP amplitudes for unrecalled emotional items overlap substantially with those for both recalled and unrecalled neutral items.
-Thus, models that treat LPP as a continuous proxy for item type would mispredict either unrecalled emotional items or recalled neutral items unless further mechanisms were introduced.
-
-Since LPPs differ on average between emotional and neutral items, we asked whether window-averaged LPP could stand in for explicit item-type tags in models reproducing EEM.
-However, two considerations limit this possibility.
-First, we observe substantial overlap in LPP distributions across item types.
-This means an LPP substitution would be noisy and misclassify many items.
-Second, the apparent relationship between LPP and recall differs from that between item type and recall.
-Whereas emotional items are apparently broadly advantaged in recall, higher LPPs predict recall primarily for emotional items, not for neutral items.
-This means that a model in which LPP directly substitutes for item type would mispredict recall patterns for neutral items.
-These considerations challenge an interpretation of window-averaged LPP signals as a continuous proxy for item type, and instead motivate models that incorporate both item type and LPP signals as distinct, interacting influences on recall.
-Statistical and cognitive modeling work provide complementary perspectives on this issue.
- 
-Prior work using generalized mixed effects models provide an alternative perspective on these relationships [@fig-reference_gmm].
-That work found that a model predicting recall as a function of condition (emotional vs. neutral), Early LPP, and their interaction showed significant main effects of condition and Early LPP as well as a significant interaction.
-This indicates that Early LPP predicts recall in both emotional and neutral items but does so more strongly for emotional items.
-Our initial model development may therefore incorporate both item type and LPP signals as distinct inputs modulating a cognitive process that determines later recall probability.
-One parameter could govern the baseline recall advantage for emotional items.
-Another parameter could govern how strongly LPP modulates recall probability.
-A final parameter could govern the interaction, allowing LPP to modulate recall more strongly for emotional items than for neutral items.
-Through formal model comparison, we can later evaluate whether a simpler model omitting one or more of these parameters suffices to explain observed data. -->
+<section id="implications-for-model-development" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="implications-for-model-development"><span class="header-section-number">2.5</span> Implications for Model Development</h2>
+<p>Taken together, these benchmarks place clear constraints on any mechanistic account of how LPP relates to emotion and memory. Item type and LPP must be treated as distinct inputs whose effects interact: emotional items enjoy a baseline recall advantage (EEM), and Early LPP further modulates recall likelihood, with a much stronger association for emotional items than for neutral items. The mixed-effects cross-check confirms this pattern, showing main effects of condition and Early LPP as well as a significant interaction.</p>
+<p>In particular, <a href="#fig-cat_lpp_by_recall" class="quarto-xref">Figure&nbsp;4</a> and <a href="#fig-cat_lpp_by_recall_split" class="quarto-xref">Figure&nbsp;3</a> argue against two simple linking hypotheses about how LPP relates to item type and recall. The first is that LPP is essentially an emotion index: emotional items have higher LPPs, and this graded “emotion strength” drives their recall advantage. We do observe higher average LPPs for emotional than neutral items, but distributions overlap substantially. Moreover, if LPP simply encoded item type, recalled and unrecalled items of the same type should show similar LPPs. Instead, within both emotional and neutral items, LPPs split by recall status diverge, and unrecalled emotional items overlap strongly with both recalled and unrecalled neutral items.</p>
+<p>A second simple hypothesis is that LPP is essentially a recall index: items with higher LPPs are more likely to be recalled, regardless of item type. If that were the case, recalled items across types should have similar LPPs, and unrecalled items across types should likewise align. This also does not hold: within each recall status, emotional and neutral items differ in LPP, with recalled emotional items showing the highest values. Rather than cleanly tracking emotion alone or recall alone, LPP amplitude depends on both item type and subsequent recall, with a stronger predictive relationship for emotional items. In modeling terms, this motivates treating item type and LPP as distinct, interacting influences on recall: models that collapse LPP into a pure “emotion strength” signal or a pure “recall strength” signal risk mispredicting either unrecalled emotional items or recalled neutral items.</p>
+<p>Our conditional co-recall analysis is the only benchmark that directly targets temporal context. When validated on a standard free-recall dataset (PEERS), the same measure produces a steep contiguity gradient that closely tracks the lag-CRP, which confirms that it is sensitive to temporal clustering when such clustering is strong. In the Zarubin EEG dataset, by contrast, the conditional co-recall curve is nearly flat, and any short-lag advantage is small compared to what is observed in classic free-recall paradigms. This pattern indicates that temporal clustering, if present in this task, is much weaker than in standard free recall and is unlikely to be the main determinant of which items are recalled. This outcome does not necessarily surprise given the task design, which includes strong semantic and emotional clustering forces that can compete with and overshadow temporal context effects. We therefore do not use these data to draw detailed conclusions about how temporal context evolves or about how LPP modulates temporal-context dynamics.</p>
+<p>Within this setting, the role of modeling is to bridge the gap between these descriptive relationships and a cue-dependent, competitive retrieval process. The mixed-effects model tells us that recall varies approximately linearly with item type, LPP, and their interaction, but it does not specify how these predictors should enter an encoding rule or how they propagate through retrieved-context dynamics to shape recall sets. In the next section, we use an eCMR-style model to ask whether simple encoding rules that combine emotion and LPP can reproduce the observed benchmarks once they are embedded in a full retrieval process. In particular, we will test whether a linear learning-rate rule with Emotion, LPP, and their interaction remains compatible with the behavioral and EEG constraints when run through eCMR. We also test whether the observed LPP × emotion pattern can be captured by main-effect LPP terms together with nonlinear competitive dynamics, or instead requires an explicit interaction term at encoding. Finally, we show that models omitting LPP, emotion, or both fail to reproduce the observed recall sets and key benchmarks, confirming that both signals are necessary to explain the data in this framework. We then discuss these results and their theoretical implications in the final section, highlighting limitations and directions for future work.</p>
 </section>
 </section>
-<section id="appendix" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="appendix"><span class="header-section-number">3</span> Appendix</h2>
-<section id="lpp-by-item-type-and-recall-status" class="level3" data-number="3.1">
-<h3 data-number="3.1" class="anchored" data-anchor-id="lpp-by-item-type-and-recall-status"><span class="header-section-number">3.1</span> LPP by Item Type and Recall Status</h3>
+<section id="loss-functions-for-model-fitting" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Loss Functions for Model Fitting</h1>
+<p>Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves. Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting. Two properties of the Zarubin dataset shape how we define this likelihood. First, models like CMR and eCMR naturally predict recall sequences, but our data only say whether each item was recalled. This forces us to score models on how well they predict the <em>set</em> of recalled items on each list. Second, the first two items of each list were removed from the data to reduce primacy confounds in the emotion analyses. This omission removes some information about how context evolved early in the list; for the present purposes, we ignore the missing buffer items and treat each list as a 20-item sequence.</p>
+<section id="set-based-likelihood" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="set-based-likelihood"><span class="header-section-number">3.1</span> Set-Based Likelihood</h2>
+<p>In a standard likelihood analysis with full recall order, we would compute, for each trial, the probability that the model generates the exact observed recall sequence, and then maximize the product of those probabilities across trials. Here we replace the sequence with the unordered set of recalled items. Let <span class="math inline">\(S_t\)</span> denote the set of items recalled on trial <span class="math inline">\(t\)</span>, and let <span class="math inline">\(r\)</span> range over recall sequences that produce the same set <span class="math inline">\(S_t\)</span> (possibly with different orders and stopping points). We define the <em>set likelihood</em> as</p>
+<p><span class="math display">\[
+P(S_t \mid \theta) = \sum_{r:\, r\ \text{yields}\ S_t} P(r \mid \theta),
+\]</span></p>
+<p>where <span class="math inline">\(\theta\)</span> are the model parameters. For each list and parameter setting, this quantity assigns higher probability to sets that are frequently produced by the model’s cue-dependent, competitive retrieval dynamics, regardless of the order in which items are recalled.</p>
+<p>Evaluating this sum exactly is infeasible for lists with many recalled items, because the number of sequences that yield a given set grows rapidly with set size. We therefore approximate <span class="math inline">\(P(S_t \mid \theta)\)</span> with a Monte Carlo estimate based on permutations of the observed set. For each trial, we sample a fixed number of random permutations of <span class="math inline">\(S_t\)</span>, treat each permutation as a possible recall sequence, and compute its probability under the model. Averaging these probabilities over permutations yields an unbiased estimate of the set likelihood for that trial. We then sum log likelihoods across trials and participants, and choose parameter values that maximize this approximate set-based log likelihood. All model fits reported in the Results section use this set-likelihood objective.</p>
+<p>This approach uses trial-level information about which items were recalled on which lists and respects the full generative structure of eCMR: the same parameters that govern encoding and cue-dependent retrieval are used both to generate recall sets and to score their likelihood. It also aligns with our substantive aims. The neurally informed extensions are intended to explain <em>which</em> emotional items are more likely to be recalled as a function of their LPP values, not to change the overall magnitude of the emotional enhancement of memory summarized by the Category-SPC. A loss function that evaluates models directly on the recalled sets is therefore more sensitive to the LPP-dependent mechanisms we wish to test.</p>
+<p>For comparison, an alternative is to fit models by minimizing mean squared error between summary statistics (for example, between the empirical Category-SPC and the Category-SPC produced by simulations). This summary-statistic MSE approach is simple and effective for testing whether a model reproduces coarse patterns such as overall position effects and the average recall advantage for emotional over neutral items. However, it discards trial-level structure and is relatively insensitive to mechanisms that rearrange <em>which</em> items within a condition are recalled without changing average rates. It ignores patterns in data that are not explicitly targeted by the chosen summary statistics, potentially allowing models to fit benchmarks while mispredicting other aspects of the data. In contrast, the set-likelihood approach evaluates models on their ability to reproduce the full recalled sets, eliminating these deficiencies and providing a more stringent test of mechanistic hypotheses. Our primary questions directly address the effects of item-level variation in LPP and emotion on recall, so we prioritize a loss function that is sensitive to these item-level patterns. We thus rely on the set-likelihood framework for the fits and model comparisons reported below.</p>
+</section>
+<section id="modeling-questions-and-model-variants" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="modeling-questions-and-model-variants"><span class="header-section-number">3.2</span> Modeling Questions and Model Variants</h2>
+<p>The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items. These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model. In a retrieved-context framework, recall probabilities are not set directly by “emotion + LPP” terms; they emerge from how learning rates and trace features shape context, activation, and competition among items. It is therefore not trivial that the linear logit relationship estimated by the GMM can or should be imposed directly at the encoding level.</p>
+<p>To make this concrete, consider a simplified “spotlight” view of retrieved-context dynamics. At encoding, each item acquires an association strength or learning rate <span class="math inline">\(S_i\)</span>. At retrieval, the activation of item <span class="math inline">\(i\)</span> is roughly proportional to a product of its trace strength and its match to the current cue, for example</p>
+<p><span class="math display">\[
+A_i \propto (\text{cue–trace similarity}_i \times S_i)^\tau,
+\]</span></p>
+<p>followed by normalization across items. Importantly a sensitivity parameter <span class="math inline">\(\tau &gt; 1\)</span> introduces nonlinear competition: items with higher activation get disproportionately favored during recall.</p>
+<p>If Emotion and LPP each contribute linearly to these ingredients (for instance, adding to the learning rate and to the cue–trace match), then the product contains an interaction term even when the encoding rule itself includes only main effects. In other words, nonlinear cue-dependent competition can generate an effective LPP × emotion dependence in recall probabilities even without an explicit interaction term in the learning-rate equation. This observation makes it a modeling question, not a foregone conclusion, whether the interaction term estimated by the GMM reflects a corresponding interaction term at encoding, or whether it could arise as a side-effect of retrieved-context dynamics.</p>
+<p>Within this framework, we use an eCMR-style model to address three modeling questions that the GMM alone cannot resolve. First, we ask whether a simple linear learning-rate rule that mirrors the GMM — with additive contributions of Emotion and LPP and an explicit Emotion × LPP term — remains compatible with the behavioral and EEG benchmarks once it is embedded in a full retrieved-context process. This tests whether the GMM-inspired encoding rule “works” when it has to drive a cue-dependent competition among many items on each list, rather than just predicting recall probability for isolated items.</p>
+<p>Second, we ask whether the explicit interaction term at encoding is actually needed, or whether nonlinear competitive dynamics are sufficient to generate the observed LPP × emotion pattern in recall. To do so, we compare the interaction model to an eCMR variant in which LPP modulates learning rate only through main effects of Emotion and LPP, with no explicit Emotion × LPP factor in the learning rule. We then examine whether this main-effects-only model can reproduce the observed LPP × emotion pattern once its outputs are passed through the same analysis pipeline as the data. If nonlinear competitive dynamics are sufficient to generate the empirical interaction, a main-effects-only encoding rule should yield similar itemwise LPP–emotion–recall relationships; if not, an explicit interaction term at encoding is required.</p>
+<p>Finally, we include a baseline eCMR model in which LPP is not used at all and only the emotion labels modulate encoding. Even an emotion-sensitive eCMR model that never sees LPP as an input might, in principle, produce recall sets in which high-LPP emotional items are recalled more often than low-LPP emotional items, simply because LPP covaries with other factors the model already uses (such as position, list condition, or semantic similarity). To test this possibility, we fit the baseline emotion-only eCMR to the recall sets and then apply the same GMM analysis to its simulated outputs as we do to the empirical data. If this baseline model already reproduces the empirical pattern in which LPP is strongly predictive of recall for emotional items and only weakly predictive for neutral items, then the LPP signal does not add mechanistic information beyond what the existing eCMR mechanisms capture. If it fails to do so, this supports the claim that LPP carries additional information about emotional memory that is not reducible to the basic eCMR structure.</p>
+<p>Together, these comparisons let us test whether neurally informed encoding rules that combine emotion and LPP can be integrated into eCMR in a way that respects both the behavioral and EEG constraints, and whether the interaction structure seen in the GMM must be present at encoding or can be explained by standard competitive dynamics.</p>
+</section>
+</section>
+<section id="appendix" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Appendix</h1>
+<section id="lpp-by-item-type-and-recall-status" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="lpp-by-item-type-and-recall-status"><span class="header-section-number">4.1</span> LPP by Item Type and Recall Status</h2>
 <div id="fig-amplitude_by_cat_by_recalled" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-amplitude_by_cat_by_recalled-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="results/figures/amplitude_by_cat_by_recalled.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;8: LPP by time, recall status, and item type."><img src="results/figures/amplitude_by_cat_by_recalled.png" class="img-fluid figure-img"></a>
+<a href="results/figures/amplitude_by_cat_by_recalled.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;9: LPP by time, recall status, and item type."><img src="results/figures/amplitude_by_cat_by_recalled.png" class="img-fluid figure-img"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-amplitude_by_cat_by_recalled-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8: LPP by time, recall status, and item type.
+Figure&nbsp;9: LPP by time, recall status, and item type.
 </figcaption>
 </figure>
 </div>
 </section>
-<section id="recall-rate-by-early-lpp" class="level3" data-number="3.2">
-<h3 data-number="3.2" class="anchored" data-anchor-id="recall-rate-by-early-lpp"><span class="header-section-number">3.2</span> Recall Rate by Early LPP</h3>
+<section id="recall-rate-by-early-lpp" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="recall-rate-by-early-lpp"><span class="header-section-number">4.2</span> Recall Rate by Early LPP</h2>
 <p>This analysis is deprecated. It binned items by LPP amplitude within item category and plotted recall rates per bin to check whether LPP predicts recall beyond the emotional/neutral label. Bins were defined by percentiles of the pooled LPP distribution, and results were shown separately for Early LPP (400–700 ms) and Late LPP (700–1,000 ms). LPP values were the provided z‑normalized amplitudes computed per electrode and trial by subtracting the −200–0 ms baseline and dividing by the baseline SD (so values are on a mean‑0, SD‑1 scale). An earlier plotting bug set a participant’s bin value to zero when they contributed no items to that bin, which biased sparse bins downward; this has been fixed by excluding empty participant–bin cells from the proportion and confidence‑interval calculations. The reference figure displays lines predicted by a generalized mixed‑effects model of recall as a function of LPP and item category, whereas the current plot shows empirical proportions within bins; the two approaches diverge most at distribution tails where data are sparse.</p>
-<p>As seen in <a href="#fig-cat_recall_by_early_lpp" class="quarto-xref">Figure&nbsp;9</a>, recall rates rise with Early LPP for emotional items and are comparatively flatter for neutral items. Observations were distributed unevenly across bins (see count panels in <a href="#fig-cat_recall_by_lpp_counts" class="quarto-xref">Figure&nbsp;10</a>). Because there are more neutral than emotional items overall, neutral items appear more frequently in every LPP bin. However, since recall rates are proportions within bin, this does not bias the curves. Still, wide intervals at extreme LPP values reflect very low occupancy in those bins (and thus high uncertainty about recall rates there).</p>
+<p>As seen in <a href="#fig-cat_recall_by_early_lpp" class="quarto-xref">Figure&nbsp;10</a>, recall rates rise with Early LPP for emotional items and are comparatively flatter for neutral items. Observations were distributed unevenly across bins (see count panels in <a href="#fig-cat_recall_by_lpp_counts" class="quarto-xref">Figure&nbsp;11</a>). Because there are more neutral than emotional items overall, neutral items appear more frequently in every LPP bin. However, since recall rates are proportions within bin, this does not bias the curves. Still, wide intervals at extreme LPP values reflect very low occupancy in those bins (and thus high uncertainty about recall rates there).</p>
 <div id="fig-cat_recall_by_early_lpp" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-cat_recall_by_early_lpp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<p><a href="results/figures/reference_cat_recall_by_lpp.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;9: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT)."><img src="results/figures/reference_cat_recall_by_lpp.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/reference_cat_recall_by_lpp.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;10: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT)."><img src="results/figures/reference_cat_recall_by_lpp.png" class="img-fluid figure-img"></a></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<p><a href="results/figures/analyses/cat_recall_by_lpp_EarlyLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;9: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_EarlyLPP.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/analyses/cat_recall_by_lpp_EarlyLPP.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Figure&nbsp;10: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_EarlyLPP.png" class="img-fluid figure-img"></a></p>
 </div>
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cat_recall_by_early_lpp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT).
+Figure&nbsp;10: Recall rate by Early LPP amplitude and item type in reference materials (LEFT) and in the present dataset (RIGHT).
 </figcaption>
 </figure>
 </div>
@@ -413,18 +456,33 @@ Figure&nbsp;9: Recall rate by Early LPP amplitude and item type in reference mat
 <div aria-describedby="fig-cat_recall_by_lpp_counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<p><a href="results/figures/analyses/cat_recall_by_lpp_EarlyLPP_counts.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;10: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_EarlyLPP_counts.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/analyses/cat_recall_by_lpp_EarlyLPP_counts.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Figure&nbsp;11: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_EarlyLPP_counts.png" class="img-fluid figure-img"></a></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<p><a href="results/figures/analyses/cat_recall_by_lpp_LateLPP_counts.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Figure&nbsp;10: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_LateLPP_counts.png" class="img-fluid figure-img"></a></p>
+<p><a href="results/figures/analyses/cat_recall_by_lpp_LateLPP_counts.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="Figure&nbsp;11: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT)."><img src="results/figures/analyses/cat_recall_by_lpp_LateLPP_counts.png" class="img-fluid figure-img"></a></p>
 </div>
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cat_recall_by_lpp_counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
+Figure&nbsp;11: Counts of observations per bin for Early LPP (LEFT) and Late LPP (RIGHT).
 </figcaption>
 </figure>
 </div>
+</section>
+<section id="alternative-fitting-approaches-considered" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="alternative-fitting-approaches-considered"><span class="header-section-number">4.3</span> Alternative Fitting Approaches Considered</h2>
+<section id="simulation-based-estimates-of-set-likelihood" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="simulation-based-estimates-of-set-likelihood"><span class="header-section-number">4.3.1</span> Simulation-Based Estimates of Set Likelihood</h3>
+<p>Before settling on the permutation-based set-likelihood procedure described in the main text, we explored a more direct Monte Carlo approach based on model-generated recall sequences. For each subject and trial, we simulated many recall sequences from the model and then asked how many of those simulations produced exactly the same recalled set as observed in the data. The proportion of matching simulations provides an unbiased Monte Carlo estimate of the set likelihood for that trial under a given parameter setting.</p>
+<p>In principle, this approach aligns closely with the generative structure of the model: it directly samples from the joint distribution over recall sequences induced by the encoding and retrieval dynamics. In practice, however, it proved problematic. If no simulated sequence happens to match the observed recalled set, the estimated likelihood for that trial is zero, even when the parameter setting is reasonable. This is particularly likely when many items are recalled on a list, because the number of possible recall sequences that yield a given set grows very quickly with set size. Even when some simulations do match the observed set, the resulting likelihood estimates can be noisy unless a large number of simulations are run per subject and trial, which makes fitting costly and slow. These issues led us to favor the permutation-based estimator used in the main analyses, which operates over permutations of the observed set rather than over full simulated sequences and thus avoids exact-match sparsity.</p>
+</section>
+<section id="mean-squared-error-over-summary-statistics" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="mean-squared-error-over-summary-statistics"><span class="header-section-number">4.3.2</span> Mean Squared Error Over Summary Statistics</h3>
+<p>We also experimented with a mean squared error (MSE) approach that fits models to summary statistics rather than to trial-level recall sets. In this scheme, we select one or more summary measures from the data (for example, the Category-SPC), simulate the model under a candidate parameter setting, compute the same statistics on the simulations, and then score the fit by the mean squared difference between empirical and simulated values. This approach is common in retrieved-context modeling and is straightforward to implement and scale.</p>
+<p>For the present dataset, fitting to the Category-SPC mainly tests whether a model captures overall position effects and the average recall advantage for emotional relative to neutral items. It is well suited to assessing whether a neurally uninformed eCMR variant can reproduce the emotional enhancement of memory (EEM), and indeed our neurally informed extensions did not substantially improve fits to the Category-SPC relative to their standard eCMR counterparts. This outcome is consistent with what the mixed-effects analyses already suggest. The GMM results do not imply that LPP should add much explanatory power for overall recall rates of emotional versus neutral items beyond what is already captured by the emotion labels themselves. Instead, they show that LPP is most informative for distinguishing which <em>emotional</em> items are more likely to be recalled, with little additional predictive value for neutral items.</p>
+<p>Our neurally informed extensions were designed with this itemwise target in mind. Parameters that act like a static emotional attention boost (such as an “emotion scale” in standard eCMR or an LPP threshold used to approximate an emotional boost) can capture EEM at the serial-position-curve level. In contrast, parameters that link trial-to-trial variations in LPP to variations in recall (such as an LPP slope that modulates attention or binding strength) primarily influence <em>which</em> emotional items are recalled, not <em>how many</em> emotional items are recalled on average. As a result, MSE-based fits to summary statistics like the Category-SPC are relatively insensitive to the mechanisms we wish to test: they can confirm that emotional attention mechanisms capture the EEM effect, but they are not well positioned to detect improvements in explaining which items are recalled as a function of LPP.</p>
+<p>From this perspective, MSE over summary statistics is not “less rigorous” than likelihood-based fitting, but it targets a different question. It is most appropriate when the modeling goal is to match coarse patterns such as overall recall rates and serial-position effects. Our primary aim, however, is to evaluate neurally informed LPP mechanisms that are intended to explain itemwise differences in recall probability within the emotional condition. For that goal, a trial-level set-likelihood objective, as described in the main text, provides a more direct and sensitive test.</p>
+</section>
 </section>
 </section>
 
@@ -851,7 +909,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","selector":".lightbox","loop":false,"descPosition":"bottom","openEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","descPosition":"bottom","closeEffect":"zoom","selector":".lightbox","loop":false});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

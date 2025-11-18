@@ -334,6 +334,44 @@ def calculate_bic_scores(
 
 
 def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
+    """Returns matrix of fractions of penalized fitness in model i < model j.
+
+    Args:
+        - results: dicts containing each containing 'name', 'fitness', and 'free' data.
+            The penalty applied is (2 * number_of_free_parameters) / n_subjects, mirroring
+            the per-model contribution of the AIC complexity term.
+    """
+    # Extract model names
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+
+    # Initialize matrix for comparison results
+    comparison_matrix = np.zeros((num_models, num_models))
+
+    # Populate the matrix with comparison fractions
+    def penalized_fitness(model: dict) -> np.ndarray:
+        """Return per-subject fitness plus AIC-style penalty."""
+        fitness = np.array(model["fitness"])
+        subject_count = max(len(fitness), 1)
+        penalty = (2.0 * len(model.get("free", []))) / subject_count
+        return fitness + penalty
+
+    penalized = [penalized_fitness(model) for model in results]
+
+    for i in range(num_models):
+        for j in range(num_models):
+            if i != j:
+                comparison_scores = penalized[i] < penalized[j]
+                comparison_fraction = np.mean(comparison_scores)
+                comparison_matrix[i, j] = comparison_fraction
+            else:
+                # Set diagonal to NaN for clarity, since self-comparison does not make sense here
+                comparison_matrix[i, j] = np.nan
+
+    return pd.DataFrame(comparison_matrix, index=model_names, columns=model_names)
+
+
+def raw_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
     """Returns matrix of fractions of fitness in row model < in model j.
 
     Args:
