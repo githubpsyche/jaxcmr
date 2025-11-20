@@ -333,6 +333,73 @@ def calculate_bic_scores(
     return df.sort_values(by="BIC", ascending=False)
 
 
+def pairwise_aic_differences(
+    results: list[dict],
+    confidence: float = 0.95,
+    equivalence_margin: float = 2.0,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Compute pairwise AIC differences between models.
+
+    Args:
+      results: Model summaries containing `name`, per-subject `fitness`, and `free`.
+      confidence: Confidence level for the ΔAIC intervals.
+      equivalence_margin: Half-width in AIC units used for practical equivalence.
+
+    Returns:
+      (mean_delta, ci_halfwidth, equivalent): DataFrames with model names on rows
+      and columns. For each pair (i, j):
+
+      * mean_delta[i, j] is the mean ΔAIC_s = AIC_i,s − AIC_j,s across subjects.
+        Negative values favor model i; positive values favor model j.
+      * ci_halfwidth[i, j] is the half-width of the confidence interval for ΔAIC.
+      * equivalent[i, j] is True when |mean_delta| ≤ equivalence_margin and the
+        confidence interval includes zero, indicating practical equivalence.
+    """
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+
+    def subjectwise_aic(model: dict) -> np.ndarray:
+        """Return per-subject AIC values using the same fitness convention as AIC weights."""
+        fitness = np.asarray(model["fitness"], dtype=float)
+        subject_count = max(len(fitness), 1)
+        penalty = 2.0 * len(model.get("free", [])) / subject_count
+        return 2.0 * fitness + penalty
+
+    aic_values = [subjectwise_aic(model) for model in results]
+
+    mean_delta = np.full((num_models, num_models), np.nan, dtype=float)
+    ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
+    equivalent = np.zeros((num_models, num_models), dtype=bool)
+
+    for i in range(num_models):
+        for j in range(num_models):
+            if i == j:
+                continue
+
+            diff = aic_values[i] - aic_values[j]
+            valid = ~np.isnan(diff)
+            if np.count_nonzero(valid) <= 1:
+                continue
+
+            diff_valid = diff[valid]
+            mean_value = float(np.mean(diff_valid))
+            ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
+
+            mean_delta[i, j] = mean_value
+            ci_halfwidth[i, j] = ci
+
+            lower, upper = mean_value - ci, mean_value + ci
+            equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
+                lower <= 0.0 <= upper
+            )
+
+    df_mean = pd.DataFrame(mean_delta, index=model_names, columns=model_names)
+    df_ci = pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names)
+    df_equiv = pd.DataFrame(equivalent, index=model_names, columns=model_names)
+
+    return df_mean, df_ci, df_equiv
+
+
 def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
     """Returns matrix of fractions of penalized fitness in model i < model j.
 

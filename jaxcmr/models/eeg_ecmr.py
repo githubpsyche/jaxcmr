@@ -58,6 +58,7 @@ class CMR(Pytree):
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
+        
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
 

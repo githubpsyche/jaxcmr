@@ -1,5 +1,5 @@
-|                           |   SimpleTwoLayerEmotionOnly |   EEGTwoLayerMainEffects |   EEGTwoLayerInteraction |
-|:--------------------------|----------------------------:|-------------------------:|-------------------------:|
-| SimpleTwoLayerEmotionOnly |                             |                 0.184211 |                 0.131579 |
-| EEGTwoLayerMainEffects    |                    0.815789 |                          |                 0.473684 |
-| EEGTwoLayerInteraction    |                    0.868421 |                 0.526316 |                          |
+|                               |   EEGMainEffects |   EEGMainEffectsPlusInteraction |   EEGEmotionOnly |
+|:------------------------------|-----------------:|--------------------------------:|-----------------:|
+| EEGMainEffects                |                  |                        0.5      |         0.736842 |
+| EEGMainEffectsPlusInteraction |         0.5      |                                 |         0.736842 |
+| EEGEmotionOnly                |         0.263158 |                        0.263158 |                  |

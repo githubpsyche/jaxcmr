@@ -1,5 +1,5 @@
-|    | Model                     |        AICw |
-|---:|:--------------------------|------------:|
-|  2 | EEGTwoLayerInteraction    | 0.999933    |
-|  1 | EEGTwoLayerMainEffects    | 6.70569e-05 |
-|  0 | SimpleTwoLayerEmotionOnly | 3.16788e-23 |
+|    | Model                         |        AICw |
+|---:|:------------------------------|------------:|
+|  1 | EEGMainEffectsPlusInteraction | 0.842946    |
+|  0 | EEGMainEffects                | 0.157054    |
+|  2 | EEGEmotionOnly                | 2.66989e-24 |
