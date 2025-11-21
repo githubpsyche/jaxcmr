@@ -47,6 +47,7 @@ def plot_cat_lpp_by_recall(
     category_field: str,
     category_value: int | Sequence[int],
     lpp_field: str = "LateLPP",
+    exclude_ci=False,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -60,6 +61,7 @@ def plot_cat_lpp_by_recall(
         category_field: Keys providing item categories per study position.
         category_value: Category value to compute the LPPs over.
         lpp_field: Key in ``dataset`` providing LPP values per study position.
+        exclude_ci: If ``True``, confidence intervals will not be plotted.
         color_cycle: Colors for plotting each dataset.
         labels: Labels per dataset or category. Assumed per-category if multiple values provided.
         contrast_name: Legend title for contrasts.
@@ -84,6 +86,8 @@ def plot_cat_lpp_by_recall(
 
         # Expand category labels by recall outcome
         data = _data.copy()
+        if exclude_ci:
+            data["subject"] = (data['subject'] * 0) + 1
         data[category_field] = expand_categories_by_recall(
             data, category_field
         )
