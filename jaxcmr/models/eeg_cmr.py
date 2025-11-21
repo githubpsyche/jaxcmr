@@ -38,6 +38,10 @@ from jaxcmr.typing import (
 )
 
 
+def _apply_exponent(x, exponent: Float_):
+    "sign-preserving power; behaves like x when exponent == 1"
+    return jnp.sign(x) * jnp.abs(x) ** exponent
+
 class CMR(Pytree):
     """CMR model where emotion and EEG modulate core encoding strength.
 
@@ -86,12 +90,14 @@ class CMR(Pytree):
         # LPP transforms supporting both main effects and interaction terms.
         lpp_main_scale = parameters["lpp_main_scale"]
         lpp_main_threshold = parameters["lpp_main_threshold"]
-        self.lpp_main = lpp_main_scale * (lpp_centered - lpp_main_threshold)
+        lpp_main_raw = lpp_main_scale * (lpp_centered - lpp_main_threshold)
+        self.lpp_main = _apply_exponent(lpp_main_raw, parameters.get("lpp_main_exponent", 1.0))
 
         lpp_inter_scale = parameters["lpp_inter_scale"]
         lpp_inter_threshold = parameters["lpp_inter_threshold"]
-        self.lpp_interaction = (
-            lpp_inter_scale * (lpp_centered - lpp_inter_threshold) * self.is_emotional
+        lpp_inter_raw = lpp_inter_scale * (lpp_centered - lpp_inter_threshold) * is_emotional
+        self.lpp_interaction = _apply_exponent(
+            lpp_inter_raw, parameters.get("lpp_inter_exponent", 1.0)
         )
 
         # Combined encoding modulation signal; can represent pure main effects
