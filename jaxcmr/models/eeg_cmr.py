@@ -272,17 +272,8 @@ def make_factory(
             # 0 for neutral study events, 1 for emotional study events
             self.trial_emotions = (2 - dataset["condition"]).astype(bool)
             lpp_raw = jnp.array(dataset["EarlyLPP"], dtype=jnp.float32)
-            valid_lpp = jnp.where(self.trial_emotions, lpp_raw, 0.0)
-            emotional_count = jnp.maximum(
-                jnp.sum(self.trial_emotions, axis=1, keepdims=True),
-                1.0,
-            )
-            emotional_mean = jnp.sum(valid_lpp, axis=1, keepdims=True) / emotional_count
-            centered_lpp = jnp.where(
-                self.trial_emotions, valid_lpp - emotional_mean, 0.0
-            )
-
-            self.lpp_centered = centered_lpp
+            trial_mean = jnp.mean(lpp_raw, axis=1, keepdims=True)
+            self.lpp_centered = lpp_raw - trial_mean
 
             def model_create_fn(
                 list_length: int,
