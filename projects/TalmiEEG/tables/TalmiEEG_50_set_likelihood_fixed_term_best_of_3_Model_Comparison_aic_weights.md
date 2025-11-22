@@ -1,7 +1,7 @@
-|    | Model                                |        AICw |
-|---:|:-------------------------------------|------------:|
-|  1 | EEGMainEffectsPlusInteraction        | 1           |
-|  2 | EEGSimplerMainEffectsPlusInteraction | 2.94117e-08 |
-|  0 | EEGMainEffects                       | 5.41005e-10 |
-|  4 | EEGLPPOnly                           | 1.45159e-33 |
-|  3 | EEGEmotionOnly                       | 6.4399e-56  |
+|    | Model                         |        AICw |
+|---:|:------------------------------|------------:|
+|  1 | EEGMainEffectsPlusInteraction | 0.999999    |
+|  4 | EEGLPPNonlinearInteraction            | 6.74173e-07 |
+|  0 | EEGMainEffects                | 5.41004e-10 |
+|  3 | EEGLPPOnly                    | 1.45159e-33 |
+|  2 | EEGEmotionOnly                | 6.43989e-56 |

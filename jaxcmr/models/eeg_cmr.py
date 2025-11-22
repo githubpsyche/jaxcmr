@@ -21,6 +21,7 @@ from jaxcmr.math import (
     exponential_primacy_decay,
     lb,
     power_scale,
+    power_scale_absolute,
 )
 from jaxcmr.typing import (
     Array,
@@ -40,7 +41,7 @@ from jaxcmr.typing import (
 
 def _apply_exponent(x, exponent: Float_):
     "sign-preserving power; behaves like x when exponent == 1"
-    return jnp.sign(x) * power_scale(jnp.abs(x), exponent)
+    return jnp.sign(x) * power_scale_absolute(jnp.abs(x), exponent)
 
 class CMR(Pytree):
     """CMR model where emotion and EEG modulate core encoding strength.
