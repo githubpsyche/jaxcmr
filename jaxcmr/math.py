@@ -7,7 +7,7 @@ lb = jnp.finfo(jnp.float32).eps
 
 
 def power_scale(value: Float_, scale: Float_) -> Float:
-    """Returns value scaled by the exponent factor using logsumexp trick."""
+    """Returns a log-stabilized power that preserves ordering, not magnitude."""
     log_activation = jnp.log(value)
     return lax.cond(
         jnp.logical_and(jnp.any(value != 0), scale != 1),
@@ -16,9 +16,18 @@ def power_scale(value: Float_, scale: Float_) -> Float:
         None,
     )
 
+def power_scale_absolute(x, exponent, eps=lb):
+    """Returns a magnitude-preserving, log-stable power transform."""
+    logx = jnp.log(x + eps)
+    # subtract max to stay stable
+    logx_centered = logx - jnp.max(logx)
+    # re-add the max so magnitude is preserved
+    scaled = exponent * logx_centered + jnp.max(logx)
+    return jnp.exp(scaled)
+
 
 def simple_power_scale(value: Float_, scale: Float_) -> Float:
-    """Returns value raised to the specified power without logsumexp trick."""
+    """Returns value raised to the specified power without stabilization."""
     return value**scale
 
 
