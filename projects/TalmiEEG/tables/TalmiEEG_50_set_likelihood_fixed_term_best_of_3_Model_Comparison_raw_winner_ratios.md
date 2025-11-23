@@ -1,7 +1,7 @@
-|                               |   EEGMainEffects |   EEGMainEffectsPlusInteraction |   EEGEmotionOnly |   EEGLPPOnly |   EEGLPPNonlinearInteraction |
-|:------------------------------|-----------------:|--------------------------------:|-----------------:|-------------:|---------------------:|
-| EEGMainEffects                |                  |                        0.263158 |         0.736842 |     0.815789 |             0.368421 |
-| EEGMainEffectsPlusInteraction |         0.736842 |                                 |         0.842105 |     0.868421 |             0.605263 |
-| EEGEmotionOnly                |         0.263158 |                        0.157895 |                  |     0.447368 |             0.105263 |
-| EEGLPPOnly                    |         0.184211 |                        0.131579 |         0.552632 |              |             0.184211 |
-| EEGLPPNonlinearInteraction            |         0.631579 |                        0.394737 |         0.894737 |     0.815789 |                      |
+|                                      |   EEGMainEffects |   EEGMainEffectsPlusInteraction |   EEGLPPExponentOnly |   EEGLPPNonlinearInteraction |   EEGEmotionLPPExponentPlusInteraction |
+|:-------------------------------------|-----------------:|--------------------------------:|---------------------:|-----------------------------:|---------------------------------------:|
+| EEGMainEffects                       |                  |                        0.263158 |             0.842105 |                    0.368421  |                               0.342105 |
+| EEGMainEffectsPlusInteraction        |         0.736842 |                                 |             0.894737 |                    0.605263  |                               0.394737 |
+| EEGLPPExponentOnly                   |         0.157895 |                        0.105263 |                      |                    0.0789474 |                               0.105263 |
+| EEGLPPNonlinearInteraction           |         0.631579 |                        0.394737 |             0.921053 |                              |                               0.342105 |
+| EEGEmotionLPPExponentPlusInteraction |         0.657895 |                        0.605263 |             0.894737 |                    0.657895  |                                        |
