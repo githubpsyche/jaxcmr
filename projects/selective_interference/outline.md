@@ -9,9 +9,9 @@ This document outlines a proposed Psych Review–style theoretical paper and acc
 
 We would advance three main claims:
 
-1. **Single-System Sufficiency**. A single, context-binding episodic memory system (as implemented in CMR3) is sufficient to reproduce the key selective interference pattern: intrusions decrease after certain post-film tasks, while recognition and intentional free recall are relatively spared. This does not require separate "intrusive" and "voluntary" memory traces or a dedicated visuospatial consolidation mechanism.
-2. **Retrieval-mode + control as key determinants**. The critical dissociations arise from how retrieval is driven and controlled. Intrusions are largely unguided context→item retrievals as everyday context drifts near trauma-related states. When post-film items are bound into that region, they compete with trauma-film items and make intrusions less likely. Recognition and similar probe-based tasks are largely item→context. The probe retrieves its own associated context, so additional post-film competitors do not get a chance to "win" against the probe in the same way. Intentional/guided free recall is also context→item but benefits from control mechanisms (starting-context steering and output gating) that can shield voluntary recall from competition effects that reduce intrusions.
-3. **Re-interpretation of Tetris/visuospatial interventions**. Tetris and related tasks can be interpreted as interventions that generate dense competitor episodes that a) are bound into contexts near the trauma film,  b) suppress rehearsal of trauma items during the interval, and c) may share arousal/engagement properties with the film's most salient moments. This reframes the role of visuospatial properties: they matter insofar as they drive segmentation and engagement and help populate the relevant context region, not because they uniquely disrupt sensory trace consolidation.
+1. Single-System Sufficiency. A single, context-binding episodic memory system (as implemented in CMR3) is sufficient to reproduce the key selective interference pattern: intrusions decrease after certain post-film tasks, while recognition and intentional free recall are relatively spared. This does not require separate "intrusive" and "voluntary" memory traces or a dedicated visuospatial consolidation mechanism.
+2. Retrieval-mode + control as key determinants. The critical dissociations arise from how retrieval is driven and controlled. Intrusions are largely unguided context→item retrievals as everyday context drifts near trauma-related states. When post-film items are bound into that region, they compete with trauma-film items and make intrusions less likely. Recognition and similar probe-based tasks are largely item→context. The probe retrieves its own associated context, so additional post-film competitors do not get a chance to "win" against the probe in the same way. Intentional/guided free recall is also context→item but benefits from control mechanisms (starting-context steering and output gating) that can shield voluntary recall from competition effects that reduce intrusions.
+3. Re-interpretation of Tetris/visuospatial interventions. Tetris and related tasks can be interpreted as interventions that generate dense competitor episodes that a) are bound into contexts near the trauma film,  b) suppress rehearsal of trauma items during the interval, and c) may share arousal/engagement properties with the film's most salient moments. This reframes the role of visuospatial properties: they matter insofar as they drive segmentation and engagement and help populate the relevant context region, not because they uniquely disrupt sensory trace consolidation.
 
 The remainder of the document expands these claims into a section-by-section manuscript plan and a concrete CMR3 simulation program.
 
@@ -144,89 +144,102 @@ Possible shortcomings:
 
 ## The retrieved-context / CMR3 framework
 
-Goal: provide a more detailed presentation of the CMR3 model (including specification details) and how it can be applied to the selective interference phenomenon.
+Goal: introduce the single-system framework we will use, at a conceptual level, and prepare the ground for both the mapping to the trauma-film paradigm and the later formal model specification.
 
-### Overview and Basic Architecture
+### Core architecture (conceptual)
 
-Briefly introduce the retrieved-context family (CMR / eCMR / CMR3) as models in which:
+We will briefly situate CMR3 within the retrieved-context family (CMR / eCMR / CMR3). The key ingredients are:
 
-- Slowly drifting context vectors with temporal, semantic, and emotional components.
-- Encoding of context→item and item→context associations.
-- Retrieval dynamics: context→item competition; recalled items retrieving associated context and updating the current state.
+- A slowly drifting context state that integrates temporal, semantic, and emotional features over time.
+- Item–context bindings learned in two directions: context→item (context cues items) and item→context (items can retrieve their associated context).
+- Retrieval as competition under a context cue, with recalled items feeding back to update context.
 
-Emphasise that CMR3 extends earlier CMR/eCMR models by treating valence and arousal as context dimensions and by strengthening high-arousal encoding.
+We will emphasise that CMR3 specifically extends earlier models by treating valence and arousal as explicit context dimensions and by allowing high-arousal items to be encoded more strongly and to pull context into similar "emotional regions."
 
-Possible Figure 2: Schematic of context state, item vectors, and bidirectional associations, with emotional features highlighted.
+A schematic figure here (context vector, item vectors, bidirectional links, emotional subspace highlighted) should be enough; the full equations and parameter table will be deferred to a Box/Appx.
 
-### Retrieval modes: context→item vs item→context
+### Retrieval modes: context→item and item→context
 
-Define two generic retrieval modes in the model:
+We then define the two ways the model can be "read out":
 
-- Context→item: given a context cue, items compete based on their learned context→item strengths.
-- Item→context: given a probe item, its associated context is retrieved via item→context links and compared to a target context (or used to drive decisions).
+- In context→item mode, a context cue activates items according to their context→item strengths and they compete for retrieval.
+- In item→context mode, a probe item retrieves its associated context via item→context links, and that retrieved context is compared to a target context or used to drive a decision.
 
-Map these abstract modes to classes of tasks:
+At this point we map these modes to broad task classes:
 
 - Unguided intrusions and free recall are primarily context→item.
-- Recognition and similar probe-based judgements rely heavily on item→context, using the probe as the entry point.
+- Recognition and similar probe-based judgements rely mainly on item→context.
 
-Make clear that these are not separate systems; they are different ways of using the same associative structure.
+We stress that these are not separate systems; they are different uses of a single associative architecture. This section is where we unpack the "retrieval-mode" part of Claim 2 once and for all.
 
-### Control over retrieval: starting context and output evaluation
+### Retrieval control: starting context and output evaluation
 
-Interprets intrusions in VIT and diary paradigms as context→item retrievals driven by drifting context rather than top-down control. Intrusions occur when the naturally drifting context enters regions strongly associated with trauma-film items and those items cross threshold. 
+Next we introduce the two control "levers" the model allows, without repeating all trauma-film specifics:
 
-Distinguishes unguided context→item retrieval from voluntary free recall. Free recall is also context→item but includes:
+- Starting-context bias: retrieval can be initialised from a context state biased toward a particular episode or time period (e.g., the film session vs a later lab session).
+- Output evaluation / gating: when an item wins the competition, its retrieved context can be compared to the current goal; items with poor match can be censored or have their context only weakly integrated, limiting drift away from the target context.
 
-- **Starting-context bias**. the initial context at retrieval can be seeded toward start-of-film states via instructions/cues, increasing the likelihood of retrieving film items.
-- **Output evaluation / gating**. retrieved items can be evaluated against current goals (e.g., how well their retrieved context matches a target) and either accepted or rejected; rejected items have weaker impact on the evolving context.
+We link these in abstract terms to different kinds of behaviour:
 
-Unguided intrusions correspond to minimal use of these control levers (spontaneous context drift, little gating). Intentional free recall corresponds to stronger starting-context control and stronger gating. Recognition uses item→context plus a decision rule, with relatively little reliance on context-driven competition among many items.
+- Unguided intrusions: minimal control; context drifts with ongoing experience, little or no gating.
+- Intentional free recall: strong starting-context bias toward the film and strong gating against off-target items.
+- Recognition: primarily item→context plus a decision rule; less dependence on context-driven competition among many items.
 
-We will later instantiate these ideas in specific parameter choices (e.g., strength of starting-context bias; thresholds for gating), but the conceptual distinction belongs here.
+We will later instantiate these control settings in the simulations (e.g., high vs low control parameters) rather than here. This subsection completes the "control" part of Claim 2.
 
 ### Emotional context and intrusive memory
 
-Explain how CMR3’s emotional context dimensions are relevant:
+Finally in this section we note how CMR3’s emotional context features are relevant for intrusive memories:
 
-- High-arousal events (e.g., trauma-film hotspots) are encoded more strongly and pull context into characteristic regions of "emotional space."
-- Because context includes emotional features, later states that share arousal/valence components will preferentially cue those trauma items.
+- High-arousal negative items (e.g., trauma-film hotspots) are encoded more strongly and cluster in a characteristic region of context space.
+- Later states that share these emotional/contextual features are more likely to cue those items in context→item retrieval, providing a natural route to intrusions.
 
-On this view, intrusions are simply context→item retrievals when everyday context wanders into these trauma-associated regions. Post-film tasks can create competitor items in this same region if they are encoded in overlapping contexts (temporal, situational, and possibly emotional).
+On this view, intrusions are not a separate system: they are context→item retrievals when everyday context wanders into trauma-associated regions. Post-film tasks can create competitor items in these regions if they are encoded under overlapping temporal/situational (and possibly emotional) contexts.
+
+We end the section by signalling that:
+
+- Box/Appx 1 will provide the full mathematical specification of CMR3 as used here (state vectors, learning rules, parameters), including any deviations from published implementations.
+- The next section will apply this conceptual framework to the trauma-film/Tetris paradigm.
 
 ## Mapping the trauma-film/Tetris paradigm into CMR3
 
+Goal: specify how we represent the trauma-film experiments within CMR3 (items, contexts, tasks) and derive a verbal version of the selective interference account before turning to simulations.
+
 ### Representational mapping
 
-Trauma film. Modelled as a sequence of high-arousal negative items; strong context–item bindings; progression through a specific temporal/emotional context trajectory.
+We first map components of the paradigm onto model constructs:
 
-Post-film tasks:
+- Trauma film: modelled as a sequence of high-arousal negative items, encoded with strong item–context bindings as context drifts through a characteristic temporal/emotional trajectory.
+- Post-film tasks:
 
-- Tetris (or similar fast-paced, segmented task) modelled as a sequence of neutral items encoded in contexts adjacent in time (and, depending on assumptions, partially overlapping in arousal/engagement) to the film context.
-- Verbal or low-engagement controls represented as far fewer or weaker items; more opportunity for trauma rehearsal during that interval.
+  - Tetris-like condition: many neutral items, high engagement/segmentation, encoded in contexts adjacent in time (and, depending on assumptions, overlapping in arousal/engagement) with late-film contexts.
+  - Control conditions: fewer/weaker items and more opportunity for spontaneous trauma-film rehearsal during the same interval.
+- Intrusion measures:
 
-Intrusion measures:
+  - Lab tasks (e.g., vigilance–intrusion tasks, cue-provocation tasks): context constrained by instructions and occasional trauma/foil cues.
+  - Diary measures: context follows more variable, naturalistic trajectories.
 
-- Lab: contexts constrained by task instructions (e.g., vigilance-intrusion tasks with trauma vs foil cues).
-- Diary: more variable naturalistic context trajectories.
+This is purely a mapping step; we do not yet discuss competition or interference here.
 
 ### The context-binding account of selective interference
 
-Post-film items, encoded in context states adjacent to trauma-film states, become additional possible responses to any context cue in that neighbourhood.
+We then state the core mechanism compactly:
 
-As the system revisits that region (in everyday life or in lab tasks), trauma-film items must now compete with a larger set of strong competitors.
+- Post-film items are bound in context states adjacent to trauma-film states, so they become additional candidates whenever the system revisits that region in context→item mode.
+- As those contexts are later revisited, trauma-film items must compete with a denser set of strongly encoded post-film competitors; they therefore win less often, reducing intrusion probability.
+- The underlying item representations and their associations remain intact; when a film item is used as a probe (recognition) or when retrieval is strongly steered toward the film (intentional free recall with control), trauma items can still be accessed.
 
-As a result, the probability that a trauma item crosses threshold for context-driven retrieval (an intrusion) is reduced.
-
-However, the item representations and their associations are intact, so item-cued recognition and well-controlled free recall can still access trauma items when specifically probed.
+This subsection is where we cash out Claim 1 ("single-system sufficiency") in verbal CMR3 terms.
 
 ### Why post-film task properties matter
 
-Competitor density and strength. High event segmentation and engagement (e.g., many Tetris moves/rounds) lead to many strongly encoded post-film items; more competition.
+We close the mapping section by unpacking which properties of the post-film interval matter, in a way that directly foreshadows the simulations:
 
-Rehearsal suppression. Engaging tasks reduce spontaneous reactivation of the trauma film during the intervention window.
+- Competitor density and strength: tasks that generate many, strongly encoded episodes in the relevant context region (high segmentation and engagement) produce more competition.
+- Rehearsal suppression: strongly engaging tasks reduce spontaneous trauma-film reactivation during the post-film interval, preventing further strengthening of trauma–context bindings.
+- Context overlap: reminder cues and shared situational/emotional features can ensure that post-film items are indeed encoded into the trauma-adjacent context region, which modulates the size and selectivity of the interference effect.
 
-Emotional/context overlap. If we assume that a reminder reinstates a high-arousal trauma context into which Tetris items are then bound, this increases emotional-context overlap; alternatively, we can treat temporal/situational overlap as the primary driver and arousal as a modulator.
+This sets up the logical link to the simulation programme, which will instantiate these properties as manipulable parameters (event count/strength, rehearsal vs no rehearsal, degree of context overlap).
 
 
 ## Simulations
