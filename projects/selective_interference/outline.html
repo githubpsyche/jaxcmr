@@ -34,6 +34,35 @@ ul.task-list li input[type="checkbox"] {
 <link href="outline_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="outline_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -57,14 +86,17 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 <p>We would advance three main claims:</p>
 <ol type="1">
-<li><p><strong>Single-system sufficiency.</strong> A single, context-binding episodic memory system (as implemented in CMR3) is sufficient to reproduce the selective interference effect: intrusions decrease after certain post-film tasks, while recognition and intentional free recall are relatively spared. This does not require separate “intrusive” and “voluntary” memory traces or a dedicated visuospatial consolidation mechanism.</p></li>
-<li><p><strong>Retrieval mode and control as key determinants.</strong> The critical dissociations arise from how retrieval is driven and controlled. Unguided intrusions are primarily context→item retrievals as everyday context drifts near trauma-related states. Intentional free recall is also context→item but starts from a deliberately biased context and uses output gating. Recognition and similar probe-based tasks rely heavily on item→context retrieval and probe-based decision rules. Differences in retrieval mode (context→item vs item→context) and in the strength of control (starting-context bias and gating) explain why some tasks are more susceptible to post-film competition than others.</p></li>
-<li><p><strong>Reinterpretation of Tetris/visuospatial interventions.</strong> Tetris and related tasks can be interpreted as interventions that generate dense competitor episodes that (a) are bound into contexts near the trauma film, (b) suppress rehearsal of trauma items during the interval, and (c) may share arousal/engagement properties with the film’s most salient moments. This reframes the role of visuospatial properties: they matter insofar as they drive segmentation, engagement, and context overlap, not because they uniquely disrupt sensory trace consolidation.</p></li>
+<li><p><strong>Single-system sufficiency.</strong><br>
+A single, context-binding episodic memory system (as implemented in CMR3) is sufficient to reproduce the selective interference effect: intrusions decrease after certain post-film tasks, while recognition and intentional free recall are relatively spared. This does not require separate “intrusive” and “voluntary” memory traces or a dedicated visuospatial consolidation mechanism.</p></li>
+<li><p><strong>Retrieval mode and control as key determinants.</strong><br>
+The critical dissociations arise from how retrieval is driven and controlled. Unguided intrusions are primarily context→item retrievals as everyday context drifts near trauma-related states. Intentional free recall is also context→item but starts from a deliberately biased context and uses output gating. Recognition and similar probe-based tasks rely heavily on item→context retrieval and probe-based decision rules. Differences in retrieval mode (context→item vs item→context) and in the strength of control (starting-context bias and gating) explain why some tasks are more susceptible to post-film competition than others.</p></li>
+<li><p><strong>Reinterpretation of Tetris/visuospatial interventions.</strong><br>
+Tetris and related tasks can be interpreted as interventions that generate dense competitor episodes that (a) are bound into contexts near the trauma film, (b) suppress rehearsal of trauma items during the interval, and (c) may share arousal/engagement properties with the film’s most salient moments. This reframes the role of visuospatial properties: they matter insofar as they drive segmentation, engagement, and context overlap, not because they uniquely disrupt sensory trace consolidation.</p></li>
 </ol>
 <p>The remainder of the document expands these claims into a section-by-section manuscript plan and a concrete CMR3 simulation program.</p>
 <section id="introduction-the-selective-interference-puzzle" class="level2">
 <h2 class="anchored" data-anchor-id="introduction-the-selective-interference-puzzle">Introduction: The selective interference puzzle</h2>
-<p><strong>Goal:</strong> Define the empirical target and the theoretical puzzle succinctly.</p>
+<p>Goal: define the empirical target and the theoretical puzzle succinctly.</p>
 <ul>
 <li>Introduce the trauma-film + Tetris paradigm and the canonical finding: reminder + visuospatial task reduces intrusive memories but leaves voluntary memory largely intact (e.g., Holmes et al., Lau‑Zhu et al., James et al., Iyadurai et al., Kessler et al.).</li>
 <li>Define “selective interference” precisely:
@@ -86,13 +118,13 @@ ul.task-list li input[type="checkbox"] {
 </ul></li>
 <li>State the aim. We will derive the selective interference pattern from a single-system retrieved-context model (CMR3) and contrast its predictions with dominant alternatives.</li>
 </ul>
-<p><strong>Possible Figure 1:</strong> Schematic of the phenomenon (intrusions vs voluntary memory; Tetris vs control).</p>
+<p>Possible Figure 1: schematic of the phenomenon (intrusions vs voluntary memory; Tetris vs control).</p>
 </section>
 <section id="empirical-landscape" class="level2">
 <h2 class="anchored" data-anchor-id="empirical-landscape">Empirical landscape</h2>
-<p><strong>Goal:</strong> Compactly organise the main empirical constraints the model must accommodate.</p>
+<p>Goal: compactly organise the main empirical constraints the model must accommodate.</p>
 <section id="core-lab-studies" class="level3">
-<h3 class="anchored" data-anchor-id="core-lab-studies">Core lab studies:</h3>
+<h3 class="anchored" data-anchor-id="core-lab-studies">Core lab studies</h3>
 <ul>
 <li>Early Holmes et al.&nbsp;work showing Tetris (vs control) reduces subsequent intrusions while sparing voluntary free recall.</li>
 <li>Lau‑Zhu et al.&nbsp;(2019, 2021) showing intrusion reduction with spared recognition/free recall, including manipulations of cueing (trauma vs foil cues) and vigilance–intrusion tasks vs recognition tasks.</li>
@@ -124,59 +156,59 @@ ul.task-list li input[type="checkbox"] {
 <li>weaker or absent effects on long-term diary intrusions in others.</li>
 </ul></li>
 </ul>
-<p>We will use this to frame the empirical target as <strong>heterogeneous</strong>: the effect exists under some conditions, is weaker or fails under others. This motivates a mechanistic model that can explain when and why selective interference occurs instead of assuming a simple law.</p>
-<p><strong>Possible Table 1:</strong> Summary of a representative set of studies and key variables we will address (rows: study; columns: timing, task type, intrusion measure, voluntary measure, main effect).</p>
+<p>We will use this to frame the empirical target as heterogeneous: the effect exists under some conditions, is weaker or fails under others. This motivates a mechanistic model that can explain when and why selective interference occurs instead of assuming a simple law.</p>
+<p>Possible Table 1: summary of a representative set of studies and key variables we will address (rows: study; columns: timing, task type, intrusion measure, voluntary measure, main effect).</p>
 </section>
 </section>
 <section id="existing-theoretical-accounts" class="level2">
 <h2 class="anchored" data-anchor-id="existing-theoretical-accounts">Existing theoretical accounts</h2>
-<p><strong>Goal:</strong> Provide a fair but critical review of dominant accounts.</p>
+<p>Goal: provide a fair but critical review of dominant accounts.</p>
 <section id="visuospatial-working-memory-interference-consolidation-accounts" class="level3">
 <h3 class="anchored" data-anchor-id="visuospatial-working-memory-interference-consolidation-accounts">Visuospatial working-memory interference / consolidation accounts</h3>
-<p><strong>Representative paper:</strong><br>
-Holmes, E. A., James, E. L., Coode-Bate, T., &amp; Deeprose, C. (2009). <em>Can playing the computer game “Tetris” reduce the build-up of flashbacks for trauma?</em> PLoS ONE.</p>
-<p><strong>Core idea:</strong><br>
+<p>Representative paper:<br>
+Holmes, E. A., James, E. L., Coode-Bate, T., &amp; Deeprose, C. (2009). Can playing the computer game “Tetris” reduce the build-up of flashbacks for trauma? PLoS ONE.</p>
+<p>Core idea:<br>
 Post-film visuospatial tasks load visuospatial working memory during a critical window, disrupting consolidation of sensory-perceptual aspects of the trauma memory that support later intrusive imagery. More abstract/narrative aspects rely less on visuospatial resources, so voluntary recall and recognition are relatively spared.</p>
-<p><strong>Possible strengths:</strong></p>
+<p>Possible strengths:</p>
 <ul>
-<li>Provides a straightforward cognitive mechanism grounded in dual-task interference and WM resource theories.</li>
+<li>Straightforward cognitive mechanism grounded in dual-task interference and WM resource theories.</li>
 <li>Naturally explains why visuospatial tasks often outperform purely verbal tasks at reducing intrusive imagery.</li>
 </ul>
-<p><strong>Possible shortcomings:</strong></p>
+<p>Possible shortcomings:</p>
 <ul>
 <li>The route from transient WM load to long-term episodic consolidation is underspecified and not formalised in a retrieval model, limiting task-level predictions.</li>
-<li>It does not, by itself, explain spared recognition/free recall or heterogeneous findings (e.g., mixed diary effects, some non-visuospatial interventions) without additional assumptions.</li>
+<li>Does not, by itself, explain spared recognition/free recall or heterogeneous findings (e.g., mixed diary effects, some non-visuospatial interventions) without additional assumptions.</li>
 </ul>
 </section>
 <section id="dual-representation-separate-trace-theories" class="level3">
 <h3 class="anchored" data-anchor-id="dual-representation-separate-trace-theories">Dual-representation / separate trace theories</h3>
-<p><strong>Representative paper:</strong><br>
+<p>Representative paper:<br>
 Brewin, C. R., Gregory, J. D., Lipton, M., &amp; Burgess, N. (2010). Intrusive images in psychological disorders: Characteristics, neural mechanisms, and treatment implications. Psychological Review.</p>
-<p><strong>Core idea:</strong><br>
+<p>Core idea:<br>
 Trauma creates two partly separable representations: sensory-bound, poorly contextualised traces that drive flashback-type intrusions, and contextualised, verbally accessible traces that support narrative memory. Selective interference is attributed to interventions preferentially weakening the sensory-bound trace while leaving contextualised/narrative memory relatively intact.</p>
-<p><strong>Possible strengths:</strong></p>
+<p>Possible strengths:</p>
 <ul>
 <li>Fits clinical phenomenology of vivid, sensory intrusions coexisting with more coherent narratives, and offers a clear conceptual dissociation between intrusive and voluntary memory.</li>
-<li>Has been influential in framing imagery-focused treatments and motivating hypotheses about selective effects on “flashback” memory.</li>
+<li>Influential in framing imagery-focused treatments and hypotheses about selective effects on “flashback” memory.</li>
 </ul>
-<p><strong>Possible shortcomings:</strong></p>
+<p>Possible shortcomings:</p>
 <ul>
-<li>The two-trace architecture is rarely embedded in a detailed retrieval model; it is unclear how the traces interact during particular tasks (free recall, recognition, cue-driven intrusion tasks).</li>
-<li>Explanations can become post hoc: it is often unclear which phenomena are attributed to which trace and how an intervention like Tetris acts at the representational level.</li>
+<li>The two-trace architecture is rarely embedded in a detailed retrieval model; it is unclear how the traces interact during tasks such as free recall, recognition, and cue-driven intrusion paradigms.</li>
+<li>Explanations can become post hoc: often unclear which phenomena are attributed to which trace and how an intervention like Tetris acts at the representational level.</li>
 </ul>
 </section>
 <section id="reconsolidation-based-accounts" class="level3">
 <h3 class="anchored" data-anchor-id="reconsolidation-based-accounts">Reconsolidation-based accounts</h3>
-<p><strong>Representative paper:</strong><br>
-James, E. L., Bonsall, M. B., Hoppitt, L., Tunbridge, E. M., Geddes, J. R., Milton, A. L., &amp; Holmes, E. A. (2015). <em>Computer game play reduces intrusive memories of experimental trauma via reconsolidation-update mechanisms.</em> Psychological Science.</p>
-<p><strong>Core idea:</strong><br>
+<p>Representative paper:<br>
+James, E. L., Bonsall, M. B., Hoppitt, L., Tunbridge, E. M., Geddes, J. R., Milton, A. L., &amp; Holmes, E. A. (2015). Computer game play reduces intrusive memories of experimental trauma via reconsolidation-update mechanisms. Psychological Science.</p>
+<p>Core idea:<br>
 A reminder cue reactivates the trauma memory into a labile reconsolidation state; engaging in Tetris during this window introduces competing perceptual information that disrupts restabilisation of sensory elements that underpin intrusions. Contextual/narrative aspects are assumed to be less affected, preserving voluntary access.</p>
-<p><strong>Possible strengths:</strong></p>
+<p>Possible strengths:</p>
 <ul>
-<li>Ties behavioural effects to a broader neurobiological literature on reconsolidation and updating, providing a principled role for reminders and precise timing.</li>
+<li>Ties behavioural effects to a broader neurobiological literature on reconsolidation and updating, providing a principled role for reminders and timing.</li>
 <li>Offers a way to explain effects of delayed reminder+Tetris protocols that occur after initial consolidation.</li>
 </ul>
-<p><strong>Possible shortcomings:</strong></p>
+<p>Possible shortcomings:</p>
 <ul>
 <li>Evidence that these human paradigms genuinely tap reconsolidation (rather than standard re-encoding in a new context) is indirect, and the computational story remains largely verbal.</li>
 <li>Reconsolidation windows and boundary conditions are debated, and several patterns (including mixed replication success) can plausibly be captured by simpler context-binding and competition mechanisms.</li>
@@ -184,29 +216,28 @@ A reminder cue reactivates the trauma memory into a labile reconsolidation state
 </section>
 <section id="retrieved-context-theory-cmr3-as-a-single-system-alternative" class="level3">
 <h3 class="anchored" data-anchor-id="retrieved-context-theory-cmr3-as-a-single-system-alternative">Retrieved-context theory / CMR3 as a single-system alternative</h3>
-<p><strong>Representative paper:</strong><br>
-Cohen, R. T., &amp; Kahana, M. J. (2022). A memory-based theory of emotional disorders.Psychological Review.</p>
-<p><strong>Core idea:</strong><br>
+<p>Representative paper:<br>
+Cohen, R. T., &amp; Kahana, M. J. (2022). A memory-based theory of emotional disorders. Psychological Review.</p>
+<p>Core idea:<br>
 Episodic memory is supported by a single system in which items are bound to a drifting context that includes temporal, semantic, and emotional features. Intrusions occur when current context overlaps with trauma-related states and trauma items win a context→item competition. Voluntary recall and recognition depend on how context is seeded and controlled (for free recall) or on item→context retrieval (for recognition); post-film tasks like Tetris add competitor episodes in nearby contexts.</p>
-<p><strong>Possible strengths:</strong></p>
+<p>Possible strengths:</p>
 <ul>
-<li>Provides a fully specified computational model that already accounts for wide-ranging memory phenomena and incorporates valence/arousal, allowing explicit simulations rather than purely verbal theorising.</li>
-<li>Explains intrusive vs voluntary dissociations via retrieval mode and control within a single system, without needing separate traces or a dedicated visuospatial module.</li>
+<li>Fully specified computational model that already accounts for wide-ranging memory phenomena and incorporates valence/arousal, allowing explicit simulations rather than purely verbal theorising.</li>
+<li>Explains intrusive vs voluntary dissociations via retrieval mode and control within a single system, without separate traces or a dedicated visuospatial module.</li>
 </ul>
-<p><strong>Possible shortcomings:</strong></p>
+<p>Possible shortcomings:</p>
 <ul>
-<li>The model is abstract and parameter-rich; without clear constraints there is a risk of flexibility, and mapping to neural implementation is non-trivial.</li>
+<li>Abstract and parameter-rich; without clear constraints there is a risk of flexibility, and mapping to neural implementation is non-trivial.</li>
 <li>CMR3 has not yet been applied directly to unintentional recall or trauma-film/Tetris paradigms; this project would be the first serious test of whether its mechanisms can capture the involuntary/voluntary distinction, selective interference findings, and their boundary conditions.</li>
 </ul>
-<p><strong>Transition sentence:</strong><br>
-We next outline the CMR3 framework at a conceptual level, focusing on the aspects most relevant to selective interference (context-binding, retrieval modes, and control), before mapping the trauma-film/Tetris paradigm into this framework and presenting simulations.</p>
+<p>Transition: we next outline the CMR3 framework at a conceptual and formal level, focusing on the aspects most relevant to selective interference (context-binding, retrieval modes, and control), before mapping the trauma-film/Tetris paradigm into this framework and presenting simulations.</p>
 </section>
 </section>
 <section id="the-retrieved-context-cmr3-framework" class="level2">
 <h2 class="anchored" data-anchor-id="the-retrieved-context-cmr3-framework">The retrieved-context / CMR3 framework</h2>
-<p><strong>Goal:</strong> Introduce the single-system framework we will use at a conceptual level and make explicit how it instantiates the ingredients in Claims 1–2. Detailed equations and parameterisation will be deferred to a Box/Appendix.</p>
-<section id="overview-and-link-to-the-main-claims" class="level3">
-<h3 class="anchored" data-anchor-id="overview-and-link-to-the-main-claims">Overview and link to the main claims</h3>
+<p>Goal: introduce the single-system framework we will use, first conceptually and then in formal detail, and make explicit how it instantiates the ingredients in Claims 1–2.</p>
+<section id="conceptual-overview-and-link-to-the-main-claims" class="level3">
+<h3 class="anchored" data-anchor-id="conceptual-overview-and-link-to-the-main-claims">Conceptual overview and link to the main claims</h3>
 <ul>
 <li>Retrieved-context models (CMR, eCMR, CMR3) treat episodic memory as a system in which:
 <ul>
@@ -214,368 +245,581 @@ We next outline the CMR3 framework at a conceptual level, focusing on the aspect
 <li>Context includes temporal, semantic, and emotional (valence, arousal) features.</li>
 <li>Retrieval is governed by learned context–item and item–context associations.</li>
 </ul></li>
-<li>This single architecture will underlie all intrusive and voluntary phenomena we model, directly instantiating <strong>Claim 1</strong> (single-system sufficiency).</li>
+<li>This single architecture will underlie all intrusive and voluntary phenomena we model, directly instantiating Claim 1 (single-system sufficiency).</li>
 </ul>
 </section>
-<section id="architecture-and-emotional-context-conceptual" class="level3">
-<h3 class="anchored" data-anchor-id="architecture-and-emotional-context-conceptual">Architecture and emotional context (conceptual)</h3>
-<p>We will describe the core ingredients informally:</p>
+<section id="formal-model-specification-state-representations-and-encoding" class="level3">
+<h3 class="anchored" data-anchor-id="formal-model-specification-state-representations-and-encoding">Formal model specification: state representations and encoding</h3>
+<p>Plan: present the core CMR3 machinery in the main text, but focus on the pieces that matter for selective interference.</p>
 <ul>
-<li><strong>Context state:</strong> a vector that drifts over time, integrating recent experience and emotional features.</li>
-<li><strong>Item representations:</strong> feature vectors (including emotional features) that are associated with the context at encoding.</li>
-<li><strong>Associative matrices:</strong> context→item and item→context links learned during encoding.</li>
-</ul>
-<p>CMR3 extends earlier models by:</p>
+<li>Define notation:
 <ul>
-<li>Treating <strong>valence</strong> and <strong>arousal</strong> as explicit components of context and item features.</li>
-<li>Encoding high-arousal items with stronger context–item links and allowing them to pull context into similar emotional regions.</li>
-</ul>
-<p>A schematic figure here (context vector, item vectors, bidirectional links, emotional subspace highlighted) should suffice. The full equations and parameter table will be deferred to Box/Appendix 1.</p>
-<p>This subsection anchors the idea that “trauma context” and “post-film context” correspond to particular regions in a shared context space.</p>
-</section>
-<section id="retrieval-modes-contextitem-and-itemcontext" class="level3">
-<h3 class="anchored" data-anchor-id="retrieval-modes-contextitem-and-itemcontext">Retrieval modes: context→item and item→context</h3>
-<p>We then define two ways the model can be “read out”:</p>
+<li>Item feature vectors (e.g., <span class="math inline">\(f\)</span>): include semantic, source, and emotional features.</li>
+<li>Context vectors (e.g., <span class="math inline">\(c\)</span>): high-dimensional vectors that drift over time.</li>
+<li>Associative matrices:
 <ul>
-<li><p><strong>Context→item mode:</strong><br>
-A context cue activates items via context→item links; multiple items receive activation and compete for retrieval. This is the default mode for free recall and spontaneous intrusions.</p></li>
-<li><p><strong>Item→context mode:</strong><br>
-A probe item retrieves its associated context via item→context links. The retrieved context is then compared to a target context or used to drive a decision (e.g., in recognition).</p></li>
-</ul>
-<p>We map these modes to task classes at a coarse level:</p>
-<ul>
-<li>Unguided intrusions and free recall are primarily context→item.</li>
-<li>Recognition and similar probe-based judgements are primarily item→context.</li>
-</ul>
-<p>We stress that these are not separate systems; they are different uses of a single associative architecture. This operationalises the retrieval-mode component of Claim 2. Later sections will refer back to “context→item” and “item→context” retrieval as defined here, rather than reintroducing these concepts.</p>
-</section>
-<section id="retrieval-control-starting-context-and-output-gating" class="level3">
-<h3 class="anchored" data-anchor-id="retrieval-control-starting-context-and-output-gating">Retrieval control: starting context and output gating</h3>
-<p>We introduce the model’s two main control levers:</p>
-<ol type="1">
-<li><strong>Starting-context bias</strong>
-<ul>
-<li>Retrieval can be initialised from a context state biased toward particular episodes or time periods (e.g., the film session vs a later lab context).<br>
-</li>
-<li>This implements the notion of steering mental context at the start of intentional recall.</li>
+<li><span class="math inline">\(M_{CF}\)</span> (context→item or context→features).</li>
+<li><span class="math inline">\(M_{FC}\)</span> (item→context).</li>
 </ul></li>
-<li><strong>Output evaluation / gating</strong>
-<ul>
-<li>When an item wins the context→item competition, its retrieved context can be compared to the current goal.<br>
-</li>
-<li>Items with poor match can be rejected and have their context integrated only weakly, limiting drift away from the target context.</li>
 </ul></li>
-</ol>
-<p>We link these to behaviour:</p>
+<li>Encoding dynamics:
 <ul>
-<li><strong>Unguided intrusions:</strong> minimal starting-context control; little or no output gating.</li>
-<li><strong>Intentional free recall:</strong> strong starting-context bias toward the film session; strong gating against off-target items.</li>
-<li><strong>Recognition:</strong> primarily item→context plus a decision rule; relatively little reliance on context-driven competition among many items.</li>
-</ul>
-<p>This operationalises the control component of Claim 2. Simulation 3 will manipulate these control parameters (high vs low control) rather than introducing new mechanisms.</p>
-</section>
-<section id="where-the-full-model-specification-lives" class="level3">
-<h3 class="anchored" data-anchor-id="where-the-full-model-specification-lives">Where the full model specification lives</h3>
-<p>To keep the main text accessible while reassuring technical readers:</p>
+<li>Specify the context update rule (e.g., <span class="math inline">\(c_t\)</span> as a recency-weighted blend of previous context and current item features, with separate scaling for emotional vs non-emotional components).</li>
+<li>Specify how <span class="math inline">\(M_{CF}\)</span> and <span class="math inline">\(M_{FC}\)</span> are updated at each study event (Hebbian-style learning with learning rates; stronger learning for high-arousal items).</li>
+</ul></li>
+<li>Highlight which parameters will later matter:
 <ul>
-<li>The main text will remain at the schematic/conceptual level described above.</li>
-<li>Box / Appendix 1 will provide:
-<ul>
-<li>The full CMR3 equations (context update, learning rules, retrieval dynamics).</li>
-<li>A parameter table.</li>
-<li>Any modifications relative to published implementations (e.g., specific emotional-context settings used here).</li>
+<li>Context drift rate.</li>
+<li>Learning rates for neutral vs high-arousal items.</li>
+<li>Relative weighting of temporal vs emotional features in context.</li>
 </ul></li>
 </ul>
-<p>All simulations later in the paper will instantiate this single specification (with limited parameter tweaks), rather than using different ad hoc models.</p>
+<p>The goal is to give enough formal detail that readers can see exactly how trauma-film events and post-film tasks are encoded into the same context space.</p>
+</section>
+<section id="formal-model-specification-retrieval-dynamics-and-control" class="level3">
+<h3 class="anchored" data-anchor-id="formal-model-specification-retrieval-dynamics-and-control">Formal model specification: retrieval dynamics and control</h3>
+<p>Plan: present the retrieval equations and explicit control parameters.</p>
+<ul>
+<li>Retrieval modes:
+<ul>
+<li>Context→item:
+<ul>
+<li>Given a context state <span class="math inline">\(c\)</span>, activation of each item is a function of <span class="math inline">\(M_{CF}\)</span> and <span class="math inline">\(c\)</span> (e.g., <span class="math inline">\(a = M_{CF} \cdot c\)</span>).</li>
+<li>Items compete for recall via a standard choice rule (e.g., Luce or softmax).</li>
+<li>Retrieved item feeds back via <span class="math inline">\(M_{FC}\)</span> to update context (e.g., $c’ = $ blend of old context and Item→context(cue)).</li>
+</ul></li>
+<li>Item→context:
+<ul>
+<li>Given a probe item, retrieve its associated context via <span class="math inline">\(M_{FC}\)</span>.</li>
+<li>Compare retrieved context to a target context (e.g., via dot product or similarity measure) to drive recognition decisions.</li>
+</ul></li>
+</ul></li>
+<li>Control parameters:
+<ul>
+<li>Starting-context bias:
+<ul>
+<li>A parameter controlling how strongly initial <span class="math inline">\(c\)</span> at retrieval is biased toward a specified context (e.g., the film session vs later lab context).</li>
+</ul></li>
+<li>Output gating:
+<ul>
+<li>A similarity threshold or weighting that determines how strongly retrieved items update context, and whether they are accepted as outputs, as a function of match between retrieved context and a goal context.</li>
+</ul></li>
+<li>Stopping and threshold rules:
+<ul>
+<li>Parameters controlling when retrieval stops (e.g., global threshold on activation or probability of recall) will be specified, but kept simple across simulations.</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Here we can include a small set of core equations, with prose guiding readers through what each component does. The aim is not to reproduce the entire CMR3 paper, but to make the key operations visible and to show which parameters we will manipulate or hold fixed in the simulations.</p>
+</section>
+<section id="retrieval-modes-in-task-terms" class="level3">
+<h3 class="anchored" data-anchor-id="retrieval-modes-in-task-terms">Retrieval modes in task terms</h3>
+<p>Once the formal pieces are defined, we explicitly map them to behavioural regimes:</p>
+<ul>
+<li>Unguided intrusions:
+<ul>
+<li>Context→item retrieval.</li>
+<li>Starting context follows ongoing experience or a generic lab context.</li>
+<li>Control parameters: low starting-context bias; minimal gating.</li>
+</ul></li>
+<li>Intentional free recall:
+<ul>
+<li>Context→item retrieval.</li>
+<li>Starting context strongly biased toward the film session.</li>
+<li>Control parameters: strong gating based on match to film context.</li>
+</ul></li>
+<li>Recognition:
+<ul>
+<li>Item→context retrieval plus similarity-based decision rule.</li>
+<li>Minimal use of context-driven competition among many items; control parameters matter less.</li>
+</ul></li>
+</ul>
+<p>This section locks in the retrieval-mode and control vocabulary that later sections will reference without redefinition.</p>
 </section>
 </section>
 <section id="mapping-the-trauma-filmtetris-paradigm-into-cmr3" class="level2">
 <h2 class="anchored" data-anchor-id="mapping-the-trauma-filmtetris-paradigm-into-cmr3">Mapping the trauma-film/Tetris paradigm into CMR3</h2>
-<p><strong>Goal:</strong> Specify how we represent the trauma-film experiments within CMR3 (items, contexts, tasks) and derive a verbal version of the selective interference account before turning to simulations.</p>
-<p><strong>Opening sentence:</strong><br>
-Having outlined the core CMR3 architecture, retrieval modes, and control levers, we now specify how the trauma-film/Tetris paradigm maps into this framework.</p>
-<section id="representational-mapping" class="level3">
-<h3 class="anchored" data-anchor-id="representational-mapping">Representational mapping</h3>
-<p>We first map components of the paradigm onto model constructs:</p>
+<p>Goal: specify how we represent the trauma-film experiments within CMR3 (items, contexts, tasks), both verbally and in terms of the formal machinery defined above, and derive a verbal version of the selective interference account before turning to simulations.</p>
+<p>Opening: having outlined the CMR3 architecture and equations, we now specify how the trauma-film/Tetris paradigm maps into this framework.</p>
+<section id="representational-mapping-verbal" class="level3">
+<h3 class="anchored" data-anchor-id="representational-mapping-verbal">Representational mapping (verbal)</h3>
 <ul>
-<li><p><strong>Trauma film:</strong><br>
-Modelled as a sequence of high-arousal negative items, encoded with strong item–context bindings as context drifts through a characteristic temporal/emotional trajectory.</p></li>
-<li><p><strong>Post-film tasks:</strong></p>
+<li>Trauma film:
 <ul>
-<li>Tetris-like condition: many neutral items, high engagement and segmentation, encoded in contexts adjacent in time (and, depending on assumptions, overlapping in arousal/engagement) with late-film contexts.</li>
-<li>Control conditions: fewer/weaker items and more opportunity for spontaneous trauma-film rehearsal during the same interval.</li>
+<li>Modelled as a sequence of high-arousal negative items <span class="math inline">\(f_1, f_2, ..., f_N\)</span>, each with strong emotional components.</li>
+<li>Context <span class="math inline">\(c_t\)</span> drifts along a distinctive trajectory during film viewing, with emotional components elevated.</li>
 </ul></li>
-<li><p><strong>Intrusion measures:</strong></p>
+<li>Post-film tasks:
 <ul>
-<li>Lab tasks (e.g., vigilance–intrusion tasks, cue-provocation tasks): context constrained by instructions and occasional trauma/foil cues.</li>
-<li>Diary measures: context follows more variable, naturalistic trajectories.</li>
+<li>Tetris-like condition:
+<ul>
+<li>Many neutral items <span class="math inline">\(g_1, g_2, ..., g_M\)</span> (moves/trials), encoded in contexts <span class="math inline">\(c_{N+1}...c_{N+M}\)</span> that are temporally adjacent to late-film contexts and may share arousal/engagement features (depending on assumptions).</li>
+</ul></li>
+<li>Control conditions:
+<ul>
+<li>Fewer/weaker items and more opportunity for unstructured trauma rehearsal during the same interval.</li>
+</ul></li>
+</ul></li>
+<li>Intrusion measures:
+<ul>
+<li>Lab tasks: retrieval contexts <span class="math inline">\(c_{test}\)</span> are constrained by instructions and occasional trauma/foil cues.</li>
+<li>Diary measures: <span class="math inline">\(c_{test}\)</span> follows more variable, naturalistic trajectories.</li>
 </ul></li>
 </ul>
-<p>This is a mapping step; we do not yet invoke competition or interference here.</p>
+</section>
+<section id="representational-mapping-formal-sketch" class="level3">
+<h3 class="anchored" data-anchor-id="representational-mapping-formal-sketch">Representational mapping (formal sketch)</h3>
+<p>Plan: tie the above to specific model objects.</p>
+<ul>
+<li>Define study phases:
+<ul>
+<li>Film phase: sequence of updates to <span class="math inline">\(c\)</span> and <span class="math inline">\(M_{CF}, M_{FC}\)</span> for each <span class="math inline">\(f_i\)</span> with high-arousal learning parameters.</li>
+<li>Post-film phase:
+<ul>
+<li>Tetris condition: sequence of updates for <span class="math inline">\(g_j\)</span> with neutral item features but with context states <span class="math inline">\(c_t\)</span> that inherit from late film and/or reinstated trauma context.</li>
+<li>Control condition: fewer such updates or different context states (e.g., more drift away).</li>
+</ul></li>
+</ul></li>
+<li>Define test phases:
+<ul>
+<li>Intrusion context trajectories:
+<ul>
+<li>For lab-based intrusions (e.g., vigilance–intrusion task), define <span class="math inline">\(c_{test}\)</span> as a random walk around a lab context, occasionally perturbed by trauma or foil cues via <span class="math inline">\(M_{FC}\)</span>.</li>
+<li>For diaries, define <span class="math inline">\(c_{test}\)</span> trajectories that mix lab-like and everyday-like contexts.</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>This subsection specifies, at a high level, which equations are used in which phase, and how film vs post-film items are distinguished only by their features and context states, not by separate stores.</p>
 </section>
 <section id="the-context-binding-account-of-selective-interference" class="level3">
 <h3 class="anchored" data-anchor-id="the-context-binding-account-of-selective-interference">The context-binding account of selective interference</h3>
-<p>We then state the core mechanism:</p>
+<p>Mechanism, now explicitly grounded in the formalism:</p>
 <ul>
-<li>Post-film items are bound in context states adjacent to trauma-film states, so they become additional candidates whenever the system revisits that region in context→item mode (as defined in Section 4.3).</li>
-<li>As those contexts are later revisited, trauma-film items must compete with a denser set of strongly encoded post-film competitors; they therefore win less often, lowering the probability of an intrusion.</li>
-<li>The underlying item representations and their associations remain intact. When:
+<li>During film encoding, <span class="math inline">\(f_i\)</span> items acquire strong context→item links in states <span class="math inline">\(c_i\)</span> with high emotional components.</li>
+<li>In the Tetris condition, <span class="math inline">\(g_j\)</span> items are also encoded into <span class="math inline">\(c_t\)</span> states that are near <span class="math inline">\(c_N\)</span> in context space, so <span class="math inline">\(M_{CF}\)</span> now contains many strong links from trauma-adjacent contexts to <span class="math inline">\(g_j\)</span> as well as <span class="math inline">\(f_i\)</span>.</li>
+<li>During later context→item retrieval (intrusions), when <span class="math inline">\(c_{test}\)</span> drifts into the trauma-adjacent region:
 <ul>
-<li>a film item is used as a probe (recognition; item→context mode), or</li>
-<li>retrieval is strongly steered toward the film (intentional free recall with strong starting-context bias and gating as in Section 4.4),</li>
+<li>Activation <span class="math inline">\(a = M_{CF} \cdot c_{test}\)</span> includes both <span class="math inline">\(f_i\)</span> and <span class="math inline">\(g_j\)</span>.</li>
+<li>With more strong competitors <span class="math inline">\(g_j\)</span>, trauma items <span class="math inline">\(f_i\)</span> are less likely to win the competition and cross threshold, reducing intrusions.</li>
+</ul></li>
+<li>Item representations and <span class="math inline">\(M_{FC}\)</span> remain intact:
+<ul>
+<li>In item→context recognition, probe items <span class="math inline">\(f_i\)</span> retrieve their own associated contexts via <span class="math inline">\(M_{FC}\)</span>; <span class="math inline">\(g_j\)</span> do not compete at the same stage in the process.</li>
+<li>In intentional free recall, starting-context bias and gating keep <span class="math inline">\(c_{test}\)</span> closer to film contexts and reduce the impact of off-target <span class="math inline">\(g_j\)</span> on context drift.</li>
+</ul></li>
 </ul>
-trauma items can still be accessed, explaining why voluntary measures are spared.</li>
-</ul>
-<p>This subsection cashes out Claim 1 (“single-system sufficiency”) in verbal CMR3 terms.</p>
+<p>This is where we explicitly cash out Claim 1 in terms of the model’s equations and operations.</p>
 </section>
-<section id="why-post-film-task-properties-matter" class="level3">
-<h3 class="anchored" data-anchor-id="why-post-film-task-properties-matter">Why post-film task properties matter</h3>
-<p>Finally, we unpack which properties of the post-film interval matter, in a way that foreshadows the simulations and implements Claim 3:</p>
+<section id="why-post-film-task-properties-matter-formal-hooks-for-simulations" class="level3">
+<h3 class="anchored" data-anchor-id="why-post-film-task-properties-matter-formal-hooks-for-simulations">Why post-film task properties matter (formal hooks for simulations)</h3>
+<p>We connect task-level properties to model parameters that will be manipulated in simulations:</p>
 <ul>
-<li><p><strong>Competitor density and strength:</strong><br>
-Tasks that generate many, strongly encoded episodes in the trauma-adjacent context region (high segmentation and engagement) produce more competition and hence greater intrusion reduction.</p></li>
-<li><p><strong>Rehearsal suppression:</strong><br>
-Highly engaging tasks reduce spontaneous trauma-film reactivation during the post-film interval, preventing additional strengthening of trauma–context bindings.</p></li>
-<li><p><strong>Context overlap:</strong><br>
-Reminder cues and shared situational/emotional features help ensure that post-film items are encoded into the trauma-adjacent context region. The degree of overlap modulates the size and selectivity of the interference effect (e.g., effects on emotional vs neutral content).</p></li>
+<li>Competitor density and strength:
+<ul>
+<li>Number of <span class="math inline">\(g_j\)</span> items and their learning rate parameters determine how many strong post-film competitors are linked to trauma-adjacent context states.</li>
+</ul></li>
+<li>Rehearsal suppression:
+<ul>
+<li>Probability of re-presenting or internally “replaying” <span class="math inline">\(f_i\)</span> during the post-film interval (which would further strengthen their <span class="math inline">\(M_{CF}\)</span> and <span class="math inline">\(M_{FC}\)</span> links) is reduced in the Tetris condition and higher in some control conditions.</li>
+</ul></li>
+<li>Context overlap:
+<ul>
+<li>Degree to which post-film context states <span class="math inline">\(c_{N+1...}\)</span> remain close to <span class="math inline">\(c_N\)</span> in context space depends on:
+<ul>
+<li>whether a reminder reinstates trauma context before Tetris,</li>
+<li>the drift rate parameters,</li>
+<li>how strongly emotional and situational features are carried over.</li>
+</ul></li>
+<li>These factors will be implemented as explicit parameter differences between conditions.</li>
+</ul></li>
 </ul>
-<p>This sets up the link to the simulation programme, which will instantiate these properties as manipulable parameters (event count/strength, rehearsal vs no rehearsal, degree of context overlap).</p>
+<p>These links give the simulation section clear levers to pull, without needing to re-explain the theory.</p>
 </section>
 </section>
 <section id="simulations" class="level2">
 <h2 class="anchored" data-anchor-id="simulations">Simulations</h2>
-<p><strong>Goal:</strong> Implement a minimal but diagnostic set of simulations that instantiate the above ideas and generate testable predictions.</p>
-<section id="simulation-1.-benchmark-post-list-interference-in-standard-recall-vs-recognition" class="level3">
-<h3 class="anchored" data-anchor-id="simulation-1.-benchmark-post-list-interference-in-standard-recall-vs-recognition">Simulation 1. Benchmark: post-list interference in standard recall vs recognition</h3>
-<p><strong>Aim:</strong><br>
-Show that even in a neutral list-learning setting, CMR3 predicts stronger interference on free recall than on recognition when a post-list distractor list is added.</p>
-<p><strong>Design sketch:</strong></p>
+<p>Aim: specify a small set of simulations that directly test the three main claims, using the formal CMR3 specification laid out earlier. Each simulation should be simple, map onto well-defined empirical contrasts, and reuse as many parameters as possible.</p>
+<section id="simulation-1-benchmark-list-ab-interference" class="level3">
+<h3 class="anchored" data-anchor-id="simulation-1-benchmark-list-ab-interference">Simulation 1: Benchmark list A/B interference</h3>
+<p>Aim. Show that, in a neutral list-learning setting, adding a post-list distractor list reduces free recall of List A much more than recognition of List A, purely as a function of context-based competition. This establishes that mode-dependent interference is an intrinsic property of the model.</p>
+<p>Design sketch.</p>
 <ul>
-<li>Encode List A (target items).</li>
-<li>Two conditions:
+<li>Study phase:
 <ul>
-<li>A-only.</li>
-<li>A followed by List B (post-list distractors).</li>
+<li>List A: N items, neutral, encoded with standard (neutral) learning rates.</li>
+<li>Condition A-only: no further encoding.</li>
+<li>Condition A+B: immediately study List B (N neutral items) after A.</li>
 </ul></li>
-<li>Test:
+<li>Test phase:
 <ul>
-<li>Free recall of List A from an end-of-list context cue (context→item mode).</li>
-<li>Recognition of List A vs new foils using item→context retrieval.</li>
+<li>Free recall of List A:
+<ul>
+<li>Initial context c_test seeded to the end-of-List-A context (in A-only) or end-of-List-B context (in A+B), per the standard CMR3 implementation.</li>
+<li>Retrieval in context→item mode using the equations already specified.</li>
+</ul></li>
+<li>Recognition of List A:
+<ul>
+<li>Mixed list of A-items and new foils.</li>
+<li>Recognition decisions based on item→context retrieval and similarity to the List-A context.</li>
+</ul></li>
 </ul></li>
 </ul>
-<p><strong>Metrics:</strong></p>
+<p>Key parameters.</p>
 <ul>
-<li>Proportion of A items recalled.</li>
-<li>Recognition accuracy (hits – false alarms) for A items.</li>
+<li>Same drift, learning, and decision parameters as the published CMR3 benchmark fits, except for any minimal changes we commit to globally.</li>
+<li>No emotional features used here; emotional components of f and c are set to zero.</li>
 </ul>
-<p><strong>Expected pattern:</strong></p>
+<p>Outcome measures.</p>
 <ul>
-<li>Adding List B reduces recall of A (context competition).</li>
-<li>Recognition of A is minimally affected.</li>
+<li>Proportion of A items recalled in free recall (A-only vs A+B).</li>
+<li>Recognition accuracy for A items (hits minus false alarms) across conditions.</li>
 </ul>
-<p>This benchmark demonstrates that mode-dependent interference is intrinsic to the model, independent of trauma/Tetris specifics.</p>
+<p>Target pattern.</p>
+<ul>
+<li>Robust reduction in free recall of A when List B is added, driven by context competition.</li>
+<li>Much smaller effect (or no effect) on recognition of A, because item→context retrieval is relatively insensitive to extra context→item competitors.</li>
+</ul>
+<p>Role in the paper.</p>
+<ul>
+<li>Demonstrates that the free recall vs recognition asymmetry is a generic property of context-based models, not a special feature of trauma-film paradigms.</li>
+<li>Provides a neutral benchmark and a sanity check on our CMR3 implementation.</li>
+</ul>
 </section>
-<section id="simulation-2.-selective-interference-in-a-trauma-film-analogue" class="level3">
-<h3 class="anchored" data-anchor-id="simulation-2.-selective-interference-in-a-trauma-film-analogue">Simulation 2. Selective interference in a trauma-film analogue</h3>
-<p><strong>Aim:</strong><br>
-Capture the canonical pattern: a post-film Tetris-like condition reduces intrusive memories while leaving recognition largely intact, in a trauma-film–inspired setup.</p>
-<p><strong>Design sketch:</strong></p>
+<section id="simulation-2-trauma-film-analogue-and-selective-interference" class="level3">
+<h3 class="anchored" data-anchor-id="simulation-2-trauma-film-analogue-and-selective-interference">Simulation 2: Trauma-film analogue and selective interference</h3>
+<p>Aim. Show that, when a “film” phase is followed by a high-density post-film encoding phase (Tetris-like) vs a low-density control phase, the model produces a selective reduction in intrusions with relatively spared recognition.</p>
+<p>Design sketch.</p>
 <ul>
-<li><p><strong>Phase 1: “Film” encoding</strong><br>
-Sequence of high-arousal negative items; strong context–item binding.</p></li>
-<li><p><strong>Phase 2: Post-film manipulation</strong></p>
+<li>Film phase:
 <ul>
-<li>Tetris condition: reminder cue followed by many strongly encoded neutral items (high segmentation, high engagement) in trauma-adjacent context.</li>
-<li>Control condition: reminder cue but few/weak neutral items, or none (more opportunity for rehearsal).</li>
-<li>Optional verbal condition: intermediate competitor density and engagement.</li>
+<li>Encode a sequence of N “film” items <span class="math inline">\(f_1,...,f_N\)</span> with high-arousal negative features.</li>
+<li>Use the emotional-learning parameters so that these items have stronger context–item associations and pull the context into a high-arousal region.</li>
 </ul></li>
-<li><p><strong>Phase 3: Testing</strong></p>
+<li>Post-film manipulation:
 <ul>
-<li>Intrusions:
+<li>Condition Tetris:
 <ul>
-<li>Simulate context drift over a series of “days” or “probes.”</li>
-<li>Intrusions defined as trauma-film items retrieved in context→item mode with minimal control (as in Section 4.4), under:
-<ul>
-<li>lab-like conditions (fixed context with occasional trauma/foil cues),</li>
-<li>diary-like conditions (more variable context trajectory).</li>
+<li>Present M neutral items <span class="math inline">\(g_1,...,g_M\)</span> in quick succession.</li>
+<li>Context <span class="math inline">\(c_t\)</span> at the start of this phase is set to the late-film context (possibly after a reminder cue), so that <span class="math inline">\(g_j\)</span> are encoded into trauma-adjacent contexts.</li>
 </ul></li>
+<li>Condition Control:
+<ul>
+<li>Either no new items, or a very small number of weakly encoded neutral items, with more time for possible rehearsal of film items.</li>
+</ul></li>
+<li>Optional condition Verbal:
+<ul>
+<li>Fewer post-film items with semantic but not visuospatial features, allowing us to manipulate competitor density vs modality.</li>
+</ul></li>
+</ul></li>
+<li>Test phase:
+<ul>
+<li>Intrusions in a lab-like context:
+<ul>
+<li>Define a test context <span class="math inline">\(c_{test}\)</span> that is a mixture of lab context and occasional cue-driven reinstatement of film context (via <span class="math inline">\(M_{FC}\)</span> and a film- or foil-cue manipulation).</li>
+<li>Run context→item retrieval without strong control (low starting-context bias, minimal gating).</li>
+<li>Count the number of <span class="math inline">\(f_i\)</span> intrusions over many simulated “trials”.</li>
+</ul></li>
+<li>Intrusions in diary-like contexts:
+<ul>
+<li>Define a sequence of <span class="math inline">\(c_{test}\)</span> states that drift over a more heterogeneous trajectory.</li>
+<li>Again run context→item retrieval under low control and count <span class="math inline">\(f_i\)</span> intrusions over simulated “days”.</li>
 </ul></li>
 <li>Recognition:
 <ul>
-<li>Item-cued recognition of film items vs foils (item→context mode).</li>
+<li>Present film items and foils as probes.</li>
+<li>Use item→context retrieval and a simple similarity-based decision rule (as in the formal spec).</li>
 </ul></li>
 </ul></li>
 </ul>
-<p><strong>Metrics:</strong></p>
+<p>Key parameters.</p>
 <ul>
-<li>Intrusion frequency over simulated time (per condition).</li>
-<li>Recognition accuracy (per condition).</li>
-<li>Optional: voluntary free recall performance.</li>
+<li><span class="math inline">\(M\)</span> (number of post-film items), and their learning strength in the Tetris condition vs Control.</li>
+<li>Degree of context overlap between film and post-film phases (controlled by the reminder and drift parameters).</li>
+<li>Threshold and stopping rules for intrusions (kept fixed across conditions).</li>
 </ul>
-<p><strong>Expected pattern:</strong></p>
+<p>Outcome measures.</p>
 <ul>
-<li>Tetris condition shows lower intrusion rates than Control, especially in contexts overlapping with post-film context.</li>
-<li>Recognition differs little between conditions relative to intrusions.</li>
-<li>Depending on parameterisation, voluntary free recall shows limited interference, anticipating Simulation 3.</li>
+<li>Intrusion frequency (lab-like and diary-like) in Tetris vs Control vs Verbal.</li>
+<li>Recognition accuracy for film items in each condition.</li>
+<li>Optional: free recall of film items in a high-control regime (see Simulation 3).</li>
+</ul>
+<p>Target pattern.</p>
+<ul>
+<li>Tetris condition shows lower intrusion rates than Control, with Verbal intermediate if competitor density is lower.</li>
+<li>Recognition differences across conditions are small relative to intrusion differences.</li>
+<li>If we include free recall here, any Tetris effect should be smaller than for intrusions.</li>
+</ul>
+<p>Role in the paper.</p>
+<ul>
+<li>Directly implements the selective interference effect in an idealised trauma-film setting.</li>
+<li>Provides a model-based explanation of why intrusions are more affected than recognition.</li>
 </ul>
 </section>
-<section id="simulation-3.-intentional-vs-unintentional-contextitem-retrieval-control-mechanisms" class="level3">
-<h3 class="anchored" data-anchor-id="simulation-3.-intentional-vs-unintentional-contextitem-retrieval-control-mechanisms">Simulation 3. Intentional vs unintentional context→item retrieval (control mechanisms)</h3>
-<p><strong>Aim:</strong><br>
-Explain how intrusions can be reduced while voluntary free recall is spared, using control over starting context and output gating (Section 4.4).</p>
-<p><strong>Design sketch:</strong></p>
+<section id="simulation-3-intentional-vs-unintentional-contextitem-retrieval" class="level3">
+<h3 class="anchored" data-anchor-id="simulation-3-intentional-vs-unintentional-contextitem-retrieval">Simulation 3: Intentional vs unintentional context→item retrieval</h3>
+<p>Aim. Show that the same post-film competitor encoding that reduces intrusions can leave intentional free recall relatively spared when retrieval control is high, and that lowering control makes free recall more intrusion-like.</p>
+<p>Design sketch.</p>
 <ul>
-<li><p>Use the same film + post-film conditions as in Simulation 2.</p></li>
-<li><p>Define two retrieval regimes:</p>
-<ol type="1">
-<li><strong>Unguided intrusions</strong>
+<li><p>Use the same Film and Post-film phases as in Simulation 2 (Tetris vs Control).</p></li>
+<li><p>Define two retrieval regimes, using the formal control parameters:</p>
 <ul>
-<li>Context drifts autonomously.</li>
-<li>Minimal starting-context control and gating.</li>
-<li>Intrusions = trauma-film items crossing threshold in context→item mode.</li>
+<li>Unguided intrusions:
+<ul>
+<li>Retrieval in context→item mode.</li>
+<li>Initial <span class="math inline">\(c_{test}\)</span> drawn from a distribution of lab-like or everyday contexts, with no explicit bias toward film context.</li>
+<li>Control parameters: low starting-context bias; minimal gating.</li>
+<li>Count spontaneous <span class="math inline">\(f_i\)</span> recalls across many iterations (as in Simulation 2).</li>
 </ul></li>
-<li><strong>Intentional free recall</strong>
+<li>Intentional free recall:
 <ul>
-<li>Starting context strongly biased toward the film session (e.g., early-film context).</li>
-<li>Strong output gating: if a retrieved item’s context mismatches the film goal, it is rejected and its context integrated weakly.</li>
+<li>Retrieval in context→item mode.</li>
+<li>Initial <span class="math inline">\(c_{test}\)</span> is explicitly biased toward the film-session context (for example a linear combination of early-film context states).</li>
+<li>Control parameters: strong gating (items whose retrieved context is dissimilar to the film-context template have reduced influence on <span class="math inline">\(c\)</span> and may be rejected from output).</li>
+<li>Count correctly recalled <span class="math inline">\(f_i\)</span> and incorrectly recalled <span class="math inline">\(g_j\)</span>.</li>
 </ul></li>
-</ol></li>
-<li><p>Additional manipulation: control strength as a parameter.</p>
+</ul></li>
+<li><p>Manipulate control strength:</p>
 <ul>
-<li>High control: strong bias + strong gating.</li>
-<li>Low control: weaker bias + weaker gating (mimicking divided attention, time pressure, or stress).</li>
+<li>High-control condition:
+<ul>
+<li>Strong starting-context bias.</li>
+<li>High gating threshold.</li>
+</ul></li>
+<li>Low-control condition:
+<ul>
+<li>Weaker bias; lower gating threshold (mimicking divided attention, time pressure, or stress).</li>
+</ul></li>
 </ul></li>
 </ul>
-<p><strong>Metrics:</strong></p>
+<p>Outcome measures.</p>
 <ul>
-<li>Intrusion rates (unguided regime).</li>
-<li>Recall probability for film items (intentional regime) across control levels.</li>
-<li>Degree to which post-film items intrude into intentional recall.</li>
+<li>Intrusion rates (unguided regime) across post-film conditions (reproducing Simulation 2).</li>
+<li>Free recall of film items (intentional regime) across post-film conditions and control levels.</li>
+<li>Rate at which <span class="math inline">\(g_j\)</span> items intrude into intentional recall.</li>
 </ul>
-<p><strong>Expected pattern:</strong></p>
+<p>Target pattern.</p>
 <ul>
-<li>With high control:
+<li>Unguided intrusions: Tetris vs Control difference similar to Simulation 2.</li>
+<li>Intentional free recall:
 <ul>
-<li>Post-film Tetris reduces intrusions.</li>
-<li>Voluntary free recall of film items is largely spared across conditions.</li>
+<li>With high control, little or no Tetris vs Control difference, and relatively few <span class="math inline">\(g_j\)</span> intrusions.</li>
+<li>With low control, Tetris vs Control differences start to appear, and <span class="math inline">\(g_j\)</span> items intrude more into recall.</li>
 </ul></li>
-<li>With reduced control:
+</ul>
+<p>Role in the paper.</p>
 <ul>
-<li>Voluntary free recall begins to show interference effects more similar to intrusions (lower recall in Tetris vs Control), generating concrete experimental predictions.</li>
-</ul></li>
+<li>Explicitly instantiates the “control” part of Claim 2 in the formal model.</li>
+<li>Generates concrete predictions that can be tested by manipulating retrieval load or instruction strictness in trauma-film experiments.</li>
 </ul>
 </section>
-<section id="simulation-4.-emotional-vs-neutral-material-and-the-arousal-subspace-claim" class="level3">
-<h3 class="anchored" data-anchor-id="simulation-4.-emotional-vs-neutral-material-and-the-arousal-subspace-claim">Simulation 4. Emotional vs neutral material and the arousal-subspace claim</h3>
-<p><strong>Aim:</strong><br>
-Explore how emotional features (valence/arousal) modulate interference in CMR3, and to what extent post-film task arousal/emotionality is needed to produce selective effects on emotional material.</p>
-<p><strong>Design sketch:</strong></p>
+<section id="simulation-4-emotional-vs-neutral-material" class="level3">
+<h3 class="anchored" data-anchor-id="simulation-4-emotional-vs-neutral-material">Simulation 4: Emotional vs neutral material</h3>
+<p>Aim. Test how emotional features and arousal-based learning parameters affect selective interference, and determine when post-film tasks differentially affect emotional vs neutral items.</p>
+<p>Design sketch.</p>
 <ul>
-<li>Encode mixed episodes containing:
+<li>Film phase:
 <ul>
-<li>High-arousal negative items (trauma-like).</li>
-<li>Neutral items.</li>
+<li>Encode a mixed list of items: some “emotional” (high-arousal negative) and some “neutral” (low arousal).</li>
+<li>Use CMR3’s emotional encoding parameters so that emotional items have stronger context–item bindings and cluster in emotional-context space.</li>
 </ul></li>
-<li>Post-film conditions:
+<li>Post-film manipulation:
 <ul>
-<li>High-arousal competitors (e.g., neutral content encoded under high arousal/engagement or reinstated trauma context).</li>
-<li>Low-arousal competitors (low engagement; minimal arousal change; weaker emotional overlap).</li>
+<li>High-arousal competitor condition:
+<ul>
+<li>Tetris-like or other arousing tasks encoded under contexts with elevated arousal (through a reminder or through task properties), so <span class="math inline">\(g_j\)</span> land in or near the emotional region of context.</li>
 </ul></li>
-<li>Test intrusions, voluntary recall, and recognition separately for high-arousal vs neutral film items.</li>
-</ul>
-<p><strong>Metrics:</strong></p>
+<li>Low-arousal competitor condition:
 <ul>
-<li>Intrusion reduction for high-arousal vs neutral film items across conditions.</li>
-<li>Voluntary recall/recognition for each item type.</li>
-</ul>
-<p><strong>Expected pattern:</strong></p>
+<li>Post-film tasks that are low engagement/low arousal; <span class="math inline">\(g_j\)</span> encoded in more neutral contexts.</li>
+</ul></li>
+<li>Control condition:
 <ul>
-<li>When competitors are high-arousal and temporally close, interference effects on intrusions are stronger for high-arousal items than for neutral ones.</li>
-<li>When competitors are low-arousal, interference is less selectively emotional.</li>
-<li>This simulation converts the “post-film traces are in a high-arousal region” idea into specific, testable constraints.</li>
+<li>No additional post-film encoding.</li>
+</ul></li>
+</ul></li>
+<li>Test phase:
+<ul>
+<li>Intrusions in context→item mode under low control, as in Simulation 2.</li>
+<li>Optional free recall and recognition for emotional vs neutral items under high control (for recall) and item→context (for recognition).</li>
+</ul></li>
+</ul>
+<p>Outcome measures.</p>
+<ul>
+<li>Intrusion reduction for emotional vs neutral items in each post-film condition.</li>
+<li>Voluntary recall and recognition of each item type.</li>
+</ul>
+<p>Target pattern.</p>
+<ul>
+<li>When competitors are encoded in high-arousal, trauma-adjacent contexts, intrusions from emotional items are reduced more than from neutral items.</li>
+<li>When competitors are low-arousal and contextually distant, interference is less emotion-selective and more uniformly tied to temporal proximity.</li>
+</ul>
+<p>Role in the paper.</p>
+<ul>
+<li>Makes the “high-arousal region” premise empirically precise.</li>
+<li>Clarifies whether emotional selectivity is an optional add-on or an integral part of the interference mechanism.</li>
 </ul>
 </section>
-<section id="simulation-5-optional.-reminder-delayed-tetris-reconsolidation-style-designs" class="level3">
-<h3 class="anchored" data-anchor-id="simulation-5-optional.-reminder-delayed-tetris-reconsolidation-style-designs">Simulation 5 (optional). Reminder + delayed Tetris / reconsolidation-style designs</h3>
-<p><strong>Aim:</strong><br>
-Show that reminder+Tetris effects at delays (e.g., 24 h, 3 days) can arise via context reinstatement and new competitor encoding, without invoking special reconsolidation mechanisms.</p>
-<p><strong>Design sketch:</strong></p>
+<section id="simulation-5-optional-delayed-reminder-tetris" class="level3">
+<h3 class="anchored" data-anchor-id="simulation-5-optional-delayed-reminder-tetris">Simulation 5 (optional): Delayed reminder + Tetris</h3>
+<p>Aim. Show that reminder+Tetris effects at delays (24 h, 3 days, etc.) can emerge from context reinstatement and competitor encoding, without additional reconsolidation machinery.</p>
+<p>Design sketch.</p>
 <ul>
-<li>Phase 1: Film encoding.</li>
-<li>Phase 2: Delay (context drifts away from trauma region).</li>
-<li>Phase 3: Reminder cue reinstating trauma context, followed by:
+<li><p>Film phase as in Simulation 2.</p></li>
+<li><p>Delay:</p>
 <ul>
-<li>Tetris-like competitor encoding vs reminder-only control.</li>
+<li>Allow context to drift away from the trauma region via the standard drift dynamics.</li>
 </ul></li>
-<li>Phase 4: Intrusion measures over subsequent time.</li>
-</ul>
-<p><strong>Metrics:</strong></p>
+<li><p>Reminder phase:</p>
 <ul>
-<li>Intrusion frequency as a function of post-reminder condition.</li>
-<li>Any effects on voluntary measures.</li>
-</ul>
-<p><strong>Expected pattern:</strong></p>
+<li>Present a reminder cue that retrieves the film context via M_FC and reinstates a trauma-like <span class="math inline">\(c_{remind}\)</span> (by mixing retrieved context into the current context).</li>
+</ul></li>
+<li><p>Post-reminder manipulation:</p>
 <ul>
-<li>When the reminder successfully reinstates trauma context and is followed by competitor encoding, additional intrusion reduction emerges relative to reminder-only control.</li>
-<li>This offers a single-system interpretation of some “reconsolidation-like” findings.</li>
+<li>Reminder+Tetris condition:
+<ul>
+<li>Encode many <span class="math inline">\(g_j\)</span> items starting from <span class="math inline">\(c_{remind}\)</span>.</li>
+</ul></li>
+<li>Reminder-only control:
+<ul>
+<li>Present the reminder but no subsequent <span class="math inline">\(g_j\)</span> encoding, or only a few weak competitors.</li>
+</ul></li>
+</ul></li>
+<li><p>Test phase:</p>
+<ul>
+<li>Intrusions under context→item retrieval over subsequent “days” as in Simulation 2.</li>
+<li>Optional recognition and free recall.</li>
+</ul></li>
+</ul>
+<p>Outcome measures.</p>
+<ul>
+<li>Intrusion rates in Reminder+Tetris vs Reminder-only across simulated days.</li>
+<li>Any changes in voluntary measures.</li>
+</ul>
+<p>Target pattern.</p>
+<ul>
+<li>Additional reduction in intrusions in the Reminder+Tetris condition relative to Reminder-only, proportional to the degree of context reinstatement and competitor density.</li>
+<li>No need to posit a special reconsolidation module; the effect emerges from the same CMR3 operations.</li>
+</ul>
+<p>Role in the paper.</p>
+<ul>
+<li>Provides a single-system interpretation of delayed reminder+Tetris findings and clarifies what is gained (and not gained) by invoking reconsolidation terminology.</li>
 </ul>
 </section>
 </section>
-<section id="comparing-accounts-who-predicts-what" class="level2">
-<h2 class="anchored" data-anchor-id="comparing-accounts-who-predicts-what">Comparing accounts: who predicts what?</h2>
-<p>In this section we will systematically contrast:</p>
+<section id="comparing-accounts" class="level2">
+<h2 class="anchored" data-anchor-id="comparing-accounts">Comparing accounts</h2>
+<p>Here we contrast the main theories across a common set of phenomena, using the simulations as concrete instantiations for CMR3.</p>
+<p>Organisation.</p>
 <ul>
-<li>Visuospatial WM/consolidation accounts.</li>
-<li>Dual-representation / separate-trace theories.</li>
-<li>Reconsolidation-based accounts.</li>
-<li>The CMR3 retrieved-context account.</li>
-</ul>
-<p>We will organise the comparison by phenomena, not by theory:</p>
+<li>For each phenomenon or constraint, summarise:
 <ul>
-<li>Intrusions vs recognition/free recall.</li>
-<li>Effects of associative cueing.</li>
-<li>Timing of intervention (immediate vs delayed).</li>
-<li>Effects on emotional vs neutral content.</li>
-<li>Immediate vs long-term diary intrusions.</li>
-<li>Dependence on event segmentation / competitor density.</li>
+<li>What the data look like (briefly).</li>
+<li>What each theory predicts or can accommodate.</li>
+<li>What the CMR3 simulations show.</li>
+</ul></li>
 </ul>
-<p>A summary table will indicate, for each phenomenon, whether each theory:</p>
+<p>Key phenomena:</p>
 <ul>
-<li>clearly predicts it,</li>
-<li>clearly does not predict it,</li>
-<li>or can accommodate it only with additional assumptions.</li>
+<li>Selective interference: intrusions reduced, recognition/free recall spared (Simulations 1–3).</li>
+<li>Effects of associative cueing: trauma vs foil cues in lab-based intrusions and recognition tasks (built into the way c_test is perturbed in Simulations 2–3).</li>
+<li>Timing and context overlap:
+<ul>
+<li>During-film vs post-film interventions; delayed reminder+Tetris (Simulation 5).</li>
+</ul></li>
+<li>Emotional specificity:
+<ul>
+<li>Emotional vs neutral items and the arousal-subspace claim (Simulation 4).</li>
+</ul></li>
+<li>Heterogeneity and boundary conditions:
+<ul>
+<li>Immediate vs diary measures; tasks with low competitor density or poor context overlap.</li>
+</ul></li>
 </ul>
-<p>This section will highlight where the CMR3 account adds explanatory precision and where it remains underdetermined.</p>
+<p>For each, a short paragraph can lay out, for example:</p>
+<ul>
+<li>Visuospatial WM accounts: straightforward narrative for modality and timing, less clear on retrieval-mode specificity and diary heterogeneity.</li>
+<li>Dual-representation accounts: good fit to intrusive vs voluntary dissociations, less precise about task dynamics and context manipulations.</li>
+<li>Reconsolidation accounts: emphasise reminders and timing, but lack explicit retrieval predictions and can be mimicked by context reinstatement.</li>
+<li>CMR3 account: explains selective interference, retrieval-mode differences, and several boundary conditions with one set of operations, but relies on abstract context representations and requires careful parameter constraints.</li>
+</ul>
+<p>A single comparative table can make these correspondences explicit (rows = phenomena, columns = theories, entries = predicted / flexible / not predicted).</p>
 </section>
 <section id="implications-for-intervention-design" class="level2">
 <h2 class="anchored" data-anchor-id="implications-for-intervention-design">Implications for intervention design</h2>
-<p>Using the retrieved-context account, we will derive mechanistic design principles:</p>
+<p>This section draws out practical and conceptual implications of the CMR3 account for designing and interpreting intrusive-memory interventions.</p>
+<p>Points to develop:</p>
 <ul>
-<li>Tetris is one instance of a broader class of tasks that:
+<li>Mechanistic design principles:
 <ul>
-<li>generate many well-segmented, strongly encoded competitor episodes in contexts overlapping with trauma,</li>
-<li>suppress trauma rehearsal during critical periods.</li>
+<li>Post-film tasks are effective when they:
+<ul>
+<li>generate many strongly encoded competitor episodes in context near the trauma memory,</li>
+<li>suppress trauma rehearsal during that window,</li>
+<li>maintain sufficient context overlap (temporal, situational, emotional) with the trauma context.</li>
 </ul></li>
-<li>Other tasks (imagery rescripting, alternative visuospatial activities, possibly certain semantic tasks with high segmentation and context overlap) may satisfy the same mechanistic criteria and thus be effective.</li>
-</ul>
-<p>We can reinterpret mixed empirical results and meta-analytic heterogeneity in terms of:</p>
+</ul></li>
+<li>Tetris as one instance:
+<ul>
+<li>Tetris is effective not because it uniquely taps visuospatial WM, but because it happens to punch all three levers (segmentation, engagement, context overlap) in a convenient way.</li>
+</ul></li>
+<li>Alternative interventions:
+<ul>
+<li>Imagery rescripting, other visuospatial tasks, or even some verbal/semantic tasks could work if they can be engineered to produce a similar pattern of competitor encoding and rehearsal suppression.</li>
+</ul></li>
+<li>Interpretation of heterogeneity:
+<ul>
+<li>Mixed results across studies and meta-analyses can be reinterpreted in terms of:
 <ul>
 <li>insufficient competitor density,</li>
-<li>poor context overlap,</li>
-<li>ineffective rehearsal suppression,</li>
-<li>or weak retrieval control at test.</li>
+<li>poor context overlap (e.g., no reminder; different setting),</li>
+<li>inadequate engagement,</li>
+<li>or weak control at test (e.g., noisy intrusion measures).</li>
+</ul></li>
+</ul></li>
+<li>Experiment design directions:
+<ul>
+<li>Manipulate event segmentation and competitor count at fixed modality.</li>
+<li>Manipulate arousal/engagement while holding segmentation constant.</li>
+<li>Manipulate retrieval control (divided attention, instructions) to test Simulation 3 predictions.</li>
+</ul></li>
 </ul>
-<p>This feeds into concrete design principles for post-trauma interventions and lab paradigms.</p>
+<p>The aim is to show that the model gives concrete guidance about how to tweak interventions, not just a post hoc story about Tetris.</p>
 </section>
 <section id="limitations-and-open-questions" class="level2">
 <h2 class="anchored" data-anchor-id="limitations-and-open-questions">Limitations and open questions</h2>
-<p>We will explicitly acknowledge:</p>
+<p>Finally, we should be explicit about what this approach does not solve and where it is most fragile.</p>
+<p>Model-related limitations:</p>
 <ul>
-<li><strong>Model abstraction:</strong> CMR3 is highly abstract; parameters and context dimensions are not trivially tied to specific neural substrates.</li>
-<li><strong>Scope of fitting:</strong> We will be fitting qualitative patterns rather than individual datasets. A full data-fitting exercise would be ideal but is beyond the scope of a single paper.</li>
-<li><strong>Empirical robustness:</strong> The empirical base for Tetris/selective interference is heterogeneous; large-sample replications and meta-analyses show mixed outcomes, which we treat as constraints rather than nuisances.</li>
-<li><strong>Unresolved predictions:</strong> Some key predictions (e.g., about arousal-mediated effects, the role of control, and competitor density) are currently untested and will require targeted experiments.</li>
+<li>Abstraction and parameterisation:
+<ul>
+<li>CMR3 treats context and emotion at a high level of abstraction; mapping these directly to neural circuits or clinical variables will require additional assumptions.</li>
+<li>The model has many parameters; our simulations must use a small, principled subset of manipulations to avoid overfitting.</li>
+</ul></li>
+<li>Scope of fits:
+<ul>
+<li>In this paper we will target qualitative patterns, not full quantitative fits to each dataset.</li>
+<li>A more ambitious programme would fit the same parameter set to trauma-film and standard list-learning data simultaneously.</li>
+</ul></li>
 </ul>
+<p>Empirical and conceptual limitations:</p>
+<ul>
+<li>Empirical robustness:
+<ul>
+<li>The trauma-film/Tetris effect is not uniformly robust across labs, samples, and measures; some key studies have failed to replicate certain aspects.</li>
+<li>Our account treats this heterogeneity as a feature to be explained (via competitor density, context overlap, and control), but we will need new experiments to test that.</li>
+</ul></li>
+<li>Unresolved predictions:
+<ul>
+<li>The arousal-subspace hypothesis and its proposed tests (Simulation 4) require physiological or self-report measures of arousal to be collected alongside trauma-film paradigms.</li>
+<li>The role of retrieval control in real-world settings (stress, sleep deprivation, comorbidity) may differ from the neat high/low control manipulations we simulate.</li>
+</ul></li>
+<li>Integration with biological theories:
+<ul>
+<li>Although we do not invoke a dedicated reconsolidation mechanism, our account is not incompatible with biological consolidation and reconsolidation processes.</li>
+<li>Future work will need to articulate how context-binding and competition mechanisms relate to synaptic and systems-level changes over time.</li>
+</ul></li>
+</ul>
+<p>The discussion can close by emphasising that a single-system, retrieved-context account does not aim to replace all existing ideas, but to provide a mechanistic core that clarifies which aspects of the selective interference effect require additional constructs (e.g., reconsolidation, dual representations) and which do not.</p>
 </section>
 </section>
 
