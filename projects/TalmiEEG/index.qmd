@@ -26,28 +26,24 @@ We compare ways LPPs could modulate these processes and assess which specificati
 
 # Data Preparation
 
-The primary analysis table is `Single_Trial_Behavioural_and_EEG_Data_Z.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\`).
-That table, identical across server copies, omits study events that lack reliable EEG measurements.
-To restore those events, we merged it with the behavioral log `All_Included_Subjects.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\`). This log contains no LPP scores but records recall status for all study events beyond a primacy buffer of the first two items per list.
-Recall data for buffer items were excluded by the original authors to avoid confounding primacy effects with emotion–memory effects.
-Unfortunately, recall data for buffer items cannot be recovered. 
-Accordingly, lists are analyzed as 20‑item sequences, despite originally being 22 items long.
+Lists are analyzed as 20‑item sequences because the first two study positions were removed during preprocessing by Zarubin et al to avoid primacy confounds and cannot be recovered. 
+As a result, each trial contributes only the remaining 20 items to all analyses and modeling.
 
-Before merging, we verified label consistency across sources, confirming there were no conflicts in recalled versus not-recalled designations.
+The primary analysis table is `Single_Trial_Behavioural_and_EEG_Data_Z.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Manuscript\files from robin nov24\`). 
+It omits study events that lack reliable EEG measurements, so we merged it with the behavioral log `All_Included_Subjects.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\`) to restore recall status for those events. 
+Before merging, we verified label consistency across sources and found no conflicts between recalled vs not‑recalled designations.
+
 The merged dataset comprises 6,840 study events from 342 list trials with 20 analyzable items per list.
-Of these events, 371 (5.42%) lack EEG measurements.
-Missingness is comparable across valence conditions: negative lists contribute 125 of 2,266 events (5.52%; mean 0.37 ± 0.65 items missing per trial) and neutral lists contribute 246 of 4,574 events (5.38%; mean 0.72 ± 0.93 items missing per trial).
-Overall, 202 of 342 lists (59.1%) include at least one missing LPP value; among affected lists, 1.84 ± 1.01 items are missing (median 2; maximum 6).
+Overall missingness is ~5% and balanced across valence: 371 events (5.42%) lack EEG measurements, with negative lists contributing 125 of 2,266 events (5.52%; mean 0.37 ± 0.65 items missing per trial) and neutral lists contributing 246 of 4,574 events (5.38%; mean 0.72 ± 0.93 items missing per trial).
+In total, 202 of 342 lists (59.1%) include at least one missing LPP value; among affected lists, 1.84 ± 1.01 items are missing (median 2; maximum 6).
 Across participants, missing exposure ranges from 2 to 19 items (3.9–10% of each person's 180 study events), so imputation is methodologically substantive.
 
-LPP amplitudes are imputed using within-person, within-trial emotion-matched means.
-For any study event still missing an LPP value after merging, we fill that participant's average for items of the same emotion within the same trial.
+LPP amplitudes are imputed using within-person, within-trial emotion‑matched means.
+For any study event still missing an LPP value after merging, we fill that participant's average for items of the same emotion within the same trial. 
 This preserves within‑person, within‑trial, and emotion‑specific structure and avoids borrowing information across trials or valence conditions.
 
 The dataset indicates which items were recalled but not their order. 
-Accordingly, model fitting must use loss functions defined over the recalled set per trial, and our likelihood-based evaluation scores models by the probability they assign to the observed recalled sets rather than to output sequences.
-Similarly, analyses of recall structure cannot use standard measures like lag-CRP that require output order. 
-We therefore develop an order-agnostic alternative with similar interpretive goals.
+Accordingly, model fitting must use loss functions defined over the recalled set per trial, and analyses of recall structure require order‑agnostic alternatives.
 
 # Benchmark Analyses
 
