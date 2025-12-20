@@ -196,11 +196,7 @@ Our conditional co-recall analysis is the only benchmark that directly targets t
 
 These constraints motivate treating item type and LPP as interacting influences on encoding or retrieval while keeping temporal context effects modest in scope. The mixed-effects cross-check supports this view (main effects plus interaction) but does not specify how the predictors should enter an encoding rule or propagate through retrieved-context dynamics to shape recall sets.
 
-In the next section, we use an eCMR-style model to ask whether simple encoding rules that combine emotion and LPP can reproduce the observed benchmarks once they are embedded in a full retrieval process.
-In particular, we will test whether a linear learning-rate rule with Emotion, LPP, and their interaction remains compatible with the behavioral and EEG constraints when run through eCMR.
-We also test whether the observed LPP × emotion pattern can be captured by main-effect LPP terms together with nonlinear competitive dynamics, or instead requires an explicit interaction term at encoding.
-Finally, we show that models omitting LPP, emotion, or both fail to reproduce the observed recall sets and key benchmarks, confirming that both signals are necessary to explain the data in this framework.
-We then discuss these results and their theoretical implications in the final section, highlighting limitations and directions for future work.
+In the next section, we focus on three closely related eCMR variants that directly address whether LPP adds explanatory value beyond emotion labels and whether that value differs by item type. We compare an emotion-only model (no LPP input), a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue). These comparisons test whether LPP contributes incremental information about recall sets and whether the GMM-style interaction requires an explicit emotion-dependent term or can arise from retrieved-context dynamics.
 
 # A Set-Based Likelihood Function for Model Fitting
 
