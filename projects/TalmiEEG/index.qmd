@@ -18,7 +18,7 @@ Prior analyses provide two anchors. First, emotionally negative items are recall
 
 We address this with computational neurocognitive models that formalize hypotheses about how LPPs interact with attention and context binding at encoding.
 We simulate trials and score models by the likelihood they assign to the full recalled set on each list, asking how probable the observed data are under each mechanism as specified. 
-Good fits provide evidence that a mechanism can produce the behavior; poor fits indicate the specification is insufficient.
+Good fits provide evidence that a mechanism can produce the behavior; poor fits indicate that the specification is insufficient.
 
 Our evaluation instantiates these hypotheses within the retrieved-context framework of eCMR (Talmi et al., 2019), where item–context associations guide recall. 
 Emotional items bind more strongly to emotion-specific context and attract more attention, increasing their odds of retrieval. 
@@ -30,14 +30,15 @@ The primary analysis table is `Single_Trial_Behavioural_and_EEG_Data_Z.csv` (`Z:
 That table, identical across server copies, omits study events that lack reliable EEG measurements.
 To restore those events, we merged it with the behavioral log `All_Included_Subjects.csv` (`Z:\Talmi lab space\Archive\Secondary_Data_Analysis_Zarubin_From_Robin\Data\Behaviour\Behaviour_csv_files\`). This log contains no LPP scores but records recall status for all study events beyond a primacy buffer of the first two items per list.
 Recall data for buffer items were excluded by the original authors to avoid confounding primacy effects with emotion–memory effects.
-Unfortunately, recall data for buffer items cannot be recovered; accordingly, lists are analyzed as 20‑item sequences, despite originally being 22 items long.
+Unfortunately, recall data for buffer items cannot be recovered. 
+Accordingly, lists are analyzed as 20‑item sequences, despite originally being 22 items long.
 
 Before merging, we verified label consistency across sources, confirming there were no conflicts in recalled versus not-recalled designations.
 The merged dataset comprises 6,840 study events from 342 list trials with 20 analyzable items per list.
 Of these events, 371 (5.42%) lack EEG measurements.
 Missingness is comparable across valence conditions: negative lists contribute 125 of 2,266 events (5.52%; mean 0.37 ± 0.65 items missing per trial) and neutral lists contribute 246 of 4,574 events (5.38%; mean 0.72 ± 0.93 items missing per trial).
 Overall, 202 of 342 lists (59.1%) include at least one missing LPP value; among affected lists, 1.84 ± 1.01 items are missing (median 2; maximum 6).
-Across participants, missing exposure ranges from 2 to 19 items (3.9–10% of each person's 180 study events), so imputation methodologically substantive.
+Across participants, missing exposure ranges from 2 to 19 items (3.9–10% of each person's 180 study events), so imputation is methodologically substantive.
 
 LPP amplitudes are imputed using within-person, within-trial emotion-matched means.
 For any study event still missing an LPP value after merging, we fill that participant's average for items of the same emotion within the same trial.
@@ -45,14 +46,14 @@ This preserves within‑person, within‑trial, and emotion‑specific structure
 
 The dataset indicates which items were recalled but not their order. 
 Accordingly, model fitting must use loss functions defined over the recalled set per trial, and our likelihood-based evaluation scores models by the probability they assign to the observed recalled sets rather than to output sequences.
-Similarly, analyses of recall structure cannot use standard measures like lag-CRP that require output order; we therefore develop an order-agnostic alternatives with similar interpretive goals.
+Similarly, analyses of recall structure cannot use standard measures like lag-CRP that require output order. 
+We therefore develop an order-agnostic alternative with similar interpretive goals.
 
 # Benchmark Analyses
 
 These benchmarks both define concrete targets for model development and verify that data preparation preserved known effects.
 Unless noted, error bars show 95% bootstrap confidence intervals across participants.
-
-<!--#TODO: We may switch to hierarchical (subject and trial level) confidence intervals later to better account for data structure.-->
+That is, we resample participants with replacement 10,000 times, compute the statistic of interest on each bootstrap sample, and take the 2.5th and 97.5th percentiles of the resulting distribution as confidence bounds.
 
 ## Emotional Items Are Recalled More Often
 
@@ -113,7 +114,7 @@ Unrecalled emotional items overlap with both recalled and unrecalled neutral ite
 Two simple linking stories are inconsistent with this pattern.
 First, if LPP simply reflected item type, recalled and unrecalled items of the same type would have similar LPPs; instead, recall status clearly separates Early LPP within the emotional condition. 
 Second, if LPP simply reflected recall probability, recalled items across item types would align; instead, recalled emotional items have higher LPPs than recalled neutral items.
-Neither pattern holds, indicating an interation between LPP and item type.
+Neither pattern holds, indicating an interaction between LPP and item type.
 
 ::: {#fig-cat_lpp_by_recall }
 ![](results/figures/cat_lpp_by_recall.png)
@@ -227,7 +228,7 @@ We also test whether the observed LPP × emotion pattern can be captured by main
 Finally, we show that models omitting LPP, emotion, or both fail to reproduce the observed recall sets and key benchmarks, confirming that both signals are necessary to explain the data in this framework.
 We then discuss these results and their theoretical implications in the final section, highlighting limitations and directions for future work.
 
-# Loss Functions for Model Fitting
+# A Set-Based Likelihood Function for Model Fitting
 
 Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
 Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
@@ -236,8 +237,6 @@ First, models like CMR and eCMR naturally predict recall sequences, but our data
 This forces us to score models on how well they predict the *set* of recalled items on each list.
 Second, the first two items of each list were removed from the data to reduce primacy confounds in the emotion analyses.
 This omission removes some information about how context evolved early in the list; for the present purposes, we ignore the missing buffer items and treat each list as a 20-item sequence.
-
-## Set-Based Likelihood
 
 In a standard likelihood analysis with full recall order, we would compute, for each trial, the probability that the model generates the exact observed recall sequence, and then maximize the product of those probabilities across trials.
 Here we replace the sequence with the unordered set of recalled items.
