@@ -386,6 +386,217 @@ Figure&nbsp;8: Order-agnostic conditional co-recall by lag for the Zarubin EEG d
 <p>In the next section, we focus on three closely related eCMR variants that directly address whether LPP adds explanatory value beyond emotion labels and whether that value differs by item type. We compare an emotion-only model (no LPP input), a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue). These comparisons test whether LPP contributes incremental information about recall sets and whether the GMM-style interaction requires an explicit emotion-dependent term or can arise from retrieved-context dynamics.</p>
 <section id="ecmr-specification" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="ecmr-specification"><span class="header-section-number">3.1</span> eCMR Specification</h2>
+<p>We use a connectionist CMR architecture with a temporal context and add a separate emotional context unit. The emotional context unit is active for emotional items and inactive for neutral items during encoding and retrieval. Emotional items also receive a learning boost in the emotional context-to-item memory.</p>
+<div id="tbl-ecmr-parameters" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ecmr-parameters-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Parameters and structures specifying eCMR.
+</figcaption>
+<div aria-describedby="tbl-ecmr-parameters-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(c^T\)</span></td>
+<td>temporal context</td>
+<td>Recency-weighted summary of prior items.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(c^E\)</span></td>
+<td>emotional context</td>
+<td>Binary context unit active for emotional items.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(f_i\)</span></td>
+<td>item features</td>
+<td>One-hot representation of item <span class="math inline">\(i\)</span>.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(M^{FC}\)</span></td>
+<td>item-to-temporal-context memory</td>
+<td>Feature-to-context associations.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(M^{CF}_T\)</span></td>
+<td>temporal context-to-item memory</td>
+<td>Temporal context cueing item features.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(M^{CF}_E\)</span></td>
+<td>emotional context-to-item memory</td>
+<td>Emotional context cueing item features.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\beta_{enc}\)</span></td>
+<td>encoding drift rate</td>
+<td>Integration rate of temporal context during encoding.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\beta_{start}\)</span></td>
+<td>start drift rate</td>
+<td>Start-list context integration at recall onset.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\beta_{rec}\)</span></td>
+<td>recall drift rate</td>
+<td>Integration rate of temporal context during recall.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\alpha\)</span></td>
+<td>shared support</td>
+<td>Uniform pre-experimental support in <span class="math inline">\(M^{CF}_T\)</span>.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\delta\)</span></td>
+<td>item support</td>
+<td>Self-support in <span class="math inline">\(M^{CF}_T\)</span>.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\gamma\)</span></td>
+<td>learning rate</td>
+<td>Feature-to-context learning rate in <span class="math inline">\(M^{FC}\)</span>.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\phi_s\)</span></td>
+<td>primacy scale</td>
+<td>Initial boost to <span class="math inline">\(M^{CF}_T\)</span> learning.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\phi_d\)</span></td>
+<td>primacy decay</td>
+<td>Decay rate of the primacy boost.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\theta_s\)</span></td>
+<td>stop scale</td>
+<td>Baseline stopping probability.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\theta_r\)</span></td>
+<td>stop growth</td>
+<td>Growth rate of stopping probability per output.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\tau_c\)</span></td>
+<td>choice sensitivity</td>
+<td>Exponent for Luce-style competition.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(E_i\)</span></td>
+<td>emotion indicator</td>
+<td>1 for emotional items, 0 for neutral items.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(L_i\)</span></td>
+<td>centered Early LPP</td>
+<td>List-centered Early LPP for item <span class="math inline">\(i\)</span>.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\kappa_E\)</span></td>
+<td>emotional learning scale</td>
+<td>Base boost to <span class="math inline">\(M^{CF}_E\)</span> learning.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\kappa_L\)</span></td>
+<td>LPP main scale</td>
+<td>Slope for LPP main effect.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\lambda_L\)</span></td>
+<td>LPP main threshold</td>
+<td>Centering offset for the LPP main effect.</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\kappa_{EL}\)</span></td>
+<td>LPP interaction scale</td>
+<td>Slope for LPP-by-emotion interaction.</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\lambda_{EL}\)</span></td>
+<td>LPP interaction threshold</td>
+<td>Centering offset for the interaction term.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Temporal context uses the standard CMR pre-experimental initializations:</p>
+<p><span class="math display">\[
+M^{FC}_{pre(ij)} =
+\begin{cases}
+1 - \gamma &amp; \text{if } i=j \\
+0 &amp; \text{if } i \neq j
+\end{cases}
+\]</span></p>
+<p><span class="math display">\[
+M^{CF_T}_{pre(ij)} =
+\begin{cases}
+\delta &amp; \text{if } i=j \\
+\alpha &amp; \text{if } i \neq j
+\end{cases}
+\]</span></p>
+<p>During encoding, temporal contextual input is retrieved as <span class="math inline">\(c^{IN}_i = M^{FC} f_i\)</span> and normalized to unit length. Temporal context updates according to:</p>
+<p><span class="math display">\[
+c^T_i = \rho_i c^T_{i-1} + \beta_{enc} c^{IN}_i
+\]</span></p>
+<p><span class="math display">\[
+\rho_i = \sqrt{1 + \beta_{enc}^2\left[\left(c^T_{i-1} \cdot c^{IN}_i\right)^2 - 1\right]} - \beta_{enc}\left(c^T_{i-1} \cdot c^{IN}_i\right)
+\]</span></p>
+<p>Feature-to-context learning uses a Hebbian update:</p>
+<p><span class="math display">\[
+\Delta M^{FC}_{ij} = \gamma f_i c^T_j
+\]</span></p>
+<p>Primacy is implemented by scaling the temporal context-to-feature learning rate:</p>
+<p><span class="math display">\[
+\phi_i = \phi_s e^{-\phi_d(i-1)} + 1
+\]</span></p>
+<p>LPP enters the emotional learning strength through separate main and interaction terms:</p>
+<p><span class="math display">\[
+\ell_i = \kappa_L (L_i - \lambda_L)
+\]</span></p>
+<p><span class="math display">\[
+\ell^{E}_i = \kappa_{EL} (L_i - \lambda_{EL}) E_i
+\]</span></p>
+<p><span class="math display">\[
+g_i = \max\left(0,\; \kappa_E E_i + \ell_i + \ell^{E}_i\right)
+\]</span></p>
+<p>Temporal context-to-feature learning is:</p>
+<p><span class="math display">\[
+\Delta M^{CF_T}_{ij} = \phi_i c^T_j f_i
+\]</span></p>
+<p>Emotional context-to-feature learning uses the emotional context unit <span class="math inline">\(c^E_i = E_i\)</span>:</p>
+<p><span class="math display">\[
+\Delta M^{CF_E}_{ij} = \phi_i g_i c^E_i f_i
+\]</span></p>
+<p>At the start of recall, temporal context is shifted toward the pre-list state:</p>
+<p><span class="math display">\[
+c^T_{start} = \rho_{N+1} c^T_N + \beta_{start} c^T_0
+\]</span></p>
+<p>At each recall step, temporal context cues item activations and the emotional memory contributes only when the emotional context is active:</p>
+<p><span class="math display">\[
+A = M^{CF_T} c^T + e_{t-1} M^{CF_E}
+\]</span></p>
+<p>where <span class="math inline">\(e_{t-1}\)</span> is 1 if the most recently recalled item was emotional and 0 otherwise. Stopping follows:</p>
+<p><span class="math display">\[
+P(\text{stop}, j) = \theta_s e^{j\theta_r}
+\]</span></p>
+<p>If recall continues, the probability of recalling item <span class="math inline">\(i\)</span> is:</p>
+<p><span class="math display">\[
+P(i) = (1-P(\text{stop}))\frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
+\]</span></p>
+<p>When an item is recalled, its temporal context is reinstated via <span class="math inline">\(M^{FC}\)</span> and integrated with <span class="math inline">\(\beta_{rec}\)</span>, and the process iterates.</p>
 </section>
 <section id="model-variants" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="model-variants"><span class="header-section-number">3.2</span> Model Variants</h2>
@@ -908,7 +1119,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","loop":false,"descPosition":"bottom","selector":".lightbox","openEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","selector":".lightbox","loop":false,"openEffect":"zoom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
