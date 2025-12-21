@@ -184,7 +184,9 @@ In contrast to the PEERS subset, this paradigm therefore shows at most a weak te
 Order-agnostic conditional co-recall by lag for the Zarubin EEG dataset. Conditional co-recall probabilities vary little with lag, indicating weak temporal clustering of recalled items in this paradigm.
 :::
 
-# Constraints and Hypotheses
+# Modeling Strategy
+
+## Constraints and Hypotheses
 
 Taken together, these benchmarks place clear constraints on any mechanistic account of how LPP relates to emotion and memory.
 Item type and LPP must be treated as distinct inputs whose effects interact: emotional items enjoy a baseline recall advantage (EEM), and Early LPP further modulates recall likelihood, with a much stronger association for emotional items than for neutral items.
@@ -198,7 +200,7 @@ These constraints motivate treating item type and LPP as interacting influences 
 
 In the next section, we focus on three closely related eCMR variants that directly address whether LPP adds explanatory value beyond emotion labels and whether that value differs by item type. We compare an emotion-only model (no LPP input), a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue). These comparisons test whether LPP contributes incremental information about recall sets and whether the GMM-style interaction requires an explicit emotion-dependent term or can arise from retrieved-context dynamics.
 
-# Modeling Strategy
+## Model Variants
 
 The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items.
 These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model.
@@ -212,7 +214,7 @@ Similarly, even a single-slope LPP model might capture the interaction pattern i
 The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term.
 Together, these comparisons address the core question without introducing additional structural variants.
 
-## # A Set-Based Likelihood Function for Model Fitting
+## A Set-Based Likelihood Function for Model Fitting
 
 Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
 Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
@@ -253,34 +255,6 @@ It ignores patterns in data that are not explicitly targeted by the chosen summa
 In contrast, the set-likelihood approach evaluates models on their ability to reproduce the full recalled sets, eliminating these deficiencies and providing a more stringent test of mechanistic hypotheses.
 Our primary questions directly address the effects of item-level variation in LPP and emotion on recall, so we prioritize a loss function that is sensitive to these item-level patterns.
 We thus rely on the set-likelihood framework for the fits and model comparisons reported below.
-
-# Modeling Strategy
-
-The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items.
-These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model.
-In a retrieved-context framework, recall probabilities are not set directly by "emotion + LPP" terms; they emerge from how learning rates and trace features shape context, activation, and competition among items.
-We therefore test whether a GMM-aligned encoding rule remains consistent with observed recall sets once it is passed through eCMR dynamics.
-We also evaluate that rule by the likelihood assigned to observed recall sets, not just by marginal recall probabilities.
-We therefore compare three eCMR variants that differ only in how LPP enters the encoding rule: an emotion-only model with no LPP term, a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue).
-
-Even an emotion-only model might appear to reproduce LPP-recall patterns if LPP covaries with factors the model already uses (position, list condition, semantic similarity), so it provides a baseline test of whether LPP adds information beyond emotion labels.
-The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term.
-
-To make this concrete, consider a simplified "spotlight" view of retrieved-context dynamics.
-At encoding, each item acquires an association strength or learning rate $S_i$.
-At retrieval, the activation of item $i$ is roughly proportional to a product of its trace strength and its match to the current cue, for example
-
-$$
-A_i \propto (\text{cue–trace similarity}_i \times S_i)^\tau,
-$$
-
-followed by normalization across items.
-Importantly a sensitivity parameter $\tau > 1$ introduces nonlinear competition: items with higher activation get disproportionately favored during recall.
-
-If Emotion and LPP each contribute linearly to these ingredients (for instance, adding to the learning rate and to the cue–trace match), then the product contains an interaction term even when the encoding rule itself includes only main effects.
-In other words, nonlinear cue-dependent competition can generate an effective LPP × emotion dependence in recall probabilities even without an explicit interaction term in the learning-rate equation.
-This observation makes it a modeling question, not a foregone conclusion, whether the interaction term estimated by the GMM must be present at encoding or can arise as a side-effect of retrieved-context dynamics.
-Together, these comparisons address the core question without introducing additional structural variants.
 
 # Appendix
 
