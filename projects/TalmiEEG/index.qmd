@@ -186,8 +186,6 @@ Order-agnostic conditional co-recall by lag for the Zarubin EEG dataset. Conditi
 
 # Modeling Strategy
 
-## Constraints and Hypotheses
-
 Taken together, these benchmarks place clear constraints on any mechanistic account of how LPP relates to emotion and memory.
 Item type and LPP must be treated as distinct inputs whose effects interact: emotional items enjoy a baseline recall advantage (EEM), and Early LPP further modulates recall likelihood, with a much stronger association for emotional items than for neutral items.
 The mixed-effects cross-check confirms this pattern, showing main effects of condition and Early LPP as well as a significant interaction.
@@ -199,6 +197,9 @@ Our conditional co-recall analysis is the only benchmark that directly targets t
 These constraints motivate treating item type and LPP as interacting influences on encoding or retrieval while keeping temporal context effects modest in scope. The mixed-effects cross-check supports this view (main effects plus interaction) but does not specify how the predictors should enter an encoding rule or propagate through retrieved-context dynamics to shape recall sets.
 
 In the next section, we focus on three closely related eCMR variants that directly address whether LPP adds explanatory value beyond emotion labels and whether that value differs by item type. We compare an emotion-only model (no LPP input), a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue). These comparisons test whether LPP contributes incremental information about recall sets and whether the GMM-style interaction requires an explicit emotion-dependent term or can arise from retrieved-context dynamics.
+
+## eCMR Specification
+
 
 ## Model Variants
 
@@ -214,7 +215,7 @@ Similarly, even a single-slope LPP model might capture the interaction pattern i
 The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term.
 Together, these comparisons address the core question without introducing additional structural variants.
 
-## A Set-Based Likelihood Function for Model Fitting
+## Fitting Objective: Set Likelihood
 
 Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
 Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
