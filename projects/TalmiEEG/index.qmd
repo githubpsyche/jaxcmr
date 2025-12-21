@@ -203,6 +203,8 @@ In the next section, we focus on three closely related eCMR variants that direct
 We use a connectionist CMR architecture with a temporal context and add a separate emotional context unit.
 The emotional context unit is active for emotional items and inactive for neutral items during encoding and retrieval.
 Emotional items also receive a learning boost in the emotional context-to-item memory.
+We denote temporal context as $c^T$ and emotional context as $c^E$, with item features $f_i$.
+The matrix $M^{FC}$ binds item features to temporal context, $M^{CF}_T$ binds temporal context to item features, and $M^{CF}_E$ binds the emotional context unit to item features.
 
 | Symbol | Name | Description |
 | --- | --- | --- |
@@ -251,6 +253,8 @@ M^{CF_T}_{pre(ij)} =
 \end{cases}
 $$
 
+Here, $\gamma$ scales the ratio of new feature-to-context associations formed during the experiment to pre-experimental item–context links.
+The parameters $\delta$ and $\alpha$ set pre-experimental self-support and shared support in temporal context-to-feature memory, respectively.
 During encoding, temporal contextual input is retrieved as $c^{IN}_i = M^{FC} f_i$ and normalized to unit length.
 Temporal context updates according to:
 
@@ -262,18 +266,21 @@ $$
 \rho_i = \sqrt{1 + \beta_{enc}^2\left[\left(c^T_{i-1} \cdot c^{IN}_i\right)^2 - 1\right]} - \beta_{enc}\left(c^T_{i-1} \cdot c^{IN}_i\right)
 $$
 
+Here, $\beta_{enc}$ sets the drift rate of temporal context during encoding and $\rho_i$ normalizes the context vector.
 Feature-to-context learning uses a Hebbian update:
 
 $$
 \Delta M^{FC}_{ij} = \gamma f_i c^T_j
 $$
 
+This update uses $\gamma$ as the feature-to-context learning rate.
 Primacy is implemented by scaling the temporal context-to-feature learning rate:
 
 $$
 \phi_i = \phi_s e^{-\phi_d(i-1)} + 1
 $$
 
+Here, $\phi_s$ sets the initial primacy boost and $\phi_d$ controls its decay across serial positions.
 LPP enters the emotional learning strength through separate main and interaction terms:
 
 $$
@@ -288,24 +295,30 @@ $$
 g_i = \max\left(0,\; \kappa_E E_i + \ell_i + \ell^{E}_i\right)
 $$
 
+Here, $E_i$ is the emotion indicator and $L_i$ is the centered Early LPP value for item $i$.
+The parameters $\kappa_L$ and $\lambda_L$ set the slope and centering of the LPP main effect, while $\kappa_{EL}$ and $\lambda_{EL}$ set the interaction slope and centering.
+The parameter $\kappa_E$ sets the base emotional learning boost, and $g_i$ is the resulting emotional learning strength for item $i$.
 Temporal context-to-feature learning is:
 
 $$
 \Delta M^{CF_T}_{ij} = \phi_i c^T_j f_i
 $$
 
+This update uses the primacy-scaled temporal context to bind items in $M^{CF}_T$.
 Emotional context-to-feature learning uses the emotional context unit $c^E_i = E_i$:
 
 $$
 \Delta M^{CF_E}_{ij} = \phi_i g_i c^E_i f_i
 $$
 
+This update applies the emotional learning strength $g_i$ to bind items in the emotional memory $M^{CF}_E$.
 At the start of recall, temporal context is shifted toward the pre-list state:
 
 $$
 c^T_{start} = \rho_{N+1} c^T_N + \beta_{start} c^T_0
 $$
 
+Here, $\beta_{start}$ controls how much start-list context is reinstated at retrieval onset.
 At each recall step, temporal context cues item activations and the emotional memory contributes only when the emotional context is active:
 
 $$
@@ -313,19 +326,23 @@ A = M^{CF_T} c^T + e_{t-1} M^{CF_E}
 $$
 
 where $e_{t-1}$ is 1 if the most recently recalled item was emotional and 0 otherwise.
+This term gates emotional-context support to sequences that just recalled an emotional item.
 Stopping follows:
 
 $$
 P(\text{stop}, j) = \theta_s e^{j\theta_r}
 $$
 
+The parameters $\theta_s$ and $\theta_r$ set the baseline and growth rate of stopping over output positions.
 If recall continues, the probability of recalling item $i$ is:
 
 $$
 P(i) = (1-P(\text{stop}))\frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
 $$
 
+Here, $\tau_c$ controls the sharpness of the Luce-style competition over item activations.
 When an item is recalled, its temporal context is reinstated via $M^{FC}$ and integrated with $\beta_{rec}$, and the process iterates.
+Here, $\beta_{rec}$ sets the drift rate of temporal context during recall.
 
 
 ## Model Variants
