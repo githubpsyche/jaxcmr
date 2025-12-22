@@ -222,8 +222,6 @@ The matrix $M^{FC}$ binds item features to temporal context, $M^{CF}_T$ binds te
 | $\gamma$ | learning rate | Feature-to-context learning rate in $M^{FC}$. |
 | $\phi_s$ | primacy scale | Initial boost to $M^{CF}_T$ learning. |
 | $\phi_d$ | primacy decay | Decay rate of the primacy boost. |
-| $\theta_s$ | stop scale | Baseline stopping probability. |
-| $\theta_r$ | stop growth | Growth rate of stopping probability per output. |
 | $\tau_c$ | choice sensitivity | Exponent for Luce-style competition. |
 | $\phi_{emot}$ | emotional learning boost | Value is $\phi_{emot}$ for emotional items and 0 for neutral items. |
 | $L_i$ | centered Early LPP | List-centered Early LPP for item $i$. |
@@ -317,20 +315,15 @@ $$
 
 where $e_{t-1}$ is 1 if the most recently recalled item was emotional and 0 otherwise.
 This term gates emotional-context support to sequences that just recalled an emotional item.
-Stopping follows:
+At each recall step, the probability of recalling item $i$ is:
 
 $$
-P(\text{stop}, j) = \theta_s e^{j\theta_r}
-$$
-
-The parameters $\theta_s$ and $\theta_r$ set the baseline and growth rate of stopping over output positions.
-If recall continues, the probability of recalling item $i$ is:
-
-$$
-P(i) = (1-P(\text{stop}))\frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
+P(i) = \frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
 $$
 
 Here, $\tau_c$ controls the sharpness of the Luce-style competition over item activations.
+To simplify evaluation, we do not include an explicit termination mechanism in this variant; instead, we simulate unconstrained recall and then truncate outputs to match observed recall lengths during likelihood evaluation.
+This matches termination behavior to the data, removing its influence on model fits.
 When an item is recalled, its temporal context is reinstated via $M^{FC}$ and integrated with $\beta_{rec}$, and the process iterates.
 Here, $\beta_{rec}$ sets the drift rate of temporal context during recall.
 
@@ -376,15 +369,17 @@ In implementation, negative values of $g_i$ are clamped to 0 in all variants.
 
 Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
 Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
-Two properties of the Zarubin dataset shape how we define this likelihood.
+Three factors shape how we define this likelihood.
 First, models like CMR and eCMR naturally predict recall sequences, but our data only say whether each item was recalled.
 This forces us to score models on how well they predict the *set* of recalled items on each list.
 Second, the first two items of each list were removed from the data to reduce primacy confounds in the emotion analyses.
 This omission removes some information about how context evolved early in the list; for the present purposes, we ignore the missing buffer items and treat each list as a 20-item sequence.
+Third, we exclude explicit termination events from the loss by masking trailing stop markers in the recall matrix so termination actions do not affect the likelihood.
+This focuses fits on which items are recalled rather than how many items are recalled and when recall stops, matching our substantive aims and simplifying evaluation.
 
 In a standard likelihood analysis with full recall order, we would compute, for each trial, the probability that the model generates the exact observed recall sequence, and then maximize the product of those probabilities across trials.
 Here we replace the sequence with the unordered set of recalled items.
-Let $S_t$ denote the set of items recalled on trial $t$, and let $r$ range over recall sequences that produce the same set $S_t$ (possibly with different orders and stopping points).
+Let $S_t$ denote the set of items recalled on trial $t$, and let $r$ range over recall sequences that produce the same set $S_t$ (possibly with different orders).
 We define the *set likelihood* as
 
 $$
@@ -398,8 +393,16 @@ Evaluating this sum exactly is infeasible for lists with many recalled items, be
 We therefore approximate $P(S_t \mid \theta)$ with a Monte Carlo estimate based on permutations of the observed set.
 For each trial, we sample a fixed number of random permutations of $S_t$, treat each permutation as a possible recall sequence, and compute its probability under the model.
 Averaging these probabilities over permutations yields an unbiased estimate of the set likelihood for that trial.
-We then sum log likelihoods across trials and participants, and choose parameter values that maximize this approximate set-based log likelihood.
-All model fits reported in the Results section use this set-likelihood objective.
+We then sum log likelihoods across trials for each participant and choose parameter values that maximize this approximate set-based log likelihood.
+
+We maximize the objective with differential evolution [@storn1997differential].
+Because differential evolution is stochastic, we run three independent optimizations per participant and model variant and retain the best-performing fit.
+For model comparison, we compute per-subject AIC values and summarize mean $\Delta$AIC with t-based 95\% confidence intervals, alongside AIC weights and winner ratios.
+
+We also simulate each fitted model variant on the same list structure participants experienced, using per-subject fitted parameters, and analyze the simulated datasets with the same benchmark plots.
+Simulation runs unconstrained free recall and then zeroes outputs after the observed termination index so simulated sequences match the empirical output lengths.
+By comparing empirical and simulated curves, we assess whether a model that fits trial-level recall sets also reproduces hallmark free-recall benchmarks.
+Because additional parameters can improve likelihoods by construction, these benchmark fits provide a qualitative check on model plausibility alongside AIC-based comparisons.
 
 This approach uses trial-level information about which items were recalled on which lists and respects the full generative structure of eCMR: the same parameters that govern encoding and cue-dependent retrieval are used both to generate recall sets and to score their likelihood.
 It also aligns with our substantive aims.
@@ -496,7 +499,7 @@ It is most appropriate when the modeling goal is to match coarse patterns such a
 Our primary aim, however, is to evaluate neurally informed LPP mechanisms that are intended to explain itemwise differences in recall probability within the emotional condition.
 For that goal, a trial-level set-likelihood objective, as described in the main text, provides a more direct and sensitive test.
 
-### Justification for Pure Main Effects Model
+## Justification for Pure Main Effects Model
 
 Consider a simplified "spotlight" view of retrieved-context dynamics.
 At encoding, each item acquires an association strength or learning rate $S_i$.
