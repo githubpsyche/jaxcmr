@@ -1,0 +1,144 @@
+\begin{table*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+
+{\caption{{Parameters and structures specifying
+eCMR.}{\label{tbl-ecmr-parameters}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Symbol
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Name
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(c^T\) & temporal context & Recency-weighted summary of prior items. \\
+\(f_i\) & item features & One-hot representation of item \(i\). \\
+\(M^{FC}\) & item-to-temporal-context memory & Feature-to-context
+associations. \\
+\(M^{CF}\) & context-to-item memory & Temporal context cueing item
+features. \\
+\(\beta_{enc}\) & encoding drift rate & Integration rate of temporal
+context during encoding. \\
+\(\beta_{start}\) & start drift rate & Start-list context integration at
+recall onset. \\
+\(\beta_{rec}\) & recall drift rate & Integration rate of temporal
+context during recall. \\
+\(\alpha\) & shared support & Uniform pre-experimental support in
+\(M^{CF}\). \\
+\(\delta\) & item support & Self-support in \(M^{CF}\). \\
+\(\gamma\) & learning rate & Feature-to-context learning rate in
+\(M^{FC}\). \\
+\(\phi_s\) & primacy scale & Initial boost to \(M^{CF}\) learning. \\
+\(\phi_d\) & primacy decay & Decay rate of the primacy boost. \\
+\(\tau_c\) & choice sensitivity & Exponent for Luce-style
+competition. \\
+\(\phi_{emot}\) & emotional learning boost & Value is \(\phi_{emot}\)
+for emotional items and 0 for neutral items. \\
+\(L_i\) & centered Early LPP & List-centered Early LPP for item
+\(i\). \\
+\(\kappa_L\) & LPP main scale & Slope for LPP main effect. \\
+\(\lambda_L\) & LPP main threshold & Centering offset for the LPP main
+effect. \\
+\(\kappa_{EL}\) & LPP interaction scale & Slope for LPP-by-emotion
+interaction. \\
+\(\lambda_{EL}\) & LPP interaction threshold & Centering offset for the
+interaction term. \\
+\end{longtable}
+
+\end{table*}
+\efloatseparator
+ 
+\begin{table*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+
+{\caption{{Parameter estimates and fit summaries for TalmiEEG model
+variants (mean +/- 95\% t-based CI across
+participants).}{\label{tbl-talmi-parameter-estimates}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.3400}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Parameter
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (main effects)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (interaction)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion-only
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+fitness & 210.26 +/- 16.34 & 209.65 +/- 16.24 & 211.74 +/- 16.38 \\
+encoding drift rate & 0.61 +/- 0.11 & 0.65 +/- 0.11 & 0.62 +/- 0.11 \\
+start drift rate & 0.37 +/- 0.13 & 0.36 +/- 0.13 & 0.40 +/- 0.14 \\
+recall drift rate & 0.49 +/- 0.12 & 0.56 +/- 0.13 & 0.47 +/- 0.13 \\
+shared support & 40.74 +/- 11.52 & 35.02 +/- 11.32 & 42.56 +/- 11.07 \\
+item support & 45.36 +/- 10.79 & 47.20 +/- 11.63 & 52.40 +/- 10.85 \\
+learning rate & 0.51 +/- 0.12 & 0.47 +/- 0.13 & 0.55 +/- 0.11 \\
+primacy scale & 18.43 +/- 8.30 & 37.07 +/- 11.06 & 16.68 +/- 8.45 \\
+primacy decay & 48.94 +/- 9.90 & 45.74 +/- 10.83 & 39.34 +/- 9.43 \\
+choice sensitivity & 37.24 +/- 11.43 & 20.87 +/- 9.77 & 37.12 +/-
+10.10 \\
+emotion scale & 6.77 +/- 0.88 & 4.91 +/- 0.81 & 4.43 +/- 1.02 \\
+lpp main scale & 23.21 +/- 10.50 & 39.53 +/- 12.91 & 0.00 +/- 0.00 \\
+lpp main threshold & 0.95 +/- 1.10 & 0.84 +/- 0.98 & 0.00 +/- 0.00 \\
+lpp inter scale & 0.00 +/- 0.00 & 53.95 +/- 11.17 & 0.00 +/- 0.00 \\
+lpp inter threshold & 0.00 +/- 0.00 & -0.90 +/- 0.98 & 0.00 +/- 0.00 \\
+\end{longtable}
+
+\end{table*}
+\efloatseparator
+ 
+\begin{table*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+
+{\caption{{Pairwise delta AIC (row minus column; mean {[}95\% t-based
+CI{]}).}{\label{tbl-talmi-delta-aic}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.3400}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (main effects)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (interaction)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion-only
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Emotion + LPP (main effects) & NA & 1.12 {[}0.13, 2.11{]} & -2.86
+{[}-4.14, -1.57{]} \\
+Emotion + LPP (interaction) & -1.12 {[}-2.11, -0.13{]} & NA & -3.98
+{[}-5.71, -2.25{]} \\
+Emotion-only & 2.86 {[}1.57, 4.14{]} & 3.98 {[}2.25, 5.71{]} & NA \\
+\end{longtable}
+
+\end{table*}
