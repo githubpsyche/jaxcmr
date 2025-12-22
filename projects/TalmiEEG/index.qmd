@@ -225,9 +225,8 @@ The matrix $M^{FC}$ binds item features to temporal context, $M^{CF}_T$ binds te
 | $\theta_s$ | stop scale | Baseline stopping probability. |
 | $\theta_r$ | stop growth | Growth rate of stopping probability per output. |
 | $\tau_c$ | choice sensitivity | Exponent for Luce-style competition. |
-| $E_i$ | emotion indicator | 1 for emotional items, 0 for neutral items. |
+| $\phi_{emot}$ | emotional learning boost | Value is $\phi_{emot}$ for emotional items and 0 for neutral items. |
 | $L_i$ | centered Early LPP | List-centered Early LPP for item $i$. |
-| $\kappa_E$ | emotional learning scale | Base boost to $M^{CF}_E$ learning. |
 | $\kappa_L$ | LPP main scale | Slope for LPP main effect. |
 | $\lambda_L$ | LPP main threshold | Centering offset for the LPP main effect. |
 | $\kappa_{EL}$ | LPP interaction scale | Slope for LPP-by-emotion interaction. |
@@ -281,23 +280,14 @@ $$
 $$
 
 Here, $\phi_s$ sets the initial primacy boost and $\phi_d$ controls its decay across serial positions.
-LPP enters the emotional learning strength through separate main and interaction terms:
+Emotional learning strength is defined as:
 
 $$
-\ell_i = \kappa_L (L_i - \lambda_L)
+g_i = \phi_{emot,i} + \phi_i
 $$
 
-$$
-\ell^{E}_i = \kappa_{EL} (L_i - \lambda_{EL}) E_i
-$$
-
-$$
-g_i = \max\left(0,\; \kappa_E E_i + \ell_i + \ell^{E}_i\right)
-$$
-
-Here, $E_i$ is the emotion indicator and $L_i$ is the centered Early LPP value for item $i$.
-The parameters $\kappa_L$ and $\lambda_L$ set the slope and centering of the LPP main effect, while $\kappa_{EL}$ and $\lambda_{EL}$ set the interaction slope and centering.
-The parameter $\kappa_E$ sets the base emotional learning boost, and $g_i$ is the resulting emotional learning strength for item $i$.
+Here, $\phi_{emot,i}$ equals $\phi_{emot}$ for emotional items and 0 for neutral items.
+The primacy term $\phi_i$ enters additively to capture an independent primacy contribution to emotional learning.
 Temporal context-to-feature learning is:
 
 $$
@@ -305,10 +295,10 @@ $$
 $$
 
 This update uses the primacy-scaled temporal context to bind items in $M^{CF}_T$.
-Emotional context-to-feature learning uses the emotional context unit $c^E_i = E_i$:
+Emotional context-to-feature learning uses the emotional context unit $c^E_i$, which is 1 for emotional items and 0 for neutral items:
 
 $$
-\Delta M^{CF_E}_{ij} = \phi_i g_i c^E_i f_i
+\Delta M^{CF_E}_{ij} = g_i c^E_i f_i
 $$
 
 This update applies the emotional learning strength $g_i$ to bind items in the emotional memory $M^{CF}_E$.
@@ -358,6 +348,29 @@ Even an emotion-only model might appear to reproduce LPP-recall patterns if LPP 
 Similarly, even a single-slope LPP model might capture the interaction pattern if retrieved-context dynamics generate nonlinear competition that amplifies small LPP effects for emotional items into larger recall differences.
 The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term.
 Together, these comparisons address the core question without introducing additional structural variants.
+
+We implement the three variants by constraining the emotional learning strength $g_i$ used in $\Delta M^{CF_E}_{ij}$.
+In the emotion-only model, LPP effects are removed by setting $\kappa_L = 0$ and $\kappa_{EL} = 0$, yielding:
+
+$$
+g_i = \phi_{emot,i} + \phi_i
+$$
+
+In the main-effect model, the interaction term is removed by setting $\kappa_{EL} = 0$, yielding:
+
+$$
+g_i = \phi_{emot,i} + \phi_i + \kappa_L (L_i - \lambda_L)
+$$
+
+Here, $\kappa_L$ and $\lambda_L$ define a single LPP slope and centering applied uniformly, with the learning update still gated by the emotional context $c^E_i$.
+In the separate-slope model, both LPP terms are allowed, yielding:
+
+$$
+g_i = \phi_{emot,i} + \phi_i + \kappa_L (L_i - \lambda_L) + \kappa_{EL} (L_i - \lambda_{EL}) c^E_i
+$$
+
+Here, $\kappa_{EL}$ and $\lambda_{EL}$ allow an additional LPP slope for emotional items beyond the shared LPP term.
+In implementation, negative values of $g_i$ are clamped to 0 in all variants.
 
 ## Fitting Objective: Set Likelihood
 

@@ -493,9 +493,9 @@ Table&nbsp;1: Parameters and structures specifying eCMR.
 <td>Exponent for Luce-style competition.</td>
 </tr>
 <tr class="even">
-<td><span class="math inline">\(E_i\)</span></td>
-<td>emotion indicator</td>
-<td>1 for emotional items, 0 for neutral items.</td>
+<td><span class="math inline">\(\phi_{emot}\)</span></td>
+<td>emotional learning boost</td>
+<td>Value is <span class="math inline">\(\phi_{emot}\)</span> for emotional items and 0 for neutral items.</td>
 </tr>
 <tr class="odd">
 <td><span class="math inline">\(L_i\)</span></td>
@@ -503,26 +503,21 @@ Table&nbsp;1: Parameters and structures specifying eCMR.
 <td>List-centered Early LPP for item <span class="math inline">\(i\)</span>.</td>
 </tr>
 <tr class="even">
-<td><span class="math inline">\(\kappa_E\)</span></td>
-<td>emotional learning scale</td>
-<td>Base boost to <span class="math inline">\(M^{CF}_E\)</span> learning.</td>
-</tr>
-<tr class="odd">
 <td><span class="math inline">\(\kappa_L\)</span></td>
 <td>LPP main scale</td>
 <td>Slope for LPP main effect.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\lambda_L\)</span></td>
 <td>LPP main threshold</td>
 <td>Centering offset for the LPP main effect.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><span class="math inline">\(\kappa_{EL}\)</span></td>
 <td>LPP interaction scale</td>
 <td>Slope for LPP-by-emotion interaction.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><span class="math inline">\(\lambda_{EL}\)</span></td>
 <td>LPP interaction threshold</td>
 <td>Centering offset for the interaction term.</td>
@@ -562,23 +557,17 @@ c^T_i = \rho_i c^T_{i-1} + \beta_{enc} c^{IN}_i
 <p><span class="math display">\[
 \phi_i = \phi_s e^{-\phi_d(i-1)} + 1
 \]</span></p>
-<p>Here, <span class="math inline">\(\phi_s\)</span> sets the initial primacy boost and <span class="math inline">\(\phi_d\)</span> controls its decay across serial positions. LPP enters the emotional learning strength through separate main and interaction terms:</p>
+<p>Here, <span class="math inline">\(\phi_s\)</span> sets the initial primacy boost and <span class="math inline">\(\phi_d\)</span> controls its decay across serial positions. Emotional learning strength is defined as:</p>
 <p><span class="math display">\[
-\ell_i = \kappa_L (L_i - \lambda_L)
+g_i = \phi_{emot,i} + \phi_i
 \]</span></p>
-<p><span class="math display">\[
-\ell^{E}_i = \kappa_{EL} (L_i - \lambda_{EL}) E_i
-\]</span></p>
-<p><span class="math display">\[
-g_i = \max\left(0,\; \kappa_E E_i + \ell_i + \ell^{E}_i\right)
-\]</span></p>
-<p>Here, <span class="math inline">\(E_i\)</span> is the emotion indicator and <span class="math inline">\(L_i\)</span> is the centered Early LPP value for item <span class="math inline">\(i\)</span>. The parameters <span class="math inline">\(\kappa_L\)</span> and <span class="math inline">\(\lambda_L\)</span> set the slope and centering of the LPP main effect, while <span class="math inline">\(\kappa_{EL}\)</span> and <span class="math inline">\(\lambda_{EL}\)</span> set the interaction slope and centering. The parameter <span class="math inline">\(\kappa_E\)</span> sets the base emotional learning boost, and <span class="math inline">\(g_i\)</span> is the resulting emotional learning strength for item <span class="math inline">\(i\)</span>. Temporal context-to-feature learning is:</p>
+<p>Here, <span class="math inline">\(\phi_{emot,i}\)</span> equals <span class="math inline">\(\phi_{emot}\)</span> for emotional items and 0 for neutral items. The primacy term <span class="math inline">\(\phi_i\)</span> enters additively to capture an independent primacy contribution to emotional learning. Temporal context-to-feature learning is:</p>
 <p><span class="math display">\[
 \Delta M^{CF_T}_{ij} = \phi_i c^T_j f_i
 \]</span></p>
-<p>This update uses the primacy-scaled temporal context to bind items in <span class="math inline">\(M^{CF}_T\)</span>. Emotional context-to-feature learning uses the emotional context unit <span class="math inline">\(c^E_i = E_i\)</span>:</p>
+<p>This update uses the primacy-scaled temporal context to bind items in <span class="math inline">\(M^{CF}_T\)</span>. Emotional context-to-feature learning uses the emotional context unit <span class="math inline">\(c^E_i\)</span>, which is 1 for emotional items and 0 for neutral items:</p>
 <p><span class="math display">\[
-\Delta M^{CF_E}_{ij} = \phi_i g_i c^E_i f_i
+\Delta M^{CF_E}_{ij} = g_i c^E_i f_i
 \]</span></p>
 <p>This update applies the emotional learning strength <span class="math inline">\(g_i\)</span> to bind items in the emotional memory <span class="math inline">\(M^{CF}_E\)</span>. At the start of recall, temporal context is shifted toward the pre-list state:</p>
 <p><span class="math display">\[
@@ -602,6 +591,19 @@ P(i) = (1-P(\text{stop}))\frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
 <h2 data-number="3.2" class="anchored" data-anchor-id="model-variants"><span class="header-section-number">3.2</span> Model Variants</h2>
 <p>The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items. These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model. In a retrieved-context framework, recall probabilities are not set directly by “emotion + LPP” terms; they emerge from how learning rates and trace features shape context, activation, and competition among items. We therefore test whether a GMM-aligned encoding rule remains consistent with observed recall sets once it is passed through eCMR dynamics. We also evaluate that rule by the likelihood assigned to observed recall sets, not just by marginal recall probabilities. We therefore compare three eCMR variants that differ only in how LPP enters the encoding rule: an emotion-only model with no LPP term, a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue).</p>
 <p>Even an emotion-only model might appear to reproduce LPP-recall patterns if LPP covaries with factors the model already uses (position, list condition, semantic similarity), so it provides a baseline test of whether LPP adds information beyond emotion labels. Similarly, even a single-slope LPP model might capture the interaction pattern if retrieved-context dynamics generate nonlinear competition that amplifies small LPP effects for emotional items into larger recall differences. The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term. Together, these comparisons address the core question without introducing additional structural variants.</p>
+<p>We implement the three variants by constraining the emotional learning strength <span class="math inline">\(g_i\)</span> used in <span class="math inline">\(\Delta M^{CF_E}_{ij}\)</span>. In the emotion-only model, LPP effects are removed by setting <span class="math inline">\(\kappa_L = 0\)</span> and <span class="math inline">\(\kappa_{EL} = 0\)</span>, yielding:</p>
+<p><span class="math display">\[
+g_i = \phi_{emot,i} + \phi_i
+\]</span></p>
+<p>In the main-effect model, the interaction term is removed by setting <span class="math inline">\(\kappa_{EL} = 0\)</span>, yielding:</p>
+<p><span class="math display">\[
+g_i = \phi_{emot,i} + \phi_i + \kappa_L (L_i - \lambda_L)
+\]</span></p>
+<p>Here, <span class="math inline">\(\kappa_L\)</span> and <span class="math inline">\(\lambda_L\)</span> define a single LPP slope and centering applied uniformly, with the learning update still gated by the emotional context <span class="math inline">\(c^E_i\)</span>. In the separate-slope model, both LPP terms are allowed, yielding:</p>
+<p><span class="math display">\[
+g_i = \phi_{emot,i} + \phi_i + \kappa_L (L_i - \lambda_L) + \kappa_{EL} (L_i - \lambda_{EL}) c^E_i
+\]</span></p>
+<p>Here, <span class="math inline">\(\kappa_{EL}\)</span> and <span class="math inline">\(\lambda_{EL}\)</span> allow an additional LPP slope for emotional items beyond the shared LPP term. In implementation, negative values of <span class="math inline">\(g_i\)</span> are clamped to 0 in all variants.</p>
 </section>
 <section id="fitting-objective-set-likelihood" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="fitting-objective-set-likelihood"><span class="header-section-number">3.3</span> Fitting Objective: Set Likelihood</h2>
@@ -1119,7 +1121,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","loop":false,"descPosition":"bottom","openEffect":"zoom","closeEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","selector":".lightbox","descPosition":"bottom","loop":false,"openEffect":"zoom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
