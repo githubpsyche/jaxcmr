@@ -1,5 +1,5 @@
-|                               |   EEGMainEffectsPlusInteraction |   EEGEmotionOnly |   EEGLPPOnly |
-|:------------------------------|--------------------------------:|-----------------:|-------------:|
-| EEGMainEffectsPlusInteraction |                                 |         0.815789 |     0.789474 |
-| EEGEmotionOnly                |                        0.184211 |                  |     0.552632 |
-| EEGLPPOnly                    |                        0.210526 |         0.447368 |              |
+|                               |   EEGMainEffects |   EEGMainEffectsPlusInteraction |   EEGEmotionOnly |
+|:------------------------------|-----------------:|--------------------------------:|-----------------:|
+| EEGMainEffects                |                  |                        0.342105 |         0.736842 |
+| EEGMainEffectsPlusInteraction |         0.657895 |                                 |         0.815789 |
+| EEGEmotionOnly                |         0.263158 |                        0.184211 |                  |
