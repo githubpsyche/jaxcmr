@@ -40,14 +40,20 @@ __all__ = [
     "plot_difference_rep_crp",
     "plot_first_rep_crp",
     "plot_second_rep_crp",
+    "subject_rep_crp",
+    "test_rep_crp_vs_control",
+    "test_first_second_bias",
 ]
 
+from dataclasses import dataclass
 from typing import Optional, Sequence
 
+import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
+from scipy import stats
 from simple_pytree import Pytree
 
 from ..plotting import init_plot, plot_data, set_plot_labels
@@ -400,4 +406,191 @@ def plot_second_rep_crp(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+    )
+
+
+def subject_rep_crp(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+    min_lag: int = 4,
+    max_lag: int = 5,
+    size: int = 2,
+) -> np.ndarray:
+    """Compute subject-level repetition CRP values.
+
+    Args:
+        dataset: Recall dataset.
+        trial_mask: Boolean mask selecting trials to include.
+        min_lag: Minimum spacing between item repetitions.
+        max_lag: Maximum lag to include in output.
+        size: Maximum number of presentations per item.
+
+    Returns:
+        Array of shape [n_subjects, size, 2*max_lag+1] with CRP values per subject,
+        repetition index, and lag.
+    """
+    lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
+    lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
+
+    subject_values = apply_by_subject(
+        dataset, trial_mask, jit(repcrp, static_argnames=("size",)), min_lag, size
+    )
+    return np.stack([s[:, lag_slice] for s in subject_values])
+
+
+@dataclass
+class RepCRPTestResult:
+    """Results from a repetition CRP statistical test."""
+
+    lags: np.ndarray
+    t_stats: np.ndarray
+    t_pvals: np.ndarray
+    w_stats: np.ndarray
+    w_pvals: np.ndarray
+    mean_diffs: np.ndarray
+
+    def __str__(self) -> str:
+        lines = [
+            f"{'Lag':>5} | {'t-stat':>8} {'t p-val':>10} | "
+            f"{'W-stat':>8} {'W p-val':>10} | {'Mean Diff':>10}",
+            f"{'-'*5}-+-{'-'*20}-+-{'-'*20}-+-{'-'*11}",
+        ]
+        for i, lag in enumerate(self.lags):
+            lines.append(
+                f"{lag:>5} | {self.t_stats[i]:>8.3f} {self.t_pvals[i]:>10.4f} | "
+                f"{self.w_stats[i]:>8.1f} {self.w_pvals[i]:>10.4f} | "
+                f"{self.mean_diffs[i]:>10.4f}"
+            )
+        return "\n".join(lines)
+
+
+def test_rep_crp_vs_control(
+    observed_crp: np.ndarray,
+    control_crp: np.ndarray,
+    max_lag: int = 5,
+) -> dict[str, RepCRPTestResult]:
+    """Test observed vs control CRP for each presentation index.
+
+    Performs paired t-tests and Wilcoxon signed-rank tests comparing observed
+    and control CRP values at each lag, separately for each presentation.
+
+    Args:
+        observed_crp: Subject-level CRP from observed data.
+            Shape [n_subjects, size, 2*max_lag+1].
+        control_crp: Subject-level CRP from control data.
+            Shape [n_subjects, size, 2*max_lag+1].
+        max_lag: Maximum lag (used for labeling).
+
+    Returns:
+        Dictionary mapping presentation labels to RepCRPTestResult objects.
+    """
+    lag_labels = np.arange(-max_lag, max_lag + 1)
+    n_lags = len(lag_labels)
+    size = observed_crp.shape[1]
+    results = {}
+
+    for rep_idx in range(size):
+        obs = observed_crp[:, rep_idx, :]
+        ctrl = control_crp[:, rep_idx, :]
+
+        t_stats = np.zeros(n_lags)
+        t_pvals = np.zeros(n_lags)
+        w_stats = np.zeros(n_lags)
+        w_pvals = np.zeros(n_lags)
+        mean_diffs = np.zeros(n_lags)
+
+        for lag_idx in range(n_lags):
+            obs_col = obs[:, lag_idx]
+            ctrl_col = ctrl[:, lag_idx]
+            diff = obs_col - ctrl_col
+
+            t_stat, t_pval = stats.ttest_rel(obs_col, ctrl_col, nan_policy="omit")
+            t_stats[lag_idx] = t_stat
+            t_pvals[lag_idx] = t_pval
+
+            valid = ~(np.isnan(obs_col) | np.isnan(ctrl_col))
+            if valid.sum() > 10:
+                w_stat, w_pval = stats.wilcoxon(diff[valid], alternative="two-sided")
+            else:
+                w_stat, w_pval = np.nan, np.nan
+            w_stats[lag_idx] = w_stat
+            w_pvals[lag_idx] = w_pval
+            mean_diffs[lag_idx] = np.nanmean(diff)
+
+        label = "First Presentation" if rep_idx == 0 else f"Presentation {rep_idx + 1}"
+        if rep_idx == 1:
+            label = "Second Presentation"
+        results[label] = RepCRPTestResult(
+            lags=lag_labels,
+            t_stats=t_stats,
+            t_pvals=t_pvals,
+            w_stats=w_stats,
+            w_pvals=w_pvals,
+            mean_diffs=mean_diffs,
+        )
+
+    return results
+
+
+def test_first_second_bias(
+    observed_crp: np.ndarray,
+    control_crp: np.ndarray,
+    max_lag: int = 5,
+) -> RepCRPTestResult:
+    """Test whether first-presentation bias differs between observed and control.
+
+    Computes (First - Second) CRP difference for both observed and control,
+    then tests whether the observed bias exceeds the control bias.
+
+    H0: The preference for first-presentation neighbors over second-presentation
+        neighbors is the same in observed data as in the shuffled control.
+
+    Args:
+        observed_crp: Subject-level CRP from observed data.
+            Shape [n_subjects, size, 2*max_lag+1].
+        control_crp: Subject-level CRP from control data.
+            Shape [n_subjects, size, 2*max_lag+1].
+        max_lag: Maximum lag (used for labeling).
+
+    Returns:
+        RepCRPTestResult with test statistics for the difference of differences.
+    """
+    lag_labels = np.arange(-max_lag, max_lag + 1)
+    n_lags = len(lag_labels)
+
+    observed_diff = observed_crp[:, 0, :] - observed_crp[:, 1, :]
+    control_diff = control_crp[:, 0, :] - control_crp[:, 1, :]
+    effect = observed_diff - control_diff
+
+    t_stats = np.zeros(n_lags)
+    t_pvals = np.zeros(n_lags)
+    w_stats = np.zeros(n_lags)
+    w_pvals = np.zeros(n_lags)
+    mean_diffs = np.zeros(n_lags)
+
+    for lag_idx in range(n_lags):
+        obs_d = observed_diff[:, lag_idx]
+        ctrl_d = control_diff[:, lag_idx]
+        diff_of_diff = effect[:, lag_idx]
+
+        t_stat, t_pval = stats.ttest_rel(obs_d, ctrl_d, nan_policy="omit")
+        t_stats[lag_idx] = t_stat
+        t_pvals[lag_idx] = t_pval
+
+        valid = ~(np.isnan(obs_d) | np.isnan(ctrl_d))
+        if valid.sum() > 10:
+            w_stat, w_pval = stats.wilcoxon(diff_of_diff[valid], alternative="two-sided")
+        else:
+            w_stat, w_pval = np.nan, np.nan
+        w_stats[lag_idx] = w_stat
+        w_pvals[lag_idx] = w_pval
+        mean_diffs[lag_idx] = np.nanmean(diff_of_diff)
+
+    return RepCRPTestResult(
+        lags=lag_labels,
+        t_stats=t_stats,
+        t_pvals=t_pvals,
+        w_stats=w_stats,
+        w_pvals=w_pvals,
+        mean_diffs=mean_diffs,
     )
