@@ -23,14 +23,20 @@ __all__ = [
     "plot_repneighborcrp_j2i",
     "plot_repneighborcrp_i2j",
     "plot_repneighborcrp_both",
+    "subject_rep_neighbor_crp",
+    "test_rep_neighbor_crp_vs_control",
+    "RepNeighborCRPTestResult",
 ]
 
+from dataclasses import dataclass
 from typing import Literal, Optional, Sequence
 
+import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
+from scipy import stats
 from simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
@@ -64,7 +70,7 @@ class NeighborCRPTabulation(Pytree):
     It also optionally includes lag-2 offsets.
 
     Args:
-        presentation: Sequence of presented item indices (1-indexed; padding = 0).
+        presentation: Sequence of presented item indices (1-indexed; padding = 0).
         first_recall: Study position of the first recalled item (1-indexed).
         direction: "j2i", "i2j", or "both".
         use_lag2: Include +2 neighbor offsets when True; otherwise only +1.
@@ -222,17 +228,19 @@ def tabulate_trial(
     presentation: Integer[Array, " study_events"],
     direction: Literal["j2i", "i2j", "both"] = "j2i",
     use_lag2: bool = False,
+    min_lag: int = 4,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
     """Returns actual and available neighbor-lag transition counts for a single recall trial.
 
     Args:
-        trial: First study position of recalled items in order of recall (1-indexed; padding = 0).
-        presentation: Sequence of presented item indices (1-indexed; padding = 0).
+        trial: First study position of recalled items in order of recall (1-indexed; padding = 0).
+        presentation: Sequence of presented item indices (1-indexed; padding = 0).
         direction: "j2i", "i2j", or "both".
         use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
+        min_lag: Minimum spacing between first and second presentations of repeated items.
     """
     init = NeighborCRPTabulation(
-        presentation, trial[0], direction=direction, use_lag2=use_lag2
+        presentation, trial[0], min_lag=min_lag, direction=direction, use_lag2=use_lag2
     )
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return tab.actual_lags, tab.avail_lags
@@ -242,6 +250,7 @@ def repneighborcrp(
     dataset: RecallDataset,
     direction: Literal["j2i", "i2j", "both"] = "both",
     use_lag2: bool = True,
+    min_lag: int = 4,
 ) -> Float[Array, " lags"]:
     """Return repetition-neighbor lag-CRP probabilities per lag.
 
@@ -249,19 +258,21 @@ def repneighborcrp(
         dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
         direction: "j2i", "i2j", or "both".
         use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
+        min_lag: Minimum spacing between first and second presentations of repeated items.
     """
 
     trials = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
 
-    tabulate_trials = vmap(tabulate_trial, in_axes=(0, 0, None, None))
-    actual, possible = tabulate_trials(trials, presentations, direction, use_lag2)
+    tabulate_trials = vmap(tabulate_trial, in_axes=(0, 0, None, None, None))
+    actual, possible = tabulate_trials(trials, presentations, direction, use_lag2, min_lag)
     return actual.sum(0) / possible.sum(0)
 
 def plot_rep_neighbor_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
+    min_lag: int = 4,
     direction: str = "both",
     use_lag2: bool = True,
     color_cycle: Optional[list[str]] = None,
@@ -275,6 +286,7 @@ def plot_rep_neighbor_crp(
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks to filter trials in datasets.
         max_lag: Maximum lag to plot.
+        min_lag: Minimum spacing between first and second presentations of repeated items.
         direction: Direction of neighbor transitions ("j2i", "i2j", or "both").
         use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
         color_cycle: Colors for plotting each dataset.
@@ -305,9 +317,10 @@ def plot_rep_neighbor_crp(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(repneighborcrp, static_argnames=("direction", "use_lag2")),
+                jit(repneighborcrp, static_argnames=("direction", "use_lag2", "min_lag")),
                 direction,
                 use_lag2,
+                min_lag,
             )
         )
         subject_values = subject_values[
@@ -340,6 +353,7 @@ def plot_repneighborcrp_j2i(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
+    min_lag: int = 4,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -350,6 +364,7 @@ def plot_repneighborcrp_j2i(
         datasets,
         trial_masks,
         max_lag=max_lag,
+        min_lag=min_lag,
         direction="j2i",
         use_lag2=True,
         color_cycle=color_cycle,
@@ -357,10 +372,13 @@ def plot_repneighborcrp_j2i(
         contrast_name=contrast_name,
         axis=axis,
     )
+
+
 def plot_repneighborcrp_i2j(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
+    min_lag: int = 4,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -371,6 +389,7 @@ def plot_repneighborcrp_i2j(
         datasets,
         trial_masks,
         max_lag=max_lag,
+        min_lag=min_lag,
         direction="i2j",
         use_lag2=True,
         color_cycle=color_cycle,
@@ -378,10 +397,13 @@ def plot_repneighborcrp_i2j(
         contrast_name=contrast_name,
         axis=axis,
     )
+
+
 def plot_repneighborcrp_both(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
+    min_lag: int = 4,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -392,10 +414,134 @@ def plot_repneighborcrp_both(
         datasets,
         trial_masks,
         max_lag=max_lag,
+        min_lag=min_lag,
         direction="both",
         use_lag2=True,
         color_cycle=color_cycle,
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+    )
+
+
+def subject_rep_neighbor_crp(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+    direction: Literal["j2i", "i2j", "both"] = "both",
+    use_lag2: bool = True,
+    min_lag: int = 4,
+    max_lag: int = 3,
+) -> np.ndarray:
+    """Compute subject-level repetition-neighbor CRP values.
+
+    Args:
+        dataset: Recall dataset.
+        trial_mask: Boolean mask selecting trials to include.
+        direction: "j2i", "i2j", or "both".
+        use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
+        min_lag: Minimum spacing between first and second presentations of repeated items.
+        max_lag: Maximum lag to include in output.
+
+    Returns:
+        Array of shape [n_subjects, 2*max_lag+1] with CRP values per subject and lag.
+    """
+    lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
+    lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
+
+    subject_values = apply_by_subject(
+        dataset,
+        trial_mask,
+        jit(repneighborcrp, static_argnames=("direction", "use_lag2", "min_lag")),
+        direction,
+        use_lag2,
+        min_lag,
+    )
+    return np.vstack([s[lag_slice] for s in subject_values])
+
+
+@dataclass
+class RepNeighborCRPTestResult:
+    """Results from a repetition-neighbor CRP statistical test."""
+
+    lags: np.ndarray
+    t_stats: np.ndarray
+    t_pvals: np.ndarray
+    w_stats: np.ndarray
+    w_pvals: np.ndarray
+    mean_diffs: np.ndarray
+    direction: str
+
+    def __str__(self) -> str:
+        lines = [
+            f"Direction: {self.direction}",
+            f"{'Lag':>5} | {'t-stat':>8} {'t p-val':>10} | "
+            f"{'W-stat':>8} {'W p-val':>10} | {'Mean Diff':>10}",
+            f"{'-'*5}-+-{'-'*20}-+-{'-'*20}-+-{'-'*11}",
+        ]
+        for i, lag in enumerate(self.lags):
+            lines.append(
+                f"{lag:>5} | {self.t_stats[i]:>8.3f} {self.t_pvals[i]:>10.4f} | "
+                f"{self.w_stats[i]:>8.1f} {self.w_pvals[i]:>10.4f} | "
+                f"{self.mean_diffs[i]:>10.4f}"
+            )
+        return "\n".join(lines)
+
+
+def test_rep_neighbor_crp_vs_control(
+    observed_crp: np.ndarray,
+    control_crp: np.ndarray,
+    max_lag: int = 3,
+    direction: str = "both",
+) -> RepNeighborCRPTestResult:
+    """Test observed vs control repetition-neighbor CRP.
+
+    Performs paired t-tests and Wilcoxon signed-rank tests comparing observed
+    and control CRP values at each lag.
+
+    Args:
+        observed_crp: Subject-level CRP from observed data.
+            Shape [n_subjects, 2*max_lag+1].
+        control_crp: Subject-level CRP from control data.
+            Shape [n_subjects, 2*max_lag+1].
+        max_lag: Maximum lag (used for labeling).
+        direction: Direction label for results ("j2i", "i2j", or "both").
+
+    Returns:
+        RepNeighborCRPTestResult with test statistics.
+    """
+    lag_labels = np.arange(-max_lag, max_lag + 1)
+    n_lags = len(lag_labels)
+
+    t_stats = np.zeros(n_lags)
+    t_pvals = np.zeros(n_lags)
+    w_stats = np.zeros(n_lags)
+    w_pvals = np.zeros(n_lags)
+    mean_diffs = np.zeros(n_lags)
+
+    for lag_idx in range(n_lags):
+        obs_col = observed_crp[:, lag_idx]
+        ctrl_col = control_crp[:, lag_idx]
+        diff = obs_col - ctrl_col
+
+        t_stat, t_pval = stats.ttest_rel(obs_col, ctrl_col, nan_policy="omit")
+        t_stats[lag_idx] = t_stat
+        t_pvals[lag_idx] = t_pval
+
+        valid = ~(np.isnan(obs_col) | np.isnan(ctrl_col))
+        if valid.sum() > 10:
+            w_stat, w_pval = stats.wilcoxon(diff[valid], alternative="two-sided")
+        else:
+            w_stat, w_pval = np.nan, np.nan
+        w_stats[lag_idx] = w_stat
+        w_pvals[lag_idx] = w_pval
+        mean_diffs[lag_idx] = np.nanmean(diff)
+
+    return RepNeighborCRPTestResult(
+        lags=lag_labels,
+        t_stats=t_stats,
+        t_pvals=t_pvals,
+        w_stats=w_stats,
+        w_pvals=w_pvals,
+        mean_diffs=mean_diffs,
+        direction=direction,
     )

@@ -6,12 +6,15 @@ provide plotting utilities for visualizing repetition lag effects.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Optional, Sequence
 
+import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
+from scipy import stats
 
 from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
@@ -25,6 +28,10 @@ __all__ = [
     "binned_recall_probability_by_lag",
     "plot_full_rpl",
     "plot_rpl",
+    "subject_full_rpl",
+    "subject_binned_rpl",
+    "test_rpl_slope",
+    "test_rpl_slope_vs_control",
 ]
 
 
@@ -259,3 +266,244 @@ def plot_rpl(
     axis.set_xticklabels(xticklabels)
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
+
+_BINNED_LAG_VALUES = np.array([0.0, 1.5, 4.0, 7.0])
+
+
+def _resolve_max_lag(
+    dataset: RecallDataset,
+    max_lag: int | None,
+) -> int:
+    """Returns the explicit lag bucket limit.
+
+    Args:
+        dataset: Dataset used to infer the lag limit when ``max_lag`` is None.
+        max_lag: Explicit lag bucket limit to use when provided.
+    """
+    if max_lag is not None:
+        return max_lag
+    return infer_max_lag(dataset["pres_itemnos"], dataset["pres_itemnos"].shape[1])
+
+
+def subject_full_rpl(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+    max_lag: int | None = None,
+) -> np.ndarray:
+    """Compute subject-level recall probability by lag.
+
+    Args:
+        dataset: Recall dataset containing trial data.
+        trial_mask: Boolean mask selecting trials to include.
+        max_lag: Largest explicit lag bucket to use.
+
+    Returns:
+        Array of shape [n_subjects, max_lag + 2] with recall probabilities by lag.
+    """
+    max_lag = _resolve_max_lag(dataset, max_lag)
+    subject_values = apply_by_subject(
+        dataset,
+        trial_mask,
+        jit(recall_probability_by_lag, static_argnames=("max_lag",)),
+        max_lag,
+    )
+    return np.vstack(subject_values)
+
+
+def subject_binned_rpl(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+    max_lag: int | None = None,
+) -> np.ndarray:
+    """Compute subject-level binned recall probability by lag.
+
+    Args:
+        dataset: Recall dataset containing trial data.
+        trial_mask: Boolean mask selecting trials to include.
+        max_lag: Largest explicit lag bucket to use.
+
+    Returns:
+        Array of shape [n_subjects, 5] with binned recall probabilities by lag.
+    """
+    max_lag = _resolve_max_lag(dataset, max_lag)
+    subject_values = apply_by_subject(
+        dataset,
+        trial_mask,
+        jit(binned_recall_probability_by_lag, static_argnames=("max_lag",)),
+        max_lag,
+    )
+    return np.vstack(subject_values)
+
+
+def _lag_values_for_mode(mode: str, n_bins: int) -> np.ndarray:
+    """Return lag values for slope fits.
+
+    Args:
+        mode: "full" or "binned".
+        n_bins: Number of lag bins excluding the single-presentation bin.
+
+    Returns:
+        Array of lag values aligned to the slope-fit columns.
+    """
+    if mode == "full":
+        return np.arange(n_bins, dtype=float)
+    if mode == "binned":
+        if n_bins != _BINNED_LAG_VALUES.size:
+            raise ValueError("Binned mode expects four lag bins.")
+        return _BINNED_LAG_VALUES.copy()
+    raise ValueError("Mode must be 'full' or 'binned'.")
+
+
+def _fit_subject_slopes(
+    subject_values: np.ndarray,
+    lag_values: np.ndarray,
+) -> np.ndarray:
+    """Return per-subject slope estimates for recall probability by lag.
+
+    Args:
+        subject_values: Subject-level recall probabilities for each lag.
+        lag_values: Lag values aligned to the columns in ``subject_values``.
+
+    Returns:
+        Array of shape [n_subjects] with slope estimates; NaN when insufficient data.
+    """
+    slopes = np.full(subject_values.shape[0], np.nan)
+    for idx, values in enumerate(subject_values):
+        valid = np.isfinite(values)
+        if valid.sum() < 2:
+            continue
+        slopes[idx] = np.polyfit(lag_values[valid], values[valid], 1)[0]
+    return slopes
+
+
+@dataclass
+class RPLSlopeTestResult:
+    """Results from a recall-probability-by-lag slope test."""
+
+    n: int
+    mean_slope: float
+    t_stat: float
+    t_pval: float
+    w_stat: float
+    w_pval: float
+
+    def __str__(self) -> str:
+        lines = [
+            f"N={self.n}",
+            f"Mean slope: {self.mean_slope:.4f}",
+            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
+            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
+        ]
+        return "\n".join(lines)
+
+
+@dataclass
+class RPLSlopeComparisonResult:
+    """Results from a comparison of recall-probability-by-lag slopes."""
+
+    n: int
+    mean_observed: float
+    mean_control: float
+    mean_diff: float
+    t_stat: float
+    t_pval: float
+    w_stat: float
+    w_pval: float
+
+    def __str__(self) -> str:
+        lines = [
+            f"N={self.n}",
+            f"Mean slope (observed): {self.mean_observed:.4f}",
+            f"Mean slope (control): {self.mean_control:.4f}",
+            f"Mean difference: {self.mean_diff:.4f}",
+            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
+            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
+        ]
+        return "\n".join(lines)
+
+
+def test_rpl_slope(
+    subject_rpl: np.ndarray,
+    mode: str = "full",
+) -> RPLSlopeTestResult:
+    """Test whether recall probability increases with spacing.
+
+    Fits a slope for each subject across lag bins (excluding the
+    single-presentation bin) and tests whether the mean slope differs from zero.
+
+    Args:
+        subject_rpl: Subject-level recall probabilities by lag.
+        mode: "full" or "binned".
+
+    Returns:
+        RPLSlopeTestResult with test statistics for the per-subject slopes.
+    """
+    values = subject_rpl[:, 1:]
+    lag_values = _lag_values_for_mode(mode, values.shape[1])
+    slopes = _fit_subject_slopes(values, lag_values)
+
+    valid = np.isfinite(slopes)
+    n = int(valid.sum())
+    t_stat, t_pval = stats.ttest_1samp(slopes, 0.0, nan_policy="omit")
+    if n > 10:
+        w_stat, w_pval = stats.wilcoxon(slopes[valid], alternative="two-sided")
+    else:
+        w_stat, w_pval = np.nan, np.nan
+
+    return RPLSlopeTestResult(
+        n=n,
+        mean_slope=float(np.nanmean(slopes)),
+        t_stat=float(t_stat),
+        t_pval=float(t_pval),
+        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
+        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
+    )
+
+
+def test_rpl_slope_vs_control(
+    observed_rpl: np.ndarray,
+    control_rpl: np.ndarray,
+    mode: str = "full",
+) -> RPLSlopeComparisonResult:
+    """Test whether observed and control spacing slopes differ.
+
+    Fits per-subject slopes across lag bins (excluding the single-presentation bin)
+    and compares observed and control slopes.
+
+    Args:
+        observed_rpl: Subject-level recall probabilities by lag from observed data.
+        control_rpl: Subject-level recall probabilities by lag from control data.
+        mode: "full" or "binned".
+
+    Returns:
+        RPLSlopeComparisonResult with test statistics for slope differences.
+    """
+    obs_values = observed_rpl[:, 1:]
+    ctrl_values = control_rpl[:, 1:]
+    if obs_values.shape != ctrl_values.shape:
+        raise ValueError("Observed and control RPL arrays must have the same shape.")
+
+    lag_values = _lag_values_for_mode(mode, obs_values.shape[1])
+    obs_slopes = _fit_subject_slopes(obs_values, lag_values)
+    ctrl_slopes = _fit_subject_slopes(ctrl_values, lag_values)
+
+    valid = ~(np.isnan(obs_slopes) | np.isnan(ctrl_slopes))
+    n = int(valid.sum())
+    t_stat, t_pval = stats.ttest_rel(obs_slopes, ctrl_slopes, nan_policy="omit")
+    if n > 10:
+        diff = obs_slopes[valid] - ctrl_slopes[valid]
+        w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
+    else:
+        w_stat, w_pval = np.nan, np.nan
+
+    return RPLSlopeComparisonResult(
+        n=n,
+        mean_observed=float(np.nanmean(obs_slopes)),
+        mean_control=float(np.nanmean(ctrl_slopes)),
+        mean_diff=float(np.nanmean(obs_slopes - ctrl_slopes)),
+        t_stat=float(t_stat),
+        t_pval=float(t_pval),
+        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
+        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
+    )
+
