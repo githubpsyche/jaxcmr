@@ -32,6 +32,7 @@ __all__ = [
     "subject_binned_rpl",
     "test_rpl_slope",
     "test_rpl_slope_vs_control",
+    "run_rpl_slope_analysis",
 ]
 
 
@@ -507,3 +508,43 @@ def test_rpl_slope_vs_control(
         w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
     )
 
+
+def run_rpl_slope_analysis(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+    control_dataset: RecallDataset,
+    control_mask: Bool[Array, " trial_count"],
+    mode: str = "full",
+    max_lag: int | None = None,
+) -> tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]:
+    """Compute spacing-effect slope tests for observed and control datasets.
+
+    Args:
+        dataset: Observed recall dataset.
+        trial_mask: Boolean mask selecting observed trials.
+        control_dataset: Control recall dataset.
+        control_mask: Boolean mask selecting control trials.
+        mode: Spacing resolution to use ("full" or "binned").
+        max_lag: Largest explicit lag bucket to use.
+
+    Returns:
+        (observed_result, control_result, comparison_result): Slope tests for the
+            observed dataset, the control dataset, and their difference.
+    """
+    max_lag = _resolve_max_lag(dataset, max_lag)
+    if mode == "full":
+        observed_rpl = subject_full_rpl(dataset, trial_mask, max_lag)
+        control_rpl = subject_full_rpl(control_dataset, control_mask, max_lag)
+    elif mode == "binned":
+        observed_rpl = subject_binned_rpl(dataset, trial_mask, max_lag)
+        control_rpl = subject_binned_rpl(control_dataset, control_mask, max_lag)
+    else:
+        raise ValueError("Mode must be 'full' or 'binned'.")
+
+    observed_result = test_rpl_slope(observed_rpl, mode=mode)
+    control_result = test_rpl_slope(control_rpl, mode=mode)
+    comparison_result = test_rpl_slope_vs_control(
+        observed_rpl, control_rpl, mode=mode
+    )
+
+    return observed_result, control_result, comparison_result

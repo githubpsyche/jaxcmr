@@ -6,18 +6,29 @@ output position and provide plotting helpers for group comparisons.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Optional, Sequence
 
+import numpy as np
 import jax.numpy as jnp
 from jax import jit
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
+from scipy import stats
 
 from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
-from ..typing import Array, Bool, Float, RecallDataset
+from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["simple_termination_probability", "conditional_termination_probability"]
+__all__ = [
+    "simple_termination_probability",
+    "conditional_termination_probability",
+    "plot_termination_probability",
+    "subject_output_length_mean",
+    "subject_output_length_median",
+    "test_output_length_mean_vs_control",
+    "test_output_length_median_vs_control",
+]
 
 
 def simple_termination_probability(
@@ -131,3 +142,145 @@ def plot_termination_probability(
     ylabel = "P(Terminate | Reach)" if mode == "conditional" else "P(Terminate)"
     set_plot_labels(axis, "Recall Position", ylabel, contrast_name)
     return axis
+
+
+def _output_lengths(
+    dataset: RecallDataset,
+) -> Integer[Array, " trial_count"]:
+    """Return output lengths per trial."""
+    recalls = dataset["recalls"]
+    return jnp.sum(recalls > 0, axis=1)
+
+
+def _mean_output_length(
+    dataset: RecallDataset,
+) -> Float[Array, ""]:
+    """Return the mean output length for a dataset slice."""
+    return jnp.mean(_output_lengths(dataset))
+
+
+def _median_output_length(
+    dataset: RecallDataset,
+) -> Float[Array, ""]:
+    """Return the median output length for a dataset slice."""
+    return jnp.median(_output_lengths(dataset))
+
+
+def subject_output_length_mean(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+) -> np.ndarray:
+    """Return mean output lengths per subject.
+
+    Args:
+      dataset: Recall dataset containing trial data.
+      trial_mask: Boolean mask selecting trials to include.
+
+    Returns:
+      Array of per-subject mean output lengths.
+    """
+    subject_values = apply_by_subject(dataset, trial_mask, _mean_output_length)
+    return np.asarray(subject_values, dtype=float)
+
+
+def subject_output_length_median(
+    dataset: RecallDataset,
+    trial_mask: Bool[Array, " trial_count"],
+) -> np.ndarray:
+    """Return median output lengths per subject.
+
+    Args:
+      dataset: Recall dataset containing trial data.
+      trial_mask: Boolean mask selecting trials to include.
+
+    Returns:
+      Array of per-subject median output lengths.
+    """
+    subject_values = apply_by_subject(dataset, trial_mask, _median_output_length)
+    return np.asarray(subject_values, dtype=float)
+
+
+@dataclass
+class OutputLengthTestResult:
+    """Results from an output-length statistical test."""
+
+    n: int
+    mean_observed: float
+    mean_control: float
+    mean_diff: float
+    t_stat: float
+    t_pval: float
+    w_stat: float
+    w_pval: float
+
+    def __str__(self) -> str:
+        lines = [
+            f"N={self.n}",
+            f"Mean (observed): {self.mean_observed:.4f}",
+            f"Mean (control): {self.mean_control:.4f}",
+            f"Mean difference: {self.mean_diff:.4f}",
+            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
+            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
+        ]
+        return "\n".join(lines)
+
+
+def _test_output_lengths(
+    observed: np.ndarray,
+    control: np.ndarray,
+) -> OutputLengthTestResult:
+    """Return paired tests for per-subject output length summaries."""
+    if observed.shape != control.shape:
+        raise ValueError("Observed and control arrays must have the same shape.")
+
+    valid = ~(np.isnan(observed) | np.isnan(control))
+    n = int(valid.sum())
+    t_stat, t_pval = stats.ttest_rel(observed, control, nan_policy="omit")
+    if n > 10:
+        diff = observed[valid] - control[valid]
+        w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
+    else:
+        w_stat, w_pval = np.nan, np.nan
+
+    return OutputLengthTestResult(
+        n=n,
+        mean_observed=float(np.nanmean(observed)),
+        mean_control=float(np.nanmean(control)),
+        mean_diff=float(np.nanmean(observed - control)),
+        t_stat=float(t_stat),
+        t_pval=float(t_pval),
+        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
+        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
+    )
+
+
+def test_output_length_mean_vs_control(
+    observed_means: np.ndarray,
+    control_means: np.ndarray,
+) -> OutputLengthTestResult:
+    """Test mean output length differences between observed and control.
+
+    Args:
+      observed_means: Per-subject mean output lengths from observed data.
+      control_means: Per-subject mean output lengths from control data.
+
+    Returns:
+      OutputLengthTestResult with test statistics.
+    """
+    return _test_output_lengths(observed_means, control_means)
+
+
+def test_output_length_median_vs_control(
+    observed_medians: np.ndarray,
+    control_medians: np.ndarray,
+) -> OutputLengthTestResult:
+    """Test median output length differences between observed and control.
+
+    Args:
+      observed_medians: Per-subject median output lengths from observed data.
+      control_medians: Per-subject median output lengths from control data.
+
+    Returns:
+      OutputLengthTestResult with test statistics.
+    """
+    return _test_output_lengths(observed_medians, control_medians)
