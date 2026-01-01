@@ -26,6 +26,19 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "item_to_study_positions",
+    "simulate_free_recall",
+    "simulate_free_recall_count",
+    "simulate_study_and_free_recall",
+    "simulate_study_first_recall_and_free_recall",
+    "simulate_study_free_recall_and_forced_stop",
+    "MemorySearchSimulator",
+    "preallocate_for_h5_dataset",
+    "simulate_h5_from_h5",
+    "parameter_shifted_simulate_h5_from_h5",
+]
+
 def item_to_study_positions(
     item: Int_,
     presentation: Integer[Array, " list_length"],

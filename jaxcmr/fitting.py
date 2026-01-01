@@ -19,6 +19,11 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "make_subject_trial_masks",
+    "ScipyDE",
+]
+
 def make_subject_trial_masks(
     trial_mask: Bool[Array, " trials"], subject_vector: Integer[Array, " trials"]
 ):

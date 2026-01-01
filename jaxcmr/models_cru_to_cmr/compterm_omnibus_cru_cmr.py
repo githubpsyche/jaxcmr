@@ -23,6 +23,13 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "CMR",
+    "BaseCMR",
+    "BaseCMRFactory",
+    "letter_similarities",
+]
+
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
 

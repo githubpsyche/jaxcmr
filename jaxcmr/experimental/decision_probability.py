@@ -7,6 +7,23 @@ from simple_pytree import Pytree
 
 from jaxcmr.math import lb
 
+__all__ = [
+    "Float_",
+    "Int_",
+    "Bool_",
+    "theta",
+    "tmax",
+    "n_steps",
+    "t_vals",
+    "dt",
+    "wald_pdf",
+    "wald_cdf_closed_form",
+    "race_diffusion_precompute",
+    "compute_runner_probability",
+    "compute_runner_probabilities",
+    "RaceDiffusionModel",
+]
+
 Float_ = Float[Array, ""] | float | int
 Int_ = Integer[Array, ""] | int
 Bool_ = Bool[Array, ""] | bool

@@ -25,6 +25,12 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "CMR",
+    "FlatChoiceModel",
+    "CMRFactory",
+]
+
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
 

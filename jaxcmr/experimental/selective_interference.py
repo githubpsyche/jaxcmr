@@ -14,6 +14,14 @@ from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import Array, Float_, Int_, Integer, MemorySearch, PRNGKeyArray
 
 
+__all__ = [
+    "drift_context",
+    "cue_context",
+    "apply_reminder_and_interference",
+    "simulate_vigilance_block",
+    "simulate_recognition_block",
+]
+
 def drift_context(
     model: MemorySearch, drift_rate: Float_, steps: Int_
 ) -> MemorySearch:

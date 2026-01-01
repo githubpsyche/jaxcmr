@@ -39,6 +39,11 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "CMR",
+    "make_factory",
+]
+
 def _apply_exponent(x, exponent: Float_):
     "sign-preserving power; behaves like x when exponent == 1"
     return jnp.sign(x) * power_scale_absolute(jnp.abs(x), exponent)

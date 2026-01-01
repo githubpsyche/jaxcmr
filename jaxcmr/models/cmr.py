@@ -31,6 +31,11 @@ from jaxcmr.typing import (
     TerminationPolicyCreateFn,
 )
 
+__all__ = [
+    "CMR",
+    "make_factory",
+]
+
 # def exponential_primacy_decay(
 #     study_indices: Array, primacy_scale: Float_, primacy_decay: Float_
 # ):

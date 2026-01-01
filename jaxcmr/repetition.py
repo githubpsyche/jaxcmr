@@ -57,6 +57,14 @@ from .helpers import generate_trial_mask
 from .typing import Array, Int_, Integer, RecallDataset
 
 
+__all__ = [
+    "item_to_study_positions",
+    "all_study_positions",
+    "filter_repeated_recalls",
+    "relabel_trial_to_firstpos",
+    "make_control_dataset",
+]
+
 def item_to_study_positions(
     item: Int_,
     presentation: Integer[Array, " list_length"],

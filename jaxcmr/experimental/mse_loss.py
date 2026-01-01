@@ -24,6 +24,11 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
+__all__ = [
+    "simulate_masked_free_recall",
+    "MemorySearchMseFnGenerator",
+]
+
 def simulate_masked_free_recall(
     model: MemorySearch,
     list_length: int,

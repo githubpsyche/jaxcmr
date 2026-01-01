@@ -22,6 +22,14 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "InstanceCMR",
+    "BaseInstanceCMR",
+    "MixedCMR",
+    "InstanceCMRFactory",
+    "MixedCMRFactory",
+]
+
 class InstanceCMR(Pytree):
     """An Instance-Based Specification of the CMR model of memory search."""
 

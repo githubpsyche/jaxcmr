@@ -7,6 +7,12 @@ from jaxcmr.math import power_scale
 from jaxcmr.typing import Array, Context, Float, Float_, Int_
 
 
+__all__ = [
+    "InstanceMemory",
+    "init_mfc",
+    "init_mcf",
+]
+
 class InstanceMemory(Pytree):
     """Instance-based memory model for CMR.
 

@@ -10,6 +10,22 @@ from jax import vmap
 from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
 
 
+__all__ = [
+    "have_common_nonzero",
+    "all_rows_identical",
+    "log_likelihood",
+    "import_from_string",
+    "format_floats",
+    "find_project_root",
+    "generate_trial_mask",
+    "load_data",
+    "limit_to_first_subjects",
+    "save_dict_to_hdf5",
+    "find_max_list_length",
+    "apply_by_subject",
+    "has_repeats_per_row",
+]
+
 def have_common_nonzero(
     a: Integer[Array, " size"],
     b: Integer[Array, " size"],

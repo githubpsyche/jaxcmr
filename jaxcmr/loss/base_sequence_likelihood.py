@@ -28,6 +28,15 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "mask_trailing_terminations",
+    "mask_first_recall",
+    "predict_and_simulate_recalls",
+    "MemorySearchLikelihoodFnGenerator",
+    "ExcludeFirstRecallLikelihoodFnGenerator",
+    "ExcludeTerminationLikelihoodFnGenerator",
+]
+
 def mask_trailing_terminations(
     recalls: Integer[Array, " recall_events"],
 ) -> Bool[Array, " recall_events"]:

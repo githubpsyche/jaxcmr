@@ -36,6 +36,11 @@ from jaxcmr.typing import (
     TerminationPolicyCreateFn,
 )
 
+__all__ = [
+    "CMR",
+    "make_factory",
+]
+
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""

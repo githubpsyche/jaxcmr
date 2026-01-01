@@ -9,6 +9,22 @@ from scipy.stats import t, ttest_rel
 
 from jaxcmr.typing import Array, Float, MemorySearchCreateFn
 
+__all__ = [
+    "bound_params",
+    "load_opt_params",
+    "validate_params",
+    "calculate_ci",
+    "add_summary_lines",
+    "summarize_parameters",
+    "generate_t_p_matrices",
+    "calculate_aic_weights",
+    "calculate_aic",
+    "calculate_bic_scores",
+    "pairwise_aic_differences",
+    "winner_comparison_matrix",
+    "raw_winner_comparison_matrix",
+]
+
 def bound_params(
     params: Mapping[str, Float[Array, " popsize"]], bounds: Mapping[str, list[float]]
 ) -> dict[str, Float[Array, " popsize"]]:

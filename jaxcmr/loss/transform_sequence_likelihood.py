@@ -24,6 +24,14 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
+__all__ = [
+    "mask_trailing_terminations",
+    "mask_first_recall",
+    "MemorySearchLikelihoodFnGenerator",
+    "ExcludeFirstRecallLikelihoodFnGenerator",
+    "ExcludeTerminationLikelihoodFnGenerator",
+]
+
 
 def mask_trailing_terminations(
     recalls: Integer[Array, " recall_events"],

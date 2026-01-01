@@ -23,6 +23,11 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "predict_and_simulate_recalls",
+    "MemorySearchLikelihoodFnGenerator",
+]
+
 def predict_and_simulate_recalls(
     model: MemorySearch, choices: Integer[Array, " recall_events"]
 ) -> tuple[MemorySearch, Float[Array, " recall_events"]]:

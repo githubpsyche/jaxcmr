@@ -23,6 +23,11 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "StrengthSearch",
+    "make_factory",
+]
+
 class StrengthSearch(Pytree):
     """Represents a strength-based memory search without retrieved context."""
 

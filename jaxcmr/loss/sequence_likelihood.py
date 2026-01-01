@@ -21,6 +21,10 @@ from jaxcmr.typing import (
 )
 
 
+__all__ = [
+    "MemorySearchLikelihoodFnGenerator",
+]
+
 class MemorySearchLikelihoodFnGenerator:
     """Generates loss functions for a given dataset and model factory.
 
