@@ -31,7 +31,7 @@ __all__ = [
     "subject_full_rpl",
     "subject_binned_rpl",
     "test_rpl_slope",
-    "test_rpl_slope_vs_control",
+    "test_rpl_slope_vs_comparison",
     "run_rpl_slope_analysis",
 ]
 
@@ -404,7 +404,7 @@ class RPLSlopeComparisonResult:
 
     n: int
     mean_observed: float
-    mean_control: float
+    mean_comparison: float
     mean_diff: float
     t_stat: float
     t_pval: float
@@ -415,7 +415,7 @@ class RPLSlopeComparisonResult:
         lines = [
             f"N={self.n}",
             f"Mean slope (observed): {self.mean_observed:.4f}",
-            f"Mean slope (control): {self.mean_control:.4f}",
+            f"Mean slope (comparison): {self.mean_comparison:.4f}",
             f"Mean difference: {self.mean_diff:.4f}",
             f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
             f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
@@ -461,38 +461,42 @@ def test_rpl_slope(
     )
 
 
-def test_rpl_slope_vs_control(
+def test_rpl_slope_vs_comparison(
     observed_rpl: np.ndarray,
-    control_rpl: np.ndarray,
+    comparison_rpl: np.ndarray,
     mode: str = "full",
 ) -> RPLSlopeComparisonResult:
-    """Test whether observed and control spacing slopes differ.
+    """Test whether observed and comparison spacing slopes differ.
 
     Fits per-subject slopes across lag bins (excluding the single-presentation bin)
-    and compares observed and control slopes.
+    and compares observed and comparison slopes.
 
     Args:
         observed_rpl: Subject-level recall probabilities by lag from observed data.
-        control_rpl: Subject-level recall probabilities by lag from control data.
+        comparison_rpl: Subject-level recall probabilities by lag from comparison data.
         mode: "full" or "binned".
 
     Returns:
         RPLSlopeComparisonResult with test statistics for slope differences.
     """
     obs_values = observed_rpl[:, 1:]
-    ctrl_values = control_rpl[:, 1:]
-    if obs_values.shape != ctrl_values.shape:
-        raise ValueError("Observed and control RPL arrays must have the same shape.")
+    comparison_values = comparison_rpl[:, 1:]
+    if obs_values.shape != comparison_values.shape:
+        raise ValueError(
+            "Observed and comparison RPL arrays must have the same shape."
+        )
 
     lag_values = _lag_values_for_mode(mode, obs_values.shape[1])
     obs_slopes = _fit_subject_slopes(obs_values, lag_values)
-    ctrl_slopes = _fit_subject_slopes(ctrl_values, lag_values)
+    comparison_slopes = _fit_subject_slopes(comparison_values, lag_values)
 
-    valid = ~(np.isnan(obs_slopes) | np.isnan(ctrl_slopes))
+    valid = ~(np.isnan(obs_slopes) | np.isnan(comparison_slopes))
     n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_rel(obs_slopes, ctrl_slopes, nan_policy="omit")
+    t_stat, t_pval = stats.ttest_rel(
+        obs_slopes, comparison_slopes, nan_policy="omit"
+    )
     if n > 10:
-        diff = obs_slopes[valid] - ctrl_slopes[valid]
+        diff = obs_slopes[valid] - comparison_slopes[valid]
         w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
     else:
         w_stat, w_pval = np.nan, np.nan
@@ -500,8 +504,8 @@ def test_rpl_slope_vs_control(
     return RPLSlopeComparisonResult(
         n=n,
         mean_observed=float(np.nanmean(obs_slopes)),
-        mean_control=float(np.nanmean(ctrl_slopes)),
-        mean_diff=float(np.nanmean(obs_slopes - ctrl_slopes)),
+        mean_comparison=float(np.nanmean(comparison_slopes)),
+        mean_diff=float(np.nanmean(obs_slopes - comparison_slopes)),
         t_stat=float(t_stat),
         t_pval=float(t_pval),
         w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
@@ -512,39 +516,41 @@ def test_rpl_slope_vs_control(
 def run_rpl_slope_analysis(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
-    control_dataset: RecallDataset,
-    control_mask: Bool[Array, " trial_count"],
+    comparison_dataset: RecallDataset,
+    comparison_mask: Bool[Array, " trial_count"],
     mode: str = "full",
     max_lag: int | None = None,
 ) -> tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]:
-    """Compute spacing-effect slope tests for observed and control datasets.
+    """Compute spacing-effect slope tests for observed and comparison datasets.
 
     Args:
         dataset: Observed recall dataset.
         trial_mask: Boolean mask selecting observed trials.
-        control_dataset: Control recall dataset.
-        control_mask: Boolean mask selecting control trials.
+        comparison_dataset: Comparison recall dataset.
+        comparison_mask: Boolean mask selecting comparison trials.
         mode: Spacing resolution to use ("full" or "binned").
         max_lag: Largest explicit lag bucket to use.
 
     Returns:
-        (observed_result, control_result, comparison_result): Slope tests for the
-            observed dataset, the control dataset, and their difference.
+        (observed_result, comparison_result, difference_result): Slope tests for the
+            observed dataset, the comparison dataset, and their difference.
     """
     max_lag = _resolve_max_lag(dataset, max_lag)
     if mode == "full":
         observed_rpl = subject_full_rpl(dataset, trial_mask, max_lag)
-        control_rpl = subject_full_rpl(control_dataset, control_mask, max_lag)
+        comparison_rpl = subject_full_rpl(comparison_dataset, comparison_mask, max_lag)
     elif mode == "binned":
         observed_rpl = subject_binned_rpl(dataset, trial_mask, max_lag)
-        control_rpl = subject_binned_rpl(control_dataset, control_mask, max_lag)
+        comparison_rpl = subject_binned_rpl(
+            comparison_dataset, comparison_mask, max_lag
+        )
     else:
         raise ValueError("Mode must be 'full' or 'binned'.")
 
     observed_result = test_rpl_slope(observed_rpl, mode=mode)
-    control_result = test_rpl_slope(control_rpl, mode=mode)
-    comparison_result = test_rpl_slope_vs_control(
-        observed_rpl, control_rpl, mode=mode
+    comparison_result = test_rpl_slope(comparison_rpl, mode=mode)
+    difference_result = test_rpl_slope_vs_comparison(
+        observed_rpl, comparison_rpl, mode=mode
     )
 
-    return observed_result, control_result, comparison_result
+    return observed_result, comparison_result, difference_result
