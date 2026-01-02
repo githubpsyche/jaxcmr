@@ -64,6 +64,7 @@ class CMR(Pytree):
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = context_create_fn(list_length)
+        #! use pre-experimental MFC for context updates during study
         self.pre_exp_mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)

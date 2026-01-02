@@ -60,11 +60,12 @@ class CMR(Pytree):
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
+        self.mfc_sensitivity = parameters["mfc_sensitivity"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
         #! item representations on F now position representations
-        self.positions = jnp.eye(self.item_count)
+        self.positions = jnp.eye(list_length)
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
@@ -75,9 +76,8 @@ class CMR(Pytree):
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
-        self.recalls = jnp.zeros(self.item_count, dtype=int)
-        #! recallable is now per-position, not per-item
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recalls = jnp.zeros(list_length, dtype=int)
+        self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -102,11 +102,11 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            #! associate using position cue instead of item
-            mfc=self.mfc.associate(mfc_cue, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, mfc_cue, self.mcf_learning_rate),
+            mfc=self.mfc.associate(mfc_cue, learning_state, self.mfc_learning_rate),  #! updated
+            mcf=self.mcf.associate(learning_state, mfc_cue, self.mcf_learning_rate),  #! updated
             #! update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! track each item's study position(s)
@@ -138,15 +138,25 @@ class CMR(Pytree):
         Args:
             choice: the index of the item to retrieve (0-indexed)
         """
-        #! Pool item activation across the item's study positions
+        #! We don't know which trace was recalled,
+        #! so we use relative support from MCF to weight recall
+        item_activation = self.position_activations() * (self.studied == item_index + 1)
+        mfc_cue = power_scale(
+            item_activation / jnp.sum(item_activation), self.mfc_sensitivity
+        )
         new_context = self.context.integrate(
-            self.mfc.probe(self.studied == item_index + 1),
+            self.mfc.probe(mfc_cue),
             self.recall_drift_rate,
         )
         return self.replace(
             context=new_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            recallable=self.recallable.at[item_index].set(self.allow_repeated_recalls),
+            #! Conditionally toggle recallability based on allow_repeated_recalls
+            recallable=lax.cond(
+                self.allow_repeated_recalls,
+                lambda: self.recallable,
+                lambda: self.recallable * (self.studied != item_index + 1),
+            ),
             recall_total=self.recall_total + 1,
         )
 
@@ -161,16 +171,22 @@ class CMR(Pytree):
             lambda: self.replace(is_active=False),
             lambda: self.retrieve_item(choice - 1),
         )
+    
+    def position_activations(self) -> Float[Array, " list_length"]:
+        """Returns relative support for retrieval of each study position given model state"""
+        #! refactored to get position activations separately
+        _activations = self.mcf.probe(self.context.state) * self.recallable
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
-        position_activations = self.mcf.probe(self.context.state) * self.recallable
-        item_activations = lax.map(
+        position_activations = self.position_activations()
+        return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
             self.item_ids,
         )
-        return (power_scale(item_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -184,8 +200,13 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve.
         """
-        item_activations = self.activations()
-        return item_activations[item_index] / jnp.sum(item_activations)
+        #! Since item activations are potentially distributed across position activations,
+        #! instead of indexing by item, we mask position activations by item then sum/normalize
+        position_activations = self.position_activations()
+        item_activation = jnp.sum(
+            position_activations * (self.studied == item_index + 1)
+        )
+        return item_activation / jnp.sum(position_activations)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
         """Return probability of the specified retrieval event.
