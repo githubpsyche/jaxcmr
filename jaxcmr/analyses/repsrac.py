@@ -1,8 +1,7 @@
-"""Compute and plot serial recall accuracy.
+"""Compute and plot repetition-index serial recall accuracy.
 
-The Serial Recall Accuracy Curve (SRAC) reports the
-proportion of trials on which the item studied at each
-position is recalled in the matching output position.
+The repetition-index SRAC reports accuracy at repeated study positions,
+stratified by repetition index (first vs second occurrence, etc.).
 """
 
 from typing import Optional, Sequence
@@ -12,20 +11,20 @@ from jax import jit, vmap
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
+from ..helpers import apply_by_subject
 from ..plotting import init_plot, plot_data, set_plot_labels
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["trial_srac", "srac", "plot_srac"]
+__all__ = ["trial_repsrac_counts", "repsrac", "plot_repsrac"]
 
 
-def trial_srac(
+def trial_repsrac_counts(
     recalls: Integer[Array, " recall_positions"],
     presentations: Integer[Array, " study_positions"],
     size: int = 3,
-) -> Bool[Array, " study_positions"]:
-    """Return a flag for each study position indicating correct recall.
+) -> tuple[Integer[Array, " repetition_index"], Integer[Array, " repetition_index"]]:
+    """Return correct and total counts for each repetition index in a trial.
 
     Args:
       recalls: Recalled item indices for one trial. Shape
@@ -33,19 +32,37 @@ def trial_srac(
       presentations: Item identifiers in study order. Shape
         ``[study_positions]``; 1-indexed.
       size: Maximum number of study positions an item can occupy.
+
+    Returns:
+      (correct_counts, total_counts): Counts per repetition index for repeated items.
     """
     expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
-    study_positions = jnp.arange(1, len(recalls) + 1)
-    return vmap(lambda r, i: jnp.any(r == i))(expanded_recalls, study_positions)
+    study_positions = jnp.arange(1, presentations.shape[0] + 1)
+    correct_positions = vmap(lambda r, i: jnp.any(r == i))(
+        expanded_recalls, study_positions
+    )
+    item_positions = vmap(all_study_positions, in_axes=(0, None, None))(
+        study_positions, presentations, size
+    )
+    repeated_mask = (
+        item_positions[:, 1] > 0
+        if size > 1
+        else jnp.zeros_like(study_positions, dtype=bool)
+    )
+    matches = item_positions == study_positions[:, None]
+    index_mask = matches & repeated_mask[:, None]
+    correct_counts = jnp.sum(index_mask & correct_positions[:, None], axis=0)
+    total_counts = jnp.sum(index_mask, axis=0)
+    return correct_counts, total_counts
 
 
-def srac(
+def repsrac(
     dataset: RecallDataset,
     size: int = 3,
-) -> Float[Array, " study_positions"]:
-    """Return the proportion of correct recalls for each study position.
+) -> Float[Array, " repetition_index"]:
+    """Return recall accuracy for each repetition index.
 
     Args:
       dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
@@ -54,14 +71,15 @@ def srac(
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
 
-    return vmap(trial_srac, in_axes=(0, 0, None))(
-        recalls,
-        presentations,
-        size,
-    ).mean(axis=0)
+    correct_counts, total_counts = vmap(trial_repsrac_counts, in_axes=(0, 0, None))(
+        recalls, presentations, size
+    )
+    total_correct = correct_counts.sum(axis=0)
+    total_possible = total_counts.sum(axis=0)
+    return jnp.where(total_possible > 0, total_correct / total_possible, 0.0)
 
 
-def plot_srac(
+def plot_repsrac(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: Optional[list[str]] = None,
@@ -70,7 +88,7 @@ def plot_srac(
     axis: Optional[Axes] = None,
     size: int = 3,
 ) -> Axes:
-    """Plot serial recall accuracy curves for one or more datasets.
+    """Plot repetition-index serial recall accuracy for one or more datasets.
 
     Args:
       datasets: Recall datasets to plot.
@@ -98,23 +116,19 @@ def plot_srac(
     if labels is None:
         labels = ["" for _ in datasets]
 
-    # Identify the largest list length across datasets so we can plot consistently
-    max_list_length = find_max_list_length(datasets, trial_masks)
-
     for data_index, data_dict in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
                 data_dict,
                 trial_masks[data_index],
-                jit(srac, static_argnames=("size",)),
+                jit(repsrac, static_argnames=("size",)),
                 size=size,
             )
         )
 
         color = color_cycle.pop(0)
-        subject_values = subject_values[:, :max_list_length]
-        xvals = jnp.arange(max_list_length) + 1
+        xvals = jnp.arange(size) + 1
         plot_data(axis, xvals, subject_values, labels[data_index], color)
 
-    set_plot_labels(axis, "Study Position", "Serial Recall Accuracy", contrast_name)
+    set_plot_labels(axis, "Repetition Index", "Serial Recall Accuracy", contrast_name)
     return axis
