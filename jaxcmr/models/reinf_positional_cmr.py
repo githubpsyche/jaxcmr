@@ -1,10 +1,9 @@
 """
-Reinforcement Positional CMR.
+Positional CMR.
 
 Items are encoded using positional representations rather than item representations.
 This allows repeated items to have distinct contextual associations for each presentation.
-Uses MCF relative support to weight MFC cue during recall.
-Recallability is tracked at the position level with more sophisticated handling.
+Recallability is tracked at the position level (not item level).
 """
 
 from typing import Mapping, Optional, Type
@@ -42,6 +41,7 @@ __all__ = [
     "make_factory",
 ]
 
+
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
 
@@ -61,13 +61,18 @@ class CMR(Pytree):
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
-        #! additional mfc_sensitivity parameter for weighting MFC cue during recall
-        self.mfc_sensitivity = parameters.get("mfc_choice_sensitivity", 1.0)
+        self.mfc_sensitivity = parameters["mfc_sensitivity"]
+        #! first_presentation_reinforcement parameter for reinforcing first presentation
+        shared = parameters.get("first_pres_reinforcement", 0.0)
+        mcf_delta = parameters.get("mcf_first_pres_reinforcement", 0.0)
+        mfc_delta = parameters.get("mfc_first_pres_reinforcement", 0.0)
+        self.mcf_first_pres_reinforcement = shared + mcf_delta
+        self.mfc_first_pres_reinforcement = shared + mfc_delta
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
         #! item representations on F now position representations
-        self.positions = jnp.eye(self.item_count)
+        self.positions = jnp.eye(list_length)
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
@@ -76,11 +81,11 @@ class CMR(Pytree):
         self.studied = jnp.zeros(list_length, dtype=int)
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
+        self.pre_exp_mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
         self.termination_policy = termination_policy_create_fn(list_length, parameters)
-        self.recalls = jnp.zeros(self.item_count, dtype=int)
-        #! recallable is now per-position, not per-item
-        self.recallable = jnp.zeros(self.item_count, dtype=bool)
+        self.recalls = jnp.zeros(list_length, dtype=int)
+        self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
@@ -105,11 +110,35 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+
+        #! if studied item has been studied before, we reinforce its pre-experimental context
+        item_studied = self.studied == item_index + 1
+        already_studied = jnp.any(item_studied)
+        associated_context = self.pre_exp_mfc.probe(item_studied)
+        new_mfc = lax.cond(
+            already_studied,
+            lambda: self.mfc.associate(
+                item_studied, associated_context, self.mfc_first_pres_reinforcement
+            ),
+            lambda: self.mfc,
+        )
+        new_mcf = lax.cond(
+            already_studied,
+            lambda: self.mcf.associate(
+                associated_context, item_studied, self.mcf_first_pres_reinforcement
+            ),
+            lambda: self.mcf,
+        )
+
+        #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            #! associate using position cue instead of item
-            mfc=self.mfc.associate(mfc_cue, learning_state, self.mfc_learning_rate),
-            mcf=self.mcf.associate(learning_state, mfc_cue, self.mcf_learning_rate),
+            mfc=new_mfc.associate(
+                mfc_cue, learning_state, self.mfc_learning_rate
+            ),  #! updated
+            mcf=new_mcf.associate(
+                learning_state, mfc_cue, self.mcf_learning_rate
+            ),  #! updated
             #! update recallable at the study position instead of item_index
             recallable=self.recallable.at[self.study_index].set(True),
             #! track each item's study position(s)
@@ -139,7 +168,7 @@ class CMR(Pytree):
         """Return model after simulating retrieval of item with the specified index.
 
         Args:
-            item_index: the index of the item to retrieve (0-indexed)
+            choice: the index of the item to retrieve (0-indexed)
         """
         #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
@@ -223,7 +252,7 @@ class CMR(Pytree):
             lambda: lax.cond(
                 jnp.logical_or(
                     p_stop == 1.0,
-                    jnp.all(self.recallable * (self.studied == choice) == 0)
+                    jnp.all(self.recallable * (self.studied == choice) == 0),
                 ),
                 lambda: 0.0,
                 lambda: (1 - p_stop) * self.item_probability(choice - 1),
@@ -233,14 +262,14 @@ class CMR(Pytree):
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return the outcome probabilities of all recall events."""
         p_stop = self.stop_probability()
-        item_activations = self.activations()
-        item_activation_sum = jnp.sum(item_activations)
+        item_activation = self.activations()
+        item_activation_sum = jnp.sum(item_activation)
         return jnp.hstack(
             (
                 p_stop,
                 (
                     (1 - p_stop)
-                    * item_activations
+                    * item_activation
                     / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
                 ),
             )

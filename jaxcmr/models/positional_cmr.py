@@ -140,6 +140,8 @@ class CMR(Pytree):
         """
         #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
+        #! mfc_sensitivity scales the sharpness of this weighting; 
+        #! higher values lead to more deterministic recalls focused on the strongest trace
         item_activation = self.position_activations() * (self.studied == item_index + 1)
         mfc_cue = power_scale(
             item_activation / jnp.sum(item_activation), self.mfc_sensitivity
@@ -178,11 +180,11 @@ class CMR(Pytree):
         _activations = self.mcf.probe(self.context.state) * self.recallable
         return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
-
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
         position_activations = self.position_activations()
+        print(position_activations)
         return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
             self.item_ids,
@@ -219,7 +221,10 @@ class CMR(Pytree):
             choice == 0,
             lambda: p_stop,
             lambda: lax.cond(
-                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
+                jnp.logical_or(
+                    p_stop == 1.0, 
+                    jnp.all(self.recallable * (self.studied == choice) == 0)
+                ),
                 lambda: 0.0,
                 lambda: (1 - p_stop) * self.item_probability(choice - 1),
             ),

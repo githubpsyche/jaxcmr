@@ -36,26 +36,6 @@ __all__ = [
     "make_factory",
 ]
 
-# def exponential_primacy_decay(
-#     study_indices: Array, primacy_scale: Float_, primacy_decay: Float_
-# ):
-#     """Returns the exponential primacy weighting for the specified study event.
-
-#     Args:
-#         study_indices: vector of study positions (e.g., ``jnp.arange(list_length)``).
-#         primacy_scale: the scale factor for primacy effect.
-#         primacy_decay: the decay factor for primacy effect.
-#     """
-#     # Exponential drop-off across positions lays out the raw primacy profile.
-#     weights = jnp.exp(-primacy_decay * study_indices)
-#     # Normalize so overall mass is fixed regardless of list length.
-#     weights = weights / jnp.sum(weights)
-#     # Center the profile; the exponential below keeps the result positive.
-#     centered = weights - jnp.mean(weights)
-#     curve = jnp.exp(primacy_scale * centered)
-#     # Rescale so the mean primacy remains 1.0 for downstream code.
-#     return curve / jnp.mean(curve)
-
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
