@@ -207,20 +207,24 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve (0-indexed)
         """
-        # Position-based stream update (like positional CMR)
-        # Weight positions by relative support from MCF
-        position_activation = self._position_stream_activations() * (
+        #! We don't know which trace was recalled,
+        #! so we use relative support from MCF to weight recall
+        #! mfc_sensitivity scales the sharpness of this weighting; 
+        #! higher values lead to more deterministic recalls focused on the strongest trace
+        blended_activation = self.position_activations() * (
             self.studied == item_index + 1
         )
-        position_mfc_cue = power_scale(
-            position_activation / jnp.sum(position_activation), self.mfc_sensitivity
+        mfc_cue = power_scale(
+            blended_activation / jnp.sum(blended_activation), self.mfc_sensitivity
         )
+
+        # Position-based stream update: probe position MFC with weighted cue
         new_position_context = self.position_context.integrate(
-            self.position_mfc.probe(position_mfc_cue),
+            self.position_mfc.probe(mfc_cue),
             self.recall_drift_rate,
         )
 
-        # Item-based stream update (like regular CMR)
+        # Item-based stream update (like regular CMR - no ambiguity about which item)
         item_cue = self.items[item_index]
         new_item_context = self.item_context.integrate(
             self.item_mfc.probe(item_cue),
@@ -252,15 +256,6 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def _position_stream_activations(self) -> Float[Array, " list_length"]:
-        """Returns scaled position activations from position-based context stream.
-
-        Used by retrieve_item() to weight which position trace was retrieved.
-        """
-        _activations = (
-            self.position_mcf.probe(self.position_context.state) * self.recallable
-        )
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def _raw_position_stream(self) -> Float[Array, " list_length"]:
         """Returns raw (unscaled) position activations from position-based stream."""
