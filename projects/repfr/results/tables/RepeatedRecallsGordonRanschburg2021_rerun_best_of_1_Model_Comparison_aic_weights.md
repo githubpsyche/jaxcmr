@@ -5,6 +5,7 @@
 |  3 | BasePositionalCMR            | 3.02066e-25 |
 |  7 | FullReinfPositionalCMR       | 4.39203e-49 |
 |  5 | MCFReinfPositionalCMR        | 1.08788e-51 |
+|  9 | BlendPositionalCMR           | 2.16098e-58 |
 |  8 | SimpleFullReinfPositionalCMR | 4.5302e-86  |
 |  0 | WeirdCMR                     | 0           |
 |  1 | NoReinstateCMR               | 0           |

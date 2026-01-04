@@ -209,7 +209,7 @@ class CMR(Pytree):
         """
         #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
-        #! mfc_sensitivity scales the sharpness of this weighting; 
+        #! mfc_sensitivity scales the sharpness of this weighting;
         #! higher values lead to more deterministic recalls focused on the strongest trace
         blended_activation = self.position_activations() * (
             self.studied == item_index + 1
@@ -278,7 +278,7 @@ class CMR(Pytree):
                 lambda: item_activations[self.studied[pos] - 1],
                 lambda: 0.0,
             ),
-            jnp.arange(self.item_count),
+            self.item_ids,  # use pre-computed arange to avoid tracing issues
         )
         return position_activations * self.recallable
 

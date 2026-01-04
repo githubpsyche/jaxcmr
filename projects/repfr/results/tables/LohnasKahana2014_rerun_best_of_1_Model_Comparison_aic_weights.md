@@ -1,6 +1,7 @@
 |    | Model                        |         AICw |
 |---:|:-----------------------------|-------------:|
 |  7 | FullReinfPositionalCMR       | 1            |
+|  9 | BlendPositionalCMR           | 6.42176e-22  |
 |  5 | MCFReinfPositionalCMR        | 7.51558e-31  |
 |  6 | MFCReinfPositionalCMR        | 1.0882e-43   |
 |  8 | SimpleFullReinfPositionalCMR | 4.11588e-45  |
