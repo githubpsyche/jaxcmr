@@ -235,7 +235,7 @@ class CMR(Pytree):
             position_context=new_position_context,
             item_context=new_item_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
-            # Recallability at position level
+            #! Recallability at position level
             recallable=lax.cond(
                 self.allow_repeated_recalls,
                 lambda: self.recallable,
@@ -290,6 +290,7 @@ class CMR(Pytree):
         2. Blend with mixture weights (blend_weight controls contribution)
         3. Apply power scaling once to combined result
         """
+        #! Get raw activations from each stream
         raw_pos = self._raw_position_stream()
         raw_item = self._raw_item_stream()
 
@@ -305,6 +306,7 @@ class CMR(Pytree):
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state."""
+        #! reworked to pool position activations by item
         position_activations = self.position_activations()
         return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
@@ -321,6 +323,8 @@ class CMR(Pytree):
         Args:
             item_index: the index of the item to retrieve.
         """
+        #! Since item activations are potentially distributed across position activations,
+        #! instead of indexing by item, we mask position activations by item then sum/normalize
         position_activations = self.position_activations()
         item_activation = jnp.sum(
             position_activations * (self.studied == item_index + 1)
