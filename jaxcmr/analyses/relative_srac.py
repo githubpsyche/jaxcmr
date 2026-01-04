@@ -37,7 +37,11 @@ class Tabulation(Pytree):
             lambda i: all_study_positions(i, presentation, size),
             self.all_positions,
         )
-        self.previous = self.item_study_positions[first_recall - 1]
+        self.previous = lax.cond(
+            first_recall > 0,
+            lambda: self.item_study_positions[first_recall - 1],
+            lambda: jnp.zeros((self.size,), dtype=int),
+        )
         self.recalled = (
             jnp.zeros(self.list_length, dtype=bool)
             .at[0]
@@ -88,6 +92,7 @@ def tabulate_trial(
         presentation: Presented item numbers in study order.
         size: Maximum number of study positions an item may occupy.
     """
+    trial = trial[:presentation.size]
     init = Tabulation(presentation, trial[0], size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return tab.recalled

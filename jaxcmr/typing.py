@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from typing import (
     Any,
     Callable,
@@ -37,7 +36,6 @@ __all__ = [
     "LossFnGenerator",
     "LikelihoodMaskFn",
     "FitResult",
-    "AnalysisConfig",
     "FittingAlgorithm",
     "TrialSimulator",
     "TerminationPolicy",
@@ -445,14 +443,3 @@ class TrialSimulator(Protocol):
           rng: Random key.
         """
         ...
-
-
-# @dataclass(slots=True)
-# class AnalysisConfig:
-#     """Store callable analysis configuration and visualization metadata."""
-
-#     target: Callable[..., Any]
-#     figure_suffix: str
-#     labels: tuple[str, ...] = ("Model", "Data")
-#     contrast_name: str = "Source"
-#     kwargs: dict[str, Any] = field(default_factory=dict)

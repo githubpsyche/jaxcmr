@@ -19,11 +19,13 @@ def trial_omission_error_rate(
     size: int = 3,
 ) -> Bool[Array, " study_positions"]:
     # Expand each recall token into every study position it could refer to
+    list_length = presentations.shape[0]
+    recalls = recalls[:list_length]
     expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
 
-    study_positions = jnp.arange(1, presentations.shape[0] + 1)
+    study_positions = jnp.arange(1, list_length + 1)
 
     # For each study position: did it ever appear in any expanded recall list?
     position_was_recalled = vmap(

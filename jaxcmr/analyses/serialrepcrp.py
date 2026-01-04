@@ -10,6 +10,15 @@
 #       jupytext_version: 1.16.7
 # ---
 
+"""Serial repetition CRP conditioned on correct run-up.
+
+Tabulates repetition-index CRPs for serial recall while conditioning on
+correctly ordered output up to the point of analysis. Once an out-of-position
+response occurs, subsequent transitions are not counted. For repeated items,
+an output is treated as in-position if it matches any of the item's study
+positions.
+"""
+
 # %% auto 0
 __all__ = [
     "set_false_at_index",
@@ -68,7 +77,11 @@ class RepCRPTabulation(Pytree):
         self.actual_lags = jnp.zeros((size, self.lag_range * 2 + 1), dtype=int)
         self.avail_lags = jnp.zeros((size, self.lag_range * 2 + 1), dtype=int)
 
-        self.previous_positions = self.item_study_positions[first_recall - 1]
+        self.previous_positions = lax.cond(
+            first_recall > 0,
+            lambda: self.item_study_positions[first_recall - 1],
+            lambda: jnp.zeros((self.size,), dtype=int),
+        )
         self.avail_recalls = jnp.ones(self.list_length, dtype=bool)
         # self.avail_recalls = self.available_recalls_after(first_recall)
 

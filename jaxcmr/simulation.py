@@ -208,7 +208,9 @@ def simulate_study_free_recall_and_forced_stop(
       trial: Observed recall sequence whose first zero marks termination timing.
       rng: Random key.
     """
-    model, recalls = simulate_study_and_free_recall(model, present, trial, rng)
+    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = model.start_retrieving()
+    model, recalls = simulate_free_recall(model, trial.size, rng)
     return model, recalls * (trial != 0)
 
 

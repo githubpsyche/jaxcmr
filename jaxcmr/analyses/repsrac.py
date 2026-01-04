@@ -36,10 +36,12 @@ def trial_repsrac_counts(
     Returns:
       (correct_counts, total_counts): Counts per repetition index for repeated items.
     """
+    list_length = presentations.shape[0]
+    recalls = recalls[:list_length]
     expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
-    study_positions = jnp.arange(1, presentations.shape[0] + 1)
+    study_positions = jnp.arange(1, list_length + 1)
     correct_positions = vmap(lambda r, i: jnp.any(r == i))(
         expanded_recalls, study_positions
     )

@@ -34,10 +34,12 @@ def trial_srac(
         ``[study_positions]``; 1-indexed.
       size: Maximum number of study positions an item can occupy.
     """
+    list_length = presentations.shape[0]
+    recalls = recalls[:list_length]
     expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
-    study_positions = jnp.arange(1, len(recalls) + 1)
+    study_positions = jnp.arange(1, list_length + 1)
     return vmap(lambda r, i: jnp.any(r == i))(expanded_recalls, study_positions)
 
 
