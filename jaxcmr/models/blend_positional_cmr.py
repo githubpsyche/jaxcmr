@@ -94,8 +94,12 @@ class CMR(Pytree):
 
         # Position-based context stream (positional CMR style)
         self.position_context = context_create_fn(list_length)
-        self.position_mfc = mfc_create_fn(list_length, parameters, self.position_context)
-        self.position_mcf = mcf_create_fn(list_length, parameters, self.position_context)
+        self.position_mfc = mfc_create_fn(
+            list_length, parameters, self.position_context
+        )
+        self.position_mcf = mcf_create_fn(
+            list_length, parameters, self.position_context
+        )
 
         # Item-based context stream (regular CMR style)
         self.item_context = context_create_fn(list_length)
@@ -184,12 +188,11 @@ class CMR(Pytree):
     def start_retrieving(self) -> "CMR":
         """Returns model after transitioning from study to retrieval mode."""
         # Both contexts drift toward start-of-list
-        start_input = self.position_context.initial_state
         new_position_context = self.position_context.integrate(
-            start_input, self.start_drift_rate
+            self.position_context.initial_state, self.start_drift_rate
         )
         new_item_context = self.item_context.integrate(
-            start_input, self.start_drift_rate
+            self.item_context.initial_state, self.start_drift_rate
         )
         return self.replace(
             position_context=new_position_context,
@@ -250,19 +253,27 @@ class CMR(Pytree):
         )
 
     def _position_stream_activations(self) -> Float[Array, " list_length"]:
-        """Returns position activations from position-based context stream."""
-        _activations = self.position_mcf.probe(self.position_context.state) * self.recallable
+        """Returns scaled position activations from position-based context stream.
+
+        Used by retrieve_item() to weight which position trace was retrieved.
+        """
+        _activations = (
+            self.position_mcf.probe(self.position_context.state) * self.recallable
+        )
         return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
-    def _item_stream_activations(self) -> Float[Array, " list_length"]:
-        """Returns position activations from item-based context stream.
+    def _raw_position_stream(self) -> Float[Array, " list_length"]:
+        """Returns raw (unscaled) position activations from position-based stream."""
+        return self.position_mcf.probe(self.position_context.state) * self.recallable
 
-        The item MCF maps context -> items, so we need to redistribute
-        item activations back to positions based on which item was studied where.
+    def _raw_item_stream(self) -> Float[Array, " list_length"]:
+        """Returns raw (unscaled) position activations from item-based stream.
+
+        The item MCF maps context -> items, so we redistribute item activations
+        back to positions based on which item was studied where.
         """
-        # Get item activations from item-based MCF
+        # Get raw item activations from item-based MCF
         item_activations = self.item_mcf.probe(self.item_context.state)
-        item_activations = power_scale(item_activations, self.mcf_sensitivity) + lb
 
         # Map item activations to positions based on studied mapping
         # For each position, get the activation of the item studied there
@@ -277,12 +288,25 @@ class CMR(Pytree):
         return position_activations * self.recallable
 
     def position_activations(self) -> Float[Array, " list_length"]:
-        """Returns blended position activations from both context streams."""
-        position_stream = self._position_stream_activations()
-        item_stream = self._item_stream_activations()
+        """Returns blended position activations from both context streams.
 
-        # Blend: (1 - blend_weight) * position + blend_weight * item
-        return (1 - self.blend_weight) * position_stream + self.blend_weight * item_stream
+        Uses normalize-then-blend-then-scale approach:
+        1. Normalize each stream to probability distribution
+        2. Blend with mixture weights (blend_weight controls contribution)
+        3. Apply power scaling once to combined result
+        """
+        raw_pos = self._raw_position_stream()
+        raw_item = self._raw_item_stream()
+
+        # Normalize each stream to probability distribution
+        pos_prob = raw_pos / (jnp.sum(raw_pos) + lb)
+        item_prob = raw_item / (jnp.sum(raw_item) + lb)
+
+        # Blend distributions (mixture model: blend_weight = prob of using item stream)
+        blended = (1 - self.blend_weight) * pos_prob + self.blend_weight * item_prob
+
+        # Single winner-take-all stage on combined distribution
+        return (power_scale(blended, self.mcf_sensitivity) + lb) * self.recallable
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state."""
