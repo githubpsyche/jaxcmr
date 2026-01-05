@@ -87,7 +87,7 @@ class RepCRPTabulation(Pytree):
 
         # modified to sum over current_recall axis while still separating over prev_recall
         new_lags = lax.map(self.lags_from_previous, recall_study_positions).astype(bool)
-        return self.actual_lags + new_lags.sum(0)
+        return self.actual_lags + new_lags.sum(1)
 
     # for updating avail_lags: lag-transitions available from the previous item
     def available_lags_from(self, pos: Int_) -> Bool[Array, " lags"]:

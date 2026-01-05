@@ -6,43 +6,44 @@ Jordan Gunn, Sean Polyn, Department of Psychology, Vanderbilt University
 
 ### The Theoretical Puzzle: Does Memory Blend Repeated Experiences?
 
-Image: A timeline diagram showing a study phase where item C appears at two positions (i and j) in the list. The recall phase shows C being retrieved, with question marks and arrows pointing toward both neighborhoods (i±1 and j±1), posing the question: which neighborhood does retrieval cue?
+Image: A timeline diagram showing a study phase where item C appears at two positions (i and j) in the list. An arrow points from the recall phase back to the study list, with question marks indicating uncertainty about which neighborhood (i±1 or j±1) will be cued next. The diagram poses the central question: when C is recalled, which part of the mental timeline does memory revisit?
 
-Retrieved-context theory explains memory search through item-driven context reinstatement: recalling an item reinstates its associated temporal context, cueing neighbors from study.
+Retrieved-context theory (RCT) explains memory search as mental time travel: recalling an item reinstates its associated temporal context, biasing subsequent retrievals toward items studied nearby in time.
+
+The Context Maintenance and Retrieval model (CMR; Polyn, Norman, & Kahana, 2009) implements RCT by coupling items to a slowly evolving temporal context. When an item is studied or recalled, it retrieves and partially reinstates contextual features associated with it, updating the current context state. This item-driven context evolution explains the lag-contiguity effect and other hallmarks of episodic memory search.
 
 But when an item was studied twice, it has TWO associated contexts. Does retrieval blend them or select one?
 
 ### Two Competing Accounts
 
-Image: A two-panel diagram contrasting item-based and position-based reinstatement mechanisms.
+Image: A two-panel diagram contrasting item-based and position-based reinstatement mechanisms. Left panel shows CMR's approach: item C is linked to overlapping contexts at positions i and j; at retrieval, a composite context is reinstated, with arrows fanning out to both neighborhoods. Right panel shows Instance-CMR's approach: item C has two separate traces with distinct, non-overlapping contexts; at retrieval, traces compete, one wins, and only that trace's context is reinstated, with a single arrow to one neighborhood. Visual emphasis on the contrast: blending vs. selection.
 
 **Panel A: Item-based Reinstatement (Standard CMR)**
 
+In CMR, item identity drives context evolution. When C appears at position j, it retrieves context associated with its earlier presentation at i (study-phase retrieval), knitting the two contexts together. At recall, reinstating C produces a composite of both occurrence contexts.
+
 ```
 ENCODING:
-  C at position i → context_i
-  C at position j → context_j
-                    (but study-phase retrieval partially reinstates context_i)
-                    (contexts become overlapping/knitted together)
+  C at position i → binds to context_i
+  C at position j → reinstates context_i, then binds to blended context_j
+                    (contexts become overlapping)
 
 RETRIEVAL:
-  Recall C → retrieves COMPOSITE of context_i and context_j
+  Recall C → reinstates COMPOSITE of context_i and context_j
           → activates neighbors of BOTH i and j
 
 PREDICTION: Cross-occurrence associative interference
-  - Balanced access to both neighborhoods
-  - Cross-occurrence neighbor transitions elevated
-  - Forward-chaining errors in serial recall
 ```
 
 **Panel B: Position-based Reinstatement (Instance-CMR)**
 
+In Instance-CMR, position (not item) drives context evolution. Each occurrence encodes to a fresh, non-overlapping context. At recall, occurrence traces compete; the winner's context is selectively reinstated.
+
 ```
 ENCODING:
-  C at position i → context_i (fresh, position-specific)
-  C at position j → context_j (fresh, non-overlapping with context_i)
+  C at position i → binds to context_i (position-specific)
+  C at position j → binds to context_j (fresh, non-overlapping)
                     (no study-phase context reinstatement)
-                    (contexts remain as distinct as if different items)
 
 RETRIEVAL:
   Recall C → traces COMPETE for selection
@@ -50,10 +51,9 @@ RETRIEVAL:
           → activates neighbors of ONE occurrence only
 
 PREDICTION: Occurrence-specific access (no interference)
-  - Preferential access to one neighborhood
-  - No cross-occurrence neighbor elevation
-  - Intact forward chaining in serial recall
 ```
+
+**Reinforcement variant:** At second presentation, strengthen first-occurrence trace WITHOUT reinstating its context. This preserves distinct contexts while enhancing access to the first occurrence.
 
 The key insight: Position-based coding treats each study event as unique, allowing retrieval to route through individual occurrences without blending.
 
@@ -73,7 +73,7 @@ Additional datasets (Lohnas 2025; Kahana & Jacobs 2000) confirm generalization. 
 
 ## Methodological Innovation: Position-Matched Symmetric Baseline
 
-Image: A diagram showing the control analysis procedure. On the left, a mixed list shows item C at positions 5 and 15. On the right, a control list shows items X and Y at the same positions 5 and 15. An arrow indicates that X and Y are treated as a "pseudo-repeater" — recalls of either position count as recalls of the same pseudo-item. Text below: "Subtract control from mixed to isolate TRUE repetition effects."
+Image: A side-by-side comparison of mixed and control lists using the same visual language as the setup diagram. Left side shows a mixed list timeline with item C appearing at positions 5 and 15, labeled as "Repeater." Right side shows a control list timeline with items X at position 5 and Y at position 15, with a bracket grouping them as "Pseudo-repeater." An equals sign or arrow connects the two, indicating that they are analyzed equivalently. Below, text emphasizes: "Recall of X OR Y counts as recall of pseudo-repeater. Subtract control from mixed to isolate TRUE repetition effects."
 
 Previous analyses compared repeated items to singletons within the same mixed lists — but repetitions change rehearsal and output dynamics for ALL items.
 
@@ -87,9 +87,19 @@ This rigorous baseline reveals effects previous work missed and eliminates spuri
 
 ## Repetition Lag-CRP: First-Presentation Bias
 
-Image: A 2×4 grid of repetition lag-CRP plots. Columns are: Data, CMR, Positional CMR, Reinf Positional CMR. Rows are: Mixed lists, Control lists.
+### How the Repetition Lag-CRP is Computed
 
-Each panel shows two curves: first-centered (transitions relative to position i) and second-centered (transitions relative to position j). X-axis: lag (-3 to +3). Y-axis: conditional response probability.
+Image: A schematic showing how lag is calculated relative to each presentation of a repeated item. A timeline shows item D studied at positions 4 and 11, and item F studied at position 6. One arrow from position 4 to position 6 indicates "lag = +2 relative to first presentation." Another arrow from position 11 to position 6 indicates "lag = -5 relative to second presentation." The diagram clarifies that the same transition is scored twice, once relative to each study position.
+
+For recalls of repeated items with spacing ≥ 4:
+1. Track transitions relative to first presentation (position i) AND second presentation (position j) separately
+2. For each lag in [-3, -2, -1, +1, +2, +3]: count possible transitions and actual transitions
+3. Conditional probability = Actual / Possible
+4. Compare first-centered curve vs second-centered curve
+
+### Results
+
+Image: A 2×4 grid of repetition lag-CRP plots arranged with columns for Data, CMR, Positional CMR, and Reinf Positional CMR, and rows for Mixed lists (top) and Control lists (bottom). Each panel contains two curves: a blue/solid "first-centered" curve showing transition probabilities relative to position i, and an orange/dashed "second-centered" curve showing probabilities relative to position j. X-axis ranges from lag -3 to +3 (excluding 0). Y-axis shows conditional response probability from 0 to approximately 0.3. Key visual pattern: In Data-Mixed, the first-centered curve peaks much higher than second-centered at +1 lag. In CMR-Mixed, the curves nearly overlap. In Positional-Mixed, curves show moderate separation similar to control. In Reinf-Mixed, curves show large separation matching Data.
 
 **Row 1 (Mixed lists):**
 - Data: Large separation between curves at +1 lag; first-centered curve substantially higher than second-centered. Shows strong first-presentation bias.
@@ -120,7 +130,7 @@ Measure: Probability of next transition to the OTHER occurrence's neighborhood (
 CMR predicts: Elevated transitions to j±1, j±2 (study-phase retrieval knits neighborhoods together)
 Data shows: Flat curve at baseline (no cross-occurrence linkage)
 
-Image: Three panels showing neighbor-contiguity analysis (first→second variant: triggers from i+1/i+2, lags centered on j). Each panel overlays mixed (solid line) and control (dashed line) curves.
+Image: Three panels arranged horizontally, labeled "Data," "CMR," and "Reinf Positional CMR." Each panel shows a centered lag-CRP with x-axis from -3 to +3 (centered on position j) and y-axis showing conditional response probability. Each panel contains two overlaid curves: mixed lists (solid line) and control lists (dashed line). In the Data panel, the solid and dashed lines overlap almost perfectly, sitting flat near baseline, except for a small bump at lag=0. In the CMR panel, the solid line (mixed) rises above the dashed line (control) at lags ±1 and ±2, showing predicted cross-occurrence elevation. In the Reinf Positional panel, solid and dashed lines overlap like the Data panel, with a small lag=0 bump.
 
 - Panel 1 (Data): Mixed and control curves overlap completely. No elevation at j±1, j±2. Exception: selective elevation at lag=0 (the repeated item itself) — suggests boosted access to the repeater without neighborhood knitting.
 - Panel 2 (CMR): Mixed curve elevated above control at j±1, j±2. Predicts cross-occurrence knitting that DATA DOES NOT SHOW.
@@ -135,7 +145,7 @@ In serial recall, after correctly reporting through position i (first occurrence
 CMR predicts: Elevated i→j+1 errors (blended context activates both forward neighbors)
 Data shows: No elevation above position-matched baseline
 
-Image: Three panels showing serial forward-chaining analysis. Each panel overlays mixed (solid line) and control (dashed line) showing probability of transitions to j+1 and j+2 after correct report through position i.
+Image: Three panels arranged horizontally, labeled "Data," "CMR," and "Reinf Positional CMR." Each panel shows a bar chart or point plot with x-axis showing transition targets (j+1 and j+2) and y-axis showing conditional probability of erroneous transition. Each panel contains two series: mixed lists (solid/filled) and control lists (dashed/unfilled). In the Data panel, mixed and control bars are approximately equal height — no elevation of cross-occurrence errors. In the CMR panel, mixed bars are noticeably taller than control bars, especially at j+1, showing the predicted (but unsupported) error elevation. In the Reinf Positional panel, mixed and control bars are again approximately equal, correctly matching the data pattern.
 
 - Panel 1 (Data): Mixed and control curves overlap. No elevated cross-occurrence errors. Forward chaining intact.
 - Panel 2 (CMR): Mixed curve elevated above control. Predicts errors that DATA DOES NOT SHOW.
@@ -145,13 +155,15 @@ Image: Three panels showing serial forward-chaining analysis. Each panel overlay
 
 ## Model Comparison
 
+Image: A table with 4 columns (one per dataset) and 3 rows (one per model). Column headers identify each dataset: two free recall (Lohnas & Kahana 2014, Lohnas 2025) and two serial recall (Logan & Cox 2021, Kahana & Jacobs 2000). Row labels identify each model: CMR, Positional CMR, Reinf Positional CMR. Cells contain AIC weights formatted to show decisive preferences. The CMR row shows zeros across all datasets. The Positional CMR row shows near-zero for free recall but 1.00 for Logan serial recall. The Reinf Positional CMR row shows 1.00 (bolded) for three of four datasets. Color coding or bolding emphasizes the winning model in each column.
+
 | Model | Free Recall (Lohnas & Kahana 2014) | Free Recall (Lohnas 2025) | Serial Recall (Logan & Cox 2021) | Serial Recall (Kahana & Jacobs 2000) |
 |-------|-----------------------------------|---------------------------|----------------------------------|--------------------------------------|
 | CMR | 0 | 0 | 0 | 0 |
 | Positional CMR | ~0 | ~0 | 1.00 | ~0 |
 | Reinf Positional CMR | **1.00** | **1.00** | ~1.00 | **1.00** |
 
-Table: AIC weights (higher = better; weights sum to 1 within each dataset). Reinf Positional CMR is decisively preferred in free recall. Both positional variants dominate in serial recall.
+Table: AIC weights (higher = better; weights sum to 1 within each dataset). Models fitted via maximum likelihood to trial-by-trial recall sequences. Reinf Positional CMR is decisively preferred in free recall. Both positional variants dominate in serial recall. All variants fit standard benchmarks (SPC, CRP, PFR) comparably.
 
 **Parameter note:** Positional CMR has the same parameter count as standard CMR. Reinf Positional CMR adds one reinforcement parameter. Despite this penalty, it is strongly preferred.
 
