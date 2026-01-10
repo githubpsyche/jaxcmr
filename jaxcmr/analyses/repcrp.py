@@ -256,7 +256,7 @@ def plot_rep_crp(
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
     for data_index, data in enumerate(datasets):
-        lag_range = jnp.max(data["listLength"][trial_masks[data_index]]) - 1
+        lag_range = data["pres_itemnos"].shape[1] - 1
         subject_values = apply_by_subject(
             data,
             trial_masks[data_index],
@@ -325,7 +325,7 @@ def plot_difference_rep_crp(
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
     for data_index, data in enumerate(datasets):
-        lag_range = jnp.max(data["listLength"][trial_masks[data_index]]) - 1
+        lag_range = data["pres_itemnos"].shape[1] - 1
         subject_values = apply_by_subject(
             data,
             trial_masks[data_index],
@@ -429,7 +429,7 @@ def subject_rep_crp(
         Array of shape [n_subjects, size, 2*max_lag+1] with CRP values per subject,
         repetition index, and lag.
     """
-    lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
+    lag_range = dataset["pres_itemnos"].shape[1] - 1
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
 
     subject_values = apply_by_subject(
