@@ -131,6 +131,7 @@ Memory can connect the related episodes without collapsing their distinctive det
 
 # Instance-CMR: An Episode-Specific Retrieved-Context Account of Memory Search
 
+Seeking to identify the minimal 
 We specify Instance‑CMR by adapting the likelihood-based CMR framework developed for model evaluation by @kragel2015neural and @morton2016predictive.
 This framework assigns trial-level probabilities to each recall, enabling likelihood-based fits to individual subjects.
 We retain CMR's parameterization, its pre-experimental initialization, and its two associative memories, $M^{CF}$ and $M^{FC}$.
@@ -150,45 +151,46 @@ Key visual contrasts to include:
 
 | Symbol | Name | Description |
 |-------------------|-------------------|----------------------------------|
-| $C$ | temporal context | A recency-weighted average of encoded items |
-| $F$ | item features | Current pattern of item feature unit activations |
-| $M^{FC}$ | item-to-context memory | encoded feature-to-context associations |
-| $M^{CF}$ | context-to-feature memory | encoded context-to-feature associations |
-| ${\beta}_{enc}$ | encoding drift rate | Rate of context drift during item encoding |
+| $C$ | temporal context | Recency-weighted context state that drifts during study and recall |
+| $F$ | position features | Feature layer indexing study events (one unit per list position) |
+| $M^{FC}$ | feature-to-context memory | Encoded feature-to-context associations |
+| $M^{CF}$ | context-to-feature memory | Encoded context-to-feature associations |
+| ${\beta}_{enc}$ | encoding drift rate | Rate of context drift during study |
 | ${\beta}_{start}$ | start drift rate | Amount of start-list context retrieved at start of recall |
 | ${\beta}_{rec}$ | recall drift rate | Rate of context drift during recall |
-| ${\alpha}$ | shared support | Uniform pre-experimental cross-item support in $M^{CF}$ |
-| ${\delta}$ | item support | Pre-experimental self-association in $M^{CF}$ |
+| ${\alpha}$ | shared support | Uniform pre-experimental support across positions in $M^{CF}$ |
+| ${\delta}$ | self support | Pre-experimental self-association for each position in $M^{CF}$ |
 | ${\gamma}$ | learning rate | Learning rate for updates to $M^{FC}$ |
 | ${\phi}_{s}$ | primacy scale | Scaling of primacy gradient during learning in $M^{CF}$ |
 | ${\phi}_{d}$ | primacy decay | Rate of decay of the primacy gradient |
 | ${\theta}_{s}$ | stop probability scale | Baseline of the stopping process over outputs |
 | ${\theta}_{r}$ | stop probability growth | Slope of the stopping process over outputs |
-| ${\tau}$ | activation scaling | Exponential scaling of $M^{CF}$ trace activations in recall competition |
+| ${\tau}_{c}$ | choice sensitivity | Exponential scaling of $M^{CF}$ activations in recall competition |
 
 : Parameters and structures specifying Instance-CMR. {#tbl-cmr-parameters}
 
+<!-- | ${\tau}_{f}$ | reinstatement sensitivity | Exponential scaling of trace-mixture weights in $M^{FC}$ reinstatement | -->
+
 ## Representations and Memory Architecture
 
-To emphasize continuity with standard CMR notation, we retain the conventional labels for the two associative "directions" that support retrieved-context search.
-Conceptually, a context-to-memory projection ($M^{CF}$) uses the current context cue to activate item features, and a feature-to-context projection ($M^{FC}$) reinstates contextual features associated with the cued item's features.
-In composite CMR these projections are implemented by fixed-size weight matrices that aggregate across study events [@polyn2009context; @morton2016predictive].
-In Instance-CMR, the same computations are implemented by accessing and competing over stored traces: $M^{CF}$ corresponds to comparing the current context to each stored trace context, and $M^{FC}$ corresponds to reinstating the context stored in the selected trace.
+To emphasize continuity with standard CMR notation, we retain the conventional labels for the two associative directions that support retrieved-context search.
+Conceptually, a context-to-memory projection ($M^{CF}$) uses the current context cue to activate position features (study events), and a feature-to-context projection ($M^{FC}$) reinstates contextual features associated with those positions.
+In composite CMR these projections are implemented by fixed-size weight matrices that link item features and context features, so repeated items accumulate into shared rows and columns [@polyn2009context; @morton2016predictive].
+In Instance-CMR, the feature layer indexes list positions rather than item labels, so each study event writes to its own address and the item presented at that position is stored as a label for later report.
 
-Each study event $m$ (an occurrence) creates a distinct trace that binds an item label to the contextual state present at that moment.
-Formally, a trace stores a
+Each study event $m$ is represented by
 
-- an item-identity code $f_m$ (the same $f$ may appear in multiple traces if an item repeats),
-- an episode/position code $p_m$ (unique across traces within a list),
+- a position code $p_m$ (unique within a list),
+- an item label $f_m$ associated with that position,
 - the associated temporal context state $c_m$ at encoding.
 
 The critical architectural difference from standard CMR is *when* and *where* information is aggregated across occurrences.
 In connectionist/composite CMR, learning accumulates into fixed-size associative matrices, so repeated events sum into shared weights and later reinstatement is inherently aggregated at the item level [@polyn2009context; @morton2016predictive].
-In Instance-CMR, traces remain separable in memory, and aggregation is postponed to the retrieval competition—allowing the model to reinstate a single occurrence trace rather than an item-level mixture.
+In Instance-CMR, associations remain separable by position, and aggregation is postponed until report, when position-level activations are pooled to item labels.
 
 ## Encoding Dynamics (Study)
 
-At study position $m$, the model updates temporal context by integrating an input representation and then stores the resulting state alongside the current item in a new trace.
+At study position $m$, the model updates temporal context by integrating an input representation and then associates the current position with the resulting context in memory.
 As in CMR, context evolves by a leaky integration rule:
 
 $$
@@ -210,12 +212,12 @@ The context input $c^{\text{IN}}_m$ is derived from the current episode/position
 Intuitively, each study moment reinstates a unique “where-in-the-list/when-in-the-list” marker; repeated items therefore do not pull context states toward one another simply by virtue of sharing an item label.
 This change targets the study-stage route to cross-occurrence blending while retaining the core retrieved-context mechanism that context is updated on every event.
 
-After updating context, the model stores a new trace $m$ containing $(f_m, p_m, c_m)$.
-When an item repeats, this creates two traces with the same item-identity code but distinct episode/position codes and distinct associated contexts.
+After updating context, the model binds the position code $p_m$ to the updated context in $M^{FC}$ and $M^{CF}$ and records the item label $f_m$ at that position.
+When an item repeats, this yields multiple positions with the same label but distinct position codes and distinct associated contexts.
 
 ## Retrieval Dynamics (Recall)
 
-Retrieval is trace-first: the current context $c$ cues traces; a trace is selected; the trace emits an item label; and the model updates context by reinstating the selected trace's stored context.
+Retrieval is trace-first: the current context $c$ cues study-event positions; a position is selected; its item label is reported; and the model updates context by reinstating the context associated with that position.
 This makes “which occurrence” the primary retrieval unit for contextual reinstatement.
 
 ### Trace competition (context → trace)
