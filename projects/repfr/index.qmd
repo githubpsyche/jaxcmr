@@ -1,5 +1,7 @@
 <!-- 
 Still need to clean up and extend citations.
+
+Howard/Shankar post-TCM papers
 -->
 
 Episodic memory -- our ability to recall events anchored to a unique time and place [@tulving1972episodic] -- is especially challenged by repeated and overlapping experience.
@@ -22,7 +24,9 @@ At study, states of this dynamic temporal context are associated with items in m
 at retrieval, it serves as the primary cue, prioritizing items studied in similar contexts.
 The theory's central claim is that retrieving an item reinstates its study context, and that this reinstated context guides what comes next.
 In this work, we test this principle when the same item appears more than once in a list. 
-Across free and serial recall, retrieval remains tied to a single occurrence context rather than blending across repetitions, challenging item-level context reinstatement and motivating an instance-based alternative.
+Across free and serial recall, we argue that contextual reinstatement is indexed to a particular occurrence rather than an item-level composite, motivating an episode-specific alternative we call Instance-CMR.
+
+<!-- Across free and serial recall, we find retrieval remains tied to a single occurrence context rather than blending across repetitions, challenging item-level context reinstatement and motivating an instance-based alternative. -->
 
 ## Retrieved-Context Theory and Repetition
 
@@ -47,7 +51,7 @@ If contextual features tied to *canoe* are blended across occurrences, a cue tha
 In RCT, item-driven context reinstatement can produce this blending at two stages.
 At study, reinstating the item's context produces overlapping contextual states across occurrences, so cues for one region also contact the other.
 At retrieval, the same process blends contextual features from all occurrences of the repeated item, creating a composite cue.
-Either route implies that cues to one occurrence will also substantially cue the other, limiting occurrence-specific access and undermining differentiation across episodes.
+Either route implies that cues to one occurrence will also substantially cue the other, limiting selective retrieval and undermining differentiation across episodes.
 
 Here, we show that this prediction of associative interference between repeated occurrences is at odds with empirical patterns in six published datasets spanning free and serial recall.
 We derive and test three predictions that follow from item-based context reinstatement in retrieved-context models, using a refined position-matching control procedure that factors out baseline transition tendencies tied to serial position and list structure.
@@ -72,49 +76,47 @@ We propose a three-part solution.
 First, we provide an instance-based reformulation of one of the most prominent implementations of RCT, the Context Maintenance and Retrieval model (CMR) [@howard2002distributed; @polyn2009context].
 In CMR, item-context associations are stored in composite weight matrices that map items to a single blended representation of contextual features across their occurrences.
 When an item is retrieved, the model looks up and reinstates that composite with no additional selection step.
-A contrasting instance-based strategy [@hintzman1984minerva] stores a separate trace for every study event, pairing the item with its occurrence-specific context.
-Under this framework, reinstatement is configurable along a continuum: it may reinstate a fixed, item-level composite (recovering classic CMR behavior), construct a cue-weighted mixture across occurrence-specific contexts at retrieval, or -- in the limiting case -- select the single best-matching occurrence.
+A contrasting multi-trace approach [@hintzman1984minerva] stores a separate trace for each study event and retrieves by global matching, so a cue elicits a similarity‑weighted blend over the traces it contacts. 
+In retrieved-context models, that perspective makes reinstatement a design choice: it can reinstate an item-level composite (recovering standard CMR behavior), construct a cue‑weighted blend over an item's occurrences, or become effectively dominated by a single occurrence when trace discrimination is strong.
 
 Instance-based approaches have been effective in domains from category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons] to episodic and semantic memory [@cox2020similarity; @hintzman1988judgments; @jamieson2018instance; @shiffrin1997model].
 However, aside from the Context Retrieval and Updating (CRU) model for serial-order memory [@logan2018automatic;@logan2021serial], they have played a limited role in retrieved-context modeling of episodic memory search.
-The under-representation appears to reflect modeling tradition rather than a theoretical barrier; nothing in RCT prevents applying the item-driven update rule to a growing set of traces.
+The under-representation appears to reflect modeling tradition rather than a theoretical barrier.
+The item-driven contextual reinstatement assumption that drives repetition effects in RCT is compatible with a multi-trace store as well as a composite one: even with separate traces per study event, a repeated item can still cue and reinstate an aggregate that blends across its trace set.
 Work across domains also shows conditions under which composite and instance formulations become equivalent rather than distinct [@turner2019toward; @kelly2017memory; @ramsauer2020hopfield; @anderson1995introduction].
-So whereas CMR's composite architecture converts one reinstatement approach into an architectural commitment, this work leverages the instance-based framework to show how retrieved-context theory can accommodate selective access across repeated occurrences.
+So whereas CMR's composite architecture converts occurrence-blending reinstatement into an architectural commitment, this work uses an instance-based reformulation to separate storage format from reinstatement dynamics and then ask what additional constraints are required for selective access across repeated occurrences.
 
-We find, however, that simply storing separate traces for each occurrence is not sufficient to account for the lack of associative interference across occurrences in free and serial recall.
-This is because a simple swap of storage format leaves the item-driven context dynamics unchanged, so each occurrence of an item still reinstates a composite of contexts associated with it.
-As a second part of the solution, we show that allowing individual traces (rather than items) to compete with one another for retrieval and subsequent context reinstatement during the recall process is key to eliminating the predicted interference.
-Under these dynamics, traces corresponding to different occurrences of the same item are cued independently. 
-Retrieving either occurrence reports the same item, yet only reinstates its own contextual features rather than a blend, allowing differentiated access to its neighbors in successive recalls.
-Here, associations within retrieved instances rather than at the item level drive context evolution, enabling focused search using occurrence-specific contextual details.
+If the model still treats item identity as the retrieval unit, then recalling a repeated item reinstates an item-level aggregate across its occurrences, and the interference prediction survives.
+The second step is therefore to let occurrence traces, not item labels, compete for retrieval.
+Context cues the occurrence traces; the most strongly supported trace drives contextual reinstatement; and the model reports the trace's item label.
+This decouples what is retrieved from what is said and supports differentiated access to each occurrence's neighborhood.
 
-Even with instance-based storage and occurrence-specific retrieval, however, most associative interference is preserved.
-Item-driven context reinstatement during study still evolves context across occurrences toward similar states by reinstating features tied to the same item.
-If contexts associated with different occurrences overlap substantially, perfect cues for one occurrence will still partially activate the other, producing interference.
-We thus propose a third part of the solution: modifying context-evolutionary dynamics so that each occurrence of an item reinstates features unique to that episode rather than item-dependent features shared across occurrences.
-This change ensures that contexts associated with different occurrences remain distinct, so cues for one occurrence do not substantially activate the other beyond the extent that they would if they were entirely different items.
-Item-independent contextual dynamics thus prevent overlap across occurrences from building up during study, refining temporal context into a reliable marker of episode identity stored alongside item information in separate memory traces.
+However, this mechanism only helps if the occurrence contexts themselves remain distinct, which motivates the third change.
+If context updating is item-driven, then a repetition reinstates features tied to the earlier occurrence, pulling the two occurrence contexts toward one another during study.
+When occurrence contexts overlap, even cues matched to one occurrence will partially activate the other, producing interference.
+So thirdly, we drive study-phase context evolution with unique occurrence or position features rather than item identity.
+This keeps occurrence contexts distinct and makes temporal context a reliable marker of episode identity stored alongside item information.
 
-These modifications together yield Instance-CMR, an instance-based reformulation of CMR capable of episode-specific context reinstatement.
-Context evolves via item-independent dynamics, so different occurrences of an item do not produce overlapping contextual states during study.
-Each occurrence of an item is stored as a separate trace paired with the specific context at that study event instead of updating a composite item--context mapping.
-During retrieval, traces compete for activation based on their match to the current context cue, and only the winning trace reinstates its associated context.
+These modifications together yield Instance-CMR, a reformulation of CMR that supports episode-specific contextual reinstatement.
+Context evolves via item-independent inputs during study, so repeating a label does not pull the two occurrence contexts toward one another.
+Each presentation leaves a separate memory trace with its own contextual associations, rather than contributing to a single item-addressed composite.
+During retrieval, traces compete for activation based on their match to the current context cue, and only the winning trace reinstates its associated context while the model reports its item label.
 Instance-CMR remains a retrieved-context model: context cues retrieval, and retrieved memories reinstate context to guide subsequent search.
-However, these dynamics operate at the level of individual traces rather than aggregated item representations, enabling occurrence-specific access.
+The difference is that these dynamics are organized around study events rather than item-level aggregates, enabling selective access.
 Item-independent contextual dynamics provide a disambiguated mental timeline of the past, placing related episodes at distinct points even as shared item features support access across them.
-This instance-based retrieved-context account of memory search reconciles the competing demands of integration and differentiation across repeated experience.
+This episode-specific retrieved-context account of memory search reconciles the competing demands of integration and differentiation across repeated experience.
 
 ## Roadmap
 
 This work proceeds as follows.
-First, we characterize Instance-CMR in contrast to classic CMR, and show that despite its different architecture and dynamics, Instance-CMR can equivalently fit individual-subject data and capture established benchmarks in free recall datasets that do not present item repetitions.
-Next, we define and test the three diagnostic predictions derived from item-based context reinstatement across six published datasets involving repeated items in free and serial recall, and compare these patterns to standard CMR simulations.
-We then re-examine CMR's study-phase retrieval mechanism in an ablation analysis, showing that it does not improve fits to spacing and repetition effects in free recall and in fact can attenuate the spacing effect by reducing contextual variability across occurrences [@lohnas2014retrieved].
-From there, we demonstrate how Instance-CMR, with its modified context dynamics and occurrence-specific retrieval, accounts for repeated-item transition patterns while preserving established retrieved-context phenomena.
-In a final extension and set of simulations, we identify remaining gaps between model and data, and propose directions for future work to refine the account further.
+We first specify Instance-CMR and validate that it preserves established retrieved-context benchmarks and fits individual-subject free recall data in lists without item repetitions [@healey2014memory].
+We then characterize and test three diagnostic predictions of occurrence blending derived from item-based context reinstatement, focusing on one free recall dataset and one serial recall dataset and summarizing replications across four additional datasets in supplementary analyses.
+Next, we isolate CMR's study-phase retrieval mechanism in an ablation analysis, showing that it does not improve fits to spacing and repetition effects in free recall and can attenuate the spacing effect by reducing contextual variability across occurrences [@lohnas2014retrieved].
+We then demonstrate how Instance-CMR, with item-independent context evolution and occurrence-specific retrieval, accounts for repeated-item transition patterns while preserving established retrieved-context phenomena.
+Finally, we present an extension and set of simulations that probe remaining gaps between model and data and outline directions for future work.
 
-Together, these contributions undermine the assumption that item--context associations mediate access to contextual details in episodic memory search and clarify how episodic memory balances integration and differentiation across repeated experience.
-Even as item features can be shared across occurrences to support transfer across related moments, temporal context signals stored alongside those details in memory traces must evolve in an item-independent manner to reliably mark episode identity.
+Together, these results put pressure on any account of episodic memory search in which item identity serves as the retrieval unit for contextual associations.
+Item identity can be shared across repeated occurrences, but temporal context must evolve independently of item identity to preserve access to occurrence-specific detail.
 
 <!-- A visit to the neighborhood bakery illustrates the challenge.
 On Monday you step inside, inhale warm cinnamon, and buy a fresh loaf. 
@@ -127,5 +129,176 @@ Memory can connect the related episodes without collapsing their distinctive det
 
 <!-- Overall I'm inclined to preserve the basic structure of the section unless there's a really big reason not to. So yes I'd open with an overview paragraph where the key summary schematics happen and I introduce key symbols and provide a roadmap of the presentation. Then I get into the structure of the memory representations, focusing on highlighting the difference and parallels between instance-based and connectionist memories. Maybe I can do this mroe cohesively than I do in icmr.qmd by not separating sections, caring a little less about providing a compete presentation of standard CMR (referring readers to Morton & Polyn, 2016 to compensate). Then Encoding Dynamics then Retrieval dynamics, the first section focsed on the difference between episode/position code instead of item-based context reinstatement, and the second section focused on the difference between item- and trace- based retrieval. Then follow-up sections a) clarifying relationship to standard CMR, b) specifying variants and extension mechanisms specified by NoSPR and Reinf. How does this compare with your vision? -->
 
-# Instance-CMR: An Instance-Based Retrieved-Context Account of Memory Search
+# Instance-CMR: An Episode-Specific Retrieved-Context Account of Memory Search
 
+We specify Instance‑CMR by adapting the likelihood-based CMR framework developed for model evaluation by @kragel2015neural and @morton2016predictive.
+This framework assigns trial-level probabilities to each recall, enabling likelihood-based fits to individual subjects.
+We retain CMR's parameterization, its pre-experimental initialization, and its two associative memories, $M^{CF}$ and $M^{FC}$.
+Our main representational change is that the feature layer indexes study events rather than item labels: each list position is treated as a distinct address, and the item presented at that position is stored as a label for later report.
+In lists without item repetitions, this is essentially a relabeling; the consequences matter when the same item label maps to multiple study events.
+Given that representation, Instance‑CMR differs from standard CMR in two respects that matter for repetition.
+During study, context updating is driven by item-independent, position-indexed inputs rather than item-driven study-phase reinstatement.
+During recall, competition and contextual reinstatement operate over study-event traces, and the retrieved trace's label determines the response.
+We next define the representations and then give the study and recall dynamics.
+
+<!-- TODO: schematic figure(s).
+Key visual contrasts to include:
+(1) Standard CMR: context → item → (composite) context reinstatement; repeated items imply composite reinstatement.
+(2) Instance-CMR: context → trace → item label; the retrieved trace reinstates its own context (episode-specific).
+(3) Task fork: free recall uses a positional stop hazard; serial recall uses an END trace that competes to terminate recall.
+-->
+
+| Symbol | Name | Description |
+|-------------------|-------------------|----------------------------------|
+| $C$ | temporal context | A recency-weighted average of encoded items |
+| $F$ | item features | Current pattern of item feature unit activations |
+| $M^{FC}$ | item-to-context memory | encoded feature-to-context associations |
+| $M^{CF}$ | context-to-feature memory | encoded context-to-feature associations |
+| ${\beta}_{enc}$ | encoding drift rate | Rate of context drift during item encoding |
+| ${\beta}_{start}$ | start drift rate | Amount of start-list context retrieved at start of recall |
+| ${\beta}_{rec}$ | recall drift rate | Rate of context drift during recall |
+| ${\alpha}$ | shared support | Uniform pre-experimental cross-item support in $M^{CF}$ |
+| ${\delta}$ | item support | Pre-experimental self-association in $M^{CF}$ |
+| ${\gamma}$ | learning rate | Learning rate for updates to $M^{FC}$ |
+| ${\phi}_{s}$ | primacy scale | Scaling of primacy gradient during learning in $M^{CF}$ |
+| ${\phi}_{d}$ | primacy decay | Rate of decay of the primacy gradient |
+| ${\theta}_{s}$ | stop probability scale | Baseline of the stopping process over outputs |
+| ${\theta}_{r}$ | stop probability growth | Slope of the stopping process over outputs |
+| ${\tau}$ | activation scaling | Exponential scaling of $M^{CF}$ trace activations in recall competition |
+
+: Parameters and structures specifying Instance-CMR. {#tbl-cmr-parameters}
+
+## Representations and Memory Architecture
+
+To emphasize continuity with standard CMR notation, we retain the conventional labels for the two associative "directions" that support retrieved-context search.
+Conceptually, a context-to-memory projection ($M^{CF}$) uses the current context cue to activate item features, and a feature-to-context projection ($M^{FC}$) reinstates contextual features associated with the cued item's features.
+In composite CMR these projections are implemented by fixed-size weight matrices that aggregate across study events [@polyn2009context; @morton2016predictive].
+In Instance-CMR, the same computations are implemented by accessing and competing over stored traces: $M^{CF}$ corresponds to comparing the current context to each stored trace context, and $M^{FC}$ corresponds to reinstating the context stored in the selected trace.
+
+Each study event $m$ (an occurrence) creates a distinct trace that binds an item label to the contextual state present at that moment.
+Formally, a trace stores a
+
+- an item-identity code $f_m$ (the same $f$ may appear in multiple traces if an item repeats),
+- an episode/position code $p_m$ (unique across traces within a list),
+- the associated temporal context state $c_m$ at encoding.
+
+The critical architectural difference from standard CMR is *when* and *where* information is aggregated across occurrences.
+In connectionist/composite CMR, learning accumulates into fixed-size associative matrices, so repeated events sum into shared weights and later reinstatement is inherently aggregated at the item level [@polyn2009context; @morton2016predictive].
+In Instance-CMR, traces remain separable in memory, and aggregation is postponed to the retrieval competition—allowing the model to reinstate a single occurrence trace rather than an item-level mixture.
+
+## Encoding Dynamics (Study)
+
+At study position $m$, the model updates temporal context by integrating an input representation and then stores the resulting state alongside the current item in a new trace.
+As in CMR, context evolves by a leaky integration rule:
+
+$$
+c_m \;=\; \rho_m\,c_{m-1} \;+\; \beta_{\text{enc}}\,c^{\text{IN}}_m,
+$$
+
+where $\rho_m$ is chosen to keep $\lVert c_m\rVert$ normalized (see Morton & Polyn, 2016, for the standard normalization implementation).
+
+### Parallelism with CMR
+
+The model preserves the CMR-style idea that study binds each presented item to a sequence of gradually changing contextual states, providing the substrate for temporal contiguity and recency-weighted access later [@howard2002distributed; @polyn2009context].
+
+### Key departure: item-independent episode/position inputs at study
+
+Standard CMR implements item-based context reinstatement during study: presenting an item retrieves and reintegrates contextual features tied to that item, so when an item repeats, the second presentation partially reinstates the first-presentation context (study-phase retrieval), making the two occurrence contexts overlap more than drift alone would produce [@lohnas2014retrieved; @morton2016predictive].
+
+Instance-CMR instead uses *episode/position features* to drive study-phase context evolution.
+The context input $c^{\text{IN}}_m$ is derived from the current episode/position code $p_m$ rather than from item identity.
+Intuitively, each study moment reinstates a unique “where-in-the-list/when-in-the-list” marker; repeated items therefore do not pull context states toward one another simply by virtue of sharing an item label.
+This change targets the study-stage route to cross-occurrence blending while retaining the core retrieved-context mechanism that context is updated on every event.
+
+After updating context, the model stores a new trace $m$ containing $(f_m, p_m, c_m)$.
+When an item repeats, this creates two traces with the same item-identity code but distinct episode/position codes and distinct associated contexts.
+
+## Retrieval Dynamics (Recall)
+
+Retrieval is trace-first: the current context $c$ cues traces; a trace is selected; the trace emits an item label; and the model updates context by reinstating the selected trace's stored context.
+This makes “which occurrence” the primary retrieval unit for contextual reinstatement.
+
+### Trace competition (context → trace)
+
+Let $\mathcal{R}$ be the set of recallable traces (traces not yet retrieved in the current recall period).
+Each candidate trace $m\in\mathcal{R}$ receives support based on its contextual match to the current cue, for example via a dot product similarity:
+
+$$
+s_m \;=\; (c \cdot c_m)^{\tau_t}.
+$$
+
+The trace-sensitivity parameter $\tau_t$ controls how strongly the competition concentrates on the best-matching occurrence trace: $\tau_t=1$ yields a relatively graded mixture of support, whereas larger $\tau_t$ approximates winner-take-most selection.
+The model then converts trace supports into retrieval probabilities via a Luce-style choice rule with sensitivity $\tau_c$:
+
+$$
+P(m \mid c) \;=\; \frac{s_m^{\tau_c}}{\sum_{k\in\mathcal{R}} s_k^{\tau_c}}.
+$$
+
+### Output: trace → item label (and repeated items)
+
+If trace $m$ is retrieved, the model outputs its item label.
+Crucially, inhibition is applied at the level of traces, not at the level of item labels.
+Retrieving one occurrence trace prevents that same trace from being retrieved again, but does not prevent retrieval of a different trace with the same item label.
+This is how the model can recall repeated items more than once while still avoiding pathological “stuck” retrieval of the same episode.
+
+### Context reinstatement (trace → context)
+
+After a trace is retrieved, the model updates context by integrating the retrieved trace's stored context state:
+
+$$
+c_{\text{new}} \;=\; \rho\,c \;+\; \beta_{\text{rec}}\,c_m.
+$$
+
+This reinstatement is episode-specific by construction: because traces are separable and only a single trace is selected, retrieval routes context updating through one occurrence rather than through an item-level composite.
+This is the key mechanism that eliminates the cross-occurrence blending signatures predicted by item-level composite reinstatement.
+
+## Task Implementations and Termination
+
+The retrieval competition and reinstatement rules above are shared across tasks; task differences enter through recall initiation and termination.
+
+### Recall initiation
+
+At the start of a recall period, the context cue is initialized by blending the end-of-study context state with a start-of-list context state, controlled by $\beta_{\text{start}}$ (standard in likelihood-based CMR) [@morton2016predictive].
+In free recall, $\beta_{\text{start}}$ is used to capture participants' tendency to initiate recall from different parts of the list (including strong recency in many datasets).
+In serial recall, retrieval is initiated from the start-of-list cue, consistent with the instruction to begin with the first list item.
+
+### Free recall: positional stopping hazard
+
+For free recall, we use the likelihood-friendly CMR-style termination rule in which stopping is a separate process from retrieval and depends only on output position $j$ (the number of recalls already produced) [@kragel2015neural; @morton2016predictive]:
+
+$$
+P(\text{stop}, j) \;=\; \theta_s\,e^{j\theta_r}.
+$$
+
+Conditional on continuing, the model samples a trace from the trace-choice distribution.
+This positional hazard captures the flexible stopping characteristic of free recall without requiring termination to be mediated by the current contextual state.
+
+### Serial recall: end-of-list trace competitor
+
+For serial recall, we adopt the CRU-style context-based termination mechanism in which the end of the list is treated as an additional stored event that competes for retrieval [@logan2018automatic; @logan2021serial].
+Concretely, after study the model stores an additional “END” trace associated with the terminal study context.
+During recall, this END trace is included in the trace competition; if it is retrieved, the recall sequence terminates.
+This makes termination depend on the evolving context cue and naturally predicts termination to be most likely when context resembles the end-of-list state.
+
+## Relationship to Standard CMR (Where We Match and Where We Depart)
+
+Instance-CMR is designed to be maximally comparable to standard CMR while isolating the assumptions that matter for repeated items.
+Relative to the Morton & Polyn (2016) likelihood-based CMR specification, the main points of parallelism are:
+
+- **Retrieved-context backbone:** a drifting context cue that is updated at study and after recalls; reinstatement-driven temporal organization [@polyn2009context; @morton2016predictive].
+- **Choice mechanics:** Luce-style competition with a sensitivity parameter.
+- **Primacy/recency mechanisms:** standard CMR-style scaling and recall initiation controls (see Morton & Polyn, 2016).
+
+The key departures are:
+
+- **Study-phase inputs:** context evolution is driven by episode/position features rather than item-based reinstatement, preventing repetition from collapsing two occurrences toward overlapping context states.
+- **Retrieval unit:** retrieval selects *traces* (occurrences), not item-level aggregates; item labels are outputs of traces rather than the retrieval targets that control reinstatement.
+- **Reinstatement rule:** the retrieved trace reinstates its own stored context rather than an item-level composite across occurrences.
+- **Task-specific termination:** free recall uses a positional stop hazard; serial recall uses a competing END trace.
+
+## Variants and Extensions Used in Later Analyses
+
+Although the main text focuses on Instance-CMR as the occurrence-specific account, later sections consider two targeted modifications to clarify which mechanisms matter.
+
+- **NoSPR (ablation of study-phase retrieval):** We remove study-phase reinstatement in the baseline composite CMR family to test whether the study-phase retrieval mechanism improves fits to spacing/repetition functions or instead introduces undesirable contextual overlap across occurrences. This ablation targets the *study-stage* route to blending.
+- **Reinf (reinforcement extension):** We explore an extension in which the second presentation strengthens the first-occurrence trace without reinstating its contextual features. This preserves episode-specific encoding and reinstatement while probing whether additional strengthening is required to capture remaining gaps in repetition effects.
