@@ -27,7 +27,9 @@ The theory's central claim is that retrieving an item reinstates its study conte
 In this work, we test this principle when the same item appears more than once in a list.
 Across free and serial recall, we argue that contextual reinstatement is indexed to a particular occurrence rather than an item-level composite, motivating an episode-specific alternative we call Instance-CMR.
 
-<!-- Across free and serial recall, we find retrieval remains tied to a single occurrence context rather than blending across repetitions, challenging item-level context reinstatement and motivating an instance-based alternative. -->
+<!-- 
+Across free and serial recall, we find retrieval remains tied to a single occurrence context rather than blending across repetitions, challenging item-level context reinstatement and motivating an instance-based alternative.
+-->
 
 ## Retrieved-Context Theory and Repetition
 
@@ -53,7 +55,7 @@ At study, reinstating the item's context produces overlapping contextual states 
 At retrieval, the same process blends contextual features from all occurrences of the repeated item, creating a composite cue.
 Either route implies that cues to one occurrence will also substantially cue the other, limiting selective retrieval and undermining differentiation across episodes.
 
-Here, we show that this prediction of associative interference between repeated occurrences is at odds with empirical patterns in six published datasets spanning free and serial recall.
+Here, we argue that this prediction of associative interference between repeated occurrences is at odds with the empirical record in free and serial recall.
 We derive and test three predictions that follow from item-based context reinstatement in retrieved-context models, using a refined position-matching control procedure that factors out baseline transition tendencies tied to serial position and list structure.
 First, in free recall, transitions between the temporal neighbors of two occurrences of the same item should be elevated relative to controls [@lohnas2014retrieved].
 Second, after recalling a repeated item, subsequent transitions should be more evenly split between the two occurrence regions than for position-matched control items.
@@ -118,18 +120,20 @@ Finally, we present an extension and set of simulations that probe remaining gap
 Together, these results put pressure on any account of episodic memory search in which item identity serves as the retrieval unit for contextual associations.
 Item identity can be shared across repeated occurrences, but temporal context must evolve independently of item identity to preserve access to occurrence-specific detail.
 
-```{=html}
-<!-- A visit to the neighborhood bakery illustrates the challenge.
+<!-- 
+A visit to the neighborhood bakery illustrates the challenge.
 On Monday you step inside, inhale warm cinnamon, and buy a fresh loaf. 
 Ten days later you return and are greeted by the aroma of espresso and a new cashier. 
 Weeks later, a friend's mention of "the bakery down the street" brings both visits to mind.
 Both the loaf and the espresso come back, yet you may still know which purchase happened when.
-Memory can connect the related episodes without collapsing their distinctive details. -->
-```
-
-<!-- In this work, we show that participants reliably differentiate occurrences in both tasks, placing sharper constraints on how search can integrate across repetition without blurring episode-specific detail. -->
-
-<!-- Overall I'm inclined to preserve the basic structure of the section unless there's a really big reason not to. So yes I'd open with an overview paragraph where the key summary schematics happen and I introduce key symbols and provide a roadmap of the presentation. Then I get into the structure of the memory representations, focusing on highlighting the difference and parallels between instance-based and connectionist memories. Maybe I can do this mroe cohesively than I do in icmr.qmd by not separating sections, caring a little less about providing a compete presentation of standard CMR (referring readers to Morton & Polyn, 2016 to compensate). Then Encoding Dynamics then Retrieval dynamics, the first section focsed on the difference between episode/position code instead of item-based context reinstatement, and the second section focused on the difference between item- and trace- based retrieval. Then follow-up sections a) clarifying relationship to standard CMR, b) specifying variants and extension mechanisms specified by NoSPR and Reinf. How does this compare with your vision? -->
+Memory can connect the related episodes without collapsing their distinctive details. 
+-->
+<!-- 
+In this work, we show that participants reliably differentiate occurrences in both tasks, placing sharper constraints on how search can integrate across repetition without blurring episode-specific detail. 
+-->
+<!-- 
+Overall I'm inclined to preserve the basic structure of the section unless there's a really big reason not to. So yes I'd open with an overview paragraph where the key summary schematics happen and I introduce key symbols and provide a roadmap of the presentation. Then I get into the structure of the memory representations, focusing on highlighting the difference and parallels between instance-based and connectionist memories. Maybe I can do this mroe cohesively than I do in icmr.qmd by not separating sections, caring a little less about providing a compete presentation of standard CMR (referring readers to Morton & Polyn, 2016 to compensate). Then Encoding Dynamics then Retrieval dynamics, the first section focsed on the difference between episode/position code instead of item-based context reinstatement, and the second section focused on the difference between item- and trace- based retrieval. Then follow-up sections a) clarifying relationship to standard CMR, b) specifying variants and extension mechanisms specified by NoSPR and Reinf. How does this compare with your vision? 
+-->
 
 # Instance-CMR: An Episode-Specific Retrieved-Context Account of Memory Search
 
@@ -144,14 +148,13 @@ During study, context updating is driven by item-independent, position-indexed i
 During recall, competition and contextual reinstatement operate over study-event traces, and the retrieved trace's label determines the response.
 Here we define the representations and walk through the study and recall dynamics.
 
-```{=html}
 <!-- TODO: schematic figure(s).
 Key visual contrasts to include:
 (1) Standard CMR: context → item → (composite) context reinstatement; repeated items imply composite reinstatement.
 (2) Instance-CMR: context → trace → item label; the retrieved trace reinstates its own context (episode-specific).
 (3) Task fork: free recall uses a positional stop hazard; serial recall uses an END trace that competes to terminate recall.
 -->
-```
+
 
 | Symbol | Name | Description |
 |-------------------|-------------------|----------------------------------|
@@ -207,15 +210,20 @@ where $i$ indexes context units ($i=0$ is the start-of-list unit) and $j$ indexe
 This preserves the pre-experimental structure of the likelihood-based CMR specification while replacing item features with position features.
 
 During study, $M^{FC}$ and $M^{CF}$ are updated by outer-product learning.
-With position code $f_t$ and learning context $\tilde{c}_t$, the updates are
+With position code $f_t$ and the pre-update context $c_{t-1}$, the updates are
 
 $$
-\Delta M^{FC} = \gamma\,f_t \tilde{c}_t^{\top}, \qquad
-\Delta M^{CF} = \phi_t\,\tilde{c}_t f_t^{\top},
+\Delta M^{FC} = \gamma\,f_t c_{t-1}^{\top}, \qquad
+\Delta M^{CF} = \phi_t\,c_{t-1} f_t^{\top},
 $$ {#eq-3}
 
-with primacy modulation $\phi_t = 1 + \phi_s \exp\{-\phi_d (t-1)\}$.
-The learning context $\tilde{c}_t$ can be taken either before or after context integration depending on the `learn_after_context_update` setting, as in the likelihood-based CMR implementation.
+Primacy modulation follows
+
+$$
+\phi_t = 1 + \phi_s \exp\{-\phi_d (t-1)\}.
+$$ {#eq-4}
+
+This is the standard likelihood-based CMR learning rule, applied here with position codes in place of item identities.
 
 ## Encoding Dynamics (Study)
 
@@ -224,13 +232,13 @@ Temporal context then integrates this input with the leaky, unit-length update r
 
 $$
 c_t \;=\; \rho_t\,c_{t-1} \;+\; \beta_{\text{enc}}\,c^{\text{IN}}_t,
-$$ {#eq-4}
+$$ {#eq-5}
 
 with normalization
 
 $$
 \rho_t \;=\; \sqrt{1 + \beta_{\text{enc}}^2\bigl[(c_{t-1}\cdot c^{\text{IN}}_t)^2 - 1\bigr]}\;-\;\beta_{\text{enc}}(c_{t-1}\cdot c^{\text{IN}}_t),
-$$ {#eq-5}
+$$ {#eq-6}
 
 as in the likelihood-based CMR implementation [@morton2016predictive].
 This preserves the CMR mechanism that binds each event to a gradually drifting context signal.
@@ -242,73 +250,83 @@ After updating context, the model applies the $M^{FC}$ and $M^{CF}$ learning rul
 ## Retrieval Dynamics (Recall)
 
 At recall, the current context cue activates study positions through $M^{CF}$.
-Let $\mathcal{R}$ be the set of recallable positions and let $a_m = (M^{CF}c)_m$ denote the activation for position $m\in\mathcal{R}$.
+Let $\mathcal{R}$ be the set of recallable positions and let $a_t = (M^{CF}c)_t$ denote the activation for position $t\in\mathcal{R}$.
 These activations are sharpened by the choice sensitivity parameter,
 
 $$
-s_m \;=\; a_m^{\tau_c},
-$$ {#eq-6}
-
-and pooled to item labels for the recall decision.
-If $f_m$ is the item label stored at position $m$, then the probability of recalling item $i$ is
-
-$$
-P(i \mid c) \;=\; \frac{\sum_{m\in\mathcal{R}: f_m=i} s_m}{\sum_{k\in\mathcal{R}} s_k}.
+s_t \;=\; a_t^{\tau_c},
 $$ {#eq-7}
 
-After item $i$ is reported, contextual reinstatement is computed as a mixture over the positions that carry that label.
-The within-item weights are
+and pooled to item labels for the recall decision.
+If $w_t$ is the word label stored at position $t$, then the probability of recalling item $w$ is
 
 $$
-w_m \;=\; \frac{s_m^{\tau_f}}{\sum_{k: f_k=i} s_k^{\tau_f}},
+P(w \mid c) \;=\; \frac{\sum_{t\in\mathcal{R}: w_t=w} s_t}{\sum_{k\in\mathcal{R}} s_k}.
 $$ {#eq-8}
 
-and the context input for reinstatement is $c^{\text{IN}} = M^{FC}w$.
+After item $w$ is reported, contextual reinstatement is computed as a mixture over the positions that carry that label.
+The within-item weights follow directly from the recall supports,
+
+$$
+q_t \;=\; \frac{s_t}{\sum_{k: w_k=w} s_k},
+$$ {#eq-9}
+
+so reinstatement depends on the same choice sensitivity $\tau_c$ that shapes the recall distribution.
+The context input for reinstatement is $c^{\text{IN}} = M^{FC}q$.
 Context then updates by
 
 $$
 c_{\text{new}} \;=\; \rho\,c \;+\; \beta_{\text{rec}}\,c^{\text{IN}}.
-$$ {#eq-9}
+$$ {#eq-10}
 
-Larger $\tau_f$ concentrates reinstatement on the best-supported position, and the mixture form provides a likelihood-friendly marginalization over which position generated the reported label.
+The mixture form resolves the ambiguity that a reported label does not uniquely identify which position trace was retrieved: it reinstates the expected context conditional on the observed label under the model’s own support distribution.
 
 Recallability is tracked at the position level.
 When repeated recalls are disallowed, all positions with the reported label are suppressed; when they are allowed, recallability is left unchanged, permitting multiple outputs of the same label.
 
 ## Task Implementations and Termination
 
-The retrieval competition and reinstatement rules above are shared across tasks; task differences enter through recall initiation and termination.
-At the start of a recall period, the context cue is initialized by integrating the start-of-list input with drift rate $\beta_{\text{start}}$ (standard in likelihood-based CMR) [@morton2016predictive].
-In free recall, this parameter captures the tendency to initiate from different parts of the list, including strong recency.
-In serial recall, retrieval is initiated from the start-of-list cue to match the instruction to begin with the first item.
+The retrieval competition and reinstatement rules above are shared across tasks.
+The only task-specific constraints we enforce are the termination rule and the allowance of repeated responses in serial-recall lists with repetitions.
+Recall initiation follows the same mechanism in both tasks, with parameters fit separately within the shared dynamics.
+We retain distinct termination mechanisms because stopping dynamics differ between free and serial recall, and each mechanism fits its own task better [@gunn2025bridging].
+Otherwise, differences in performance between task domains are accounted for through parameter variation within the shared Instance-CMR architecture.
 
 For free recall, we use the likelihood-friendly CMR-style termination rule in which stopping is a separate process from retrieval and depends only on output position $j$ (the number of recalls already produced) [@kragel2015neural; @morton2016predictive]:
 
 $$
 P(\text{stop}, j) \;=\; \theta_s\,e^{j\theta_r}.
-$$ {#eq-10}
+$$ {#eq-11}
 
-Conditional on continuing, the model samples an item label from $P(i \mid c)$.
+Conditional on continuing, the model samples an item label from $P(w \mid c)$.
 This positional hazard captures flexible stopping without requiring termination to be mediated by the current contextual state.
 
 For serial recall, we adopt the CRU-style context-based termination mechanism in which the end of the list is treated as an additional stored event that competes for retrieval [@logan2018automatic; @logan2021serial].
 After study the model stores an additional END position associated with the terminal study context.
 During recall, this END position is included in the same competition; if it is retrieved, the recall sequence terminates.
 This makes termination depend on the evolving context cue and predicts termination to be most likely when context resembles the end-of-list state.
+Repeated responses are allowed in serial-recall lists with repetitions so that all occurrences can be reported.
 
-## Relationship to Standard CMR (Where We Match and Where We Depart)
-
-Instance-CMR is designed to be maximally comparable to the likelihood-based CMR specification of @morton2016predictive while isolating the assumptions that matter for repeated items.
-It preserves the same context integration rule, the same dual-memory architecture and pre-experimental structure, the same primacy modulation of $M^{CF}$ learning, and the same Luce-style choice rule for recall.
-Recall initiation and the free-recall stopping rule are also inherited from that framework.
-
-The departures are limited to how study inputs and retrieval targets are defined when items repeat.
-Study-phase inputs are driven by position codes rather than item-based reinstatement, so repetitions do not collapse context states.
-Retrieval competition is over positions, and item labels are reported by pooling position support rather than by reinstating an item-level composite.
-The serial-recall termination rule follows CRU by adding an END position that competes for retrieval.
-
-## Variants and Extensions Used in Later Analyses
+## Variants and Extensions
 
 Although the main text focuses on Instance-CMR as the episode-specific account, later sections consider two targeted modifications to clarify which mechanisms matter.
-The NoSPR variant removes study-phase reinstatement in the baseline composite CMR family to test whether the study-phase retrieval mechanism improves fits to spacing and repetition functions or instead introduces undesirable contextual overlap across occurrences.
-The Reinf extension strengthens the first-occurrence association at a repetition without reinstating its contextual features, preserving episode-specific encoding while probing whether additional strengthening is required to capture remaining gaps in repetition effects.
+One removes study-phase reinstatement from standard CMR to test whether that mechanism improves fits to spacing and repetition functions or instead introduces undesirable contextual overlap across occurrences.
+The other strengthens the first-occurrence association at a repetition without reinstating its contextual features, preserving episode-specific encoding while probing whether additional strengthening is required to capture remaining gaps in repetition effects.
+Together, these variants bound the contribution of study-phase reinstatement versus repetition-driven strengthening once episode-specific reinstatement is in place.
+They also provide a compact bridge from the model specification to the later simulation sections.
+
+# Methodological Framework
+
+# Model Validation on Non-Repetition Lists
+
+# Diagnostic Tests of Cross-Occurrence Associative Interference
+
+# Ablation Analysis of Study-Phase Retrieval
+
+# Instance-CMR Accounts of Repetition
+
+# Exploring Reinforcement without Associative Blending at Study
+
+## Formal Comparison Across Datasets
+
+# General Discussion
