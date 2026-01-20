@@ -317,11 +317,9 @@ They also provide a compact bridge from the model specification to the later sim
 
 # Methodological Framework
 
-Our methodological innovation that underpins the analyses below is a refined position-matching control procedure for isolating repetition effects in free and serial recall.
-We first define repetition effects precisely, then describe how we estimate them using position-matched control lists and symmetric scoring.
-Then, we introduce the datasets we analyze, highlighting the primary free and serial recall sources.
-From there, we lay out the specific analyses used to test predictions of occurrence blending derived from item-based context reinstatement.
-Finally, we describe the model fitting and simulations procedures used to evaluate Instance-CMR and related variants.
+Our methodological framework isolates repetition-specific effects using a refined position-matching baseline and symmetric scoring.
+We define the estimand and baseline, then summarize the datasets that anchor the free- and serial-recall analyses, noting which serve as primary tests and which provide supplementary checks.
+Model-evaluation procedures and diagnostic analyses are introduced in their respective sections, where we apply this framework to behavioral data and simulations.
 
 ## Defining and Measuring Repetition Effects
 
@@ -576,7 +574,7 @@ Third row: probability of first recall by serial position.
 ![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_crp.png)
 
 ![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_pnr.png)
-    
+
 Standard CMR predictions for mixed and control list trials from trials from @lohnas2014retrieved, with symmetric scoring over matched serial positions of repeated items.
 Left: recall rate by serial position (serial position curve, SPC).
 Middle: conditional response probability (CRP) by lag.
@@ -600,9 +598,9 @@ Thus, while CMR captures the basic memorability gain with increasing lag, it doe
 
 ::: {#fig-spacing layout="[[1,1]]"}
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_full_rpl.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_full_rpl.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_full_rpl.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_full_rpl.png)
 
 The spacing effect for mixed vs control list trials from @lohnas2014retrieved. Left: data, right: simulations of standard CMR fitted to the data.
 :::
@@ -628,13 +626,13 @@ The absence of above-baseline neighbor-to-neighbor transitions argues against a 
 
 ::: {#fig-neighbor_contiguity layout="[[1,1], [1,1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
 
 Cross-occurrence neighbor transitions as centered lag-CRPs (free recall). Top row (data), bottom row (CMR simulations). **Left column (first→second):** triggers are forward neighbors of the *first* presentation ($i{+}1,i{+}2$); lags are centered on the *second* presentation at $j$ (so $\ell=\text{next}-j$). **Right column (second→first):** triggers are forward neighbors of the *second* presentation ($j{+}1,j{+}2$); lags are centered on the *first* presentation at $i$ (so $\ell=\text{next}-i$). All curves plot mixed–minus–matched-control probabilities using the symmetric baseline. In the data, cross-occurrence neighbor bins (e.g., $\ell=\pm1,\pm2$) sit near baseline in both directions, with a selective elevation at $\ell=0$ (the repeater itself) only in the first→second case. Standard CMR predicts pronounced above-baseline peaks at the other occurrence's neighbors in both directions, consistent with associative blending. 
 :::
@@ -652,13 +650,13 @@ This conflict isolates the problem: when the repeater is recalled, the model's i
 
 ::: {#fig-repetition_lag_crp layout="[[1,1], [1,1]]"}
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_rep_crp.png)
 
 Repetition lag-CRP (outgoing): data vs CMR. Top row (data): mixed lists (left) and matched-control baseline (right), each showing two centered curves (first-centered vs second-centered). Bottom row (CMR): same for simulations. In data, separation (e.g., +1 bin) favors the first-occurrence neighborhood and is larger than in baseline; CMR predicts reduced separation (balanced access), consistent with blending.
 :::
@@ -669,13 +667,13 @@ For each recall of a repeater, we look one step back to the item produced immedi
 
 ::: {#fig-backward_rep_lag_crp layout="[[1,1], [1,1]]"}
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png)
 
 Repetition lag-CRP (incoming/backward): data vs CMR. Top row (data): mixed lists (left) and baseline (right) for transitions to repeated items. Bottom row (CMR): simulations. In data, transitions to repeated items are more frequently from the backward neighbor of the item's first presentation than from the second, especially in mixed lists but also in the position-matched baseline. By contrast, CMR predicts a weaker first-over-second advantage for incoming transitions.
 :::
@@ -688,13 +686,13 @@ In the bottom half of @fig-serial_rep_crp, simulations of standard CMR after fit
 
 ::: {#fig-serial_rep_crp layout="[[1,1],[1,1]]"}
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png)
 
 **Cross-occurrence forward errors in serial recall (two datasets).** Left: @logan2021serial. Right: @kahana2000interresponse. **Top row (data):** For items studied at positions $i$ and $j$, each panel plots the conditional probability— after correct report through the first occurrence at position $i$ -- of an erroneous transition to the *second* occurrence’s forward neighbors ($i\!\rightarrow\!j{+}1$ and $i\!\rightarrow\!j{+}2$), contrasting mixed lists with their position-matched, symmetric baseline. **Bottom row (CMR):** standard CMR simulations fitted separately to each dataset and scored with the identical baseline procedure. In both datasets, data show no elevation of $i\!\rightarrow\!j{+}1/j{+}2$ errors relative to baseline (non-interference), whereas CMR predicts a clear error elevation (associative interference). 
 :::
@@ -714,11 +712,11 @@ This manipulation thus targets the first route to blending described above (knit
 MR-NoSPR reproduces serial-position, lag-CRP, and first-recall profiles under the same scoring as before (@fig-cmr_nospr_benchmarks). As with standard CMR, it predicts minimal differences between mixed and position-matched control lists once the symmetric baseline is applied. Thus removing study-phase reinstatement does not degrade fits to core free-recall benchmarks.
 
 ::: {#fig-cmr_nospr_benchmarks layout="[[1,1],[1]]"}
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_spc.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_spc.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_crp.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_pnr.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_pnr.png)
 
 CMR-NoSPR benchmarks (free recall). Simulated serial-position curves (SPC; top left), lag-CRP (top right), and probability of first/next recall (bottom) for mixed vs matched-control lists from @lohnas2014retrieved, scored with the symmetric baseline. Eliminating study-phase reinstatement leaves benchmark fits intact.
 :::
@@ -727,7 +725,7 @@ Critically, removing study-phase reinstatement does not weaken the spacing funct
 This indicates that, in these list-learning paradigms, contextual variability plus test-phase reinstatement is sufficient to generate the spacing effect at least to the extent realized by the model; the particular form of study-phase reinstatement implemented in standard CMR is not required.
 
 ::: {#fig-nospr_spacing layout="[[1, 1]]"}
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_full_rpl.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_full_rpl.png)
 
 CMR-NoSPR spacing function. Simulated spacing curves for mixed vs matched-control lists from @lohnas2014retrieved. The spacing advantage is preserved without study-phase reinstatement.
 :::
@@ -738,9 +736,9 @@ In the centered neighbor-contiguity tests (triggers from one neighborhood, lags 
 
 ::: {#fig-nospr_neighbor_contiguity layout="[[1,1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png)
 
 CMR-NoSPR: cross-occurrence neighbor transitions (centered lag-CRPs). Left: triggers from forward neighbors of the first presentation and lags centered on the second. Right: triggers from forward neighbors of the second and lags centered on the first. Curves plot mixed–minus–matched-control probabilities with symmetric scoring. With distinctive encoding contexts, cross-occurrence neighbor bins lie at baseline in both directions—neighbor knitting is abolished.
 :::
@@ -750,9 +748,9 @@ Eliminating study-phase reinstatement therefore does not restore the first-over-
 
 ::: {#fig-nospr_rep_lag_crp layout="[[1,1]]"}
 
-![](figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png)
 
-![](figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png)
 
 CMR-NoSPR: repetition lag-CRP (outgoing). Mixed lists (left) and matched-control baseline (right) from simulations. First- vs second-centered curves are more balanced than in baseline, consistent with lingering cross-occurrence blending at retrieval.
 :::
@@ -768,11 +766,12 @@ Instance-CMR maintains good agreement with serial-position, lag-CRP, and first-r
 
 ::: {#fig-icmr_os_benchmarks layout="[[1,1],[1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_spc.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_spc.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_pnr.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_crp.png)
+
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_pnr.png)
 
 Instance-CMR benchmarks (free recall). Simulated serial-position curves (SPC; top left), lag-CRP (top right), and probability of first/next recall (bottom) for mixed vs matched-control lists from @lohnas2014retrieved under symmetric scoring. Occurrence-specific reinstatement at test preserves benchmark fits.
 :::
@@ -780,7 +779,7 @@ Instance-CMR benchmarks (free recall). Simulated serial-position curves (SPC; to
 Like standard CMR and CMR-NoSPR, Instance-CMR reproduces a robust, monotonic spacing advantage (@fig-icmr_os_spacing). As before, removing study-phase knitting and adding occurrence-specific reinstatement does not blunt the spacing function, indicating that contextual variability plus test-phase reinstatement suffices for this benchmark in these paradigms.
 
 ::: {#fig-icmr_os_spacing layout="[[1]]"}
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_full_rpl.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_full_rpl.png)
 
 **Instance-CMR spacing function.** Simulated spacing curves for mixed vs matched-control lists from @lohnas2014retrieved. The spacing advantage is preserved without blending at test; the model does not reproduce the apparent steeper slope for mixed lists in the data (cf. @fig-spacing).
 :::
@@ -789,9 +788,9 @@ Next we consider cross-occurrence neighbor contiguity. Because Instance-CMR keep
 
 ::: {#fig-os_neighbor_contiguity layout="[[1,1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
 
 Instance-CMR: cross-occurrence neighbor transitions (centered lag-CRPs). Left: triggers from forward neighbors of the *first* presentation ($i{+}1,i{+}2$), lags centered on the *second* ($\ell=\text{next}-j$). Right: symmetric variant (triggers $j{+}1,j{+}2$; lags centered on $i$). Mixed–minus–baseline curves sit at baseline in both directions, consistent with no knitting across neighborhoods.
 :::
@@ -802,13 +801,13 @@ In the incoming/backward Repetition Lag-CRP (not displayed), selective reinstate
 
 ::: {#fig-os_rep_lag_crp layout="[[1,1],[1,1]]"}
 
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/LohnasKahana2014_mixed_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixed_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png)
 
-![](figures/LohnasKahana2014_control_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_control_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png)
 
 **Repetition lag-CRP (outgoing): data vs Instance-CMR.** Top row: mixed lists (left) and matched-control baseline (right) from @lohnas2014retrieved. Bottom row: Instance-CMR simulations scored identically. First- vs second-centered curves remain separated (no blending). Unlike the data (top-left), the mixed-minus-baseline separation is not substantially enlarged in Instance-CMR, fixing interference but not the boosted first-over-second advantage.
 :::
@@ -818,13 +817,13 @@ Finally, we consider the the serial recall variant of this analysis to examine f
 
 ::: {#fig-os_serial_rep_crp layout="[[1,1],[1,1]]"}
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png)
 
 **Cross-occurrence forward errors in serial recall (data vs Instance-CMR).** Left: @logan2021serial. Right: @kahana2000interresponse. **Top row (data):** For items studied at positions $i$ and $j$, each panel plots the conditional probability— after correct report through the first occurrence at position $i$ -- of an erroneous transition to the *second* occurrence’s forward neighbors ($i\!\rightarrow\!j{+}1$ and $i\!\rightarrow\!j{+}2$), contrasting mixed lists with their position-matched, symmetric baseline. **Bottom row (CMR-OS):** Occurrence-Specific CMR simulations fitted separately to each dataset and scored with the identical baseline procedure. 
 :::
@@ -839,11 +838,11 @@ ICMR-Reinf maintains good agreement with serial-position, lag-CRP, and first-rec
 
 ::: {#fig-icmr_reinf_benchmarks layout="[[1,1],[1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_crp.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_pnr.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_pnr.png)
 
 ICMR-Reinf benchmarks (free recall). Simulated serial-position curves (SPC; top left), lag-CRP (top right), and probability of first/next recall (bottom) for mixed vs matched-control lists from @lohnas2014retrieved under symmetric scoring. Reinforcement at study preserves benchmark fits.
 :::
@@ -852,7 +851,7 @@ Like the other variants, ICMR-Reinf reproduces a robust, monotonic spacing advan
 
 ::: {#fig-icmr_reinf_spacing layout="[[1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_full_rpl.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_full_rpl.png)
 
 ICMR-Reinf spacing function. Simulated spacing curves for mixed vs matched-control lists from @lohnas2014retrieved. The spacing advantage is preserved; the model does not, by itself, produce the additional steepening seen in mixed lists (cf. @fig-spacing).
 :::
@@ -863,9 +862,9 @@ Turning to cross-occurrence neighbor contiguity, ICMR-Reinf inherits two ingredi
 
 ::: {#fig-reinf_neighbor_contiguity layout="[[1,1]]"}
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png)
 
-![](figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png)
 
 ICMR-Reinf: cross-occurrence neighbor transitions (centered lag-CRPs). Left: triggers from forward neighbors of the first presentation ($i{+}1,i{+}2$), lags centered on the second ($\ell=text{next}-j$). Right: symmetric variant (triggers $j{+}1,j{+}2$; lags centered on $i$). Mixed–minus–baseline curves remain flat at the other occurrence’s neighbors (no knitting). A selective lag = 0 elevation emerges in the first→second variant, consistent with boosted access to the repeated item itself.
 :::
@@ -873,13 +872,13 @@ ICMR-Reinf: cross-occurrence neighbor transitions (centered lag-CRPs). Left: tri
 The decisive change also appears in the outgoing repetition lag-CRP. By routing reinstatement through a single occurrence and preferentially strengthening the first-occurrence trace, ICMR-Reinf not only avoids balanced access but also amplifies the first-over-second separation in mixed lists relative to the matched baseline—capturing the positive, repetition-specific asymmetry in the data. The 2×2 comparison in @fig-reinf_rep_lag_crp shows that where Instance-CMR preserved only baseline-level separation, ICMR-Reinf produces the boosted separation observed empirically.
 
 ::: {#fig-reinf_rep_lag_crp layout="[[1,1],[1,1]]"}
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png)
 
-![](figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png)
 
-![](figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png)
 
 Repetition lag-CRP (outgoing): data vs ICMR-Reinf. Top: mixed lists (left) and matched-control baseline (right) from @lohnas2014retrieved. Bottom: ICMR-Reinf simulations scored identically. In mixed lists, the +1 bin and nearby lags show a larger first-over-second separation than in baseline—matching the data’s boosted separation. Balanced-access (blending) is absent.
 :::
@@ -887,13 +886,13 @@ Repetition lag-CRP (outgoing): data vs ICMR-Reinf. Top: mixed lists (left) and m
 For the incoming/backward repetition lag-CRP (@fig-reinf_back_rep_crp), reinforcement increases arrivals from the first occurrence’s backward neighbor relative to the second, strengthening the first-over-second preference beyond Instance-CMR and moving the model toward the empirical pattern. Because this variant largely reflects how the search state approached the repeater, the outgoing mixed–minus–baseline contrast remains the cleanest probe of repetition-specific reinstatement, and that is where ICMR-Reinf shows its clearest advantage.
 
 ::: {#fig-reinf_back_rep_crp layout="[[1,1],[1,1]]"}
-![](figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png)
 
-![](figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png)
+![](../../work/thesis/figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png)
 
 Repetition lag-CRP (incoming/backward). Top: mixed lists (left) and matched-control baseline (right) from @lohnas2014retrieved. Bottom: ICMR-Reinf simulations scored identically. In mixed lists, the +1 bin and nearby lags show a larger first-over-second separation than in baseline—matching the data’s boosted separation. Balanced-access (blending) is absent.
 :::
@@ -902,13 +901,13 @@ Finally, in serial recall, the same combination—distinct contexts at study plu
 
 ::: {#fig-reinf_serial_rep_crp layout="[[1,1],[1,1]]"}
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png)
 
-![](figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png)
+![](../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png)
 
 Cross-occurrence forward errors in serial recall (data vs ICMR-Reinf; @logan2021serial; @kahana2000interresponse). Top: data; bottom: ICMR-Reinf simulations. Panels plot, for items studied at $i$ and $j$, the conditional probability—after correct report through $i$—of erroneous transitions to the second occurrence’s forward neighbors ($i\!\rightarrow\!j{+}1$ and $i\!\rightarrow\!j{+}2$), contrasted with matched pseudo-repeater baselines. ICMR-Reinf reproduces the data’s non-elevation.
 :::
