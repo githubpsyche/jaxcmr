@@ -1,74 +1,75 @@
-% Options for packages loaded elsewhere
-\PassOptionsToPackage{unicode}{hyperref}
-\PassOptionsToPackage{hyphens}{url}
-\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
-%
 \documentclass[
-  letterpaper,
-  DIV=11,
-  numbers=noendperiod]{scrartcl}
+  man,
+  floatsintext,
+  longtable,
+  nolmodern,
+  notxfonts,
+  notimes,
+  draftfirst,
+  colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{apa7}
 
-\usepackage{amsmath,amssymb}
-\usepackage{iftex}
-\ifPDFTeX
-  \usepackage[T1]{fontenc}
-  \usepackage[utf8]{inputenc}
-  \usepackage{textcomp} % provide euro and other symbols
-\else % if luatex or xetex
-  \usepackage{unicode-math}
-  \defaultfontfeatures{Scale=MatchLowercase}
-  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
-\fi
-\usepackage{lmodern}
-\ifPDFTeX\else  
-    % xetex/luatex font selection
-\fi
-% Use upquote if available, for straight quotes in verbatim environments
-\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
-\IfFileExists{microtype.sty}{% use microtype if available
-  \usepackage[]{microtype}
-  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
-}{}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+
+
+
+\RequirePackage{longtable}
+\RequirePackage{threeparttablex}
+
 \makeatletter
-\@ifundefined{KOMAClassName}{% if non-KOMA class
-  \IfFileExists{parskip.sty}{%
-    \usepackage{parskip}
-  }{% else
-    \setlength{\parindent}{0pt}
-    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
-}{% if KOMA class
-  \KOMAoptions{parskip=half}}
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-.5em}%
+	{\normalfont\normalsize\bfseries\typesectitle}}
+
+\renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{0.5em}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-\z@\relax}%
+	{\normalfont\normalsize\bfseries\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
 \makeatother
-\usepackage{xcolor}
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
-% Make \paragraph and \subparagraph free-standing
-\makeatletter
-\ifx\paragraph\undefined\else
-  \let\oldparagraph\paragraph
-  \renewcommand{\paragraph}{
-    \@ifstar
-      \xxxParagraphStar
-      \xxxParagraphNoStar
-  }
-  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
-  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
-\fi
-\ifx\subparagraph\undefined\else
-  \let\oldsubparagraph\subparagraph
-  \renewcommand{\subparagraph}{
-    \@ifstar
-      \xxxSubParagraphStar
-      \xxxSubParagraphNoStar
-  }
-  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
-  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
-\fi
-\makeatother
+
+
+
+
+\usepackage{longtable, booktabs, multirow, multicol, colortbl, hhline, caption, array, float, xpatch}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.7}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,theorems, breakable, skins}
+\usepackage{fontawesome5}
+
+\definecolor{quarto-callout-color}{HTML}{909090}
+\definecolor{quarto-callout-note-color}{HTML}{0758E5}
+\definecolor{quarto-callout-important-color}{HTML}{CC1914}
+\definecolor{quarto-callout-warning-color}{HTML}{EB9113}
+\definecolor{quarto-callout-tip-color}{HTML}{00A047}
+\definecolor{quarto-callout-caution-color}{HTML}{FC5300}
+\definecolor{quarto-callout-color-frame}{HTML}{ACACAC}
+\definecolor{quarto-callout-note-color-frame}{HTML}{4582EC}
+\definecolor{quarto-callout-important-color-frame}{HTML}{D9534F}
+\definecolor{quarto-callout-warning-color-frame}{HTML}{F0AD4E}
+\definecolor{quarto-callout-tip-color-frame}{HTML}{02B875}
+\definecolor{quarto-callout-caution-color-frame}{HTML}{FD7E14}
+
+%\newlength\Oldarrayrulewidth
+%\newlength\Oldtabcolsep
+
+
+\usepackage{hyperref}
+
+
 
 
 \providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -78,6 +79,7 @@
 % Allow footnotes in longtable head/foot
 \IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
 \makesavenoteenv{longtable}
+
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -92,7 +94,126 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\KOMAoption{captions}{tableheading}
+
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+
+
+
+
+\usepackage{newtx}
+
+\defaultfontfeatures{Scale=MatchLowercase}
+\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+
+
+
+
+
+\title{Same item, distinct contexts: Episode-specific reinstatement in
+free and serial recall}
+
+
+\shorttitle{Same Item, Distinct Contexts}
+
+
+\usepackage{etoolbox}
+
+
+
+
+
+
+
+
+\authorsnames{Jordan B Gunn,Sean M Polyn}
+
+
+
+
+
+\affiliation{
+{Department of Psychology, Vanderbilt University}}
+
+
+
+
+\leftheader{Gunn and Polyn}
+
+
+
+\abstract{Repetition strengthens memories while tying each occurrence to
+an evolving temporal context. The core idea of retrieved‑context
+theory\,(RCT) is that this evolution is item‑based: encoding or
+retrieval ``calls back'' and blends items' prior contexts into the
+ongoing state. Such blending links occurrences across time, but also
+engenders associative interference by overlapping traces and diffusing
+retrieval across occurrences contexts. Using matched control baselines,
+we identify patterns in free‑ and serial‑recall datasets contradicting
+this account: (i) no elevated transitions between neighborhoods of
+different occurrences, (ii) biased transitions from repeated items
+toward first-occurrence neighbors, and (iii) preserved forward chaining
+in serial recall without cross-occurrence errors. To limit interference
+and improve fits, we advance a modified framework where repetitions (a)
+reinstate unique, non-overlapping contextual features and (b) produce
+traces that compete for retrieval. Episodic memory balances integration
+and specificity not through contextual blending, but rather
+differentiated competition. }
+
+\keywords{episodic memory, repetiton effects, free recall, serial
+recall, retrieved-context theory, computational modeling}
+
+\authornote{ 
+
+\par{  This is an in-progress working draft based on the dissertation
+completed by Gunn (2025). Please do not cite, quote, or circulate
+without the authors' written permission.     }
+}
+
+\makeatletter
+\let\endoldlt\endlongtable
+\def\endlongtable{
+\hline
+\endoldlt
+}
+\makeatother
+
+\urlstyle{same}
+
+
+
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -135,33 +256,56 @@
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
 
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
-\usepackage{bookmark}
+% From https://tex.stackexchange.com/a/645996/211326
+%%% apa7 doesn't want to add appendix section titles in the toc
+%%% let's make it do it
+\makeatletter
+\xpatchcmd{\appendix}
+  {\par}
+  {\addcontentsline{toc}{section}{\@currentlabelname}\par}
+  {}{}
+\makeatother
 
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
-\hypersetup{
-  colorlinks=true,
-  linkcolor={blue},
-  filecolor={Maroon},
-  citecolor={Blue},
-  urlcolor={Blue},
-  pdfcreator={LaTeX via pandoc}}
+%% Disable longtable counter
+%% https://tex.stackexchange.com/a/248395/211326
 
+\usepackage{etoolbox}
 
-\author{}
-\date{}
+\makeatletter
+\patchcmd{\LT@caption}
+  {\bgroup}
+  {\bgroup\global\LTpatch@captiontrue}
+  {}{}
+\patchcmd{\longtable}
+  {\par}
+  {\par\global\LTpatch@captionfalse}
+  {}{}
+\apptocmd{\endlongtable}
+  {\ifLTpatch@caption\else\addtocounter{table}{-1}\fi}
+  {}{}
+\newif\ifLTpatch@caption
+\makeatother
 
 \begin{document}
 
+\maketitle
+
+
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\setlength\LTleft{0pt}
+
+
+\section{Introduction}\label{introduction}
 
 Episodic memory -- our ability to recall events anchored to a unique
-time and place {[}@tulving1972episodic{]} -- is especially challenged by
-repeated and overlapping experience. A flexible system must navigate two
-competing demands {[}@yassa2011pattern; @schlichting2015memory;
-@mcclelland1995complementary; @kumaran2012generalization{]}. It must
+time and place (\citeproc{ref-tulving1972episodic}{Tulving et al.,
+1972}) -- is especially challenged by repeated and overlapping
+experience. A flexible system must navigate two competing demands
+(\citeproc{ref-kumaran2012generalization}{Kumaran \& McClelland, 2012};
+\citeproc{ref-mcclelland1995complementary}{McClelland et al., 1995};
+\citeproc{ref-schlichting2015memory}{Schlichting \& Preston, 2015};
+\citeproc{ref-yassa2011pattern}{Yassa \& Stark, 2011}). It must
 integrate information across related experiences so partial cues in the
 present can retrieve relevant details from the past, yet it must also
 differentiate those experiences so one moment's details are not confused
@@ -178,22 +322,27 @@ late \emph{canoe}. In serial recall, the correct output is unambiguous:
 \emph{canoe} must be spoken twice, each time followed by the correct
 neighbor from its study position. Frequently substituting a neighbor
 tied to the other occurrence would indicate that the two study moments
-were not kept fully apart in memory {[}@henson1996unchained;
-@kahana2000interresponse{]}. In free recall, order is unconstrained, but
-transitions remain diagnostic: frequent transitions between the
-neighborhoods of the two occurrences (in either direction) would
-indicate that recalling one occurrence tends to reinstate context
-associated with the other {[}@lohnas2014retrieved{]}. Across tasks, such
-transitions provide a behavioral portrait of how memory stores and
-reinstates contextual associations learned across occurrences.
+were not kept fully apart in memory
+(\citeproc{ref-henson1996unchained}{Henson, 1996};
+\citeproc{ref-kahana2000interresponse}{Kahana \& Jacobs, 2000}). In free
+recall, order is unconstrained, but transitions remain diagnostic:
+frequent transitions between the neighborhoods of the two occurrences
+(in either direction) would indicate that recalling one occurrence tends
+to reinstate context associated with the other
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Across
+tasks, such transitions provide a behavioral portrait of how memory
+stores and reinstates contextual associations learned across
+occurrences.
 
 Within this landscape, retrieved-context theory (RCT) provides a
 prominent overarching account of episodic memory search, especially its
-temporal organization in free recall {[}@howard2002distributed{]}.
+temporal organization in free recall
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a}).
 Implemented first in the Temporal Context Model and elaborated in models
 such as the Context Maintenance and Retrieval (CMR)
-{[}@polyn2009context{]} and Context Retrieval and Updating (CRU)
-{[}@logan2018automatic; @logan2021serial{]} frameworks, RCT emphasizes
+(\citeproc{ref-polyn2009context}{Polyn et al., 2009}) and Context
+Retrieval and Updating (CRU) (\citeproc{ref-logan2018automatic}{Logan,
+2018}, \citeproc{ref-logan2021serial}{2021}) frameworks, RCT emphasizes
 the interaction between studied items and a continuously evolving
 temporal context. Each study or recall event blends associated features
 into a context state that evolves over time, leaving a recency‑weighted
@@ -207,52 +356,65 @@ Across free and serial recall, we argue that contextual reinstatement is
 indexed to a particular occurrence rather than an item-level composite,
 motivating an episode-specific alternative we call Instance-CMR.
 
-\subsection{Retrieved-Context Theory and
-Repetition}\label{retrieved-context-theory-and-repetition}
+\subsection{Repetition Within Retrieved-Context
+Theory}\label{repetition-within-retrieved-context-theory}
 
 Earlier context theories treated background context as evolving largely
 independently of study events, so items were associated with whatever
-state happened to prevail {[}@estes1955statistical;
-@mensink1989model{]}. Retrieved-context theory departs from this view by
-allowing each item to reinstate contextual features specific to its
-study history, so retrieval actively reconstructs a cue rather than
-relying on a cue that has simply drifted forward in time
-{[}@howard2002distributed; @kahana2020computational{]}. This single
-change solves several puzzles at once {[}@howard2002distributed{]}. In
-free recall, it explains why successive recalls tend to move between
-nearby study positions with a forward tilt: each new context state
-retains features reinstated by earlier items, so recalling one item
+state happened to prevail (\citeproc{ref-estes1955statistical}{Estes,
+1955}; \citeproc{ref-mensink1989model}{Mensink \& Raaijmakers, 1989}).
+Retrieved-context theory departs from this view by allowing each item to
+reinstate contextual features specific to its study history, so
+retrieval actively reconstructs a cue rather than relying on a cue that
+has simply drifted forward in time
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-kahana2020computational}{Kahana, 2020}). This single
+change solves several puzzles at once
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a}). In free
+recall, it explains why successive recalls tend to move between nearby
+study positions with a forward tilt: each new context state retains
+features reinstated by earlier items, so recalling one item
 preferentially cues what followed it during study
-{[}@kahana1996associative; @howard2002distributed{]}. It also explains
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-kahana1996associative}{Kahana, 1996}). It also explains
 why these temporal regularities survive long distractors, because each
 recall refreshes the cue with retrieved study context rather than
 letting similarity decay as the cue drifts on
-{[}@sederberg2008context{]}. In serial recall, it captures the
-transposition gradient (errors cluster near the correct position) and
-the gradual learning of repeating sequences {[}@logan2018automatic;
-@logan2021serial; @lohnas2024retrieved{]}. In multi-list free recall, it
-has likewise been extended to account for graded prior-list intrusions,
-in which recall drifts to items from recent lists when list targeting is
-imperfect {[}@howard2008persistence; @lohnas2015expanding;
-@zaromb2006temporal{]}. These and other successes position item-based
-context reinstatement as a linchpin of RCT's explanatory power and
-motivate its application to repetition effects.
+(\citeproc{ref-sederberg2008context}{Sederberg et al., 2008}). In serial
+recall, it captures the transposition gradient (errors cluster near the
+correct position) and the gradual learning of repeating sequences
+(\citeproc{ref-logan2018automatic}{Logan, 2018},
+\citeproc{ref-logan2021serial}{2021};
+\citeproc{ref-lohnas2024retrieved}{Lohnas, 2024}). In multi-list free
+recall, it has likewise been extended to account for graded prior-list
+intrusions, in which recall drifts to items from recent lists when list
+targeting is imperfect (\citeproc{ref-howard2008persistence}{Howard et
+al., 2008}; \citeproc{ref-lohnas2015expanding}{Lohnas et al., 2015};
+\citeproc{ref-zaromb2006temporal}{Zaromb et al., 2006}). These and other
+successes position item-based context reinstatement as a linchpin of
+RCT's explanatory power and motivate its application to repetition
+effects.
 
 In this framework, repetition effects follow from two complementary
 consequences of encountering an item multiple times
-{[}@lohnas2014retrieved; @howard2002distributed{]}. One is contextual
-variability: each occurrence is stored with a new context, so the
-repeated item becomes accessible from multiple cues later
-{[}@bower1972coding; @glenberg1979component{]}. The other is associative
-study-phase retrieval: each occurrence can reinstate context from prior
-presentations of that item, linking separated moments in experience
-{[}@hintzman1975spacing{]} Together, these mechanisms have been used to
-explain classic spacing effects and the superadditive benefits of
-repetition in free recall {[}@lohnas2014retrieved;
-@cepeda2006distributed; @benjamin2010distributed{]}. Closely related
-episodic-context accounts apply the same logic to explain the retrieval
-practice and testing effects {[}@whiffen2017episodic;
-@karpicke2014retrievalbased{]}.
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). One is
+contextual variability: each occurrence is stored with a new context, so
+the repeated item becomes accessible from multiple cues later
+(\citeproc{ref-bower1972coding}{Bower et al., 1972};
+\citeproc{ref-glenberg1979component}{Glenberg, 1979}). The other is
+associative study-phase retrieval: each occurrence can reinstate context
+from prior presentations of that item, linking separated moments in
+experience (\citeproc{ref-hintzman1975spacing}{Hintzman et al., 1975})
+Together, these mechanisms have been used to explain classic spacing
+effects and the superadditive benefits of repetition in free recall
+(\citeproc{ref-benjamin2010distributed}{Benjamin \& Tullis, 2010};
+\citeproc{ref-cepeda2006distributed}{Cepeda et al., 2006};
+\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Closely
+related episodic-context accounts apply the same logic to explain the
+retrieval practice and testing effects
+(\citeproc{ref-karpicke2014retrievalbased}{Karpicke et al., 2014};
+\citeproc{ref-whiffen2017episodic}{Whiffen \& Karpicke, 2017a}).
 
 Despite the appeal and broad success of this account of episodic memory,
 the same mechanism that links occurrences of an item across time may
@@ -276,36 +438,40 @@ refined position-matching control procedure that factors out baseline
 transition tendencies tied to serial position and list structure. First,
 in free recall, transitions between the temporal neighbors of two
 occurrences of the same item should be elevated relative to controls
-{[}@lohnas2014retrieved{]}. Second, after recalling a repeated item,
-subsequent transitions should be more evenly split between the two
-occurrence regions than for position-matched control items. Third,
-similarly in serial recall, recalling the first occurrence should
-frequently propel retrieval to the second occurrence's neighbors rather
-than to the correct forward neighbor. Together, these patterns would
-indicate that each occurrence and retrieval of the same item reinstates
-an item-level composite of contextual features, blending details across
-episodes rather than selecting details specific to one. Yet across
-multiple published datasets and analyses, the predicted elevations are
-not observed. By contrast, simulations of a standard retrieved-context
-implementation (CMR) robustly produce these elevations under both free
-and serial recall dynamics.
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Second,
+after recalling a repeated item, subsequent transitions should be more
+evenly split between the two occurrence regions than for
+position-matched control items. Third, similarly in serial recall,
+recalling the first occurrence should frequently propel retrieval to the
+second occurrence's neighbors rather than to the correct forward
+neighbor. Together, these patterns would indicate that each occurrence
+and retrieval of the same item reinstates an item-level composite of
+contextual features, blending details across episodes rather than
+selecting details specific to one. Yet across multiple published
+datasets and analyses, the predicted elevations are not observed. By
+contrast, simulations of a standard retrieved-context implementation
+(CMR) robustly produce these elevations under both free and serial
+recall dynamics.
 
 This mismatch between model and data generalizes a constraint that has
 been clear in serial recall for decades, but has not been carried over
 to free recall or to evaluations of retrieved-context theory. In serial
 recall, participants reliably distinguish repeated occurrences,
 producing the correct local neighbors for each occurrence and rarely
-substituting neighbors from the other {[}@henson1996unchained;
-@kahana2000interresponse{]}. This pattern helped rule out simple
-chaining accounts of sequential memory in which each item directly cues
-its immediate successor. Our contribution is to extend the same logic
-across tasks and frameworks. Prior work has suggested either that
-signatures of associative interference are in fact present in free
-recall or that retrieved-context models can avoid them via residual
-backward context in serial recall {[}@lohnas2014retrieved;
-@logan2021serial{]}. Our findings contradict both claims and put
-pressure on any account of episodic memory search in which item identity
-serves as the retrieval unit for contextual associations.
+substituting neighbors from the other
+(\citeproc{ref-henson1996unchained}{Henson, 1996};
+\citeproc{ref-kahana2000interresponse}{Kahana \& Jacobs, 2000}). This
+pattern helped rule out simple chaining accounts of sequential memory in
+which each item directly cues its immediate successor. Our contribution
+is to extend the same logic across tasks and frameworks. Prior work has
+suggested either that signatures of associative interference are in fact
+present in free recall or that retrieved-context models can avoid them
+via residual backward context in serial recall
+(\citeproc{ref-logan2021serial}{Logan, 2021};
+\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Our
+findings contradict both claims and put pressure on any account of
+episodic memory search in which item identity serves as the retrieval
+unit for contextual associations.
 
 \subsection{Episode-Specific Reinstatement Within a Retrieved-Context
 Framework}\label{episode-specific-reinstatement-within-a-retrieved-context-framework}
@@ -314,28 +480,34 @@ How can retrieved-context models and similar frameworks be revised to
 resolve this mismatch? We propose a three-part solution. First, we
 provide an instance-based reformulation of one of the most prominent
 implementations of RCT, the Context Maintenance and Retrieval model
-(CMR) {[}@howard2002distributed; @polyn2009context{]}. In CMR,
-item-context associations are stored in composite weight matrices that
+(CMR) (\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-polyn2009context}{Polyn et al., 2009}). In CMR,
+item--context associations are stored in composite weight matrices that
 map items to a single blended representation of contextual features
 across their occurrences. When an item is retrieved, the model looks up
 and reinstates that composite with no additional selection step. A
-contrasting multi-trace approach {[}@hintzman1984minerva{]} stores a
-separate trace for each study event and retrieves by global matching, so
-a cue elicits a similarity‑weighted blend over the traces it contacts.
-In retrieved-context models, that perspective makes reinstatement a
-design choice: it can reinstate an item-level composite (recovering
-standard CMR behavior), construct a cue‑weighted blend over an item's
+contrasting multi-trace approach
+(\citeproc{ref-hintzman1984minerva}{Hintzman, 1984}) stores a separate
+trace for each study event and retrieves by global matching, so a cue
+elicits a similarity‑weighted blend over the traces it contacts. In
+retrieved-context models, that perspective makes reinstatement a design
+choice: it can reinstate an item-level composite (recovering standard
+CMR behavior), construct a cue‑weighted blend over an item's
 occurrences, or become effectively dominated by a single occurrence when
 trace discrimination is strong.
 
 Instance-based approaches have been effective in domains from category
-learning {[}@turner2019toward; @nosofsky2002exemplar;
-@stanton2002comparisons{]} to episodic and semantic memory
-{[}@cox2020similarity; @hintzman1988judgments; @jamieson2018instance;
-@shiffrin1997model{]}. However, aside from the Context Retrieval and
-Updating (CRU) model for serial-order memory {[}@logan2018automatic;
-@logan2021serial{]}, they have played a limited role in
-retrieved-context modeling of episodic memory search. The
+learning (\citeproc{ref-nosofsky2002exemplar}{Nosofsky \& Zaki, 2002};
+\citeproc{ref-stanton2002comparisons}{Stanton et al., 2002};
+\citeproc{ref-turner2019toward}{Turner, 2019}) to episodic and semantic
+memory (\citeproc{ref-cox2020similarity}{Cox \& Criss, 2020};
+\citeproc{ref-hintzman1988judgments}{Hintzman, 1988};
+\citeproc{ref-jamieson2018instance}{Jamieson et al., 2018};
+\citeproc{ref-shiffrin1997model}{Shiffrin \& Steyvers, 1997}). However,
+aside from the Context Retrieval and Updating (CRU) model for
+serial-order memory (\citeproc{ref-logan2018automatic}{Logan, 2018},
+\citeproc{ref-logan2021serial}{2021}), they have played a limited role
+in retrieved-context modeling of episodic memory search. The
 under-representation appears to reflect modeling tradition rather than a
 theoretical barrier. The item-driven contextual reinstatement assumption
 that drives repetition effects in RCT is compatible with a multi-trace
@@ -343,8 +515,10 @@ store as well as a composite one: even with separate traces per study
 event, a repeated item can still cue and reinstate an aggregate that
 blends across its trace set. Work across domains also shows conditions
 under which composite and instance formulations become equivalent rather
-than distinct {[}@turner2019toward; @kelly2017memory;
-@ramsauer2020hopfield; @anderson1995introduction{]}. So whereas CMR's
+than distinct (\citeproc{ref-anderson1995introduction}{Anderson, 1995};
+\citeproc{ref-kelly2017memory}{Kelly et al., 2017};
+\citeproc{ref-ramsauer2020hopfield}{Ramsauer et al., 2020};
+\citeproc{ref-turner2019toward}{Turner, 2019}). So whereas CMR's
 composite architecture converts occurrence-blending reinstatement into
 an architectural commitment, this work uses an instance-based
 reformulation to separate storage format from reinstatement dynamics and
@@ -396,17 +570,18 @@ and differentiation across repeated experience.
 This work proceeds as follows. We first specify Instance-CMR and
 validate that it preserves established retrieved-context benchmarks and
 fits individual-subject free recall data in lists without item
-repetitions {[}@healey2014memory{]}. We then characterize and test three
-diagnostic predictions of occurrence blending derived from item-based
-context reinstatement, focusing on one free recall dataset and one
-serial recall dataset and summarizing replications across four
-additional datasets in supplementary analyses. Next, we isolate CMR's
-study-phase retrieval mechanism in an ablation analysis, showing that it
-does not improve fits to spacing and repetition effects in free recall
-and can attenuate the spacing effect by reducing contextual variability
-across occurrences {[}@lohnas2014retrieved{]}. We then demonstrate how
-Instance-CMR, with item-independent context evolution and
-occurrence-specific retrieval, accounts for repeated-item transition
+repetitions (\citeproc{ref-healey2014memory}{Healey \& Kahana, 2014}).
+We then characterize and test three diagnostic predictions of occurrence
+blending derived from item-based context reinstatement, focusing on one
+free recall dataset and one serial recall dataset and summarizing
+replications across four additional datasets in supplementary analyses.
+Next, we isolate CMR's study-phase retrieval mechanism in an ablation
+analysis, showing that it does not improve fits to spacing and
+repetition effects in free recall and can attenuate the spacing effect
+by reducing contextual variability across occurrences
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). We then
+demonstrate how Instance-CMR, with item-independent context evolution
+and occurrence-specific retrieval, accounts for repeated-item transition
 patterns while preserving established retrieved-context phenomena.
 Finally, we present an extension and set of simulations that probe
 remaining gaps between model and data and outline directions for future
@@ -425,41 +600,36 @@ Search}\label{instance-cmr-an-episode-specific-retrieved-context-account-of-memo
 This presentation of Instance‑CMR aims to isolate the smallest set of
 changes needed for episode‑specific reinstatement within a
 retrieved‑context model. We specify it by adapting the likelihood-based
-CMR framework developed for model evaluation by @kragel2015neural and
-@morton2016predictive. This framework assigns trial-level probabilities
-to each recall, enabling likelihood-based fits to individual subjects.
-We retain CMR's parameterization, its pre-experimental initialization,
-and its two associative memories, \(M^{CF}\) and \(M^{FC}\). Our main
-representational change is that the feature layer indexes study events
-rather than item labels: each list position is treated as a distinct
-address, and the item presented at that position is stored as a label
-for later report. In lists without item repetitions, this is essentially
-a relabeling; the consequences matter when the same item label maps to
-multiple study events. Given that representation, Instance‑CMR differs
-from standard CMR in two respects that matter for repetition. During
-study, context updating is driven by item-independent, position-indexed
-inputs rather than item-driven study-phase reinstatement. During recall,
-competition and contextual reinstatement operate over study-event
-traces, and the retrieved trace's label determines the response. Here we
-define the representations and walk through the study and recall
-dynamics.
+CMR framework developed for model evaluation by Kragel et al.
+(\citeproc{ref-kragel2015neural}{2015}) and Morton and Polyn
+(\citeproc{ref-morton2016predictive}{2016}). This framework assigns
+trial-level probabilities to each recall, enabling likelihood-based fits
+to individual subjects. We retain CMR's parameterization, its
+pre-experimental initialization, and its two associative memories,
+\(M^{CF}\) and \(M^{FC}\). Our main representational change is that the
+feature layer indexes study events rather than item labels: each list
+position is treated as a distinct address, and the item presented at
+that position is stored as a label for later report. In lists without
+item repetitions, this is essentially a relabeling; the consequences
+matter when the same item label maps to multiple study events. Given
+that representation, Instance‑CMR differs from standard CMR in two
+respects that matter for repetition. During study, context updating is
+driven by item-independent, position-indexed inputs rather than
+item-driven study-phase reinstatement. During recall, competition and
+contextual reinstatement operate over study-event traces, and the
+retrieved trace's label determines the response. Here we define the
+representations and walk through the study and recall dynamics.
+
+\begin{table}
+
+{\caption{{Parameters and structures specifying
+Instance-CMR.}{\label{tbl-cmr-parameters}}}
+\vspace{-20pt}}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2639}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2639}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4722}}@{}}
-\caption{Parameters and structures specifying
-Instance-CMR.}\label{tbl-cmr-parameters}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Symbol
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Name
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Description
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Symbol
@@ -503,6 +673,8 @@ process over outputs \\
 \({\tau}_{c}\) & choice sensitivity & Exponential scaling of \(M^{CF}\)
 activations in recall competition \\
 \end{longtable}
+
+\end{table}
 
 \subsection{Representations and Memory
 Architecture}\label{representations-and-memory-architecture}
@@ -555,7 +727,7 @@ learning. With position code \(f_t\) and the pre-update context
 }\end{equation}
 
 where \(\phi_t\) scales the primacy gradient at position \(t\)
-{[}@sederberg2008context{]}:
+(\citeproc{ref-sederberg2008context}{Sederberg et al., 2008}):
 
 \begin{equation}\phantomsection\label{eq-4}{
 \phi_t = 1 + \phi_s \exp\{-\phi_d (t-1)\}.
@@ -582,14 +754,16 @@ with normalization
 }\end{equation}
 
 as in the likelihood-based CMR implementation
-{[}@morton2016predictive{]}. This preserves the CMR mechanism that binds
-each event to a gradually drifting context signal.
+(\citeproc{ref-morton2016predictive}{Morton \& Polyn, 2016}). This
+preserves the CMR mechanism that binds each event to a gradually
+drifting context signal.
 
 Because \(c^{\text{IN}}_t\) is driven by position codes rather than item
 identity, repeating an item does not reinstate the context from its
-earlier occurrence during study {[}@lohnas2014retrieved{]}. The position
-code is what binds to context in memory, while the item label is
-recorded only for later report. After updating context, the model
+earlier occurrence during study
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). The
+position code is what binds to context in memory, while the item label
+is recorded only for later report. After updating context, the model
 applies the \(M^{FC}\) and \(M^{CF}\) learning rules above and marks the
 current position as recallable.
 
@@ -650,14 +824,16 @@ serial-recall lists with repetitions. Recall initiation follows the same
 mechanism in both tasks, with parameters fit separately within the
 shared dynamics. We retain distinct termination mechanisms because
 stopping dynamics differ between free and serial recall, and each
-mechanism fits its own task better {[}@gunn2025bridging{]}. Otherwise,
-differences in performance between task domains are accounted for
-through parameter variation within the shared Instance-CMR architecture.
+mechanism fits its own task better (\citeproc{ref-gunn2025bridging}{Gunn
+\& Polyn, 2025}). Otherwise, differences in performance between task
+domains are accounted for through parameter variation within the shared
+Instance-CMR architecture.
 
 For free recall, we use the likelihood-friendly CMR-style termination
 rule in which stopping is a separate process from retrieval and depends
 only on output position \(j\) (the number of recalls already produced)
-{[}@kragel2015neural; @morton2016predictive{]}:
+(\citeproc{ref-kragel2015neural}{Kragel et al., 2015};
+\citeproc{ref-morton2016predictive}{Morton \& Polyn, 2016}):
 
 \begin{equation}\phantomsection\label{eq-11}{
 P(\text{stop}, j) \;=\; \theta_s\,e^{j\theta_r}.
@@ -670,15 +846,16 @@ state.
 
 For serial recall, we adopt the CRU-style context-based termination
 mechanism in which the end of the list is treated as an additional
-stored event that competes for retrieval {[}@logan2018automatic;
-@logan2021serial{]}. After study the model stores an additional END
-position associated with the terminal study context. During recall, this
-END position is included in the same competition; if it is retrieved,
-the recall sequence terminates. This makes termination depend on the
-evolving context cue and predicts termination to be most likely when
-context resembles the end-of-list state. Repeated responses are allowed
-in serial-recall lists with repetitions so that all occurrences can be
-reported.
+stored event that competes for retrieval
+(\citeproc{ref-logan2018automatic}{Logan, 2018},
+\citeproc{ref-logan2021serial}{2021}). After study the model stores an
+additional END position associated with the terminal study context.
+During recall, this END position is included in the same competition; if
+it is retrieved, the recall sequence terminates. This makes termination
+depend on the evolving context cue and predicts termination to be most
+likely when context resembles the end-of-list state. Repeated responses
+are allowed in serial-recall lists with repetitions so that all
+occurrences can be reported.
 
 \subsection{Variants and Extensions}\label{variants-and-extensions}
 
@@ -698,13 +875,13 @@ bridge from the model specification to the later simulation sections.
 
 \section{Methodological Framework}\label{methodological-framework}
 
-Our methodological framework isolates repetition-specific effects using
-a refined position-matching baseline and symmetric scoring. We define
-the estimand and baseline, then summarize the datasets that anchor the
-free- and serial-recall analyses, noting which serve as primary tests
-and which provide supplementary checks. Model-evaluation procedures and
-diagnostic analyses are introduced in their respective sections, where
-we apply this framework to behavioral data and simulations.
+Our methodology isolates repetition-specific effects using a refined
+position-matching baseline and symmetric scoring. We define the estimand
+and baseline, then summarize the datasets that anchor the free- and
+serial-recall analyses, noting which serve as primary tests and which
+provide supplementary checks. Model-evaluation procedures and diagnostic
+analyses are introduced in their respective sections, where we apply
+this framework to behavioral data and simulations.
 
 \subsection{Defining and Measuring Repetition
 Effects}\label{defining-and-measuring-repetition-effects}
@@ -731,22 +908,24 @@ the baseline for repeaters. That comparison is problematic because item
 repetitions in mixed lists impact memory for all items in the list, not
 just the repeated item itself. They change rehearsal allocation, output
 competition, and contextual drift, disrupting characterization of
-performance in the absence of repetition {[}see @tulving1972inhibition;
-@ratcliff1990list{]}. This conflation can mimic repetition effects or
-mask genuine repetition benefits.
+performance in the absence of repetition
+(\citeproc{ref-ratcliff1990list}{Ratcliff et al., 1990}; see
+\citeproc{ref-tulving1972inhibition}{Tulving \& Hastie, 1972}). This
+conflation can mimic repetition effects or mask genuine repetition
+benefits.
 
-Following @lohnas2014retrieved, we instead estimate this baseline using
-position-matched control lists that mirror each mixed list in length and
-temporal structure. For every mixed-list trial, we pair many
-control-list trials performed by the same participant that share the
-number of items, presentation schedule, instructions, and other relevant
-factors. In each control list, we designate the items occupying the
-repeater's two positions \(i\) and \(j\) as a pseudo-repeater pair. We
-then recompute the target statistic after relabeling those two positions
-as a single pseudo-item. Repeating this resampling many times yields a
-null distribution under the no-special-status hypothesis -- the memory
-system treats the two positions as independent study events that differ
-only in label.
+Following Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}),
+we instead estimate this baseline using position-matched control lists
+that mirror each mixed list in length and temporal structure. For every
+mixed-list trial, we pair many control-list trials performed by the same
+participant that share the number of items, presentation schedule,
+instructions, and other relevant factors. In each control list, we
+designate the items occupying the repeater's two positions \(i\) and
+\(j\) as a pseudo-repeater pair. We then recompute the target statistic
+after relabeling those two positions as a single pseudo-item. Repeating
+this resampling many times yields a null distribution under the
+no-special-status hypothesis -- the memory system treats the two
+positions as independent study events that differ only in label.
 
 Building on this foundation, we clarify how recalls from the matched
 positions are scored. Just as the two occurrences of ``canoe'' in a
@@ -778,104 +957,108 @@ a cleaner test bed for evaluating retrieved-context models.
 \subsection{Datasets}\label{datasets}
 
 We draw on multiple archival datasets spanning free and serial recall
-with within-list repetitions. Data from @lohnas2014retrieved serve as
-the primary free recall test bed because they include both mixed and
-control lists under identical procedures, enabling the matched-baseline
-estimation. Data from @logan2021serial Experiment 2 serve as the primary
-serial recall test bed because they isolate single repeats at short lags
-with tight list control. We also use @broitman2024neural and
-@lohnas2025temporal as complementary free recall checks and
-@kahana2000interresponse to cover longer lags and learning-to-criterion
-serial recall; these additional datasets provide robustness tests where
-noted.
+with within-list repetitions. Data from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) serve as the primary free
+recall test bed because they include both mixed and control lists under
+identical procedures, enabling the matched-baseline estimation. Data
+from Logan (\citeproc{ref-logan2021serial}{2021}) Experiment 2 serve as
+the primary serial recall test bed because they isolate single repeats
+at short lags with tight list control. We also use Broitman and Kahana
+(\citeproc{ref-broitman2024neural}{2024}) and Lohnas
+(\citeproc{ref-lohnas2025temporal}{2025}) as complementary free recall
+checks and Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000}) to cover longer lags and
+learning-to-criterion serial recall; these additional datasets provide
+robustness tests where noted.
 
-Across 4 sessions, 35 subjects in @lohnas2014retrieved performed delayed
-free recall of 48 lists. Subjects encountered control lists with all
-once-presented items, pure massed lists with immediate repeats, pure
-spaced lists with repeats at lags 1-8 (lag is the number of intervening
-items), and mixed lists containing once-presented, massed, and spaced
-items; each session included three lists of each type and list order was
-randomized. Each list had 40 positions. Control lists contained 40
-unique items, pure massed and pure spaced lists contained 20 repeated
-items occupying the 40 positions, and mixed lists contained 28
-singletons and six repeated items. In pure spaced lists each lag 1-8
-occurred equally often, and in mixed lists each lag 0-8 occurred exactly
-twice per session.
+Across 4 sessions, 35 subjects in Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) performed delayed free recall
+of 48 lists. Subjects encountered control lists with all once-presented
+items, pure massed lists with immediate repeats, pure spaced lists with
+repeats at lags 1-8 (lag is the number of intervening items), and mixed
+lists containing once-presented, massed, and spaced items; each session
+included three lists of each type and list order was randomized. Each
+list had 40 positions. Control lists contained 40 unique items, pure
+massed and pure spaced lists contained 20 repeated items occupying the
+40 positions, and mixed lists contained 28 singletons and six repeated
+items. In pure spaced lists each lag 1-8 occurred equally often, and in
+mixed lists each lag 0-8 occurred exactly twice per session.
 
-We include @broitman2024neural to test model predictions in a free
-recall setting that omits control lists, providing a complementary
-generalization check under high trial counts. Across 6 sessions, 52
-participants performed delayed free recall with mixed lists. Each list
-contained 12 unique words, half presented once and half presented twice,
-yielding 18 total presentations per list. Repeat items were separated by
-at least three intervening presentations. The first presentation of a
-repeated item always occurred within the first 12 serial positions, and
-the second always occurred after position 6. Single items were
-distributed across all serial positions. Words were selected to minimize
-adjacent semantic similarity using Word Association Spaces, reducing
-confounds between temporal and semantic associations. In each session,
-participants completed 21 lists under a consistent study-then-recall
-procedure with a fixed post-encoding delay before recall. Control lists
-were not included in this experimental design, so we use this dataset
-for qualitative benchmarks and model comparisons that do not require
-matched-baseline estimation.
+We include Broitman and Kahana (\citeproc{ref-broitman2024neural}{2024})
+to test model predictions in a free recall setting that omits control
+lists, providing a complementary generalization check under high trial
+counts. Across 6 sessions, 52 participants performed delayed free recall
+with mixed lists. Each list contained 12 unique words, half presented
+once and half presented twice, yielding 18 total presentations per list.
+Repeat items were separated by at least three intervening presentations.
+The first presentation of a repeated item always occurred within the
+first 12 serial positions, and the second always occurred after position
+6. Single items were distributed across all serial positions. Words were
+selected to minimize adjacent semantic similarity using Word Association
+Spaces, reducing confounds between temporal and semantic associations.
+In each session, participants completed 21 lists under a consistent
+study-then-recall procedure with a fixed post-encoding delay before
+recall. Control lists were not included in this experimental design, so
+we use this dataset for qualitative benchmarks and model comparisons
+that do not require matched-baseline estimation.
 
-We also analyze @lohnas2025temporal (Experiments 1-2, pooled) as another
-free recall test bed with mixed lists and control lists, but with
-different constraints. Each participant completed a single remote
-session with 10 lists drawn from a 576-noun pool, constructed to
-minimize within-list semantic similarity (WAS constraints) and to
-balance concreteness, valence, and frequency across lists. Two lists
-were controls with 20 unique items, and eight were mixed lists with 19
-unique items plus one word repeated once. The repeated word appeared in
-one of four configurations defined by first-occurrence position (6 or 7)
-crossed with spacing (5 or 6 intervening items), with each configuration
-used twice; list order and within-list order were randomized. Experiment
-1 used delayed free recall with 20-item lists and a post-encoding
-distractor, whereas Experiment 2 used immediate free recall with 24-item
-lists and no distractor. Unless noted otherwise, we pool recall data
-across experiments while tracking an experiment indicator to assess
-robustness to the delay manipulation.
+We also analyze Lohnas (\citeproc{ref-lohnas2025temporal}{2025})
+(Experiments 1-2, pooled) as another free recall test bed with mixed
+lists and control lists, but with different constraints. Each
+participant completed a single remote session with 10 lists drawn from a
+576-noun pool, constructed to minimize within-list semantic similarity
+(WAS constraints) and to balance concreteness, valence, and frequency
+across lists. Two lists were controls with 20 unique items, and eight
+were mixed lists with 19 unique items plus one word repeated once. The
+repeated word appeared in one of four configurations defined by
+first-occurrence position (6 or 7) crossed with spacing (5 or 6
+intervening items), with each configuration used twice; list order and
+within-list order were randomized. Experiment 1 used delayed free recall
+with 20-item lists and a post-encoding distractor, whereas Experiment 2
+used immediate free recall with 24-item lists and no distractor. Unless
+noted otherwise, we pool recall data across experiments while tracking
+an experiment indicator to assess robustness to the delay manipulation.
 
-We use @logan2021serial Experiment 2 to evaluate repetition effects in
-serial recall under tightly controlled list structure and short lags.
-Twenty-four participants completed lists designed to test repetition
-effects in serial recall. Participants were recruited for self-reported
-typing speed of at least 40 WPM, with a mean of 76.74 WPM (SD 21.03) and
-mean accuracy of 93.66\% (SD 2.77). All lists were six letters long and
-letters were sampled uniformly from the 26-letter English alphabet.
-There were 576 lists in total divided evenly across multiple task
-variants, and our analyses focus on the serial-recall subset. Within
-each task, 96 lists contained no repetitions and 96 lists contained a
-single repeated letter. For repeated lists, the lag between the two
-occurrences was 0, 1, 2, or 3 with 24 lists at each lag. Repeated items
-appeared in all possible positions with equal frequency for lags 1-3,
-and for lag 0 four positions were tested five times while one position
-was tested four times. Lists with and without repetitions were randomly
-interleaved. On each trial, the six-letter array was displayed
-simultaneously for 1000 ms, then removed, and participants typed the
-letters in order. A 1000-ms blank screen followed each response before
-the next trial.
+We use Logan (\citeproc{ref-logan2021serial}{2021}) Experiment 2 to
+evaluate repetition effects in serial recall under tightly controlled
+list structure and short lags. Twenty-four participants completed lists
+designed to test repetition effects in serial recall. Participants were
+recruited for self-reported typing speed of at least 40 WPM, with a mean
+of 76.74 WPM (SD 21.03) and mean accuracy of 93.66\% (SD 2.77). All
+lists were six letters long and letters were sampled uniformly from the
+26-letter English alphabet. There were 576 lists in total divided evenly
+across multiple task variants, and our analyses focus on the
+serial-recall subset. Within each task, 96 lists contained no
+repetitions and 96 lists contained a single repeated letter. For
+repeated lists, the lag between the two occurrences was 0, 1, 2, or 3
+with 24 lists at each lag. Repeated items appeared in all possible
+positions with equal frequency for lags 1-3, and for lag 0 four
+positions were tested five times while one position was tested four
+times. Lists with and without repetitions were randomly interleaved. On
+each trial, the six-letter array was displayed simultaneously for 1000
+ms, then removed, and participants typed the letters in order. A 1000-ms
+blank screen followed each response before the next trial.
 
-We analyze @kahana2000interresponse to probe serial recall with a wider
-lag range and ensure generalization of our serial recall results across
-datasets. Twenty participants completed 12 sessions of serial recall.
-Each session comprised 36 lists built from randomly arranged consonants
-excluding ``Y''. Lists crossed three lengths (11, 12, 13) with two
-repetition conditions (no repeats vs one repeated consonant), six lists
-per cell. In repetition lists a single consonant was repeated with lag
-0-5, and the first occurrence was never in the first two or last two
-positions. On each study-test cycle, consonants were shown one at a time
-for 1000 ms with a 250-ms interstimulus interval, followed by typed
-forward recall without backspace. Lists were re-presented and tested
-until participants achieved three consecutive perfect forward recalls,
-after which a single backward recall was administered. For the present
-analyses we use only the first forward recall immediately following the
-initial study presentation for each unique list. Backward recall trials
-and subsequent forward recalls used to reach criterion are excluded. We
-also do not analyze inter-response times. Assignment of consonants to
-list structures and the order of list conditions were separately
-randomized for each participant and session.
+We analyze Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000}) to probe serial recall
+with a wider lag range and ensure generalization of our serial recall
+results across datasets. Twenty participants completed 12 sessions of
+serial recall. Each session comprised 36 lists built from randomly
+arranged consonants excluding ``Y''. Lists crossed three lengths (11,
+12, 13) with two repetition conditions (no repeats vs one repeated
+consonant), six lists per cell. In repetition lists a single consonant
+was repeated with lag 0-5, and the first occurrence was never in the
+first two or last two positions. On each study-test cycle, consonants
+were shown one at a time for 1000 ms with a 250-ms interstimulus
+interval, followed by typed forward recall without backspace. Lists were
+re-presented and tested until participants achieved three consecutive
+perfect forward recalls, after which a single backward recall was
+administered. For the present analyses we use only the first forward
+recall immediately following the initial study presentation for each
+unique list. Backward recall trials and subsequent forward recalls used
+to reach criterion are excluded. We also do not analyze inter-response
+times. Assignment of consonants to list structures and the order of list
+conditions were separately randomized for each participant and session.
 
 \section{Model Evaluation}\label{model-evaluation}
 
@@ -902,17 +1085,17 @@ While quantitative model comparison helps measure relative evidence in
 favor of one model over another, tests of the ability of candidate
 models to produce specific effects from data can provide more direct
 evidence for or against a model's account of memory
-{[}@palminteri2017importance{]}. Failure to reproduce an effect that is
-well-established in the literature can effectively falsify a model,
-requiring new or modified models to account for the data. To evaluate
-the generative performance of the CMR model and its variants, we will
-first fit model variants to applicable data using the likelihood-based
-evaluation and fitting techniques reviewed above. Next, we will simulate
-data from the model using the fitted parameters and apply proposed
-analyses to the simulated data to measure the model's ability to predict
-the outcomes of these analyses. The match between the model's
-predictions and the observed data quantifies the model's generative
-performance.
+(\citeproc{ref-palminteri2017importance}{Palminteri et al., 2017}).
+Failure to reproduce an effect that is well-established in the
+literature can effectively falsify a model, requiring new or modified
+models to account for the data. To evaluate the generative performance
+of the CMR model and its variants, we will first fit model variants to
+applicable data using the likelihood-based evaluation and fitting
+techniques reviewed above. Next, we will simulate data from the model
+using the fitted parameters and apply proposed analyses to the simulated
+data to measure the model's ability to predict the outcomes of these
+analyses. The match between the model's predictions and the observed
+data quantifies the model's generative performance.
 
 \section{Model Validation on Non-Repetition
 Lists}\label{model-validation-on-non-repetition-lists}
@@ -920,11 +1103,12 @@ Lists}\label{model-validation-on-non-repetition-lists}
 We first validate Instance-CMR on lists without item repetitions to show
 that the model preserves established retrieved-context benchmarks in the
 single-presentation regime. We use a subset of the PEERS dataset
-reported by @healey2014memory: 126 participants each studied 112 lists
-of 16 unique words followed by immediate free recall. The word lists
-were sampled for low semantic similarity from the Toronto Word Pool
-{[}@friendly1982toronto{]}, providing a clean baseline for temporal
-organization.
+reported by Healey and Kahana (\citeproc{ref-healey2014memory}{2014}):
+126 participants each studied 112 lists of 16 unique words followed by
+immediate free recall. The word lists were sampled for low semantic
+similarity from the Toronto Word Pool
+(\citeproc{ref-friendly1982toronto}{Friendly et al., 1982}), providing a
+clean baseline for temporal organization.
 
 We fit the model to individual-subject recall sequences using the
 likelihood procedure described above and then simulate recall with the
@@ -945,6 +1129,11 @@ before we test repetition-specific predictions.
 
 \begin{figure}
 
+\caption{\label{fig-healey2014memory}Summary statistic fits to Healey
+and Kahana (\citeproc{ref-healey2014memory}{2014}). Top: standard CMR.
+Bottom: Instance-CMR. Left: lag-CRP. Middle: probability of first
+recall. Right: serial position curve.}
+
 \begin{minipage}{0.33\linewidth}
 \includegraphics{../../work/thesis/icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_crp-1.png}
 \includegraphics{../../work/thesis/icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_pfr-1.png}
@@ -954,11 +1143,6 @@ before we test repetition-specific predictions.
 \includegraphics{../../work/thesis/icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_crp-1.png}
 \includegraphics{../../work/thesis/icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_pfr-1.png}
 \includegraphics{../../work/thesis/icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_spc-1.png}\end{minipage}%
-
-\caption{\label{fig-healey2014memory}Summary statistic fits to
-@healey2014memory. Top: standard CMR. Bottom: Instance-CMR. Left:
-lag-CRP. Middle: probability of first recall. Right: serial position
-curve.}
 
 \end{figure}%
 
@@ -973,17 +1157,17 @@ bootstrapped 95\% confidence interval over subject means, enabling
 statistical inference on the group level.
 Figure~\ref{fig-control_method} shows serial-position curves (SPCs),
 lag-conditional response probabilities (lag-CRPs), and probabilities of
-first recall (PFRs) for mixed and control lists in @lohnas2014retrieved,
-plotted in raw form (left) and after baseline correction (right). In the
-raw SPCs, mixed lists appear to enjoy a mid-list advantage; after
-position matching and symmetric scoring this inflation vanishes, and
-SPCs from mixed and control lists are essentially indistinguishable.
-Small raw differences in the lag-CRP likewise disappear under the
-baseline, and the PFRs are virtually identical across conditions. With
-the basic benchmarks satisfied and no substantive differences between
-mixed and control lists once the baseline is applied, we can focus on
-analyses that more directly test the predictions of item-based context
-evolution.
+first recall (PFRs) for mixed and control lists in Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}), plotted in raw form (left)
+and after baseline correction (right). In the raw SPCs, mixed lists
+appear to enjoy a mid-list advantage; after position matching and
+symmetric scoring this inflation vanishes, and SPCs from mixed and
+control lists are essentially indistinguishable. Small raw differences
+in the lag-CRP likewise disappear under the baseline, and the PFRs are
+virtually identical across conditions. With the basic benchmarks
+satisfied and no substantive differences between mixed and control lists
+once the baseline is applied, we can focus on analyses that more
+directly test the predictions of item-based context evolution.
 
 Standard CMR broadly reproduces these benchmarks under the same scoring
 and similarly predicts limited differences between SPC, PFR, and lag-CRP
@@ -993,6 +1177,13 @@ evaluation on the specific predictions that arise from the model's
 treatment of repeated items.
 
 \begin{figure}
+
+\caption{\label{fig-control_method}Raw (Left) vs control-corrected
+(Right) benchmark summary statistics for mixed vs control list trials
+from Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}). Top
+row: recall rate by serial position (serial position curve, SPC). Second
+row: conditional response probability (CRP) by lag. Third row:
+probability of first recall by serial position.}
 
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_spc.png}\end{minipage}%
@@ -1012,16 +1203,17 @@ treatment of repeated items.
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_pnr.png}\end{minipage}%
 
-\caption{\label{fig-control_method}Raw (Left) vs control-corrected
-(Right) benchmark summary statistics for mixed vs control list trials
-from @lohnas2014retrieved. Top row: recall rate by serial position
-(serial position curve, SPC). Second row: conditional response
-probability (CRP) by lag. Third row: probability of first recall by
-serial position.}
-
 \end{figure}%
 
 \begin{figure}
+
+\caption{\label{fig-cmr_benchmarks}Standard CMR predictions for mixed
+and control list trials from trials from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}), with symmetric scoring over
+matched serial positions of repeated items. Left: recall rate by serial
+position (serial position curve, SPC). Middle: conditional response
+probability (CRP) by lag. Right: probability of first recall by serial
+position.}
 
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
@@ -1032,61 +1224,59 @@ serial position.}
 \begin{minipage}{\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
 
-\caption{\label{fig-cmr_benchmarks}Standard CMR predictions for mixed
-and control list trials from trials from @lohnas2014retrieved, with
-symmetric scoring over matched serial positions of repeated items. Left:
-recall rate by serial position (serial position curve, SPC). Middle:
-conditional response probability (CRP) by lag. Right: probability of
-first recall by serial position.}
-
 \end{figure}%
 
 \subsection{The Spacing Effect}\label{the-spacing-effect}
 
 The spacing effect is classically understood as a repetition effect, and
 has been a central focus of research on memory for repeated experience
-{[}@cepeda2006distributed{]} However, it applies even to pairs of
-distinct items, not just repeated items. By measuring the probability of
-retrieving either of two study items during a free recall trial -- an
-analysis termed the ``OR score'' -- research often finds that pairs of
-spaced items were more likely to be recalled than pairs of massed items
-{[}@lohnas2011contextual{]}. Notably, in a phenomenon called
-``superadditivity'', the mnemonic benefit of spacing is argued to be
-more pronounced for repeated items than for distinct items. The
-probability of recalling an item repeated in a spaced fashion may be
-higher than the probability of recalling one of two distinct but
-similarly spaced items, violating statistical independence
-{[}@benjamin2010makes{]}. Study-phase retrieval or other mechanisms
-specific to item repetitions are thought to complement contextual
-variability mechanisms to produce such superadditivity.
+(\citeproc{ref-cepeda2006distributed}{Cepeda et al., 2006}) However, it
+applies even to pairs of distinct items, not just repeated items. By
+measuring the probability of retrieving either of two study items during
+a free recall trial -- an analysis termed the ``OR score'' -- research
+often finds that pairs of spaced items were more likely to be recalled
+than pairs of massed items (\citeproc{ref-lohnas2011contextual}{Lohnas
+et al., 2011}). Notably, in a phenomenon called ``superadditivity'', the
+mnemonic benefit of spacing is argued to be more pronounced for repeated
+items than for distinct items. The probability of recalling an item
+repeated in a spaced fashion may be higher than the probability of
+recalling one of two distinct but similarly spaced items, violating
+statistical independence
+(\citeproc{ref-benjamin2010distributed}{Benjamin \& Tullis, 2010}).
+Study-phase retrieval or other mechanisms specific to item repetitions
+are thought to complement contextual variability mechanisms to produce
+such superadditivity.
 
 Figure~\ref{fig-spacing} displays the spacing function for mixed and
-control lists in @lohnas2014retrieved alongside fitted CMR simulations.
-In the data, the spacing function estimated from mixed lists appears
-steeper than the function derived from our position-matched, symmetric
-baseline (left panel of Figure~\ref{fig-spacing}). Because the baseline
-equates list length, presentation schedule, and scoring opportunity, the
-slope difference cannot be attributed to serial-position or scoring
-artifacts; it suggests a repetition-specific boost over and above the
-spacing effect observed for equally spaced distinct items (i.e., a
-superadditive component). Standard CMR, by contrast, reproduces the
-overall monotonic spacing advantage but shows no apparent corresponding
-slope separation between mixed and baseline conditions (right panel of
+control lists in Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) alongside fitted CMR
+simulations. In the data, the spacing function estimated from mixed
+lists appears steeper than the function derived from our
+position-matched, symmetric baseline (left panel of
+Figure~\ref{fig-spacing}). Because the baseline equates list length,
+presentation schedule, and scoring opportunity, the slope difference
+cannot be attributed to serial-position or scoring artifacts; it
+suggests a repetition-specific boost over and above the spacing effect
+observed for equally spaced distinct items (i.e., a superadditive
+component). Standard CMR, by contrast, reproduces the overall monotonic
+spacing advantage but shows no apparent corresponding slope separation
+between mixed and baseline conditions (right panel of
 Figure~\ref{fig-spacing}). Thus, while CMR captures the basic
 memorability gain with increasing lag, it does not express the
 additional repetition-specific steepening present in the data.
 
 \begin{figure}
 
+\caption{\label{fig-spacing}The spacing effect for mixed vs control list
+trials from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}). Left: data, right:
+simulations of standard CMR fitted to the data.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_full_rpl.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_full_rpl.png}\end{minipage}%
-
-\caption{\label{fig-spacing}The spacing effect for mixed vs control list
-trials from @lohnas2014retrieved. Left: data, right: simulations of
-standard CMR fitted to the data.}
 
 \end{figure}%
 
@@ -1110,7 +1300,17 @@ the contribution of repetition structure.
 
 \begin{figure}
 
+\caption{\label{fig-rep-crp-base}\textbf{The repetition lag-CRP.}
+\emph{A.} The lag-contiguity effect conceptualizes free-recall search as
+movement along a mental timeline, but repeated items occupy two
+positions on that timeline. \emph{B.} Extending the lag-CRP, we tabulate
+transitions from a recalled repeater relative to both its study
+positions. Illustration from mixed lists in Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}).}
+
 \begin{minipage}{0.50\linewidth}
+
+\subcaption{\label{fig-rep-crp-schematic}}
 
 \centering{
 
@@ -1118,11 +1318,11 @@ the contribution of repetition structure.
 
 }
 
-\subcaption{\label{fig-rep-crp-schematic}}
-
 \end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
+
+\subcaption{\label{fig-rep-crp-base}}
 
 \centering{
 
@@ -1130,16 +1330,7 @@ the contribution of repetition structure.
 
 }
 
-\subcaption{\label{fig-rep-crp-base}}
-
 \end{minipage}%
-
-\caption{\label{fig-rep-crp-base}\textbf{The repetition lag-CRP.}
-\emph{A.} The lag-contiguity effect conceptualizes free-recall search as
-movement along a mental timeline, but repeated items occupy two
-positions on that timeline. \emph{B.} Extending the lag-CRP, we tabulate
-transitions from a recalled repeater relative to both its study
-positions. Illustration from mixed lists in @lohnas2014retrieved.}
 
 \end{figure}%
 
@@ -1183,13 +1374,13 @@ from how the repeater redirects the next step.
 \subsubsection{Cross-occurrence neighbor contiguity (free
 recall)}\label{cross-occurrence-neighbor-contiguity-free-recall}
 
-@lohnas2014retrieved introduced a neighbor-contiguity test for
-cross-occurrence blending: if the first-presentation context is
-reinstated at the second, neighborhoods around the two presentations
-become associatively linked. They measured the probability of
-transitions from a \(+1\) or \(+2\) neighbor of one presentation to a
-\(+1\) or \(+2\) neighbor of the other, comparing mixed lists to
-position-matched controls.
+Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}) introduced
+a neighbor-contiguity test for cross-occurrence blending: if the
+first-presentation context is reinstated at the second, neighborhoods
+around the two presentations become associatively linked. They measured
+the probability of transitions from a \(+1\) or \(+2\) neighbor of one
+presentation to a \(+1\) or \(+2\) neighbor of the other, comparing
+mixed lists to position-matched controls.
 
 We preserve that intuition but refine both baseline and readout. First,
 the matched baseline uses symmetric scoring over the two matched
@@ -1302,18 +1493,6 @@ trace and better accommodates this pattern.
 
 \begin{figure}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
-\newline
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
-
 \caption{\label{fig-neighbor_contiguity}Cross-occurrence neighbor
 transitions as centered lag-CRPs (free recall). Top row (data), bottom
 row (CMR simulations). \textbf{Left column (first→second):} triggers are
@@ -1330,6 +1509,18 @@ selective elevation at \(\ell=0\) (the repeater itself) only in the
 first→second case. Standard CMR predicts pronounced above-baseline peaks
 at the other occurrence's neighbors in both directions, consistent with
 associative blending.}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\newline
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1358,6 +1549,14 @@ as if a single occurrence's context is (selectively) reinstated.
 
 \begin{figure}
 
+\caption{\label{fig-repetition_lag_crp}Repetition lag-CRP (outgoing):
+data vs CMR. Top row (data): mixed lists (left) and matched-control
+baseline (right), each showing two centered curves (first-centered vs
+second-centered). Bottom row (CMR): same for simulations. In data,
+separation (e.g., +1 bin) favors the first-occurrence neighborhood and
+is larger than in baseline; CMR predicts reduced separation (balanced
+access), consistent with blending.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
 %
@@ -1369,14 +1568,6 @@ as if a single occurrence's context is (selectively) reinstated.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-repetition_lag_crp}Repetition lag-CRP (outgoing):
-data vs CMR. Top row (data): mixed lists (left) and matched-control
-baseline (right), each showing two centered curves (first-centered vs
-second-centered). Bottom row (CMR): same for simulations. In data,
-separation (e.g., +1 bin) favors the first-occurrence neighborhood and
-is larger than in baseline; CMR predicts reduced separation (balanced
-access), consistent with blending.}
 
 \end{figure}%
 
@@ -1408,6 +1599,15 @@ cleaner probe of repetition-specific reinstatement.
 
 \begin{figure}
 
+\caption{\label{fig-backward_rep_lag_crp}Repetition lag-CRP
+(incoming/backward): data vs CMR. Top row (data): mixed lists (left) and
+baseline (right) for transitions to repeated items. Bottom row (CMR):
+simulations. In data, transitions to repeated items are more frequently
+from the backward neighbor of the item's first presentation than from
+the second, especially in mixed lists but also in the position-matched
+baseline. By contrast, CMR predicts a weaker first-over-second advantage
+for incoming transitions.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
 %
@@ -1420,29 +1620,21 @@ cleaner probe of repetition-specific reinstatement.
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
 
-\caption{\label{fig-backward_rep_lag_crp}Repetition lag-CRP
-(incoming/backward): data vs CMR. Top row (data): mixed lists (left) and
-baseline (right) for transitions to repeated items. Bottom row (CMR):
-simulations. In data, transitions to repeated items are more frequently
-from the backward neighbor of the item's first presentation than from
-the second, especially in mixed lists but also in the position-matched
-baseline. By contrast, CMR predicts a weaker first-over-second advantage
-for incoming transitions.}
-
 \end{figure}%
 
 \subsection{Forward Chaining in Serial
 Recall}\label{forward-chaining-in-serial-recall}
 
 Serial recall provides a more stringent test of cross-occurrence
-competition. In the data from @logan2021serial and from
-@kahana2000interresponse (Figure~\ref{fig-serial_rep_crp}, top), after
-participants correctly type through the first occurrence at position
-\(i\), continuations to \(i{+}1\) remain strong, and erroneous
-continuations to the competing neighbor \(j{+}1\) are rare and
-indistinguishable from the matched control baseline. That is, the second
-occurrence's neighborhood does not draw responses away from the correct
-forward chain.
+competition. In the data from Logan
+(\citeproc{ref-logan2021serial}{2021}) and from Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000})
+(Figure~\ref{fig-serial_rep_crp}, top), after participants correctly
+type through the first occurrence at position \(i\), continuations to
+\(i{+}1\) remain strong, and erroneous continuations to the competing
+neighbor \(j{+}1\) are rare and indistinguishable from the matched
+control baseline. That is, the second occurrence's neighborhood does not
+draw responses away from the correct forward chain.
 
 In the bottom half of Figure~\ref{fig-serial_rep_crp}, simulations of
 standard CMR after fitting to each dataset predicts a measurable
@@ -1456,6 +1648,22 @@ single episode.
 
 \begin{figure}
 
+\caption{\label{fig-serial_rep_crp}\textbf{Cross-occurrence forward
+errors in serial recall (two datasets).} Left: Logan
+(\citeproc{ref-logan2021serial}{2021}). Right: Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000}). \textbf{Top row (data):}
+For items studied at positions \(i\) and \(j\), each panel plots the
+conditional probability--- after correct report through the first
+occurrence at position \(i\) -- of an erroneous transition to the
+\emph{second} occurrence's forward neighbors (\(i\!\rightarrow\!j{+}1\)
+and \(i\!\rightarrow\!j{+}2\)), contrasting mixed lists with their
+position-matched, symmetric baseline. \textbf{Bottom row (CMR):}
+standard CMR simulations fitted separately to each dataset and scored
+with the identical baseline procedure. In both datasets, data show no
+elevation of \(i\!\rightarrow\!j{+}1/j{+}2\) errors relative to baseline
+(non-interference), whereas CMR predicts a clear error elevation
+(associative interference).}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
 %
@@ -1467,21 +1675,6 @@ single episode.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-serial_rep_crp}\textbf{Cross-occurrence forward
-errors in serial recall (two datasets).} Left: @logan2021serial. Right:
-@kahana2000interresponse. \textbf{Top row (data):} For items studied at
-positions \(i\) and \(j\), each panel plots the conditional
-probability--- after correct report through the first occurrence at
-position \(i\) -- of an erroneous transition to the \emph{second}
-occurrence's forward neighbors (\(i\!\rightarrow\!j{+}1\) and
-\(i\!\rightarrow\!j{+}2\)), contrasting mixed lists with their
-position-matched, symmetric baseline. \textbf{Bottom row (CMR):}
-standard CMR simulations fitted separately to each dataset and scored
-with the identical baseline procedure. In both datasets, data show no
-elevation of \(i\!\rightarrow\!j{+}1/j{+}2\) errors relative to baseline
-(non-interference), whereas CMR predicts a clear error elevation
-(associative interference).}
 
 \end{figure}%
 
@@ -1539,6 +1732,14 @@ reinstatement does not degrade fits to core free-recall benchmarks.
 
 \begin{figure}
 
+\caption{\label{fig-cmr_nospr_benchmarks}CMR-NoSPR benchmarks (free
+recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
+right), and probability of first/next recall (bottom) for mixed vs
+matched-control lists from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}), scored with the symmetric
+baseline. Eliminating study-phase reinstatement leaves benchmark fits
+intact.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_spc.png}\end{minipage}%
 %
@@ -1547,13 +1748,6 @@ reinstatement does not degrade fits to core free-recall benchmarks.
 \newline
 \begin{minipage}{\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_pnr.png}\end{minipage}%
-
-\caption{\label{fig-cmr_nospr_benchmarks}CMR-NoSPR benchmarks (free
-recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
-right), and probability of first/next recall (bottom) for mixed vs
-matched-control lists from @lohnas2014retrieved, scored with the
-symmetric baseline. Eliminating study-phase reinstatement leaves
-benchmark fits intact.}
 
 \end{figure}%
 
@@ -1567,16 +1761,16 @@ implemented in standard CMR is not required.
 
 \begin{figure}
 
+\caption{\label{fig-nospr_spacing}CMR-NoSPR spacing function. Simulated
+spacing curves for mixed vs matched-control lists from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}). The spacing advantage is
+preserved without study-phase reinstatement.}
+
 \begin{minipage}{0.50\linewidth}
 
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_full_rpl.png}
 
 \end{minipage}%
-
-\caption{\label{fig-nospr_spacing}CMR-NoSPR spacing function. Simulated
-spacing curves for mixed vs matched-control lists from
-@lohnas2014retrieved. The spacing advantage is preserved without
-study-phase reinstatement.}
 
 \end{figure}%
 
@@ -1595,12 +1789,6 @@ knitting.
 
 \begin{figure}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
-
 \caption{\label{fig-nospr_neighbor_contiguity}CMR-NoSPR:
 cross-occurrence neighbor transitions (centered lag-CRPs). Left:
 triggers from forward neighbors of the first presentation and lags
@@ -1609,6 +1797,12 @@ second and lags centered on the first. Curves plot
 mixed--minus--matched-control probabilities with symmetric scoring. With
 distinctive encoding contexts, cross-occurrence neighbor bins lie at
 baseline in both directions---neighbor knitting is abolished.}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1623,17 +1817,17 @@ composite cue that contacts both occurrence contexts.
 
 \begin{figure}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
-
 \caption{\label{fig-nospr_rep_lag_crp}CMR-NoSPR: repetition lag-CRP
 (outgoing). Mixed lists (left) and matched-control baseline (right) from
 simulations. First- vs second-centered curves are more balanced than in
 baseline, consistent with lingering cross-occurrence blending at
 retrieval.}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1680,6 +1874,13 @@ free-recall benchmarks.
 
 \begin{figure}
 
+\caption{\label{fig-icmr_os_benchmarks}Instance-CMR benchmarks (free
+recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
+right), and probability of first/next recall (bottom) for mixed vs
+matched-control lists from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) under symmetric scoring.
+Occurrence-specific reinstatement at test preserves benchmark fits.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
 %
@@ -1688,12 +1889,6 @@ free-recall benchmarks.
 \newline
 \begin{minipage}{\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
-
-\caption{\label{fig-icmr_os_benchmarks}Instance-CMR benchmarks (free
-recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
-right), and probability of first/next recall (bottom) for mixed vs
-matched-control lists from @lohnas2014retrieved under symmetric scoring.
-Occurrence-specific reinstatement at test preserves benchmark fits.}
 
 \end{figure}%
 
@@ -1706,17 +1901,18 @@ benchmark in these paradigms.
 
 \begin{figure}
 
+\caption{\label{fig-icmr_os_spacing}\textbf{Instance-CMR spacing
+function.} Simulated spacing curves for mixed vs matched-control lists
+from Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}). The
+spacing advantage is preserved without blending at test; the model does
+not reproduce the apparent steeper slope for mixed lists in the data
+(cf. Figure~\ref{fig-spacing}).}
+
 \begin{minipage}{\linewidth}
 
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_full_rpl.png}
 
 \end{minipage}%
-
-\caption{\label{fig-icmr_os_spacing}\textbf{Instance-CMR spacing
-function.} Simulated spacing curves for mixed vs matched-control lists
-from @lohnas2014retrieved. The spacing advantage is preserved without
-blending at test; the model does not reproduce the apparent steeper
-slope for mixed lists in the data (cf. Figure~\ref{fig-spacing}).}
 
 \end{figure}%
 
@@ -1731,12 +1927,6 @@ non-elevation and improving on standard CMR's incorrect peaks.
 
 \begin{figure}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
-
 \caption{\label{fig-os_neighbor_contiguity}Instance-CMR:
 cross-occurrence neighbor transitions (centered lag-CRPs). Left:
 triggers from forward neighbors of the \emph{first} presentation
@@ -1745,6 +1935,12 @@ triggers from forward neighbors of the \emph{first} presentation
 \(j{+}1,j{+}2\); lags centered on \(i\)). Mixed--minus--baseline curves
 sit at baseline in both directions, consistent with no knitting across
 neighborhoods.}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1772,6 +1968,16 @@ repetition-specific reinstatement.
 
 \begin{figure}
 
+\caption{\label{fig-os_rep_lag_crp}\textbf{Repetition lag-CRP
+(outgoing): data vs Instance-CMR.} Top row: mixed lists (left) and
+matched-control baseline (right) from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}). Bottom row: Instance-CMR
+simulations scored identically. First- vs second-centered curves remain
+separated (no blending). Unlike the data (top-left), the
+mixed-minus-baseline separation is not substantially enlarged in
+Instance-CMR, fixing interference but not the boosted first-over-second
+advantage.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
 %
@@ -1783,15 +1989,6 @@ repetition-specific reinstatement.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_control_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-os_rep_lag_crp}\textbf{Repetition lag-CRP
-(outgoing): data vs Instance-CMR.} Top row: mixed lists (left) and
-matched-control baseline (right) from @lohnas2014retrieved. Bottom row:
-Instance-CMR simulations scored identically. First- vs second-centered
-curves remain separated (no blending). Unlike the data (top-left), the
-mixed-minus-baseline separation is not substantially enlarged in
-Instance-CMR, fixing interference but not the boosted first-over-second
-advantage.}
 
 \end{figure}%
 
@@ -1810,6 +2007,19 @@ cross-occurrence forward error predicted by blended reinstatement.
 
 \begin{figure}
 
+\caption{\label{fig-os_serial_rep_crp}\textbf{Cross-occurrence forward
+errors in serial recall (data vs Instance-CMR).} Left: Logan
+(\citeproc{ref-logan2021serial}{2021}). Right: Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000}). \textbf{Top row (data):}
+For items studied at positions \(i\) and \(j\), each panel plots the
+conditional probability--- after correct report through the first
+occurrence at position \(i\) -- of an erroneous transition to the
+\emph{second} occurrence's forward neighbors (\(i\!\rightarrow\!j{+}1\)
+and \(i\!\rightarrow\!j{+}2\)), contrasting mixed lists with their
+position-matched, symmetric baseline. \textbf{Bottom row (CMR-OS):}
+Occurrence-Specific CMR simulations fitted separately to each dataset
+and scored with the identical baseline procedure.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
 %
@@ -1821,18 +2031,6 @@ cross-occurrence forward error predicted by blended reinstatement.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-os_serial_rep_crp}\textbf{Cross-occurrence forward
-errors in serial recall (data vs Instance-CMR).} Left: @logan2021serial.
-Right: @kahana2000interresponse. \textbf{Top row (data):} For items
-studied at positions \(i\) and \(j\), each panel plots the conditional
-probability--- after correct report through the first occurrence at
-position \(i\) -- of an erroneous transition to the \emph{second}
-occurrence's forward neighbors (\(i\!\rightarrow\!j{+}1\) and
-\(i\!\rightarrow\!j{+}2\)), contrasting mixed lists with their
-position-matched, symmetric baseline. \textbf{Bottom row (CMR-OS):}
-Occurrence-Specific CMR simulations fitted separately to each dataset
-and scored with the identical baseline procedure.}
 
 \end{figure}%
 
@@ -1885,6 +2083,13 @@ study does not degrade core free-recall benchmarks.
 
 \begin{figure}
 
+\caption{\label{fig-icmr_reinf_benchmarks}ICMR-Reinf benchmarks (free
+recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
+right), and probability of first/next recall (bottom) for mixed vs
+matched-control lists from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) under symmetric scoring.
+Reinforcement at study preserves benchmark fits.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
 %
@@ -1893,12 +2098,6 @@ study does not degrade core free-recall benchmarks.
 \newline
 \begin{minipage}{\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
-
-\caption{\label{fig-icmr_reinf_benchmarks}ICMR-Reinf benchmarks (free
-recall). Simulated serial-position curves (SPC; top left), lag-CRP (top
-right), and probability of first/next recall (bottom) for mixed vs
-matched-control lists from @lohnas2014retrieved under symmetric scoring.
-Reinforcement at study preserves benchmark fits.}
 
 \end{figure}%
 
@@ -1911,17 +2110,18 @@ Figure~\ref{fig-spacing}.)
 
 \begin{figure}
 
+\caption{\label{fig-icmr_reinf_spacing}ICMR-Reinf spacing function.
+Simulated spacing curves for mixed vs matched-control lists from Lohnas
+and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}). The spacing
+advantage is preserved; the model does not, by itself, produce the
+additional steepening seen in mixed lists (cf.
+Figure~\ref{fig-spacing}).}
+
 \begin{minipage}{\linewidth}
 
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_full_rpl.png}
 
 \end{minipage}%
-
-\caption{\label{fig-icmr_reinf_spacing}ICMR-Reinf spacing function.
-Simulated spacing curves for mixed vs matched-control lists from
-@lohnas2014retrieved. The spacing advantage is preserved; the model does
-not, by itself, produce the additional steepening seen in mixed lists
-(cf. Figure~\ref{fig-spacing}).}
 
 \end{figure}%
 
@@ -1947,12 +2147,6 @@ feature visible in the data (cf. Figure~\ref{fig-neighbor_contiguity}).
 
 \begin{figure}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
-
 \caption{\label{fig-reinf_neighbor_contiguity}ICMR-Reinf:
 cross-occurrence neighbor transitions (centered lag-CRPs). Left:
 triggers from forward neighbors of the first presentation
@@ -1962,6 +2156,12 @@ Right: symmetric variant (triggers \(j{+}1,j{+}2\); lags centered on
 occurrence's neighbors (no knitting). A selective lag\,=\,0 elevation
 emerges in the first→second variant, consistent with boosted access to
 the repeated item itself.}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{../../work/thesis/figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1977,6 +2177,15 @@ boosted separation observed empirically.
 
 \begin{figure}
 
+\caption{\label{fig-reinf_rep_lag_crp}Repetition lag-CRP (outgoing):
+data vs ICMR-Reinf. Top: mixed lists (left) and matched-control baseline
+(right) from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}). Bottom: ICMR-Reinf
+simulations scored identically. In mixed lists, the +1 bin and nearby
+lags show a larger first-over-second separation than in
+baseline---matching the data's boosted separation. Balanced-access
+(blending) is absent.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
 %
@@ -1988,13 +2197,6 @@ boosted separation observed empirically.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-reinf_rep_lag_crp}Repetition lag-CRP (outgoing):
-data vs ICMR-Reinf. Top: mixed lists (left) and matched-control baseline
-(right) from @lohnas2014retrieved. Bottom: ICMR-Reinf simulations scored
-identically. In mixed lists, the +1 bin and nearby lags show a larger
-first-over-second separation than in baseline---matching the data's
-boosted separation. Balanced-access (blending) is absent.}
 
 \end{figure}%
 
@@ -2010,6 +2212,15 @@ its clearest advantage.
 
 \begin{figure}
 
+\caption{\label{fig-reinf_back_rep_crp}Repetition lag-CRP
+(incoming/backward). Top: mixed lists (left) and matched-control
+baseline (right) from Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}). Bottom: ICMR-Reinf
+simulations scored identically. In mixed lists, the +1 bin and nearby
+lags show a larger first-over-second separation than in
+baseline---matching the data's boosted separation. Balanced-access
+(blending) is absent.}
+
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
 %
@@ -2022,27 +2233,30 @@ its clearest advantage.
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
 
-\caption{\label{fig-reinf_back_rep_crp}Repetition lag-CRP
-(incoming/backward). Top: mixed lists (left) and matched-control
-baseline (right) from @lohnas2014retrieved. Bottom: ICMR-Reinf
-simulations scored identically. In mixed lists, the +1 bin and nearby
-lags show a larger first-over-second separation than in
-baseline---matching the data's boosted separation. Balanced-access
-(blending) is absent.}
-
 \end{figure}%
 
 Finally, in serial recall, the same combination---distinct contexts at
 study plus occurrence-specific reinstatement at test, with reinforcement
 of the first occurrence---maintains strong continuations to \(i{+}1\)
 and keeps cross-occurrence forward errors at baseline levels. The 2×2
-comparison in Figure~\ref{fig-reinf_serial_rep_crp} uses
-@logan2021serial (top: data; bottom: simulations) and shows that
-ICMR-Reinf mirrors the empirically negligible elevation of
-\(i\!\rightarrow\!j{+}1/j{+}2\) errors while preserving correct forward
-chaining.
+comparison in Figure~\ref{fig-reinf_serial_rep_crp} uses Logan
+(\citeproc{ref-logan2021serial}{2021}) (top: data; bottom: simulations)
+and shows that ICMR-Reinf mirrors the empirically negligible elevation
+of \(i\!\rightarrow\!j{+}1/j{+}2\) errors while preserving correct
+forward chaining.
 
 \begin{figure}
+
+\caption{\label{fig-reinf_serial_rep_crp}Cross-occurrence forward errors
+in serial recall (data vs ICMR-Reinf; Logan
+(\citeproc{ref-logan2021serial}{2021}); Kahana and Jacobs
+(\citeproc{ref-kahana2000interresponse}{2000})). Top: data; bottom:
+ICMR-Reinf simulations. Panels plot, for items studied at \(i\) and
+\(j\), the conditional probability---after correct report through
+\(i\)---of erroneous transitions to the second occurrence's forward
+neighbors (\(i\!\rightarrow\!j{+}1\) and \(i\!\rightarrow\!j{+}2\)),
+contrasted with matched pseudo-repeater baselines. ICMR-Reinf reproduces
+the data's non-elevation.}
 
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
@@ -2055,16 +2269,6 @@ chaining.
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{../../work/thesis/figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
-
-\caption{\label{fig-reinf_serial_rep_crp}Cross-occurrence forward errors
-in serial recall (data vs ICMR-Reinf; @logan2021serial;
-@kahana2000interresponse). Top: data; bottom: ICMR-Reinf simulations.
-Panels plot, for items studied at \(i\) and \(j\), the conditional
-probability---after correct report through \(i\)---of erroneous
-transitions to the second occurrence's forward neighbors
-(\(i\!\rightarrow\!j{+}1\) and \(i\!\rightarrow\!j{+}2\)), contrasted
-with matched pseudo-repeater baselines. ICMR-Reinf reproduces the data's
-non-elevation.}
 
 \end{figure}%
 
@@ -2093,24 +2297,28 @@ AIC model weights (AICw), which penalize parameter count.
 Across datasets, three patterns emerge. First, Instance-CMR
 substantially improves fit relative to Standard CMR in all datasets,
 with especially large gains in the serial-recall tasks
-{[}@logan2021serial; @kahana2000interresponse{]}. Second, adding
-study-phase reinforcement without contextual knitting (ICMR-Reinf)
-yields a further, reliable improvement in free recall
-(@lohnas2014retrieved; @broitman2024neural) despite its extra parameter,
+(\citeproc{ref-kahana2000interresponse}{Kahana \& Jacobs, 2000};
+\citeproc{ref-logan2021serial}{Logan, 2021}). Second, adding study-phase
+reinforcement without contextual knitting (ICMR-Reinf) yields a further,
+reliable improvement in free recall (Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}); Broitman and Kahana
+(\citeproc{ref-broitman2024neural}{2024})) despite its extra parameter,
 but brings no advantage over OS in serial recall. Third, ICMR-NoSPR
 improves over Standard CMR in free recall but is not sufficient on its
 own---consistent with the results sections above.
 
-\begin{longtable}[]{@{}lrr@{}}
-\caption{\textbf{Free‑recall model fits (−log\,L; lower is better).}
+\begin{table}
+
+{\caption{{\textbf{Free‑recall model fits (−log\,L; lower is better).}
 Values are participant means ± bootstrapped 95\% CIs
-(subjects).}\label{tbl-fit-fr}\tabularnewline
+(subjects).}{\label{tbl-fit-fr}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}lrr@{}}
 \toprule\noalign{}
-Model variant & @lohnas2014retrieved & @broitman2024neural \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-Model variant & @lohnas2014retrieved & @broitman2024neural \\
+Model variant & Lohnas and Kahana
+(\citeproc{ref-lohnas2014retrieved}{2014}) & Broitman and Kahana
+(\citeproc{ref-broitman2024neural}{2024}) \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -2121,17 +2329,20 @@ ICMR‑OS & 1661.01 ± 147.02 & 1260.15 ± 278.41 \\
 ICMR‑Reinf & \textbf{1658.99 ± 146.97} & \textbf{1259.17 ± 278.37} \\
 \end{longtable}
 
-\begin{longtable}[]{@{}lrr@{}}
-\caption{\textbf{Serial‑recall model fits (−log\,L; lower is better).}
+\end{table}
+
+\begin{table}
+
+{\caption{{\textbf{Serial‑recall model fits (−log\,L; lower is better).}
 ICMR‑NoSPR was not evaluated for the serial‑recall datasets. Values are
 participant means ± bootstrapped 95\% CIs
-(subjects).}\label{tbl-fit-sr}\tabularnewline
+(subjects).}{\label{tbl-fit-sr}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}lrr@{}}
 \toprule\noalign{}
-Model variant & @logan2021serial & @kahana2000interresponse \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-Model variant & @logan2021serial & @kahana2000interresponse \\
+Model variant & Logan (\citeproc{ref-logan2021serial}{2021}) & Kahana
+and Jacobs (\citeproc{ref-kahana2000interresponse}{2000}) \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -2140,6 +2351,8 @@ Standard CMR & 770.66 ± 59.75 & 3852.12 ± 530.13 \\
 ICMR‑OS & \textbf{729.19 ± 60.18} & \textbf{3759.75 ± 516.93} \\
 ICMR‑Reinf & 730.08 ± 60.47 & 3761.08 ± 516.74 \\
 \end{longtable}
+
+\end{table}
 
 As compact deltas relative to Standard CMR: Lohnas −log\,L improves by
 \textbf{−6.21} (NoSPR), \textbf{−7.18} (OS), \textbf{−9.20} (Reinf);
@@ -2153,46 +2366,42 @@ steps. First, a \textbf{pairwise} comparison between
 across all datasets; second, a \textbf{three-way} comparison in free
 recall that \textbf{includes ICMR-Reinf} (adds one parameter).
 
+\begin{table}
+
+{\caption{{\textbf{Pairwise AIC weights (Instance-CMR vs Standard CMR).}
+OS is preferred in every dataset.}{\label{tbl-aic-os-vs-cmr}}}
+\vspace{-20pt}}
+
 \begin{longtable}[]{@{}lrr@{}}
-\caption{\textbf{Pairwise AIC weights (Instance-CMR vs Standard CMR).}
-OS is preferred in every
-dataset.}\label{tbl-aic-os-vs-cmr}\tabularnewline
-\toprule\noalign{}
-Dataset & AICw (Standard) & AICw (Instance-CMR) \\
-\midrule\noalign{}
-\endfirsthead
 \toprule\noalign{}
 Dataset & AICw (Standard) & AICw (Instance-CMR) \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-@lohnas2014retrieved & 3.25\,×\,10⁻¹¹⁰ & \textbf{1.00} \\
-@broitman2024neural & 8.24\,×\,10⁻¹²⁴ & \textbf{1.00} \\
-@logan2021serial & 0 & \textbf{1.00} \\
-@kahana2000interresponse & 0 & \textbf{1.00} \\
+Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}) &
+3.25\,×\,10⁻¹¹⁰ & \textbf{1.00} \\
+Broitman and Kahana (\citeproc{ref-broitman2024neural}{2024}) &
+8.24\,×\,10⁻¹²⁴ & \textbf{1.00} \\
+Logan (\citeproc{ref-logan2021serial}{2021}) & 0 & \textbf{1.00} \\
+Kahana and Jacobs (\citeproc{ref-kahana2000interresponse}{2000}) & 0 &
+\textbf{1.00} \\
 \end{longtable}
+
+\end{table}
+
+\begin{table}
+
+{\caption{{\textbf{Three-way AIC weights in free recall.} After
+penalization, ICMR-Reinf is preferred; OS is second; Standard CMR is not
+competitive.}{\label{tbl-aic-fr}}}
+\vspace{-20pt}}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.5000}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}
   >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}@{}}
-\caption{\textbf{Three-way AIC weights in free recall.} After
-penalization, ICMR-Reinf is preferred; OS is second; Standard CMR is not
-competitive.}\label{tbl-aic-fr}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Free-recall dataset
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-AICw (Standard)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-AICw (Instance-CMR)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-AICw (ICMR-Reinf)
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Free-recall dataset
@@ -2207,11 +2416,13 @@ AICw (ICMR-Reinf)
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-@lohnas2014retrieved & 1.91\,×\,10⁻¹⁴⁰ & 5.87\,×\,10⁻³¹ &
-\textbf{1.00} \\
-@broitman2024neural & 1.95\,×\,10⁻¹³⁷ & 2.37\,×\,10⁻¹⁴ &
-\textbf{1.00} \\
+Lohnas and Kahana (\citeproc{ref-lohnas2014retrieved}{2014}) &
+1.91\,×\,10⁻¹⁴⁰ & 5.87\,×\,10⁻³¹ & \textbf{1.00} \\
+Broitman and Kahana (\citeproc{ref-broitman2024neural}{2024}) &
+1.95\,×\,10⁻¹³⁷ & 2.37\,×\,10⁻¹⁴ & \textbf{1.00} \\
 \end{longtable}
+
+\end{table}
 
 As a complementary, model-agnostic summary, we report the fraction of
 participants whose individual fit favored one model over another (lower
@@ -2241,50 +2452,59 @@ least favored under penalized fit.
 
 Human episodic search is strikingly organized by temporal contiguity:
 recalling one experience tends to cue retrieval of experiences that
-occurred nearby in time {[}@kahana1996associative;
-@healey2019contiguity{]}. This work asked how that organizing principle
-manifests when the same item has multiple study positions within a list
-(e.g., ``canoe'' at positions \emph{i} and \emph{j}). Do repetitions
-knit their occurrence‑specific neighborhoods together, or do they remain
-separable such that retrieval can route through one occurrence without
-contacting the other? We addressed this question in free and serial
-recall by comparing performance in lists with item repetitions to a
-position‑matched, symmetric baseline. This procedure removes
-list-composition artifacts and isolates the consequences of being a
-repetition rather than a novel token in those positions
-{[}@lohnas2014retrieved; @tulving1972inhibition; @ratcliff1990list{]}.
+occurred nearby in time (\citeproc{ref-healey2019contiguity}{Healey et
+al., 2019}; \citeproc{ref-kahana1996associative}{Kahana, 1996}). This
+work asked how that organizing principle manifests when the same item
+has multiple study positions within a list (e.g., ``canoe'' at positions
+\emph{i} and \emph{j}). Do repetitions knit their occurrence‑specific
+neighborhoods together, or do they remain separable such that retrieval
+can route through one occurrence without contacting the other? We
+addressed this question in free and serial recall by comparing
+performance in lists with item repetitions to a position‑matched,
+symmetric baseline. This procedure removes list-composition artifacts
+and isolates the consequences of being a repetition rather than a novel
+token in those positions (\citeproc{ref-lohnas2014retrieved}{Lohnas \&
+Kahana, 2014}; \citeproc{ref-ratcliff1990list}{Ratcliff et al., 1990};
+\citeproc{ref-tulving1972inhibition}{Tulving \& Hastie, 1972}).
 
 Retrieved‑context models explain contiguity and related regularities by
 coupling items to a slowly drifting temporal context and using that
 context as both a storage address and a retrieval cue
-{[}@howard2002distributed; @polyn2009context; @healey2019contiguity{]}.
-During study, presenting an item reinstates contextual features
-associated with it into the ongoing context state, and the item binds to
-that updated state. Because the context drifts, different occurrences of
-the same item couple to different temporal states. During retrieval, the
-current context preferentially cues items encoded in similar contexts.
-Recalling an item then reinstates its associated contextual features
-into the cue again, which pulls subsequent transitions toward items
-studied nearby in time.
+(\citeproc{ref-healey2019contiguity}{Healey et al., 2019};
+\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-polyn2009context}{Polyn et al., 2009}). During study,
+presenting an item reinstates contextual features associated with it
+into the ongoing context state, and the item binds to that updated
+state. Because the context drifts, different occurrences of the same
+item couple to different temporal states. During retrieval, the current
+context preferentially cues items encoded in similar contexts. Recalling
+an item then reinstates its associated contextual features into the cue
+again, which pulls subsequent transitions toward items studied nearby in
+time.
 
 Under this framework, context evolution is item-driven. Presenting or
 recalling an item retrieves its associated context features and pulls
 the ongoing temporal context toward those item-specific features. This
 commitment explains how memory search can be guided by successive
 retrieval events, and also provides a cohesive account of how item
-repetition impacts memory retrieval dynamics {[}@howard2002distributed;
-@lohnas2014retrieved{]}. First, each occurrence of the same item binds
-its to different temporal contexts; with increased spacing, these
-contexts become more distinct, producing a spacing advantage through
-encoding variability {[}@glenberg1979component;
-@cepeda2006distributed{]}. Second, each occurrence triggers a form of
-study-phase retrieval: it partially reinstates prior occurrences'
-contexts into the ongoing state, making the contexts across occurrences
-more similar to each other {[}@@hintzman1975spacing;
-@delaney2010spacing{]}. Finally, at test, recalling a repeated item
-reinstates a composite over its occurrence-specific contexts, priming
-recall transitions toward neighbors of all occurrences
-{[}@polyn2009context; @logan2021serial; @sederberg2008context{]}.
+repetition impacts memory retrieval dynamics
+(\citeproc{ref-howard2002distributed}{Howard \& Kahana, 2002a};
+\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). First, each
+occurrence of the same item binds its to different temporal contexts;
+with increased spacing, these contexts become more distinct, producing a
+spacing advantage through encoding variability
+(\citeproc{ref-cepeda2006distributed}{Cepeda et al., 2006};
+\citeproc{ref-glenberg1979component}{Glenberg, 1979}). Second, each
+occurrence triggers a form of study-phase retrieval: it partially
+reinstates prior occurrences' contexts into the ongoing state, making
+the contexts across occurrences more similar to each other
+(\citeproc{ref-delaney2010spacing}{Delaney et al., 2010}; @
+\citeproc{ref-hintzman1975spacing}{Hintzman et al., 1975}). Finally, at
+test, recalling a repeated item reinstates a composite over its
+occurrence-specific contexts, priming recall transitions toward
+neighbors of all occurrences (\citeproc{ref-logan2021serial}{Logan,
+2021}; \citeproc{ref-polyn2009context}{Polyn et al., 2009};
+\citeproc{ref-sederberg2008context}{Sederberg et al., 2008}).
 
 Here, we showed that this framework predicts patterns of
 cross-occurrence associative interference in free and serial recall.
@@ -2302,9 +2522,10 @@ results contradict those predictions once the matched, symmetric
 baseline is applied.
 
 First, we found that cross-occurrence neighbor transitions sit at
-baseline, indicating no knitting. Prior work {[}@lohnas2014retrieved{]}
-reported boosted cross-occurrence neighbor transitions in free recall,
-finding that for repeated items with study positions \(i\) and \(j\),
+baseline, indicating no knitting. Prior work
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}) reported
+boosted cross-occurrence neighbor transitions in free recall, finding
+that for repeated items with study positions \(i\) and \(j\),
 participants exhibited boosted chances of transitioning from neighbors
 of \(i\) (e.g., \(i{+}1,i{+}2\)) to neighbors of \(j\) (e.g.,
 \(j{+}1,j{+}2\)) and vice versa compared to a control. We generalized
@@ -2333,15 +2554,16 @@ second's, contradicting the balanced-access prediction. Furthermore,
 when considering incoming transitions to repeated items, arrivals from
 the first occurrence's backward neighbor were more likely than from the
 second's, again contradicting balanced access. These patterns have been
-initially explored in other contemporaneous work. @broitman2024neural
-focused on transitions from repeated items in free recall, finding that
-they exhibit similar biases toward the first occurrence's context and
-even observing in spectral EEG analyses that neural activity patterns
-prior to these recall events were most similar to patterns observed
-during the first occurrence's study event. Similarly,
-@lohnas2025temporal examined incoming transitions to repeated items,
-finding that arrivals from the first occurrence's backward neighbor were
-more likely than from the second's.
+initially explored in other contemporaneous work. Broitman and Kahana
+(\citeproc{ref-broitman2024neural}{2024}) focused on transitions from
+repeated items in free recall, finding that they exhibit similar biases
+toward the first occurrence's context and even observing in spectral EEG
+analyses that neural activity patterns prior to these recall events were
+most similar to patterns observed during the first occurrence's study
+event. Similarly, Lohnas (\citeproc{ref-lohnas2025temporal}{2025})
+examined incoming transitions to repeated items, finding that arrivals
+from the first occurrence's backward neighbor were more likely than from
+the second's.
 
 Our results replicate and extend these findings, showing that they
 persist across multiple datasets and are not artifacts of list
@@ -2361,13 +2583,14 @@ variant that preferentially strengthens the first occurrence's trace
 upon item repetition is able to additionally capture this preference,
 suggesting that a non-associative mechanism enhances access to the first
 occurrence without knitting contexts together. These results echo the
-interpretation of similar patterns observed by @lohnas2025temporal, who
-argued that the first occurrence may be privileged because retrieval of
-item information from its first presentation upon its second
-presentation may strengthens its trace. However, by contrast to
-@lohnas2025temporal, we find that retrieved-context theory requires
-modification in order to instantiate this mechanism without
-reintroducing associative interference.
+interpretation of similar patterns observed by Lohnas
+(\citeproc{ref-lohnas2025temporal}{2025}), who argued that the first
+occurrence may be privileged because retrieval of item information from
+its first presentation upon its second presentation may strengthens its
+trace. However, by contrast to Lohnas
+(\citeproc{ref-lohnas2025temporal}{2025}), we find that
+retrieved-context theory requires modification in order to instantiate
+this mechanism without reintroducing associative interference.
 
 Finally, we considered transitions from recall of repeated items in the
 context of serial recall. In serial recall of sequences with item
@@ -2383,25 +2606,27 @@ above a position-matched, symmetric baseline in two independent
 serial-recall datasets. This type of error receives extensive attention
 in the serial-recall literature and has been central to critiques of
 chaining models of serial order memory positing that each item cues the
-next {[}@henson1996unchained; @kahana2000interresponse{]}. These results
-extend the same critique to retrieved-context models using an item-based
-context reinstatement rule. Because they knit occurrence-specific
-contexts together at study and test, they predict that correct chaining
-through one occurrence should increase erroneous continuations to the
-other occurrence's forward neighbors.
+next (\citeproc{ref-henson1996unchained}{Henson, 1996};
+\citeproc{ref-kahana2000interresponse}{Kahana \& Jacobs, 2000}). These
+results extend the same critique to retrieved-context models using an
+item-based context reinstatement rule. Because they knit
+occurrence-specific contexts together at study and test, they predict
+that correct chaining through one occurrence should increase erroneous
+continuations to the other occurrence's forward neighbors.
 
 These findings provide a measured challenge to the standard
 retrieved-context account of memory search. Retrieved-context theory
 posits that context evolves by retrieving prior contextual states as
 opposed to contemporaneous accounts that instead proposed that context
-drifts randomly {[}@howard2002distributed{]}. Here, items are the
-drivers of context evolution, evoking features from their prior
-presentations to update the ongoing context state and guide retrieval.
-This framework was embraced as a more parsimonious way to account for
-recency and contiguity effects in memory using a single mechanism. But
-these data show that this mechanism, however parsimonious, predicts
-associative interference that is not observed empirically. They raise
-the question: what then becomes of retrieved-context theory?
+drifts randomly (\citeproc{ref-howard2002distributed}{Howard \& Kahana,
+2002a}). Here, items are the drivers of context evolution, evoking
+features from their prior presentations to update the ongoing context
+state and guide retrieval. This framework was embraced as a more
+parsimonious way to account for recency and contiguity effects in memory
+using a single mechanism. But these data show that this mechanism,
+however parsimonious, predicts associative interference that is not
+observed empirically. They raise the question: what then becomes of
+retrieved-context theory?
 
 Our modeling results identify narrow changes to a retrieved-context
 model that reconcile it with these findings. Removing associative
@@ -2426,23 +2651,26 @@ unique event that can be separately cued and retrieved at test.
 The serial‑recall literature has long emphasized positional or timeline
 codes and competitive selection to explain transposition gradients and
 the sparing of strict chaining, particularly in lists with within‑list
-repetitions {[}@henson1996unchained; @brown2000oscillator{]}. Our
-serial‑recall analyses align with this perspective: after correct report
-through the first occurrence, continuations to \emph{i\,+\,1} were
-preserved and erroneous continuations to the competing neighbor
-\emph{j\,+\,1} were not elevated relative to position‑matched controls
--- exactly the pattern positional accounts anticipate and that strict
-item‑to‑item chaining (or blended item‑based reinstatement) would
-struggle to accommodate. In other words, the absence of cross‑occurrence
-forward errors in our data is not merely compatible with positional
-coding; it is diagnostic of the kind of competition over position‑like
-cues those models posit. Traditionally, accounts of free recall have
-de-emphasized the role of positional information, with performance
-thought to rely predominantly on temporal coding and semantic
-organization {[}@polyn2009context; @lohnas2015expanding;
-@sederberg2008context{]}. However, recent efforts to show that
-retrieved-context models can address serial as well as free recall
-{[}@lohnas2024retrieved; @logan2021serial{]} have highlighted the
+repetitions (\citeproc{ref-brown2000oscillator}{Brown et al., 2000};
+\citeproc{ref-henson1996unchained}{Henson, 1996}). Our serial‑recall
+analyses align with this perspective: after correct report through the
+first occurrence, continuations to \emph{i\,+\,1} were preserved and
+erroneous continuations to the competing neighbor \emph{j\,+\,1} were
+not elevated relative to position‑matched controls -- exactly the
+pattern positional accounts anticipate and that strict item‑to‑item
+chaining (or blended item‑based reinstatement) would struggle to
+accommodate. In other words, the absence of cross‑occurrence forward
+errors in our data is not merely compatible with positional coding; it
+is diagnostic of the kind of competition over position‑like cues those
+models posit. Traditionally, accounts of free recall have de-emphasized
+the role of positional information, with performance thought to rely
+predominantly on temporal coding and semantic organization
+(\citeproc{ref-lohnas2015expanding}{Lohnas et al., 2015};
+\citeproc{ref-polyn2009context}{Polyn et al., 2009};
+\citeproc{ref-sederberg2008context}{Sederberg et al., 2008}). However,
+recent efforts to show that retrieved-context models can address serial
+as well as free recall (\citeproc{ref-logan2021serial}{Logan, 2021};
+\citeproc{ref-lohnas2024retrieved}{Lohnas, 2024}) have highlighted the
 viability of an integrated framework that encompasses both types of
 recall. These results help advance an integrated view of serial and free
 recall where a common set of constraints from both literatures inform
@@ -2456,41 +2684,46 @@ It is nonetheless challenging to reconcile these findings with prior
 demonstrations that item features can influence organization in free and
 serial recall. Free recall is classically subject to semantic
 organization, a tendency for similar items to cluster during retrieval
-{[}@bousfield1953occurrence; @glanzer1969distance; @howard2002does;
-@romney1993predicting{]}. Similarly, serial-recall performance is
-influenced by item-level properties such as phonological similarity
-{[}@baddeley1966influence; @osth2023item{]}. This consistency of these
-classic benchmarks establishes all but incontrovertibly that item
-features fundamentally influence the organization of memory search,
-instead of just defining what is reported when a trace is retrieved.
-Furthermore, patterns of prior-list intrusions (PLIs) across free and
-serial recall suggest that items can cue retrieval across list
-boundaries, which is difficult to reconcile with a purely temporal or
-positional code. For example, transitions from items in the prior list
-to their neighbors in the current list are elevated relative to a
-matched baseline, suggesting that item features can cue retrieval across
-list boundaries {[}@lohnas2015expanding{]}. At the same time though,
-positional codes have been shown to influence PLIs in serial recall,
-with intrusions tending to come from the same serial position in the
-prior list as the current recall position {[}e.g., @osth2023item{]}.
-Together, a wealth of evidence persistently shows that item features
-influence organization in both free and serial recall.
+(\citeproc{ref-bousfield1953occurrence}{Bousfield, 1953};
+\citeproc{ref-glanzer1969distance}{Glanzer, 1969};
+\citeproc{ref-howard2002does}{Howard \& Kahana, 2002b};
+\citeproc{ref-romney1993predicting}{Romney et al., 1993}). Similarly,
+serial-recall performance is influenced by item-level properties such as
+phonological similarity (\citeproc{ref-baddeley1966influence}{Baddeley,
+1966}; \citeproc{ref-osth2023item}{Osth \& Hurlstone, 2023}). This
+consistency of these classic benchmarks establishes all but
+incontrovertibly that item features fundamentally influence the
+organization of memory search, instead of just defining what is reported
+when a trace is retrieved. Furthermore, patterns of prior-list
+intrusions (PLIs) across free and serial recall suggest that items can
+cue retrieval across list boundaries, which is difficult to reconcile
+with a purely temporal or positional code. For example, transitions from
+items in the prior list to their neighbors in the current list are
+elevated relative to a matched baseline, suggesting that item features
+can cue retrieval across list boundaries
+(\citeproc{ref-lohnas2015expanding}{Lohnas et al., 2015}). At the same
+time though, positional codes have been shown to influence PLIs in
+serial recall, with intrusions tending to come from the same serial
+position in the prior list as the current recall position (e.g.,
+\citeproc{ref-osth2023item}{Osth \& Hurlstone, 2023}). Together, a
+wealth of evidence persistently shows that item features influence
+organization in both free and serial recall.
 
-@logan2021serial demonstrated item-dependent and position-dependent
-contexts can be accommodated simultaneously in a retrieved-context model
-to simultaneously address these and other constraints. Similarly, CMR
-and its variants has traditionally included multiple layers of context
-that encode different kinds of similarity relationships across study
-events, such as a semantic layer that captures item similarity or a
-source layer that captures stimulus modality {[}@polyn2009context{]}.
-Given these successes, it is likely that ICMR-OS could similarly be
-extended to include item-level features alongside the
-occurrence-specific features it applies to avoid associative
-interference. An additional parameter that weights the contribution of
-an item-dependent contextual layer relative to a occurrence-specific
-contextual layer could allow the model to flexibly capture the influence
-of item features on organization while avoiding associative interference
-across occurrences.
+Logan (\citeproc{ref-logan2021serial}{2021}) demonstrated item-dependent
+and position-dependent contexts can be accommodated simultaneously in a
+retrieved-context model to simultaneously address these and other
+constraints. Similarly, CMR and its variants has traditionally included
+multiple layers of context that encode different kinds of similarity
+relationships across study events, such as a semantic layer that
+captures item similarity or a source layer that captures stimulus
+modality (\citeproc{ref-polyn2009context}{Polyn et al., 2009}). Given
+these successes, it is likely that ICMR-OS could similarly be extended
+to include item-level features alongside the occurrence-specific
+features it applies to avoid associative interference. An additional
+parameter that weights the contribution of an item-dependent contextual
+layer relative to a occurrence-specific contextual layer could allow the
+model to flexibly capture the influence of item features on organization
+while avoiding associative interference across occurrences.
 
 That said, the lack of any cross‑occurrence interference in our free‑
 and serial‑recall datasets weighs against even a ``small'' but pervasive
@@ -2516,49 +2749,57 @@ Along with its consequences for retrieved-context accounts of memory
 search, these results also challenge classic understanding of factors
 underlying the spacing effect. The spacing effect is classically
 understood as a repetition effect, and has been a central focus of
-research on memory for repeated experience {[}@cepeda2006distributed{]}
-However, it applies even to pairs of distinct items, not just repeated
-items. By measuring the probability of retrieving either of two study
-items during a free recall trial -- an analysis termed the ``OR score''
--- research consistently finds that pairs of spaced items were more
-likely to be recalled than pairs of massed items
-{[}@lohnas2011contextual{]}. Notably, in a phenomenon called
-``superadditivity'', the mnenomic benefit of spacing tends to be more
-pronounced for repeated items than for distinct items . The probability
-of recalling an item repeated in a spaced fashion is frequently reported
-as higher than the probability of recalling one of two distinct but
-similarly spaced items, violating statistical independence
-{[}@benjamin2010makes{]}. This has been interpreted as evidence that
-additional mechanisms are at play when items are repeated, beyond those
-that govern the spacing effect for distinct items. Our results did not
-directly test for a superadditive spacing effect, but nonetheless
-provide insight into its possible mechanisms.
+research on memory for repeated experience
+(\citeproc{ref-cepeda2006distributed}{Cepeda et al., 2006}) However, it
+applies even to pairs of distinct items, not just repeated items. By
+measuring the probability of retrieving either of two study items during
+a free recall trial -- an analysis termed the ``OR score'' -- research
+consistently finds that pairs of spaced items were more likely to be
+recalled than pairs of massed items
+(\citeproc{ref-lohnas2011contextual}{Lohnas et al., 2011}). Notably, in
+a phenomenon called ``superadditivity'', the mnenomic benefit of spacing
+tends to be more pronounced for repeated items than for distinct items .
+The probability of recalling an item repeated in a spaced fashion is
+frequently reported as higher than the probability of recalling one of
+two distinct but similarly spaced items, violating statistical
+independence (\citeproc{ref-benjamin2010distributed}{Benjamin \& Tullis,
+2010}). This has been interpreted as evidence that additional mechanisms
+are at play when items are repeated, beyond those that govern the
+spacing effect for distinct items. Our results did not directly test for
+a superadditive spacing effect, but nonetheless provide insight into its
+possible mechanisms.
 
 The study-phase retrieval hypothesis is one among several prominent
 accounts of where such a superadditive spacing advantage might come
 from. By this account, presenting an item again after a lag reinstates
 the context associated with its prior presentation, in some way
 strengthening access to the item's representation in memory
-{[}@hintzman1975spacing; @delaney2010spacing{]}. Retrieved-context
-theory combines a specific instantiation of this idea with a contextual
-variability mechanism to explain the spacing effect for repeated items
-{[}@howard2002distributed; @lohnas2014retrieved{]}. In retrieved-context
-models, study-phase retrieval during repetition reinstates makes the
-contexts across occurrence neighborhoods more similar to each other,
-producing the patterns of associative interference described above. This
-mechanism has been proposed to help address spacing effects in free
-recall {[}@lohnas2014retrieved{]} as well as a potential basis for the
-benefits of retrieval practice {[}@karpicke2011retrieval;
-@whiffen2017role{]}. But while confirming and evaluating CMR's
-predictions of associative interference because of this mechanism, we
-also showed that study-phase retrieval in CMR does not contribute to the
-spacing effect itself: removing the mechanism (in CMR-SPR) preserves the
-spacing advantage for repeated items and keeps contexts reinstated upon
-each occurrence distinct. In CMR, the primary consequence of study-phase
-retrieval is to knit occurrence-specific contexts together;
-characterizations of the mechanism as providing a repetition-specific
-strengthening of retrieved representations are not clearly supported by
-the current findings {[}@lohnas2025temporal; @lohnas2014retrieved{]}.
+(\citeproc{ref-delaney2010spacing}{Delaney et al., 2010};
+\citeproc{ref-hintzman1975spacing}{Hintzman et al., 1975}).
+Retrieved-context theory combines a specific instantiation of this idea
+with a contextual variability mechanism to explain the spacing effect
+for repeated items (\citeproc{ref-howard2002distributed}{Howard \&
+Kahana, 2002a}; \citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana,
+2014}). In retrieved-context models, study-phase retrieval during
+repetition reinstates makes the contexts across occurrence neighborhoods
+more similar to each other, producing the patterns of associative
+interference described above. This mechanism has been proposed to help
+address spacing effects in free recall
+(\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}) as well as
+a potential basis for the benefits of retrieval practice
+(\citeproc{ref-karpicke2011retrieval}{Karpicke \& Blunt, 2011};
+\citeproc{ref-whiffen2017role}{Whiffen \& Karpicke, 2017b}). But while
+confirming and evaluating CMR's predictions of associative interference
+because of this mechanism, we also showed that study-phase retrieval in
+CMR does not contribute to the spacing effect itself: removing the
+mechanism (in CMR-SPR) preserves the spacing advantage for repeated
+items and keeps contexts reinstated upon each occurrence distinct. In
+CMR, the primary consequence of study-phase retrieval is to knit
+occurrence-specific contexts together; characterizations of the
+mechanism as providing a repetition-specific strengthening of retrieved
+representations are not clearly supported by the current findings
+(\citeproc{ref-lohnas2025temporal}{Lohnas, 2025};
+\citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}).
 
 To match this characterization, we proposed a modified version of
 ICMR-OS (ICMR-Reinf) that explicitly incorporates study-phase retrieval
@@ -2604,6 +2845,322 @@ street'' can cue either visit, but it need not blend them. Memory search
 can route through one episode at a time, preserving what happened when,
 allowing repeated experience to strengthen access without sacrificing
 specificity.
+
+\section{References}\label{references}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-anderson1995introduction}
+Anderson, J. A. (1995). \emph{An introduction to neural networks}. MIT
+press.
+
+\bibitem[\citeproctext]{ref-baddeley1966influence}
+Baddeley, A. D. (1966). The influence of acoustic and semantic
+similarity on long-term memory for word sequences. \emph{The Quarterly
+Journal of Experimental Psychology}, \emph{18}(4), 302--309.
+
+\bibitem[\citeproctext]{ref-benjamin2010distributed}
+Benjamin, A. S., \& Tullis, J. G. (2010). What makes distributed
+practice effective? \emph{Cognitive Psychology}, \emph{61}(3), 228--247.
+\url{https://doi.org/10.1016/j.cogpsych.2010.05.004}
+
+\bibitem[\citeproctext]{ref-bousfield1953occurrence}
+Bousfield, W. A. (1953). The occurrence of clustering in the recall of
+randomly arranged associates. \emph{The Journal of General Psychology},
+\emph{49}(2), 229--240.
+
+\bibitem[\citeproctext]{ref-bower1972coding}
+Bower, G., Melton, A., \& Martin, E. (1972). \emph{Coding processes in
+human memory}.
+
+\bibitem[\citeproctext]{ref-broitman2024neural}
+Broitman, A. W., \& Kahana, M. J. (2024). Neural context reinstatement
+of recurring events. \emph{bioRxiv}.
+
+\bibitem[\citeproctext]{ref-brown2000oscillator}
+Brown, G. D., Preece, T., \& Hulme, C. (2000). Oscillator-based memory
+for serial order. \emph{Psychological Review}, \emph{107}(1), 127.
+
+\bibitem[\citeproctext]{ref-cepeda2006distributed}
+Cepeda, N. J., Pashler, H., Vul, E., Wixted, J. T., \& Rohrer, D.
+(2006). Distributed practice in verbal recall tasks: A review and
+quantitative synthesis. \emph{Psychological Bulletin}, \emph{132}(3),
+354.
+
+\bibitem[\citeproctext]{ref-cox2020similarity}
+Cox, G. E., \& Criss, A. H. (2020). Similarity leads to correlated
+processing: A dynamic model of encoding and recognition of episodic
+associations. \emph{Psychological Review}, \emph{127}(5), 792.
+
+\bibitem[\citeproctext]{ref-delaney2010spacing}
+Delaney, P. F., Verkoeijen, P. P., \& Spirgel, A. (2010). Spacing and
+testing effects: A deeply critical, lengthy, and at times discursive
+review of the literature. \emph{Psychology of Learning and Motivation},
+\emph{53}, 63--147.
+
+\bibitem[\citeproctext]{ref-estes1955statistical}
+Estes, W. K. (1955). Statistical theory of spontaneous recovery and
+regression. \emph{Psychological Review}, \emph{62}(3), 145.
+
+\bibitem[\citeproctext]{ref-friendly1982toronto}
+Friendly, M., Franklin, P. E., Hoffman, D., \& Rubin, D. C. (1982). The
+toronto word pool: Norms for imagery, concreteness, orthographic
+variables, and grammatical usage for 1,080 words. \emph{Behavior
+Research Methods \& Instrumentation}, \emph{14}(4), 375--399.
+
+\bibitem[\citeproctext]{ref-glanzer1969distance}
+Glanzer, M. (1969). Distance between related words in free recall: Trace
+of the STS. \emph{Journal of Verbal Learning and Verbal Behavior},
+\emph{8}(1), 105--111.
+
+\bibitem[\citeproctext]{ref-glenberg1979component}
+Glenberg, A. M. (1979). Component-levels theory of the effects of
+spacing of repetitions on recall and recognition. \emph{Memory \&
+Cognition}, \emph{7}(2), 95--112.
+
+\bibitem[\citeproctext]{ref-gunn2025bridging}
+Gunn, J. B., \& Polyn, S. M. (2025). Bridging CRU and CMR in free and
+serial recall: A factorial comparison of retrieved-context models.
+\emph{The American Journal of Psychology}, \emph{138}(2), 203--230.
+\url{https://doi.org/10.5406/19398298.138.2.09}
+
+\bibitem[\citeproctext]{ref-healey2014memory}
+Healey, M. K., \& Kahana, M. J. (2014). Is memory search governed by
+universal principles or idiosyncratic strategies? \emph{Journal of
+Experimental Psychology: General}, \emph{143}(2), 575.
+
+\bibitem[\citeproctext]{ref-healey2019contiguity}
+Healey, M. K., Long, N. M., \& Kahana, M. J. (2019). Contiguity in
+episodic memory. \emph{Psychonomic Bulletin \& Review}, \emph{26}(3),
+699--720.
+
+\bibitem[\citeproctext]{ref-henson1996unchained}
+Henson, R. N. (1996). Unchained memory: Error patterns rule out chaining
+models of immediate serial recall. \emph{The Quarterly Journal of
+Experimental Psychology Section A}, \emph{49}(1), 80--115.
+
+\bibitem[\citeproctext]{ref-hintzman1984minerva}
+Hintzman, D. L. (1984). MINERVA 2: A simulation model of human memory.
+\emph{Behavior Research Methods, Instruments, \& Computers},
+\emph{16}(2), 96--101.
+
+\bibitem[\citeproctext]{ref-hintzman1988judgments}
+Hintzman, D. L. (1988). Judgments of frequency and recognition memory in
+a multiple-trace memory model. \emph{Psychological Review},
+\emph{95}(4), 528.
+
+\bibitem[\citeproctext]{ref-hintzman1975spacing}
+Hintzman, D. L., Summers, J. J., \& Block, R. A. (1975). Spacing
+judgments as an index of study-phase retrieval. \emph{Journal of
+Experimental Psychology: Human Learning and Memory}, \emph{1}(1), 31.
+
+\bibitem[\citeproctext]{ref-howard2002distributed}
+Howard, M. W., \& Kahana, M. J. (2002a). A distributed representation of
+temporal context. \emph{Journal of Mathematical Psychology},
+\emph{46}(3), 269--299.
+
+\bibitem[\citeproctext]{ref-howard2002does}
+Howard, M. W., \& Kahana, M. J. (2002b). When does semantic similarity
+help episodic retrieval? \emph{Journal of Memory and Language},
+\emph{46}(1), 85--98.
+
+\bibitem[\citeproctext]{ref-howard2008persistence}
+Howard, M. W., Youker, T. E., \& Venkatadass, V. S. (2008). The
+persistence of memory: Contiguity effects across hundreds of seconds.
+\emph{Psychonomic Bulletin \& Review}, \emph{15}(1), 58--63.
+
+\bibitem[\citeproctext]{ref-jamieson2018instance}
+Jamieson, R. K., Avery, J. E., Johns, B. T., \& Jones, M. N. (2018). An
+instance theory of semantic memory. \emph{Computational Brain \&
+Behavior}, \emph{1}, 119--136.
+
+\bibitem[\citeproctext]{ref-kahana1996associative}
+Kahana, M. J. (1996). Associative retrieval processes in free recall.
+\emph{Memory \& Cognition}, \emph{24}(1), 103--109.
+
+\bibitem[\citeproctext]{ref-kahana2020computational}
+Kahana, M. J. (2020). Computational models of memory search.
+\emph{Annual Review of Psychology}, \emph{71}(1), 107--138.
+
+\bibitem[\citeproctext]{ref-kahana2000interresponse}
+Kahana, M. J., \& Jacobs, J. (2000). Interresponse times in serial
+recall: Effects of intraserial repetition. \emph{Journal of Experimental
+Psychology: Learning, Memory, and Cognition}, \emph{26}(5), 1188.
+
+\bibitem[\citeproctext]{ref-karpicke2011retrieval}
+Karpicke, J. D., \& Blunt, J. R. (2011). Retrieval practice produces
+more learning than elaborative studying with concept mapping.
+\emph{Science}, \emph{331}(6018), 772--775.
+
+\bibitem[\citeproctext]{ref-karpicke2014retrievalbased}
+Karpicke, J. D., Lehman, M., \& Aue, W. R. (2014). Retrieval-based
+learning: An episodic context account. In B. H. Ross (Ed.),
+\emph{Psychology of learning and motivation} (Vol. 61, pp. 237--284).
+Academic Press. \url{https://doi.org/10.1016/B978-0-12-800283-4.00007-1}
+
+\bibitem[\citeproctext]{ref-kelly2017memory}
+Kelly, M. A., Mewhort, D. J., \& West, R. L. (2017). The memory
+tesseract: Mathematical equivalence between composite and separate
+storage memory models. \emph{Journal of Mathematical Psychology},
+\emph{77}, 142--155.
+
+\bibitem[\citeproctext]{ref-kragel2015neural}
+Kragel, J. E., Morton, N. W., \& Polyn, S. M. (2015). Neural activity in
+the medial temporal lobe reveals the fidelity of mental time travel.
+\emph{Journal of Neuroscience}, \emph{35}(7), 2914--2926.
+
+\bibitem[\citeproctext]{ref-kumaran2012generalization}
+Kumaran, D., \& McClelland, J. L. (2012). Generalization through the
+recurrent interaction of episodic memories: A model of the hippocampal
+system. \emph{Psychological Review}, \emph{119}(3), 573--616.
+\url{https://doi.org/10.1037/a0028681}
+
+\bibitem[\citeproctext]{ref-logan2018automatic}
+Logan, G. D. (2018). Automatic control: How experts act without
+thinking. \emph{Psychological Review}, \emph{125}(4), 453.
+
+\bibitem[\citeproctext]{ref-logan2021serial}
+Logan, G. D. (2021). Serial order in perception, memory, and action.
+\emph{Psychological Review}, \emph{128}(1), 1.
+
+\bibitem[\citeproctext]{ref-lohnas2024retrieved}
+Lohnas, L. (2024). A retrieved context model of serial recall and free
+recall. \emph{Computational Brain \& Behavior}, 1--35.
+
+\bibitem[\citeproctext]{ref-lohnas2025temporal}
+Lohnas, L. (2025). Temporal associations supporting repetitions in free
+recall. \emph{Psychonomic Bulletin \& Review}, 1--9.
+
+\bibitem[\citeproctext]{ref-lohnas2014retrieved}
+Lohnas, L., \& Kahana, M. J. (2014). A retrieved context account of
+spacing and repetition effects in free recall. \emph{Journal of
+Experimental Psychology: Learning, Memory, and Cognition}, \emph{40}(3),
+755.
+
+\bibitem[\citeproctext]{ref-lohnas2011contextual}
+Lohnas, L., Polyn, S. M., \& Kahana, M. J. (2011). Contextual
+variability in free recall. \emph{Journal of Memory and Language},
+\emph{64}(3), 249--255.
+
+\bibitem[\citeproctext]{ref-lohnas2015expanding}
+Lohnas, L., Polyn, S. M., \& Kahana, M. J. (2015). Expanding the scope
+of memory search: Modeling intralist and interlist effects in free
+recall. \emph{Psychological Review}, \emph{122}(2), 337.
+
+\bibitem[\citeproctext]{ref-mcclelland1995complementary}
+McClelland, J. L., McNaughton, B. L., \& O'Reilly, R. C. (1995). Why
+there are complementary learning systems in the hippocampus and
+neocortex: Insights from the successes and failures of connectionist
+models of learning and memory. \emph{Psychological Review},
+\emph{102}(3), 419--457.
+\url{https://doi.org/10.1037/0033-295X.102.3.419}
+
+\bibitem[\citeproctext]{ref-mensink1989model}
+Mensink, G.-J. M., \& Raaijmakers, J. G. (1989). A model for contextual
+fluctuation. \emph{Journal of Mathematical Psychology}, \emph{33}(2),
+172--186.
+
+\bibitem[\citeproctext]{ref-morton2016predictive}
+Morton, N. W., \& Polyn, S. M. (2016). A predictive framework for
+evaluating models of semantic organization in free recall. \emph{Journal
+of Memory and Language}, \emph{86}, 119--140.
+
+\bibitem[\citeproctext]{ref-nosofsky2002exemplar}
+Nosofsky, R. M., \& Zaki, S. R. (2002). Exemplar and prototype models
+revisited: Response strategies, selective attention, and stimulus
+generalization. \emph{Journal of Experimental Psychology: Learning,
+Memory, and Cognition}, \emph{28}(5), 924.
+
+\bibitem[\citeproctext]{ref-osth2023item}
+Osth, A. F., \& Hurlstone, M. J. (2023). \emph{Do item-dependent context
+representations underlie serial order in cognition? Commentary on logan
+(2021).}
+
+\bibitem[\citeproctext]{ref-palminteri2017importance}
+Palminteri, S., Wyart, V., \& Koechlin, E. (2017). The importance of
+falsification in computational cognitive modeling. \emph{Trends in
+Cognitive Sciences}, \emph{21}(6), 425--433.
+
+\bibitem[\citeproctext]{ref-polyn2009context}
+Polyn, S. M., Norman, K. A., \& Kahana, M. J. (2009). A context
+maintenance and retrieval model of organizational processes in free
+recall. \emph{Psychological Review}, \emph{116}(1), 129.
+
+\bibitem[\citeproctext]{ref-ramsauer2020hopfield}
+Ramsauer, H., Schäfl, B., Lehner, J., Seidl, P., Widrich, M., Adler, T.,
+Gruber, L., Holzleitner, M., Pavlović, M., Sandve, G. K., et al. (2020).
+Hopfield networks is all you need. \emph{arXiv Preprint
+arXiv:2008.02217}.
+
+\bibitem[\citeproctext]{ref-ratcliff1990list}
+Ratcliff, R., Clark, S. E., \& Shiffrin, R. M. (1990). List-strength
+effect: I. Data and discussion. \emph{Journal of Experimental
+Psychology: Learning, Memory, and Cognition}, \emph{16}(2), 163.
+
+\bibitem[\citeproctext]{ref-romney1993predicting}
+Romney, A. K., Brewer, D. D., \& Batchelder, W. H. (1993). Predicting
+clustering from semantic structure. \emph{Psychological Science},
+\emph{4}(1), 28--34.
+
+\bibitem[\citeproctext]{ref-schlichting2015memory}
+Schlichting, M. L., \& Preston, A. R. (2015). Memory integration: Neural
+mechanisms and implications for behavior. \emph{Current Opinion in
+Behavioral Sciences}, \emph{1}, 1--8.
+
+\bibitem[\citeproctext]{ref-sederberg2008context}
+Sederberg, P. B., Howard, M. W., \& Kahana, M. J. (2008). A
+context-based theory of recency and contiguity in free recall.
+\emph{Psychological Review}, \emph{115}(4), 893.
+
+\bibitem[\citeproctext]{ref-shiffrin1997model}
+Shiffrin, R. M., \& Steyvers, M. (1997). A model for recognition memory:
+REM---retrieving effectively from memory. \emph{Psychonomic Bulletin \&
+Review}, \emph{4}, 145--166.
+
+\bibitem[\citeproctext]{ref-stanton2002comparisons}
+Stanton, R. D., Nosofsky, R. M., \& Zaki, S. R. (2002). Comparisons
+between exemplar similarity and mixed prototype models using a linearly
+separable category structure. \emph{Memory \& Cognition}, \emph{30}(6),
+934--944.
+
+\bibitem[\citeproctext]{ref-tulving1972episodic}
+Tulving, E. et al. (1972). Episodic and semantic memory.
+\emph{Organization of Memory}, \emph{1}(381-403), 1.
+
+\bibitem[\citeproctext]{ref-tulving1972inhibition}
+Tulving, E., \& Hastie, R. (1972). Inhibition effects of intralist
+repetition in free recall. \emph{Journal of Experimental Psychology},
+\emph{92}(3), 297.
+
+\bibitem[\citeproctext]{ref-turner2019toward}
+Turner, B. M. (2019). Toward a common representational framework for
+adaptation. \emph{Psychological Review}, \emph{126}(5), 660.
+
+\bibitem[\citeproctext]{ref-whiffen2017episodic}
+Whiffen, J. W., \& Karpicke, J. D. (2017a). The role of episodic context
+in retrieval practice effects. \emph{Journal of Experimental Psychology:
+Learning, Memory, and Cognition}, \emph{43}(7), 1036--1046.
+\url{https://doi.org/10.1037/xlm0000379}
+
+\bibitem[\citeproctext]{ref-whiffen2017role}
+Whiffen, J. W., \& Karpicke, J. D. (2017b). The role of episodic context
+in retrieval practice effects. \emph{Journal of Experimental Psychology:
+Learning, Memory, and Cognition}, \emph{43}(7), 1036.
+
+\bibitem[\citeproctext]{ref-yassa2011pattern}
+Yassa, M. A., \& Stark, C. E. (2011). Pattern separation in the
+hippocampus. \emph{Trends in Neurosciences}, \emph{34}(10), 515--525.
+
+\bibitem[\citeproctext]{ref-zaromb2006temporal}
+Zaromb, F. M., Howard, M. W., Dolan, E. D., Sirotin, Y. B., Tully, M.,
+Wingfield, A., \& Kahana, M. J. (2006). Temporal associations and
+prior-list intrusions in free recall. \emph{Journal of Experimental
+Psychology: Learning, Memory, and Cognition}, \emph{32}(4), 792--804.
+\url{https://doi.org/10.1037/0278-7393.32.4.792}
+
+\end{CSLReferences}
+
+
 
 
 
