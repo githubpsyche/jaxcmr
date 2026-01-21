@@ -1,21 +1,20 @@
 # Formal Modeling
 
-Taken together, these benchmarks place clear constraints on any mechanistic account of how LPP relates to emotion and memory.
-Item type and LPP must be treated as distinct inputs whose effects interact: emotional items enjoy a baseline recall advantage (EEM), and Early LPP further modulates recall likelihood, with a much stronger association for emotional items than for neutral items.
-The mixed-effects cross-check confirms this pattern, showing main effects of condition and Early LPP as well as a significant interaction.
+Building on the behavioral and ERP results reported above (negative > neutral recall and an emotion-dependent Early LPP subsequent-memory effect), we test mechanistic accounts of how study-phase neural activity can modulate encoding within retrieved-context models.
+We embed Early LPP as an item-level modulator of learning strength in eCMR and compare three variants that differ only in how LPP enters the encoding rule.
 
-These constraints motivate treating item type and LPP as interacting influences on encoding or retrieval while keeping temporal context effects modest in scope.
-The mixed-effects cross-check supports this view (main effects plus interaction) but does not specify how the predictors should enter an encoding rule or propagate through retrieved-context dynamics to shape recall sets.
+## Modeling Methods
 
-In the next section, we focus on three closely related eCMR variants that directly address whether LPP adds explanatory value beyond emotion labels and whether that value differs by item type.
-We compare an emotion-only model (no LPP input), a model with a single LPP slope shared across items, and a model with an additional LPP slope for emotional items.
-These comparisons test whether LPP contributes incremental information about recall sets and whether the GMM-style interaction requires an explicit emotion-dependent term or can arise from retrieved-context dynamics.
+### Inputs and data constraints
 
-## eCMR Specification
+- Lists are modeled as 20-item sequences because the first two study positions were excluded during preprocessing.
+- The behavioral data indicate which items were recalled but not recall order, so model evaluation targets recalled *sets* per list.
+- We use the Early LPP measure defined in the ERP analyses above. For modeling, $L_i$ denotes list-centered Early LPP for item $i$ (item value minus the list mean).
+- Study events lacking an LPP measurement are imputed using the participant’s within-list mean for items of the same valence (negative vs. neutral).
 
-We use a connectionist CMR architecture with a temporal context and implement emotion and LPP as modulators of learning strength rather than a separate emotional context state.
-This simplified eCMR is appropriate here because the dataset provides no recall-order scaffold to validate an explicit emotional context trajectory.
-It also yields a cleaner comparison across emotion-only, LPP main-effects, and LPP interaction models by placing LPP in a common learning pathway rather than different loci for neutral versus emotional items.
+### eCMR specification
+
+We use a connectionist CMR architecture with a temporal context and implement valence and Early LPP as modulators of learning strength rather than a separate emotional context state.
 We denote temporal context as $c^T$, with item features $f_i$.
 The matrix $M^{FC}$ binds item features to temporal context, and $M^{CF}$ binds temporal context to item features.
 
@@ -34,11 +33,11 @@ The matrix $M^{FC}$ binds item features to temporal context, and $M^{CF}$ binds 
 | $\phi_s$ | primacy scale | Initial boost to $M^{CF}$ learning. |
 | $\phi_d$ | primacy decay | Decay rate of the primacy boost. |
 | $\tau_c$ | choice sensitivity | Exponent for Luce-style competition. |
-| $\phi_{emot}$ | emotional learning boost | Value is $\phi_{emot}$ for emotional items and 0 for neutral items. |
+| $\phi_{emot}$ | negative-item learning boost | Value is $\phi_{emot}$ for negative items and 0 for neutral items. |
 | $L_i$ | centered Early LPP | List-centered Early LPP for item $i$. |
 | $\kappa_L$ | LPP main scale | Slope for LPP main effect. |
 | $\lambda_L$ | LPP main threshold | Centering offset for the LPP main effect. |
-| $\kappa_{EL}$ | LPP interaction scale | Slope for LPP-by-emotion interaction. |
+| $\kappa_{EL}$ | LPP interaction scale | Slope for LPP-by-valence interaction. |
 | $\lambda_{EL}$ | LPP interaction threshold | Centering offset for the interaction term. |
 
 : Parameters and structures specifying eCMR. {#tbl-ecmr-parameters}
@@ -95,7 +94,7 @@ $$
 g_i = \phi_{emot,i} + \phi_i
 $$
 
-Here, $\phi_{emot,i}$ equals $\phi_{emot}$ for emotional items and 0 for neutral items.
+Here, $\phi_{emot,i}$ equals $\phi_{emot}$ for negative items and 0 for neutral items.
 The primacy term $\phi_i$ enters additively to capture an independent primacy contribution to learning strength.
 Context-to-feature learning uses the learning strength $g_i$:
 
@@ -115,7 +114,9 @@ At each recall step, temporal context cues item activations:
 
 $$
 A = M^{CF} c^T
-$$ At each recall step, the probability of recalling item $i$ is:
+$$
+
+At each recall step, the probability of recalling item $i$ is:
 
 $$
 P(i) = \frac{A_i^{\tau_c}}{\sum_k A_k^{\tau_c}}
@@ -126,22 +127,13 @@ We omit an explicit termination mechanism here, consistent with our focus on rec
 When an item is recalled, its temporal context is reinstated via $M^{FC}$ and integrated with $\beta_{rec}$, and the process iterates.
 Here, $\beta_{rec}$ sets the drift rate of temporal context during recall.
 
-## Model Variants
+### Model variants
 
-The mixed-effects analyses show that recall varies systematically with item type, Early LPP, and their interaction: emotional items have higher recall overall, and LPP is strongly predictive of recall for emotional items but only weakly for neutral items.
-These results characterize how recall depends on itemwise predictors, but they do not say how those predictors should enter an encoding rule, nor whether the same linear form can be used inside a cue-dependent, competitive retrieval model.
-In a retrieved-context framework, recall probabilities are not set directly by "emotion + LPP" terms; they emerge from how learning rates and trace features shape context, activation, and competition among items.
-We therefore test whether a GMM-aligned encoding rule remains consistent with observed recall sets once it is passed through eCMR dynamics.
-We also evaluate that rule by the likelihood assigned to observed recall sets, not just by marginal recall probabilities.
-We therefore compare three eCMR variants that differ only in how LPP enters the encoding rule: an emotion-only model with no LPP term, a model with a single LPP slope shared across items, and a model with separate LPP slopes for emotional and neutral items (the direct GMM analogue).
-
-Even an emotion-only model might appear to reproduce LPP-recall patterns if LPP covaries with factors the model already uses (position, list condition, semantic similarity), so it provides a baseline test of whether LPP adds information beyond emotion labels.
-Similarly, even a single-slope LPP model might capture the interaction pattern if retrieved-context dynamics generate nonlinear competition that amplifies small LPP effects for emotional items into larger recall differences.
-The single-slope model tests whether any LPP contribution is general rather than emotion-specific, while the separate-slope model tests whether the GMM-style interaction requires an explicit emotion-dependent term.
-Together, these comparisons address the core question without introducing additional structural variants.
+Motivated by the mixed-effects results reported above (main effects of valence and Early LPP plus an interaction), we compare three closely related eCMR variants that differ only in how $L_i$ enters learning.
+These comparisons test whether Early LPP contributes incremental information about recalled sets beyond the valence label, and whether the observed interaction requires an explicit valence-dependent LPP term.
 
 We implement the three variants by constraining the learning strength $g_i$ used in $\Delta M^{CF}_{ij}$.
-Let $e_i$ be an indicator that equals 1 for emotional items and 0 for neutral items.
+Let $e_i$ be an indicator that equals 1 for negative items and 0 for neutral items.
 In the emotion-only model, LPP effects are removed by setting $\kappa_L = 0$ and $\kappa_{EL} = 0$, yielding:
 
 $$
@@ -161,21 +153,15 @@ $$
 g_i = \phi_{emot,i} + \phi_i + \kappa_L (L_i - \lambda_L) + \kappa_{EL} (L_i - \lambda_{EL}) e_i
 $$
 
-Here, $\kappa_{EL}$ and $\lambda_{EL}$ allow an additional LPP slope for emotional items beyond the shared LPP term.
+Here, $\kappa_{EL}$ and $\lambda_{EL}$ allow an additional LPP slope for negative items beyond the shared LPP term.
 In implementation, negative values of $g_i$ are clamped to 0 in all variants.
 
-## Fitting Objective: Set Likelihood
+### Fitting objective: set likelihood
 
-Our modeling goal is to explain which specific items are recalled on each trial, given their position, emotionality, and LPP, rather than only the average recall rates summarized in serial-position curves.
+Our modeling goal is to explain which specific items are recalled on each trial, given their position, valence, and LPP, rather than only the average recall rates summarized in serial-position curves.
 Accordingly, we fit models by maximizing the likelihood of the observed recall data under each parameter setting.
-Three factors shape how we define this likelihood.
-First, models like CMR and eCMR naturally predict recall sequences, but our data only say whether each item was recalled.
-This forces us to score models on how well they predict the *set* of recalled items on each list.
-Second, the first two items of each list were removed from the data to reduce primacy confounds in the emotion analyses.
-This omission removes some information about how context evolved early in the list; for the present purposes, we ignore the missing buffer items and treat each list as a 20-item sequence.
-Third, we do not score termination events in the loss function.
-We evaluate models only on the identities of recalled items, not on their ability to predict when recall stops or how many items are produced.
-Because the dataset does not encode explicit termination decisions and our question targets which items are recalled, we treat stopping policy as out of scope for fitting.
+Because recall order is unavailable, we score models on how well they predict the *set* of recalled items on each list.
+We treat each list as a 20-item sequence (with the first two study positions excluded) and do not score termination events; stopping policy is therefore out of scope for fitting.
 
 In a standard likelihood analysis with full recall order, we would compute, for each trial, the probability that the model generates the exact observed recall sequence, and then maximize the product of those probabilities across trials.
 Here we replace the sequence with the unordered set of recalled items.
@@ -198,32 +184,12 @@ We then sum log likelihoods across trials for each participant and choose parame
 We maximize the objective with differential evolution [@storn1997differential].
 Because differential evolution is stochastic, we run three independent optimizations per participant and model variant and retain the best-performing fit.
 For model comparison, we compute per-subject AIC values and summarize mean $\Delta$AIC with t-based 95% confidence intervals, alongside AIC weights and winner ratios.
+As a qualitative check on plausibility, we also simulate each fitted model variant on the same list structure participants experienced and compare simulated benchmarks against the empirical patterns.
+In simulation, we generate recall sequences only up to the observed number of recalls for each trial, so benchmark comparisons focus on item selection rather than stopping policy.
 
-We also simulate each fitted model variant on the same list structure participants experienced, using per-subject fitted parameters, and analyze the simulated datasets with the same benchmark plots.
-In simulation, we generate recall sequences only up to the observed number of recalls for each trial.
-This means simulations are evaluated on the sequence of recalled items, not on the total number of recalls.
-Matching the observed recall count keeps the benchmark comparison focused on item selection rather than differences in stopping policy.
-By comparing empirical and simulated curves, we assess whether a model that fits trial-level recall sets also reproduces hallmark free-recall benchmarks.
-Because additional parameters can improve likelihoods by construction, these benchmark fits provide a qualitative check on model plausibility alongside AIC-based comparisons.
+## Modeling Results
 
-This approach uses trial-level information about which items were recalled on which lists and respects the full generative structure of eCMR: the same parameters that govern encoding and cue-dependent retrieval are used both to generate recall sets and to score their likelihood.
-It also aligns with our substantive aims.
-The neurally informed extensions are intended to explain *which* emotional items are more likely to be recalled as a function of their LPP values, not to change the overall magnitude of the emotional enhancement of memory summarized by the Category-SPC.
-A loss function that evaluates models directly on the recalled sets is therefore more sensitive to the LPP-dependent mechanisms we wish to test.
-
-For comparison, an alternative is to fit models by minimizing mean squared error between summary statistics (for example, between the empirical Category-SPC and the Category-SPC produced by simulations).
-This summary-statistic MSE approach is simple and effective for testing whether a model reproduces coarse patterns such as overall position effects and the average recall advantage for emotional over neutral items.
-However, it discards trial-level structure and is relatively insensitive to mechanisms that rearrange *which* items within a condition are recalled without changing average rates.
-It ignores patterns in data that are not explicitly targeted by the chosen summary statistics, potentially allowing models to fit benchmarks while mispredicting other aspects of the data.
-In contrast, the set-likelihood approach evaluates models on their ability to reproduce the full recalled sets, eliminating these deficiencies and providing a more stringent test of mechanistic hypotheses.
-Our primary questions directly address the effects of item-level variation in LPP and emotion on recall, so we prioritize a loss function that is sensitive to these item-level patterns.
-We thus rely on the set-likelihood framework for the fits and model comparisons reported below.
-
-## Model Comparison
-
-We first summarize model comparison outcomes from the set-likelihood fits.
-We then evaluate how each fitted model reproduces benchmark patterns in simulations that mirror the study lists and observed output lengths.
-All reported fits use the best solution out of three independent optimization runs per participant.
+### Model comparison
 
 The Emotion + LPP (interaction) model provides the best fit by all comparison metrics.
 Relative to Emotion + LPP (main effects), its mean $\Delta$AIC is -1.12 with a 95% t-based confidence interval of \[-2.11, -0.13\].
@@ -234,87 +200,10 @@ Winner ratios tell the same story, favoring the interaction model for roughly 0.
 Together these results indicate that adding an interaction provides a modest but consistent improvement over main effects, and both LPP models outperform Emotion-only.
 Estimated parameters are broadly similar across variants, so the key evidence comes from relative fit metrics and benchmark patterns rather than large shifts in fitted values.
 
-@tbl-talmi-parameter-estimates reports mean parameter estimates with 95% t-based confidence intervals.
-Termination parameters are omitted because the fitting procedure does not include a stopping mechanism.
+### Parameter estimates (brief summary)
 
-| Parameter | Emotion + LPP (main effects) | Emotion + LPP (interaction) | Emotion-only |
-|------------------|------------------|------------------|------------------|
-| fitness | 210.26 +/- 16.34 | 209.65 +/- 16.24 | 211.74 +/- 16.38 |
-| encoding drift rate | 0.61 +/- 0.11 | 0.65 +/- 0.11 | 0.62 +/- 0.11 |
-| start drift rate | 0.37 +/- 0.13 | 0.36 +/- 0.13 | 0.40 +/- 0.14 |
-| recall drift rate | 0.49 +/- 0.12 | 0.56 +/- 0.13 | 0.47 +/- 0.13 |
-| shared support | 40.74 +/- 11.52 | 35.02 +/- 11.32 | 42.56 +/- 11.07 |
-| item support | 45.36 +/- 10.79 | 47.20 +/- 11.63 | 52.40 +/- 10.85 |
-| learning rate | 0.51 +/- 0.12 | 0.47 +/- 0.13 | 0.55 +/- 0.11 |
-| primacy scale | 18.43 +/- 8.30 | 37.07 +/- 11.06 | 16.68 +/- 8.45 |
-| primacy decay | 48.94 +/- 9.90 | 45.74 +/- 10.83 | 39.34 +/- 9.43 |
-| choice sensitivity | 37.24 +/- 11.43 | 20.87 +/- 9.77 | 37.12 +/- 10.10 |
-| emotion scale | 6.77 +/- 0.88 | 4.91 +/- 0.81 | 4.43 +/- 1.02 |
-| lpp main scale | 23.21 +/- 10.50 | 39.53 +/- 12.91 | 0.00 +/- 0.00 |
-| lpp main threshold | 0.95 +/- 1.10 | 0.84 +/- 0.98 | 0.00 +/- 0.00 |
-| lpp inter scale | 0.00 +/- 0.00 | 53.95 +/- 11.17 | 0.00 +/- 0.00 |
-| lpp inter threshold | 0.00 +/- 0.00 | -0.90 +/- 0.98 | 0.00 +/- 0.00 |
+In the interaction model, mean estimates (± 95% t-based CI) support a baseline negative-item learning advantage and additional Early LPP modulation: $\phi_{emot} = 4.91 \pm 0.81$, $\kappa_L = 39.53 \pm 12.91$, and $\kappa_{EL} = 53.95 \pm 11.17$.
 
-: Parameter estimates and fit summaries for TalmiEEG model variants (mean +/- 95% t-based CI across participants). {#tbl-talmi-parameter-estimates tbl-colwidths="\[34,22,22,22\]"}
+### Benchmark reproduction (qualitative)
 
-@tbl-talmi-delta-aic reports pairwise delta AIC values used in the comparisons above.
-
-|   | Emotion + LPP (main effects) | Emotion + LPP (interaction) | Emotion-only |
-|------------------|------------------|------------------|------------------|
-| Emotion + LPP (main effects) | NA | 1.12 \[0.13, 2.11\] | -2.86 \[-4.14, -1.57\] |
-| Emotion + LPP (interaction) | -1.12 \[-2.11, -0.13\] | NA | -3.98 \[-5.71, -2.25\] |
-| Emotion-only | 2.86 \[1.57, 4.14\] | 3.98 \[2.25, 5.71\] | NA |
-
-: Pairwise delta AIC (row minus column; mean \[95% t-based CI\]). {#tbl-talmi-delta-aic tbl-colwidths="\[34,22,22,22\]"}
-
-## Benchmark Fits
-
-We next inspect simulated benchmark patterns for each fitted model variant.
-We first show the empirical benchmarks that the simulations aim to reproduce in @fig-data_benchmarks.
-Each model figure then pairs the Category-SPC with the combined cat_lpp_by_recall plot to show whether a model captures both overall category structure and the LPP–recall association.
-
-::: {#fig-data_benchmarks layout-ncol="2"}
-![](results/figures/analyses/reference_catspc.png)
-
-![](results/figures/cat_lpp_by_recall.png)
-
-Empirical benchmarks for model evaluation.
-Left: Category-SPC for negative (red) and neutral (black) items, with bootstrapped 95% CIs across participants.
-Right: Early LPP by recall status and item type, with lines following the legend labels (recalled/unrecalled negative and recalled/unrecalled neutral) and CIs omitted for clarity.
-:::
-
-::: {#fig-eeg_emotion_only_fits layout-ncol="2"}
-![](results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_spc.png)
-
-![](results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png)
-
-Simulated benchmarks for the Emotion-only model.
-Left: Category-SPC from simulations using per-subject fitted parameters, with negative (red) and neutral (black) lines and bootstrapped 95% CIs across subjects.
-Right: Early LPP by recall status from the same simulations, with lines following the legend labels (recalled/unrecalled negative and recalled/unrecalled neutral) and CIs omitted.
-:::
-
-::: {#fig-eeg_main_effects_fits layout-ncol="2"}
-![](results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_spc.png)
-
-![](results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png)
-
-Simulated benchmarks for the Emotion + LPP (main effects) model.
-Left: Category-SPC from simulations using per-subject fitted parameters, with negative (red) and neutral (black) lines and bootstrapped 95% CIs across subjects.
-Right: Early LPP by recall status from the same simulations, with lines following the legend labels (recalled/unrecalled negative and recalled/unrecalled neutral) and CIs omitted.
-:::
-
-::: {#fig-eeg_main_effects_plus_interaction_fits layout-ncol="2"}
-![](results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_spc.png)
-
-![](results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png)
-
-Simulated benchmarks for the Emotion + LPP (interaction) model.
-Left: Category-SPC from simulations using per-subject fitted parameters, with negative (red) and neutral (black) lines and bootstrapped 95% CIs across subjects.
-Right: Early LPP by recall status from the same simulations, with lines following the legend labels (recalled/unrecalled negative and recalled/unrecalled neutral) and CIs omitted.
-:::
-
-In the Emotion-only simulations, the model captures much of the emotional enhancement of memory in the Category-SPC but shows little separation between recalled and unrecalled negative items in Early LPP. This pattern indicates that emotion labels alone can reproduce the overall category advantage without explaining LPP-linked recall differences.
-In the Emotion + LPP (main effects) simulations, the model fits both summary statistics but assigns a larger recalled–unrecalled difference for neutral items and a smaller difference for negative items.
-This pattern suggests that a single LPP slope captures the overall association while misallocating the emotion-specific separation.
-In the Emotion + LPP (interaction) simulations, the Category-SPC preserves emotional enhancement of memory and the Early LPP panel shows a clearer emotion-dependent separation between recalled and unrecalled items.
-Together these benchmarks indicate that combining emotion and LPP with an interaction provides the most faithful account of both the category-level advantage and the emotion-specific LPP–recall pattern.
+Across fitted simulations, the interaction model preserves the negative > neutral recall advantage while producing a stronger Early LPP separation for subsequently recalled negative items than for neutral items.
