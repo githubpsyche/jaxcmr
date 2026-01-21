@@ -1,10 +1,41 @@
-```{=html}
-<!-- 
-Still need to clean up and extend citations.
+---
+title: "Same item, distinct contexts: Episode-specific reinstatement in free and serial recall"
+shorttitle: "Same Item, Distinct Contexts"
+author: 
+  - name: Jordan B Gunn
+    affiliations:
+      - name: Vanderbilt University
+        department: Department of Psychology
+  - name: Sean M Polyn
+    affiliations:
+      - name: Vanderbilt University
+        department: Department of Psychology
+keywords: 
+  - episodic memory
+  - repetiton effects
+  - free recall
+  - serial recall
+  - retrieved-context theory
+  - computational modeling
+author-note:
+floatsintext: true
+bibliography: references.bib
+---
 
-Howard/Shankar post-TCM papers
--->
-```
+
+# Abstract
+
+Repetition strengthens memories while tying each occurrence to an evolving temporal context.
+The core idea of retrieved‑context theory (RCT) is that this evolution is item‑based: encoding or retrieval "calls back" and blends items' prior contexts into the ongoing state.
+Such blending links occurrences across time, but also engenders associative interference by overlapping traces and diffusing retrieval across occurrences contexts.
+Using matched control baselines, we identify patterns in free‑ and serial‑recall datasets contradicting this account:
+(i) no elevated transitions between neighborhoods of different occurrences, 
+(ii) biased transitions from repeated items toward first-occurrence neighbors, and 
+(iii) preserved forward chaining in serial recall without cross-occurrence errors.
+To limit interference and improve fits, we advance a modified framework where repetitions (a) reinstate unique, non-overlapping contextual features and (b) produce traces that compete for retrieval.
+Episodic memory balances integration and specificity not through contextual blending, but rather differentiated competition.
+
+# Introduction
 
 Episodic memory -- our ability to recall events anchored to a unique time and place [@tulving1972episodic] -- is especially challenged by repeated and overlapping experience.
 A flexible system must navigate two competing demands [@yassa2011pattern; @schlichting2015memory; @mcclelland1995complementary; @kumaran2012generalization].
@@ -31,7 +62,7 @@ Across free and serial recall, we argue that contextual reinstatement is indexed
 Across free and serial recall, we find retrieval remains tied to a single occurrence context rather than blending across repetitions, challenging item-level context reinstatement and motivating an instance-based alternative.
 -->
 
-## Retrieved-Context Theory and Repetition
+## Repetition Within Retrieved-Context Theory
 
 Earlier context theories treated background context as evolving largely independently of study events, so items were associated with whatever state happened to prevail [@estes1955statistical; @mensink1989model].
 Retrieved-context theory departs from this view by allowing each item to reinstate contextual features specific to its study history, so retrieval actively reconstructs a cue rather than relying on a cue that has simply drifted forward in time [@howard2002distributed; @kahana2020computational].
@@ -76,7 +107,7 @@ Our findings contradict both claims and put pressure on any account of episodic 
 How can retrieved-context models and similar frameworks be revised to resolve this mismatch?
 We propose a three-part solution.
 First, we provide an instance-based reformulation of one of the most prominent implementations of RCT, the Context Maintenance and Retrieval model (CMR) [@howard2002distributed; @polyn2009context].
-In CMR, item-context associations are stored in composite weight matrices that map items to a single blended representation of contextual features across their occurrences.
+In CMR, item--context associations are stored in composite weight matrices that map items to a single blended representation of contextual features across their occurrences.
 When an item is retrieved, the model looks up and reinstates that composite with no additional selection step.
 A contrasting multi-trace approach [@hintzman1984minerva] stores a separate trace for each study event and retrieves by global matching, so a cue elicits a similarity‑weighted blend over the traces it contacts.
 In retrieved-context models, that perspective makes reinstatement a design choice: it can reinstate an item-level composite (recovering standard CMR behavior), construct a cue‑weighted blend over an item's occurrences, or become effectively dominated by a single occurrence when trace discrimination is strong.
@@ -317,7 +348,7 @@ They also provide a compact bridge from the model specification to the later sim
 
 # Methodological Framework
 
-Our methodological framework isolates repetition-specific effects using a refined position-matching baseline and symmetric scoring.
+Our methodology isolates repetition-specific effects using a refined position-matching baseline and symmetric scoring.
 We define the estimand and baseline, then summarize the datasets that anchor the free- and serial-recall analyses, noting which serve as primary tests and which provide supplementary checks.
 Model-evaluation procedures and diagnostic analyses are introduced in their respective sections, where we apply this framework to behavioral data and simulations.
 
@@ -359,146 +390,19 @@ Applied below, the approach markedly attenuates or eliminates patterns previousl
 
 ## Datasets
 
-We draw on multiple archival datasets that together span free recall and serial recall with within-list repetitions.
-Data from @lohnas2014retrieved serves as the primary free recall test bed because it includes both mixed and control lists under identical procedures, which enables our matched-baseline estimation.
-Data from @broitman2024neural adds converging free recall evidence from mixed lists only, allowing model generalization checks without baseline construction.
-Data from @logan2021serial Experiment 2 provides tightly controlled serial recall with single repeats at short lags, ideal for testing cross-occurrence transitions.
-Data from @kahana2000interresponse contributes a classic serial recall dataset with a wider lag range and learning-to-criterion procedures, from which we analyze the first forward recall only.
-Analyses are primarily introduced using data from @lohnas2014retrieved for free recall tasks and the @logan2021serial dataset for serial recall tasks, with supplementary evidence from other datasets included in appendices.
+We draw on multiple archival datasets spanning free and serial recall with within-list repetitions. Data from @lohnas2014retrieved serve as the primary free recall test bed because they include both mixed and control lists under identical procedures, enabling the matched-baseline estimation. Data from @logan2021serial Experiment 2 serve as the primary serial recall test bed because they isolate single repeats at short lags with tight list control. We also use @broitman2024neural and @lohnas2025temporal as complementary free recall checks and @kahana2000interresponse to cover longer lags and learning-to-criterion serial recall; these additional datasets provide robustness tests where noted.
 
-### @lohnas2014retrieved
+Across 4 sessions, 35 subjects in @lohnas2014retrieved performed delayed free recall of 48 lists. Subjects encountered control lists with all once-presented items, pure massed lists with immediate repeats, pure spaced lists with repeats at lags 1-8 (lag is the number of intervening items), and mixed lists containing once-presented, massed, and spaced items; each session included three lists of each type and list order was randomized. Each list had 40 positions. Control lists contained 40 unique items, pure massed and pure spaced lists contained 20 repeated items occupying the 40 positions, and mixed lists contained 28 singletons and six repeated items. In pure spaced lists each lag 1-8 occurred equally often, and in mixed lists each lag 0-8 occurred exactly twice per session.
 
-This dataset is the focal source for our free recall analyses because it offers matched control lists and systematic manipulation of repetition spacing.
-Across 4 sessions, 35 subjects performed delayed free recall of 48 lists.
-Subjects encountered four different types of lists: 
+We include @broitman2024neural to test model predictions in a free recall setting that omits control lists, providing a complementary generalization check under high trial counts. Across 6 sessions, 52 participants performed delayed free recall with mixed lists. Each list contained 12 unique words, half presented once and half presented twice, yielding 18 total presentations per list. Repeat items were separated by at least three intervening presentations. The first presentation of a repeated item always occurred within the first 12 serial positions, and the second always occurred after position 6. Single items were distributed across all serial positions. Words were selected to minimize adjacent semantic similarity using Word Association Spaces, reducing confounds between temporal and semantic associations. In each session, participants completed 21 lists under a consistent study-then-recall procedure with a fixed post-encoding delay before recall. Control lists were not included in this experimental design, so we use this dataset for qualitative benchmarks and model comparisons that do not require matched-baseline estimation.
 
-1. Control lists that contained all once-presented items;
-2. pure massed lists containing all twice-presented items; 
-3. pure spaced lists consisting of items presented twice at lags 1-8, where lag is defined as the number of intervening items between a repeated item's presentations; 
-4. mixed lists consisting of once presented, massed and spaced items.
+We also analyze @lohnas2025temporal (Experiments 1-2, pooled) as another free recall test bed with mixed lists and control lists, but with different constraints. Each participant completed a single remote session with 10 lists drawn from a 576-noun pool, constructed to minimize within-list semantic similarity (WAS constraints) and to balance concreteness, valence, and frequency across lists. Two lists were controls with 20 unique items, and eight were mixed lists with 19 unique items plus one word repeated once. The repeated word appeared in one of four configurations defined by first-occurrence position (6 or 7) crossed with spacing (5 or 6 intervening items), with each configuration used twice; list order and within-list order were randomized. Experiment 1 used delayed free recall with 20-item lists and a post-encoding distractor, whereas Experiment 2 used immediate free recall with 24-item lists and no distractor. Unless noted otherwise, we pool recall data across experiments while tracking an experiment indicator to assess robustness to the delay manipulation.
 
-Within each session, subjects encountered three lists of each of these four types.
+We use @logan2021serial Experiment 2 to evaluate repetition effects in serial recall under tightly controlled list structure and short lags. Twenty-four participants completed lists designed to test repetition effects in serial recall. Participants were recruited for self-reported typing speed of at least 40 WPM, with a mean of 76.74 WPM (SD 21.03) and mean accuracy of 93.66% (SD 2.77). All lists were six letters long and letters were sampled uniformly from the 26-letter English alphabet. There were 576 lists in total divided evenly across multiple task variants, and our analyses focus on the serial-recall subset. Within each task, 96 lists contained no repetitions and 96 lists contained a single repeated letter. For repeated lists, the lag between the two occurrences was 0, 1, 2, or 3 with 24 lists at each lag. Repeated items appeared in all possible positions with equal frequency for lags 1-3, and for lag 0 four positions were tested five times while one position was tested four times. Lists with and without repetitions were randomly interleaved. On each trial, the six-letter array was displayed simultaneously for 1000 ms, then removed, and participants typed the letters in order. A 1000-ms blank screen followed each response before the next trial.
 
-In each list there were 40 presentation positions, such that in the control lists each position was occupied by a singleton item, and in the pure massed and pure spaced lists, 20 unique repeater words occupied the 40 positions.
-In the mixed lists 28 singletons and six repeater words occupied the 40 positions.
-In the pure spaced lists, spacings of repeated items were chosen so that each of the lags 1-8 occurred with equal probability.
-In the mixed lists, massed repetitions (lag=0) and spaced repetitions (lags 1-8) were chosen such that each of the 9 lags of 0-8 were used exactly twice within each session.
-The order of presentation for the different list types was randomized within each session.
+We analyze @kahana2000interresponse to probe serial recall with a wider lag range and ensure generalization of our serial recall results across datasets. Twenty participants completed 12 sessions of serial recall. Each session comprised 36 lists built from randomly arranged consonants excluding "Y". Lists crossed three lengths (11, 12, 13) with two repetition conditions (no repeats vs one repeated consonant), six lists per cell. In repetition lists a single consonant was repeated with lag 0-5, and the first occurrence was never in the first two or last two positions. On each study-test cycle, consonants were shown one at a time for 1000 ms with a 250-ms interstimulus interval, followed by typed forward recall without backspace. Lists were re-presented and tested until participants achieved three consecutive perfect forward recalls, after which a single backward recall was administered. For the present analyses we use only the first forward recall immediately following the initial study presentation for each unique list. Backward recall trials and subsequent forward recalls used to reach criterion are excluded. We also do not analyze inter-response times. Assignment of consonants to list structures and the order of list conditions were separately randomized for each participant and session.
 
-### @broitman2024neural
-
-We include this dataset to test model predictions in a free recall setting that omits control lists, providing a complementary generalization check under high trial counts.
-Across 6 sessions, 52 participants performed delayed free recall with mixed lists.
-Each list contained 12 unique words, half presented once and half presented twice, yielding 18 total presentations per list.
-Repeat items were separated by at least three intervening presentations.
-The first presentation of a repeated item always occurred within the first 12 serial positions, and the second always occurred after position 6.
-Single items were distributed across all serial positions.
-Words were selected to minimize adjacent semantic similarity using Word Association Spaces, reducing confounds between temporal and semantic associations.
-In each session, participants completed 21 lists under a consistent study-then-recall procedure with a fixed post-encoding delay before recall.
-Control lists were not included in this experimental design, so we use this dataset for qualitative benchmarks and model comparisons that do not require matched-baseline estimation.
-
-<!-- ### @lohnas2025temporal (Experiments 1–2, pooled)
-
-We include this dataset as another free recall test bed with mixed lists and control lists, but with a different set of constraints.
-Each participant completed a single remote session with 10 lists drawn from a 576-noun pool, constructed to minimize within-list semantic similarity (WAS constraints) and to balance concreteness, valence, and frequency across lists.
-Two lists were controls with 20 unique items, and eight were mixed lists with 19 unique items plus one word repeated once.
-The repeated word appeared in one of four configurations defined by first-occurrence position (6 or 7) crossed with spacing (5 or 6 intervening items), each configuration used twice; list order and within-list order were randomized.
-Experiment 1 used delayed free recall with 20-item lists and a post-encoding distractor, whereas Experiment 2 used immediate free recall with 24-item lists and no distractor.
-Unless noted otherwise, we pool recall data across experiments while tracking an experiment indicator to assess robustness to the delay manipulation. -->
-
-### @logan2021serial Experiment 2
-
-We use this experiment to evaluate repetition effects in serial recall under tightly controlled list structure and short lags.
-Twenty-four participants completed lists designed to test repetition effects in serial recall.
-Participants were recruited for self-reported typing speed of at least 40 WPM, with a mean of 76.74 WPM (SD 21.03) and mean accuracy of 93.66% (SD 2.77).
-All lists were six letters long and letters were sampled uniformly from the 26-letter English alphabet.
-There were 576 lists in total divided evenly across multiple task variants, and our analyses focus on the serial-recall subset.
-Within each task, 96 lists contained no repetitions and 96 lists contained a single repeated letter.
-For repeated lists, the lag between the two occurrences was 0, 1, 2, or 3 with 24 lists at each lag.
-Repeated items appeared in all possible positions with equal frequency for lags 1–3, and for lag 0 four positions were tested five times while one position was tested four times.
-Lists with and without repetitions were randomly interleaved.
-On each trial, the six-letter array was displayed simultaneously for 1000 ms, then removed, and participants typed the letters in order.
-A 1000-ms blank screen followed each response before the next trial.
-
-### @kahana2000interresponse
-
-We analyze this dataset to probe serial recall with a wider lag range and ensure generalization of our serial recall results across datasets.
-Twenty participants completed 12 sessions of serial recall.
-Each session comprised 36 lists built from randomly arranged consonants excluding "Y".
-Lists crossed three lengths (11, 12, 13) with two repetition conditions (no repeats vs one repeated consonant), six lists per cell.
-In repetition lists a single consonant was repeated with lag 0–5, and the first occurrence was never in the first two or last two positions.
-On each study–test cycle, consonants were shown one at a time for 1000 ms with a 250-ms interstimulus interval, followed by typed forward recall without backspace.
-Lists were re-presented and tested until participants achieved three consecutive perfect forward recalls, after which a single backward recall was administered.
-For the present analyses we use only the first forward recall immediately following the initial study presentation for each unique list.
-Backward recall trials and subsequent forward recalls used to reach criterion are excluded.
-We also do not analyze inter-response times.
-Assignment of consonants to list structures and the order of list conditions were separately randomized for each participant and session.
-
-## Diagnostic Tests of Associative Interference
-
-All analyses use the matched, symmetric baseline defined above.
-For each mixed-list trial with a repeater at positions $i$ and $j$, we pair many control-list trials that match list length and presentation schedule; in each control list we designate $i$ and $j$ as a single pseudo-repeater and apply symmetric scoring.
-Unless noted, conditional probabilities are computed over eligible transitions (targets exist and have not yet been recalled), aggregated within participant, and then averaged across participants.
-Mixed–minus–baseline contrasts isolate the contribution of repetition structure.
-
-### Repetition lag-CRP (outgoing)
-
-::: {#fig-rep-crp-base layout="[[1, 1]]"}
-![](repeat_cmr_figures/rep_lag_crp_schematic.png){#fig-rep-crp-schematic}
-![](repeat_cmr_figures/rep_crp_base.png){#fig-rep-crp-base}
-
-**The repetition lag-CRP.** *A.* The lag-contiguity effect conceptualizes free-recall search as movement along a mental timeline, but repeated items occupy two positions on that timeline.
-*B.* Extending the lag-CRP, we tabulate transitions from a recalled repeater relative to both its study positions.
-Illustration from mixed lists in @lohnas2014retrieved.
-:::
-
-The goal is to test whether retrieving a repeater reinstates a composite of its occurrence-specific contexts (blending) or selectively routes through one occurrence (occurrence-specific access).
-For every recall of a repeater with study positions $i$ and $j$ ($i<j$), we construct two centered lag-CRPs: one treating $i$ as the center and one treating $j$ as the center.
-From the first-centered cue, a $+1$ transition is to position $i{+}1$; from the second-centered cue, a $+1$ transition is to position $j{+}1$.
-Each centered curve gives the probability of the very next recall at each available lag, conditional on eligibility.
-
-Interpretation proceeds by comparing mixed lists to the position-matched baseline.
-Blending predicts that, relative to baseline, outgoing transitions will be *more balanced* across the two centers (reduced separation of first- vs second-centered curves) because both occurrence contexts contribute to the cue.
-Occurrence-specific reinstatement predicts a *preserved or enlarged separation*, typically favoring the first occurrence (e.g., higher $+1$ from the first center than from the second).
-
-### Repetition lag-CRP (incoming; "backward" variant)
-
-This variant helps explore the extent to which any asymmetry in the outgoing analysis arises from how repeaters are cued versus how they cue what follows.
-For every recall of a repeater, we look one step back to the immediately preceding recall and compute lags centered on the repeater's first and second study positions.
-If the asymmetry is already present on incoming transitions, list context before the repeater tends to match one occurrence's neighborhood more than the other (a cue-driven effect).
-If incoming curves show little asymmetry but outgoing curves do, the asymmetry is more likely due to how the repeater *reinstates* context.
-
-### Cross-occurrence neighbor contiguity (free recall)
-
-@lohnas2014retrieved introduced a neighbor-contiguity test for cross-occurrence blending: if the first-presentation context is reinstated at the second, neighborhoods around the two presentations become associatively linked.
-They measured the probability of transitions from a $+1$ or $+2$ neighbor of one presentation to a $+1$ or $+2$ neighbor of the other, comparing mixed lists to position-matched controls.
-
-We preserve that intuition but refine both baseline and readout.
-First, the matched baseline uses symmetric scoring over the two matched positions, preserving their identity relation and avoiding inflation that arises when matched positions are tallied independently.
-Second, we recast neighbor-contiguity as a *centered lag-CRP* triggered by a neighbor of one occurrence and centered on the other occurrence.
-This reveals the full *shape* of cross-occurrence support rather than only neighbor-to-neighbor bins.
-
-Let a repeater appear at $i$ and $j$ with $i<j$.
-In the first-centered variant, triggers are recalls of $j{+}1$ or $j{+}2$; for each trigger we record the next recall and compute its lag relative to $i$, tabulating a lag-CRP centered on $i$ under the usual eligibility constraints.
-The second-centered variant swaps roles, using $i{+}1$ or $i{+}2$ as triggers and centering lags on $j$.
-For each variant we subtract the matched, symmetric baseline to obtain a mixed–minus–baseline curve.
-
-Blending predicts above-baseline mass near the alternative occurrence's neighbors (e.g., elevated probability around $\ell=\pm1,\pm2$ with the typical forward skew), because the trigger in one neighborhood partially reinstates the other neighborhood's context.
-Occurrence-specific access predicts that the centered curves in mixed lists overlay their baselines, indicating no selective elevation of cross-occurrence neighbors.
-
-Re-expressing neighbor-contiguity this way provides a position-controlled contrast (via symmetric scoring) and a richer diagnostic: the magnitude and spread of the centered curve show whether cross-occurrence support is diffuse, localized, or absent.
-Because the triggers are neighbors rather than the repeater itself, the analysis remains sensitive to blending that operates without requiring the repeated item to be recalled.
-
-### Serial forward-chaining test (serial recall)
-
-This test asks whether blended support at retrieval increases competition between continuations from the first versus second occurrence in serial report.
-For repeated lists we focus on trials where participants have reported the list correctly through position $i$ (the first occurrence).
-The correct continuation is the transition $i\rightarrow i{+}1$; the cross-occurrence competitor is $i\rightarrow j{+}1$.
-We compute the probabilities of the correct chain and the cross-occurrence error, conditional on eligibility, and compare to matched pseudo-repeater positions in controls.
-Blending predicts an elevated error rate to $j{+}1$ relative to baseline with a corresponding reduction in correct forward chaining.
-Occurrence-specific reinstatement predicts no elevation of $i\rightarrow j{+}1$ errors relative to baseline and intact chaining through $i{+}1$.
-
-## Model Evaluation
+# Model Evaluation
 
 We evaluate models using two complementary approaches: likelihood-based fitting and generative performance assessment.
 Given an arbitrary parameter configuration and sequences of responses to predict, a model simulates encoding of each item presented in the corresponding study list in its respective order.
@@ -581,7 +485,7 @@ Middle: conditional response probability (CRP) by lag.
 Right: probability of first recall by serial position.
 ::: 
 
-### The Spacing Effect
+## The Spacing Effect
 
 The spacing effect is classically understood as a repetition effect, and has been a central focus of research on memory for repeated experience [@cepeda2006distributed]
 However, it applies even to pairs of distinct items, not just repeated items.
@@ -605,7 +509,78 @@ Thus, while CMR captures the basic memorability gain with increasing lag, it doe
 The spacing effect for mixed vs control list trials from @lohnas2014retrieved. Left: data, right: simulations of standard CMR fitted to the data.
 :::
 
-### Cross-Occurrence Neighbor Transitions
+# Diagnostic Tests of Cross-Occurrence Associative Interference
+
+## Analytic definitions
+
+All analyses use the matched, symmetric baseline defined above.
+For each mixed-list trial with a repeater at positions $i$ and $j$, we pair many control-list trials that match list length and presentation schedule; in each control list we designate $i$ and $j$ as a single pseudo-repeater and apply symmetric scoring.
+Unless noted, conditional probabilities are computed over eligible transitions (targets exist and have not yet been recalled), aggregated within participant, and then averaged across participants.
+Mixed–minus–baseline contrasts isolate the contribution of repetition structure.
+
+### Repetition lag-CRP (outgoing)
+
+::: {#fig-rep-crp-base layout="[[1, 1]]"}
+![](../../work/thesis/repeat_cmr_figures/rep_lag_crp_schematic.png){#fig-rep-crp-schematic}
+
+![](../../work/thesis/repeat_cmr_figures/rep_crp_base.png){#fig-rep-crp-base}
+
+**The repetition lag-CRP.** *A.* The lag-contiguity effect conceptualizes free-recall search as movement along a mental timeline, but repeated items occupy two positions on that timeline.
+*B.* Extending the lag-CRP, we tabulate transitions from a recalled repeater relative to both its study positions.
+Illustration from mixed lists in @lohnas2014retrieved.
+:::
+
+The goal is to test whether retrieving a repeater reinstates a composite of its occurrence-specific contexts (blending) or selectively routes through one occurrence (occurrence-specific access).
+For every recall of a repeater with study positions $i$ and $j$ ($i<j$), we construct two centered lag-CRPs: one treating $i$ as the center and one treating $j$ as the center.
+From the first-centered cue, a $+1$ transition is to position $i{+}1$; from the second-centered cue, a $+1$ transition is to position $j{+}1$.
+Each centered curve gives the probability of the very next recall at each available lag, conditional on eligibility.
+
+Interpretation proceeds by comparing mixed lists to the position-matched baseline.
+Blending predicts that, relative to baseline, outgoing transitions will be *more balanced* across the two centers (reduced separation of first- vs second-centered curves) because both occurrence contexts contribute to the cue.
+Occurrence-specific reinstatement predicts a *preserved or enlarged separation*, typically favoring the first occurrence (e.g., higher $+1$ from the first center than from the second).
+
+### Repetition lag-CRP (incoming; "backward" variant)
+
+This variant helps explore the extent to which any asymmetry in the outgoing analysis arises from how repeaters are cued versus how they cue what follows.
+For every recall of a repeater, we look one step back to the immediately preceding recall and compute lags centered on the repeater's first and second study positions.
+If the asymmetry is already present on incoming transitions, list context before the repeater tends to match one occurrence's neighborhood more than the other (a cue-driven effect).
+If incoming curves show little asymmetry but outgoing curves do, the asymmetry is more likely due to how the repeater *reinstates* context.
+
+Because this measure conditions on the event that a repeater is recalled, it helps separate how the search state approached the repeater from how the repeater redirects the next step.
+
+### Cross-occurrence neighbor contiguity (free recall)
+
+@lohnas2014retrieved introduced a neighbor-contiguity test for cross-occurrence blending: if the first-presentation context is reinstated at the second, neighborhoods around the two presentations become associatively linked.
+They measured the probability of transitions from a $+1$ or $+2$ neighbor of one presentation to a $+1$ or $+2$ neighbor of the other, comparing mixed lists to position-matched controls.
+
+We preserve that intuition but refine both baseline and readout.
+First, the matched baseline uses symmetric scoring over the two matched positions, preserving their identity relation and avoiding inflation that arises when matched positions are tallied independently.
+Second, we recast neighbor-contiguity as a *centered lag-CRP* triggered by a neighbor of one occurrence and centered on the other occurrence.
+This reveals the full *shape* of cross-occurrence support rather than only neighbor-to-neighbor bins.
+
+Let a repeater appear at $i$ and $j$ with $i<j$.
+In the first-centered variant, triggers are recalls of $j{+}1$ or $j{+}2$; for each trigger we record the next recall and compute its lag relative to $i$, tabulating a lag-CRP centered on $i$ under the usual eligibility constraints.
+The second-centered variant swaps roles, using $i{+}1$ or $i{+}2$ as triggers and centering lags on $j$.
+For each variant we subtract the matched, symmetric baseline to obtain a mixed–minus–baseline curve.
+
+Blending predicts above-baseline mass near the alternative occurrence's neighbors (e.g., elevated probability around $\ell=\pm1,\pm2$ with the typical forward skew), because the trigger in one neighborhood partially reinstates the other neighborhood's context.
+Occurrence-specific access predicts that the centered curves in mixed lists overlay their baselines, indicating no selective elevation of cross-occurrence neighbors.
+
+Re-expressing neighbor-contiguity this way provides a position-controlled contrast (via symmetric scoring) and a richer diagnostic: the magnitude and spread of the centered curve show whether cross-occurrence support is diffuse, localized, or absent.
+Because the triggers are neighbors rather than the repeater itself, the analysis remains sensitive to blending that operates without requiring the repeated item to be recalled.
+
+### Serial forward-chaining test (serial recall)
+
+This test asks whether blended support at retrieval increases competition between continuations from the first versus second occurrence in serial report.
+For repeated lists we focus on trials where participants have reported the list correctly through position $i$ (the first occurrence).
+The correct continuation is the transition $i\rightarrow i{+}1$; the cross-occurrence competitor is $i\rightarrow j{+}1$.
+We compute the probabilities of the correct chain and the cross-occurrence error, conditional on eligibility, and compare to matched pseudo-repeater positions in controls.
+Blending predicts an elevated error rate to $j{+}1$ relative to baseline with a corresponding reduction in correct forward chaining.
+Occurrence-specific reinstatement predicts no elevation of $i\rightarrow j{+}1$ errors relative to baseline and intact chaining through $i{+}1$.
+
+We treat the matched control lists as the baseline for the error rate so that any elevation reflects cross-occurrence competition rather than serial-position structure.
+
+## Cross-Occurrence Neighbor Transitions
 
 This analysis tests whether repetition links the neighborhoods surrounding the two study positions of a repeated item. 
 We use the centered lag-CRP recast described above, with triggers confined to forward neighbors (+1 or +2) of one occurrence and lags centered on the other occurrence, and we compare mixed lists to the matched, symmetric baseline.
@@ -637,7 +612,7 @@ The absence of above-baseline neighbor-to-neighbor transitions argues against a 
 Cross-occurrence neighbor transitions as centered lag-CRPs (free recall). Top row (data), bottom row (CMR simulations). **Left column (first→second):** triggers are forward neighbors of the *first* presentation ($i{+}1,i{+}2$); lags are centered on the *second* presentation at $j$ (so $\ell=\text{next}-j$). **Right column (second→first):** triggers are forward neighbors of the *second* presentation ($j{+}1,j{+}2$); lags are centered on the *first* presentation at $i$ (so $\ell=\text{next}-i$). All curves plot mixed–minus–matched-control probabilities using the symmetric baseline. In the data, cross-occurrence neighbor bins (e.g., $\ell=\pm1,\pm2$) sit near baseline in both directions, with a selective elevation at $\ell=0$ (the repeater itself) only in the first→second case. Standard CMR predicts pronounced above-baseline peaks at the other occurrence's neighbors in both directions, consistent with associative blending. 
 :::
 
-### The Repetition Lag-CRP
+## The Repetition Lag-CRP
 
 The outgoing repetition lag-CRP quantifies how a recalled repeater cues subsequent recall from each occurrence's neighborhood (@fig-repetition_lag_crp).
 In the data, transitions from the repeated item preferentially target neighbors of the item's first study position instead of neighbors of the second.
@@ -661,9 +636,11 @@ This conflict isolates the problem: when the repeater is recalled, the model's i
 Repetition lag-CRP (outgoing): data vs CMR. Top row (data): mixed lists (left) and matched-control baseline (right), each showing two centered curves (first-centered vs second-centered). Bottom row (CMR): same for simulations. In data, separation (e.g., +1 bin) favors the first-occurrence neighborhood and is larger than in baseline; CMR predicts reduced separation (balanced access), consistent with blending.
 :::
 
-### Backward/Incoming Variant of the Repetition Lag-CRP
+## Backward/Incoming Variant of the Repetition Lag-CRP
 
-For each recall of a repeater, we look one step back to the item produced immediately before it and compute two centered lag-CRPs—one centered on the first presentation and one on the second—using the matched, symmetric baseline to control position effects. In the data (@fig-backward_rep_lag_crp, top row), arrivals at repeaters come disproportionately from the backward neighbor of the *first* presentation (from $i{-}1$ to $i$) compared with the backward neighbor of the second (from $j{-}1$ to $j$). The preference is strongest in mixed lists but is also evident in the position-matched baseline, indicating that it reflects general serial-order dynamics (e.g., forward contiguity and output competition) rather than repetition-specific knitting per se. Standard CMR yields only a weak first-over-second advantage on these incoming transitions (@fig-backward_rep_lag_crp, bottom row), consistent with the model's tendency to aggregate support across a repeater's occurrences and thereby dilute approach biases. Practically, this pattern cautions that any first-over-second asymmetry seen *after* recalling a repeater (the outgoing analysis) may be partly inherited from how the search state approached the repeater; the mixed–minus–baseline contrast in the outgoing test is therefore the cleaner probe of repetition-specific reinstatement.
+For each recall of a repeater, we look one step back to the item produced immediately before it and compute two centered lag-CRPs—one centered on the first presentation and one on the second—using the matched, symmetric baseline to control position effects. In the data (@fig-backward_rep_lag_crp, top row), arrivals at repeaters come disproportionately from the backward neighbor of the *first* presentation (from $i{-}1$ to $i$) compared with the backward neighbor of the second (from $j{-}1$ to $j$). The preference is strongest in mixed lists but is also evident in the position-matched baseline, indicating that it reflects general serial-order dynamics (e.g., forward contiguity and output competition) rather than repetition-specific knitting per se.
+
+Standard CMR yields only a weak first-over-second advantage on these incoming transitions (@fig-backward_rep_lag_crp, bottom row), consistent with the model's tendency to aggregate support across a repeater's occurrences and thereby dilute approach biases. Practically, this pattern cautions that any first-over-second asymmetry seen *after* recalling a repeater (the outgoing analysis) may be partly inherited from how the search state approached the repeater; the mixed–minus–baseline contrast in the outgoing test is therefore the cleaner probe of repetition-specific reinstatement.
 
 ::: {#fig-backward_rep_lag_crp layout="[[1,1], [1,1]]"}
 
@@ -678,7 +655,7 @@ For each recall of a repeater, we look one step back to the item produced immedi
 Repetition lag-CRP (incoming/backward): data vs CMR. Top row (data): mixed lists (left) and baseline (right) for transitions to repeated items. Bottom row (CMR): simulations. In data, transitions to repeated items are more frequently from the backward neighbor of the item's first presentation than from the second, especially in mixed lists but also in the position-matched baseline. By contrast, CMR predicts a weaker first-over-second advantage for incoming transitions.
 :::
 
-### Forward Chaining in Serial Recall
+## Forward Chaining in Serial Recall
 
 Serial recall provides a more stringent test of cross-occurrence competition. In the data from @logan2021serial and from @kahana2000interresponse (@fig-serial_rep_crp, top), after participants correctly type through the first occurrence at position $i$, continuations to $i{+}1$ remain strong, and erroneous continuations to the competing neighbor $j{+}1$ are rare and indistinguishable from the matched control baseline. That is, the second occurrence's neighborhood does not draw responses away from the correct forward chain.
 
@@ -697,9 +674,11 @@ In the bottom half of @fig-serial_rep_crp, simulations of standard CMR after fit
 **Cross-occurrence forward errors in serial recall (two datasets).** Left: @logan2021serial. Right: @kahana2000interresponse. **Top row (data):** For items studied at positions $i$ and $j$, each panel plots the conditional probability— after correct report through the first occurrence at position $i$ -- of an erroneous transition to the *second* occurrence’s forward neighbors ($i\!\rightarrow\!j{+}1$ and $i\!\rightarrow\!j{+}2$), contrasting mixed lists with their position-matched, symmetric baseline. **Bottom row (CMR):** standard CMR simulations fitted separately to each dataset and scored with the identical baseline procedure. In both datasets, data show no elevation of $i\!\rightarrow\!j{+}1/j{+}2$ errors relative to baseline (non-interference), whereas CMR predicts a clear error elevation (associative interference). 
 :::
 
-### Summary: Noninterference Across Tasks
+## Summary: Noninterference Across Tasks
 
-Across three diagnostics and two tasks, the same pattern recurs. When we remove list-composition artifacts with a matched, symmetric baseline, free recall does not show elevated cross-occurrence neighbor transitions, and the repeated item does not balance access to the two neighborhoods; instead, access is preferentially routed to the first occurrence's neighbors. In serial recall, the first occurrence's forward chain remains intact, with no detectable attraction to the second occurrence's neighbors. Standard CMR fits the classic benchmarks and the spacing function, but its item-based reinstatement produces a robust associative-interference signature that the data do not support. This motivates the mechanistic analysis that follows, which alters how contextual features are reinstated at study and at test—first by removing study-phase reinstatement (CMR-NoSPR), then by allowing occurrence-specific reinstatement at retrieval (Instance-CMR), and finally by rehabilitating study-phase retrieval as a mechanism that enacts trace-strengthening rather than blending (ICMR-Reinf) to reconcile retrieved-context theory with the observed non-interference.
+Across three diagnostics and two tasks, the same pattern recurs. When we remove list-composition artifacts with a matched, symmetric baseline, free recall does not show elevated cross-occurrence neighbor transitions, and the repeated item does not balance access to the two neighborhoods; instead, access is preferentially routed to the first occurrence's neighbors. In serial recall, the first occurrence's forward chain remains intact, with no detectable attraction to the second occurrence's neighbors. Standard CMR fits the classic benchmarks and the spacing function, but its item-based reinstatement produces a robust associative-interference signature that the data do not support.
+
+This motivates the mechanistic analysis that follows, which alters how contextual features are reinstated at study and at test—first by removing study-phase reinstatement (CMR-NoSPR), then by allowing occurrence-specific reinstatement at retrieval (Instance-CMR), and finally by rehabilitating study-phase retrieval as a mechanism that enacts trace-strengthening rather than blending (ICMR-Reinf) to reconcile retrieved-context theory with the observed non-interference.
 
 # Ablation Analysis: CMR without Study Phase Retrieval
 
@@ -1111,3 +1090,8 @@ In contrast, our results suggest that memory search in tasks like free and seria
 Instead of using item features to remember associated contextual details, memory search may rely on a positional or event-based contextual code that can separately index each occurrence of an item during encoding and later retrieve individual occurrences stored as distinct traces at test.
 A later mention of "the bakery down the street" can cue either visit, but it need not blend them.
 Memory search can route through one episode at a time, preserving what happened when, allowing repeated experience to strengthen access without sacrificing specificity.
+
+# References
+
+::: {#refs}
+:::
