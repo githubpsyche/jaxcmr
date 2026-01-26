@@ -265,7 +265,7 @@ $$ {#eq-4}
 
 This is the standard likelihood-based CMR learning rule, applied here with position codes in place of item identities.
 
-## Encoding Dynamics (Study)
+## Study Dynamics
 
 At study position $t$, the model uses the position code $f_t$ to probe $M^{FC}$ and produce a context input $c^{\text{IN}}_t = M^{FC} f_t$.
 Temporal context then integrates this input with the leaky, unit-length update rule
@@ -287,7 +287,7 @@ Because $c^{\text{IN}}_t$ is driven by position codes rather than item identity,
 The position code is what binds to context in memory, while the item label is recorded only for later report.
 After updating context, the model applies the $M^{FC}$ and $M^{CF}$ learning rules above and marks the current position as recallable.
 
-## Retrieval Dynamics (Recall)
+## Recall Dynamics
 
 At recall, the current context cue activates study positions through $M^{CF}$.
 Let $\mathcal{R}$ be the set of recallable positions and let $a_t = (M^{CF}c)_t$ denote the activation for position $t\in\mathcal{R}$.

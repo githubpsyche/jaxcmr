@@ -52,10 +52,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
 <script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -388,8 +388,8 @@ window.Quarto = {
   <li><a href="#instance-cmr-an-episode-specific-retrieved-context-account-of-memory-search" id="toc-instance-cmr-an-episode-specific-retrieved-context-account-of-memory-search" class="nav-link" data-scroll-target="#instance-cmr-an-episode-specific-retrieved-context-account-of-memory-search">Instance-CMR: An Episode-Specific Retrieved-Context Account of Memory Search</a>
   <ul class="collapse">
   <li><a href="#representations-and-memory-architecture" id="toc-representations-and-memory-architecture" class="nav-link" data-scroll-target="#representations-and-memory-architecture">Representations and Memory Architecture</a></li>
-  <li><a href="#encoding-dynamics-study" id="toc-encoding-dynamics-study" class="nav-link" data-scroll-target="#encoding-dynamics-study">Encoding Dynamics (Study)</a></li>
-  <li><a href="#retrieval-dynamics-recall" id="toc-retrieval-dynamics-recall" class="nav-link" data-scroll-target="#retrieval-dynamics-recall">Retrieval Dynamics (Recall)</a></li>
+  <li><a href="#study-dynamics" id="toc-study-dynamics" class="nav-link" data-scroll-target="#study-dynamics">Study Dynamics</a></li>
+  <li><a href="#recall-dynamics" id="toc-recall-dynamics" class="nav-link" data-scroll-target="#recall-dynamics">Recall Dynamics</a></li>
   <li><a href="#task-implementations-and-termination" id="toc-task-implementations-and-termination" class="nav-link" data-scroll-target="#task-implementations-and-termination">Task Implementations and Termination</a></li>
   <li><a href="#variants-and-extensions" id="toc-variants-and-extensions" class="nav-link" data-scroll-target="#variants-and-extensions">Variants and Extensions</a></li>
   </ul></li>
@@ -640,8 +640,8 @@ M^{CF}_{\text{pre}}(i,j) =
 \tag{4}\]</span></span></p>
 <p>This is the standard likelihood-based CMR learning rule, applied here with position codes in place of item identities.</p>
 </section>
-<section id="encoding-dynamics-study" class="level2">
-<h2 class="anchored" data-anchor-id="encoding-dynamics-study">Encoding Dynamics (Study)</h2>
+<section id="study-dynamics" class="level2">
+<h2 class="anchored" data-anchor-id="study-dynamics">Study Dynamics</h2>
 <p>At study position <span class="math inline">\(t\)</span>, the model uses the position code <span class="math inline">\(f_t\)</span> to probe <span class="math inline">\(M^{FC}\)</span> and produce a context input <span class="math inline">\(c^{\text{IN}}_t = M^{FC} f_t\)</span>. Temporal context then integrates this input with the leaky, unit-length update rule</p>
 <p><span id="eq-5"><span class="math display">\[
 c_t \;=\; \rho_t\,c_{t-1} \;+\; \beta_{\text{enc}}\,c^{\text{IN}}_t,
@@ -653,8 +653,8 @@ c_t \;=\; \rho_t\,c_{t-1} \;+\; \beta_{\text{enc}}\,c^{\text{IN}}_t,
 <p>as in the likelihood-based CMR implementation <span class="citation" data-cites="morton2016predictive">(<a href="#ref-morton2016predictive" role="doc-biblioref">Morton and Polyn 2016</a>)</span>. This preserves the CMR mechanism that binds each event to a gradually drifting context signal.</p>
 <p>Because <span class="math inline">\(c^{\text{IN}}_t\)</span> is driven by position codes rather than item identity, repeating an item does not reinstate the context from its earlier occurrence during study <span class="citation" data-cites="lohnas2014retrieved">(<a href="#ref-lohnas2014retrieved" role="doc-biblioref">Lohnas and Kahana 2014</a>)</span>. The position code is what binds to context in memory, while the item label is recorded only for later report. After updating context, the model applies the <span class="math inline">\(M^{FC}\)</span> and <span class="math inline">\(M^{CF}\)</span> learning rules above and marks the current position as recallable.</p>
 </section>
-<section id="retrieval-dynamics-recall" class="level2">
-<h2 class="anchored" data-anchor-id="retrieval-dynamics-recall">Retrieval Dynamics (Recall)</h2>
+<section id="recall-dynamics" class="level2">
+<h2 class="anchored" data-anchor-id="recall-dynamics">Recall Dynamics</h2>
 <p>At recall, the current context cue activates study positions through <span class="math inline">\(M^{CF}\)</span>. Let <span class="math inline">\(\mathcal{R}\)</span> be the set of recallable positions and let <span class="math inline">\(a_t = (M^{CF}c)_t\)</span> denote the activation for position <span class="math inline">\(t\in\mathcal{R}\)</span>. These activations are sharpened by the choice sensitivity parameter,</p>
 <p><span id="eq-7"><span class="math display">\[
 s_t \;=\; a_t^{\tau_c},
@@ -1349,7 +1349,7 @@ Figure&nbsp;25: Cross-occurrence forward errors in serial recall (data vs ICMR-R
 <h2 class="anchored" data-anchor-id="formal-comparison-across-datasets">Formal Comparison Across Datasets</h2>
 <p>We compared four variants under a common fitting and scoring pipeline (Methods): Standard CMR , ICMR-NoSPR , Instance-CMR, and ICMR-Reinf. ICMR-Reinf introduces one additional reinforcement parameter; all other pairwise comparisons are parameter-matched. Fit quality is reported as mean negative log-likelihood (−log L) across participants with bootstrapped 95% CIs over subjects. Where informative, we also report AIC model weights (AICw), which penalize parameter count.</p>
 <p>Across datasets, three patterns emerge. First, Instance-CMR substantially improves fit relative to Standard CMR in all datasets, with especially large gains in the serial-recall tasks <span class="citation" data-cites="logan2021serial kahana2000interresponse">(<a href="#ref-logan2021serial" role="doc-biblioref">Logan 2021</a>; <a href="#ref-kahana2000interresponse" role="doc-biblioref">Kahana and Jacobs 2000</a>)</span>. Second, adding study-phase reinforcement without contextual knitting (ICMR-Reinf) yields a further, reliable improvement in free recall (<span class="citation" data-cites="lohnas2014retrieved">Lohnas and Kahana (<a href="#ref-lohnas2014retrieved" role="doc-biblioref">2014</a>)</span>; <span class="citation" data-cites="broitman2024neural">Broitman and Kahana (<a href="#ref-broitman2024neural" role="doc-biblioref">2024</a>)</span>) despite its extra parameter, but brings no advantage over OS in serial recall. Third, ICMR-NoSPR improves over Standard CMR in free recall but is not sufficient on its own—consistent with the results sections above.</p>
-<div id="tbl-fit-fr" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-cap-location="top" data-tbl-colwidths="[0.30,0.35,0.35]">
+<div id="tbl-fit-fr" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[0.30,0.35,0.35]" data-tbl-cap-location="top">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fit-fr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;2: <strong>Free‑recall model fits (−log L; lower is better).</strong> Values are participant means ± bootstrapped 95% CIs (subjects).
@@ -1389,7 +1389,7 @@ Table&nbsp;2: <strong>Free‑recall model fits (−log L; lower is better).</s
 </div>
 </figure>
 </div>
-<div id="tbl-fit-sr" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-cap-location="top" data-tbl-colwidths="[0.30,0.35,0.35]">
+<div id="tbl-fit-sr" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[0.30,0.35,0.35]" data-tbl-cap-location="top">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fit-sr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;3: <strong>Serial‑recall model fits (−log L; lower is better).</strong> ICMR‑NoSPR was not evaluated for the serial‑recall datasets. Values are participant means ± bootstrapped 95% CIs (subjects).
@@ -2140,7 +2140,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","selector":".lightbox","loop":false,"descPosition":"bottom","openEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","loop":false,"openEffect":"zoom","selector":".lightbox","descPosition":"bottom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
