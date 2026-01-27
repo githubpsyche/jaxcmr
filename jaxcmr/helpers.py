@@ -18,6 +18,7 @@ __all__ = [
     "format_floats",
     "find_project_root",
     "generate_trial_mask",
+    "generate_recall_mask",
     "load_data",
     "limit_to_first_subjects",
     "save_dict_to_hdf5",
@@ -108,6 +109,21 @@ def generate_trial_mask(
     if trial_query is None:
         return jnp.ones(data["recalls"].shape[0], dtype=bool)
     return eval(trial_query).flatten()
+
+
+def generate_recall_mask(
+    data: RecallDataset, recall_query: Optional[str]
+) -> Bool[Array, " trial_count recall_events"]:
+    """Returns a boolean mask for selecting recall events based on a query condition.
+
+    Args:
+        data: dict containing trial data arrays, including a "recalls" key with an array.
+        recall_query: condition to evaluate, which should return a boolean array aligned
+            to recall events. If None, returns a mask that selects all recall events.
+    """
+    if recall_query is None:
+        return jnp.ones_like(data["recalls"], dtype=bool)
+    return jnp.asarray(eval(recall_query), dtype=bool)
 
 
 def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:
