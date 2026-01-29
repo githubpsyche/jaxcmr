@@ -57,17 +57,15 @@ __all__ = [
 from typing import Optional, Sequence
 
 import numpy as np
-from jax import jit, lax, vmap
+from jax import lax, vmap
 from jax import numpy as jnp
 from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
-from matplotlib.ticker import MaxNLocator
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_without_error_bars, set_plot_labels
+from ..plotting import init_plot, plot_ratio_data, set_plot_labels
 from ..repetition import all_study_positions
-from ..helpers import apply_by_subject
-from ..typing import Array, Bool, Float, Int_, Bool_, Integer, Real, RecallDataset
+from ..typing import Array, Bool, Float, Int_, Bool_, Integer, RecallDataset
 
 
 def set_false_at_index(
@@ -284,205 +282,6 @@ def crp(
     return actual.sum(0) / possible.sum(0)
 
 
-def _segment_by_nan(vector: jnp.ndarray) -> list[tuple[int, int]]:
-    """Return (start, end) segments split by NaN entries.
-
-    Args:
-        vector: Vector to segment.
-
-    Returns:
-        List of (start, end) index pairs.
-    """
-    segments: list[tuple[int, int]] = []
-    start_index = 0
-    for i in range(len(vector)):
-        if bool(jnp.isnan(vector[i])):
-            segments.append((start_index, i))
-            start_index = i + 1
-    if start_index < len(vector):
-        segments.append((start_index, len(vector)))
-    return segments
-
-
-def _hierarchical_bootstrap_means(
-    actual_by_trial: np.ndarray,
-    possible_by_trial: np.ndarray,
-    subject_ids: np.ndarray,
-    trial_mask: Bool[Array, " trial_count"],
-    n_resamples: int = 100,
-    confidence_level: float = 0.95,
-    rng: np.random.Generator | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return hierarchical bootstrap mean curves and confidence bounds.
-
-    Args:
-        actual_by_trial: Actual lag counts per trial (shape [trials, lags]).
-        possible_by_trial: Available lag counts per trial (shape [trials, lags]).
-        subject_ids: Subject id per trial (shape [trials]).
-        trial_mask: Boolean mask selecting trials to include.
-        n_resamples: Number of bootstrap resamples.
-        confidence_level: Confidence level for the bounds.
-        rng: Optional NumPy random generator.
-
-    Returns:
-        Tuple of (mean_curves, ci_low, ci_high), each shaped [lags].
-    """
-    if rng is None:
-        rng = np.random.default_rng()
-
-    trial_mask_np = np.asarray(trial_mask, dtype=bool)
-    trial_indices = np.nonzero(trial_mask_np)[0]
-    if trial_indices.size == 0:
-        raise ValueError("No trials selected by trial_mask.")
-
-    subject_ids = np.asarray(subject_ids).reshape(-1)[trial_mask_np]
-    actual_by_trial = np.asarray(actual_by_trial)[trial_mask_np]
-    possible_by_trial = np.asarray(possible_by_trial)[trial_mask_np]
-
-    unique_subjects = np.unique(subject_ids)
-    indices_by_subject: dict[int, np.ndarray] = {}
-    for subject in unique_subjects:
-        indices_by_subject[int(subject)] = np.nonzero(subject_ids == subject)[0]
-
-    boot_means: list[np.ndarray] = []
-    for _ in range(n_resamples):
-        sampled_subjects = rng.choice(unique_subjects, size=unique_subjects.size, replace=True)
-        actual_sum = np.zeros(actual_by_trial.shape[1], dtype=float)
-        possible_sum = np.zeros(possible_by_trial.shape[1], dtype=float)
-
-        for subject in sampled_subjects:
-            subject_indices = indices_by_subject[int(subject)]
-            resampled_indices = rng.choice(
-                subject_indices, size=subject_indices.size, replace=True
-            )
-            actual_sum += actual_by_trial[resampled_indices].sum(axis=0)
-            possible_sum += possible_by_trial[resampled_indices].sum(axis=0)
-
-        with np.errstate(divide="ignore", invalid="ignore"):
-            boot_means.append(actual_sum / possible_sum)
-
-    mean_curves = np.vstack(boot_means)
-    alpha = (1.0 - confidence_level) / 2.0
-    ci_low = np.nanpercentile(mean_curves, 100 * alpha, axis=0)
-    ci_high = np.nanpercentile(mean_curves, 100 * (1 - alpha), axis=0)
-    return np.nanmean(mean_curves, axis=0), ci_low, ci_high
-
-
-def _plot_with_error_bars(
-    axis: Axes,
-    x_values: Real[Array, " trial_count values"],
-    y_mean: Real[Array, " values"],
-    ci_low: Real[Array, " values"],
-    ci_high: Real[Array, " values"],
-    segments: list[tuple[int, int]],
-    label: str,
-    color: str,
-) -> None:
-    """Plot a line with hierarchical-bootstrap error bars.
-
-    Args:
-        axis: Axis to plot on.
-        x_values: X-axis values.
-        y_mean: Mean y values to plot.
-        ci_low: Lower confidence bound for y values.
-        ci_high: Upper confidence bound for y values.
-        segments: Segments splitting NaN regions.
-        label: Legend label for the line.
-        color: Line and error bar color.
-    """
-    y_mean = np.asarray(y_mean)
-    ci_low = np.asarray(ci_low)
-    ci_high = np.asarray(ci_high)
-    errors = np.vstack((y_mean - ci_low, ci_high - y_mean))
-
-    for index, (start, end) in enumerate(segments):
-        axis.errorbar(
-            x_values[start:end],
-            y_mean[start:end],
-            errors[:, start:end],
-            label=label if index == 0 else None,
-            color=color,
-            capsize=3,
-            marker="o",
-            markersize=5,
-            linewidth=1.5,
-        )
-
-
-def plot_data(
-    axis: Axes,
-    x_values: Real[Array, " trial_count values"],
-    y_values: Real[Array, " trial_count values"],
-    label: str,
-    color: str,
-    dataset: RecallDataset,
-    trial_mask: Bool[Array, " trial_count"],
-    size: int,
-    slice_start: int,
-    slice_end: int,
-) -> Axes:
-    """Plot mean curves with hierarchical-bootstrap error bars.
-
-    Args:
-        axis: Axis to plot on.
-        x_values: X-axis values.
-        y_values: Subject-level curves stacked by row.
-        label: Legend label for the line.
-        color: Line and error bar color.
-        dataset: Dataset used for bootstrap resampling.
-        trial_mask: Trial mask applied before bootstrapping.
-        size: Maximum number of study positions an item can occupy.
-        slice_start: Starting lag index (inclusive) to plot.
-        slice_end: Ending lag index (exclusive) to plot.
-    """
-    should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)
-    actual_by_trial, possible_by_trial = vmap(tabulate_trial, in_axes=(0, 0, 0, None))(
-        dataset["recalls"],
-        dataset["pres_itemnos"],
-        should_tabulate,
-        size,
-    )
-
-    trial_mask_np = np.asarray(trial_mask, dtype=bool)
-    actual_total = np.asarray(actual_by_trial)[trial_mask_np].sum(axis=0)
-    possible_total = np.asarray(possible_by_trial)[trial_mask_np].sum(axis=0)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        y_mean = actual_total / possible_total
-
-    y_mean = np.asarray(y_mean)[slice_start:slice_end]
-    segments = _segment_by_nan(jnp.asarray(y_mean))
-    subject_ids = np.asarray(dataset["subject"]).reshape(-1)
-    subject_count = np.unique(subject_ids[trial_mask_np]).size
-
-    if subject_count > 1:
-        _, ci_low, ci_high = _hierarchical_bootstrap_means(
-            actual_by_trial=actual_by_trial,
-            possible_by_trial=possible_by_trial,
-            subject_ids=subject_ids,
-            trial_mask=trial_mask,
-        )
-        ci_low = np.asarray(ci_low)[slice_start:slice_end]
-        ci_high = np.asarray(ci_high)[slice_start:slice_end]
-        _plot_with_error_bars(
-            axis,
-            x_values,
-            y_mean,
-            ci_low,
-            ci_high,
-            segments,
-            label,
-            color,
-        )
-    else:
-        plot_without_error_bars(axis, x_values, y_mean, segments, label, color)
-
-    x = jnp.asarray(x_values)
-    x = x[jnp.isfinite(x)]
-    if x.size and bool(jnp.allclose(x, jnp.round(x), atol=1e-9)):
-        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-    return axis
-
 def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
@@ -496,6 +295,10 @@ def plot_crp(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    ci_mode: str = "hierarchical",
+    n_resamples: int = 100,
+    confidence_level: float = 0.95,
+    rng: np.random.Generator | None = None,
 ) -> Axes:
     """
     Plot subject-wise Lag-CRP and their mean ± error.
@@ -511,6 +314,10 @@ def plot_crp(
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
         size: Maximum number of study positions an item can be presented at.
+        ci_mode: Bootstrap procedure for confidence intervals.
+        n_resamples: Number of bootstrap resamples.
+        confidence_level: Confidence level for the bounds.
+        rng: Optional NumPy random generator.
 
     Returns:
         Matplotlib Axes with the Lag-CRP plot.
@@ -519,6 +326,9 @@ def plot_crp(
         - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
         - `trial_masks` filters trials; lengths must match datasets.
         - Color cycle wraps if more datasets than colors.
+        - ``ci_mode`` accepts "omit", "subjectwise", "trialwise", or "hierarchical".
+        - When ``ci_mode`` is not "omit" and only one subject is present, the
+          confidence interval falls back to trialwise sampling.
     """
     axis = init_plot(axis)
 
@@ -543,33 +353,32 @@ def plot_crp(
         lag_range = (jnp.max(data["listLength"]) - 1).item()
         slice_start = lag_range - max_lag
         slice_end = lag_range + max_lag + 1
-        data_with_mask = {
-            **data,
-            "_should_tabulate": should_tabulate[data_index],
-        }
-        subject_values = apply_by_subject(
-            data_with_mask, # type: ignore
-            trial_masks[data_index],
-            jit(crp, static_argnames=("size")),
-            size=size,
+        actual_by_trial, possible_by_trial = vmap(
+            tabulate_trial, in_axes=(0, 0, 0, None)
+        )(
+            data["recalls"],
+            data["pres_itemnos"],
+            should_tabulate[data_index],
+            size,
         )
-        subject_values = jnp.vstack(subject_values)
-        subject_values = subject_values[
-            :, lag_range - max_lag : lag_range + max_lag + 1
-        ]
+        actual_by_trial = actual_by_trial[:, slice_start:slice_end]
+        possible_by_trial = possible_by_trial[:, slice_start:slice_end]
+        subject_ids = np.asarray(data["subject"]).reshape(-1)
 
         color = color_cycle.pop(0)
-        plot_data(
+        plot_ratio_data(
             axis,
             lag_interval,
-            subject_values,
+            actual_by_trial,
+            possible_by_trial,
+            subject_ids,
+            trial_masks[data_index],
             labels[data_index],
             color,
-            dataset=data_with_mask,
-            trial_mask=trial_masks[data_index],
-            size=size,
-            slice_start=slice_start,
-            slice_end=slice_end,
+            ci_mode=ci_mode,
+            n_resamples=n_resamples,
+            confidence_level=confidence_level,
+            rng=rng,
         )
 
     set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
