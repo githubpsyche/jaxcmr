@@ -48,7 +48,7 @@ Cue arrays are aligned to the corresponding recall arrays:
 
 The cue pairing rule is **one-to-one**: a cue can only be assigned to the **next**
 utterance that follows it (and is then consumed).
-
+ok 
 ## Summary lists of cues and foils (per trial)
 
 These are **not aligned to recall events**; they are just lists in row order:

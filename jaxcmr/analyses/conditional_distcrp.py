@@ -1,0 +1,284 @@
+"""Compute distance-binned conditional response probabilities with transition filtering.
+
+This module extends distcrp.py by adding support for a `should_tabulate` mask
+that controls which transitions are counted. This mirrors the conditional_crp.py
+pattern, allowing analyses to exclude specific transitions (e.g., cued recalls).
+
+When `should_tabulate[i]` is False for a recall:
+- State is still updated (availability, previous_item)
+- But the transition INTO that recall is NOT counted in actual/available tallies
+
+This preserves correct availability tracking while filtering out unwanted transitions.
+"""
+
+from __future__ import annotations
+
+__all__ = [
+    "DistanceTabulation",
+    "tabulate_trial",
+    "dist_crp",
+    "plot_dist_crp",
+]
+
+from typing import Optional, Sequence
+
+from jax import jit, lax, vmap
+from jax import numpy as jnp
+import numpy as np
+from matplotlib import rcParams  # type: ignore
+from matplotlib.axes import Axes
+from simple_pytree import Pytree
+
+from ..helpers import apply_by_subject
+from ..plotting import init_plot, plot_data, set_plot_labels
+from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
+from ..math import cosine_similarity_matrix
+
+from .distcrp import (
+    compute_distance_bins_percentiles,
+    compute_distance_bin_edges,
+    compute_min_count_distance_bins,
+    compute_distance_bins_min_count,
+    raw_candidate_transitions,
+)
+
+
+class DistanceTabulation(Pytree):
+    """Accumulates per-bin transition counts for a single trial with conditional tabulation.
+
+    This version adds `should_tabulate` support: when False, state is updated but
+    transition counts are not incremented.
+
+    Assumes:
+        - ``trial[0] > 0`` (first recall exists).
+        - ``presentation`` supplies item identifiers compatible with the global
+          ``distance_matrix``.
+        - Subsequent zeros in ``trial`` are padding and ignored.
+    """
+
+    def __init__(
+        self,
+        availability_mask: Bool[Array, " study_events"],
+        first_recall: Int_,
+        trial_distances: Float[Array, "study_events study_events"],
+        bin_edges: Float[Array, " edges"],
+    ):
+        bin_count = bin_edges.shape[0] + 1
+        self.bin_edges = bin_edges
+        self.trial_distances = trial_distances
+        self.actual_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
+        self.avail_transitions = jnp.zeros(bin_count, dtype=jnp.int32)
+        self.avail_items = availability_mask
+        self.avail_items = self.avail_items.at[first_recall - 1].set(False)
+        self.previous_item = first_recall
+
+    def _compute_transition_counts(
+        self, current_item: Int_
+    ) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
+        """Compute actual and available bin counts for a transition."""
+        distances_from_prev = self.trial_distances[self.previous_item - 1]
+        actual_distance = distances_from_prev[current_item - 1]
+        actual_bin = jnp.digitize(actual_distance, self.bin_edges)
+
+        present_bins = jnp.digitize(distances_from_prev, self.bin_edges)
+        bin_count = self.bin_edges.shape[0] + 1
+        masked_bins = jnp.where(self.avail_items, present_bins, bin_count)
+        bin_flags = jnp.zeros(bin_count + 1, dtype=jnp.int32).at[masked_bins].set(1)
+        bin_flags = bin_flags[:-1]
+
+        new_actual = self.actual_transitions.at[actual_bin].add(1)
+        new_avail = self.avail_transitions + bin_flags
+        return new_actual, new_avail
+
+    def tabulate(self, choice: Int_, should_tabulate: Bool_) -> "DistanceTabulation":
+        """Update state and optionally count the transition into this recall.
+
+        Args:
+            choice: The recalled item (study position, 1-indexed). Zero = padding.
+            should_tabulate: If True, count this transition. If False, only update state.
+        """
+
+        def _update_state() -> "DistanceTabulation":
+            new_previous_item = choice
+            new_avail_items = self.avail_items.at[choice - 1].set(False)
+
+            def _with_counts() -> "DistanceTabulation":
+                new_actual, new_avail = self._compute_transition_counts(choice)
+                return self.replace(
+                    previous_item=new_previous_item,
+                    avail_items=new_avail_items,
+                    actual_transitions=new_actual,
+                    avail_transitions=new_avail,
+                )
+
+            def _without_counts() -> "DistanceTabulation":
+                return self.replace(
+                    previous_item=new_previous_item,
+                    avail_items=new_avail_items,
+                )
+
+            return lax.cond(should_tabulate, _with_counts, _without_counts)
+
+        return lax.cond(choice > 0, _update_state, lambda: self)
+
+
+def tabulate_trial(
+    trial: Integer[Array, " recall_events"],
+    present_ids: Integer[Array, " study_item_ids"],
+    should_tabulate: Bool[Array, " recall_events"],
+    distance_matrix: Float[Array, " item_count item_count"],
+    bin_edges: Float[Array, " edges"],
+) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
+    """Return actual and available bin counts for a single trial.
+
+    Args:
+        trial: Sequence of recall events encoded as study positions.
+        present_ids: Item identifiers presented at each study position.
+        should_tabulate: Boolean mask aligned to recall events; True means count the
+            transition into that recall.
+        distance_matrix: Pairwise distances indexed by item identifier.
+        bin_edges: Interior bin edges shared across trials.
+    """
+    valid = present_ids > 0
+    remapped = jnp.where(valid, present_ids - 1, 0)
+    trial_distances = distance_matrix[remapped[:, None], remapped[None, :]]
+    trial_distances = jnp.where(valid[:, None] & valid[None, :], trial_distances, 0.0)
+
+    init = DistanceTabulation(
+        availability_mask=valid,
+        first_recall=trial[0],
+        trial_distances=trial_distances,
+        bin_edges=bin_edges,
+    )
+
+    def step(tab: DistanceTabulation, idx: Int_) -> tuple[DistanceTabulation, None]:
+        return tab.tabulate(trial[idx], should_tabulate[idx]), None
+
+    result, _ = lax.scan(step, init, jnp.arange(1, trial.size))
+    return result.actual_transitions, result.avail_transitions
+
+
+def dist_crp(
+    dataset: RecallDataset,
+    distance_matrix: Float[Array, " item_count item_count"],
+    bin_edges: Float[Array, " edges"],
+) -> Float[Array, " bins"]:
+    """Return the distance-conditioned response probability with conditional tabulation.
+
+    Args:
+        dataset: Recall dataset containing ``recalls``, ``pres_itemids``, and
+            ``_should_tabulate`` (boolean mask aligned to recall events).
+        distance_matrix: Pairwise item distances.
+        bin_edges: Interior boundaries for distance bins.
+    """
+    should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)
+
+    actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, None, None))(
+        dataset["recalls"],
+        dataset["pres_itemids"],
+        should_tabulate,
+        distance_matrix,
+        bin_edges,
+    )
+    return actual.sum(0) / possible.sum(0)
+
+
+def plot_dist_crp(
+    datasets: Sequence[RecallDataset] | RecallDataset,
+    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    should_tabulate: (
+        Sequence[Bool[Array, " trial_count recall_events"]]
+        | Bool[Array, " trial_count recall_events"]
+    ),
+    features: Float[Array, "word_count features_count"],
+    color_cycle: Optional[list[str]] = None,
+    labels: Optional[Sequence[str]] = None,
+    contrast_name: Optional[str] = None,
+    axis: Optional[Axes] = None,
+    min_transitions_per_subject: int = 10,
+    bin_step: float = 0.05,
+    bin_source_index: int = 0,
+    bin_edges: Optional[Float[Array, " edges"]] = None,
+    bin_centers: Optional[Float[Array, " bins"]] = None,
+) -> Axes:
+    """Plot distance-binned CRP curves with conditional tabulation.
+
+    Args:
+        datasets: Collection of recall datasets to contrast.
+        trial_masks: Boolean masks selecting trials per dataset.
+        should_tabulate: Boolean masks aligned to recall events, one per dataset,
+            indicating which transitions to include in tabulation.
+        features: Feature matrix whose rows align with the vocabulary items.
+        color_cycle: Colors used for successive datasets.
+        labels: Legend labels corresponding to ``datasets``.
+        contrast_name: Optional legend title.
+        axis: Optional matplotlib axis to draw on.
+        min_transitions_per_subject: Minimum number of available transitions per
+            bin, averaged across subjects, used when defining distance bins.
+        bin_step: Distance increment applied while expanding each bin.
+        bin_source_index: Index selecting which dataset provides the binning
+            availability counts.
+        bin_edges: Interior bin edges supplied by caller.
+        bin_centers: Optional centers matching ``bin_edges``.
+    """
+    axis = init_plot(axis)
+    if color_cycle is None:
+        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+
+    if labels is None:
+        labels = [""] * len(datasets)
+
+    if isinstance(datasets, dict):
+        datasets = [datasets]
+
+    if isinstance(trial_masks, jnp.ndarray):
+        trial_masks = [trial_masks]
+
+    if not isinstance(should_tabulate, Sequence):
+        should_tabulate = [jnp.array(should_tabulate)]
+
+    distances = 1 - cosine_similarity_matrix(features)
+
+    if bin_edges is None:
+        bin_edges, bin_centers = compute_distance_bins_min_count(
+            datasets[bin_source_index],
+            distances,
+            min_transitions_per_subject=min_transitions_per_subject,
+            step=bin_step,
+            trial_mask=trial_masks[bin_source_index],
+        )
+    elif bin_centers is None:
+        min_distance = jnp.min(distances)
+        max_distance = jnp.max(distances)
+        full_edges = jnp.concatenate(
+            (min_distance[None], bin_edges, max_distance[None])
+        )
+        bin_centers = 0.5 * (full_edges[:-1] + full_edges[1:])
+
+    for data_index, data in enumerate(datasets):
+        data_with_mask = {
+            **data,
+            "_should_tabulate": should_tabulate[data_index],
+        }
+        subject_values = apply_by_subject(
+            data_with_mask,
+            trial_masks[data_index],
+            jit(dist_crp),
+            distances,
+            bin_edges,
+        )
+        subject_values = jnp.vstack(subject_values)
+
+        color = color_cycle.pop(0)
+        plot_data(
+            axis,
+            bin_centers,
+            subject_values,
+            labels[data_index],
+            color,
+        )
+
+    set_plot_labels(
+        axis, "Semantic Distance (bin center)", "Conditional Resp. Prob.", contrast_name
+    )
+    return axis
