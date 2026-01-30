@@ -251,6 +251,8 @@ def plot_rep_crp(
 
     for data_index, data in enumerate(datasets):
         trial_mask = trial_masks[data_index].reshape(-1)
+        if not bool(jnp.any(trial_mask)):
+            raise ValueError("No trials selected by trial_mask.")
         lag_range = int(jnp.max(data["listLength"][trial_mask])) - 1
         subject_values = apply_by_subject(
             data,
@@ -260,16 +262,17 @@ def plot_rep_crp(
             size,
         )
 
-        for repetition_index in repetition_indices:
-            rep_mat = jnp.vstack(
+        for rep_idx, repetition_index in enumerate(repetition_indices):
+            repetition_subject_values = jnp.vstack(
                 [each[repetition_index] for each in subject_values]
-            )#[:, lag_range - max_lag : lag_range + max_lag + 1]
-            repetition_subject_values = rep_mat[:, lag_range + lower_bound: lag_range + max_lag + 1]
+            )[:, lag_range + lower_bound : lag_range + max_lag + 1]
 
-            if len(datasets) == 1:
-                label = labels_list[repetition_index] or str(repetition_index + 1)
-            else:
-                label = labels_list[data_index] or str(repetition_index + 1)
+            label = (
+                labels_list[repetition_index]
+                if len(datasets) == 1 and repetition_index < len(labels_list)
+                else str(repetition_index + 1)
+            )
+            color_idx = data_index * len(repetition_indices) + rep_idx
             color = color_cycle[color_idx % len(color_cycle)]
             plot_data(
                 axis,
