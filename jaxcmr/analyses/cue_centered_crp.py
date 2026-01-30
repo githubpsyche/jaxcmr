@@ -11,13 +11,12 @@ from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_data, set_plot_labels
-from ..repetition import item_to_study_positions
 from ..helpers import apply_by_subject
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from ..repetition import item_to_study_positions
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
 
 __all__ = [
@@ -118,9 +117,7 @@ class CueCenteredTabulation(Pytree):
             return lax.cond(
                 (cue_pos * recall_pos) == 0,
                 lambda: self.base_lags,
-                lambda: self.base_lags.at[
-                    recall_pos - cue_pos + self.lag_range
-                ].add(1),
+                lambda: self.base_lags.at[recall_pos - cue_pos + self.lag_range].add(1),
             )
 
         return lax.map(f, recall_positions).sum(0).astype(bool)
@@ -133,7 +130,9 @@ class CueCenteredTabulation(Pytree):
         """Tabulate cue-centered lags for the current recall."""
         recall_positions = self.item_positions(recall)
         new_lags = (
-            lax.map(lambda pos: self.lags_from_cue(pos, recall_positions), cue_positions)
+            lax.map(
+                lambda pos: self.lags_from_cue(pos, recall_positions), cue_positions
+            )
             .sum(0)
             .astype(bool)
         )
@@ -144,9 +143,9 @@ class CueCenteredTabulation(Pytree):
         return lax.cond(
             cue_pos == 0,
             lambda: self.base_lags,
-            lambda: self.base_lags.at[self.all_positions - cue_pos + self.lag_range].add(
-                self.avail_recalls
-            ),
+            lambda: self.base_lags.at[
+                self.all_positions - cue_pos + self.lag_range
+            ].add(self.avail_recalls),
         )
 
     def tabulate_available_lags(
@@ -158,7 +157,9 @@ class CueCenteredTabulation(Pytree):
         )
         return self.avail_lags + new_lags
 
-    def tabulate(self, recall: Int_, cue: Int_, should_tabulate: Bool_) -> "CueCenteredTabulation":
+    def tabulate(
+        self, recall: Int_, cue: Int_, should_tabulate: Bool_
+    ) -> "CueCenteredTabulation":
         """Update state and optionally count the cue-centered transition."""
 
         def _update_state() -> "CueCenteredTabulation":
@@ -246,6 +247,7 @@ def plot_cue_centered_crp(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plot cue-centered Lag-CRP curves.
 
@@ -260,23 +262,17 @@ def plot_cue_centered_crp(
         contrast_name: Legend title for contrasts.
         axis: Existing Matplotlib axis to plot on.
         size: Maximum number of study positions an item can be presented at.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
 
-    if not isinstance(datasets, Sequence):
-        datasets = [datasets]
-
     if not isinstance(should_tabulate, Sequence):
         should_tabulate = [jnp.array(should_tabulate)]
-
-    if not isinstance(trial_masks, Sequence):
-        trial_masks = [jnp.array(trial_masks)]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
@@ -301,13 +297,14 @@ def plot_cue_centered_crp(
             center_index = max_lag
             subject_values = subject_values.at[:, center_index].set(jnp.nan)
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(axis, "Cue-Centered Lag", "Conditional Resp. Prob.", contrast_name)

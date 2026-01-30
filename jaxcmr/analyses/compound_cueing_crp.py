@@ -58,13 +58,12 @@ from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_data, set_plot_labels
-from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
+from ..plotting import prepare_plot_inputs
+from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
@@ -325,19 +324,12 @@ def plot_compound_cueing(
         - Error bars show standard error of the mean across subjects.
         - ICMR predicts pure > mixed; CMR predicts mixed >= pure.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-
-    if not isinstance(datasets, Sequence):
-        datasets = [datasets]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-    if not isinstance(trial_masks, Sequence):
-        trial_masks = [jnp.array(trial_masks)]
 
     x_labels = ["Pure\n{i-2, i-1}", "Mixed\n{j-2, i-1}"]
     x_positions = jnp.array([0, 1])

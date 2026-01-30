@@ -9,11 +9,10 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
 from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
@@ -71,6 +70,7 @@ def plot_srac(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plot serial recall accuracy curves for one or more datasets.
 
@@ -82,20 +82,14 @@ def plot_srac(
       contrast_name: Name of the contrast used in labeling.
       axis: Existing Matplotlib axes to draw on.
       size: Maximum number of study positions an item may occupy.
+      confidence_level: Confidence level for the bounds.
 
     Returns:
       The Matplotlib axes containing the plot.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [c["color"] for c in rcParams["axes.prop_cycle"]]
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = ["" for _ in datasets]
@@ -113,10 +107,18 @@ def plot_srac(
             )
         )
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
+        xvals = jnp.arange(max_list_length) + 1
         subject_values = subject_values[:, :max_list_length]
         xvals = jnp.arange(max_list_length) + 1
-        plot_data(axis, xvals, subject_values, labels[data_index], color)
+        plot_data(
+            axis,
+            xvals,
+            subject_values,
+            labels[data_index],
+            color,
+            confidence_level=confidence_level,
+        )
 
     set_plot_labels(axis, "Study Position", "Serial Recall Accuracy", contrast_name)
     return axis

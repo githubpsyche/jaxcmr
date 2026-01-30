@@ -24,23 +24,14 @@ from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-import numpy as np
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
-from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
 from ..math import cosine_similarity_matrix
-
-from .distcrp import (
-    compute_distance_bins_percentiles,
-    compute_distance_bin_edges,
-    compute_min_count_distance_bins,
-    compute_distance_bins_min_count,
-    raw_candidate_transitions,
-)
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
+from .distcrp import compute_distance_bins_min_count
 
 
 class DistanceTabulation(Pytree):
@@ -200,6 +191,7 @@ def plot_dist_crp(
     bin_source_index: int = 0,
     bin_edges: Optional[Float[Array, " edges"]] = None,
     bin_centers: Optional[Float[Array, " bins"]] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plot distance-binned CRP curves with conditional tabulation.
 
@@ -220,19 +212,14 @@ def plot_dist_crp(
             availability counts.
         bin_edges: Interior bin edges supplied by caller.
         bin_centers: Optional centers matching ``bin_edges``.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
 
     if not isinstance(should_tabulate, Sequence):
         should_tabulate = [jnp.array(should_tabulate)]
@@ -269,13 +256,14 @@ def plot_dist_crp(
         )
         subject_values = jnp.vstack(subject_values)
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             bin_centers,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(

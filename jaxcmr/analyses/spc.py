@@ -10,11 +10,10 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
 from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
@@ -64,6 +63,7 @@ def plot_spc(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Matplotlib ``Axes`` with serial position curves for datasets.
 
@@ -75,20 +75,14 @@ def plot_spc(
         contrast_name: Legend title for contrasts.
         axis: Existing Matplotlib ``Axes`` to plot on.
         size: Maximum number of study positions an item can be presented at.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
@@ -108,6 +102,7 @@ def plot_spc(
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)

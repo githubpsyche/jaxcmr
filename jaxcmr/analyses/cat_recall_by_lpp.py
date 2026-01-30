@@ -7,11 +7,9 @@ from typing import Optional, Sequence
 import jax.numpy as jnp
 from jax import jit, vmap
 from jax.nn import one_hot
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = [
@@ -113,6 +111,7 @@ def plot_cat_recall_by_lpp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Matplotlib ``Axes`` with category-filtered LPP-binned recall curves.
 
@@ -128,21 +127,15 @@ def plot_cat_recall_by_lpp(
       labels: Labels per dataset or category. Assumed per-category if multiple values provided.
       contrast_name: Legend title for contrasts.
       axis: Existing Matplotlib ``Axes`` to plot on.
+      confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         size = len(category_values) if len(category_values) > 1 else len(datasets)
         labels = [""] * size
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks] * len(datasets)
 
     if bin_edges is None:
         minima = []
@@ -188,6 +181,7 @@ def plot_cat_recall_by_lpp(
                 subject_values,
                 labels[label_index] if len(category_values) > 1 else labels[data_index],
                 color,
+                confidence_level=confidence_level,
             )
 
     set_plot_labels(axis, f"{lpp_field} (uV)", "Recall Rate", contrast_name)

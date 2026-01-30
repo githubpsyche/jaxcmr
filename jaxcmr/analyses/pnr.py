@@ -19,13 +19,12 @@ __all__ = [
 from typing import Optional, Sequence
 
 import jax.numpy as jnp
-from jax import jit, vmap, lax
-from matplotlib import rcParams  # type: ignore
+from jax import jit, lax, vmap
 from matplotlib.axes import Axes
 
-from ..plotting import init_plot, plot_data, set_plot_labels
-from ..repetition import all_study_positions
 from ..helpers import apply_by_subject, find_max_list_length
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
@@ -118,7 +117,7 @@ def conditional_fixed_pres_pnr(
 
     numerator = actual.sum(axis=0)  # times each pos was the nth recall
     denominator = available.sum(axis=0)  # times each pos was available
-    return numerator/denominator
+    return numerator / denominator
 
 
 def pnr(
@@ -227,6 +226,7 @@ def conditional_pnr_with_repeats(
     denominator = available.sum(axis=0)
     return numerator / denominator
 
+
 def plot_pnr(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
@@ -236,6 +236,7 @@ def plot_pnr(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Axes object with plotted probability of nth recall for given datasets and trial masks.
 
@@ -248,25 +249,16 @@ def plot_pnr(
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
         size: Maximum number of study positions an item can be presented at.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
     if labels is None:
         labels = [""] * len(datasets)
 
-    # Convert single dict or single mask to list
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
-    # Determine x-axis length
     max_list_length = find_max_list_length(datasets, trial_masks)
 
-    # For each dataset, apply the pnr function by subject, gather results, and plot
     for data_index, data in enumerate(datasets):
         subject_values = jnp.vstack(
             apply_by_subject(
@@ -281,13 +273,14 @@ def plot_pnr(
             )
         )
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             jnp.arange(max_list_length, dtype=int) + 1,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(axis, "Study Position", "Probability of Nth Recall", contrast_name)

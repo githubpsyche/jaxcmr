@@ -6,11 +6,10 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..helpers import find_max_list_length
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = ["category_recall_counts", "cat_spc", "plot_cat_spc"]
@@ -49,7 +48,7 @@ def fixed_pres_cat_spc(
 
     numerator = recall_counts.sum(axis=0)
     denominator = jnp.sum(categories == category_value, axis=0)
-    return numerator/denominator
+    return numerator / denominator
 
 
 def cat_spc(
@@ -80,6 +79,7 @@ def plot_cat_spc(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Matplotlib ``Axes`` with category-filtered SPC curves.
 
@@ -92,21 +92,16 @@ def plot_cat_spc(
         labels: Labels per dataset or category. Assumed per-category if multiple values provided.
         contrast_name: Legend title for contrasts.
         axis: Existing Matplotlib ``Axes`` to plot on.
-    """
-    axis = init_plot(axis)
+        confidence_level: Confidence level for the bounds.
 
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    """
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         size = len(category_values) if len(category_values) > 1 else len(datasets)
         labels = [""] * size
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks] * len(datasets)
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
@@ -121,7 +116,8 @@ def plot_cat_spc(
                 )
             )
 
-            color = color_cycle.pop(0)
+            color_idx = data_index * len(category_values) + label_index
+            color = color_cycle[color_idx % len(color_cycle)]
             plot_data(
                 axis,
                 jnp.arange(max_list_length, dtype=int) + 1,

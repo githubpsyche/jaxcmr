@@ -51,12 +51,11 @@ from typing import Optional, Sequence
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from scipy import stats
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
@@ -219,6 +218,7 @@ def plot_rep_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Axes object with plotted prob of repetition lag-crp for datasets and trial masks.
 
@@ -229,25 +229,15 @@ def plot_rep_crp(
         min_lag: Minimum amount of study positions between two presentations of an item.
         size: Maximum number of study positions an item can be presented at.
         color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
+        labels: Labels for repetition-index lines when plotting a single dataset.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
+        confidence_level: Confidence level for the bounds.
     """
-
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-
-    if labels is None:
-        labels = [""] * len(datasets)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
+    labels_list = list(labels) if labels is not None else []
     if isinstance(repetition_index, int):
         repetition_indices = [repetition_index]
     else:
@@ -265,18 +255,25 @@ def plot_rep_crp(
             size,
         )
 
-        for repetition_index in repetition_indices:
+        for rep_idx, repetition_index in enumerate(repetition_indices):
             repetition_subject_values = jnp.vstack(
                 [each[repetition_index] for each in subject_values]
             )[:, lag_range - max_lag : lag_range + max_lag + 1]
 
-            color = color_cycle.pop(0)
+            label = (
+                labels_list[repetition_index]
+                if len(datasets) == 1 and repetition_index < len(labels_list)
+                else str(repetition_index + 1)
+            )
+            color_idx = data_index * len(repetition_indices) + rep_idx
+            color = color_cycle[color_idx % len(color_cycle)]
             plot_data(
                 axis,
                 lag_interval,
                 repetition_subject_values,
-                str(repetition_index + 1),
+                label,
                 color,
+                confidence_level=confidence_level,
             )
 
     set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
@@ -293,6 +290,7 @@ def plot_difference_rep_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Axes object with plotted prob of repetition lag-crp for datasets and trial masks.
 
@@ -306,21 +304,16 @@ def plot_difference_rep_crp(
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
+        confidence_level: Confidence level for the bounds.
     """
 
-    axis = init_plot(axis)
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
 
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
     if labels is None:
         labels = [""] * len(datasets)
 
-    if isinstance(datasets, dict):
-        datasets = [datasets]
 
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
@@ -344,13 +337,15 @@ def plot_difference_rep_crp(
             [each[repetition_index] for each in subject_values]
         )[:, lag_range - max_lag : lag_range + max_lag + 1]
 
-        color = color_cycle.pop(0)
+
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             lag_interval,
             repetition_subject_values,
             str(repetition_index + 1),
             color,
+        confidence_level=confidence_level  
         )
 
     set_plot_labels(axis, "Lag", "Diff. Conditional Resp. Prob.", contrast_name)
@@ -367,6 +362,7 @@ def plot_first_rep_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     "Convenience function to plot first repetition CRP."
     return plot_rep_crp(
@@ -380,6 +376,7 @@ def plot_first_rep_crp(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+        confidence_level=confidence_level,
     )
 
 
@@ -393,6 +390,7 @@ def plot_second_rep_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     "Convenience function to plot second repetition CRP."
     return plot_rep_crp(
@@ -406,6 +404,7 @@ def plot_second_rep_crp(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+        confidence_level=confidence_level,
     )
 
 

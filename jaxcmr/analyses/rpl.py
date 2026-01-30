@@ -12,12 +12,11 @@ from typing import Optional, Sequence
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from scipy import stats
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..repetition import item_to_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
@@ -154,6 +153,7 @@ def plot_full_rpl(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Return ``Axes`` with repetition-lag curves for each dataset and mask.
 
@@ -164,21 +164,13 @@ def plot_full_rpl(
         labels: Names for each dataset for the legend.
         contrast_name: Legend title for the plotted contrast.
         axis: Existing Matplotlib axes to plot on.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
     if labels is None:
         labels = [""] * len(datasets)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
     max_lag = infer_max_lag(
         datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
     )
@@ -192,14 +184,14 @@ def plot_full_rpl(
                 max_lag,
             )
         )
-
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             jnp.arange(len(xticklabels)),
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     axis.set_xticks(range(len(xticklabels)))
@@ -215,6 +207,7 @@ def plot_rpl(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Return ``Axes`` with binned repetition-lag curves for each dataset and mask.
 
@@ -225,21 +218,13 @@ def plot_rpl(
         labels: Names for each dataset for the legend.
         contrast_name: Legend title for the plotted contrast.
         axis: Existing Matplotlib axes to plot on.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
     if labels is None:
         labels = [""] * len(datasets)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
     max_lag = infer_max_lag(
         datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
     )
@@ -253,20 +238,21 @@ def plot_rpl(
                 max_lag,
             )
         )
-
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             jnp.arange(5),
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     axis.set_xticks(range(len(xticklabels)))
     axis.set_xticklabels(xticklabels)
     set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
     return axis
+
 
 _BINNED_LAG_VALUES = np.array([0.0, 1.5, 4.0, 7.0])
 

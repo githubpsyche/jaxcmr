@@ -10,11 +10,10 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = ["corec_by_lag", "plot_corec_by_lag"]
@@ -80,6 +79,7 @@ def plot_corec_by_lag(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Matplotlib ``Axes`` with co-recall curves for each dataset.
 
@@ -91,15 +91,12 @@ def plot_corec_by_lag(
       labels: Legend labels for each dataset.
       contrast_name: Legend title for contrasts.
       axis: Existing Matplotlib ``Axes`` to plot on.
+      confidence_level: Confidence level for the bounds.
     """
 
-    axis = init_plot(axis)
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
-    if not isinstance(datasets, Sequence):
-        datasets = [datasets]
-    if not isinstance(trial_masks, Sequence):
-        trial_masks = [jnp.array(trial_masks)]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
     if labels is None:
         labels = [""] * len(datasets)
 
@@ -107,7 +104,6 @@ def plot_corec_by_lag(
         lag_count = data["pres_itemnos"].shape[1] - 1
         lag_limit = lag_count if max_lag is None else min(max_lag, lag_count)
         lag_axis = jnp.arange(1, lag_limit + 1, dtype=int)
-
         subject_values = jnp.vstack(
             apply_by_subject(
                 data,
@@ -117,13 +113,14 @@ def plot_corec_by_lag(
         )
         subject_values = subject_values[:, :lag_limit]
 
-        color = color_cycle.pop(0)
+        color = color_cycle[index % len(color_cycle)]
         plot_data(
             axis,
             lag_axis,
             subject_values,
             labels[index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(axis, "Lag", "Co-Recall Probability", contrast_name)

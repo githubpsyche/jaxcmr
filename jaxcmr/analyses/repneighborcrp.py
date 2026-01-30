@@ -34,13 +34,12 @@ from typing import Literal, Optional, Sequence
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from scipy import stats
 from simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
@@ -279,6 +278,8 @@ def plot_rep_neighbor_crp(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
+
 ) -> Axes:
     """Return Axes with plotted lag-CRP probabilities for datasets and trial masks.
 
@@ -293,20 +294,16 @@ def plot_rep_neighbor_crp(
         labels: Names for each dataset for legend.
         contrast_name: Name of contrast for legend labeling.
         axis: Existing Matplotlib ``Axes`` to plot on.
-    """
-    axis = init_plot(axis)
+        confidence_level: Confidence level for the bounds.
 
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    """
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
+
 
     if labels is None:
         labels = [""] * len(datasets)
 
-    if isinstance(datasets, dict):
-        datasets = [datasets]
 
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
@@ -327,13 +324,15 @@ def plot_rep_neighbor_crp(
             :, lag_range - max_lag : lag_range + max_lag + 1
         ]
 
-        color = color_cycle.pop(0)
+
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     # build a dynamic x-axis label
@@ -358,6 +357,7 @@ def plot_repneighborcrp_j2i(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for j-neighbor → i transitions."""
     return plot_rep_neighbor_crp(
@@ -371,6 +371,7 @@ def plot_repneighborcrp_j2i(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+        confidence_level=confidence_level,
     )
 
 
@@ -383,6 +384,7 @@ def plot_repneighborcrp_i2j(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for i-neighbor → j transitions."""
     return plot_rep_neighbor_crp(
@@ -396,6 +398,7 @@ def plot_repneighborcrp_i2j(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+        confidence_level=confidence_level,
     )
 
 
@@ -408,6 +411,7 @@ def plot_repneighborcrp_both(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for both j-neighbor → i and i-neighbor → j transitions."""
     return plot_rep_neighbor_crp(
@@ -421,6 +425,7 @@ def plot_repneighborcrp_both(
         labels=labels,
         contrast_name=contrast_name,
         axis=axis,
+        confidence_level=confidence_level,
     )
 
 

@@ -11,12 +11,11 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit, lax, vmap
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..helpers import find_max_list_length
+from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
@@ -124,6 +123,8 @@ def plot_relative_srac(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
+    confidence_level: float = 0.95,
+
 ) -> Axes:
     """Returns axis with plotted relative serial recall accuracy curve.
 
@@ -135,20 +136,15 @@ def plot_relative_srac(
         contrast_name: Name of contrast for labeling.
         axis: Pre-existing axis to plot on.
         size: Maximum number of study positions an item may occupy.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
 
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
     if labels is None:
         labels = [""] * len(datasets)
 
-    if isinstance(datasets, dict):
-        datasets = [datasets]
 
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
@@ -161,13 +157,14 @@ def plot_relative_srac(
             )
         )
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             jnp.arange(max_list_length, dtype=int) + 1,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level,
         )
 
     set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)

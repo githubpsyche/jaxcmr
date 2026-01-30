@@ -56,16 +56,15 @@ __all__ = [
 
 from typing import Optional, Sequence
 
-import numpy as np
-from jax import lax, vmap
+from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_ratio_data, set_plot_labels
+from ..helpers import apply_by_subject
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..repetition import all_study_positions
-from ..typing import Array, Bool, Float, Int_, Bool_, Integer, RecallDataset
+from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
 
 
 def set_false_at_index(
@@ -271,7 +270,7 @@ def crp(
     Returns:
         [2*L - 1] floats; NaN where denominator is zero.
     """
-    should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool) # type: ignore
+    should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)  # type: ignore
 
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, None))(
         dataset["recalls"],
@@ -285,20 +284,13 @@ def crp(
 def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    should_tabulate: (
-        Sequence[Bool[Array, " trial_count recall_events"]]
-        | Bool[Array, " trial_count recall_events"]
-    ),
     max_lag: int = 4,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
     size: int = 3,
-    ci_mode: str = "hierarchical",
-    n_resamples: int = 100,
     confidence_level: float = 0.95,
-    rng: np.random.Generator | None = None,
 ) -> Axes:
     """
     Plot subject-wise Lag-CRP and their mean ± error.
@@ -306,18 +298,13 @@ def plot_crp(
     Args:
         datasets: Datasets containing trial data to be plotted.
         trial_masks: Masks to filter trials in datasets.
-        should_tabulate: Boolean masks aligned to recall events, one per dataset,
-            indicating which transitions to include in tabulation.
         max_lag: Maximum lag to plot.
         color_cycle: List of colors for plotting each dataset.
         labels: Names for each dataset for legend, optional.
         contrast_name: Name of contrast for legend labeling, optional.
         axis: Existing matplotlib Axes to plot on, optional.
         size: Maximum number of study positions an item can be presented at.
-        ci_mode: Bootstrap procedure for confidence intervals.
-        n_resamples: Number of bootstrap resamples.
         confidence_level: Confidence level for the bounds.
-        rng: Optional NumPy random generator.
 
     Returns:
         Matplotlib Axes with the Lag-CRP plot.
@@ -330,55 +317,35 @@ def plot_crp(
         - When ``ci_mode`` is not "omit" and only one subject is present, the
           confidence interval falls back to trialwise sampling.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-    if not isinstance(datasets, Sequence):
-        datasets = [datasets]
-
-    if not isinstance(should_tabulate, Sequence):
-        should_tabulate = [jnp.array(should_tabulate)]
-
-    if not isinstance(trial_masks, Sequence):
-        trial_masks = [jnp.array(trial_masks)]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
     for data_index, data in enumerate(datasets):
         lag_range = (jnp.max(data["listLength"]) - 1).item()
-        slice_start = lag_range - max_lag
-        slice_end = lag_range + max_lag + 1
-        actual_by_trial, possible_by_trial = vmap(
-            tabulate_trial, in_axes=(0, 0, 0, None)
-        )(
-            data["recalls"],
-            data["pres_itemnos"],
-            should_tabulate[data_index],
-            size,
+        subject_values = apply_by_subject(
+            data,
+            trial_masks[data_index],
+            jit(crp, static_argnames=("size")),
+            size=size,
         )
-        actual_by_trial = actual_by_trial[:, slice_start:slice_end]
-        possible_by_trial = possible_by_trial[:, slice_start:slice_end]
-        subject_ids = np.asarray(data["subject"]).reshape(-1)
-
-        color = color_cycle.pop(0)
-        plot_ratio_data(
+        subject_values = jnp.vstack(subject_values)
+        subject_values = subject_values[
+            :, lag_range - max_lag : lag_range + max_lag + 1
+        ]
+        color = color_cycle[data_index % len(color_cycle)]
+        plot_data(
             axis,
             lag_interval,
-            actual_by_trial,
-            possible_by_trial,
-            subject_ids,
-            trial_masks[data_index],
+            subject_values,
             labels[data_index],
             color,
-            ci_mode=ci_mode,
-            n_resamples=n_resamples,
             confidence_level=confidence_level,
-            rng=rng,
         )
 
     set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)

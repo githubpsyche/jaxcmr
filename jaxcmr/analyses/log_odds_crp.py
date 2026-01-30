@@ -24,13 +24,13 @@ from typing import Optional, Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..helpers import apply_by_subject
+
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
@@ -316,6 +316,8 @@ def plot_log_odds_crp(
     reference_lag: int = 10,
     epsilon: float = 1e-6,
     size: int = 3,
+    confidence_level: float = 0.95,
+
 ) -> Axes:
     """
     Plot subject-wise Lag-CRP log-odds and their mean ± error.
@@ -331,6 +333,8 @@ def plot_log_odds_crp(
         reference_lag: Lag that defines the zero log-odds baseline.
         epsilon: Probability clamp used inside the logit transform.
         size: Maximum number of study positions an item can be presented at.
+        confidence_level: Confidence level for the bounds.
+
 
     Returns:
         Matplotlib Axes with the Lag-CRP plot.
@@ -340,19 +344,13 @@ def plot_log_odds_crp(
         - `trial_masks` filters trials; lengths must match datasets.
         - Color cycle wraps if more datasets than colors.
     """
-    axis = init_plot(axis)
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
 
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
 
     if labels is None:
         labels = [""] * len(datasets)
 
-    if not isinstance(datasets, Sequence):
-        datasets = [datasets]
 
-    if not isinstance(trial_masks, Sequence):
-        trial_masks = [jnp.array(trial_masks)]
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
@@ -377,13 +375,15 @@ def plot_log_odds_crp(
             :, lag_range - max_lag : lag_range + max_lag + 1
         ]
 
-        color = color_cycle.pop(0)
+
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
+            confidence_level=confidence_level
         )
 
     set_plot_labels(

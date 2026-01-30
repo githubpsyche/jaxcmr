@@ -14,7 +14,7 @@ from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, RecallDataset
 
 __all__ = [
@@ -109,6 +109,7 @@ def plot_conditional_nth_item_recall_curve(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plot the recall-position curve for a specific study position.
 
@@ -120,20 +121,15 @@ def plot_conditional_nth_item_recall_curve(
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
       axis: Existing Matplotlib axis to draw on.
+      confidence_level: Confidence level for the bounds.
+
 
     Returns:
       The Matplotlib axis containing the plot.
     """
-    axis = init_plot(axis)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
-    if color_cycle is None:
-        color_cycle = [entry["color"] for entry in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
@@ -143,29 +139,24 @@ def plot_conditional_nth_item_recall_curve(
         for dataset, mask in zip(datasets, trial_masks)
         if jnp.any(mask)
     )
-
     curve_fn = conditional_nth_item_recall_curve
 
     for index, data in enumerate(datasets):
         subject_curves = jnp.vstack(
-            apply_by_subject(
-                data,
-                trial_masks[index],
-                curve_fn,
-                query_study_position
-            )
+            apply_by_subject(data, trial_masks[index], curve_fn, query_study_position)
         )
 
         subject_curves = subject_curves[:, :max_recall_length]
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
-        color = color_cycle.pop(0)
+        color = color_cycle[index % len(color_cycle)]
         plot_data(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
+            confidence_level=confidence_level,
         )
 
     item_number = query_study_position + 1
@@ -186,6 +177,7 @@ def plot_simple_nth_item_recall_curve(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plot the recall-position curve without availability gating.
 
@@ -197,20 +189,14 @@ def plot_simple_nth_item_recall_curve(
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
       axis: Existing Matplotlib axis to draw on.
+      confidence_level: Confidence level for the bounds.
 
     Returns:
       The Matplotlib axis containing the plot.
     """
-    axis = init_plot(axis)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
-    if color_cycle is None:
-        color_cycle = [entry["color"] for entry in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
@@ -220,29 +206,23 @@ def plot_simple_nth_item_recall_curve(
         for dataset, mask in zip(datasets, trial_masks)
         if jnp.any(mask)
     )
-
     curve_fn = jit(simple_nth_item_recall_curve)
-
     for index, data in enumerate(datasets):
         subject_curves = jnp.vstack(
-            apply_by_subject(
-                data,
-                trial_masks[index],
-                curve_fn,
-                query_study_position
-            )
+            apply_by_subject(data, trial_masks[index], curve_fn, query_study_position)
         )
 
         subject_curves = subject_curves[:, :max_recall_length]
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
-        color = color_cycle.pop(0)
+        color = color_cycle[index % len(color_cycle)]
         plot_data(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
+            confidence_level=confidence_level,
         )
 
     item_number = query_study_position + 1

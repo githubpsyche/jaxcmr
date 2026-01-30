@@ -12,12 +12,11 @@ from typing import Optional, Sequence
 import numpy as np
 import jax.numpy as jnp
 from jax import jit
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 from scipy import stats
 
 from ..helpers import apply_by_subject
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = [
@@ -78,6 +77,7 @@ def plot_termination_probability(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Plots termination probability curves for the requested mode.
 
@@ -89,20 +89,14 @@ def plot_termination_probability(
       labels: Legend labels for each dataset.
       contrast_name: Optional legend title.
       axis: Existing Matplotlib axis to draw on.
+      confidence_level: Confidence level for the bounds.
 
     Returns:
       Matplotlib axis with the rendered curves.
     """
-    axis = init_plot(axis)
-
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks]
-
-    if color_cycle is None:
-        color_cycle = [entry["color"] for entry in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
@@ -130,13 +124,14 @@ def plot_termination_probability(
         subject_curves = subject_curves[:, :max_recall_length]
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
-        color = color_cycle.pop(0)
+        color = color_cycle[index % len(color_cycle)]
         plot_data(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
+            confidence_level=confidence_level,
         )
 
     ylabel = "P(Terminate | Reach)" if mode == "conditional" else "P(Terminate)"

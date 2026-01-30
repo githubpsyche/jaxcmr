@@ -6,16 +6,13 @@ from typing import Optional, Sequence
 
 import jax.numpy as jnp
 from jax import jit
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import init_plot, plot_data, set_plot_labels
+from ..helpers import find_max_list_length
+from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Integer, RecallDataset
-from .cat_lpp_spc import cat_lpp_spc
 
 __all__ = ["plot_cat_lpp_by_recall", "expand_categories_by_recall"]
-
 
 
 def expand_categories_by_recall(
@@ -52,6 +49,7 @@ def plot_cat_lpp_by_recall(
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
 ) -> Axes:
     """Returns Matplotlib ``Axes`` with recall-filtered LPP curves for specified category.
 
@@ -66,31 +64,22 @@ def plot_cat_lpp_by_recall(
         labels: Labels per dataset or category. Assumed per-category if multiple values provided.
         contrast_name: Legend title for contrasts.
         axis: Existing Matplotlib ``Axes`` to plot on.
+        confidence_level: Confidence level for the bounds.
     """
-    axis = init_plot(axis)
-
-    if color_cycle is None:
-        color_cycle = [each["color"] for each in rcParams["axes.prop_cycle"]]
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * 2
 
-    if isinstance(datasets, dict):
-        datasets = [datasets]
-
-    if isinstance(trial_masks, jnp.ndarray):
-        trial_masks = [trial_masks] * len(datasets)
-
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, _data in enumerate(datasets):
-
         # Expand category labels by recall outcome
         data = _data.copy()
         if exclude_ci:
-            data["subject"] = (data['subject'] * 0) + 1
-        data[category_field] = expand_categories_by_recall(
-            data, category_field
-        )
+            data["subject"] = (data["subject"] * 0) + 1
+        data[category_field] = expand_categories_by_recall(data, category_field)
 
         # Select both recalled and unrecalled versions of the category value
         if type(category_value) is int:
@@ -119,13 +108,15 @@ def plot_cat_lpp_by_recall(
                 )
             )
 
-            color = color_cycle.pop(0)
+            color_idx = data_index * len(category_values) + label_index
+            color = color_cycle[color_idx % len(color_cycle)]
             plot_data(
                 axis,
                 jnp.arange(max_list_length, dtype=int) + 1,
                 subject_values,
                 labels[label_index] if len(category_values) > 1 else labels[data_index],
                 color,
+                confidence_level=confidence_level,
             )
 
     set_plot_labels(axis, "Study Position", f"{lpp_field} (uV)", contrast_name)
