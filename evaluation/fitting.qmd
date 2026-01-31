@@ -1,15 +1,15 @@
 ---
-title: "Model Fitting"
-description: "Fit CMR parameters to experimental data"
+title: "Fitting"
+description: "Parameter optimization"
 ---
 
 ::: {.callout-note}
-This tutorial provides a concise overview. For the full workflow with all options, see the [fitting template notebook](../templates/fitting.ipynb).
+For the full workflow with all options, see the [fitting template notebook](../templates/fitting.ipynb).
 :::
 
 ## Overview
 
-This tutorial shows how to fit CMR model parameters to free recall data using differential evolution optimization.
+Model fitting finds parameter values that best explain observed recall data using differential evolution optimization.
 
 ## 1. Load Your Data
 
@@ -149,9 +149,7 @@ plot_spc(
 )
 ```
 
-## Fitting Options
-
-### Loss Functions
+## Loss Functions
 
 | Loss Function | Use Case |
 |--------------|----------|
@@ -159,7 +157,7 @@ plot_spc(
 | `ExcludeTerminationLikelihoodFnGenerator` | Likelihood ignoring stop decisions |
 | `SPCMSEFnGenerator` | Fit to serial position curve shape |
 
-### Fitting Algorithms
+## Fitting Algorithm Options
 
 Currently jaxcmr provides `ScipyDE` (differential evolution). Key hyperparameters:
 
@@ -170,7 +168,25 @@ Currently jaxcmr provides `ScipyDE` (differential evolution). Key hyperparameter
 | `best_of` | Number of restarts | 1-5 |
 | `relative_tolerance` | Convergence threshold | 0.001 |
 
-## Next Steps
+## The FittingAlgorithm Protocol
 
-- [Parameter Sensitivity](parameter-shifting.qmd) - Understand parameter effects
-- [Analyses](../analyses/) - Compute behavioral measures
+Custom fitting algorithms should implement:
+
+```python
+class FittingAlgorithm(Protocol):
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[...],
+        base_params: Mapping[str, Float_],
+        model_factory: Type[MemorySearchModelFactory],
+        loss_fn_generator: Type[LossFnGenerator],
+        hyperparams: Optional[dict[str, Any]] = None,
+    ): ...
+
+    def fit(
+        self,
+        trial_mask: Bool[Array, " trials"],
+        fit_to_subjects: bool = True,
+    ) -> FitResult: ...
+```

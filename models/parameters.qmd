@@ -74,7 +74,7 @@ $$P(\text{stop})_i = \text{scale} \times e^{\text{growth} \times i}$$
 
 ## Example Parameter Set
 
-A complete parameter dictionary for BaseCMR:
+A complete parameter dictionary for CMR:
 
 ```python
 params = {
@@ -111,7 +111,7 @@ Different CMR variants may require additional parameters:
 
 ### Semantic CMR
 
-For models with semantic similarity (e.g., `AdditiveSematicCMR`):
+For models with semantic similarity:
 
 | Parameter | Description |
 |-----------|-------------|
@@ -124,13 +124,3 @@ For models with positional encoding:
 | Parameter | Description |
 |-----------|-------------|
 | `position_encoding_weight` | Weight for positional vs. temporal context |
-
-## Parameter Fitting
-
-When fitting parameters to data:
-
-1. **Fix some parameters** based on experimental design or prior knowledge
-2. **Fit others** using differential evolution or other optimization
-3. Use `ScipyDE` with bounds appropriate for each parameter
-
-See [Fitting Tutorial](../tutorials/fitting.qmd) for a complete workflow.

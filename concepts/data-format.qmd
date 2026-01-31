@@ -1,0 +1,64 @@
+---
+title: "Data Format"
+description: "The RecallDataset structure"
+---
+
+jaxcmr expects data in a specific format defined by the `RecallDataset` TypedDict.
+
+## RecallDataset Structure
+
+```python
+class RecallDataset(TypedDict):
+    # Required fields
+    subject: Integer[Array, "n_trials 1"]
+    listLength: Integer[Array, "n_trials 1"]
+    pres_itemnos: Integer[Array, "n_trials num_presented"]
+    recalls: Integer[Array, "n_trials num_recalled"]
+
+    # Optional fields
+    pres_itemids: Integer[Array, "n_trials num_presented"]
+    rec_itemids: NotRequired[Integer[Array, "n_trials num_recalled"]]
+    irt: NotRequired[Integer[Array, "n_trials num_recalled"]]
+    session: NotRequired[Integer[Array, "n_trials 1"]]
+```
+
+## Field Descriptions
+
+### Required Fields
+
+| Field | Shape | Description |
+|-------|-------|-------------|
+| `subject` | (n_trials, 1) | Subject ID for each trial |
+| `listLength` | (n_trials, 1) | Number of items presented in each trial |
+| `pres_itemnos` | (n_trials, max_presented) | Within-list item positions (1-indexed, 0 = padding) |
+| `recalls` | (n_trials, max_recalled) | Recalled item positions (1-indexed, 0 = padding) |
+
+### Optional Fields
+
+| Field | Shape | Description |
+|-------|-------|-------------|
+| `pres_itemids` | (n_trials, max_presented) | Cross-list item IDs (for semantic analyses) |
+| `rec_itemids` | (n_trials, max_recalled) | Cross-list IDs of recalled items |
+| `irt` | (n_trials, max_recalled) | Inter-response times |
+| `session` | (n_trials, 1) | Session identifiers |
+
+## Indexing Convention
+
+All item indices are **1-indexed**:
+- Position 1 = first item in the list
+- Position 0 = padding (unused entry)
+
+## Loading Data
+
+Data is typically stored in HDF5 format:
+
+```python
+import h5py
+
+with h5py.File("experiment.h5", "r") as f:
+    dataset = {key: f[key][:] for key in f.keys()}
+```
+
+## Converting from Other Formats
+
+*Coming soon: conversion utilities for psifr, pandas DataFrames*

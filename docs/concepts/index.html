@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Understanding CMR and memory search models">
+<meta name="description" content="Library architecture and core abstractions">
 
 <title>Concepts – jaxcmr</title>
 <style>
@@ -122,16 +122,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
+    <a class="nav-link" href="../get-started/index.html"> 
+<span class="menu-text">Get Started</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="../concepts/index.html" aria-current="page"> 
 <span class="menu-text">Concepts</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../tutorials/index.html"> 
-<span class="menu-text">Tutorials</span></a>
-  </li>  
-  <li class="nav-item">
     <a class="nav-link" href="../analyses/index.html"> 
 <span class="menu-text">Analyses</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../models/index.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../evaluation/index.html"> 
+<span class="menu-text">Evaluation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../workflow/index.html"> 
+<span class="menu-text">Workflow</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../projects/index.html"> 
@@ -179,20 +191,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../concepts/context.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Temporal Context</span></a>
+  <a href="../concepts/jax.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Why JAX</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../concepts/linear-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Linear Memory</span></a>
+  <a href="../concepts/data-format.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Data Format</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../concepts/parameters.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Parameters</span></a>
+  <a href="../concepts/architecture.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../concepts/evaluation-pipeline.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation Pipeline</span></a>
   </div>
 </li>
     </ul>
@@ -205,14 +223,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#what-is-cmr" id="toc-what-is-cmr" class="nav-link active" data-scroll-target="#what-is-cmr">What is CMR?</a></li>
-  <li><a href="#how-cmr-works" id="toc-how-cmr-works" class="nav-link" data-scroll-target="#how-cmr-works">How CMR Works</a>
-  <ul class="collapse">
-  <li><a href="#temporal-context" id="toc-temporal-context" class="nav-link" data-scroll-target="#temporal-context">1. Temporal Context</a></li>
-  <li><a href="#associative-memory" id="toc-associative-memory" class="nav-link" data-scroll-target="#associative-memory">2. Associative Memory</a></li>
-  <li><a href="#retrieval-dynamics" id="toc-retrieval-dynamics" class="nav-link" data-scroll-target="#retrieval-dynamics">3. Retrieval Dynamics</a></li>
-  </ul></li>
-  <li><a href="#cmr-parameters" id="toc-cmr-parameters" class="nav-link" data-scroll-target="#cmr-parameters">CMR Parameters</a></li>
+  <li><a href="#what-is-jaxcmr" id="toc-what-is-jaxcmr" class="nav-link active" data-scroll-target="#what-is-jaxcmr">What is jaxcmr?</a></li>
+  <li><a href="#core-design" id="toc-core-design" class="nav-link" data-scroll-target="#core-design">Core Design</a></li>
   <li><a href="#sections" id="toc-sections" class="nav-link" data-scroll-target="#sections">Sections</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/edit/main/concepts/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -227,7 +239,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Understanding CMR and memory search models
+    Library architecture and core abstractions
   </div>
 </div>
 
@@ -244,99 +256,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This section explains the key concepts behind the Context Maintenance and Retrieval (CMR) model and how jaxcmr implements them.</p>
-<section id="what-is-cmr" class="level2">
-<h2 class="anchored" data-anchor-id="what-is-cmr">What is CMR?</h2>
-<p>The <strong>Context Maintenance and Retrieval</strong> model is a computational model of episodic memory, particularly designed to explain patterns in free recall experiments.</p>
-<p>In a free recall experiment:</p>
-<ol type="1">
-<li>Participants study a list of items (words, pictures, etc.)</li>
-<li>After a brief delay, they recall as many items as they can, in any order</li>
-<li>The order and timing of recalls reveal the structure of memory</li>
-</ol>
-<p>CMR explains classic memory phenomena:</p>
+<p>This section covers the foundational concepts you need to understand jaxcmr.</p>
+<section id="what-is-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-jaxcmr">What is jaxcmr?</h2>
+<p>jaxcmr is a JAX-accelerated toolkit for computational memory research. It provides:</p>
 <ul>
-<li><strong>Recency effect</strong>: Items at the end of the list are recalled first</li>
-<li><strong>Primacy effect</strong>: Items at the start are recalled better than middle items</li>
-<li><strong>Temporal contiguity</strong>: Items studied near each other tend to be recalled together</li>
+<li><strong>Analyses</strong>: Functions for computing behavioral measures from recall data</li>
+<li><strong>Models</strong>: Implementations of CMR and related memory search models</li>
+<li><strong>Evaluation</strong>: Tools for fitting models to data and comparing them</li>
 </ul>
 </section>
-<section id="how-cmr-works" class="level2">
-<h2 class="anchored" data-anchor-id="how-cmr-works">How CMR Works</h2>
-<p>CMR has three core components:</p>
-<section id="temporal-context" class="level3">
-<h3 class="anchored" data-anchor-id="temporal-context">1. Temporal Context</h3>
-<p>The model maintains a <strong>context representation</strong> that drifts over time. During study, each item updates the context, creating a record of <em>when</em> things happened.</p>
-<p>During recall, context is used as a cue to retrieve items. When an item is recalled, it reinstates its associated context, which then cues related items.</p>
-<p>See <a href="../concepts/context.html">Context</a> for details.</p>
-</section>
-<section id="associative-memory" class="level3">
-<h3 class="anchored" data-anchor-id="associative-memory">2. Associative Memory</h3>
-<p>CMR uses two memory stores:</p>
-<ul>
-<li><strong>MFC (Item → Context)</strong>: Maps items to their associated temporal contexts</li>
-<li><strong>MCF (Context → Item)</strong>: Maps context states to item activations for retrieval</li>
-</ul>
-<p>These memories are learned during study through Hebbian association.</p>
-<p>See <a href="../concepts/linear-memory.html">Linear Memory</a> for details.</p>
-</section>
-<section id="retrieval-dynamics" class="level3">
-<h3 class="anchored" data-anchor-id="retrieval-dynamics">3. Retrieval Dynamics</h3>
-<p>At recall, the model:</p>
-<ol type="1">
-<li>Uses current context to probe MCF for item activations</li>
-<li>Converts activations to probabilities via softmax</li>
-<li>Samples an item or decides to stop</li>
-<li>Updates context based on the recalled item</li>
-<li>Repeats until stopping</li>
-</ol>
-</section>
-</section>
-<section id="cmr-parameters" class="level2">
-<h2 class="anchored" data-anchor-id="cmr-parameters">CMR Parameters</h2>
-<p>CMR has several free parameters controlling different aspects of memory:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 52%">
-<col style="width: 47%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Parameter</th>
-<th>Controls</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Context drift rates</td>
-<td>How much context changes during study and recall</td>
-</tr>
-<tr class="even">
-<td>Primacy parameters</td>
-<td>The primacy gradient (better memory for early items)</td>
-</tr>
-<tr class="odd">
-<td>Learning rate</td>
-<td>Strength of new associations</td>
-</tr>
-<tr class="even">
-<td>Choice sensitivity</td>
-<td>How deterministic vs.&nbsp;random retrieval is</td>
-</tr>
-<tr class="odd">
-<td>Stop parameters</td>
-<td>When recall terminates</td>
-</tr>
-</tbody>
-</table>
-<p>See <a href="../concepts/parameters.html">Parameters</a> for a complete reference.</p>
+<section id="core-design" class="level2">
+<h2 class="anchored" data-anchor-id="core-design">Core Design</h2>
+<p>The library is built around typed protocols that define extension points. Implement these protocols and your code integrates with the entire ecosystem.</p>
 </section>
 <section id="sections" class="level2">
 <h2 class="anchored" data-anchor-id="sections">Sections</h2>
 <ul>
-<li><a href="../concepts/context.html"><strong>Context</strong></a> - Temporal context representation</li>
-<li><a href="../concepts/linear-memory.html"><strong>Linear Memory</strong></a> - Associative memory components</li>
-<li><a href="../concepts/parameters.html"><strong>Parameters</strong></a> - Complete parameter reference</li>
+<li><a href="../concepts/jax.html">Why JAX</a> - JAX fundamentals for memory science</li>
+<li><a href="../concepts/data-format.html">Data Format</a> - The RecallDataset structure</li>
+<li><a href="../concepts/architecture.html">Architecture</a> - How models are composed</li>
+<li><a href="../concepts/evaluation-pipeline.html">Evaluation Pipeline</a> - Fitting and simulation flow</li>
 </ul>
 
 
@@ -818,79 +758,29 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Concepts"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Understanding CMR and memory search models"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Library architecture and core abstractions"</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This section explains the key concepts behind the Context Maintenance and Retrieval (CMR) model and how jaxcmr implements them.</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This section covers the foundational concepts you need to understand jaxcmr.</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## What is CMR?</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## What is jaxcmr?</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>The **Context Maintenance and Retrieval** model is a computational model of episodic memory, particularly designed to explain patterns in free recall experiments.</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>jaxcmr is a JAX-accelerated toolkit for computational memory research. It provides:</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>In a free recall experiment:</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Participants study a list of items (words, pictures, etc.)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>After a brief delay, they recall as many items as they can, in any order</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>The order and timing of recalls reveal the structure of memory</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Analyses**: Functions for computing behavioral measures from recall data</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Models**: Implementations of CMR and related memory search models</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Evaluation**: Tools for fitting models to data and comparing them</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">## Core Design</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>CMR explains classic memory phenomena:</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>The library is built around typed protocols that define extension points. Implement these protocols and your code integrates with the entire ecosystem.</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Recency effect**: Items at the end of the list are recalled first</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Primacy effect**: Items at the start are recalled better than middle items</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Temporal contiguity**: Items studied near each other tend to be recalled together</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## How CMR Works</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>CMR has three core components:</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Temporal Context</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>The model maintains a **context representation** that drifts over time. During study, each item updates the context, creating a record of *when* things happened.</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>During recall, context is used as a cue to retrieve items. When an item is recalled, it reinstates its associated context, which then cues related items.</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Context</span><span class="co">](context.qmd)</span> for details.</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Associative Memory</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>CMR uses two memory stores:</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MFC (Item → Context)**: Maps items to their associated temporal contexts</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**MCF (Context → Item)**: Maps context states to item activations for retrieval</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>These memories are learned during study through Hebbian association.</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Linear Memory</span><span class="co">](linear-memory.qmd)</span> for details.</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Retrieval Dynamics</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>At recall, the model:</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Uses current context to probe MCF for item activations</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Converts activations to probabilities via softmax</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Samples an item or decides to stop</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Updates context based on the recalled item</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>Repeats until stopping</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="fu">## CMR Parameters</span></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>CMR has several free parameters controlling different aspects of memory:</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>| Parameter | Controls |</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>|-----------|----------|</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>| Context drift rates | How much context changes during study and recall |</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>| Primacy parameters | The primacy gradient (better memory for early items) |</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>| Learning rate | Strength of new associations |</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>| Choice sensitivity | How deterministic vs. random retrieval is |</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>| Stop parameters | When recall terminates |</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Parameters</span><span class="co">](parameters.qmd)</span> for a complete reference.</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sections</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">**Context**</span><span class="co">](context.qmd)</span> - Temporal context representation</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">**Linear Memory**</span><span class="co">](linear-memory.qmd)</span> - Associative memory components</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">**Parameters**</span><span class="co">](parameters.qmd)</span> - Complete parameter reference</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sections</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Why JAX</span><span class="co">](jax.qmd)</span> - JAX fundamentals for memory science</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Data Format</span><span class="co">](data-format.qmd)</span> - The RecallDataset structure</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Architecture</span><span class="co">](architecture.qmd)</span> - How models are composed</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Evaluation Pipeline</span><span class="co">](evaluation-pipeline.qmd)</span> - Fitting and simulation flow</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

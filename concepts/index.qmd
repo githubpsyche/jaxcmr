@@ -1,75 +1,25 @@
 ---
 title: "Concepts"
-description: "Understanding CMR and memory search models"
+description: "Library architecture and core abstractions"
 ---
 
-This section explains the key concepts behind the Context Maintenance and Retrieval (CMR) model and how jaxcmr implements them.
+This section covers the foundational concepts you need to understand jaxcmr.
 
-## What is CMR?
+## What is jaxcmr?
 
-The **Context Maintenance and Retrieval** model is a computational model of episodic memory, particularly designed to explain patterns in free recall experiments.
+jaxcmr is a JAX-accelerated toolkit for computational memory research. It provides:
 
-In a free recall experiment:
+- **Analyses**: Functions for computing behavioral measures from recall data
+- **Models**: Implementations of CMR and related memory search models
+- **Evaluation**: Tools for fitting models to data and comparing them
 
-1. Participants study a list of items (words, pictures, etc.)
-2. After a brief delay, they recall as many items as they can, in any order
-3. The order and timing of recalls reveal the structure of memory
+## Core Design
 
-CMR explains classic memory phenomena:
-
-- **Recency effect**: Items at the end of the list are recalled first
-- **Primacy effect**: Items at the start are recalled better than middle items
-- **Temporal contiguity**: Items studied near each other tend to be recalled together
-
-## How CMR Works
-
-CMR has three core components:
-
-### 1. Temporal Context
-
-The model maintains a **context representation** that drifts over time. During study, each item updates the context, creating a record of *when* things happened.
-
-During recall, context is used as a cue to retrieve items. When an item is recalled, it reinstates its associated context, which then cues related items.
-
-See [Context](context.qmd) for details.
-
-### 2. Associative Memory
-
-CMR uses two memory stores:
-
-- **MFC (Item → Context)**: Maps items to their associated temporal contexts
-- **MCF (Context → Item)**: Maps context states to item activations for retrieval
-
-These memories are learned during study through Hebbian association.
-
-See [Linear Memory](linear-memory.qmd) for details.
-
-### 3. Retrieval Dynamics
-
-At recall, the model:
-
-1. Uses current context to probe MCF for item activations
-2. Converts activations to probabilities via softmax
-3. Samples an item or decides to stop
-4. Updates context based on the recalled item
-5. Repeats until stopping
-
-## CMR Parameters
-
-CMR has several free parameters controlling different aspects of memory:
-
-| Parameter | Controls |
-|-----------|----------|
-| Context drift rates | How much context changes during study and recall |
-| Primacy parameters | The primacy gradient (better memory for early items) |
-| Learning rate | Strength of new associations |
-| Choice sensitivity | How deterministic vs. random retrieval is |
-| Stop parameters | When recall terminates |
-
-See [Parameters](parameters.qmd) for a complete reference.
+The library is built around typed protocols that define extension points. Implement these protocols and your code integrates with the entire ecosystem.
 
 ## Sections
 
-- [**Context**](context.qmd) - Temporal context representation
-- [**Linear Memory**](linear-memory.qmd) - Associative memory components
-- [**Parameters**](parameters.qmd) - Complete parameter reference
+- [Why JAX](jax.qmd) - JAX fundamentals for memory science
+- [Data Format](data-format.qmd) - The RecallDataset structure
+- [Architecture](architecture.qmd) - How models are composed
+- [Evaluation Pipeline](evaluation-pipeline.qmd) - Fitting and simulation flow
