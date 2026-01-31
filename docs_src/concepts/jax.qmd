@@ -1,0 +1,80 @@
+---
+title: "Why JAX"
+description: "JAX fundamentals for memory science"
+---
+
+jaxcmr uses [JAX](https://github.com/google/jax) as its computational backend. Understanding a few JAX concepts helps you get the most from the library.
+
+## Why JAX for Memory Modeling?
+
+Memory models require:
+
+1. **Fast simulation** - Thousands of trials to evaluate a parameter set
+2. **Parallel fitting** - Multiple subjects, multiple models
+3. **Reproducibility** - Identical random seeds yield identical results
+
+JAX addresses all three through its core features.
+
+## Key JAX Concepts
+
+### JIT Compilation
+
+`jax.jit` compiles Python functions to optimized machine code:
+
+```python
+import jax
+
+@jax.jit
+def simulate_trial(model, study_items):
+    # This runs much faster after first call
+    ...
+```
+
+jaxcmr models are designed to be JIT-compatible. Most functions work seamlessly with `jit`.
+
+### Vectorization with vmap
+
+`jax.vmap` automatically vectorizes functions across an axis:
+
+```python
+# Instead of looping over trials:
+for trial in trials:
+    result = simulate(trial)
+
+# Vectorize:
+results = jax.vmap(simulate)(trials)
+```
+
+This enables parallel simulation across trials and subjects.
+
+### Pure Functions
+
+JAX functions must be *pure*—no side effects, same inputs always produce same outputs. This enables:
+
+- **Reproducibility**: Random state is explicit (PRNGKey)
+- **Parallelism**: No hidden state to synchronize
+- **Caching**: Results can be safely cached
+
+### PyTrees
+
+JAX represents nested data structures (dicts, dataclasses) as "PyTrees". jaxcmr models are PyTrees, making them compatible with JAX transformations:
+
+```python
+# Models can be passed through jit, vmap, etc.
+model = CMR.create(list_length=16, parameters=params)
+jax.tree_util.tree_map(lambda x: x.shape, model)  # Inspect structure
+```
+
+## Practical Implications
+
+When working with jaxcmr:
+
+1. **Use JIT for fitting** - Wrap loss functions in `jit` for speed
+2. **Vectorize over trials** - Use `vmap` instead of loops
+3. **Manage random state explicitly** - Pass PRNGKey to functions that sample
+4. **Models are immutable** - Methods return new model instances
+
+## Further Reading
+
+- [JAX Quickstart](https://jax.readthedocs.io/en/latest/notebooks/quickstart.html)
+- [JAX Sharp Bits](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html)

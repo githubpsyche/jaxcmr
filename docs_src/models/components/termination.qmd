@@ -1,0 +1,19 @@
+---
+title: "Termination"
+description: "Stopping policies for memory search"
+---
+
+Termination policies determine when a model stops retrieving items.
+
+## The TerminationPolicy Protocol
+
+```python
+class TerminationPolicy(Protocol):
+    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]:
+        """Returns stop probability for the provided model."""
+        ...
+```
+
+## Available Implementations
+
+*Coming soon: documentation of termination policy variants*

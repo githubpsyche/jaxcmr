@@ -1,0 +1,103 @@
+---
+title: "Behavioral Analyses"
+description: "Standard analyses for free recall data"
+---
+
+jaxcmr provides functions for computing standard behavioral measures from free recall experiments. Each analysis can be applied to both empirical data and model simulations.
+
+## Getting Started
+
+- [Importing Data](importing-data.qmd) - Loading recall datasets
+- [Scoring Data](scoring-data.qmd) - Computing basic metrics
+- [Custom Analyses](custom-analyses.qmd) - Implementing your own
+
+## Analysis Categories
+
+### Serial Position
+
+How recall probability varies with study position.
+
+| Analysis | Description |
+|----------|-------------|
+| [SPC](serial-position/spc.qmd) | Serial Position Curve - recall probability by position |
+| [PNR](serial-position/pnr.qmd) | Probability of Nth Recall - what position is recalled first, second, etc. |
+| [SRAC](serial-position/srac.qmd) | Subject Relative Accuracy Curve |
+
+### Temporal Contiguity
+
+How recall transitions relate to study order.
+
+| Analysis | Description |
+|----------|-------------|
+| [CRP](temporal-contiguity/crp.qmd) | Conditional Response Probability - transition probabilities by lag |
+| [DistCRP](temporal-contiguity/distcrp.qmd) | Distance-based CRP - transitions by semantic distance |
+
+### Category Effects
+
+Effects of item categories on recall.
+
+| Analysis | Description |
+|----------|-------------|
+| [CatCRP](category/catcrp.qmd) | Category CRP - within vs. between category transitions |
+| [CatSPC](category/cat-spc.qmd) | Category SPC - serial position by category |
+
+### Repetition Effects
+
+Analyses for experiments with repeated items.
+
+| Analysis | Description |
+|----------|-------------|
+| [RepCRP](repetition/repcrp.qmd) | Repetition CRP - transitions involving repeated items |
+| [Compound Cueing](repetition/compound-cueing.qmd) | Effects of compound cues on retrieval |
+
+### Error Analyses
+
+Patterns of recall errors.
+
+| Analysis | Description |
+|----------|-------------|
+| [Intrusions](error-analyses/intrusion.qmd) | Extra-list intrusion rates |
+| [Omissions](error-analyses/omission.qmd) | Items not recalled |
+
+## Using Analyses
+
+All analysis functions follow a similar pattern:
+
+```python
+from jaxcmr.analyses.spc import spc, plot_spc
+
+# Compute analysis
+result = spc(data, list_length, trial_mask=None)
+
+# Or use the plotting function
+plot_spc(
+    datasets=[data, sim],
+    trial_masks=[mask, mask],
+    labels=["Data", "Model"],
+)
+```
+
+## Comparing Model and Data
+
+Most plotting functions accept multiple datasets for comparison:
+
+```python
+from jaxcmr.analyses.crp import plot_crp
+
+plot_crp(
+    datasets=[simulation, empirical_data],
+    trial_masks=[sim_mask, data_mask],
+    labels=["CMR Model", "Observed"],
+)
+```
+
+## Available in Templates
+
+Each analysis has a corresponding template notebook in `templates/`:
+
+- `templates/spc.ipynb`
+- `templates/crp.ipynb`
+- `templates/pnr.ipynb`
+- etc.
+
+These templates show complete workflows for computing and visualizing each measure.

@@ -1,7 +1,7 @@
 [
   {
-    "objectID": "get-started/quickstart.html",
-    "href": "get-started/quickstart.html",
+    "objectID": "docs_src/get-started/quickstart.html",
+    "href": "docs_src/get-started/quickstart.html",
     "title": "Quickstart",
     "section": "",
     "text": "This tutorial walks through a minimal example: loading data, creating a model, and simulating recall.\nCode\n# Coming soon - placeholder for quickstart tutorial",
@@ -11,8 +11,8 @@
     ]
   },
   {
-    "objectID": "get-started/quickstart.html#next-steps",
-    "href": "get-started/quickstart.html#next-steps",
+    "objectID": "docs_src/get-started/quickstart.html#next-steps",
+    "href": "docs_src/get-started/quickstart.html#next-steps",
     "title": "Quickstart",
     "section": "Next Steps",
     "text": "Next Steps\n\nConcepts - Understand the library architecture\nModels - Learn about CMR and variants\nFitting - Fit models to your data",
@@ -22,15 +22,15 @@
     ]
   },
   {
-    "objectID": "blog/index.html",
-    "href": "blog/index.html",
+    "objectID": "docs_src/blog/index.html",
+    "href": "docs_src/blog/index.html",
     "title": "Blog",
     "section": "",
     "text": "Research updates, technical tutorials, and notes on computational memory modeling with jaxcmr.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWelcome to jaxcmr\n\n\n\n\n\n\nannouncement\n\n\n\nIntroducing jaxcmr: JAX-accelerated computational memory modeling\n\n\n\n\n\nJan 1, 2024\n\n\njaxcmr team\n\n\n\n\n\n\nNo matching items"
   },
   {
-    "objectID": "workflow/templates.html",
-    "href": "workflow/templates.html",
+    "objectID": "docs_src/workflow/templates.html",
+    "href": "docs_src/workflow/templates.html",
     "title": "Templates",
     "section": "",
     "text": "The templates/ directory contains Jupyter notebooks for common workflows.",
@@ -40,8 +40,8 @@
     ]
   },
   {
-    "objectID": "workflow/templates.html#available-templates",
-    "href": "workflow/templates.html#available-templates",
+    "objectID": "docs_src/workflow/templates.html#available-templates",
+    "href": "docs_src/workflow/templates.html#available-templates",
     "title": "Templates",
     "section": "Available Templates",
     "text": "Available Templates\n\nfitting.ipynb - Model fitting workflow\nparameter_shifting.ipynb - Parameter sensitivity analysis\ncontext.ipynb - Context component exploration\nlinear_memory.ipynb - Memory component exploration",
@@ -51,8 +51,8 @@
     ]
   },
   {
-    "objectID": "workflow/templates.html#using-templates",
-    "href": "workflow/templates.html#using-templates",
+    "objectID": "docs_src/workflow/templates.html#using-templates",
+    "href": "docs_src/workflow/templates.html#using-templates",
     "title": "Templates",
     "section": "Using Templates",
     "text": "Using Templates\n\nCopy a template to your working directory\nModify parameters and data paths\nRun the notebook\n\ncp templates/fitting.ipynb my_fitting_analysis.ipynb\njupyter notebook my_fitting_analysis.ipynb\nComing soon: detailed template documentation",
@@ -62,8 +62,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html",
-    "href": "workflow/parameter-sensitivity.html",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html",
+    "href": "docs_src/workflow/parameter-sensitivity.html",
     "title": "Parameter Sensitivity",
     "section": "",
     "text": "Note\n\n\n\nFor the full workflow, see the parameter shifting template notebook.",
@@ -73,8 +73,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#overview",
-    "href": "workflow/parameter-sensitivity.html#overview",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#overview",
+    "href": "docs_src/workflow/parameter-sensitivity.html#overview",
     "title": "Parameter Sensitivity",
     "section": "Overview",
     "text": "Overview\nUnderstanding how CMR parameters affect model predictions is crucial for:\n\nInterpreting fits: What does a high drift rate mean behaviorally?\nSetting bounds: What parameter ranges produce realistic behavior?\nIdentifying parameters: Can different parameters produce similar effects?",
@@ -84,8 +84,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#basic-parameter-sweep",
-    "href": "workflow/parameter-sensitivity.html#basic-parameter-sweep",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#basic-parameter-sweep",
+    "href": "docs_src/workflow/parameter-sensitivity.html#basic-parameter-sweep",
     "title": "Parameter Sensitivity",
     "section": "Basic Parameter Sweep",
     "text": "Basic Parameter Sweep\nVary one parameter while holding others at baseline:\nfrom jax import random\nimport jax.numpy as jnp\nfrom jaxcmr.models.cmr import CMR\nfrom jaxcmr.simulation import simulate_study_and_free_recall\nfrom jaxcmr.analyses.spc import spc\nimport matplotlib.pyplot as plt\n\n# Baseline parameters\nbase_params = {\n    \"encoding_drift_rate\": 0.5,\n    \"start_drift_rate\": 0.5,\n    \"recall_drift_rate\": 0.5,\n    \"shared_support\": 0.05,\n    \"item_support\": 0.25,\n    \"learning_rate\": 0.5,\n    \"primacy_scale\": 1.0,\n    \"primacy_decay\": 0.6,\n    \"choice_sensitivity\": 0.6,\n    \"stop_probability_scale\": 0.05,\n    \"stop_probability_growth\": 0.2,\n    \"learn_after_context_update\": True,\n    \"allow_repeated_recalls\": False,\n}\n\n# Parameter values to test\ndrift_rates = [0.2, 0.4, 0.6, 0.8]\n\n# Simulate for each value\nlist_length = 10\nn_trials = 500\nrng = random.PRNGKey(0)\n\nresults = {}\nfor drift in drift_rates:\n    params = base_params.copy()\n    params[\"encoding_drift_rate\"] = drift\n\n    all_recalls = []\n    for i in range(n_trials):\n        rng, rng_iter = random.split(rng)\n        model = CMR(list_length, params)\n        present = jnp.arange(1, list_length + 1)\n        model, recalls = simulate_study_and_free_recall(model, present, rng_iter)\n        all_recalls.append(recalls)\n\n    results[drift] = jnp.stack(all_recalls)",
@@ -95,8 +95,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#visualizing-effects",
-    "href": "workflow/parameter-sensitivity.html#visualizing-effects",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#visualizing-effects",
+    "href": "docs_src/workflow/parameter-sensitivity.html#visualizing-effects",
     "title": "Parameter Sensitivity",
     "section": "Visualizing Effects",
     "text": "Visualizing Effects\nPlot how the serial position curve changes:\nfig, ax = plt.subplots()\n\nfor drift, recalls in results.items():\n    # Compute SPC\n    curve = spc(recalls, list_length)\n    ax.plot(range(1, list_length + 1), curve, label=f\"drift={drift}\")\n\nax.set_xlabel(\"Serial Position\")\nax.set_ylabel(\"Recall Probability\")\nax.legend()\nax.set_title(\"Effect of Encoding Drift Rate on SPC\")\nplt.show()",
@@ -106,8 +106,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#common-parameter-effects",
-    "href": "workflow/parameter-sensitivity.html#common-parameter-effects",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#common-parameter-effects",
+    "href": "docs_src/workflow/parameter-sensitivity.html#common-parameter-effects",
     "title": "Parameter Sensitivity",
     "section": "Common Parameter Effects",
     "text": "Common Parameter Effects\n\nEncoding Drift Rate\n\n\n\nValue\nEffect\n\n\n\n\nLow (~0.2)\nWeak recency, more uniform recall\n\n\nHigh (~0.8)\nStrong recency, temporal contiguity\n\n\n\n\n\nPrimacy Parameters\n\n\n\nChange\nEffect\n\n\n\n\nHigher primacy_scale\nStronger primacy (better early item recall)\n\n\nHigher primacy_decay\nPrimacy effect drops off faster\n\n\n\n\n\nChoice Sensitivity\n\n\n\nValue\nEffect\n\n\n\n\nLow (~0.2)\nMore random recall order\n\n\nHigh (~2.0)\nMore deterministic (most active item wins)\n\n\n\n\n\nStop Parameters\n\n\n\n\n\n\n\nChange\nEffect\n\n\n\n\nHigher stop_probability_scale\nShorter recall sequences\n\n\nHigher stop_probability_growth\nStopping increases faster with output position",
@@ -117,8 +117,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#parameter-interactions",
-    "href": "workflow/parameter-sensitivity.html#parameter-interactions",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#parameter-interactions",
+    "href": "docs_src/workflow/parameter-sensitivity.html#parameter-interactions",
     "title": "Parameter Sensitivity",
     "section": "Parameter Interactions",
     "text": "Parameter Interactions\nSome parameters interact—changing one may require adjusting another:\n\nDrift rate + learning rate: Both affect association strength\nShared support + item support: Both affect baseline retrieval\nPrimacy scale + decay: Trade off in shaping the primacy curve",
@@ -128,8 +128,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#practical-tips",
-    "href": "workflow/parameter-sensitivity.html#practical-tips",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#practical-tips",
+    "href": "docs_src/workflow/parameter-sensitivity.html#practical-tips",
     "title": "Parameter Sensitivity",
     "section": "Practical Tips",
     "text": "Practical Tips\n\nStart with published values: Use parameters from CMR papers as baselines\nVary one at a time: Understand each parameter before varying multiple\nCheck behavioral measures: Use SPC, CRP, and PNR to assess effects\nConsider identifiability: Some parameter combinations may produce identical behavior",
@@ -139,8 +139,8 @@
     ]
   },
   {
-    "objectID": "workflow/parameter-sensitivity.html#next-steps",
-    "href": "workflow/parameter-sensitivity.html#next-steps",
+    "objectID": "docs_src/workflow/parameter-sensitivity.html#next-steps",
+    "href": "docs_src/workflow/parameter-sensitivity.html#next-steps",
     "title": "Parameter Sensitivity",
     "section": "Next Steps",
     "text": "Next Steps\n\nFitting - Apply these insights to parameter estimation\nAnalyses - Full set of behavioral measures",
@@ -150,8 +150,8 @@
     ]
   },
   {
-    "objectID": "workflow/index.html",
-    "href": "workflow/index.html",
+    "objectID": "docs_src/workflow/index.html",
+    "href": "docs_src/workflow/index.html",
     "title": "Workflow",
     "section": "",
     "text": "This section goes beyond the API to cover research workflow and tooling.",
@@ -160,8 +160,8 @@
     ]
   },
   {
-    "objectID": "workflow/index.html#the-modeling-cycle",
-    "href": "workflow/index.html#the-modeling-cycle",
+    "objectID": "docs_src/workflow/index.html#the-modeling-cycle",
+    "href": "docs_src/workflow/index.html#the-modeling-cycle",
     "title": "Workflow",
     "section": "The Modeling Cycle",
     "text": "The Modeling Cycle\nComputational modeling research typically follows this cycle:\n\nIdentify a research question - What behavioral phenomenon needs explanation?\nIdentify a mechanism - What cognitive process could produce this behavior?\nImplement the mechanism - Add it to a model as a new component or parameter\nValidate the mechanism - Use parameter sensitivity analysis to verify it behaves as expected\nFit to data - Optimize parameters to maximize fit\nEvaluate - Does the new mechanism improve fit over baseline?\nIterate or publish - Refine or share findings",
@@ -170,8 +170,8 @@
     ]
   },
   {
-    "objectID": "workflow/index.html#sections",
-    "href": "workflow/index.html#sections",
+    "objectID": "docs_src/workflow/index.html#sections",
+    "href": "docs_src/workflow/index.html#sections",
     "title": "Workflow",
     "section": "Sections",
     "text": "Sections\n\nParameter Sensitivity - Understanding parameter effects\nTemplates - Using the templates/ directory\nPapermill - Batch notebook execution\nResearch Tools - Other utilities for research",
@@ -180,8 +180,8 @@
     ]
   },
   {
-    "objectID": "evaluation/index.html",
-    "href": "evaluation/index.html",
+    "objectID": "docs_src/evaluation/index.html",
+    "href": "docs_src/evaluation/index.html",
     "title": "Evaluation",
     "section": "",
     "text": "This section covers how to evaluate models against data.",
@@ -190,8 +190,8 @@
     ]
   },
   {
-    "objectID": "evaluation/index.html#overview",
-    "href": "evaluation/index.html#overview",
+    "objectID": "docs_src/evaluation/index.html#overview",
+    "href": "docs_src/evaluation/index.html#overview",
     "title": "Evaluation",
     "section": "Overview",
     "text": "Overview\nModel evaluation in jaxcmr involves three interconnected processes:\n\nSimulation - Generate predictions from a model\nFitting - Find parameters that best explain observed data\nComparison - Compare models to determine which best accounts for the data",
@@ -200,8 +200,8 @@
     ]
   },
   {
-    "objectID": "evaluation/index.html#sections",
-    "href": "evaluation/index.html#sections",
+    "objectID": "docs_src/evaluation/index.html#sections",
+    "href": "docs_src/evaluation/index.html#sections",
     "title": "Evaluation",
     "section": "Sections",
     "text": "Sections\n\nFitting - Parameter optimization with differential evolution\nSimulation - Generating model predictions\nComparison - Formal model comparison",
@@ -210,8 +210,8 @@
     ]
   },
   {
-    "objectID": "evaluation/comparison.html",
-    "href": "evaluation/comparison.html",
+    "objectID": "docs_src/evaluation/comparison.html",
+    "href": "docs_src/evaluation/comparison.html",
     "title": "Model Comparison",
     "section": "",
     "text": "After fitting multiple models, you need to determine which best accounts for the data.",
@@ -221,8 +221,8 @@
     ]
   },
   {
-    "objectID": "evaluation/comparison.html#approaches",
-    "href": "evaluation/comparison.html#approaches",
+    "objectID": "docs_src/evaluation/comparison.html#approaches",
+    "href": "docs_src/evaluation/comparison.html#approaches",
     "title": "Model Comparison",
     "section": "Approaches",
     "text": "Approaches\n\nLikelihood comparison - Compare log-likelihoods directly\nInformation criteria - AIC, BIC for model selection\nCross-validation - Out-of-sample prediction accuracy\n\nComing soon: detailed comparison methods",
@@ -232,8 +232,8 @@
     ]
   },
   {
-    "objectID": "models/index.html",
-    "href": "models/index.html",
+    "objectID": "docs_src/models/index.html",
+    "href": "docs_src/models/index.html",
     "title": "Models",
     "section": "",
     "text": "This section documents the memory search models available in jaxcmr.",
@@ -242,8 +242,8 @@
     ]
   },
   {
-    "objectID": "models/index.html#why-do-we-model-memory",
-    "href": "models/index.html#why-do-we-model-memory",
+    "objectID": "docs_src/models/index.html#why-do-we-model-memory",
+    "href": "docs_src/models/index.html#why-do-we-model-memory",
     "title": "Models",
     "section": "Why Do We Model Memory?",
     "text": "Why Do We Model Memory?\nFree recall experiments reveal robust patterns:\n\nRecency: Items from the end of a list are recalled first and most often\nPrimacy: Items from the beginning are also recalled well\nContiguity: Recalled items tend to come from nearby serial positions\n\nCMR (Context Maintenance and Retrieval) explains these patterns through a simple mechanism: temporal context that drifts during study and is reinstated during retrieval.",
@@ -252,8 +252,8 @@
     ]
   },
   {
-    "objectID": "models/index.html#model-components",
-    "href": "models/index.html#model-components",
+    "objectID": "docs_src/models/index.html#model-components",
+    "href": "docs_src/models/index.html#model-components",
     "title": "Models",
     "section": "Model Components",
     "text": "Model Components\nModels are composed of three core components:\n\nContext - Temporal context representations\nMemory - Associative memory (MFC, MCF)\nTermination - When to stop recalling",
@@ -262,8 +262,8 @@
     ]
   },
   {
-    "objectID": "models/index.html#base-model",
-    "href": "models/index.html#base-model",
+    "objectID": "docs_src/models/index.html#base-model",
+    "href": "docs_src/models/index.html#base-model",
     "title": "Models",
     "section": "Base Model",
     "text": "Base Model\n\nCMR - The Context Maintenance and Retrieval model\nParameters - Complete parameter reference",
@@ -272,8 +272,8 @@
     ]
   },
   {
-    "objectID": "models/index.html#creating-custom-models",
-    "href": "models/index.html#creating-custom-models",
+    "objectID": "docs_src/models/index.html#creating-custom-models",
+    "href": "docs_src/models/index.html#creating-custom-models",
     "title": "Models",
     "section": "Creating Custom Models",
     "text": "Creating Custom Models\n\nCustom Models - Implementing your own variants",
@@ -282,8 +282,8 @@
     ]
   },
   {
-    "objectID": "models/components/termination.html",
-    "href": "models/components/termination.html",
+    "objectID": "docs_src/models/components/termination.html",
+    "href": "docs_src/models/components/termination.html",
     "title": "Termination",
     "section": "",
     "text": "Termination policies determine when a model stops retrieving items.",
@@ -294,8 +294,8 @@
     ]
   },
   {
-    "objectID": "models/components/termination.html#the-terminationpolicy-protocol",
-    "href": "models/components/termination.html#the-terminationpolicy-protocol",
+    "objectID": "docs_src/models/components/termination.html#the-terminationpolicy-protocol",
+    "href": "docs_src/models/components/termination.html#the-terminationpolicy-protocol",
     "title": "Termination",
     "section": "The TerminationPolicy Protocol",
     "text": "The TerminationPolicy Protocol\nclass TerminationPolicy(Protocol):\n    def stop_probability(self, model: \"MemorySearch\") -&gt; Float[Array, \"\"]:\n        \"\"\"Returns stop probability for the provided model.\"\"\"\n        ...",
@@ -306,8 +306,8 @@
     ]
   },
   {
-    "objectID": "models/components/termination.html#available-implementations",
-    "href": "models/components/termination.html#available-implementations",
+    "objectID": "docs_src/models/components/termination.html#available-implementations",
+    "href": "docs_src/models/components/termination.html#available-implementations",
     "title": "Termination",
     "section": "Available Implementations",
     "text": "Available Implementations\nComing soon: documentation of termination policy variants",
@@ -318,8 +318,8 @@
     ]
   },
   {
-    "objectID": "models/components/context.html",
-    "href": "models/components/context.html",
+    "objectID": "docs_src/models/components/context.html",
+    "href": "docs_src/models/components/context.html",
     "title": "Context",
     "section": "",
     "text": "Context is a slowly drifting representation that tracks temporal position during study and retrieval.",
@@ -330,8 +330,8 @@
     ]
   },
   {
-    "objectID": "models/components/context.html#the-context-protocol",
-    "href": "models/components/context.html#the-context-protocol",
+    "objectID": "docs_src/models/components/context.html#the-context-protocol",
+    "href": "docs_src/models/components/context.html#the-context-protocol",
     "title": "Context",
     "section": "The Context Protocol",
     "text": "The Context Protocol\nAny context implementation must satisfy the Context protocol:\nclass Context(Protocol):\n    state: Float[Array, \" context_feature_units\"]\n    initial_state: Float[Array, \" context_feature_units\"]\n    size: int\n\n    def integrate(\n        self,\n        context_input: Float[Array, \" context_feature_units\"],\n        drift_rate: Float_,\n    ) -&gt; \"Context\":\n        \"\"\"Returns context after integrating input representation.\"\"\"\n        ...",
@@ -342,8 +342,8 @@
     ]
   },
   {
-    "objectID": "models/components/context.html#available-implementations",
-    "href": "models/components/context.html#available-implementations",
+    "objectID": "docs_src/models/components/context.html#available-implementations",
+    "href": "docs_src/models/components/context.html#available-implementations",
     "title": "Context",
     "section": "Available Implementations",
     "text": "Available Implementations\nComing soon: documentation of context variants",
@@ -354,8 +354,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/distcrp.html",
-    "href": "analyses/temporal-contiguity/distcrp.html",
+    "objectID": "docs_src/analyses/temporal-contiguity/distcrp.html",
+    "href": "docs_src/analyses/temporal-contiguity/distcrp.html",
     "title": "Distance CRP",
     "section": "",
     "text": "Note\n\n\n\nSee templates/distcrp.ipynb for a complete example.",
@@ -366,8 +366,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/distcrp.html#overview",
-    "href": "analyses/temporal-contiguity/distcrp.html#overview",
+    "objectID": "docs_src/analyses/temporal-contiguity/distcrp.html#overview",
+    "href": "docs_src/analyses/temporal-contiguity/distcrp.html#overview",
     "title": "Distance CRP",
     "section": "Overview",
     "text": "Overview\nDistance CRP shows transition probabilities as a function of semantic distance between items, revealing semantic clustering effects.",
@@ -378,8 +378,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/distcrp.html#usage",
-    "href": "analyses/temporal-contiguity/distcrp.html#usage",
+    "objectID": "docs_src/analyses/temporal-contiguity/distcrp.html#usage",
+    "href": "docs_src/analyses/temporal-contiguity/distcrp.html#usage",
     "title": "Distance CRP",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.distcrp import plot_dist_crp\n\nplot_dist_crp(\n    datasets=[data],\n    features=semantic_embeddings,\n    labels=[\"Data\"],\n)\nRequires semantic feature vectors (e.g., word embeddings) for items.",
@@ -390,8 +390,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/srac.html",
-    "href": "analyses/serial-position/srac.html",
+    "objectID": "docs_src/analyses/serial-position/srac.html",
+    "href": "docs_src/analyses/serial-position/srac.html",
     "title": "Subject Relative Accuracy Curve",
     "section": "",
     "text": "Note\n\n\n\nSee templates/srac.ipynb for a complete example.",
@@ -402,8 +402,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/srac.html#overview",
-    "href": "analyses/serial-position/srac.html#overview",
+    "objectID": "docs_src/analyses/serial-position/srac.html#overview",
+    "href": "docs_src/analyses/serial-position/srac.html#overview",
     "title": "Subject Relative Accuracy Curve",
     "section": "Overview",
     "text": "Overview\nThe Subject Relative Accuracy Curve (SRAC) normalizes recall probability relative to each subject’s overall performance, revealing the shape of serial position effects independent of overall memory strength.",
@@ -414,8 +414,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/srac.html#usage",
-    "href": "analyses/serial-position/srac.html#usage",
+    "objectID": "docs_src/analyses/serial-position/srac.html#usage",
+    "href": "docs_src/analyses/serial-position/srac.html#usage",
     "title": "Subject Relative Accuracy Curve",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.srac import srac, plot_srac\n\nresult = srac(data[\"recalls\"], list_length=16)\nplot_srac(datasets=[data], labels=[\"Data\"])",
@@ -426,8 +426,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/pnr.html",
-    "href": "analyses/serial-position/pnr.html",
+    "objectID": "docs_src/analyses/serial-position/pnr.html",
+    "href": "docs_src/analyses/serial-position/pnr.html",
     "title": "Probability of Nth Recall",
     "section": "",
     "text": "Note\n\n\n\nSee templates/pnr.ipynb for a complete example.",
@@ -438,8 +438,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/pnr.html#overview",
-    "href": "analyses/serial-position/pnr.html#overview",
+    "objectID": "docs_src/analyses/serial-position/pnr.html#overview",
+    "href": "docs_src/analyses/serial-position/pnr.html#overview",
     "title": "Probability of Nth Recall",
     "section": "Overview",
     "text": "Overview\nProbability of Nth Recall (PNR) shows which study positions are most likely to be recalled at each output position (1st recall, 2nd recall, etc.).\nThis reveals:\n\nWhere recall typically starts (usually recency)\nHow recall transitions across the list\nDifferences in early vs. late output positions",
@@ -450,8 +450,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/pnr.html#usage",
-    "href": "analyses/serial-position/pnr.html#usage",
+    "objectID": "docs_src/analyses/serial-position/pnr.html#usage",
+    "href": "docs_src/analyses/serial-position/pnr.html#usage",
     "title": "Probability of Nth Recall",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.pnr import pnr, plot_pnr\n\n# Compute PNR\nresult = pnr(data[\"recalls\"], list_length=16)\n\n# Plot\nplot_pnr(\n    datasets=[data],\n    labels=[\"Data\"],\n)",
@@ -462,8 +462,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/pnr.html#interpretation",
-    "href": "analyses/serial-position/pnr.html#interpretation",
+    "objectID": "docs_src/analyses/serial-position/pnr.html#interpretation",
+    "href": "docs_src/analyses/serial-position/pnr.html#interpretation",
     "title": "Probability of Nth Recall",
     "section": "Interpretation",
     "text": "Interpretation\n\n\n\nPattern\nInterpretation\n\n\n\n\nFirst recall from end\nStrong recency initiation\n\n\nProgression toward primacy\nTemporal contiguity + primacy\n\n\nRandom across positions\nWeak temporal structure",
@@ -474,8 +474,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/repcrp.html",
-    "href": "analyses/repetition/repcrp.html",
+    "objectID": "docs_src/analyses/repetition/repcrp.html",
+    "href": "docs_src/analyses/repetition/repcrp.html",
     "title": "Repetition CRP",
     "section": "",
     "text": "Note\n\n\n\nSee templates/repcrp.ipynb for a complete example.",
@@ -486,8 +486,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/repcrp.html#overview",
-    "href": "analyses/repetition/repcrp.html#overview",
+    "objectID": "docs_src/analyses/repetition/repcrp.html#overview",
+    "href": "docs_src/analyses/repetition/repcrp.html#overview",
     "title": "Repetition CRP",
     "section": "Overview",
     "text": "Overview\nRepetition CRP analyzes transition probabilities for experiments where items are repeated during study, revealing how repetition affects temporal contiguity.",
@@ -498,8 +498,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/repcrp.html#usage",
-    "href": "analyses/repetition/repcrp.html#usage",
+    "objectID": "docs_src/analyses/repetition/repcrp.html#usage",
+    "href": "docs_src/analyses/repetition/repcrp.html#usage",
     "title": "Repetition CRP",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.repcrp import plot_rep_crp\n\nplot_rep_crp(datasets=[data], labels=[\"Data\"])",
@@ -510,8 +510,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html",
-    "href": "analyses/index.html",
+    "objectID": "docs_src/analyses/index.html",
+    "href": "docs_src/analyses/index.html",
     "title": "Behavioral Analyses",
     "section": "",
     "text": "jaxcmr provides functions for computing standard behavioral measures from free recall experiments. Each analysis can be applied to both empirical data and model simulations.",
@@ -521,8 +521,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html#getting-started",
-    "href": "analyses/index.html#getting-started",
+    "objectID": "docs_src/analyses/index.html#getting-started",
+    "href": "docs_src/analyses/index.html#getting-started",
     "title": "Behavioral Analyses",
     "section": "Getting Started",
     "text": "Getting Started\n\nImporting Data - Loading recall datasets\nScoring Data - Computing basic metrics\nCustom Analyses - Implementing your own",
@@ -532,8 +532,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html#analysis-categories",
-    "href": "analyses/index.html#analysis-categories",
+    "objectID": "docs_src/analyses/index.html#analysis-categories",
+    "href": "docs_src/analyses/index.html#analysis-categories",
     "title": "Behavioral Analyses",
     "section": "Analysis Categories",
     "text": "Analysis Categories\n\nSerial Position\nHow recall probability varies with study position.\n\n\n\nAnalysis\nDescription\n\n\n\n\nSPC\nSerial Position Curve - recall probability by position\n\n\nPNR\nProbability of Nth Recall - what position is recalled first, second, etc.\n\n\nSRAC\nSubject Relative Accuracy Curve\n\n\n\n\n\nTemporal Contiguity\nHow recall transitions relate to study order.\n\n\n\nAnalysis\nDescription\n\n\n\n\nCRP\nConditional Response Probability - transition probabilities by lag\n\n\nDistCRP\nDistance-based CRP - transitions by semantic distance\n\n\n\n\n\nCategory Effects\nEffects of item categories on recall.\n\n\n\nAnalysis\nDescription\n\n\n\n\nCatCRP\nCategory CRP - within vs. between category transitions\n\n\nCatSPC\nCategory SPC - serial position by category\n\n\n\n\n\nRepetition Effects\nAnalyses for experiments with repeated items.\n\n\n\nAnalysis\nDescription\n\n\n\n\nRepCRP\nRepetition CRP - transitions involving repeated items\n\n\nCompound Cueing\nEffects of compound cues on retrieval\n\n\n\n\n\nError Analyses\nPatterns of recall errors.\n\n\n\nAnalysis\nDescription\n\n\n\n\nIntrusions\nExtra-list intrusion rates\n\n\nOmissions\nItems not recalled",
@@ -543,8 +543,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html#using-analyses",
-    "href": "analyses/index.html#using-analyses",
+    "objectID": "docs_src/analyses/index.html#using-analyses",
+    "href": "docs_src/analyses/index.html#using-analyses",
     "title": "Behavioral Analyses",
     "section": "Using Analyses",
     "text": "Using Analyses\nAll analysis functions follow a similar pattern:\nfrom jaxcmr.analyses.spc import spc, plot_spc\n\n# Compute analysis\nresult = spc(data, list_length, trial_mask=None)\n\n# Or use the plotting function\nplot_spc(\n    datasets=[data, sim],\n    trial_masks=[mask, mask],\n    labels=[\"Data\", \"Model\"],\n)",
@@ -554,8 +554,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html#comparing-model-and-data",
-    "href": "analyses/index.html#comparing-model-and-data",
+    "objectID": "docs_src/analyses/index.html#comparing-model-and-data",
+    "href": "docs_src/analyses/index.html#comparing-model-and-data",
     "title": "Behavioral Analyses",
     "section": "Comparing Model and Data",
     "text": "Comparing Model and Data\nMost plotting functions accept multiple datasets for comparison:\nfrom jaxcmr.analyses.crp import plot_crp\n\nplot_crp(\n    datasets=[simulation, empirical_data],\n    trial_masks=[sim_mask, data_mask],\n    labels=[\"CMR Model\", \"Observed\"],\n)",
@@ -565,8 +565,8 @@
     ]
   },
   {
-    "objectID": "analyses/index.html#available-in-templates",
-    "href": "analyses/index.html#available-in-templates",
+    "objectID": "docs_src/analyses/index.html#available-in-templates",
+    "href": "docs_src/analyses/index.html#available-in-templates",
     "title": "Behavioral Analyses",
     "section": "Available in Templates",
     "text": "Available in Templates\nEach analysis has a corresponding template notebook in templates/:\n\ntemplates/spc.ipynb\ntemplates/crp.ipynb\ntemplates/pnr.ipynb\netc.\n\nThese templates show complete workflows for computing and visualizing each measure.",
@@ -576,8 +576,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/omission.html",
-    "href": "analyses/error-analyses/omission.html",
+    "objectID": "docs_src/analyses/error-analyses/omission.html",
+    "href": "docs_src/analyses/error-analyses/omission.html",
     "title": "Omission Errors",
     "section": "",
     "text": "Note\n\n\n\nSee templates/omission_error_rate.ipynb for a complete example.",
@@ -588,8 +588,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/omission.html#overview",
-    "href": "analyses/error-analyses/omission.html#overview",
+    "objectID": "docs_src/analyses/error-analyses/omission.html#overview",
+    "href": "docs_src/analyses/error-analyses/omission.html#overview",
     "title": "Omission Errors",
     "section": "Overview",
     "text": "Overview\nOmission errors are study list items that were not recalled. Analyzing omission patterns by serial position or other factors reveals which items are hardest to retrieve.",
@@ -600,8 +600,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/omission.html#usage",
-    "href": "analyses/error-analyses/omission.html#usage",
+    "objectID": "docs_src/analyses/error-analyses/omission.html#usage",
+    "href": "docs_src/analyses/error-analyses/omission.html#usage",
     "title": "Omission Errors",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.omission_error_rate import omission_error_rate, plot_omission_error_rate\n\nrate = omission_error_rate(data)\nplot_omission_error_rate(datasets=[data], labels=[\"Data\"])",
@@ -612,8 +612,8 @@
     ]
   },
   {
-    "objectID": "analyses/custom-analyses.html",
-    "href": "analyses/custom-analyses.html",
+    "objectID": "docs_src/analyses/custom-analyses.html",
+    "href": "docs_src/analyses/custom-analyses.html",
     "title": "Custom Analyses",
     "section": "",
     "text": "jaxcmr analyses follow consistent patterns. You can create custom analyses that integrate with the library.",
@@ -623,8 +623,8 @@
     ]
   },
   {
-    "objectID": "analyses/custom-analyses.html#analysis-pattern",
-    "href": "analyses/custom-analyses.html#analysis-pattern",
+    "objectID": "docs_src/analyses/custom-analyses.html#analysis-pattern",
+    "href": "docs_src/analyses/custom-analyses.html#analysis-pattern",
     "title": "Custom Analyses",
     "section": "Analysis Pattern",
     "text": "Analysis Pattern\nMost analyses follow this structure:\nimport jax.numpy as jnp\nfrom jaxtyping import Array, Integer, Float\n\ndef my_analysis(\n    recalls: Integer[Array, \"trials max_recalls\"],\n    list_length: int,\n    **kwargs\n) -&gt; Float[Array, \"...\"]:\n    \"\"\"\n    Compute my custom analysis.\n\n    Args:\n        recalls: Recall sequences (1-indexed, 0 = padding)\n        list_length: Number of items in each list\n        **kwargs: Additional parameters\n\n    Returns:\n        Analysis results\n    \"\"\"\n    # Your implementation here\n    ...",
@@ -634,8 +634,8 @@
     ]
   },
   {
-    "objectID": "analyses/custom-analyses.html#example-first-recall-probability",
-    "href": "analyses/custom-analyses.html#example-first-recall-probability",
+    "objectID": "docs_src/analyses/custom-analyses.html#example-first-recall-probability",
+    "href": "docs_src/analyses/custom-analyses.html#example-first-recall-probability",
     "title": "Custom Analyses",
     "section": "Example: First Recall Probability",
     "text": "Example: First Recall Probability\nProbability of recalling each serial position first:\ndef first_recall_probability(\n    recalls: Integer[Array, \"trials max_recalls\"],\n    list_length: int,\n) -&gt; Float[Array, \"list_length\"]:\n    \"\"\"Probability each position is recalled first.\"\"\"\n    # Get first recall for each trial\n    first_recalls = recalls[:, 0]\n\n    # Count how often each position is first\n    counts = jnp.zeros(list_length)\n    for pos in range(1, list_length + 1):\n        counts = counts.at[pos - 1].set(jnp.sum(first_recalls == pos))\n\n    # Normalize\n    return counts / jnp.sum(counts)",
@@ -645,8 +645,8 @@
     ]
   },
   {
-    "objectID": "analyses/custom-analyses.html#jit-compatibility",
-    "href": "analyses/custom-analyses.html#jit-compatibility",
+    "objectID": "docs_src/analyses/custom-analyses.html#jit-compatibility",
+    "href": "docs_src/analyses/custom-analyses.html#jit-compatibility",
     "title": "Custom Analyses",
     "section": "JIT Compatibility",
     "text": "JIT Compatibility\nFor performance, ensure your analysis is JIT-compatible:\nimport jax\n\n@jax.jit\ndef my_fast_analysis(recalls, list_length):\n    ...\nAvoid Python loops over data—use JAX operations instead.",
@@ -656,8 +656,8 @@
     ]
   },
   {
-    "objectID": "analyses/custom-analyses.html#vectorization",
-    "href": "analyses/custom-analyses.html#vectorization",
+    "objectID": "docs_src/analyses/custom-analyses.html#vectorization",
+    "href": "docs_src/analyses/custom-analyses.html#vectorization",
     "title": "Custom Analyses",
     "section": "Vectorization",
     "text": "Vectorization\nUse jax.vmap to apply analyses across subjects or conditions:\n# Apply analysis to each subject separately\nsubject_results = jax.vmap(my_analysis)(subject_data)",
@@ -667,8 +667,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/cat-spc.html",
-    "href": "analyses/category/cat-spc.html",
+    "objectID": "docs_src/analyses/category/cat-spc.html",
+    "href": "docs_src/analyses/category/cat-spc.html",
     "title": "Category SPC",
     "section": "",
     "text": "Note\n\n\n\nSee templates/cat_spc.ipynb for a complete example.",
@@ -679,8 +679,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/cat-spc.html#overview",
-    "href": "analyses/category/cat-spc.html#overview",
+    "objectID": "docs_src/analyses/category/cat-spc.html#overview",
+    "href": "docs_src/analyses/category/cat-spc.html#overview",
     "title": "Category SPC",
     "section": "Overview",
     "text": "Overview\nCategory SPC shows serial position curves broken down by item category.",
@@ -691,8 +691,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/cat-spc.html#usage",
-    "href": "analyses/category/cat-spc.html#usage",
+    "objectID": "docs_src/analyses/category/cat-spc.html#usage",
+    "href": "docs_src/analyses/category/cat-spc.html#usage",
     "title": "Category SPC",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.cat_spc import plot_cat_spc\n\nplot_cat_spc(\n    datasets=[data],\n    category_field=\"condition\",\n    category_values=[1, 2],\n    labels=[\"Category A\", \"Category B\"],\n)",
@@ -703,8 +703,8 @@
     ]
   },
   {
-    "objectID": "concepts/index.html",
-    "href": "concepts/index.html",
+    "objectID": "docs_src/concepts/index.html",
+    "href": "docs_src/concepts/index.html",
     "title": "Concepts",
     "section": "",
     "text": "This section covers the foundational concepts you need to understand jaxcmr.",
@@ -713,8 +713,8 @@
     ]
   },
   {
-    "objectID": "concepts/index.html#what-is-jaxcmr",
-    "href": "concepts/index.html#what-is-jaxcmr",
+    "objectID": "docs_src/concepts/index.html#what-is-jaxcmr",
+    "href": "docs_src/concepts/index.html#what-is-jaxcmr",
     "title": "Concepts",
     "section": "What is jaxcmr?",
     "text": "What is jaxcmr?\njaxcmr is a JAX-accelerated toolkit for computational memory research. It provides:\n\nAnalyses: Functions for computing behavioral measures from recall data\nModels: Implementations of CMR and related memory search models\nEvaluation: Tools for fitting models to data and comparing them",
@@ -723,8 +723,8 @@
     ]
   },
   {
-    "objectID": "concepts/index.html#core-design",
-    "href": "concepts/index.html#core-design",
+    "objectID": "docs_src/concepts/index.html#core-design",
+    "href": "docs_src/concepts/index.html#core-design",
     "title": "Concepts",
     "section": "Core Design",
     "text": "Core Design\nThe library is built around typed protocols that define extension points. Implement these protocols and your code integrates with the entire ecosystem.",
@@ -733,8 +733,8 @@
     ]
   },
   {
-    "objectID": "concepts/index.html#sections",
-    "href": "concepts/index.html#sections",
+    "objectID": "docs_src/concepts/index.html#sections",
+    "href": "docs_src/concepts/index.html#sections",
     "title": "Concepts",
     "section": "Sections",
     "text": "Sections\n\nWhy JAX - JAX fundamentals for memory science\nData Format - The RecallDataset structure\nArchitecture - How models are composed\nEvaluation Pipeline - Fitting and simulation flow",
@@ -743,8 +743,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html",
-    "href": "concepts/data-format.html",
+    "objectID": "docs_src/concepts/data-format.html",
+    "href": "docs_src/concepts/data-format.html",
     "title": "Data Format",
     "section": "",
     "text": "jaxcmr expects data in a specific format defined by the RecallDataset TypedDict.",
@@ -754,8 +754,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html#recalldataset-structure",
-    "href": "concepts/data-format.html#recalldataset-structure",
+    "objectID": "docs_src/concepts/data-format.html#recalldataset-structure",
+    "href": "docs_src/concepts/data-format.html#recalldataset-structure",
     "title": "Data Format",
     "section": "RecallDataset Structure",
     "text": "RecallDataset Structure\nclass RecallDataset(TypedDict):\n    # Required fields\n    subject: Integer[Array, \"n_trials 1\"]\n    listLength: Integer[Array, \"n_trials 1\"]\n    pres_itemnos: Integer[Array, \"n_trials num_presented\"]\n    recalls: Integer[Array, \"n_trials num_recalled\"]\n\n    # Optional fields\n    pres_itemids: Integer[Array, \"n_trials num_presented\"]\n    rec_itemids: NotRequired[Integer[Array, \"n_trials num_recalled\"]]\n    irt: NotRequired[Integer[Array, \"n_trials num_recalled\"]]\n    session: NotRequired[Integer[Array, \"n_trials 1\"]]",
@@ -765,8 +765,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html#field-descriptions",
-    "href": "concepts/data-format.html#field-descriptions",
+    "objectID": "docs_src/concepts/data-format.html#field-descriptions",
+    "href": "docs_src/concepts/data-format.html#field-descriptions",
     "title": "Data Format",
     "section": "Field Descriptions",
     "text": "Field Descriptions\n\nRequired Fields\n\n\n\n\n\n\n\n\nField\nShape\nDescription\n\n\n\n\nsubject\n(n_trials, 1)\nSubject ID for each trial\n\n\nlistLength\n(n_trials, 1)\nNumber of items presented in each trial\n\n\npres_itemnos\n(n_trials, max_presented)\nWithin-list item positions (1-indexed, 0 = padding)\n\n\nrecalls\n(n_trials, max_recalled)\nRecalled item positions (1-indexed, 0 = padding)\n\n\n\n\n\nOptional Fields\n\n\n\n\n\n\n\n\nField\nShape\nDescription\n\n\n\n\npres_itemids\n(n_trials, max_presented)\nCross-list item IDs (for semantic analyses)\n\n\nrec_itemids\n(n_trials, max_recalled)\nCross-list IDs of recalled items\n\n\nirt\n(n_trials, max_recalled)\nInter-response times\n\n\nsession\n(n_trials, 1)\nSession identifiers",
@@ -776,8 +776,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html#indexing-convention",
-    "href": "concepts/data-format.html#indexing-convention",
+    "objectID": "docs_src/concepts/data-format.html#indexing-convention",
+    "href": "docs_src/concepts/data-format.html#indexing-convention",
     "title": "Data Format",
     "section": "Indexing Convention",
     "text": "Indexing Convention\nAll item indices are 1-indexed: - Position 1 = first item in the list - Position 0 = padding (unused entry)",
@@ -787,8 +787,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html#loading-data",
-    "href": "concepts/data-format.html#loading-data",
+    "objectID": "docs_src/concepts/data-format.html#loading-data",
+    "href": "docs_src/concepts/data-format.html#loading-data",
     "title": "Data Format",
     "section": "Loading Data",
     "text": "Loading Data\nData is typically stored in HDF5 format:\nimport h5py\n\nwith h5py.File(\"experiment.h5\", \"r\") as f:\n    dataset = {key: f[key][:] for key in f.keys()}",
@@ -798,8 +798,8 @@
     ]
   },
   {
-    "objectID": "concepts/data-format.html#converting-from-other-formats",
-    "href": "concepts/data-format.html#converting-from-other-formats",
+    "objectID": "docs_src/concepts/data-format.html#converting-from-other-formats",
+    "href": "docs_src/concepts/data-format.html#converting-from-other-formats",
     "title": "Data Format",
     "section": "Converting from Other Formats",
     "text": "Converting from Other Formats\nComing soon: conversion utilities for psifr, pandas DataFrames",
@@ -809,8 +809,8 @@
     ]
   },
   {
-    "objectID": "get-started/index.html",
-    "href": "get-started/index.html",
+    "objectID": "docs_src/get-started/index.html",
+    "href": "docs_src/get-started/index.html",
     "title": "Get Started",
     "section": "",
     "text": "Install the latest stable version using pip:\npip install jaxcmr\nOr install the development version from GitHub:\npip install git+https://github.com/githubpsyche/jaxcmr\n\n\njaxcmr uses JAX for fast computation. By default, JAX runs on CPU. For GPU acceleration:\n# CUDA (NVIDIA GPUs)\npip install -U \"jax[cuda12]\"\n\n# Metal (Apple Silicon)\npip install jax-metal",
@@ -819,8 +819,8 @@
     ]
   },
   {
-    "objectID": "get-started/index.html#installation",
-    "href": "get-started/index.html#installation",
+    "objectID": "docs_src/get-started/index.html#installation",
+    "href": "docs_src/get-started/index.html#installation",
     "title": "Get Started",
     "section": "",
     "text": "Install the latest stable version using pip:\npip install jaxcmr\nOr install the development version from GitHub:\npip install git+https://github.com/githubpsyche/jaxcmr\n\n\njaxcmr uses JAX for fast computation. By default, JAX runs on CPU. For GPU acceleration:\n# CUDA (NVIDIA GPUs)\npip install -U \"jax[cuda12]\"\n\n# Metal (Apple Silicon)\npip install jax-metal",
@@ -829,8 +829,8 @@
     ]
   },
   {
-    "objectID": "get-started/index.html#next-steps",
-    "href": "get-started/index.html#next-steps",
+    "objectID": "docs_src/get-started/index.html#next-steps",
+    "href": "docs_src/get-started/index.html#next-steps",
     "title": "Get Started",
     "section": "Next Steps",
     "text": "Next Steps\n\nQuickstart - Run your first CMR simulation\nConcepts - Understand the library architecture",
@@ -843,7 +843,7 @@
     "href": "index.html",
     "title": "jaxcmr",
     "section": "",
-    "text": "jaxcmr is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall."
+    "text": "jaxcmr is a Python library for specifying and evaluating computational models of memory search. It leverages a compositional design and JAX’s support for easy just-in-time compilation to streamline model prototyping and simulation so researchers can explore more ideas in less time."
   },
   {
     "objectID": "index.html#installation",
@@ -860,8 +860,8 @@
     "text": "Explore\n\n\nGet Started\nInstallation and quickstart tutorials.\n\n\nConcepts\nLibrary architecture, JAX fundamentals, and core abstractions.\n\n\nAnalyses\nBehavioral measures for recall data.\n\n\nModels\nCMR and memory search model variants.\n\n\nEvaluation\nFitting, simulation, and model comparison.\n\n\nWorkflow\nResearch practice, templates, and tooling.\n\n\nProjects\nResearch manuscripts using jaxcmr.\n\n\nBlog\nUpdates and research notes.\n\n\nGitHub\nSource code and issue tracker."
   },
   {
-    "objectID": "concepts/architecture.html",
-    "href": "concepts/architecture.html",
+    "objectID": "docs_src/concepts/architecture.html",
+    "href": "docs_src/concepts/architecture.html",
     "title": "Architecture",
     "section": "",
     "text": "jaxcmr models are composed from three core components, each defined by a protocol.",
@@ -871,8 +871,8 @@
     ]
   },
   {
-    "objectID": "concepts/architecture.html#the-memorysearch-protocol",
-    "href": "concepts/architecture.html#the-memorysearch-protocol",
+    "objectID": "docs_src/concepts/architecture.html#the-memorysearch-protocol",
+    "href": "docs_src/concepts/architecture.html#the-memorysearch-protocol",
     "title": "Architecture",
     "section": "The MemorySearch Protocol",
     "text": "The MemorySearch Protocol\nAll memory search models implement the MemorySearch protocol:\nclass MemorySearch(Protocol):\n    item_count: int\n    is_active: Bool[Array, \"\"]\n    recallable: Bool[Array, \" item_count\"]\n    recall_total: Integer[Array, \"\"]\n\n    def experience(self, choice: Int_) -&gt; \"MemorySearch\": ...\n    def start_retrieving(self) -&gt; \"MemorySearch\": ...\n    def retrieve(self, choice: Int_) -&gt; \"MemorySearch\": ...\n    def activations(self) -&gt; Float[Array, \" item_count\"]: ...\n    def outcome_probability(self, choice: Int_) -&gt; Float[Array, \"\"]: ...\n    def outcome_probabilities(self) -&gt; Float[Array, \" recall_outcomes\"]: ...\nThis defines the interface for: - Study phase: experience() processes each study item - Transition: start_retrieving() switches to retrieval mode - Retrieval phase: retrieve() processes each recall, activations() and outcome_probability() compute retrieval probabilities",
@@ -882,8 +882,8 @@
     ]
   },
   {
-    "objectID": "concepts/architecture.html#component-protocols",
-    "href": "concepts/architecture.html#component-protocols",
+    "objectID": "docs_src/concepts/architecture.html#component-protocols",
+    "href": "docs_src/concepts/architecture.html#component-protocols",
     "title": "Architecture",
     "section": "Component Protocols",
     "text": "Component Protocols\nModels are built from three component types:\n\nContext\nMaintains temporal context that drifts during study and retrieval:\nclass Context(Protocol):\n    state: Float[Array, \" context_feature_units\"]\n    initial_state: Float[Array, \" context_feature_units\"]\n    size: int\n\n    def integrate(self, context_input, drift_rate) -&gt; \"Context\": ...\n\n\nMemory\nStores and retrieves associations:\nclass Memory(Protocol):\n    state: Float[Array, \" input_size output_size\"]\n\n    def associate(self, in_pattern, out_pattern, learning_rate) -&gt; \"Memory\": ...\n    def probe(self, in_pattern) -&gt; Float[Array, \" output_size\"]: ...\n\n\nTerminationPolicy\nDetermines when to stop recalling:\nclass TerminationPolicy(Protocol):\n    def stop_probability(self, model: \"MemorySearch\") -&gt; Float[Array, \"\"]: ...",
@@ -893,8 +893,8 @@
     ]
   },
   {
-    "objectID": "concepts/architecture.html#composition",
-    "href": "concepts/architecture.html#composition",
+    "objectID": "docs_src/concepts/architecture.html#composition",
+    "href": "docs_src/concepts/architecture.html#composition",
     "title": "Architecture",
     "section": "Composition",
     "text": "Composition\nA CMR model combines these components:\nMemorySearch\n├── Context (temporal context state)\n├── Memory (MFC: item → context)\n├── Memory (MCF: context → item)\n└── TerminationPolicy (when to stop)",
@@ -904,8 +904,8 @@
     ]
   },
   {
-    "objectID": "concepts/architecture.html#factory-functions",
-    "href": "concepts/architecture.html#factory-functions",
+    "objectID": "docs_src/concepts/architecture.html#factory-functions",
+    "href": "docs_src/concepts/architecture.html#factory-functions",
     "title": "Architecture",
     "section": "Factory Functions",
     "text": "Factory Functions\nFactory protocols enable dependency injection:\nclass ContextCreateFn(Protocol):\n    def __call__(self, item_count: int) -&gt; Context: ...\n\nclass MemoryCreateFn(Protocol):\n    def __call__(self, list_length, parameters, context) -&gt; Memory: ...\nThis allows swapping implementations without changing model code.",
@@ -915,8 +915,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html",
-    "href": "concepts/evaluation-pipeline.html",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html",
+    "href": "docs_src/concepts/evaluation-pipeline.html",
     "title": "Evaluation Pipeline",
     "section": "",
     "text": "Model evaluation connects loss functions, fitting algorithms, and simulation.",
@@ -926,8 +926,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#pipeline-overview",
-    "href": "concepts/evaluation-pipeline.html#pipeline-overview",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#pipeline-overview",
+    "href": "docs_src/concepts/evaluation-pipeline.html#pipeline-overview",
     "title": "Evaluation Pipeline",
     "section": "Pipeline Overview",
     "text": "Pipeline Overview\nDataset → LossFnGenerator → Loss Function → FittingAlgorithm → FitResult\n                                ↑\n                          TrialSimulator",
@@ -937,8 +937,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#lossfngenerator",
-    "href": "concepts/evaluation-pipeline.html#lossfngenerator",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#lossfngenerator",
+    "href": "docs_src/concepts/evaluation-pipeline.html#lossfngenerator",
     "title": "Evaluation Pipeline",
     "section": "LossFnGenerator",
     "text": "LossFnGenerator\nGenerates loss functions for optimization:\nclass LossFnGenerator(Protocol):\n    def __init__(\n        self,\n        model_create_fn: MemorySearchCreateFn,\n        dataset: RecallDataset,\n        features: Optional[Float[Array, \" word_pool_items features_count\"]],\n    ) -&gt; None: ...\n\n    def __call__(\n        self,\n        trial_indices: Integer[Array, \" trials\"],\n        base_params: Mapping[str, Float_],\n        free_param_names: Iterable[str],\n    ) -&gt; Callable[[np.ndarray], Float[Array, \"\"]]: ...\nThe generator: 1. Takes a model factory and dataset 2. Returns a callable loss function 3. Loss function maps parameter vectors to scalar loss values",
@@ -948,8 +948,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#fittingalgorithm",
-    "href": "concepts/evaluation-pipeline.html#fittingalgorithm",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#fittingalgorithm",
+    "href": "docs_src/concepts/evaluation-pipeline.html#fittingalgorithm",
     "title": "Evaluation Pipeline",
     "section": "FittingAlgorithm",
     "text": "FittingAlgorithm\nRuns optimization:\nclass FittingAlgorithm(Protocol):\n    def __init__(\n        self,\n        dataset: RecallDataset,\n        features: Optional[...],\n        base_params: Mapping[str, Float_],\n        model_factory: Type[MemorySearchModelFactory],\n        loss_fn_generator: Type[LossFnGenerator],\n        hyperparams: Optional[dict[str, Any]] = None,\n    ): ...\n\n    def fit(\n        self,\n        trial_mask: Bool[Array, \" trials\"],\n        fit_to_subjects: bool = True,\n    ) -&gt; FitResult: ...",
@@ -959,8 +959,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#trialsimulator",
-    "href": "concepts/evaluation-pipeline.html#trialsimulator",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#trialsimulator",
+    "href": "docs_src/concepts/evaluation-pipeline.html#trialsimulator",
     "title": "Evaluation Pipeline",
     "section": "TrialSimulator",
     "text": "TrialSimulator\nGenerates recall sequences:\nclass TrialSimulator(Protocol):\n    def __call__(\n        self,\n        model: MemorySearch,\n        present: Integer[Array, \" study_events\"],\n        trial: Integer[Array, \" recalls\"],\n        rng: PRNGKeyArray,\n    ) -&gt; tuple[MemorySearch, Integer[Array, \" recall_events\"]]: ...",
@@ -970,8 +970,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#fitresult",
-    "href": "concepts/evaluation-pipeline.html#fitresult",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#fitresult",
+    "href": "docs_src/concepts/evaluation-pipeline.html#fitresult",
     "title": "Evaluation Pipeline",
     "section": "FitResult",
     "text": "FitResult\nFitting returns a structured result:\nclass FitResult(TypedDict):\n    fixed: dict[str, float]        # Fixed parameters\n    free: dict[str, list[float]]   # Free parameter bounds\n    fitness: list[float]           # Fitness values\n    fits: dict[str, list[float]]   # Optimized parameter values\n    hyperparameters: dict[str, Any]\n    fit_time: float",
@@ -981,8 +981,8 @@
     ]
   },
   {
-    "objectID": "concepts/evaluation-pipeline.html#typical-workflow",
-    "href": "concepts/evaluation-pipeline.html#typical-workflow",
+    "objectID": "docs_src/concepts/evaluation-pipeline.html#typical-workflow",
+    "href": "docs_src/concepts/evaluation-pipeline.html#typical-workflow",
     "title": "Evaluation Pipeline",
     "section": "Typical Workflow",
     "text": "Typical Workflow\n# 1. Load data\ndataset = load_dataset(\"experiment.h5\")\n\n# 2. Configure fitting\nalgorithm = ScipyDE(\n    dataset=dataset,\n    base_params=DEFAULT_PARAMS,\n    model_factory=CMRFactory,\n    loss_fn_generator=RecallLikelihood,\n    hyperparams={\"bounds\": param_bounds}\n)\n\n# 3. Run fitting\nresult = algorithm.fit(trial_mask, fit_to_subjects=True)\n\n# 4. Inspect results\nprint(result[\"fits\"])\nprint(result[\"fitness\"])",
@@ -992,8 +992,8 @@
     ]
   },
   {
-    "objectID": "concepts/jax.html",
-    "href": "concepts/jax.html",
+    "objectID": "docs_src/concepts/jax.html",
+    "href": "docs_src/concepts/jax.html",
     "title": "Why JAX",
     "section": "",
     "text": "jaxcmr uses JAX as its computational backend. Understanding a few JAX concepts helps you get the most from the library.",
@@ -1003,8 +1003,8 @@
     ]
   },
   {
-    "objectID": "concepts/jax.html#why-jax-for-memory-modeling",
-    "href": "concepts/jax.html#why-jax-for-memory-modeling",
+    "objectID": "docs_src/concepts/jax.html#why-jax-for-memory-modeling",
+    "href": "docs_src/concepts/jax.html#why-jax-for-memory-modeling",
     "title": "Why JAX",
     "section": "Why JAX for Memory Modeling?",
     "text": "Why JAX for Memory Modeling?\nMemory models require:\n\nFast simulation - Thousands of trials to evaluate a parameter set\nParallel fitting - Multiple subjects, multiple models\nReproducibility - Identical random seeds yield identical results\n\nJAX addresses all three through its core features.",
@@ -1014,8 +1014,8 @@
     ]
   },
   {
-    "objectID": "concepts/jax.html#key-jax-concepts",
-    "href": "concepts/jax.html#key-jax-concepts",
+    "objectID": "docs_src/concepts/jax.html#key-jax-concepts",
+    "href": "docs_src/concepts/jax.html#key-jax-concepts",
     "title": "Why JAX",
     "section": "Key JAX Concepts",
     "text": "Key JAX Concepts\n\nJIT Compilation\njax.jit compiles Python functions to optimized machine code:\nimport jax\n\n@jax.jit\ndef simulate_trial(model, study_items):\n    # This runs much faster after first call\n    ...\njaxcmr models are designed to be JIT-compatible. Most functions work seamlessly with jit.\n\n\nVectorization with vmap\njax.vmap automatically vectorizes functions across an axis:\n# Instead of looping over trials:\nfor trial in trials:\n    result = simulate(trial)\n\n# Vectorize:\nresults = jax.vmap(simulate)(trials)\nThis enables parallel simulation across trials and subjects.\n\n\nPure Functions\nJAX functions must be pure—no side effects, same inputs always produce same outputs. This enables:\n\nReproducibility: Random state is explicit (PRNGKey)\nParallelism: No hidden state to synchronize\nCaching: Results can be safely cached\n\n\n\nPyTrees\nJAX represents nested data structures (dicts, dataclasses) as “PyTrees”. jaxcmr models are PyTrees, making them compatible with JAX transformations:\n# Models can be passed through jit, vmap, etc.\nmodel = CMR.create(list_length=16, parameters=params)\njax.tree_util.tree_map(lambda x: x.shape, model)  # Inspect structure",
@@ -1025,8 +1025,8 @@
     ]
   },
   {
-    "objectID": "concepts/jax.html#practical-implications",
-    "href": "concepts/jax.html#practical-implications",
+    "objectID": "docs_src/concepts/jax.html#practical-implications",
+    "href": "docs_src/concepts/jax.html#practical-implications",
     "title": "Why JAX",
     "section": "Practical Implications",
     "text": "Practical Implications\nWhen working with jaxcmr:\n\nUse JIT for fitting - Wrap loss functions in jit for speed\nVectorize over trials - Use vmap instead of loops\nManage random state explicitly - Pass PRNGKey to functions that sample\nModels are immutable - Methods return new model instances",
@@ -1036,8 +1036,8 @@
     ]
   },
   {
-    "objectID": "concepts/jax.html#further-reading",
-    "href": "concepts/jax.html#further-reading",
+    "objectID": "docs_src/concepts/jax.html#further-reading",
+    "href": "docs_src/concepts/jax.html#further-reading",
     "title": "Why JAX",
     "section": "Further Reading",
     "text": "Further Reading\n\nJAX Quickstart\nJAX Sharp Bits",
@@ -1047,8 +1047,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/catcrp.html",
-    "href": "analyses/category/catcrp.html",
+    "objectID": "docs_src/analyses/category/catcrp.html",
+    "href": "docs_src/analyses/category/catcrp.html",
     "title": "Category CRP",
     "section": "",
     "text": "Note\n\n\n\nSee templates/catcrp.ipynb for a complete example.",
@@ -1059,8 +1059,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/catcrp.html#overview",
-    "href": "analyses/category/catcrp.html#overview",
+    "objectID": "docs_src/analyses/category/catcrp.html#overview",
+    "href": "docs_src/analyses/category/catcrp.html#overview",
     "title": "Category CRP",
     "section": "Overview",
     "text": "Overview\nCategory CRP compares transition probabilities within categories vs. between categories, revealing categorical clustering.",
@@ -1071,8 +1071,8 @@
     ]
   },
   {
-    "objectID": "analyses/category/catcrp.html#usage",
-    "href": "analyses/category/catcrp.html#usage",
+    "objectID": "docs_src/analyses/category/catcrp.html#usage",
+    "href": "docs_src/analyses/category/catcrp.html#usage",
     "title": "Category CRP",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.catcrp import plot_cat_crp\n\nplot_cat_crp(\n    datasets=[data],\n    category_labels=categories,\n    labels=[\"Data\"],\n)",
@@ -1083,8 +1083,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/intrusion.html",
-    "href": "analyses/error-analyses/intrusion.html",
+    "objectID": "docs_src/analyses/error-analyses/intrusion.html",
+    "href": "docs_src/analyses/error-analyses/intrusion.html",
     "title": "Intrusion Errors",
     "section": "",
     "text": "Note\n\n\n\nSee templates/intrusion_error_rate.ipynb for a complete example.",
@@ -1095,8 +1095,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/intrusion.html#overview",
-    "href": "analyses/error-analyses/intrusion.html#overview",
+    "objectID": "docs_src/analyses/error-analyses/intrusion.html#overview",
+    "href": "docs_src/analyses/error-analyses/intrusion.html#overview",
     "title": "Intrusion Errors",
     "section": "Overview",
     "text": "Overview\nIntrusion errors occur when participants recall items that were not on the study list. These can be:\n\nPrior-list intrusions (items from previous lists)\nExtra-experimental intrusions (items never studied)",
@@ -1107,8 +1107,8 @@
     ]
   },
   {
-    "objectID": "analyses/error-analyses/intrusion.html#usage",
-    "href": "analyses/error-analyses/intrusion.html#usage",
+    "objectID": "docs_src/analyses/error-analyses/intrusion.html#usage",
+    "href": "docs_src/analyses/error-analyses/intrusion.html#usage",
     "title": "Intrusion Errors",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.intrusion_error_rate import intrusion_error_rate, plot_intrusion_error_rate\n\nrate = intrusion_error_rate(data)\nplot_intrusion_error_rate(datasets=[data], labels=[\"Data\"])",
@@ -1119,8 +1119,8 @@
     ]
   },
   {
-    "objectID": "analyses/importing-data.html",
-    "href": "analyses/importing-data.html",
+    "objectID": "docs_src/analyses/importing-data.html",
+    "href": "docs_src/analyses/importing-data.html",
     "title": "Importing Data",
     "section": "",
     "text": "Before computing analyses, you need to load your data into the RecallDataset format.",
@@ -1130,8 +1130,8 @@
     ]
   },
   {
-    "objectID": "analyses/importing-data.html#from-hdf5",
-    "href": "analyses/importing-data.html#from-hdf5",
+    "objectID": "docs_src/analyses/importing-data.html#from-hdf5",
+    "href": "docs_src/analyses/importing-data.html#from-hdf5",
     "title": "Importing Data",
     "section": "From HDF5",
     "text": "From HDF5\nThe most common format for jaxcmr data:\nimport h5py\nimport jax.numpy as jnp\n\ndef load_dataset(path: str) -&gt; dict:\n    \"\"\"Load a RecallDataset from HDF5.\"\"\"\n    with h5py.File(path, \"r\") as f:\n        return {key: jnp.array(f[key][:]) for key in f.keys()}\n\ndataset = load_dataset(\"experiment.h5\")",
@@ -1141,8 +1141,8 @@
     ]
   },
   {
-    "objectID": "analyses/importing-data.html#from-psifr",
-    "href": "analyses/importing-data.html#from-psifr",
+    "objectID": "docs_src/analyses/importing-data.html#from-psifr",
+    "href": "docs_src/analyses/importing-data.html#from-psifr",
     "title": "Importing Data",
     "section": "From psifr",
     "text": "From psifr\nIf you have data in psifr format:\nComing soon: psifr conversion utilities",
@@ -1152,8 +1152,8 @@
     ]
   },
   {
-    "objectID": "analyses/importing-data.html#from-pandas",
-    "href": "analyses/importing-data.html#from-pandas",
+    "objectID": "docs_src/analyses/importing-data.html#from-pandas",
+    "href": "docs_src/analyses/importing-data.html#from-pandas",
     "title": "Importing Data",
     "section": "From Pandas",
     "text": "From Pandas\nConverting from a DataFrame:\nComing soon: DataFrame conversion utilities",
@@ -1163,8 +1163,8 @@
     ]
   },
   {
-    "objectID": "analyses/importing-data.html#validating-data",
-    "href": "analyses/importing-data.html#validating-data",
+    "objectID": "docs_src/analyses/importing-data.html#validating-data",
+    "href": "docs_src/analyses/importing-data.html#validating-data",
     "title": "Importing Data",
     "section": "Validating Data",
     "text": "Validating Data\nCheck your dataset has the required fields:\nrequired = [\"subject\", \"listLength\", \"pres_itemnos\", \"recalls\"]\nfor field in required:\n    assert field in dataset, f\"Missing required field: {field}\"\nSee Data Format for complete field specifications.",
@@ -1174,8 +1174,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/compound-cueing.html",
-    "href": "analyses/repetition/compound-cueing.html",
+    "objectID": "docs_src/analyses/repetition/compound-cueing.html",
+    "href": "docs_src/analyses/repetition/compound-cueing.html",
     "title": "Compound Cueing",
     "section": "",
     "text": "Note\n\n\n\nSee templates/compound_cueing.ipynb for a complete example.",
@@ -1186,8 +1186,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/compound-cueing.html#overview",
-    "href": "analyses/repetition/compound-cueing.html#overview",
+    "objectID": "docs_src/analyses/repetition/compound-cueing.html#overview",
+    "href": "docs_src/analyses/repetition/compound-cueing.html#overview",
     "title": "Compound Cueing",
     "section": "Overview",
     "text": "Overview\nCompound cueing analysis examines how multiple cues (e.g., context + just-recalled item) combine to support retrieval.",
@@ -1198,8 +1198,8 @@
     ]
   },
   {
-    "objectID": "analyses/repetition/compound-cueing.html#usage",
-    "href": "analyses/repetition/compound-cueing.html#usage",
+    "objectID": "docs_src/analyses/repetition/compound-cueing.html#usage",
+    "href": "docs_src/analyses/repetition/compound-cueing.html#usage",
     "title": "Compound Cueing",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.compound_cueing_crp import plot_compound_cueing_crp\n\nplot_compound_cueing_crp(datasets=[data], labels=[\"Data\"])",
@@ -1210,8 +1210,8 @@
     ]
   },
   {
-    "objectID": "analyses/scoring-data.html",
-    "href": "analyses/scoring-data.html",
+    "objectID": "docs_src/analyses/scoring-data.html",
+    "href": "docs_src/analyses/scoring-data.html",
     "title": "Scoring Data",
     "section": "",
     "text": "Before computing detailed analyses, you often need basic metrics about recall performance.",
@@ -1221,8 +1221,8 @@
     ]
   },
   {
-    "objectID": "analyses/scoring-data.html#basic-metrics",
-    "href": "analyses/scoring-data.html#basic-metrics",
+    "objectID": "docs_src/analyses/scoring-data.html#basic-metrics",
+    "href": "docs_src/analyses/scoring-data.html#basic-metrics",
     "title": "Scoring Data",
     "section": "Basic Metrics",
     "text": "Basic Metrics\n\nRecall Count\nNumber of correct recalls per trial:\nimport jax.numpy as jnp\n\ndef recall_count(recalls):\n    \"\"\"Count non-zero (valid) recalls per trial.\"\"\"\n    return jnp.sum(recalls &gt; 0, axis=1)\n\ncounts = recall_count(dataset[\"recalls\"])\n\n\nRecall Probability\nProportion of items recalled:\ndef recall_probability(recalls, list_length):\n    \"\"\"Compute recall probability per trial.\"\"\"\n    counts = jnp.sum(recalls &gt; 0, axis=1)\n    return counts / list_length.squeeze()",
@@ -1232,8 +1232,8 @@
     ]
   },
   {
-    "objectID": "analyses/scoring-data.html#filtering-trials",
-    "href": "analyses/scoring-data.html#filtering-trials",
+    "objectID": "docs_src/analyses/scoring-data.html#filtering-trials",
+    "href": "docs_src/analyses/scoring-data.html#filtering-trials",
     "title": "Scoring Data",
     "section": "Filtering Trials",
     "text": "Filtering Trials\nYou may want to filter trials by subject, session, or other criteria:\n# Trials for subject 1\nmask = dataset[\"subject\"].squeeze() == 1\nsubject_recalls = dataset[\"recalls\"][mask]",
@@ -1243,8 +1243,8 @@
     ]
   },
   {
-    "objectID": "analyses/scoring-data.html#next-steps",
-    "href": "analyses/scoring-data.html#next-steps",
+    "objectID": "docs_src/analyses/scoring-data.html#next-steps",
+    "href": "docs_src/analyses/scoring-data.html#next-steps",
     "title": "Scoring Data",
     "section": "Next Steps",
     "text": "Next Steps\nWith data loaded and validated, you can compute:\n\nSerial Position Curve - Recall by presentation position\nConditional Response Probability - Temporal contiguity",
@@ -1254,8 +1254,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/spc.html",
-    "href": "analyses/serial-position/spc.html",
+    "objectID": "docs_src/analyses/serial-position/spc.html",
+    "href": "docs_src/analyses/serial-position/spc.html",
     "title": "Serial Position Curve",
     "section": "",
     "text": "Note\n\n\n\nSee templates/spc.ipynb for a complete example.",
@@ -1266,8 +1266,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/spc.html#overview",
-    "href": "analyses/serial-position/spc.html#overview",
+    "objectID": "docs_src/analyses/serial-position/spc.html#overview",
+    "href": "docs_src/analyses/serial-position/spc.html#overview",
     "title": "Serial Position Curve",
     "section": "Overview",
     "text": "Overview\nThe Serial Position Curve (SPC) plots recall probability as a function of study position. It typically shows:\n\nPrimacy effect: Enhanced recall for early items\nRecency effect: Enhanced recall for recent items\nAsymmetry: Recency is often stronger than primacy in immediate free recall",
@@ -1278,8 +1278,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/spc.html#usage",
-    "href": "analyses/serial-position/spc.html#usage",
+    "objectID": "docs_src/analyses/serial-position/spc.html#usage",
+    "href": "docs_src/analyses/serial-position/spc.html#usage",
     "title": "Serial Position Curve",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.spc import spc, plot_spc\n\n# Compute SPC from recalls array\ncurve = spc(data[\"recalls\"], list_length=16)\n\n# Plot comparing model and data\nplot_spc(\n    datasets=[simulation, data],\n    labels=[\"Model\", \"Data\"],\n)",
@@ -1290,8 +1290,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/spc.html#function-reference",
-    "href": "analyses/serial-position/spc.html#function-reference",
+    "objectID": "docs_src/analyses/serial-position/spc.html#function-reference",
+    "href": "docs_src/analyses/serial-position/spc.html#function-reference",
     "title": "Serial Position Curve",
     "section": "Function Reference",
     "text": "Function Reference\n\nspc(recalls, list_length, trial_mask=None)\nCompute serial position curve.\nParameters:\n\nrecalls: Array of shape (n_trials, max_recalls) with 1-indexed recalls\nlist_length: Number of items in the study list\ntrial_mask: Optional boolean mask to filter trials\n\nReturns:\n\nArray of shape (list_length,) with recall probability at each position\n\n\n\nplot_spc(datasets, trial_masks, labels, ...)\nPlot one or more SPCs with error bars.",
@@ -1302,8 +1302,8 @@
     ]
   },
   {
-    "objectID": "analyses/serial-position/spc.html#interpretation",
-    "href": "analyses/serial-position/spc.html#interpretation",
+    "objectID": "docs_src/analyses/serial-position/spc.html#interpretation",
+    "href": "docs_src/analyses/serial-position/spc.html#interpretation",
     "title": "Serial Position Curve",
     "section": "Interpretation",
     "text": "Interpretation\n\n\n\nPattern\nInterpretation\n\n\n\n\nStrong recency\nRecent items have high activation\n\n\nStrong primacy\nExtra rehearsal or primacy gradient\n\n\nFlat curve\nRandom or ceiling performance\n\n\nU-shape\nTypical free recall pattern",
@@ -1314,8 +1314,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/crp.html",
-    "href": "analyses/temporal-contiguity/crp.html",
+    "objectID": "docs_src/analyses/temporal-contiguity/crp.html",
+    "href": "docs_src/analyses/temporal-contiguity/crp.html",
     "title": "Conditional Response Probability",
     "section": "",
     "text": "Note\n\n\n\nSee templates/crp.ipynb for a complete example.",
@@ -1326,8 +1326,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/crp.html#overview",
-    "href": "analyses/temporal-contiguity/crp.html#overview",
+    "objectID": "docs_src/analyses/temporal-contiguity/crp.html#overview",
+    "href": "docs_src/analyses/temporal-contiguity/crp.html#overview",
     "title": "Conditional Response Probability",
     "section": "Overview",
     "text": "Overview\nThe Conditional Response Probability (CRP) curve shows the probability of recalling an item as a function of its lag (study position relative to the just-recalled item).\nKey features:\n\nTemporal contiguity: Items studied nearby tend to be recalled together\nForward asymmetry: Transitions to +1 lag are more likely than -1\nPeak at lag +1 and -1",
@@ -1338,8 +1338,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/crp.html#usage",
-    "href": "analyses/temporal-contiguity/crp.html#usage",
+    "objectID": "docs_src/analyses/temporal-contiguity/crp.html#usage",
+    "href": "docs_src/analyses/temporal-contiguity/crp.html#usage",
     "title": "Conditional Response Probability",
     "section": "Usage",
     "text": "Usage\nfrom jaxcmr.analyses.crp import crp, plot_crp\n\n# Compute CRP\nresult = crp(data[\"recalls\"], list_length=16)\n\n# Plot comparing model and data\nplot_crp(\n    datasets=[simulation, data],\n    labels=[\"Model\", \"Data\"],\n)",
@@ -1350,8 +1350,8 @@
     ]
   },
   {
-    "objectID": "analyses/temporal-contiguity/crp.html#interpretation",
-    "href": "analyses/temporal-contiguity/crp.html#interpretation",
+    "objectID": "docs_src/analyses/temporal-contiguity/crp.html#interpretation",
+    "href": "docs_src/analyses/temporal-contiguity/crp.html#interpretation",
     "title": "Conditional Response Probability",
     "section": "Interpretation",
     "text": "Interpretation\n\n\n\nPattern\nInterpretation\n\n\n\n\nSharp peak at ±1\nStrong temporal contiguity\n\n\nForward asymmetry\nContext drift creates forward bias\n\n\nFlat curve\nRandom transitions",
@@ -1362,8 +1362,8 @@
     ]
   },
   {
-    "objectID": "models/cmr.html",
-    "href": "models/cmr.html",
+    "objectID": "docs_src/models/cmr.html",
+    "href": "docs_src/models/cmr.html",
     "title": "CMR",
     "section": "",
     "text": "CMR (Context Maintenance and Retrieval) is the base model for memory search in jaxcmr.",
@@ -1373,8 +1373,8 @@
     ]
   },
   {
-    "objectID": "models/cmr.html#overview",
-    "href": "models/cmr.html#overview",
+    "objectID": "docs_src/models/cmr.html#overview",
+    "href": "docs_src/models/cmr.html#overview",
     "title": "CMR",
     "section": "Overview",
     "text": "Overview\nCMR explains free recall through three mechanisms:\n\nContext drift: During study, each item updates the temporal context\nAssociation: Items are associated with their encoding context\nReinstatement: During retrieval, recalling an item reinstates its context, cueing nearby items",
@@ -1384,8 +1384,8 @@
     ]
   },
   {
-    "objectID": "models/cmr.html#architecture",
-    "href": "models/cmr.html#architecture",
+    "objectID": "docs_src/models/cmr.html#architecture",
+    "href": "docs_src/models/cmr.html#architecture",
     "title": "CMR",
     "section": "Architecture",
     "text": "Architecture\nA CMR model combines:\n\nA Context representation\nTwo Memory stores (MFC and MCF)\nA TerminationPolicy for stopping",
@@ -1395,8 +1395,8 @@
     ]
   },
   {
-    "objectID": "models/cmr.html#parameters",
-    "href": "models/cmr.html#parameters",
+    "objectID": "docs_src/models/cmr.html#parameters",
+    "href": "docs_src/models/cmr.html#parameters",
     "title": "CMR",
     "section": "Parameters",
     "text": "Parameters\nComing soon: parameter documentation",
@@ -1406,8 +1406,8 @@
     ]
   },
   {
-    "objectID": "models/cmr.html#usage",
-    "href": "models/cmr.html#usage",
+    "objectID": "docs_src/models/cmr.html#usage",
+    "href": "docs_src/models/cmr.html#usage",
     "title": "CMR",
     "section": "Usage",
     "text": "Usage\n#| eval: false\nfrom jaxcmr.models import CMR\n\n# Create a model for a 16-item list\nmodel = CMR.create(list_length=16, parameters=params)",
@@ -1417,8 +1417,8 @@
     ]
   },
   {
-    "objectID": "models/components/memory.html",
-    "href": "models/components/memory.html",
+    "objectID": "docs_src/models/components/memory.html",
+    "href": "docs_src/models/components/memory.html",
     "title": "Memory",
     "section": "",
     "text": "Memory components store associations between items and context. CMR uses two memory stores:",
@@ -1429,8 +1429,8 @@
     ]
   },
   {
-    "objectID": "models/components/memory.html#the-memory-protocol",
-    "href": "models/components/memory.html#the-memory-protocol",
+    "objectID": "docs_src/models/components/memory.html#the-memory-protocol",
+    "href": "docs_src/models/components/memory.html#the-memory-protocol",
     "title": "Memory",
     "section": "The Memory Protocol",
     "text": "The Memory Protocol\nAny memory implementation must satisfy the Memory protocol:\nclass Memory(Protocol):\n    state: Float[Array, \" input_size output_size\"]\n\n    def associate(\n        self,\n        in_pattern: Float[Array, \" input_size\"],\n        out_pattern: Float[Array, \" output_size\"],\n        learning_rate: Float_,\n    ) -&gt; \"Memory\":\n        \"\"\"Return the updated memory after associating input and output patterns.\"\"\"\n        ...\n\n    def probe(\n        self,\n        in_pattern: Float[Array, \" input_size\"],\n    ) -&gt; Float[Array, \" output_size\"]:\n        \"\"\"Return the output pattern associated with the input pattern.\"\"\"\n        ...",
@@ -1441,8 +1441,8 @@
     ]
   },
   {
-    "objectID": "models/components/memory.html#available-implementations",
-    "href": "models/components/memory.html#available-implementations",
+    "objectID": "docs_src/models/components/memory.html#available-implementations",
+    "href": "docs_src/models/components/memory.html#available-implementations",
     "title": "Memory",
     "section": "Available Implementations",
     "text": "Available Implementations\nComing soon: documentation of memory variants",
@@ -1453,8 +1453,8 @@
     ]
   },
   {
-    "objectID": "models/custom-models.html",
-    "href": "models/custom-models.html",
+    "objectID": "docs_src/models/custom-models.html",
+    "href": "docs_src/models/custom-models.html",
     "title": "Custom Models",
     "section": "",
     "text": "jaxcmr is designed for extensibility. You can create custom model variants by implementing the core protocols.",
@@ -1464,8 +1464,8 @@
     ]
   },
   {
-    "objectID": "models/custom-models.html#the-memorysearch-protocol",
-    "href": "models/custom-models.html#the-memorysearch-protocol",
+    "objectID": "docs_src/models/custom-models.html#the-memorysearch-protocol",
+    "href": "docs_src/models/custom-models.html#the-memorysearch-protocol",
     "title": "Custom Models",
     "section": "The MemorySearch Protocol",
     "text": "The MemorySearch Protocol\nAll models must satisfy the MemorySearch protocol:\nclass MemorySearch(Protocol):\n    item_count: int\n    is_active: Bool[Array, \"\"]\n    recallable: Bool[Array, \" item_count\"]\n    recall_total: Integer[Array, \"\"]\n\n    def experience(self, choice: Int_) -&gt; \"MemorySearch\": ...\n    def start_retrieving(self) -&gt; \"MemorySearch\": ...\n    def retrieve(self, choice: Int_) -&gt; \"MemorySearch\": ...\n    def activations(self) -&gt; Float[Array, \" item_count\"]: ...\n    def outcome_probability(self, choice: Int_) -&gt; Float[Array, \"\"]: ...\n    def outcome_probabilities(self) -&gt; Float[Array, \" recall_outcomes\"]: ...",
@@ -1475,8 +1475,8 @@
     ]
   },
   {
-    "objectID": "models/custom-models.html#creating-a-custom-model",
-    "href": "models/custom-models.html#creating-a-custom-model",
+    "objectID": "docs_src/models/custom-models.html#creating-a-custom-model",
+    "href": "docs_src/models/custom-models.html#creating-a-custom-model",
     "title": "Custom Models",
     "section": "Creating a Custom Model",
     "text": "Creating a Custom Model\nComing soon: step-by-step guide",
@@ -1486,8 +1486,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html",
-    "href": "models/parameters.html",
+    "objectID": "docs_src/models/parameters.html",
+    "href": "docs_src/models/parameters.html",
     "title": "Parameters",
     "section": "",
     "text": "This page documents all parameters used in jaxcmr CMR models, their meanings, and typical value ranges.",
@@ -1497,8 +1497,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#context-drift-parameters",
-    "href": "models/parameters.html#context-drift-parameters",
+    "objectID": "docs_src/models/parameters.html#context-drift-parameters",
+    "href": "docs_src/models/parameters.html#context-drift-parameters",
     "title": "Parameters",
     "section": "Context Drift Parameters",
     "text": "Context Drift Parameters\nThese control how the temporal context representation evolves.\n\n\n\n\n\n\n\n\nParameter\nDescription\nTypical Range\n\n\n\n\nencoding_drift_rate\nHow much context changes when studying each item. Higher values = faster drift, more temporal distinctiveness\n0.3 - 0.9\n\n\nstart_drift_rate\nContext drift at the transition from study to recall. Often similar to encoding drift rate\n0.3 - 0.9\n\n\nrecall_drift_rate\nContext drift after recalling each item. Controls how much recalled items reinstate their context\n0.3 - 0.9\n\n\n\nIntuition: With low drift rates, context changes slowly and distant items share similar contexts. With high drift rates, each item has a more distinct context, increasing temporal precision.",
@@ -1508,8 +1508,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#primacy-parameters",
-    "href": "models/parameters.html#primacy-parameters",
+    "objectID": "docs_src/models/parameters.html#primacy-parameters",
+    "href": "docs_src/models/parameters.html#primacy-parameters",
     "title": "Parameters",
     "section": "Primacy Parameters",
     "text": "Primacy Parameters\nThese create the primacy effect (better memory for early list items).\n\n\n\n\n\n\n\n\nParameter\nDescription\nTypical Range\n\n\n\n\nprimacy_scale\nMultiplier for the first item’s learning rate. Higher = stronger primacy\n1.0 - 5.0\n\n\nprimacy_decay\nExponential decay rate across serial positions. Higher = primacy effect decays faster\n0.3 - 1.5\n\n\n\nThe learning rate for position \\(i\\) is:\n\\[\\text{lr}_i = \\text{primacy\\_scale} \\times e^{-\\text{primacy\\_decay} \\times i}\\]",
@@ -1519,8 +1519,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#association-strength-parameters",
-    "href": "models/parameters.html#association-strength-parameters",
+    "objectID": "docs_src/models/parameters.html#association-strength-parameters",
+    "href": "docs_src/models/parameters.html#association-strength-parameters",
     "title": "Parameters",
     "section": "Association Strength Parameters",
     "text": "Association Strength Parameters\nThese control the strength of item-context associations.\n\n\n\n\n\n\n\n\nParameter\nDescription\nTypical Range\n\n\n\n\nlearning_rate\nBase strength for new MFC associations (item → context)\n0.3 - 1.0\n\n\nshared_support\nPre-experimental MCF association strength (all context units → all items)\n0.01 - 0.2\n\n\nitem_support\nAdditional MCF association strength for matching context-item pairs\n0.1 - 0.5\n\n\n\nIntuition: shared_support creates a baseline retrieval probability for all items. item_support gives each item extra support from its corresponding context unit.",
@@ -1530,8 +1530,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#retrieval-parameters",
-    "href": "models/parameters.html#retrieval-parameters",
+    "objectID": "docs_src/models/parameters.html#retrieval-parameters",
+    "href": "docs_src/models/parameters.html#retrieval-parameters",
     "title": "Parameters",
     "section": "Retrieval Parameters",
     "text": "Retrieval Parameters\nThese control the retrieval process.\n\n\n\n\n\n\n\n\nParameter\nDescription\nTypical Range\n\n\n\n\nchoice_sensitivity\nSoftmax temperature for converting activations to probabilities. Higher = more deterministic (winner-take-all)\n0.1 - 2.0\n\n\n\nWith choice_sensitivity = 0, retrieval is random among available items. As it increases, the most activated item becomes more likely to be retrieved.",
@@ -1541,8 +1541,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#stopping-parameters",
-    "href": "models/parameters.html#stopping-parameters",
+    "objectID": "docs_src/models/parameters.html#stopping-parameters",
+    "href": "docs_src/models/parameters.html#stopping-parameters",
     "title": "Parameters",
     "section": "Stopping Parameters",
     "text": "Stopping Parameters\nThese control when recall terminates (using PositionalTermination).\n\n\n\n\n\n\n\n\nParameter\nDescription\nTypical Range\n\n\n\n\nstop_probability_scale\nBase probability of stopping at first recall position\n0.01 - 0.2\n\n\nstop_probability_growth\nExponential growth rate of stopping probability\n0.1 - 0.5\n\n\n\nStop probability at recall position \\(i\\) is:\n\\[P(\\text{stop})_i = \\text{scale} \\times e^{\\text{growth} \\times i}\\]",
@@ -1552,8 +1552,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#boolean-parameters",
-    "href": "models/parameters.html#boolean-parameters",
+    "objectID": "docs_src/models/parameters.html#boolean-parameters",
+    "href": "docs_src/models/parameters.html#boolean-parameters",
     "title": "Parameters",
     "section": "Boolean Parameters",
     "text": "Boolean Parameters\n\n\n\n\n\n\n\n\nParameter\nDescription\nDefault\n\n\n\n\nlearn_after_context_update\nIf true, associations use the updated (post-drift) context state\nVaries\n\n\nallow_repeated_recalls\nIf true, items can be recalled multiple times\nFalse",
@@ -1563,8 +1563,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#example-parameter-set",
-    "href": "models/parameters.html#example-parameter-set",
+    "objectID": "docs_src/models/parameters.html#example-parameter-set",
+    "href": "docs_src/models/parameters.html#example-parameter-set",
     "title": "Parameters",
     "section": "Example Parameter Set",
     "text": "Example Parameter Set\nA complete parameter dictionary for CMR:\nparams = {\n    # Context drift\n    \"encoding_drift_rate\": 0.5,\n    \"start_drift_rate\": 0.5,\n    \"recall_drift_rate\": 0.5,\n\n    # Primacy\n    \"primacy_scale\": 1.0,\n    \"primacy_decay\": 0.6,\n\n    # Association strength\n    \"learning_rate\": 0.5,\n    \"shared_support\": 0.05,\n    \"item_support\": 0.25,\n\n    # Retrieval\n    \"choice_sensitivity\": 0.6,\n\n    # Stopping\n    \"stop_probability_scale\": 0.05,\n    \"stop_probability_growth\": 0.2,\n\n    # Boolean flags\n    \"learn_after_context_update\": True,\n    \"allow_repeated_recalls\": False,\n}",
@@ -1574,8 +1574,8 @@
     ]
   },
   {
-    "objectID": "models/parameters.html#model-variants",
-    "href": "models/parameters.html#model-variants",
+    "objectID": "docs_src/models/parameters.html#model-variants",
+    "href": "docs_src/models/parameters.html#model-variants",
     "title": "Parameters",
     "section": "Model Variants",
     "text": "Model Variants\nDifferent CMR variants may require additional parameters:\n\nSemantic CMR\nFor models with semantic similarity:\n\n\n\n\n\n\n\nParameter\nDescription\n\n\n\n\nsemantic_scale\nWeight for semantic similarity in retrieval competition\n\n\n\n\n\nPositional CMR\nFor models with positional encoding:\n\n\n\n\n\n\n\nParameter\nDescription\n\n\n\n\nposition_encoding_weight\nWeight for positional vs. temporal context",
@@ -1585,8 +1585,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html",
-    "href": "evaluation/fitting.html",
+    "objectID": "docs_src/evaluation/fitting.html",
+    "href": "docs_src/evaluation/fitting.html",
     "title": "Fitting",
     "section": "",
     "text": "Note\n\n\n\nFor the full workflow with all options, see the fitting template notebook.",
@@ -1596,8 +1596,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#overview",
-    "href": "evaluation/fitting.html#overview",
+    "objectID": "docs_src/evaluation/fitting.html#overview",
+    "href": "docs_src/evaluation/fitting.html#overview",
     "title": "Fitting",
     "section": "Overview",
     "text": "Overview\nModel fitting finds parameter values that best explain observed recall data using differential evolution optimization.",
@@ -1607,8 +1607,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#load-your-data",
-    "href": "evaluation/fitting.html#load-your-data",
+    "objectID": "docs_src/evaluation/fitting.html#load-your-data",
+    "href": "docs_src/evaluation/fitting.html#load-your-data",
     "title": "Fitting",
     "section": "1. Load Your Data",
     "text": "1. Load Your Data\nfrom jaxcmr.helpers import load_data, generate_trial_mask\n\n# Load dataset\ndata = load_data(\"path/to/your/data.h5\")\n\n# Optional: filter trials (e.g., by list type)\ntrial_mask = generate_trial_mask(data, \"data['listtype'] == 1\")",
@@ -1618,8 +1618,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#define-parameters",
-    "href": "evaluation/fitting.html#define-parameters",
+    "objectID": "docs_src/evaluation/fitting.html#define-parameters",
+    "href": "docs_src/evaluation/fitting.html#define-parameters",
     "title": "Fitting",
     "section": "2. Define Parameters",
     "text": "2. Define Parameters\nSpecify which parameters to fit and their bounds:\nparameters = {\n    \"fixed\": {\n        \"allow_repeated_recalls\": False,\n        \"learn_after_context_update\": False,\n    },\n    \"free\": {\n        \"encoding_drift_rate\": [0.0, 1.0],\n        \"start_drift_rate\": [0.0, 1.0],\n        \"recall_drift_rate\": [0.0, 1.0],\n        \"shared_support\": [0.0, 100.0],\n        \"item_support\": [0.0, 100.0],\n        \"learning_rate\": [0.0, 1.0],\n        \"primacy_scale\": [0.0, 100.0],\n        \"primacy_decay\": [0.0, 100.0],\n        \"choice_sensitivity\": [0.0, 100.0],\n        \"stop_probability_scale\": [0.0, 1.0],\n        \"stop_probability_growth\": [0.0, 1.0],\n    },\n}",
@@ -1629,8 +1629,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#configure-the-model",
-    "href": "evaluation/fitting.html#configure-the-model",
+    "objectID": "docs_src/evaluation/fitting.html#configure-the-model",
+    "href": "docs_src/evaluation/fitting.html#configure-the-model",
     "title": "Fitting",
     "section": "3. Configure the Model",
     "text": "3. Configure the Model\nfrom jaxcmr.models.cmr import make_factory\nfrom jaxcmr.components.linear_memory import init_mfc, init_mcf\nfrom jaxcmr.components.context import init as init_context\nfrom jaxcmr.components.termination import PositionalTermination\n\n# Create model factory\nmodel_factory = make_factory(\n    mfc_create_fn=init_mfc,\n    mcf_create_fn=init_mcf,\n    context_create_fn=init_context,\n    termination_policy_create_fn=PositionalTermination,\n)",
@@ -1640,8 +1640,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#set-up-the-fitter",
-    "href": "evaluation/fitting.html#set-up-the-fitter",
+    "objectID": "docs_src/evaluation/fitting.html#set-up-the-fitter",
+    "href": "docs_src/evaluation/fitting.html#set-up-the-fitter",
     "title": "Fitting",
     "section": "4. Set Up the Fitter",
     "text": "4. Set Up the Fitter\nfrom jaxcmr.fitting import ScipyDE\nfrom jaxcmr.loss.sequence_likelihood import SequenceLikelihoodFnGenerator\n\nfitter = ScipyDE(\n    data,\n    features=None,  # or semantic embeddings\n    base_params=parameters[\"fixed\"],\n    model_factory=model_factory,\n    loss_fn_generator=SequenceLikelihoodFnGenerator,\n    hyperparams={\n        \"bounds\": parameters[\"free\"],\n        \"num_steps\": 1000,\n        \"pop_size\": 15,\n        \"best_of\": 3,  # restart optimization 3 times\n        \"progress_bar\": True,\n    },\n)",
@@ -1651,8 +1651,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#run-the-fit",
-    "href": "evaluation/fitting.html#run-the-fit",
+    "objectID": "docs_src/evaluation/fitting.html#run-the-fit",
+    "href": "docs_src/evaluation/fitting.html#run-the-fit",
     "title": "Fitting",
     "section": "5. Run the Fit",
     "text": "5. Run the Fit\n# Fit all subjects\nresults = fitter.fit(trial_mask)\n\n# Results contain fitted parameters for each subject\nprint(results[\"fits\"])  # dict: parameter_name -&gt; [subject1_val, subject2_val, ...]\nprint(results[\"fitness\"])  # list of fitness values per subject",
@@ -1662,8 +1662,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#examine-results",
-    "href": "evaluation/fitting.html#examine-results",
+    "objectID": "docs_src/evaluation/fitting.html#examine-results",
+    "href": "docs_src/evaluation/fitting.html#examine-results",
     "title": "Fitting",
     "section": "6. Examine Results",
     "text": "6. Examine Results\nfrom jaxcmr.summarize import summarize_parameters\n\n# Get summary statistics\nquery_params = list(parameters[\"free\"].keys())\nsummary = summarize_parameters(\n    [results],\n    query_params,\n    include_std=True,\n    include_ci=True,\n)\nprint(summary)",
@@ -1673,8 +1673,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#simulate-from-fitted-parameters",
-    "href": "evaluation/fitting.html#simulate-from-fitted-parameters",
+    "objectID": "docs_src/evaluation/fitting.html#simulate-from-fitted-parameters",
+    "href": "docs_src/evaluation/fitting.html#simulate-from-fitted-parameters",
     "title": "Fitting",
     "section": "7. Simulate from Fitted Parameters",
     "text": "7. Simulate from Fitted Parameters\nfrom jaxcmr.simulation import simulate_h5_from_h5\nfrom jax import random\nimport jax.numpy as jnp\n\nrng = random.PRNGKey(0)\nfitted_params = {k: jnp.array(v) for k, v in results[\"fits\"].items()}\n\nsim = simulate_h5_from_h5(\n    model_factory,\n    data,\n    features=None,\n    params=fitted_params,\n    trial_mask=trial_mask,\n    experiment_count=100,  # simulations per subject\n    rng=rng,\n)",
@@ -1684,8 +1684,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#compare-model-to-data",
-    "href": "evaluation/fitting.html#compare-model-to-data",
+    "objectID": "docs_src/evaluation/fitting.html#compare-model-to-data",
+    "href": "docs_src/evaluation/fitting.html#compare-model-to-data",
     "title": "Fitting",
     "section": "8. Compare Model to Data",
     "text": "8. Compare Model to Data\nfrom jaxcmr.analyses.spc import plot_spc\n\n# Compare serial position curves\nplot_spc(\n    datasets=[sim, data],\n    trial_masks=[trial_mask, trial_mask],\n    labels=[\"Model\", \"Data\"],\n)",
@@ -1695,8 +1695,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#loss-functions",
-    "href": "evaluation/fitting.html#loss-functions",
+    "objectID": "docs_src/evaluation/fitting.html#loss-functions",
+    "href": "docs_src/evaluation/fitting.html#loss-functions",
     "title": "Fitting",
     "section": "Loss Functions",
     "text": "Loss Functions\n\n\n\n\n\n\n\nLoss Function\nUse Case\n\n\n\n\nSequenceLikelihoodFnGenerator\nStandard recall sequence likelihood\n\n\nExcludeTerminationLikelihoodFnGenerator\nLikelihood ignoring stop decisions\n\n\nSPCMSEFnGenerator\nFit to serial position curve shape",
@@ -1706,8 +1706,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#fitting-algorithm-options",
-    "href": "evaluation/fitting.html#fitting-algorithm-options",
+    "objectID": "docs_src/evaluation/fitting.html#fitting-algorithm-options",
+    "href": "docs_src/evaluation/fitting.html#fitting-algorithm-options",
     "title": "Fitting",
     "section": "Fitting Algorithm Options",
     "text": "Fitting Algorithm Options\nCurrently jaxcmr provides ScipyDE (differential evolution). Key hyperparameters:\n\n\n\nParameter\nDescription\nTypical Value\n\n\n\n\nnum_steps\nMax optimizer iterations\n500-2000\n\n\npop_size\nPopulation size\n10-20\n\n\nbest_of\nNumber of restarts\n1-5\n\n\nrelative_tolerance\nConvergence threshold\n0.001",
@@ -1717,8 +1717,8 @@
     ]
   },
   {
-    "objectID": "evaluation/fitting.html#the-fittingalgorithm-protocol",
-    "href": "evaluation/fitting.html#the-fittingalgorithm-protocol",
+    "objectID": "docs_src/evaluation/fitting.html#the-fittingalgorithm-protocol",
+    "href": "docs_src/evaluation/fitting.html#the-fittingalgorithm-protocol",
     "title": "Fitting",
     "section": "The FittingAlgorithm Protocol",
     "text": "The FittingAlgorithm Protocol\nCustom fitting algorithms should implement:\nclass FittingAlgorithm(Protocol):\n    def __init__(\n        self,\n        dataset: RecallDataset,\n        features: Optional[...],\n        base_params: Mapping[str, Float_],\n        model_factory: Type[MemorySearchModelFactory],\n        loss_fn_generator: Type[LossFnGenerator],\n        hyperparams: Optional[dict[str, Any]] = None,\n    ): ...\n\n    def fit(\n        self,\n        trial_mask: Bool[Array, \" trials\"],\n        fit_to_subjects: bool = True,\n    ) -&gt; FitResult: ...",
@@ -1728,8 +1728,8 @@
     ]
   },
   {
-    "objectID": "evaluation/simulation.html",
-    "href": "evaluation/simulation.html",
+    "objectID": "docs_src/evaluation/simulation.html",
+    "href": "docs_src/evaluation/simulation.html",
     "title": "Simulation",
     "section": "",
     "text": "Simulation generates recall sequences from a model given study lists.",
@@ -1739,8 +1739,8 @@
     ]
   },
   {
-    "objectID": "evaluation/simulation.html#the-trialsimulator-protocol",
-    "href": "evaluation/simulation.html#the-trialsimulator-protocol",
+    "objectID": "docs_src/evaluation/simulation.html#the-trialsimulator-protocol",
+    "href": "docs_src/evaluation/simulation.html#the-trialsimulator-protocol",
     "title": "Simulation",
     "section": "The TrialSimulator Protocol",
     "text": "The TrialSimulator Protocol\nclass TrialSimulator(Protocol):\n    def __call__(\n        self,\n        model: MemorySearch,\n        present: Integer[Array, \" study_events\"],\n        trial: Integer[Array, \" recalls\"],\n        rng: PRNGKeyArray,\n    ) -&gt; tuple[MemorySearch, Integer[Array, \" recall_events\"]]:\n        \"\"\"Returns model and simulated recall sequence.\"\"\"\n        ...",
@@ -1750,8 +1750,8 @@
     ]
   },
   {
-    "objectID": "evaluation/simulation.html#usage",
-    "href": "evaluation/simulation.html#usage",
+    "objectID": "docs_src/evaluation/simulation.html#usage",
+    "href": "docs_src/evaluation/simulation.html#usage",
     "title": "Simulation",
     "section": "Usage",
     "text": "Usage\nComing soon: simulation examples",
@@ -1761,8 +1761,8 @@
     ]
   },
   {
-    "objectID": "workflow/papermill.html",
-    "href": "workflow/papermill.html",
+    "objectID": "docs_src/workflow/papermill.html",
+    "href": "docs_src/workflow/papermill.html",
     "title": "Papermill",
     "section": "",
     "text": "Papermill enables parameterized notebook execution, useful for running the same analysis across multiple datasets or parameter configurations.",
@@ -1772,8 +1772,8 @@
     ]
   },
   {
-    "objectID": "workflow/papermill.html#basic-usage",
-    "href": "workflow/papermill.html#basic-usage",
+    "objectID": "docs_src/workflow/papermill.html#basic-usage",
+    "href": "docs_src/workflow/papermill.html#basic-usage",
     "title": "Papermill",
     "section": "Basic Usage",
     "text": "Basic Usage\npapermill templates/fitting.ipynb output.ipynb \\\n  -p dataset_path \"data/experiment1.h5\" \\\n  -p model_name \"CMR\"",
@@ -1783,8 +1783,8 @@
     ]
   },
   {
-    "objectID": "workflow/papermill.html#batch-processing",
-    "href": "workflow/papermill.html#batch-processing",
+    "objectID": "docs_src/workflow/papermill.html#batch-processing",
+    "href": "docs_src/workflow/papermill.html#batch-processing",
     "title": "Papermill",
     "section": "Batch Processing",
     "text": "Batch Processing\nComing soon: batch processing examples",
@@ -1794,8 +1794,8 @@
     ]
   },
   {
-    "objectID": "workflow/research-tools.html",
-    "href": "workflow/research-tools.html",
+    "objectID": "docs_src/workflow/research-tools.html",
+    "href": "docs_src/workflow/research-tools.html",
     "title": "Research Tools",
     "section": "",
     "text": "Beyond the core jaxcmr modules, several tools support research workflow.\nComing soon: documentation of research utilities",
@@ -1812,29 +1812,29 @@
     "text": "Research manuscripts and projects using jaxcmr for computational memory modeling.\n\n\n\n\n\n\n\n\n\n\n\n\n\nTalmiEEG\n\n\nInvestigating EEG correlates of memory encoding and retrieval using CMR models. Explores how neural signals relate to model parameters.\n\n\nStatus: In progress\n\n\n\n\nRepFR\n\n\nRepetition effects in free recall. Modeling how repeated items affect temporal context and retrieval dynamics.\n\n\nStatus: In progress\n\n\n\n\nCRU to CMR\n\n\nComparing Context Retrieval and Updating (CRU) models with CMR. Systematic evaluation of model architectures and parameter recovery.\n\n\nStatus: Published\n\n\n\n\nNo matching items"
   },
   {
-    "objectID": "blog/posts/welcome.html",
-    "href": "blog/posts/welcome.html",
+    "objectID": "docs_src/blog/posts/welcome.html",
+    "href": "docs_src/blog/posts/welcome.html",
     "title": "Welcome to jaxcmr",
     "section": "",
     "text": "Welcome to the jaxcmr blog! This is where we’ll share updates on the library, tutorials for computational memory modeling, and notes from ongoing research."
   },
   {
-    "objectID": "blog/posts/welcome.html#what-is-jaxcmr",
-    "href": "blog/posts/welcome.html#what-is-jaxcmr",
+    "objectID": "docs_src/blog/posts/welcome.html#what-is-jaxcmr",
+    "href": "docs_src/blog/posts/welcome.html#what-is-jaxcmr",
     "title": "Welcome to jaxcmr",
     "section": "What is jaxcmr?",
     "text": "What is jaxcmr?\njaxcmr is a JAX-accelerated toolkit for modeling memory search using Context Maintenance and Retrieval (CMR) models. It provides:\n\nFast simulation: JIT-compiled model simulations\nDifferentiable: JAX enables automatic differentiation\nFitting: Differential evolution for parameter estimation\nAnalyses: Standard behavioral measures (SPC, CRP, etc.)"
   },
   {
-    "objectID": "blog/posts/welcome.html#getting-started",
-    "href": "blog/posts/welcome.html#getting-started",
+    "objectID": "docs_src/blog/posts/welcome.html#getting-started",
+    "href": "docs_src/blog/posts/welcome.html#getting-started",
     "title": "Welcome to jaxcmr",
     "section": "Getting Started",
     "text": "Getting Started\nCheck out the Getting Started guide to install jaxcmr and run your first simulation."
   },
   {
-    "objectID": "blog/posts/welcome.html#stay-updated",
-    "href": "blog/posts/welcome.html#stay-updated",
+    "objectID": "docs_src/blog/posts/welcome.html#stay-updated",
+    "href": "docs_src/blog/posts/welcome.html#stay-updated",
     "title": "Welcome to jaxcmr",
     "section": "Stay Updated",
     "text": "Stay Updated\nWe’ll post here about:\n\nNew features and releases\nTutorials and tips\nResearch findings using jaxcmr\nTechnical deep-dives into CMR\n\nSubscribe to the RSS feed to stay updated."

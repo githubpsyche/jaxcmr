@@ -1,0 +1,29 @@
+---
+title: "Context"
+description: "Temporal context representations"
+---
+
+Context is a slowly drifting representation that tracks temporal position during study and retrieval.
+
+## The Context Protocol
+
+Any context implementation must satisfy the `Context` protocol:
+
+```python
+class Context(Protocol):
+    state: Float[Array, " context_feature_units"]
+    initial_state: Float[Array, " context_feature_units"]
+    size: int
+
+    def integrate(
+        self,
+        context_input: Float[Array, " context_feature_units"],
+        drift_rate: Float_,
+    ) -> "Context":
+        """Returns context after integrating input representation."""
+        ...
+```
+
+## Available Implementations
+
+*Coming soon: documentation of context variants*

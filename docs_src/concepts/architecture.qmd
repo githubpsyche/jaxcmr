@@ -1,0 +1,94 @@
+---
+title: "Architecture"
+description: "How models are composed"
+---
+
+jaxcmr models are composed from three core components, each defined by a protocol.
+
+## The MemorySearch Protocol
+
+All memory search models implement the `MemorySearch` protocol:
+
+```python
+class MemorySearch(Protocol):
+    item_count: int
+    is_active: Bool[Array, ""]
+    recallable: Bool[Array, " item_count"]
+    recall_total: Integer[Array, ""]
+
+    def experience(self, choice: Int_) -> "MemorySearch": ...
+    def start_retrieving(self) -> "MemorySearch": ...
+    def retrieve(self, choice: Int_) -> "MemorySearch": ...
+    def activations(self) -> Float[Array, " item_count"]: ...
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]: ...
+    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]: ...
+```
+
+This defines the interface for:
+- **Study phase**: `experience()` processes each study item
+- **Transition**: `start_retrieving()` switches to retrieval mode
+- **Retrieval phase**: `retrieve()` processes each recall, `activations()` and `outcome_probability()` compute retrieval probabilities
+
+## Component Protocols
+
+Models are built from three component types:
+
+### Context
+
+Maintains temporal context that drifts during study and retrieval:
+
+```python
+class Context(Protocol):
+    state: Float[Array, " context_feature_units"]
+    initial_state: Float[Array, " context_feature_units"]
+    size: int
+
+    def integrate(self, context_input, drift_rate) -> "Context": ...
+```
+
+### Memory
+
+Stores and retrieves associations:
+
+```python
+class Memory(Protocol):
+    state: Float[Array, " input_size output_size"]
+
+    def associate(self, in_pattern, out_pattern, learning_rate) -> "Memory": ...
+    def probe(self, in_pattern) -> Float[Array, " output_size"]: ...
+```
+
+### TerminationPolicy
+
+Determines when to stop recalling:
+
+```python
+class TerminationPolicy(Protocol):
+    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]: ...
+```
+
+## Composition
+
+A CMR model combines these components:
+
+```
+MemorySearch
+├── Context (temporal context state)
+├── Memory (MFC: item → context)
+├── Memory (MCF: context → item)
+└── TerminationPolicy (when to stop)
+```
+
+## Factory Functions
+
+Factory protocols enable dependency injection:
+
+```python
+class ContextCreateFn(Protocol):
+    def __call__(self, item_count: int) -> Context: ...
+
+class MemoryCreateFn(Protocol):
+    def __call__(self, list_length, parameters, context) -> Memory: ...
+```
+
+This allows swapping implementations without changing model code.

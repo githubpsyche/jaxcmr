@@ -1,0 +1,192 @@
+---
+title: "Fitting"
+description: "Parameter optimization"
+---
+
+::: {.callout-note}
+For the full workflow with all options, see the [fitting template notebook](../templates/fitting.ipynb).
+:::
+
+## Overview
+
+Model fitting finds parameter values that best explain observed recall data using differential evolution optimization.
+
+## 1. Load Your Data
+
+```python
+from jaxcmr.helpers import load_data, generate_trial_mask
+
+# Load dataset
+data = load_data("path/to/your/data.h5")
+
+# Optional: filter trials (e.g., by list type)
+trial_mask = generate_trial_mask(data, "data['listtype'] == 1")
+```
+
+## 2. Define Parameters
+
+Specify which parameters to fit and their bounds:
+
+```python
+parameters = {
+    "fixed": {
+        "allow_repeated_recalls": False,
+        "learn_after_context_update": False,
+    },
+    "free": {
+        "encoding_drift_rate": [0.0, 1.0],
+        "start_drift_rate": [0.0, 1.0],
+        "recall_drift_rate": [0.0, 1.0],
+        "shared_support": [0.0, 100.0],
+        "item_support": [0.0, 100.0],
+        "learning_rate": [0.0, 1.0],
+        "primacy_scale": [0.0, 100.0],
+        "primacy_decay": [0.0, 100.0],
+        "choice_sensitivity": [0.0, 100.0],
+        "stop_probability_scale": [0.0, 1.0],
+        "stop_probability_growth": [0.0, 1.0],
+    },
+}
+```
+
+## 3. Configure the Model
+
+```python
+from jaxcmr.models.cmr import make_factory
+from jaxcmr.components.linear_memory import init_mfc, init_mcf
+from jaxcmr.components.context import init as init_context
+from jaxcmr.components.termination import PositionalTermination
+
+# Create model factory
+model_factory = make_factory(
+    mfc_create_fn=init_mfc,
+    mcf_create_fn=init_mcf,
+    context_create_fn=init_context,
+    termination_policy_create_fn=PositionalTermination,
+)
+```
+
+## 4. Set Up the Fitter
+
+```python
+from jaxcmr.fitting import ScipyDE
+from jaxcmr.loss.sequence_likelihood import SequenceLikelihoodFnGenerator
+
+fitter = ScipyDE(
+    data,
+    features=None,  # or semantic embeddings
+    base_params=parameters["fixed"],
+    model_factory=model_factory,
+    loss_fn_generator=SequenceLikelihoodFnGenerator,
+    hyperparams={
+        "bounds": parameters["free"],
+        "num_steps": 1000,
+        "pop_size": 15,
+        "best_of": 3,  # restart optimization 3 times
+        "progress_bar": True,
+    },
+)
+```
+
+## 5. Run the Fit
+
+```python
+# Fit all subjects
+results = fitter.fit(trial_mask)
+
+# Results contain fitted parameters for each subject
+print(results["fits"])  # dict: parameter_name -> [subject1_val, subject2_val, ...]
+print(results["fitness"])  # list of fitness values per subject
+```
+
+## 6. Examine Results
+
+```python
+from jaxcmr.summarize import summarize_parameters
+
+# Get summary statistics
+query_params = list(parameters["free"].keys())
+summary = summarize_parameters(
+    [results],
+    query_params,
+    include_std=True,
+    include_ci=True,
+)
+print(summary)
+```
+
+## 7. Simulate from Fitted Parameters
+
+```python
+from jaxcmr.simulation import simulate_h5_from_h5
+from jax import random
+import jax.numpy as jnp
+
+rng = random.PRNGKey(0)
+fitted_params = {k: jnp.array(v) for k, v in results["fits"].items()}
+
+sim = simulate_h5_from_h5(
+    model_factory,
+    data,
+    features=None,
+    params=fitted_params,
+    trial_mask=trial_mask,
+    experiment_count=100,  # simulations per subject
+    rng=rng,
+)
+```
+
+## 8. Compare Model to Data
+
+```python
+from jaxcmr.analyses.spc import plot_spc
+
+# Compare serial position curves
+plot_spc(
+    datasets=[sim, data],
+    trial_masks=[trial_mask, trial_mask],
+    labels=["Model", "Data"],
+)
+```
+
+## Loss Functions
+
+| Loss Function | Use Case |
+|--------------|----------|
+| `SequenceLikelihoodFnGenerator` | Standard recall sequence likelihood |
+| `ExcludeTerminationLikelihoodFnGenerator` | Likelihood ignoring stop decisions |
+| `SPCMSEFnGenerator` | Fit to serial position curve shape |
+
+## Fitting Algorithm Options
+
+Currently jaxcmr provides `ScipyDE` (differential evolution). Key hyperparameters:
+
+| Parameter | Description | Typical Value |
+|-----------|-------------|---------------|
+| `num_steps` | Max optimizer iterations | 500-2000 |
+| `pop_size` | Population size | 10-20 |
+| `best_of` | Number of restarts | 1-5 |
+| `relative_tolerance` | Convergence threshold | 0.001 |
+
+## The FittingAlgorithm Protocol
+
+Custom fitting algorithms should implement:
+
+```python
+class FittingAlgorithm(Protocol):
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[...],
+        base_params: Mapping[str, Float_],
+        model_factory: Type[MemorySearchModelFactory],
+        loss_fn_generator: Type[LossFnGenerator],
+        hyperparams: Optional[dict[str, Any]] = None,
+    ): ...
+
+    def fit(
+        self,
+        trial_mask: Bool[Array, " trials"],
+        fit_to_subjects: bool = True,
+    ) -> FitResult: ...
+```
