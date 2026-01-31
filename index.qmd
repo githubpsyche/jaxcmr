@@ -3,78 +3,22 @@ title: "jaxcmr"
 description: "JAX-accelerated toolkit for computational memory research"
 ---
 
-**jaxcmr** is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall. It includes utilities for simulation, likelihood evaluation, fitting, and common behavioral analyses.
-
-::: {.grid}
-
-::: {.g-col-12 .g-col-md-4}
-### [Getting Started](/getting-started/)
-Install jaxcmr and run your first CMR simulation in minutes.
-:::
-
-::: {.g-col-12 .g-col-md-4}
-### [Tutorials](/tutorials/)
-Learn to fit models to data and analyze results.
-:::
-
-::: {.g-col-12 .g-col-md-4}
-### [Analyses](/analyses/)
-Compute SPC, CRP, and other standard memory measures.
-:::
-
-:::
+**jaxcmr** is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall.
 
 ## Installation
+
+You can install the latest stable version of jaxcmr using pip:
 
 ```bash
 pip install jaxcmr
 ```
 
-Python 3.12+ is required. The `jax` dependency installs automatically; consult [JAX documentation](https://jax.readthedocs.io/) for specific accelerator builds.
+You can also install the development version directly from the code
+repository on GitHub:
 
-## Quick Start
-
-Simulate a single free-recall trial with a basic CMR model:
-
-```python
-from jax import random
-import jax.numpy as jnp
-from jaxcmr.models.cmr import CMR
-from jaxcmr.simulation import simulate_study_and_free_recall
-
-# CMR parameters
-params = {
-    "encoding_drift_rate": 0.5,
-    "start_drift_rate": 0.5,
-    "recall_drift_rate": 0.5,
-    "shared_support": 0.05,
-    "item_support": 0.25,
-    "primacy_scale": 1.0,
-    "primacy_decay": 0.6,
-    "learning_rate": 0.5,
-    "stop_probability_scale": 0.05,
-    "stop_probability_growth": 0.2,
-    "choice_sensitivity": 0.6,
-    "learn_after_context_update": True,
-    "allow_repeated_recalls": False,
-}
-
-list_length = 5
-present = jnp.arange(1, list_length + 1)
-rng = random.PRNGKey(0)
-
-model = CMR(list_length, params)
-model, recalls = simulate_study_and_free_recall(model, present, rng)
-print(recalls)
+```bash
+pip install git+https://github.com/githubpsyche/jaxcmr
 ```
-
-## Features
-
-- **11 CMR variants** including semantic, positional, and EEG models
-- **Fast simulation** with JAX JIT compilation
-- **Parameter fitting** using differential evolution
-- **34+ behavioral analyses** (SPC, CRP, PNR, and more)
-- **HDF5 data format** for efficient dataset handling
 
 ## Explore
 
@@ -86,7 +30,7 @@ Understand how CMR works: temporal context, associative memory, and model parame
 :::
 
 ::: {.g-col-12 .g-col-md-6}
-### [Manuscripts](/manuscripts/)
+### [Projects](/projects/)
 Research projects using jaxcmr for computational memory modeling.
 :::
 

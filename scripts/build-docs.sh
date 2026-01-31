@@ -16,7 +16,7 @@ echo ""
 
 # Render main site
 echo "1. Rendering main site..."
-if quarto render 2>&1 | grep -q "Output created"; then
+if quarto render --no-clean 2>&1 | grep -q "Output created"; then
     echo "   Main site: OK"
 else
     echo "   Main site: FAILED"

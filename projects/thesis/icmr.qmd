@@ -1,0 +1,812 @@
+# An Instance-Based Retrieved-Context Model of Memory Search
+
+Computational models of free recall explain how people recover a sequence of studied items without an external cue.
+Within this literature, retrieved‑context theory (RCT) -- formalized in the Context Maintenance and Retrieval (CMR) model -- has achieved broad empirical coverage, capturing phenomena such as primacy and recency effects, lag‑contiguity, semantic clustering, and several population differences [@howard2002distributed; @sederberg2008context; @polyn2009context; @kahana2020computational; @healey2019contiguity].
+Here I ask whether the architectural choice between composite matrices and trace stores matters for a retrieved-context model's ability to explain free recall.
+
+Almost every RCT implementation adopts a connectionist architecture: learning updates a fixed-size weight matrix that binds item features to a drifting temporal context, so information from many episodes is blended at storage.
+Retrieval multiplies a cue by that matrix and spreads activation along the shared weights [@hebb1949organization].
+Because blending occurs during learning, the resulting memory is usually event-blending, reinstating a composite of associations rather than a specific prior episode.
+
+A complementary tradition stores one trace per event.
+In these instance-based architectures, a cue activates each trace in proportion to similarity and a similarity-weighted aggregation (an "echo") forms the response [@hintzman1984minerva].
+When trace activations are sharpened by a high trace selectivity parameter $\tau_t$, retrieval can focus on a single trace, yielding event-preserving behavior with minimal interference from other traces.
+Although architecture and retrieval regime are not independent, they are conceptually distinct.
+A connectionist network can preserve event specificity if orthogonal input vectors are used across study events, maintaining separate representations for each study event.
+By contrast, an instance model can be configured to blend when cue similarity is spread across multiple traces.
+
+Instance models have proved useful in modeling category learning [@turner2019toward; @nosofsky2002exemplar; @stanton2002comparisons], recognition memory [@shiffrin1997model; @hintzman1988judgments], and semantic tasks such as word-sense disambiguation [@jamieson2018instance].
+They win out in these domains when the task requires retrieving a specific prior episode, such as classifying an exemplar that shares rare features with a previous training item [e.g., @nosofsky2002exemplar; @jamieson2018instance].
+Yet other studies have emphasized similarities between these frameworks across areas [e.g., @anderson1995introduction; @turner2019toward;@kelly2017memory; @ramsauer2020hopfield].
+
+Despite exchanges across domains, direct comparisons of connectionist and instance architectures in free recall are rare.
+I focus on two questions.
+(i) Does storing or retrieving event-preserving traces rather than blended weights change quantitative fits to serial-position curves, lag-contiguity, or related phenomena?
+(ii) Are RCT's contextual computations portable across storage formats?
+A yes to the first would identify an overlooked architectural ingredient; a yes to the second would broaden RCT's reach.
+
+Related frameworks such as SAM [@raaijmakers1981search] and CRU [@logan2018automatic] explore different retrieval mechanisms alongside their architectural differences.
+Here I focus narrowly on how storage format affects an otherwise unchanged CMR.
+I introduce Instance-CMR, a trace-based translation of CMR that leaves every mechanism unchanged except storage.
+Each study event concatenates item features with the current temporal-context vector to form a new trace.
+Retrieval reinstates context and cues items as in CMR, but the cue now accesses a trace stack rather than a weight matrix.
+When a trace-activation scaling parameter is neutral ($\tau_t = 1$) and otherwise matched parameters, ICMR is functionally equivalent to connectionist CMR, making indistinguishable predictions.
+Freeing this parameter enables event-preserving retrieval, amplifying the few traces most consistent with a cue, which can improve fits when recalling a particular episode matters.
+ICMR thus provides a framework for comparing connectionist and instance-based retrieval in free recall tasks.
+
+The remainder of the chapter first contrasts connectionist and instance traditions, emphasizing functional consequences for memory search, then details the Instance‑CMR implementation and evaluates both models on three free‑recall datasets that vary in list length and repetition pattern.
+Simulations demonstrate their functional equivalence when trace sensitivity is neutral and explore departures when selective‑trace retrieval is enabled.
+The discussion explores the implications of these findings for interpreting the theoretical competition between instance and composite memory models and the adaptability of retrieved-context theory across different cognitive modeling frameworks.
+Simulations confirm these properties can influence model behavior, but the instance/composite distinction, though theoretically salient, does not by itself explain differences in model performance.
+These findings set the stage for Chapter 2's factorial examination of algorithmic components with architecture held fixed.
+
+## Architectural and Functional Distinctions Between Memory Models
+
+My aim in this section is twofold: to separate architecture (how experiences are stored and retrieved) from functional behavior (what kinds of representations can be retrieved), and to introduce the minimal machinery needed for the comparisons that follow.
+I use "event-preserving" to denote behavior that retrieves a specific prior episode with minimal interference, and "event-blending" to denote behavior that reinstates a composite over episodes.
+These terms are behavioral, not architectural.
+In the broader memory literature, event-blending behavior is often called "prototype retrieval," because the output reflects an average (or prototype) over stored episodes rather than any single one [@nosofsky2002exemplar].
+In connectionist models, event-preserving behavior can emerge when inputs are well separated (e.g., orthogonal) or a hidden layer mediates distinct representations [@kelly2017memory; @ramsauer2020hopfield].
+However, overlapping inputs within a simple linear associator typically yield event-blending behavior.
+
+For my exploration of instance theory, I focus on the MINERVA-2 architecture, a well-established example of instance-based modeling [@hintzman1984minerva; @hintzman1986schema; @hintzman1988judgments].
+In MINERVA-2, each learning experience is encoded as a fixed-length trace vector and traces are stacked for access.
+
+I compare a cue vector $\mathbf{cue}$ to each trace $m_i$ using a dot product, which preserves magnitude so learning-rate differences carry through to activation:
+$$
+S_i = \mathbf{cue}\cdot m_i,\qquad 
+A_i = S_i^{\tau_t},\qquad 
+E = \sum_i A_i\, m_i.
+$$ {#eq-intro1}
+
+Here, $\tau_t$ serves as a trace selectivity parameter that sharpens the activation of traces.
+At higher values, the parameter concentrates activation on a few traces (event-preserving), while lower values spread activation across many traces (event-blending).
+The model's output, often visualized as an "echo," represents the sum of all memory traces weighted by their activation.
+
+In contrast to this framework, the Context Maintenance and Retrieval (CMR) model uses a linear associative memory [@polyn2009context].
+Items and temporal-context features are bound in a weight matrix via a Hebbian rule.
+Let $x$ be item features and $y$ be context features, with learning rate $\eta$:
+$$
+\Delta w_{ij} = \eta x_i y_j
+$$ {#eq-intro5}
+
+A cue retrieves via a matrix multiply:
+$$
+A = W\,\mathbf{cue}
+$$ {#eq-intro6}
+
+Whereas the parameter $\tau_t$ in an instance model sharpens trace activations, in CMR $\tau_c$ sharpens choice during the Luce-style competition.
+There is no trace-level modulation.
+
+A compact analysis clarifies when a linear associator behaves prototype-like vs instance-like [@anderson1995introduction].
+If inputs linked to the same output decompose into a mean pattern $p$ and deviations $d_i$, then with gain $g$ and $n$ inputs:
+$$
+f_i = p + d_i
+$$ {#eq-intro7}
+
+For clarity, I suppress output indices and treat rows of $W$ equivalently -- constants are absorbed into $g$.
+
+The connectivity matrix becomes:
+$$
+W = \sum_i g f_i^T
+$$ {#eq-intro8}
+$$
+W = g \sum_i (p^T + d_i^T)
+$$ {#eq-intro9}
+$$
+W = ngp^T + g \sum_i d_i^T
+$$ {#eq-intro10}
+
+When deviations are small (inputs similar), the mean term dominates:
+$$
+W = ngp^T
+$$ {#eq-intro11}
+
+When deviations are large (inputs dissimilar), the deviation term dominates:
+$$
+W = g \sum_i d_i^T
+$$ {#eq-intro12}
+
+Thus, similarity structure and selectivity (via $\tau_t$ at traces or $\tau_c$ at choice) jointly determine functional behavior, regardless of storage format.
+
+### Theoretical Competition Between Instance and Prototype Memory Models
+
+This section situates the architectural contrast within a broader debate between prototype and instance models and explains why that debate matters here.
+The key question is whether behavior reflects a composite that averages across experiences or the targeted reactivation of specific episodes.
+Framed this way, prior work identifies principled cases where the two approaches diverge and therefore where storage format might matter for predictions.
+
+As outlined above, connectionist models can be tuned to exhibit instance-like behavior, but their default is to collapse information across experiences into a single representation that summarizes an item's associations -- a prototype.
+Instance models store one trace per episode and can retrieve specific episodes when the cue matches them well.
+This prototype vs instance contrast recurs across recognition, semantic memory, and category learning [@hintzman1988judgments; @nosofsky2002exemplar; @jamieson2018instance].
+
+For example, in category learning, exemplars are defined by multiple binary features with varying diagnosticity.
+Both model classes handle clear cases, but they diverge on ambiguous or atypical exemplars [@stanton2002comparisons].
+Prototype models classify by similarity to a category centroid, whereas instance models classify by similarity to the nearest stored exemplars [e.g., @nosofsky2002exemplar; @homa1981limitations].
+Tasks that reward sensitivity to rare feature combinations tend to favor instance-based accounts.
+
+In word-sense disambiguation, clarifying the intended meaning of a homonym requires selecting among distinct meanings based on context [@jamieson2018instance].
+Comparative evaluations suggest that prototype accounts often compress senses into a single representation and over-weight dominant meanings [@griffiths2007topics].
+By contrast, instance models that activate stored usage episodes better recover less frequent senses when orthographic cues align with distinctive contextual clusters [@jamieson2018instance].
+
+Across domains, a consistent theme emerges.
+When the test cue makes multiple stored patterns plausible, prototype and instance models make different predictions, and tasks that demand retrieval of atypical or low-frequency episodes favor instance-based mechanisms.
+Designs with orthogonal item codes and weak associative structure are unlikely to force a prototype vs instance divergence.
+On the other hand, designs that induce ambiguous cues -- strong associative structure or repetitions with overlapping contexts -- should.
+The next sections test this implication by holding RCT dynamics fixed while varying storage format, then probing whether instance-style selectivity alters key free recall benchmark phenomena.
+
+### Modeling Memory Search in Free Recall
+
+Free recall is temporally organized, with items recalled in a sequence that reflects their study order.
+This section identifies the specific benchmarks that the models must capture and summarizes how retrieved-context theory accounts for them.
+Decades of research have emphasized a small set of benchmark constraints that any account of this temporal organization must address [@kahana2020computational].
+One is the serial position effect, a U-shaped relationship between a study item's position in the list and its probability of recall [@murdock1962serial].
+Early items benefit from a primacy effect, while late items enjoy a recency effect.
+The probability of first recall (PFR) is the likelihood of initiating recall from each serial position.
+Participants tend to begin with items from either the start or the end of the list, with recency starts dominating in immediate free recall and weakening in delayed tests as recency effects diminish [@howard1999context].
+
+This temporal structure can also be seen in the organization of responses throughout the response sequence, not just at recall initiation or in overall rates.
+Free recall exhibits a lag-contiguity effect in which items studied at nearby serial positions tend to be recalled near one another [@kahana1996associative].
+To analyze this phenomenon, researchers calculate the conditional probability of recalling an item based on the distance, or lag, between its position and the position of the last item recalled -- the lag-CRP.
+Participants are more likely to transition to nearby items and, in particular, to move forward rather than backward in serial position.
+
+Retrieved-context theory explains these constraints by linking items to a drifting temporal context representation [@howard2002distributed; @polyn2009context; @morton2016predictive].
+Here, *context* is a vector that denotes a recency-weighted summary of prior experience that changes gradually as each item is studied.
+At retrieval, the current context cues items whose study contexts are most similar to it.
+Recency effects arise because the end-of-list context is similar to the context at test onset, giving an advantage to recently studied items.
+When an item is recalled, its associated context is reinstated, shifting the cue toward nearby serial positions and producing lag-contiguity with a forward skew.
+Primacy effects are mainly captured by mechanisms that allocate extra attention to early items or otherwise increase their accessibility as recall initiators.
+These same mechanisms allow retrieved-context models to produce realistic recall sequences that move through clusters of temporally related items.
+
+The Context Maintenance and Retrieval model (CMR) implements these principles using two linear associative memories: an item-to-context matrix that links recalled items to their study contexts, and a context-to-item matrix that uses reinstated context to cue items [@polyn2009context; @morton2016predictive].
+In this chapter, I retain CMR's contextual dynamics and benchmark-producing mechanisms and vary only the storage architecture.
+I introduce Instance-CMR (ICMR), an instance-based specification in which each study event creates a separate trace containing item and context features.
+This makes it possible to investigate whether replacing CMR's composite weight matrices with a trace store changes its ability to fit benchmark constraints and whether RCT's contextual computations can operate unchanged across different storage formats.
+
+These benchmarks are the targets in the simulations that follow.
+I keep most mechanisms identical to CMR and vary only how associations are stored and accessed.
+Under these conditions, if storage format matters, it should change fits to benchmark statistics; if not, predictions should be indistinguishable.
+The next section details the two storage implementations that will be compared.
+
+## Model Structure
+
+::: {#fig-comparison layout-nrow="2"}
+![Connectionist CMR](icmr_figures/connectionistcmr_diagram.png){#fig-connectionist-cmr}
+
+![Instance CMR](icmr_figures/instancecmr_diagram.png){#fig-instance-cmr}
+
+**Aggregation of information across memory traces happens at different time points in the two versions.** 
+The connectionist model aggregates over traces during encoding, because there is a fixed-size set of associative weights.
+The instance model creates separate traces for each event, so aggregation happens during retrieval.
+:::
+
+I base my implementations of Connectionist CMR and Instance CMR on the likelihood-based specification provided by @morton2016predictive and @kragel2015neural.
+The original connectionist version of the Context Maintenance and Retrieval model (Connectionist CMR) uses two linear associative memories, $M^{FC}$ and $M^{CF}$, that bind item features and temporal-context features.
+In this composite architecture, repeated experiences sum into shared weights.
+By contrast, my multi-trace specification (Instance CMR) also uses $M^{FC}$ and $M^{CF}$ but stores a distinct trace for each encoding event by concatenating the states of $F$ and $C$ at study, preserving an occurrence-specific record.
+Below I outline how each memory encodes and retrieves item-context associations and then describe the shared task dynamics used in free recall.
+
+| Symbol | Name | Description |
+|-------------------|-------------------|----------------------------------|
+| $C$ | temporal context | A recency-weighted average of encoded items |
+| $F$ | item features | Current pattern of item feature unit activations |
+| $M^{FC}$ | item-to-context memory | encoded feature-to-context associations |
+| $M^{CF}$ | context-to-feature memory | encoded context-to-feature associations |
+| ${\beta}_{enc}$ | encoding drift rate | Rate of context drift during item encoding |
+| ${\beta}_{start}$ | start drift rate | Amount of start-list context retrieved at start of recall |
+| ${\beta}_{rec}$ | recall drift rate | Rate of context drift during recall |
+| ${\alpha}$ | shared support | Uniform pre-experimental cross-item support in $M^{CF}$ |
+| ${\delta}$ | item support | Pre-experimental self-association in $M^{CF}$ |
+| ${\gamma}$ | learning rate | Learning rate for updates to $M^{FC}$ |
+| ${\phi}_{s}$ | primacy scale | Scaling of primacy gradient during learning in $M^{CF}$ |
+| ${\phi}_{d}$ | primacy decay | Rate of decay of the primacy gradient |
+| ${\theta}_{s}$ | stop probability scale | Baseline of the stopping process over outputs |
+| ${\theta}_{r}$ | stop probability growth | Slope of the stopping process over outputs |
+| ${\tau_{c}}$ | choice sensitivity | Exponential weighting during the recall competition |
+| ${\tau_{t}}$ | trace sensitivity | Exponential weighting of $M^{CF}$ trace activations in Instance CMR |
+
+: Parameters and structures specifying CMR. {#tbl-cmr-parameters}
+
+### Connectionist Memory Representations
+
+In Connectionist CMR, $M^{FC}$ and $M^{CF}$ are weight matrices linking features of items and contexts.
+For example, $M^{FC}_{ij}$ represents the association between the $i$th item feature in $F$ and the $j$th context feature in $C$ [@fig-connectionist-cmr].
+
+Before any experiment, I initialize $M^{FC}$ to summarize pre-experimental item-context structure:
+
+$$
+M^{FC}_{pre(ij)} =
+\begin{cases}
+1 - \gamma & \text{if } i=j \\
+0 & \text{if } i \neq j
+\end{cases}
+$$ {#eq-1}
+
+Here, pre-experimental self-support is tuned by $\gamma$ to scale the ratio of the strength of new associations formed during the experiment to those formed before it.
+
+Separately, $M^{CF}$ is initialized as:
+
+$$
+M^{CF}_{pre(ij)} =
+\begin{cases}
+\delta & \text{if } i=j \\
+\alpha & \text{if } i \neq j
+\end{cases}
+$$ {#eq-2}
+
+Here, $\delta$ adjusts the impact of pre-experimental context-to-feature associations compared to those acquired during the experiment.
+The $\alpha$ parameter establishes a uniform semantic support across items, supporting each other in the recall competition.
+
+During study, $M^{FC}$ learns via a Hebbian outer product with learning rate $\gamma$:
+
+$$
+\Delta M^{FC}_{ij} = \gamma\, F_i\, C_j
+$$ {#eq-3}
+
+In $M^{CF}$, learning is scaled by a primacy function $\phi$ based on study position, enforcing a primacy effect:
+
+$$ 
+\phi_i = \phi_se^{-\phi_d(i-1)} + 1
+$$ {#eq-4}
+
+where $\phi_s$ and $\phi_d$ are parameters that control the strength and decay of the primacy effect, respectively.
+Context-to-feature weights update as:
+
+$$
+\Delta M^{CF}_{ij} = \phi_i\, C_i\, F_j
+$$ {#eq-5}
+
+
+Retrieval is based on matrix multiplication:
+
+$$
+\hat{C} = M^{FC}\, f
+$$ {#eq-6}
+
+$$
+\hat{F} = M^{CF}\, c
+$$ {#eq-7}
+
+### Instance-Based Memory Representations
+
+In Instance CMR, $M^{FC}$ and $M^{CF}$ are multi-trace memories that store separate vectors for pre-experimental structure and for each encoding event via concatenation of an item feature vector and a context vector.
+Pre-experimental traces are configured so that, when combined with experimental traces, the induced input--output maps match the connectionist initializations in @eq-1 and @eq-2.
+
+For $M^{FC}$, I include one pre trace per item feature.
+In each such trace, the item half is 1 at that feature and 0 elsewhere, and the context half is $1-\gamma$ at the matching context unit and 0 elsewhere.
+Together these pre traces implement the linear map $f \mapsto M^{FC}_{pre}\, f$ from @eq-1.
+
+For $M^{CF}$, I include one pre trace per context unit.
+In each such trace, the context half is 1 at that unit and 0 elsewhere.
+The item half assigns $\delta$ to the item feature paired with that same context unit and $\alpha$ to every other item feature.
+Together these pre traces implement the linear map $c \mapsto M^{CF}_{pre}\, c$ from @eq-2.
+
+Each experimental trace concatenates the item and context states at encoding and applies modifiers to the output half at storage.
+As in Connectionist CMR, $\gamma$ scales experimental traces in $M^{FC}$ and $\phi_i$ scales experimental traces in $M^{CF}$:
+
+$$
+M^{FC}_{exp_i} = [\,f_i,\, \gamma\, c_i\,]
+$$ {#eq-8}
+$$
+M^{CF}_{exp_i} = [\,c_i,\, \phi_i\, f_i\,]
+$$ {#eq-9}
+
+Retrieving associations from these multi-trace memories uses padded probes so that the dot product compares like with like.
+For $M^{FC}$, the probe is $[\,f, 0\,]$ and traces are thus activated according to the similarity of each trace's item feature component to the probe.
+For each trace $i$, the activation is given by:
+
+$$
+A^{FC}_i \;=\; [\,f,0\,]\cdot f_i
+$$ {#eq-10}
+
+Then the retrieved context is effectively a sum of each trace's context feature component weighted by these activations:
+
+$$
+\hat C \;=\; \sum_i A^{FC}_i\, \tilde c_i
+$$ {#eq-11}
+
+I do not apply $\tau_t$ in $M^{FC}$ because the $f_i$ are orthogonal, so sharpening has no effect.
+
+For $M^{CF}$ the probe is $[c, 0]$ and activations are exponentially scaled by the parameter $\tau_t$:
+
+$$
+A^{CF}_i \;=\; \big([\,c,0\,]\cdot c_i\big)^{\tau_t}
+$$ {#eq-10cf}
+
+Then the retrieved feature is effectively a sum of each trace's feature component weighted by these activations:
+
+$$
+\hat F \;=\; \sum_i A^{CF}_i\, \tilde f_i
+$$ {#eq-11cf}
+
+Setting $\tau_t=1$ makes these sums linear and recovers the connectionist maps exactly.
+Larger $\tau_t$ concentrates weight on the best-matching traces, implementing selective reinstatement.
+
+### Memory Dynamics During the Free Recall Task
+
+Remaining aspects of the model are shared between Connectionist and Instance CMR.
+
+#### Encoding Phase
+
+When an item $i$ is presented for study, its feature representation $f_i$ activates within the item layer $F$, and its contextual associations are retrieved from $M^{FC}$, regardless of whether it's the composite or multi-trace version.
+This retrieval modifies the current state of the context layer $C$.
+The input to the context from this retrieval is defined by:
+
+$$
+c^{IN}_{i} = \hat{C}
+$$ {#eq-12}
+
+Here, $\hat{C}$ represents the context vector retrieved from $M^{FC}$.
+This vector is then normalized to maintain a consistent scale, specifically so its length equals $1$.
+
+The context state is updated based on this input:
+
+$$
+c_i = \rho_i c_{i-1} + \beta_{enc} c_{i}^{IN}
+$$ {#eq-13}
+
+In this formula, $\beta_{enc}$ controls how much the context changes--or drifts--with each new item presented, reflecting the influence of the new contextual input.
+The parameter $\rho$ is used to ensure the length of $c_i$ remains normalized at $1$.
+It is calculated as follows:
+
+$$
+\rho_i = \sqrt{1 + \beta^2\left[\left(c_{i-1} \cdot c^{IN}_i\right)^2 - 1\right]} - \beta\left(c_{i-1} \cdot c^{IN}_i\right)
+$$ {#eq-14}
+
+This calculation adjusts $\rho_i$ to balance the contribution of the previous context state $c_{i-1}$ and the new input $c^{IN}_i$, ensuring the overall context vector doesn't grow too large or become too small.
+
+At this point, the model captures and solidifies the association between the current states of the context and item features in both $M^{FC}$ and $M^{CF}$.
+This dynamic ensures that each new experience slightly alters the context, which in turn influences how subsequent items are encoded and later retrieved.
+
+#### Retrieval Phase
+
+To account for the primacy effect in the model, I posit that between the encoding and retrieval phases, the content of the context layer $C$ drifts back towards its state prior to the experiment.
+I model this drift and set the initial state of context at the start of retrieval as follows, with $\rho$ calculated as previously specified:
+
+$$
+c_{start} = \rho_{N+1}c_N + \beta_{start}c_0
+$$ {#eq-15}
+
+During each recall attempt, this current state of context serves as the cue to $M^{CF}$, attempting to retrieve a studied item and producing an activation vector A on the item layer $F$:
+
+$$
+A = \hat{F}
+$$ {#eq-155}
+
+To ensure all items have a chance of being recalled, each is given a baseline activation of $10^{-7}$.
+The likelihood of ending the recall session, or the probability of stopping the recall without retrieving any more items, depends on the output position $j$ and is given by:
+
+$$
+P(stop, j) = \theta_s e^{j\theta_r}
+$$ {#eq-16}
+
+Here, $\theta_s$ and $\theta_r$ govern the initial stopping probability and the rate at which this probability increases, respectively, which is modeled as an exponential function.
+If recall continues, the probability $P(i)$ of recalling a specific item $i$ primarily depends on its relative activation strength:
+
+$$
+P(i) = (1-P(stop))\frac{A^{\tau_{c}}_i}{\sum_{k}^{N}A^{\tau_{c}}_k}
+$$ {#eq-17}
+
+The parameter $\tau_{c}$ enhances the contrast in activation strengths between items: a high $\tau_{c}$ value amplifies differences, making the most activated item even more likely to be recalled, whereas a lower $\tau_{c}$ value diminishes these differences, equalizing recall probabilities across items with varying activations.
+This mechanism can be implemented for either instance-based or connectionist memories, even on top of pre-existing trace-based activation scaling.
+
+If an item is recalled, it is reactivated on $F$, and its contextual associations are retrieved to update the context.
+This new context input is:
+
+$$
+c^{IN}_{i} = \hat{C}
+$$ {#eq-18}
+
+Context is then updated based on this input using $\beta_{rec}$ (used during retrieval rather than encoding) to adjust for the current phase of the task, setting the stage for the next recall attempt.
+This iterative process continues until no further items are recalled, effectively concluding the recall session.
+
+## Simulation 1: Functional Equivalence Between Connectionist and Instance CMR
+
+I have established two versions of the Context Maintenance and Retrieval model: Connectionist CMR and Instance CMR that both instantiate the principles of retrieved context theory to explain memory search in free recall tasks.
+But are the models truly equivalent, or are there subtle differences in their behavior that could influence their performance in different scenarios?
+While I hold the trace-based activation scaling parameter $\tau_{t}$ constant at 1, the answer to this question is yes.
+The reason why is that the two models use the same feature and contextual representations, and perform the same mathematical operations upon them to encode and retrieve associations: The pre-scaled activation of an output feature in either model is determined by the dot product similarity between probe vectors and output features' associated input features, weighted by each trace's respective learning rate.
+Here I present simulation analyses of the functional equivalence between Connectionist CMR and Instance CMR, demonstrating how both models encode and retrieve the same associations despite their structural differences.
+Establishing the equivalence of Instance CMR and Connectionist CMR under these conditions lays the groundwork for investigation into how trace-based activation scaling might enhance the model's performance in free recall tasks.
+
+To clarify the roles of memory structures in the simulation of CMR and underscore how these models encode and retrieve the same associations despite their structural differences, I provide a functional analysis of the connectivity structure of $M^{FC}$ and $M^{CF}$ in both models that measures associations between item and context features irrespective of how these associations are represented within a memory architecture.
+To set up this analysis, I use parameters fitted to the subset of the PEERS dataset as reported by [@healey2014memory] as described in the next section, but with $\tau_{t}$ set to 1.
+Then I simulate encoding of an arbitrary study list of size 8 with each model to construct the memory structures $M^{FC}$ and $M^{CF}$ that would organize retrieval in a free recall task.
+
+To compare the connectivity matrices of Connectionist CMR and Instance CMR, I individually activate each input unit and measure the resulting activation in the output layer for each possible input unit, activating one unit at a time.
+The resulting vector represents the connectivity between the activated input unit and all output units.
+Stacking these vectors together, I obtain the full latent connectivity matrix for each memory structure.
+For connectionist $M^{FC}$ and $M^{CF}$, this extracted structure is identical to the weight matrices used in the model.
+But for instance-based $M^{FC}$ and $M^{CF}$, this structure is effectively a conversion of the multi-trace memory into a composite memory, where each row summarizes associations between an input unit and all output units across all study events.
+
+Along with producing latent $M^{FC}$ and $M^{CF}$ connectivity matrices, I also analyze their combined influence on the dynamics of memory search in free recall tasks by extracting a latent $M^{FF}$ matrix that passes $F$ input vectors through $M^{FC}$ and then passes the resulting context vectors through $M^{CF}$ to measure the strength of associations between item features across all study events.
+This matrix reflects the interplay between $M^{FC}$ and $M^{CF}$ in guiding memory search -- how recalling an item will bias the retrieval of subsequent items based on the context reinstated by the recalled item via $M^{FC}$ and then used as a retrieval cue via $M^{CF}$.
+In @fig-matrix, I illustrate that across Connectionist CMR and Instance CMR, these three latent connectivity structures are identical, despite the differences in how they store and retrieve associations.
+
+To further illustrate how the memory structures of Connectionist CMR and Instance CMR support the temporal organization of memory search, I analyze extracted latent connectivity matrices from both models in a lag-connectivity analysis.
+In latent $M^{FC}$ representations, this analysis measures the connection strength between each considered item's $F$ representations with each other item's pre-experimentally associated context units $C$ as a function of the other items' serial lag from the considered item.
+The connection weight between $F_i$ and $C_j$ for all items $i$ and $j$ is calculated for each lag $j-i$ and plotted as a function of this lag.
+For example, if item $i$ is considered, the lag-connectivity analysis measures the strength of the connection between $F_i$ and $C_j$ as a function of the lag $j-i$.
+A converse analysis is performed for $M^{CF}$, measuring the connection strength between each considered context unit $C_i$ with each other item's pre-experimentally associated feature units $F$ as a function of the other items' serial lag from the considered item.
+
+Finally, to measure the combined influence of $M^{FC}$ and $M^{CF}$ on memory search, I perform a lag-connectivity analysis on the latent $M^{FF}$ matrix, measuring the connection strength between each considered item's $F$ representations with each other item's $F$ representations as a function of the other items' serial lag from the considered item.
+This analysis, visualized in @fig-lag-connectivity, provides a visual representation of how each of $M^{FC}$ and $M^{CF}$ supports the lag-contiguity effect in free recall tasks, with $M^{FC}$ primarily supporting transitions to backward neighbors of the last recalled item and $M^{CF}$ supporting transitions to forward neighbors.
+The analysis applied to $M^{FF}$ demonstrates how the combined influence of $M^{FC}$ and $M^{CF}$ instantiates a bidirectional but forward-biased lag-connectivity structure that supports the asymetrical lag-contiguity effect in free recall tasks.
+These analyses together demonstrate that the latent connectivity structures of Connectionist CMR and Instance CMR are functionally equivalent, supporting the same dynamics of memory search in free recall tasks.
+
+::: {#fig-matrix layout="[[1,1], [1,1,1]]"}
+![](icmr_figures/icmr_mfc.png)
+
+![](icmr_figures/icmr_mcf.png)
+
+![](icmr_figures/latent_mfc.png)
+
+![](icmr_figures/latent_mcf.png)
+
+![](icmr_figures/latent_mff.png)
+
+**Comparison of latent connectivity matrices between Connectionist CMR and Instance CMR**. Top Row: Instance CMR's $M^{FC}$ (left), and $M^{CF}$ (right) matrices.
+Each row represents a memory trace associating item and context features.
+Bottom Row: Extracted latent connectivity matrices from either CMR variant's $M^{FC}$ (left), and $M^{CF}$ (middle) memories as well as the combined influence of $M^{FC}$ and $M^{CF}$ on memory search in the $M^{FF}$ matrix (right).
+These are identical between the Instance and Connectionist models and also identical to Connectionist CMR's $M^{FC}$ and $M^{CF}$ weight matrices.
+:::
+
+::: {#fig-lag-connectivity layout="[[1,1,1]]"}
+![](icmr_figures/mfc_lag_connectivity.png)
+
+![](icmr_figures/mcf_lag_connectivity.png)
+
+![](icmr_figures/mff_lag_connectivity.png)
+
+**Lag-connectivity analysis of latent connectivity matrices** from $M^{FC}$ (left), $M^{CF}$ (middle), and $M^{FF}$ (right) in both models.
+These analyses show how each memory structure supports the lag-contiguity effect in free recall tasks.
+:::
+
+## Simulation 2: Performance of Connectionist and Instance CMR on Free Recall Datasets
+
+As shown, in my specification, Connectionist and Instance CMR models are functionally equivalent when the trace-based activation scaling parameter $\tau_{t}$ is set to 1.
+This setup ensures that with identical parameter configurations, both models should yield the same results in free recall tasks.
+This equivalence is maintained by using consistent association encodings between item and context features, identical learning rates, primacy scaling parameters across experiences, and by disabling the trace-based activation scaling in the instance model.
+To demonstrate how both models equivalently handle the dynamics of memory search in free recall, I simulate their performance on a selection of free recall datasets previously used to assess the Connectionist CMR, as well as exploring how Instance CMR performs when $\tau_{t}$ is varied during model fitting.
+This will help determine the potential benefits of trace-based activation scaling in these tasks.
+
+### Datasets
+
+For my initial comparisons, I utilize a segment of the PEERS dataset as reported by [@healey2014memory].
+In this subset, each of 126 participants, aged 17 to 30, encountered 112 trials where they studied lists of 16 unique words, followed by immediate recall.
+The words in each trial were unique and selected for low similarity, randomly drawn from the Toronto Word Pool [@friendly1982toronto], which includes high-frequency nouns, adjectives, and verbs.
+
+One significant aspect of the CMR model is its ability to demonstrate the relative scale-invariance of serial position effects, regardless of list length.
+As documented by [@murdock1962serial], variations in list length did not affect the primacy or the shape of the recency effects observed, though they did influence the overall probability of recalling initially encoded items and the list-list asymptote.
+To assess whether my multi-trace and composite implementations of CMR can replicate these findings, I utilize a subset of the original behavioral data from [@murdock1962serial] where 15 subjects completed 240 trials with list lengths varying between 20, 30, and 40 words.
+
+Additionally, past research [@lohnas2014retrieved] has highlighted CMR's capacity to model various repetition effects observed in free recall experiments.
+Notably, recall sequences often show a spacing effect, where the likelihood of recalling an item increases with the lag between its repeated presentations in a study list.
+[@lohnas2014retrieved] demonstrated that CMR could account for this through two mechanisms: contextual variability and study-phase retrieval.
+In the study-phase retrieval, when an item appears multiple times, recalling its prior instances and their contexts enriches the associations made with the current presentation.
+I test model implementations against the dataset from [@lohnas2014retrieved], where 35 subjects recalled 48 lists over four sessions.
+Each session included unique words, with controlled semantic relatedness below a threshold of .55 according to WAS [@steyvers2005word], and featured four types of list structures:
+
+1.**Control lists**: Each item appeared only once.
+2.**Pure massed lists**: Items appeared twice consecutively (e.g., 1, 1, 2, 2).
+3.**Pure spaced lists**: Items appeared twice with variable spacings from 1 to 8 positions.
+4.**Mixed lists**: Contained once-presented, massed, and spaced items, with each spacing amount distributed equally.
+
+Through these simulations, I aim to further understand how different memory model architectures influence recall dynamics and whether certain features, like trace-based activation scaling, enhance the model's predictive accuracy and applicability across varied recall scenarios.
+
+### Likelihood-based model optimization and comparison
+
+To determine how accurately each model captures the sequence of items recalled in these experiments, I employ a likelihood-based model comparison technique, as suggested by @kragel2015neural.
+This method evaluates model variants based on their precision in predicting the exact order of recalled items.
+According to this method, repeated items and intrusions (responses naming items not presented in the list) are excluded from participants' recall sequences.
+
+Here's how it works: For each trial, after simulating the encoding of each item as presented in the study list, the model begins by predicting the likelihood of the first item recalled by the participant.
+Subsequently, the model simulates the retrieval of this item, updates its state, and uses this updated context to predict the next recall event—this could either be the retrieval of another item or the termination of the recall session.
+This process continues until no further items are recalled.
+The probability assigned by the model to each recall event, conditional on prior events in the sequence, is recorded, log-transformed, and summed to derive the log-likelihood for the entire sequence.
+Across multiple trials in a dataset, these sequence log-likelihoods are summed to calculate the total log-likelihood for the dataset under a given model and parameter set.
+I report negative log-likelihood (NLL); lower is better.
+
+Optimizing the parameters for each model to maximize the likelihood of the observed data is achieved using the differential evolution technique [@storn1997differential], implemented in the scipy Python library.
+This method involves maintaining a population of potential parameter configurations.
+In each iteration, the algorithm mutates each member of this population by combining them with other members in a stochastic manner.
+If the new configuration offers an improvement, it replaces the older one; otherwise, it is discarded.
+This iterative process helps in progressively refining the parameters until they converge on a configuration that maximizes the observed dataset's log-likelihood.
+I conduct optimization at the individual subject level and compare models by examining the distribution of log-likelihood values across subjects, which helps in identifying the most effective model configuration for explaining recall dynamics.
+
+### Summary Statistic Simulation
+
+In evaluations of model performance, I utilize a set of summary statistics to characterize recall sequences.
+To calculate these statistics for the models, I first simulate recall sequences based on the specified model mechanics.
+For each unique study list in a dataset, I simulate 1000 trials.
+Each trial involves simulating the encoding of each item into memory followed by the stochastic simulation of free recall, which continues according to the calculated probabilities for each recall attempt until the session ends.
+The summary statistics for each model are then computed across all these simulations.
+
+Analysis primarily focuses on four well-documented regularities in free recall tasks that significantly influence model evaluation:
+
+1.**Serial Position Effect**: This effect is crucial for understanding how the order of items in a study list affects their likelihood of recall. I calculate and visualize the retrieval rate for each item based on its position in the study list. The rates for items presented early in the list help quantify the primacy effect, while the retrieval rates for later items illustrate the recency effect.
+2.**Probability of First Recall**: This statistic measures the rate at which items are retrieved first across recall sequences. This metric helps identify the items that are most likely to initiate the recall process.
+3.**Lag-Contiguity Effect**: This phenomenon, where items close together in the list order tend to be recalled in close sequence, is another focal point of analysis. To assess this, I employ lag-based conditional response probability (lag-CRP) analyses. The "lag" here refers to the distance between two items in the study list. I calculate the probability of a participant or model making a transition to recall an item at a specific lag, given that such a transition is possible. A high degree of temporal contiguity is indicated by frequent transitions to nearby items and infrequent transitions to items further apart.
+4.**Spacing Effect**: The spacing effect describes how the intervals between item presentations within a study list influence recall probability. I plot the probability of recalling an item based on its lag from the last presentation (or whether it is a novel item). This analysis helps interpret how the model's memory dynamics are influenced by the spacing between repeated items.
+
+I plot simulated data against observed data to evaluate how well the models capture these regularities across different datasets.
+
+### Results
+
+#### Healey & Kahana (2014)
+
+{{< include icmr_tables/HealyKahana2014_Model_Comparison_parameters.md >}}
+
+: Confidence intervals of parameters fit to data from @healey2014memory, computed across subjects.
+Column 1: Connectionist CMR follows the specification in @morton2016predictive.
+Column 2: Instance CMR with $\tau_{t}$ set to 1.
+Column 3: Instance CMR with $\tau_{t}$ optimized during fitting but $\tau_{c}$ set to 1.
+Column 4: Instance CMR with both $\tau_{t}$ and $\tau_{c}$ optimized during fitting.
+{#tbl-healey tbl-colwidths="\[66, 34\]"}
+
+::: {#fig-healey2014memory layout="[[1,1,1], [1,1,1], [1,1,1], [1,1,1]]"}
+![](icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/HealyKahana2014_TraceScalingCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/HealyKahana2014_TraceScalingCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/HealyKahana2014_TraceScalingCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/HealyKahana2014_MultiScalingCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/HealyKahana2014_MultiScalingCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/HealyKahana2014_MultiScalingCMR_Model_Fitting_spc-1.png)
+
+Summary statistic fits to @healey2014memory.
+Top: Connectionist CMR. Second Row: Instance CMR, $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR, $\tau_{c}$ set to 1 and $\tau_{t}$ optimized during fitting.
+Fourth Row: Multi Scaling CMR -- Instance CMR, both $\tau_{t}$ and $\tau_{c}$ optimized during fitting.
+Left: conditional response probability as a function of lag.
+Middle: probability of starting recall by serial position.
+Right: recall probability by serial position.
+:::
+
+{{< pagebreak >}}
+
+#### Murdock (1962)
+
+{{< include icmr_tables/Murdock1962_Model_Comparison_parameters.md >}}
+
+: Confidence intervals of parameters fit to data from @murdock1962serial, computed across subjects.
+Column 1: Connectionist CMR follows the specification in @morton2016predictive.
+Column 2: Instance CMR with trace activation scaling turned off.
+Column 3: Instance CMR with only trace activation scaling and no item activation scaling.
+Fourth model Column 4: Instance CMR with both trace and item activation scaling parameters freed for fitting.
+{#tbl-murdock tbl-colwidths="\[66, 34\]"}
+
+::: {#fig-murdock1962memory20 layout="[[1,1,1], [1,1,1], [1,1,1], [1,1,1]]"}
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL20_crp-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL20_pnr-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL20_spc-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL20_crp-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL20_pnr-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL20_spc-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL20_crp-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL20_pnr-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL20_spc-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL20_crp-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL20_pnr-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL20_spc-1.png)
+
+Summary statistic fits to @murdock1962serial where list length = 20.
+Top: Connectionist CMR. Second Row: Instance CMR, $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR, $\tau_{c}$ set to 1 and $\tau_{t}$ optimized during fitting.
+Fourth Row: Multi Scaling CMR -- Instance CMR, both $\tau_{t}$ and $\tau_c$ optimized during fitting.
+Left: conditional response probability as a function of lag.
+Middle: probability of starting recall with each serial position.
+Right: recall probability as a function of serial position.
+:::
+
+::: {#fig-murdock1962memory30 layout="[[1,1,1], [1,1,1], [1,1,1], [1,1,1]]"}
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL30_crp-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL30_pnr-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL30_spc-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL30_crp-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL30_pnr-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL30_spc-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL30_crp-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL30_pnr-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL30_spc-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL30_crp-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL30_pnr-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL30_spc-1.png)
+
+Summary statistic fits to @murdock1962serial where list length = 30.
+Top: Connectionist CMR. Second Row: Instance CMR, $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR, $\tau_{c}$ set to 1 and $\tau_{t}$ optimized during fitting.
+Fourth Row: Multi Scaling CMR -- Instance CMR, both $\tau_t$ and $\tau_c$ freed for fitting.
+Left: conditional response probability as a function of lag.
+Middle: probability of starting recall with each serial position.
+Right: recall probability as a function of serial position.
+:::
+
+::: {#fig-murdock1962memory40 layout="[[1,1,1], [1,1,1], [1,1,1], [1,1,1]]"}
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL40_crp-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL40_pnr-1.png)
+
+![](icmr_figures/Murdock1962_ConnectionistCMR_Model_Fitting_LL40_spc-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL40_crp-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL40_pnr-1.png)
+
+![](icmr_figures/Murdock1962_InstanceCMR_Model_Fitting_LL40_spc-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL40_crp-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL40_pnr-1.png)
+
+![](icmr_figures/Murdock1962_TraceScalingCMR_Model_Fitting_LL40_spc-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL40_crp-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL40_pnr-1.png)
+
+![](icmr_figures/Murdock1962_MultiScalingCMR_Model_Fitting_LL40_spc-1.png)
+
+Summary statistic fits to @murdock1962serial where list length = 40.
+Top: Connectionist CMR. Second Row: Instance CMR, $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR, $\tau_{c}$ set to 1 and $\tau_{t}$ optimized during fitting.
+Fourth Row: Multi Scaling CMR -- Instance CMR, both $\tau_t$ and $\tau_c$ freed for fitting.
+Left: conditional response probability as a function of lag.
+Middle: probability of starting recall with each serial position.
+Right: recall probability as a function of serial position.
+:::
+
+{{< pagebreak >}}
+
+#### Lohnas & Kahana (2014)
+
+{{< include icmr_tables/LohnasKahana2014_Model_Comparison_parameters.md >}}
+
+: Confidence intervals of parameters fit to data from @lohnas2014retrieved, computed across subjects.
+Column 1: Connectionist CMR follows the specification in @morton2016predictive.
+Second Row: Instance CMR, with $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR with $\tau_{t}$ set to 1 and $\tau_{c}$ optimized during fitting.
+Fourth model Column 4: Instance CMR with both trace and item activation scaling parameters freed for fitting.
+{#tbl-lohnas tbl-colwidths="\[66, 34\]"}
+
+::: {#fig-lohnas2014memory layout="[[1,1,1], [1,1,1], [1,1,1], [1,1,1]]"}
+![](icmr_figures/LohnasKahana2014_ConnectionistCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/LohnasKahana2014_ConnectionistCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/LohnasKahana2014_ConnectionistCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/LohnasKahana2014_InstanceCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/LohnasKahana2014_InstanceCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/LohnasKahana2014_InstanceCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/LohnasKahana2014_TraceScalingCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/LohnasKahana2014_TraceScalingCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/LohnasKahana2014_TraceScalingCMR_Model_Fitting_spc-1.png)
+
+![](icmr_figures/LohnasKahana2014_MultiScalingCMR_Model_Fitting_crp-1.png)
+
+![](icmr_figures/LohnasKahana2014_MultiScalingCMR_Model_Fitting_pfr-1.png)
+
+![](icmr_figures/LohnasKahana2014_MultiScalingCMR_Model_Fitting_spc-1.png)
+
+Summary statistic fits to @lohnas2014retrieved.
+Top: Connectionist CMR. Second Row: Instance CMR, $\tau_{t}$ set to 1.
+Third Row: Trace Scaling CMR -- Instance CMR, $\tau_{c}$ set to 1 and $\tau_{t}$ optimized during fitting.
+Fourth Row: Multi Scaling CMR -- Instance CMR, both $\tau_t$ and $\tau_c$ freed for fitting.
+Left: conditional response probability as a function of lag.
+Middle: probability of starting recall with each serial position.
+Right: recall probability as a function of serial position.
+:::
+
+@tbl-healey, @tbl-murdock, and @tbl-lohnas present the confidence intervals of the parameters fit to the data across subjects for each model variant.
+The tables also present the mean and confidence intervals of the negative log-likelihood values for each model variant.
+@fig-healey2014memory, @fig-murdock1962memory20, and @fig-murdock1962memory30 illustrate the summary statistic fits for each model variant.
+I additionally performed paired t-tests to compare the negative log-likelihood values of the models across subjects, using a significance level of $0.05$ and Connectionist CMR as the reference model.
+Alternative models Instance-CMR, Trace Scaling CMR, and Multi Scaling CMR were compared to Connectionist CMR to determine if subject-level negative log-likelihoods were significantly lower than the reference model (lower scores indicate better fit), with outcome p-values \~0.0176, \~0.0232, and \~0.0008, respectively.
+Performing the same tests for the data from @murdock1962serial yielded p-values 0.9125, 0.9414, and 0.6252 for the three alternative models, respectively.
+For the data from @lohnas2014retrieved, the p-values were 0.8638, 0.1015, and 0.4374 for the three alternative models, respectively.
+These results suggest that the Multi Scaling CMR model provides the best fit to the data across all three datasets, with the Instance CMR model performing similarly to the Connectionist CMR model.
+However, even the best-fitting model, Multi Scaling CMR, only marginally outperforms Connectionist CMR in terms of negative log-likelihood values and capture of summary statistics across all datasets.
+
+These several figures help illustrate a single point: the functional equivalence between Connectionist and Instance CMR models.
+When the trace-based activation scaling parameter $\tau_{t}$ is set to 1, both models yield the same results in free recall tasks, with differences in results only attributable to the stochastic nature of the simulations and fitting process.
+Even when $\tau_{t}$ is varied during model fitting, either instead of or in addition to the item activation scaling parameter $\tau_{c}$, model performance is only marginally different.
+The challenges that the original Connectionist CMR faces in capturing the dynamics of memory search in free recall tasks are shared by Instance CMR, and are not clearly resolved by the latter model.
+For example, both models overrate the strength of the lag-contiguity effect in the dataset from @murdock1962serial, and lack the ability to capture the plateau-like shape of the probability of first recall curve in data both from @murdock1962serial and @lohnas2014retrieved.
+These results suggest that the instance-based specification of CMR does not provide a clear advantage over the connectionist specification in terms of capturing the dynamics of memory search in free recall tasks -- at least not without additional modifications to the model or novel task conditions.
+
+
+## Discussion
+
+This chapter set out to determine whether the architectural choice between composite-weight (connectionist) and multi-trace (instance-based) storage formats meaningfully affects a retrieved-context model's ability to account for human free recall.
+Across three datasets I compared the original Connectionist CMR to an instance-based specification (Instance-CMR) that preserves a separate trace for each encoding event.
+I also examined two extended variants: Trace Scaling CMR (freeing $\tau_t$ while holding $\tau_c$ at 1) and Multi-Scaling CMR (freeing both $\tau_t$ and $\tau_c$).
+The primary finding is that, under standard parameterizations, Connectionist and Instance-CMR perform almost identically on the serial position curve (SPC), probability of first recall (PFR), and asymmetrical lag–CRP benchmarks, and both show similar strengths and weaknesses in capturing the structure of recall.
+
+Simulation 1 established the functional equivalence of the two architectures when $\tau_t = 1$.
+Latent connectivity analyses of $M^{FC}$, $M^{CF}$, and their combined $M^{FF}$ structure showed that the two models produce identical association patterns between items and contexts, and between items themselves via reinstated context.
+These latent structures supported the same bidirectional but forward-skewed lag-connectivity profile known to underlie the contiguity effect.
+
+Simulation 2 tested whether freeing $\tau_t$ (and, in Multi Scaling CMR, $\tau_c$) would reveal an advantage for the instance-based architecture.
+Across datasets, Multi Scaling CMR achieved the highest mean log-likelihoods, but the improvements over Connectionist CMR were small and inconsistent.
+Instance-CMR with $\tau_t$ fixed at 1 performed almost exactly like Connectionist CMR.
+Even when $\tau_t$ was optimized, gains were modest, and the qualitative fit to the summary statistics remained similar across architectures.
+
+The close match between Connectionist and Instance-CMR is not accidental.
+Several features of Connectionist CMR allow it to mimic *event-preserving* retrieval even without storing separate traces.
+First, item representations in the $F$ layer are orthonormal, so a retrieval cue can fully activate the intended item without activating representations of other items.
+This property makes $M^{FC}$ in the connectionist model behave much like a set of separate item–context traces, especially when each item's representation is unique.
+Second, the role of $\tau_t$ in the instance-based model parallels that of $\tau_c$ in the connectionist model: both sharpen the competition among retrieval candidates, effectively focusing activation on the most relevant representations.
+With orthogonal $F$-layer codes and similar activation-scaling mechanisms, the architectures operate in an event-preserving regime even when $\tau_t$ is disabled.
+
+From a task-design perspective, the free recall paradigm tested here does not strongly differentiate between event-preserving and event-blending retrieval modes.
+In other literatures, such as category learning, the difference emerges most clearly for ambiguous items: prototype models classify based on similarity to a category centroid, whereas instance models classify based on similarity to the nearest stored exemplar [e.g., @nosofsky2002exemplar; @stanton2002comparisons; @homa1981limitations].
+In semantic memory, prototype-based models of homonyms tend to overweight dominant meanings, while instance-based models can recover rarer meanings when cues match specific stored episodes [@griffiths2007topics; @jamieson2018instance].
+In both cases, the test phase sets up direct competition between prototype-like and exemplar-like responses — exactly the kind of situation where event-blending and event-preserving retrieval predict different outcomes.
+
+By contrast, in standard free recall with unrelated word lists, recall cues generally point to a single studied item and its close temporal neighbors.
+This naturally encourages event-preserving retrieval in both architectures, because the temporal context cue is specific enough to select the intended target without having to average across conflicting traces.
+Under these conditions, the advantages of trace-level activation scaling in the instance model have little room to manifest.
+In Chapter 3 of this dissertation, I will explore how these dynamics play out in more detail.
+
+These findings reinforce the idea that the theoretical commitments of retrieved-context theory (RCT) are highly portable across storage architectures.
+Whether associations are stored in a composite weight matrix or as a set of separate traces, the key principles — binding items to a drifting temporal context, using reinstated context to cue retrieval, and allowing recalled items to update the cue — can be implemented to produce nearly identical recall dynamics.
+This architectural flexibility is a strength: it means that RCT's mechanisms can be embedded in different modeling traditions without sacrificing their core predictions.
+
+The results also identify shared challenges for the current RCT/CMR framework.
+Both architectures overemphasize lag-contiguity in some datasets and struggle to capture flat or plateau-like PFR curves.
+These systematic misfits suggest that changes to context updating, initiation mechanisms, or termination rules — rather than changes in storage format — are needed to address certain empirical patterns.
+
+Even without a performance advantage in standard free recall, the instance-based formulation retains practical and theoretical value.
+First, it is more naturally integrated with other instance-based models of memory, supporting multi-task accounts that combine, for example, episodic recall with category learning or recognition judgments within a single architecture.
+Second, instance-based models are often more interpretable [@gao2023interpretability]: each trace is stored and retrieved separately, and its contribution to the output can be examined directly.
+This transparency can make it easier to diagnose model failures, identify which episodes drive a given response, and design targeted extensions.
+
+Finally, instance-based architectures may show clearer advantages in free recall under modified conditions.
+Embedding strong category structure into study lists, or interleaving recall with classification or recognition decisions, would create competition between prototype- and exemplar-based responding within the same task.
+Under such conditions, the differences between event-blending and event-preserving retrieval could have greater behavioral consequences, revealing architecture-by-task interactions that are muted in standard list-learning paradigms.
+
+The present comparisons indicate that, for the free recall paradigms tested here, the choice between connectionist and instance-based storage formats is less important than the underlying temporal-context mechanisms.
+This does not diminish the importance of architectural questions, but rather clarifies the conditions under which they matter.
+Future work that systematically manipulates the degree to which recall depends on category-level generalization versus episode-specific reinstatement will help determine whether the advantages of instance-based retrieval observed in other domains can be realized in temporally organized memory search.
