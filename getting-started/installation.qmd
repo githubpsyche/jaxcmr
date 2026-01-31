@@ -1,0 +1,103 @@
+---
+title: "Installation"
+description: "Install jaxcmr and configure JAX for your hardware"
+---
+
+## Requirements
+
+- **Python 3.12+** is required
+- Works on macOS, Linux, and Windows
+
+## Basic Installation
+
+Install from PyPI:
+
+```bash
+pip install jaxcmr
+```
+
+This installs jaxcmr along with its core dependencies including JAX.
+
+## JAX Accelerator Builds
+
+By default, JAX installs with CPU support. For GPU or TPU acceleration, you'll need to install the appropriate JAX build.
+
+### GPU (CUDA)
+
+For NVIDIA GPUs with CUDA:
+
+```bash
+pip install --upgrade "jax[cuda12]"
+```
+
+See the [JAX installation guide](https://jax.readthedocs.io/en/latest/installation.html) for specific CUDA versions and requirements.
+
+### Apple Silicon (Metal)
+
+For Apple M1/M2/M3 Macs, the default JAX installation includes Metal support.
+
+### TPU
+
+For Google Cloud TPUs:
+
+```bash
+pip install --upgrade "jax[tpu]" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
+```
+
+## Development Installation
+
+To install from source for development:
+
+```bash
+git clone https://github.com/githubpsyche/jaxcmr.git
+cd jaxcmr
+pip install -e ".[dev]"
+```
+
+## Verify Installation
+
+Test that jaxcmr is installed correctly:
+
+```python
+from jaxcmr.models.cmr import BaseCMR
+print("jaxcmr installed successfully!")
+```
+
+Check which JAX backend is active:
+
+```python
+import jax
+print(jax.devices())  # Shows available devices (CPU, GPU, TPU)
+```
+
+## Dependencies
+
+jaxcmr installs these core dependencies:
+
+- `jax` - Automatic differentiation and XLA compilation
+- `jaxtyping` - Type annotations for JAX arrays
+- `h5py` - HDF5 file format support for datasets
+- `scipy` - Optimization algorithms for fitting
+- `simple-pytree` - PyTree utilities
+- `tqdm` - Progress bars for fitting
+
+## Troubleshooting
+
+### ImportError with JAX
+
+If you see JAX import errors, ensure you have a compatible version:
+
+```bash
+pip install --upgrade jax jaxlib
+```
+
+### Memory issues on GPU
+
+For large datasets, you may need to configure JAX memory allocation:
+
+```python
+import os
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+```
+
+Set this before importing JAX.

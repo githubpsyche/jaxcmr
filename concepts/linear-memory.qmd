@@ -1,0 +1,117 @@
+---
+title: "Linear Memory"
+description: "Associative memory components in CMR"
+---
+
+::: {.callout-note}
+This page is a placeholder. Content will be expanded from the [linear memory template notebook](../templates/linear_memory.ipynb).
+:::
+
+## Overview
+
+CMR uses two linear associative memory matrices:
+
+- **MFC (Item → Context)**: Stores associations from items to their temporal contexts
+- **MCF (Context → Item)**: Stores associations from context states to items
+
+## Linear Associative Memory
+
+Each memory is a matrix where:
+
+- Rows are input features
+- Columns are output features
+
+```python
+from jaxcmr.components.linear_memory import LinearMemory
+
+# Create a memory with 5 input and 6 output features
+memory = LinearMemory(input_size=5, output_size=6)
+```
+
+### Association
+
+To learn an association between patterns:
+
+```python
+memory = memory.associate(
+    in_pattern=item_vector,      # What to associate FROM
+    out_pattern=context_vector,  # What to associate TO
+    learning_rate=0.5,
+)
+```
+
+This performs outer-product learning (Hebbian):
+
+$$M_{new} = M_{old} + \eta \cdot (\text{out} \otimes \text{in})$$
+
+### Probing
+
+To retrieve the associated pattern:
+
+```python
+output = memory.probe(input_pattern)
+```
+
+This computes:
+
+$$\text{output} = M^T \cdot \text{input}$$
+
+## MFC: Item → Context Memory
+
+MFC learns what context was active when each item was studied.
+
+**Initialization**: MFC starts with pre-experimental associations connecting each item to its corresponding context unit.
+
+**During study**: When item $i$ is encoded, MFC associates the item with the current context state.
+
+**During recall**: When an item is recalled, probing MFC with the item retrieves the associated context, which is then reinstated.
+
+```python
+from jaxcmr.components.linear_memory import init_mfc
+
+mfc = init_mfc(list_length=5, parameters=params, context=context)
+
+# Probe: What context is associated with item 3?
+context_input = mfc.probe(item_vector)
+```
+
+## MCF: Context → Item Memory
+
+MCF supports retrieval - it maps context states to item activations.
+
+**Initialization**: MCF starts with:
+
+- `shared_support`: Baseline association from all context units to all items
+- `item_support`: Additional association from each context unit to its matching item
+
+**During study**: MCF associates the current context with the studied item.
+
+**During recall**: Probing MCF with current context returns activation values for each item, which are converted to retrieval probabilities.
+
+```python
+from jaxcmr.components.linear_memory import init_mcf
+
+mcf = init_mcf(list_length=5, parameters=params, context=context)
+
+# Probe: Which items are activated by current context?
+activations = mcf.probe(context.state)
+```
+
+## Pre-experimental Associations
+
+The `shared_support` and `item_support` parameters control initial MCF weights:
+
+| Parameter | Effect |
+|-----------|--------|
+| `shared_support` | All context-item pairs start with this association |
+| `item_support` | Matching pairs (context unit $i$ → item $i$) get extra support |
+
+This creates a baseline where:
+
+- All items have some retrieval probability
+- Recently studied items (with active context units) have higher probability
+
+## Next Steps
+
+- [Context](context.qmd) - How context drifts and gets reinstated
+- [Parameters](parameters.qmd) - Memory-related parameters

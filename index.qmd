@@ -1,10 +1,28 @@
 ---
 title: "jaxcmr"
+description: "JAX-accelerated toolkit for computational memory research"
 ---
 
-jaxcmr is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall. It includes utilities for simulation, likelihood evaluation, fitting, and common behavioral analyses.
+**jaxcmr** is a JAX-accelerated toolkit for modeling memory search, featuring implementations of Context Maintenance and Retrieval (CMR) models and variants for free/serial recall. It includes utilities for simulation, likelihood evaluation, fitting, and common behavioral analyses.
 
-See the Posts and Projects for background and applications.
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-4}
+### [Getting Started](/getting-started/)
+Install jaxcmr and run your first CMR simulation in minutes.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### [Tutorials](/tutorials/)
+Learn to fit models to data and analyze results.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### [Analyses](/analyses/)
+Compute SPC, CRP, and other standard memory measures.
+:::
+
+:::
 
 ## Installation
 
@@ -12,19 +30,19 @@ See the Posts and Projects for background and applications.
 pip install jaxcmr
 ```
 
-Python 3.12+ is required. The `jax` dependency installs automatically; consult JAX documentation if you need a specific accelerator build.
+Python 3.12+ is required. The `jax` dependency installs automatically; consult [JAX documentation](https://jax.readthedocs.io/) for specific accelerator builds.
 
-## Quick start
+## Quick Start
 
 Simulate a single free-recall trial with a basic CMR model:
 
 ```python
 from jax import random
 import jax.numpy as jnp
-from jaxcmr.models.cmr import BaseCMR
+from jaxcmr.models.cmr import CMR
 from jaxcmr.simulation import simulate_study_and_free_recall
 
-# Toy CMR parameters (example values)
+# CMR parameters
 params = {
     "encoding_drift_rate": 0.5,
     "start_drift_rate": 0.5,
@@ -37,37 +55,49 @@ params = {
     "stop_probability_scale": 0.05,
     "stop_probability_growth": 0.2,
     "choice_sensitivity": 0.6,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
 }
 
 list_length = 5
-present = jnp.arange(1, list_length + 1)  # [1,2,3,4,5]
+present = jnp.arange(1, list_length + 1)
 rng = random.PRNGKey(0)
 
-model = BaseCMR(list_length, params)
+model = CMR(list_length, params)
 model, recalls = simulate_study_and_free_recall(model, present, rng)
-print(recalls)  # e.g., array of recalled within-list item numbers
+print(recalls)
 ```
 
-Inspect outcome probabilities step-by-step:
+## Features
 
-```python
-from jax import lax
+- **11 CMR variants** including semantic, positional, and EEG models
+- **Fast simulation** with JAX JIT compilation
+- **Parameter fitting** using differential evolution
+- **34+ behavioral analyses** (SPC, CRP, PNR, and more)
+- **HDF5 data format** for efficient dataset handling
 
-# Study the list, then enter retrieval mode
-model = BaseCMR(list_length, params)
-model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
-model = model.start_retrieving()
+## Explore
 
-# Probabilities for stopping (index 0) and recalling each item (1..list_length)
-p0_and_items = model.outcome_probabilities()
-print(p0_and_items)
+::: {.grid}
 
-# After retrieving an item (e.g., item 5), update the model and recompute
-model = model.retrieve(5)
-print(model.outcome_probabilities())
-```
+::: {.g-col-12 .g-col-md-6}
+### [Concepts](/concepts/)
+Understand how CMR works: temporal context, associative memory, and model parameters.
+:::
 
-## Documentation and Issues
+::: {.g-col-12 .g-col-md-6}
+### [Manuscripts](/manuscripts/)
+Research projects using jaxcmr for computational memory modeling.
+:::
 
-- Docs and examples: https://githubpsyche.github.io/jaxcmr/
-- Source and issues: https://github.com/githubpsyche/jaxcmr
+::: {.g-col-12 .g-col-md-6}
+### [Blog](/blog/)
+Updates, tutorials, and research notes.
+:::
+
+::: {.g-col-12 .g-col-md-6}
+### [GitHub](https://github.com/githubpsyche/jaxcmr)
+Source code and issue tracker.
+:::
+
+:::

@@ -1,0 +1,70 @@
+---
+title: "Manuscripts"
+description: "Research projects using jaxcmr"
+---
+
+This section showcases research manuscripts and projects that use jaxcmr for computational memory modeling. Each project is a self-contained Quarto manuscript with its own analysis notebooks and results.
+
+## Active Projects
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-6}
+### [TalmiEEG](/projects/TalmiEEG/)
+
+Investigating EEG correlates of memory encoding and retrieval using CMR models. Explores how neural signals relate to model parameters.
+
+**Status**: In progress
+:::
+
+::: {.g-col-12 .g-col-md-6}
+### [RepFR](/projects/repfr/)
+
+Repetition effects in free recall. Modeling how repeated items affect temporal context and retrieval dynamics.
+
+**Status**: In progress
+:::
+
+::: {.g-col-12 .g-col-md-6}
+### [CRU to CMR](/projects/cru_to_cmr/)
+
+Comparing Context Retrieval and Updating (CRU) models with CMR. Systematic evaluation of model architectures and parameter recovery.
+
+**Status**: In progress
+:::
+
+:::
+
+## Completed Work
+
+Additional manuscripts and analyses are available in the `work/` directory, including reproductions of classic memory studies:
+
+- **HealeyKahana2014** - Large-scale free recall replication
+- **LohnasKahana2014** - Variable list length effects
+- **Murdock1962** - Classic serial position data
+
+## Project Structure
+
+Each manuscript project follows a consistent structure:
+
+```
+projects/project-name/
+├── _quarto.yml          # Quarto configuration
+├── index.qmd            # Main manuscript
+├── references.bib       # Bibliography
+├── notebooks/           # Analysis notebooks
+├── results/             # Figures and tables
+└── notes/               # Working notes
+```
+
+Projects render as subsites to `docs/projects/<name>/` and are linked from this page.
+
+## Starting a New Project
+
+To create a new manuscript project:
+
+1. Copy an existing project structure
+2. Update `_quarto.yml` with your project info
+3. Set the output directory: `output-dir: ../../docs/projects/your-project`
+4. Add your manuscript content to `index.qmd`
+5. Render with `quarto render` from the project directory

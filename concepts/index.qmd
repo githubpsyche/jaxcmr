@@ -1,0 +1,75 @@
+---
+title: "Concepts"
+description: "Understanding CMR and memory search models"
+---
+
+This section explains the key concepts behind the Context Maintenance and Retrieval (CMR) model and how jaxcmr implements them.
+
+## What is CMR?
+
+The **Context Maintenance and Retrieval** model is a computational model of episodic memory, particularly designed to explain patterns in free recall experiments.
+
+In a free recall experiment:
+
+1. Participants study a list of items (words, pictures, etc.)
+2. After a brief delay, they recall as many items as they can, in any order
+3. The order and timing of recalls reveal the structure of memory
+
+CMR explains classic memory phenomena:
+
+- **Recency effect**: Items at the end of the list are recalled first
+- **Primacy effect**: Items at the start are recalled better than middle items
+- **Temporal contiguity**: Items studied near each other tend to be recalled together
+
+## How CMR Works
+
+CMR has three core components:
+
+### 1. Temporal Context
+
+The model maintains a **context representation** that drifts over time. During study, each item updates the context, creating a record of *when* things happened.
+
+During recall, context is used as a cue to retrieve items. When an item is recalled, it reinstates its associated context, which then cues related items.
+
+See [Context](context.qmd) for details.
+
+### 2. Associative Memory
+
+CMR uses two memory stores:
+
+- **MFC (Item → Context)**: Maps items to their associated temporal contexts
+- **MCF (Context → Item)**: Maps context states to item activations for retrieval
+
+These memories are learned during study through Hebbian association.
+
+See [Linear Memory](linear-memory.qmd) for details.
+
+### 3. Retrieval Dynamics
+
+At recall, the model:
+
+1. Uses current context to probe MCF for item activations
+2. Converts activations to probabilities via softmax
+3. Samples an item or decides to stop
+4. Updates context based on the recalled item
+5. Repeats until stopping
+
+## CMR Parameters
+
+CMR has several free parameters controlling different aspects of memory:
+
+| Parameter | Controls |
+|-----------|----------|
+| Context drift rates | How much context changes during study and recall |
+| Primacy parameters | The primacy gradient (better memory for early items) |
+| Learning rate | Strength of new associations |
+| Choice sensitivity | How deterministic vs. random retrieval is |
+| Stop parameters | When recall terminates |
+
+See [Parameters](parameters.qmd) for a complete reference.
+
+## Sections
+
+- [**Context**](context.qmd) - Temporal context representation
+- [**Linear Memory**](linear-memory.qmd) - Associative memory components
+- [**Parameters**](parameters.qmd) - Complete parameter reference

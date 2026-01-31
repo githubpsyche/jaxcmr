@@ -1,0 +1,26 @@
+---
+title: "Distance CRP"
+description: "Transitions by semantic distance"
+---
+
+::: {.callout-note}
+See [templates/distcrp.ipynb](../../templates/distcrp.ipynb) for a complete example.
+:::
+
+## Overview
+
+**Distance CRP** shows transition probabilities as a function of semantic distance between items, revealing semantic clustering effects.
+
+## Usage
+
+```python
+from jaxcmr.analyses.distcrp import plot_dist_crp
+
+plot_dist_crp(
+    datasets=[data],
+    features=semantic_embeddings,
+    labels=["Data"],
+)
+```
+
+Requires semantic feature vectors (e.g., word embeddings) for items.

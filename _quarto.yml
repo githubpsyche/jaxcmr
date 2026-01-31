@@ -1,35 +1,106 @@
 project:
   type: website
-  # OPTION A (no CI): render locally into docs/ for GitHub Pages
-  output-dir: docs/home
-  # pre-render: scripts/render-projects.sh
-  resources:
-    - "projects/*/index.html"
-    - "projects/*/*_files/**"
+  output-dir: docs
   render:
     - index.qmd
-    - posts/**/*.qmd
+    - getting-started/*.qmd
+    - concepts/*.qmd
+    - tutorials/*.qmd
+    - analyses/**/*.qmd
+    - manuscripts/*.qmd
+    - blog/**/*.qmd
 
 website:
   title: "jaxcmr"
+  description: "JAX-accelerated toolkit for computational memory research"
   site-url: https://githubpsyche.github.io/jaxcmr
+  repo-url: https://github.com/githubpsyche/jaxcmr
+  repo-actions: [edit, issue]
+
   navbar:
+    background: dark
     left:
-      - text: Posts
-        href: posts/index.qmd
-      - text: Projects
-        menu:
-          - text: CRU to CMR
-            href: ../projects/cru_to_cmr/index.html
-          - text: Thesis
-            href: ../projects/thesis/index.html
+      - text: "Getting Started"
+        href: getting-started/index.qmd
+      - text: "Concepts"
+        href: concepts/index.qmd
+      - text: "Tutorials"
+        href: tutorials/index.qmd
+      - text: "Analyses"
+        href: analyses/index.qmd
+      - text: "Manuscripts"
+        href: manuscripts/index.qmd
+      - text: "Blog"
+        href: blog/index.qmd
+    right:
+      - icon: github
+        href: https://github.com/githubpsyche/jaxcmr
+
+  sidebar:
+    - title: "Getting Started"
+      style: docked
+      contents:
+        - getting-started/index.qmd
+        - getting-started/installation.qmd
+        - getting-started/quickstart.qmd
+        - getting-started/data-format.qmd
+
+    - title: "Concepts"
+      contents:
+        - concepts/index.qmd
+        - concepts/context.qmd
+        - concepts/linear-memory.qmd
+        - concepts/parameters.qmd
+
+    - title: "Tutorials"
+      contents:
+        - tutorials/index.qmd
+        - tutorials/fitting.qmd
+        - tutorials/parameter-shifting.qmd
+
+    - title: "Analyses"
+      contents:
+        - analyses/index.qmd
+        - section: "Serial Position"
+          contents:
+            - analyses/serial-position/spc.qmd
+            - analyses/serial-position/pnr.qmd
+            - analyses/serial-position/srac.qmd
+        - section: "Temporal Contiguity"
+          contents:
+            - analyses/temporal-contiguity/crp.qmd
+            - analyses/temporal-contiguity/distcrp.qmd
+        - section: "Category Effects"
+          contents:
+            - analyses/category/catcrp.qmd
+            - analyses/category/cat-spc.qmd
+        - section: "Repetition"
+          contents:
+            - analyses/repetition/repcrp.qmd
+            - analyses/repetition/compound-cueing.qmd
+        - section: "Error Analyses"
+          contents:
+            - analyses/error-analyses/intrusion.qmd
+            - analyses/error-analyses/omission.qmd
+
+  page-footer:
+    left: "Built with [Quarto](https://quarto.org/)"
+    right: "jaxcmr"
+
+  search:
+    location: navbar
+    type: overlay
 
 format:
-  html: 
-    default: true
+  html:
     theme: darkly
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    code-tools: true
+    code-copy: true
 
-# Optional: if you want KB wikilinks stripped/linked in includes
-# filters:
-#   - filters/wikilinks.lua
-# wikilinks-mode: strip
+execute:
+  freeze: auto
+
+jupyter: python3

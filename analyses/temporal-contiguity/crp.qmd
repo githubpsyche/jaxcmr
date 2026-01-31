@@ -1,0 +1,41 @@
+---
+title: "Conditional Response Probability"
+description: "Transition probabilities by lag"
+---
+
+::: {.callout-note}
+See [templates/crp.ipynb](../../templates/crp.ipynb) for a complete example.
+:::
+
+## Overview
+
+The **Conditional Response Probability (CRP)** curve shows the probability of recalling an item as a function of its lag (study position relative to the just-recalled item).
+
+Key features:
+
+- **Temporal contiguity**: Items studied nearby tend to be recalled together
+- **Forward asymmetry**: Transitions to +1 lag are more likely than -1
+- Peak at lag +1 and -1
+
+## Usage
+
+```python
+from jaxcmr.analyses.crp import crp, plot_crp
+
+# Compute CRP
+result = crp(data["recalls"], list_length=16)
+
+# Plot comparing model and data
+plot_crp(
+    datasets=[simulation, data],
+    labels=["Model", "Data"],
+)
+```
+
+## Interpretation
+
+| Pattern | Interpretation |
+|---------|---------------|
+| Sharp peak at ±1 | Strong temporal contiguity |
+| Forward asymmetry | Context drift creates forward bias |
+| Flat curve | Random transitions |

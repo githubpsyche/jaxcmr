@@ -1,0 +1,180 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Quickstart\"\n",
+        "description: \"Run your first CMR simulation\"\n",
+        "---\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n",
+        "This guide walks you through simulating a free recall trial with a CMR model.\n",
+        "\n",
+        "## What we'll do\n",
+        "\n",
+        "1. Create a CMR model with example parameters\n",
+        "2. Present a list of items (study phase)\n",
+        "3. Simulate free recall (retrieval phase)\n",
+        "4. Examine recall probabilities\n",
+        "\n",
+        "## A Single Trial Simulation\n"
+      ],
+      "id": "f717c5cf"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "from jax import random\n",
+        "import jax.numpy as jnp\n",
+        "from jaxcmr.models.cmr import CMR\n",
+        "from jaxcmr.simulation import simulate_study_and_free_recall\n",
+        "\n",
+        "# CMR parameters (example values)\n",
+        "params = {\n",
+        "    \"encoding_drift_rate\": 0.5,    # How much context drifts during encoding\n",
+        "    \"start_drift_rate\": 0.5,       # Context drift at start of recall\n",
+        "    \"recall_drift_rate\": 0.5,      # Context drift after each recall\n",
+        "    \"shared_support\": 0.05,        # Pre-experimental context-to-item associations\n",
+        "    \"item_support\": 0.25,          # Item-specific retrieval support\n",
+        "    \"primacy_scale\": 1.0,          # Primacy gradient strength\n",
+        "    \"primacy_decay\": 0.6,          # Primacy gradient decay rate\n",
+        "    \"learning_rate\": 0.5,          # Strength of new associations\n",
+        "    \"stop_probability_scale\": 0.05,  # Base stopping probability\n",
+        "    \"stop_probability_growth\": 0.2,  # How stopping probability grows\n",
+        "    \"choice_sensitivity\": 0.6,     # Softmax temperature for retrieval\n",
+        "    \"learn_after_context_update\": True,\n",
+        "    \"allow_repeated_recalls\": False,\n",
+        "}\n",
+        "\n",
+        "# Create a 5-item list\n",
+        "list_length = 5\n",
+        "present = jnp.arange(1, list_length + 1)  # Items [1, 2, 3, 4, 5]\n",
+        "\n",
+        "# Random seed for reproducibility\n",
+        "rng = random.PRNGKey(0)\n",
+        "\n",
+        "# Create model and simulate\n",
+        "model = CMR(list_length, params)\n",
+        "model, recalls = simulate_study_and_free_recall(model, present, rng)\n",
+        "\n",
+        "print(f\"Presented: {present}\")\n",
+        "print(f\"Recalled: {recalls}\")"
+      ],
+      "id": "5b62266b",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "The `recalls` array contains the item numbers recalled in order. Zeros indicate the participant stopped recalling.\n",
+        "\n",
+        "## Understanding the Parameters\n",
+        "\n",
+        "CMR parameters control different aspects of memory:\n",
+        "\n",
+        "| Parameter | What it controls |\n",
+        "|-----------|------------------|\n",
+        "| `encoding_drift_rate` | How much the temporal context changes as each item is studied |\n",
+        "| `recall_drift_rate` | How much context changes after recalling an item |\n",
+        "| `primacy_scale/decay` | The primacy effect (better memory for early items) |\n",
+        "| `learning_rate` | Strength of item-context associations formed during study |\n",
+        "| `choice_sensitivity` | How deterministic vs. random recall is |\n",
+        "\n",
+        "See [Parameters](../concepts/parameters.qmd) for a full guide.\n",
+        "\n",
+        "## Examining Recall Probabilities\n",
+        "\n",
+        "You can inspect the model's internal state and see recall probabilities at each step:\n"
+      ],
+      "id": "b1b62df6"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "from jax import lax\n",
+        "\n",
+        "# Create fresh model and study the list\n",
+        "model = CMR(list_length, params)\n",
+        "\n",
+        "# Study each item (experience them in order)\n",
+        "model = lax.fori_loop(\n",
+        "    0, present.size,\n",
+        "    lambda i, m: m.experience(present[i]),\n",
+        "    model\n",
+        ")\n",
+        "\n",
+        "# Enter retrieval mode\n",
+        "model = model.start_retrieving()\n",
+        "\n",
+        "# Get probabilities for each outcome\n",
+        "# Index 0 = probability of stopping\n",
+        "# Index 1..list_length = probability of recalling each item\n",
+        "probs = model.outcome_probabilities()\n",
+        "\n",
+        "print(\"Initial recall probabilities:\")\n",
+        "print(f\"  Stop: {probs[0]:.3f}\")\n",
+        "for i in range(list_length):\n",
+        "    print(f\"  Item {i+1}: {probs[i+1]:.3f}\")"
+      ],
+      "id": "1282a4af",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "After recalling an item, probabilities update based on the new context:\n"
+      ],
+      "id": "1982e26c"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# Recall item 5 (recency effect often makes last item likely)\n",
+        "model = model.retrieve(5)\n",
+        "\n",
+        "probs = model.outcome_probabilities()\n",
+        "print(\"\\nAfter recalling item 5:\")\n",
+        "print(f\"  Stop: {probs[0]:.3f}\")\n",
+        "for i in range(list_length):\n",
+        "    recalled = \" (already recalled)\" if i + 1 == 5 else \"\"\n",
+        "    print(f\"  Item {i+1}: {probs[i+1]:.3f}{recalled}\")"
+      ],
+      "id": "522995a9",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Next Steps\n",
+        "\n",
+        "- [**Data Format**](data-format.qmd) - Learn how to format your experimental data\n",
+        "- [**Fitting Tutorial**](../tutorials/fitting.qmd) - Fit CMR to real data\n",
+        "- [**Concepts: Context**](../concepts/context.qmd) - Understand temporal context in CMR"
+      ],
+      "id": "4ac18203"
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "/Users/jordangunn/jaxcmr/.venv/share/jupyter/kernels/python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
