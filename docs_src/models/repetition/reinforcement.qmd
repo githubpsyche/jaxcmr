@@ -1,0 +1,152 @@
+---
+title: "Reinforcement Positional CMR"
+description: "Reinforcing first-presentation traces at repetition"
+---
+
+Reinforcement Positional CMR (ICMR-Reinf) addresses a key question about repetition: when you see an item again, does it strengthen the *original* memory trace or create an entirely new one?
+
+This model says: **both**. When an item repeats, it creates a new positional trace *and* reinforces the first-presentation trace.
+
+## The Mechanism
+
+When item $k$ is presented for the second time (at position $j$), having first appeared at position $i$:
+
+1. **New trace**: A new position-$j$ trace is created (standard positional encoding)
+2. **Reinforcement**: The position-$i$ trace is strengthened
+
+The reinforcement step adds associations linking position $i$ back to the context present at position $i$ (the original encoding context).
+
+## Why Reinforcement?
+
+Standard positional encoding treats each presentation independently. But empirically:
+
+- People often preferentially recall the *first* presentation
+- Repetitions boost memory for the original occurrence
+- The "first presentation advantage" persists even with spaced repetitions
+
+Reinforcement captures the idea that seeing something again reminds you of when you first saw it.
+
+## Mathematical Specification
+
+### At Repetition (item $k$ at position $j$, previously at position $i$)
+
+**1. Create new trace** (standard):
+$$\Delta M^{FC}_{jk} = \gamma \mathbf{p}_j \mathbf{c}_j$$
+$$\Delta M^{CF}_{kj} = \phi_j \mathbf{c}_j \mathbf{p}_j$$
+
+**2. Reinforce first presentation:**
+
+Retrieve the original encoding context:
+$$\mathbf{c}^{orig}_i = M^{FC}_{pre} \mathbf{p}_i$$
+
+Add reinforcement associations:
+$$\Delta M^{FC}_{ik} = \eta_{mfc} \mathbf{p}_i \mathbf{c}^{orig}_i$$
+$$\Delta M^{CF}_{ki} = \eta_{mcf} \mathbf{c}^{orig}_i \mathbf{p}_i$$
+
+where $\eta$ is the reinforcement strength.
+
+## Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `first_pres_reinforcement` | $\eta$ | Shared reinforcement strength for MFC and MCF |
+| `mfc_first_pres_reinforcement` | $\eta_{mfc}^{+}$ | Additional MFC-specific reinforcement |
+| `mcf_first_pres_reinforcement` | $\eta_{mcf}^{+}$ | Additional MCF-specific reinforcement |
+
+Total reinforcement:
+- MFC: $\eta_{mfc} = \eta + \eta_{mfc}^{+}$
+- MCF: $\eta_{mcf} = \eta + \eta_{mcf}^{+}$
+
+## Predictions
+
+### First Presentation Advantage
+
+With reinforcement ($\eta > 0$):
+- First presentations accumulate strength across repetitions
+- Later presentations contribute their own traces but also boost the first
+- Recall favors the first presentation's context
+
+### Lag-CRP from First Presentation
+
+When the first presentation is recalled, transitions go to:
+- Items near position $i$ (the first presentation)
+- Not necessarily items near position $j$ (the repetition)
+
+## Usage
+
+```python
+from jaxcmr.models.reinf_positional_cmr import CMR
+
+params = {
+    "encoding_drift_rate": 0.5,
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 0.6,
+    "mfc_sensitivity": 3.0,
+    "first_pres_reinforcement": 0.5,  # Shared reinforcement
+    "mfc_first_pres_reinforcement": 0.0,  # MFC-specific (optional)
+    "mcf_first_pres_reinforcement": 0.0,  # MCF-specific (optional)
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+model = CMR(list_length=16, parameters=params)
+```
+
+## Implementation
+
+Key implementation detail:
+
+```python
+def experience_item(self, item_index):
+    # Check if item was previously studied
+    item_studied = self.studied == item_index + 1
+    already_studied = jnp.any(item_studied)
+
+    # Get original encoding context (from pre-experimental MFC)
+    associated_context = self.pre_exp_mfc.probe(item_studied)
+
+    # Reinforce first presentation if repetition
+    new_mfc = lax.cond(
+        already_studied,
+        lambda: self.mfc.associate(
+            item_studied, associated_context, self.mfc_first_pres_reinforcement
+        ),
+        lambda: self.mfc,
+    )
+    new_mcf = lax.cond(
+        already_studied,
+        lambda: self.mcf.associate(
+            associated_context, item_studied, self.mcf_first_pres_reinforcement
+        ),
+        lambda: self.mcf,
+    )
+
+    # Then create new trace at current position...
+```
+
+## Comparison: No Reinstatement vs Reinforcement
+
+| Model | At repetition | Benefit of repetition |
+|-------|--------------|----------------------|
+| Standard CMR | Blended context | Averaged trace |
+| Positional CMR | New trace only | Multiple traces |
+| [No Reinstate CMR](no-reinstate.qmd) | New trace, no context blend | Distinct traces |
+| **Reinforcement CMR** | New trace + boost first | First trace strengthened |
+
+## Theoretical Connections
+
+This model relates to:
+
+- **Encoding variability theory**: Each presentation creates a new trace
+- **Remindings hypothesis**: Re-seeing something triggers memory of the original
+- **Strength-based models**: Repetition increases trace strength
+
+The key insight is that reinforcement targets the *original* context, not the current context—connecting the repetition back to its first occurrence.

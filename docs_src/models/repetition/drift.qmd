@@ -1,0 +1,143 @@
+---
+title: "Drift Positional CMR"
+description: "Different drift rate for repeated items"
+---
+
+Drift Positional CMR extends [Positional CMR](positional.qmd) with a separate context drift rate for repeated presentations. When an item appears for the second (or later) time, context drifts at a different rate than for first presentations.
+
+## The Mechanism
+
+In standard encoding, context drifts at rate $\beta_{enc}$ for all items. Drift Positional CMR uses:
+
+$$\beta_{item} = \begin{cases}
+\beta_{enc} & \text{if first presentation} \\
+\beta_{rep} & \text{if repetition}
+\end{cases}$$
+
+This allows the model to capture phenomena where repetitions have different contextual effects than first presentations.
+
+## Why Different Drift?
+
+Several theoretical motivations exist for repetition-specific drift:
+
+1. **Reduced novelty**: Repeated items may update context less because they're already somewhat familiar
+2. **Chunking**: Repetitions might integrate more strongly, linking the two presentations
+3. **Attention differences**: People may attend differently to repeated items
+
+## Mathematical Specification
+
+### Encoding Decision
+
+When item $k$ is presented at position $i$:
+
+```
+if item_k ∈ studied[0:i]:
+    drift_rate = β_rep  # Repetition
+else:
+    drift_rate = β_enc  # First presentation
+```
+
+### Context Update
+
+$$\mathbf{c}_i = \rho_i \mathbf{c}_{i-1} + \beta_{item} \mathbf{c}^{IN}_i$$
+
+where $\beta_{item}$ is determined by the check above.
+
+## Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `encoding_drift_rate` | $\beta_{enc}$ | Drift rate for first presentations |
+| `repetition_drift_rate` | $\beta_{rep}$ | Drift rate for repetitions |
+
+All other parameters are inherited from Positional CMR.
+
+## Predictions
+
+| $\beta_{rep}$ | Interpretation |
+|---------------|----------------|
+| $< \beta_{enc}$ | Repetitions update context less (reduced novelty) |
+| $= \beta_{enc}$ | Equivalent to standard Positional CMR |
+| $> \beta_{enc}$ | Repetitions update context more (enhanced chunking) |
+| $= 0$ | Repetitions don't update context at all |
+| $= 1$ | Repetitions completely reset context |
+
+## Usage
+
+```python
+from jaxcmr.models.drift_positional_cmr import CMR
+
+params = {
+    "encoding_drift_rate": 0.6,      # First presentations
+    "repetition_drift_rate": 0.3,    # Repetitions (less drift)
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 0.6,
+    "mfc_sensitivity": 3.0,
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+model = CMR(list_length=16, parameters=params)
+```
+
+## Experimental Predictions
+
+### Spacing Effects
+
+With $\beta_{rep} < \beta_{enc}$:
+
+- **Massed repetitions** (immediate): Second presentation barely shifts context → strong overlap with first
+- **Spaced repetitions** (delayed): Context has drifted far; repetition at lower rate creates moderate overlap
+
+This can produce the classic **spacing effect**: spaced repetitions are better remembered than massed repetitions.
+
+### Lag-Recency Analysis
+
+The model predicts different lag-CRP curves for:
+- Transitions from first presentations
+- Transitions from repetitions (if $\beta_{rep} \neq \beta_{enc}$)
+
+Lower $\beta_{rep}$ would produce flatter lag-CRP for repetitions (less context change = less contiguity).
+
+## When To Use
+
+Use Drift Positional CMR when:
+
+- Fitting data with repeated items
+- Spacing effects are important
+- You hypothesize that repetitions affect context differently
+
+## Implementation
+
+Key difference from Positional CMR:
+
+```python
+def experience_item(self, item_index):
+    # Check if item has been studied before
+    is_repetition = jnp.isin(item_index + 1, self.studied)
+
+    # Use appropriate drift rate
+    new_context = lax.cond(
+        is_repetition,
+        lambda: self.context.integrate(context_input, self.repetition_drift_rate),
+        lambda: self.context.integrate(context_input, self.encoding_drift_rate),
+    )
+    ...
+```
+
+## Relationship to Other Variants
+
+| Variant | Key Mechanism |
+|---------|---------------|
+| Positional CMR | Position-based encoding |
+| **Drift Positional CMR** | Position + different drift for repetitions |
+| [Reinforcement CMR](reinforcement.qmd) | Position + first-presentation boosting |
+| [Outlist CMR](outlist.qmd) | Item-based + out-of-list context |

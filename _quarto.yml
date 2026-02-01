@@ -6,7 +6,7 @@ project:
     - docs_src/get-started/*.qmd
     - docs_src/concepts/*.qmd
     - docs_src/analyses/**/*.qmd
-    - docs_src/models/**/*.qmd
+    - docs_src/models/*.qmd
     - docs_src/evaluation/*.qmd
     - docs_src/workflow/*.qmd
     - projects/index.qmd
@@ -46,7 +46,6 @@ website:
     - title: "Get Started"
       contents:
         - docs_src/get-started/index.qmd
-        - docs_src/get-started/quickstart.qmd
 
     - title: "Concepts"
       contents:
@@ -65,19 +64,15 @@ website:
           contents:
             - docs_src/analyses/serial-position/spc.qmd
             - docs_src/analyses/serial-position/pnr.qmd
-            - docs_src/analyses/serial-position/srac.qmd
         - section: "Temporal Contiguity"
           contents:
             - docs_src/analyses/temporal-contiguity/crp.qmd
-            - docs_src/analyses/temporal-contiguity/distcrp.qmd
         - section: "Category Effects"
           contents:
             - docs_src/analyses/category/catcrp.qmd
-            - docs_src/analyses/category/cat-spc.qmd
         - section: "Repetition"
           contents:
             - docs_src/analyses/repetition/repcrp.qmd
-            - docs_src/analyses/repetition/compound-cueing.qmd
         - section: "Error Analyses"
           contents:
             - docs_src/analyses/error-analyses/intrusion.qmd
@@ -87,29 +82,17 @@ website:
     - title: "Models"
       contents:
         - docs_src/models/index.qmd
-        - section: "Components"
-          contents:
-            - docs_src/models/components/context.qmd
-            - docs_src/models/components/memory.qmd
-            - docs_src/models/components/termination.qmd
-        - docs_src/models/cmr.qmd
         - docs_src/models/parameters.qmd
-        - docs_src/models/custom-models.qmd
 
     - title: "Evaluation"
       contents:
         - docs_src/evaluation/index.qmd
         - docs_src/evaluation/fitting.qmd
-        - docs_src/evaluation/simulation.qmd
-        - docs_src/evaluation/comparison.qmd
 
     - title: "Workflow"
       contents:
         - docs_src/workflow/index.qmd
         - docs_src/workflow/parameter-sensitivity.qmd
-        - docs_src/workflow/templates.qmd
-        - docs_src/workflow/papermill.qmd
-        - docs_src/workflow/research-tools.qmd
 
   page-footer:
     left: "Built with [Quarto](https://quarto.org/)"

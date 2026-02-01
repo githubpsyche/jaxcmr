@@ -1,0 +1,161 @@
+---
+title: "Outlist CMR (CMR-DE)"
+description: "Out-of-list context mixing for repetitions"
+---
+
+Outlist CMR (also called CMR-DE, "Distinct Encoding") provides an alternative approach to handling repeated items. Instead of using position-based encoding, it maintains **item-based encoding** but introduces **out-of-list context** to distinguish presentations.
+
+## The Mechanism
+
+When an item appears for the second time, the model mixes its contextual input with an "out-of-list" context unit. This creates temporal separation between the two presentations:
+
+- **First presentation**: Normal context integration
+- **Repetition**: Context input mixed with a unique out-of-list unit
+
+The out-of-list context makes the second presentation's trace partially distinct from the first.
+
+## Why Out-of-List Context?
+
+The theoretical motivation is that seeing something familiar triggers a different mental state than seeing something new:
+
+- "I've seen this before" is itself part of the encoding context
+- The repetition carries information about being a repetition
+- This meta-cognitive state affects how the item is encoded
+
+## Mathematical Specification
+
+### First Presentation
+
+Standard encoding:
+$$\mathbf{c}^{IN}_i = M^{FC} \mathbf{f}_i$$
+$$\mathbf{c}_{new} = \rho \mathbf{c}_{old} + \beta_{enc} \mathbf{c}^{IN}_i$$
+
+### Repetition (item already encoded)
+
+Mixed context input:
+$$\mathbf{c}^{mix} = \alpha \cdot \mathbf{c}^{IN}_i + (1-\alpha) \cdot \mathbf{c}^{out}$$
+
+where:
+- $\mathbf{c}^{IN}_i = M^{FC} \mathbf{f}_i$ (item's normal context)
+- $\mathbf{c}^{out}$ = next available out-of-list context unit
+- $\alpha$ = `mfc_trace_sensitivity` (balance parameter)
+
+Then integrate:
+$$\mathbf{c}_{new} = \rho \mathbf{c}_{old} + \beta_{enc} \mathbf{c}^{mix}$$
+
+### Expanded Context Space
+
+To support out-of-list context, the context vector is expanded:
+
+- Standard size: $N + 1$ (items + start-of-list)
+- Expanded size: $2N + 1$ (items + out-of-list + start-of-list)
+
+Each repetition consumes a new out-of-list unit.
+
+## Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `mfc_trace_sensitivity` | $\alpha$ | Balance between item context and out-of-list context |
+
+- $\alpha = 1.0$: No out-of-list mixing (equivalent to standard CMR)
+- $\alpha = 0.5$: Equal mix of item and out-of-list context
+- $\alpha = 0.0$: Only out-of-list context (complete distinction)
+
+## Usage
+
+```python
+from jaxcmr.models.outlist_cmr import CMR
+import jaxcmr.components.context as TemporalContext
+
+params = {
+    "encoding_drift_rate": 0.5,
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 0.6,
+    "mfc_trace_sensitivity": 0.7,  # Out-of-list mixing ratio
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+# Must use expanded context
+model = CMR(
+    list_length=16,
+    parameters=params,
+    context_create_fn=TemporalContext.init_expanded,  # Required!
+)
+```
+
+## Comparison: Positional vs Outlist
+
+| Aspect | Positional CMR | Outlist CMR |
+|--------|---------------|-------------|
+| Feature layer | Position-based | Item-based |
+| Distinction mechanism | Different position = different trace | Out-of-list context unit |
+| Memory structure | Positions in MCF | Items in MCF (standard) |
+| Context size | Standard | Expanded (2N+1) |
+| Recall identifies | Position | Item |
+
+## Predictions
+
+### Context Similarity
+
+With $\alpha < 1$:
+- First and second presentations have partially distinct contexts
+- Lower $\alpha$ = more distinct
+- Transitions from repetition don't strongly cue first presentation
+
+### Spacing Effects
+
+The out-of-list mixing happens regardless of spacing. This differs from drift-based models where spacing affects context overlap directly.
+
+## Implementation
+
+Key code from `experience_item`:
+
+```python
+def experience_item(self, item_index):
+    item = self.items[item_index]
+    context_input = self.mfc.probe(item)
+
+    # Check if item was already encoded
+    new_context = lax.cond(
+        self.recallable[item_index],  # Already studied?
+        # Repetition: mix with out-of-list context
+        lambda: self.context.integrate_with_outlist(
+            context_input, self.mfc_sensitivity, self.encoding_drift_rate
+        ),
+        # First presentation: standard integration
+        lambda: self.context.integrate(context_input, self.encoding_drift_rate),
+    )
+    ...
+```
+
+The `integrate_with_outlist` method in TemporalContext handles the mixing:
+
+```python
+def integrate_with_outlist(self, inlist_input, ratio, drift_rate):
+    # Mix in-list input with next available out-of-list unit
+    context_input = normalize_magnitude(
+        (normalize_magnitude(inlist_input) * ratio)
+        + (self.outlist_input * (1 - ratio))
+    )
+    # Then standard integration...
+```
+
+## Theoretical Connections
+
+This model relates to:
+
+- **Encoding specificity**: Each encoding event has unique contextual features
+- **Global matching models**: Items can match based on overall similarity, not just local context
+- **Recognition memory**: The "old" signal at repetition affects encoding
+
+The out-of-list context can be interpreted as an "already seen" tag that becomes part of the memory trace.

@@ -222,12 +222,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Probability of Nth Recall</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs_src/analyses/serial-position/srac.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Subject Relative Accuracy Curve</span></a>
-  </div>
-</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -243,12 +237,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../../docs_src/analyses/temporal-contiguity/crp.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Conditional Response Probability</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs_src/analyses/temporal-contiguity/distcrp.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Distance CRP</span></a>
   </div>
 </li>
       </ul>
@@ -268,12 +256,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Category CRP</span></a>
   </div>
 </li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs_src/analyses/category/cat-spc.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Category SPC</span></a>
-  </div>
-</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -289,12 +271,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../../docs_src/analyses/repetition/repcrp.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Repetition CRP</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs_src/analyses/repetition/compound-cueing.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Compound Cueing</span></a>
   </div>
 </li>
       </ul>
@@ -339,8 +315,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#from-hdf5" id="toc-from-hdf5" class="nav-link active" data-scroll-target="#from-hdf5">From HDF5</a></li>
-  <li><a href="#from-psifr" id="toc-from-psifr" class="nav-link" data-scroll-target="#from-psifr">From psifr</a></li>
-  <li><a href="#from-pandas" id="toc-from-pandas" class="nav-link" data-scroll-target="#from-pandas">From Pandas</a></li>
   <li><a href="#validating-data" id="toc-validating-data" class="nav-link" data-scroll-target="#validating-data">Validating Data</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/edit/main/docs_src/analyses/importing-data.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -375,7 +349,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Before computing analyses, you need to load your data into the RecallDataset format.</p>
 <section id="from-hdf5" class="level2">
 <h2 class="anchored" data-anchor-id="from-hdf5">From HDF5</h2>
-<p>The most common format for jaxcmr data:</p>
+<p>The standard format for jaxcmr data:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -385,16 +359,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {key: jnp.array(f[key][:]) <span class="cf">for</span> key <span class="kw">in</span> f.keys()}</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> load_dataset(<span class="st">"experiment.h5"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="from-psifr" class="level2">
-<h2 class="anchored" data-anchor-id="from-psifr">From psifr</h2>
-<p>If you have data in <a href="https://psifr.readthedocs.io/">psifr</a> format:</p>
-<p><em>Coming soon: psifr conversion utilities</em></p>
-</section>
-<section id="from-pandas" class="level2">
-<h2 class="anchored" data-anchor-id="from-pandas">From Pandas</h2>
-<p>Converting from a DataFrame:</p>
-<p><em>Coming soon: DataFrame conversion utilities</em></p>
 </section>
 <section id="validating-data" class="level2">
 <h2 class="anchored" data-anchor-id="validating-data">Validating Data</h2>
@@ -890,7 +854,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## From HDF5</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>The most common format for jaxcmr data:</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>The standard format for jaxcmr data:</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py</span>
@@ -904,29 +868,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> load_dataset(<span class="st">"experiment.h5"</span>)</span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## From psifr</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Validating Data</span></span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>If you have data in <span class="co">[</span><span class="ot">psifr</span><span class="co">](https://psifr.readthedocs.io/)</span> format:</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>Check your dataset has the required fields:</span>
 <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>*Coming soon: psifr conversion utilities*</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## From Pandas</span></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>Converting from a DataFrame:</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>required <span class="op">=</span> [<span class="st">"subject"</span>, <span class="st">"listLength"</span>, <span class="st">"pres_itemnos"</span>, <span class="st">"recalls"</span>]</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> field <span class="kw">in</span> required:</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> field <span class="kw">in</span> dataset, <span class="ss">f"Missing required field: </span><span class="sc">{</span>field<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>*Coming soon: DataFrame conversion utilities*</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Validating Data</span></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>Check your dataset has the required fields:</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>required <span class="op">=</span> [<span class="st">"subject"</span>, <span class="st">"listLength"</span>, <span class="st">"pres_itemnos"</span>, <span class="st">"recalls"</span>]</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> field <span class="kw">in</span> required:</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> field <span class="kw">in</span> dataset, <span class="ss">f"Missing required field: </span><span class="sc">{</span>field<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Data Format</span><span class="co">](../concepts/data-format.qmd)</span> for complete field specifications.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Data Format</span><span class="co">](../concepts/data-format.qmd)</span> for complete field specifications.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

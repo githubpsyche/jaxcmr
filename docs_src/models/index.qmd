@@ -15,19 +15,43 @@ Free recall experiments reveal robust patterns:
 
 CMR (Context Maintenance and Retrieval) explains these patterns through a simple mechanism: temporal context that drifts during study and is reinstated during retrieval.
 
-## Model Components
+## How CMR Works
 
-Models are composed of three core components:
+CMR explains free recall through three mechanisms:
 
-- [Context](components/context.qmd) - Temporal context representations
-- [Memory](components/memory.qmd) - Associative memory (MFC, MCF)
-- [Termination](components/termination.qmd) - When to stop recalling
+1. **Context drift**: During study, each item updates the temporal context representation
+2. **Association**: Items are associated with their encoding context via two memory stores (MFC and MCF)
+3. **Reinstatement**: During retrieval, recalling an item reinstates its context, cueing nearby items
 
-## Base Model
+## Architecture
 
-- [CMR](cmr.qmd) - The Context Maintenance and Retrieval model
-- [Parameters](parameters.qmd) - Complete parameter reference
+A CMR model combines three components:
 
-## Creating Custom Models
+- A `Context` representation that drifts over time
+- Two `Memory` stores: MFC (item → context) and MCF (context → item)
+- A `TerminationPolicy` that determines when recall stops
 
-- [Custom Models](custom-models.qmd) - Implementing your own variants
+These components implement protocols defined in `jaxcmr.typing`, allowing different implementations to be swapped while maintaining compatibility with the rest of the library.
+
+## Usage
+
+```python
+from jaxcmr.models import CMR
+
+# Create a model for a 16-item list
+model = CMR.create(list_length=16, parameters=params)
+
+# Study items
+for item in study_list:
+    model = model.experience(item)
+
+# Begin retrieval
+model = model.start_retrieving()
+
+# Get retrieval probabilities
+probs = model.outcome_probabilities()
+```
+
+## Parameters
+
+See [Parameters](parameters.qmd) for a complete reference of all CMR parameters, their meanings, and typical value ranges.

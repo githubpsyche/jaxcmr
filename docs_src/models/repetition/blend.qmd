@@ -1,0 +1,186 @@
+---
+title: "Blend Positional CMR"
+description: "Hybrid item and position context streams"
+---
+
+Blend Positional CMR maintains **two parallel context streams**: one item-based (like standard CMR) and one position-based (like [Positional CMR](positional.qmd)). A blend parameter controls their relative contribution to recall competition.
+
+## The Problem It Solves
+
+Pure positional CMR predicts that repeated items have completely distinct traces. Pure item-based CMR predicts complete context blending. Empirically, the truth lies between:
+
+- Erroneous transitions to neighbors of *both* presentations occur
+- But second-presentation neighbors are cued *less* than pure CMR predicts
+
+Blend CMR captures this intermediate pattern.
+
+## The Dual-Stream Architecture
+
+```
+                    ┌────────────────────┐
+                    │   Study Event      │
+                    │   (item at pos)    │
+                    └─────────┬──────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+    ┌──────────────────┐           ┌──────────────────┐
+    │ Position Stream  │           │   Item Stream    │
+    │ (Positional CMR) │           │ (Standard CMR)   │
+    ├──────────────────┤           ├──────────────────┤
+    │ position_context │           │ item_context     │
+    │ position_mfc     │           │ item_mfc         │
+    │ position_mcf     │           │ item_mcf         │
+    └────────┬─────────┘           └────────┬─────────┘
+             │                              │
+             └──────────┬───────────────────┘
+                        │ blend_weight
+                        ▼
+              ┌──────────────────┐
+              │ Blended          │
+              │ Activations      │
+              └──────────────────┘
+```
+
+## Mathematical Specification
+
+### Encoding
+
+Each study event updates **both** streams:
+
+**Position stream:**
+$$\mathbf{c}^{pos}_{new} = \rho \mathbf{c}^{pos}_{old} + \beta_{enc} M^{FC}_{pos} \mathbf{p}_i$$
+
+**Item stream:**
+$$\mathbf{c}^{item}_{new} = \rho \mathbf{c}^{item}_{old} + \beta_{enc} M^{FC}_{item} \mathbf{f}_k$$
+
+Both MFC and MCF are updated for each stream with their respective representations.
+
+### Retrieval: Blending Activations
+
+1. **Get raw activations from each stream:**
+
+Position stream (per position):
+$$a^{pos}_i = (M^{CF}_{pos} \mathbf{c}^{pos})_i \cdot \mathbf{1}[\text{recallable}[i]]$$
+
+Item stream (per item, mapped to positions):
+$$a^{item}_k = (M^{CF}_{item} \mathbf{c}^{item})_k$$
+$$a^{item}_{pos[i]} = a^{item}_{\text{studied}[i]}$$
+
+2. **Normalize each stream:**
+$$p^{pos}_i = \frac{a^{pos}_i}{\sum_j a^{pos}_j}$$
+$$p^{item}_i = \frac{a^{item}_{pos[i]}}{\sum_j a^{item}_{pos[j]}}$$
+
+3. **Blend:**
+$$p^{blend}_i = (1 - w) \cdot p^{pos}_i + w \cdot p^{item}_i$$
+
+where $w$ = `blend_weight`.
+
+4. **Apply choice sensitivity:**
+$$a^{final}_i = (p^{blend}_i)^\tau$$
+
+## The Blend Weight Parameter
+
+| `blend_weight` | Behavior |
+|----------------|----------|
+| 0.0 | Pure positional (distinct traces) |
+| 0.5 | Equal contribution from both |
+| 1.0 | Pure item-based (shared context) |
+
+## Predictions
+
+### Transitions After Recalling Repeated Item
+
+With $w$ between 0 and 1:
+- Neighbors of *first* presentation: High probability (position stream)
+- Neighbors of *second* presentation: Moderate probability (item stream contributes)
+
+The item stream provides context that was present at *all* presentations, linking repetitions together.
+
+### Why Two Streams?
+
+The position stream captures:
+- Each presentation had a distinct temporal context
+- Recall can target specific presentations
+
+The item stream captures:
+- The item identity persisted across presentations
+- Some context is shared (semantic, perceptual)
+
+## Usage
+
+```python
+from jaxcmr.models.blend_positional_cmr import CMR
+
+params = {
+    "encoding_drift_rate": 0.5,
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 0.6,
+    "mfc_sensitivity": 3.0,
+    "blend_weight": 0.3,  # 30% item-based, 70% positional
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+model = CMR(list_length=16, parameters=params)
+```
+
+## Implementation Architecture
+
+```python
+class CMR(Pytree):
+    def __init__(self, ...):
+        # Position-based stream (Positional CMR style)
+        self.position_context = context_create_fn(list_length)
+        self.position_mfc = mfc_create_fn(...)
+        self.position_mcf = mcf_create_fn(...)
+
+        # Item-based stream (Standard CMR style)
+        self.item_context = context_create_fn(list_length)
+        self.item_mfc = mfc_create_fn(...)
+        self.item_mcf = mcf_create_fn(...)
+
+        # Blend parameter
+        self.blend_weight = parameters["blend_weight"]
+
+    def position_activations(self):
+        # Get activations from both streams
+        raw_pos = self._raw_position_stream()
+        raw_item = self._raw_item_stream()
+
+        # Normalize to probabilities
+        pos_prob = raw_pos / sum(raw_pos)
+        item_prob = raw_item / sum(raw_item)
+
+        # Blend
+        blended = (1 - self.blend_weight) * pos_prob
+                + self.blend_weight * item_prob
+
+        # Apply sensitivity
+        return power_scale(blended, self.mcf_sensitivity)
+```
+
+## When To Use
+
+Use Blend Positional CMR when:
+
+- Testing intermediate levels of context sharing
+- Neither pure positional nor pure item-based fits well
+- The data shows partial links between repetitions
+
+## Computational Cost
+
+Blend CMR maintains twice the memory structures of standard CMR:
+- Two context vectors
+- Two MFC matrices
+- Two MCF matrices
+
+This roughly doubles memory and computation.

@@ -1,0 +1,147 @@
+---
+title: "No Reinstate CMR"
+description: "No context reinstatement during encoding"
+---
+
+No Reinstate CMR (CMR-NoSPR) modifies how context updates when items are re-presented. In standard CMR, each presentation retrieves and reinstates the item's associated context. This model **skips reinstatement during study**, using only the pre-experimental item-context mappings.
+
+## The Mechanism
+
+Standard CMR updates MFC associations during study. When an item is presented again, these learned associations mean the context input includes:
+
+1. Pre-experimental context (item's default unit)
+2. Experimentally-learned context (traces from prior presentations)
+
+No Reinstate CMR separates these:
+- **Context input**: Always from pre-experimental MFC (no reinstatement of prior encoding)
+- **Learning**: Normal MFC updates (associations still form)
+- **Retrieval**: Uses full MFC (with learned associations)
+
+## Why No Reinstatement?
+
+The theoretical question: when you see an item again, does it *automatically* remind you of the first time?
+
+- **Standard CMR**: Yes—the item retrieves its encoding context
+- **No Reinstate CMR**: No—repetitions don't trigger prior-context retrieval during study
+
+This makes each presentation contextually independent at encoding, while still allowing retrieval-time reinstatement.
+
+## Mathematical Specification
+
+### Standard CMR (for comparison)
+
+Context input at study uses the full MFC:
+$$\mathbf{c}^{IN}_i = M^{FC}_{current} \mathbf{f}_i$$
+
+where $M^{FC}_{current}$ includes learned associations from prior presentations.
+
+### No Reinstate CMR
+
+Context input uses only pre-experimental MFC:
+$$\mathbf{c}^{IN}_i = M^{FC}_{pre} \mathbf{f}_i$$
+
+This returns the item's default context unit, regardless of prior presentations.
+
+Learning still updates the full MFC:
+$$\Delta M^{FC}_{ij} = \gamma \mathbf{f}_i \mathbf{c}_j$$
+
+At retrieval, the full MFC is used for context reinstatement.
+
+## Implementation
+
+The key difference is maintaining two MFC copies:
+
+```python
+def __init__(self, ...):
+    ...
+    # Pre-experimental MFC for context updates during study
+    self.pre_exp_mfc = mfc_create_fn(list_length, parameters, self.context)
+    # Full MFC for learning and retrieval
+    self.mfc = mfc_create_fn(list_length, parameters, self.context)
+
+def experience_item(self, item_index):
+    item = self.items[item_index]
+    # Use pre-experimental MFC for context input
+    context_input = self.pre_exp_mfc.probe(item)  # Not self.mfc!
+    new_context = self.context.integrate(context_input, self.encoding_drift_rate)
+
+    # But update the full MFC
+    return self.replace(
+        context=new_context,
+        mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
+        ...
+    )
+```
+
+## Predictions
+
+### Context Overlap for Repetitions
+
+**Standard CMR:** Repetition reinstates prior context → overlapping encoding contexts
+
+**No Reinstate CMR:** Each presentation integrates a fresh context unit → less overlap
+
+This affects:
+- **Spacing**: Less natural context overlap between presentations
+- **Contiguity at recall**: Recalling an item reinstates context (normal), but encoding didn't blend contexts
+
+### Lag-CRP
+
+At retrieval, context reinstatement works normally. The difference shows in:
+- Transitions after recalling a repeated item
+- Whether retrieval cues the first presentation's neighbors or the second's
+
+## Usage
+
+```python
+from jaxcmr.models.no_reinstate_cmr import CMR
+
+params = {
+    "encoding_drift_rate": 0.5,
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 0.6,
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+model = CMR(list_length=16, parameters=params)
+```
+
+## Comparison: Reinstatement Models
+
+| Model | Study-time reinstatement | Retrieval-time reinstatement |
+|-------|-------------------------|------------------------------|
+| Standard CMR | Yes (blends contexts) | Yes |
+| **No Reinstate CMR** | No (fresh context each time) | Yes |
+| Positional CMR | N/A (position-based) | Yes (weighted) |
+
+## Theoretical Implications
+
+This model tests whether:
+
+1. **Automatic retrieval** occurs at study
+2. **Encoding independence** produces different patterns than context blending
+3. **Strategic control** over reinstatement affects memory
+
+If No Reinstate CMR fits data as well as standard CMR, it suggests that study-time reinstatement may not be necessary to explain the behavioral phenomena.
+
+## When To Use
+
+Use No Reinstate CMR when:
+
+- Testing whether study-time reinstatement matters
+- Modeling conditions that might block automatic retrieval
+- You want encoding contexts to be more independent
+
+Use standard CMR when:
+
+- Automatic reinstatement is theoretically important
+- You expect context blending to drive behavior
