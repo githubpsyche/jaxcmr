@@ -1,0 +1,185 @@
+---
+title: "EEG-eCMR Overview"
+description: "Brain-based modulation of memory encoding"
+---
+
+The EEG-eCMR models integrate **neural signals** (specifically the Late Positive Potential, LPP) with the retrieved-context framework. These models test whether trial-by-trial brain activity during encoding predicts subsequent memory performance.
+
+## Motivation
+
+Traditional memory models use behavioral manipulations (emotional vs neutral stimuli) to infer encoding processes. But brain activity during encoding provides a direct window into item-specific processing:
+
+- **LPP amplitude**: Reflects attentional allocation and emotional significance
+- **Trial-by-trial variation**: Even within conditions, some items are encoded more strongly
+- **Brain-behavior link**: Do neural measures predict memory beyond categorical labels?
+
+## The Late Positive Potential (LPP)
+
+The LPP is an event-related potential (ERP) component measured during encoding:
+
+- **Timing**: ~400-1000ms after stimulus onset
+- **Topography**: Centro-parietal maximum
+- **Function**: Reflects motivated attention and elaborative processing
+- **Emotional enhancement**: Larger for emotional than neutral stimuli
+
+Higher LPP amplitudes indicate stronger encoding, leading to better subsequent memory.
+
+## Model Variants
+
+### [EEG-eCMR](ecmr.qmd)
+
+Full emotional CMR with:
+- Separate emotional memory channel
+- LPP main effects and emotion×LPP interaction
+- Retrieval-phase emotional clustering
+
+### [EEG-CMR (Main Effects)](ecmr.qmd#eeg-cmr-main-effects)
+
+Simplified CMR with:
+- LPP and emotion modulating standard MCF
+- No separate emotional memory
+- More parsimonious test of encoding effects
+
+### [Strength Model](strength.qmd)
+
+Baseline without context:
+- Pure strength-based retrieval
+- Tests whether context retrieval is necessary
+- Isolates contribution of encoding variability
+
+## Core Mechanism: Encoding Modulation
+
+All EEG models share a common encoding modulation formula:
+
+$$g_i = \phi_i + \kappa_E \cdot e_i + \kappa_L (L_i - \lambda_L) + \kappa_{EL} (L_i - \lambda_{EL}) \cdot e_i$$
+
+Where:
+- $\phi_i$ = primacy gradient ($\phi_s e^{-\phi_d(i-1)} + 1$)
+- $e_i$ = emotion indicator (1 for emotional, 0 for neutral)
+- $L_i$ = centered LPP amplitude for item $i$
+- $\kappa_E$ = emotion effect scale
+- $\kappa_L$, $\lambda_L$ = LPP main effect parameters
+- $\kappa_{EL}$, $\lambda_{EL}$ = LPP×emotion interaction parameters
+
+## Parameters
+
+### Common EEG Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `emotion_scale` | $\kappa_E$ | Boost for emotional items |
+| `lpp_main_scale` | $\kappa_L$ | LPP main effect slope |
+| `lpp_main_threshold` | $\lambda_L$ | LPP main effect threshold |
+| `lpp_inter_scale` | $\kappa_{EL}$ | LPP×emotion interaction slope |
+| `lpp_inter_threshold` | $\lambda_{EL}$ | LPP×emotion interaction threshold |
+| `modulate_emotion_by_primacy` | — | Multiplicative vs additive combination |
+
+### Model Comparison Configurations
+
+Different hypotheses are tested by fixing/freeing parameters:
+
+| Model | emotion_scale | lpp_main | lpp_inter |
+|-------|--------------|----------|-----------|
+| Emotion Only | Free | Fixed=0 | Fixed=0 |
+| LPP Main Effects | Free | Free | Fixed=0 |
+| Full Interaction | Free | Free | Free |
+
+## Data Requirements
+
+EEG-eCMR models require datasets with:
+
+```python
+dataset = {
+    "pres_itemids": [...],     # Presented item IDs
+    "condition": [...],         # 1=emotional, 2=neutral
+    "EarlyLPP": [...],          # LPP amplitudes per item
+    "listLength": [...],        # List length per trial
+    ...
+}
+```
+
+The factory automatically:
+1. Converts condition codes to binary indicators
+2. Centers LPP values within each trial
+3. Creates trial-specific model instances
+
+## Theoretical Questions
+
+### 1. Does LPP Predict Memory?
+
+Compare models with and without LPP parameters:
+- If LPP models fit better, brain activity adds predictive value
+- Main effect: LPP predicts memory regardless of emotion
+- Interaction: LPP effect differs for emotional vs neutral items
+
+### 2. Is the Effect Encoding-Specific?
+
+By localizing LPP effects to the encoding phase (MCF learning), the model tests whether neural activity during study—not retrieval—drives the memory benefit.
+
+### 3. Is Context Retrieval Necessary?
+
+Comparing full eCMR to the strength model tests whether:
+- Context-based retrieval is necessary to explain the data
+- Or simple encoding strength suffices
+
+## Usage Example
+
+```python
+from jaxcmr.models_eeg.eeg_cmr import CMR, make_factory
+import jaxcmr.components.linear_memory as LinearMemory
+import jaxcmr.components.context as TemporalContext
+from jaxcmr.components.termination import PositionalTermination
+
+# Create factory with EEG data
+Factory = make_factory(
+    LinearMemory.init_mfc,
+    LinearMemory.init_mcf,
+    TemporalContext.init,
+    PositionalTermination,
+)
+
+factory = Factory(dataset, features=None)
+
+params = {
+    # Standard CMR parameters
+    "encoding_drift_rate": 0.5,
+    "start_drift_rate": 0.5,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 1.0,
+
+    # EEG-specific parameters
+    "emotion_scale": 1.0,
+    "lpp_main_scale": 0.5,
+    "lpp_main_threshold": 0.0,
+    "lpp_inter_scale": 0.3,
+    "lpp_inter_threshold": 0.0,
+    "modulate_emotion_by_primacy": True,
+
+    # Termination
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+    "learn_after_context_update": True,
+    "allow_repeated_recalls": False,
+}
+
+model = factory.create_trial_model(trial_index=0, parameters=params)
+```
+
+## Set-Likelihood Fitting
+
+For unordered recall data (where only the set of recalled items is known, not their order), these models use **set-likelihood** fitting:
+
+$$P(S_t \mid \theta) = \sum_{r:\, r\ \text{yields}\ S_t} P(r \mid \theta)$$
+
+This sums over all recall orderings that produce the observed set, making the likelihood well-defined for data without order information.
+
+## References
+
+- Talmi, D., et al. (2019). Emotional memory: A resource economy account. *Psychological Review*.
+- Zarubin, V. C., et al. (2020). Late positive potential predicts emotional memory. *Cognitive, Affective, & Behavioral Neuroscience*.
+- Polyn, S. M., Norman, K. A., & Kahana, M. J. (2009). A context maintenance and retrieval model of organizational processes in free recall. *Psychological Review*.

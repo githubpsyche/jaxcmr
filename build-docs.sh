@@ -2,8 +2,8 @@
 # Build script for jaxcmr documentation
 #
 # Usage:
-#   ./scripts/build-docs.sh        # Full build
-#   ./scripts/build-docs.sh quick  # Main site only (faster)
+#   ./build-docs.sh        # Full build
+#   ./build-docs.sh quick  # Main site only (faster)
 #
 # For incremental development:
 #   quarto preview                           # Live preview main site
@@ -14,9 +14,12 @@ echo ""
 
 # Render main site
 echo "1. Rendering main site..."
-if quarto render --no-clean 2>&1 | grep -q "Output created"; then
+echo ""
+if quarto render --no-clean; then
+    echo ""
     echo "   Main site: OK"
 else
+    echo ""
     echo "   Main site: FAILED"
     exit 1
 fi
@@ -43,21 +46,21 @@ for project in projects/TalmiEEG projects/repfr projects/cru_to_cmr; do
         echo "   $name:"
 
         # HTML
-        if (cd "$project" && quarto render --to html 2>&1 | grep -q "Output created"); then
+        if (cd "$project" && quarto render --to html); then
             echo "     HTML: OK"
         else
             echo "     HTML: FAILED"
         fi
 
         # PDF
-        if (cd "$project" && quarto render --to apaquarto-pdf 2>&1 | grep -q "Output created"); then
+        if (cd "$project" && quarto render --to apaquarto-pdf 2>/dev/null); then
             echo "     PDF: OK"
         else
             echo "     PDF: skipped"
         fi
 
         # DOCX
-        if (cd "$project" && quarto render --to apaquarto-docx 2>&1 | grep -q "Output created"); then
+        if (cd "$project" && quarto render --to apaquarto-docx 2>/dev/null); then
             echo "     DOCX: OK"
         else
             echo "     DOCX: skipped"

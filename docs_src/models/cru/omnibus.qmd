@@ -1,0 +1,179 @@
+---
+title: "Omnibus CRU-CMR"
+description: "Full CRU architecture with item identification and serial position scaling"
+---
+
+The Omnibus CRU-CMR model implements the complete Context Retrieval and Updating (CRU) architecture within the CMR framework. It incorporates both **item identification** (with confusability-based errors) and **serial position scaling** of encoding parameters.
+
+## Key Mechanisms
+
+### 1. Item Identification with Confusability
+
+Unlike standard CMR where recall directly outputs the intended item, CRU includes an **item identification stage** that can produce errors based on stimulus similarity.
+
+When recalling item $i$, the actual output depends on confusability:
+
+$$P(\text{output } j \mid \text{target } i) = \frac{\exp(-g \cdot d_{ij})}{\sum_k \exp(-g \cdot d_{ik})}$$
+
+Where:
+- $d_{ij}$ = distance (inverse similarity) between items $i$ and $j$
+- $g$ = item sensitivity parameter (higher = more accurate identification)
+
+### 2. Serial Position Scaling
+
+Encoding parameters decay across serial positions:
+
+**Context drift:**
+$$\beta_i = \beta_{max} \cdot \beta_{dec}^{i-1}$$
+
+**Item sensitivity:**
+$$g_i = g_{max} \cdot g_{dec}^{i-1}$$
+
+This captures the empirical finding that early items are encoded more distinctly than later items.
+
+### 3. Slip Matrix
+
+The model maintains a **slip matrix** $S$ where $S_{ij}$ represents the probability of outputting item $j$ when intending item $i$:
+
+```python
+def _update_slip_row(self, letter_idx):
+    item_sensitivity = (
+        self.item_sensitivity_max
+        * self.item_sensitivity_decrease ** self.study_index
+    )
+    letter_distances = self.distances[letter_idx]
+    z_row = jnp.exp(-item_sensitivity * letter_distances)
+    z_row = z_row / z_row.sum()
+    return self.slip_matrix.at[letter_idx, :].set(z_row)
+```
+
+At each encoding position, the slip row for that item is computed based on current item sensitivity.
+
+## Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `item_sensitivity_max` | $g_{max}$ | Initial item identification precision |
+| `item_sensitivity_decrease` | $g_{dec}$ | Decay factor per position |
+| `encoding_drift_decrease` | $\beta_{dec}$ | Context drift decay factor |
+| `encoding_drift_rate` | $\beta_{max}$ | Initial context drift rate |
+| `stop_probability_scale` | $\theta_s$ | Base stopping probability |
+| `stop_probability_growth` | $\theta_r$ | Stopping probability growth rate |
+
+Plus standard CMR parameters (learning_rate, choice_sensitivity, etc.).
+
+## Mathematical Specification
+
+### Recall Probability
+
+The probability of outputting item $j$ is:
+
+$$P(j) = (1 - P_{stop}) \cdot \sum_i P_{mem}(i) \cdot S_{ij}$$
+
+Where:
+- $P_{mem}(i)$ = probability of targeting item $i$ (from MCF activations)
+- $S_{ij}$ = slip probability from $i$ to $j$
+
+### Context Update at Recall
+
+When item $j$ is output, the model determines the most likely intended item and updates context accordingly:
+
+```python
+# Joint probability of intending each item and outputting j
+item_activations = self.activations()[:-1]
+p_mem = item_activations / jnp.sum(item_activations)
+p_slip = self.slip_matrix[:, item_index]
+joint = p_mem * p_slip
+
+# Update context based on most likely intended item
+best_i = jnp.argmax(joint)
+new_context = self.context.integrate(
+    self.mfc.probe(self.items[best_i]),
+    self.recall_drift_rate,
+)
+```
+
+## Usage
+
+```python
+from jaxcmr.models_cru_to_cmr.omnibus_cru_cmr import CMR, BaseCMRFactory
+
+params = {
+    # Standard CMR parameters
+    "encoding_drift_rate": 0.8,
+    "start_drift_rate": 0.3,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 1.0,
+
+    # CRU-specific parameters
+    "item_sensitivity_max": 5.0,        # Initial identification precision
+    "item_sensitivity_decrease": 0.9,   # Decay per position
+    "encoding_drift_decrease": 0.95,    # Context drift decay
+
+    # Stopping rule
+    "stop_probability_scale": 0.01,
+    "stop_probability_growth": 0.3,
+}
+
+factory = BaseCMRFactory(dataset, features=None)
+model = factory.create_model(params)
+```
+
+## Letter Similarity Matrix
+
+For serial recall of letters, the model uses an empirical letter similarity matrix derived from confusion data. Similar letters (e.g., B-D, M-N) have higher confusion probabilities.
+
+```python
+# Example: B and D are highly confusable
+letter_similarities[1, 3]  # ≈ 0.567
+letter_similarities[1, 1]  # = 1.0 (self-similarity)
+```
+
+The distance matrix is computed as $D = 1 / (S + \epsilon)$ where $S$ is similarity.
+
+## Predictions
+
+### Transposition Errors
+
+The slip matrix predicts that errors tend to be **similar items**:
+- Recalling "D" when "B" was studied
+- Confusions cluster around acoustically/visually similar letters
+
+### Serial Position Gradients
+
+The decaying item sensitivity predicts:
+- Fewer confusions for early list items (high $g$)
+- More confusions for later items (low $g$)
+- This interacts with the primacy effect from MCF learning
+
+### Output Order
+
+Because context updates use the inferred intended item (not the output), the model can maintain appropriate retrieval dynamics even when errors occur.
+
+## Comparison: Standard CMR vs Omnibus CRU-CMR
+
+| Aspect | Standard CMR | Omnibus CRU-CMR |
+|--------|--------------|-----------------|
+| Recall output | Deterministic | Probabilistic (via slip matrix) |
+| Item identification | Perfect | Confusability-based |
+| Encoding uniformity | Same parameters all positions | Serial position scaling |
+| Error types | Omissions only | Omissions + Transpositions |
+
+## Theoretical Background
+
+The CRU architecture (Logan, 2018, 2021) was developed to model **serial recall** and **typing**, where:
+- Items must be retrieved in order
+- Errors reveal the underlying representation
+- Position-in-sequence affects encoding quality
+
+The omnibus model bridges CRU's item identification mechanism with CMR's context-based retrieval, enabling models of both free recall and serial recall within a unified framework.
+
+## References
+
+- Logan, G. D. (2018). Automatic control: How experts act without thinking. *Psychological Review*, 125(4), 453-485.
+- Logan, G. D. (2021). Serial order in perception, memory and action. *Psychological Review*, 128(1), 1-44.

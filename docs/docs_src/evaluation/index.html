@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Fitting and model evaluation">
+<meta name="description" content="Fitting, simulation, and model comparison">
 
 <title>Evaluation – jaxcmr</title>
 <style>
@@ -191,8 +191,78 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../docs_src/evaluation/fitting.html" class="sidebar-item-text sidebar-link">
+  <a href="../../docs_src/evaluation/protocols.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation Protocols</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Loss Functions</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/loss/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loss Functions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/loss/likelihood.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequence Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/loss/permutation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Set Permutation Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/loss/mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MSE-Based Loss Functions</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
  <span class="menu-text">Fitting</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/fitting/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fitting Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/fitting/scipy-de.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ScipyDE</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simulation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs_src/evaluation/comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Comparison</span></a>
   </div>
 </li>
     </ul>
@@ -205,7 +275,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#evaluation-pipeline" id="toc-evaluation-pipeline" class="nav-link active" data-scroll-target="#evaluation-pipeline">Evaluation Pipeline</a></li>
+  <li><a href="#component-architecture" id="toc-component-architecture" class="nav-link" data-scroll-target="#component-architecture">Component Architecture</a></li>
+  <li><a href="#loss-functions" id="toc-loss-functions" class="nav-link" data-scroll-target="#loss-functions">Loss Functions</a></li>
+  <li><a href="#fitting-algorithms" id="toc-fitting-algorithms" class="nav-link" data-scroll-target="#fitting-algorithms">Fitting Algorithms</a></li>
+  <li><a href="#quick-start" id="toc-quick-start" class="nav-link" data-scroll-target="#quick-start">Quick Start</a></li>
+  <li><a href="#section-contents" id="toc-section-contents" class="nav-link" data-scroll-target="#section-contents">Section Contents</a></li>
+  <li><a href="#choosing-an-approach" id="toc-choosing-an-approach" class="nav-link" data-scroll-target="#choosing-an-approach">Choosing an Approach</a>
+  <ul class="collapse">
+  <li><a href="#for-standard-free-recall" id="toc-for-standard-free-recall" class="nav-link" data-scroll-target="#for-standard-free-recall">For Standard Free Recall</a></li>
+  <li><a href="#for-unordered-recall" id="toc-for-unordered-recall" class="nav-link" data-scroll-target="#for-unordered-recall">For Unordered Recall</a></li>
+  <li><a href="#for-shape-matching" id="toc-for-shape-matching" class="nav-link" data-scroll-target="#for-shape-matching">For Shape Matching</a></li>
+  </ul></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/edit/main/docs_src/evaluation/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -219,7 +300,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Fitting and model evaluation
+    Fitting, simulation, and model comparison
   </div>
 </div>
 
@@ -236,20 +317,209 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This section covers how to evaluate models against data.</p>
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Model evaluation in jaxcmr involves:</p>
-<ol type="1">
-<li><strong>Fitting</strong> - Find parameters that best explain observed data</li>
-<li><strong>Simulation</strong> - Generate predictions from fitted parameters</li>
-<li><strong>Comparison</strong> - Compare model predictions to behavioral measures</li>
-</ol>
-<p>The <a href="../../docs_src/evaluation/fitting.html">Fitting</a> page covers the complete workflow, including generating simulations from fitted parameters and comparing model output to data.</p>
+<p>Model evaluation measures how well models explain observed data. jaxcmr provides a modular evaluation pipeline with interchangeable loss functions, optimizers, and comparison metrics.</p>
+<section id="evaluation-pipeline" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation-pipeline">Evaluation Pipeline</h2>
+<pre><code>Data → Loss Function → Optimizer → Fitted Parameters → Simulation → Comparison</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 28%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Purpose</th>
+<th>Key Components</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Loss</strong></td>
+<td>Quantify model-data discrepancy</td>
+<td>LossFnGenerator protocol</td>
+</tr>
+<tr class="even">
+<td><strong>Fitting</strong></td>
+<td>Find optimal parameters</td>
+<td>FittingAlgorithm protocol</td>
+</tr>
+<tr class="odd">
+<td><strong>Simulation</strong></td>
+<td>Generate predictions</td>
+<td><code>simulate_h5_from_h5</code></td>
+</tr>
+<tr class="even">
+<td><strong>Comparison</strong></td>
+<td>Compare models</td>
+<td>AIC, BIC, t-tests</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="component-architecture" class="level2">
+<h2 class="anchored" data-anchor-id="component-architecture">Component Architecture</h2>
+<p>All evaluation components follow protocols defined in <code>jaxcmr/typing.py</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Loss function generator creates trial-specific loss functions</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LossFnGenerator(Protocol):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        trial_indices: Int[Array, <span class="st">"trials"</span>],</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        parameters: <span class="bu">dict</span>[<span class="bu">str</span>, Array],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        free_param_names: <span class="bu">list</span>[<span class="bu">str</span>],</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> Callable[[Float[Array, <span class="st">"params"</span>]], Float[Array, <span class="st">""</span>]]: ...</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitting algorithm finds optimal parameters</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> FittingAlgorithm(Protocol):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        trial_mask: Bool[Array, <span class="st">"subjects trials"</span>],</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> FitResult: ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>See <a href="../../docs_src/evaluation/protocols.html">Protocols</a> for complete definitions.</p>
+</section>
+<section id="loss-functions" class="level2">
+<h2 class="anchored" data-anchor-id="loss-functions">Loss Functions</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Loss Function</th>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../../docs_src/evaluation/loss/likelihood.html">Sequence Likelihood</a></td>
+<td><code>loss.sequence_likelihood</code></td>
+<td>Standard negative log-likelihood</td>
+</tr>
+<tr class="even">
+<td><a href="../../docs_src/evaluation/loss/likelihood.html#transform-sequence-likelihood">Transform Likelihood</a></td>
+<td><code>loss.transform_sequence_likelihood</code></td>
+<td>Likelihood with pluggable masking</td>
+</tr>
+<tr class="odd">
+<td><a href="../../docs_src/evaluation/loss/permutation.html">Set Permutation</a></td>
+<td><code>loss.set_permutation_likelihood</code></td>
+<td>Monte Carlo for unordered recall</td>
+</tr>
+<tr class="even">
+<td><a href="../../docs_src/evaluation/loss/mse.html#spc-mse">SPC MSE</a></td>
+<td><code>loss.spc_mse</code></td>
+<td>Serial position curve fitting</td>
+</tr>
+<tr class="odd">
+<td><a href="../../docs_src/evaluation/loss/mse.html#category-spc-mse">Category SPC MSE</a></td>
+<td><code>loss.cat_spc_mse</code></td>
+<td>Category-filtered SPC</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../docs_src/evaluation/loss/index.html">Loss Functions</a> for detailed documentation.</p>
+</section>
+<section id="fitting-algorithms" class="level2">
+<h2 class="anchored" data-anchor-id="fitting-algorithms">Fitting Algorithms</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Algorithm</th>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../../docs_src/evaluation/fitting/scipy-de.html">ScipyDE</a></td>
+<td><code>fitting</code></td>
+<td>Differential evolution via SciPy</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../docs_src/evaluation/fitting/index.html">Fitting</a> for usage patterns.</p>
+</section>
+<section id="quick-start" class="level2">
+<h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.sequence_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGenerator</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Create model factory</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>factory <span class="op">=</span> make_factory(...)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Define parameters</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>fixed_params <span class="op">=</span> {<span class="st">"allow_repeated_recalls"</span>: <span class="va">False</span>, ...}</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>hyperparams <span class="op">=</span> {</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"bounds"</span>: {</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"encoding_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"recall_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"num_steps"</span>: <span class="dv">1000</span>,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Fit model</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    dataset<span class="op">=</span>data,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    base_params<span class="op">=</span>fixed_params,</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    model_factory<span class="op">=</span>factory,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    loss_fn_generator<span class="op">=</span>MemorySearchLikelihoodFnGenerator,</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    hyperparams<span class="op">=</span>hyperparams,</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> fitter.fit(trial_mask)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Simulate</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_h5_from_h5</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    factory, data, <span class="va">None</span>, results[<span class="st">"fits"</span>],</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    trial_mask, experiment_count<span class="op">=</span><span class="dv">100</span>, rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Compare to data</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.analyses.spc <span class="im">import</span> plot_spc</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>plot_spc([data, sim], [trial_mask, trial_mask], [<span class="st">"Data"</span>, <span class="st">"Model"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="section-contents" class="level2">
+<h2 class="anchored" data-anchor-id="section-contents">Section Contents</h2>
+<ul>
+<li><a href="../../docs_src/evaluation/protocols.html">Protocols</a> — LossFnGenerator and FittingAlgorithm protocols</li>
+<li><strong>Loss Functions</strong>
+<ul>
+<li><a href="../../docs_src/evaluation/loss/index.html">Overview</a> — Loss function families and selection guide</li>
+<li><a href="../../docs_src/evaluation/loss/likelihood.html">Sequence Likelihood</a> — Standard and transform variants</li>
+<li><a href="../../docs_src/evaluation/loss/permutation.html">Set Permutation</a> — Monte Carlo for unordered recall</li>
+<li><a href="../../docs_src/evaluation/loss/mse.html">MSE-Based</a> — Summary statistic fitting</li>
+</ul></li>
+<li><strong>Fitting</strong>
+<ul>
+<li><a href="../../docs_src/evaluation/fitting/index.html">Overview</a> — Fitting algorithms and patterns</li>
+<li><a href="../../docs_src/evaluation/fitting/scipy-de.html">ScipyDE</a> — Differential evolution optimizer</li>
+</ul></li>
+<li><a href="../../docs_src/evaluation/simulation.html">Simulation</a> — Generating predictions from fitted parameters</li>
+<li><a href="../../docs_src/evaluation/comparison.html">Model Comparison</a> — AIC, BIC, t-tests, and winner analysis</li>
+</ul>
+</section>
+<section id="choosing-an-approach" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-an-approach">Choosing an Approach</h2>
+<section id="for-standard-free-recall" class="level3">
+<h3 class="anchored" data-anchor-id="for-standard-free-recall">For Standard Free Recall</h3>
+<p>Use <strong>Sequence Likelihood</strong> with <strong>ScipyDE</strong>: - Captures full temporal dynamics (order, transitions) - Maximum likelihood estimation - Per-subject parameter fitting</p>
+</section>
+<section id="for-unordered-recall" class="level3">
+<h3 class="anchored" data-anchor-id="for-unordered-recall">For Unordered Recall</h3>
+<p>Use <strong>Set Permutation Likelihood</strong>: - When only the recall set is recorded - Final free recall paradigms - Monte Carlo handles factorial complexity</p>
+</section>
+<section id="for-shape-matching" class="level3">
+<h3 class="anchored" data-anchor-id="for-shape-matching">For Shape Matching</h3>
+<p>Use <strong>SPC MSE</strong> or <strong>Category SPC MSE</strong>: - Fits to aggregate curves - Useful when likelihood is computationally prohibitive - Ignores recall order information</p>
 
 
 <!-- -->
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -724,22 +994,152 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
 });
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Evaluation"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Fitting and model evaluation"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>This section covers how to evaluate models against data.</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>Model evaluation in jaxcmr involves:</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Fitting** - Find parameters that best explain observed data</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**Simulation** - Generate predictions from fitted parameters</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**Comparison** - Compare model predictions to behavioral measures</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>The <span class="co">[</span><span class="ot">Fitting</span><span class="co">](fitting.qmd)</span> page covers the complete workflow, including generating simulations from fitted parameters and comparing model output to data.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Evaluation"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Fitting, simulation, and model comparison"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>Model evaluation measures how well models explain observed data. jaxcmr provides a modular evaluation pipeline with interchangeable loss functions, optimizers, and comparison metrics.</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Evaluation Pipeline</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="in">Data → Loss Function → Optimizer → Fitted Parameters → Simulation → Comparison</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>| Stage | Purpose | Key Components |</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>|-------|---------|----------------|</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>| **Loss** | Quantify model-data discrepancy | LossFnGenerator protocol |</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>| **Fitting** | Find optimal parameters | FittingAlgorithm protocol |</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>| **Simulation** | Generate predictions | <span class="in">`simulate_h5_from_h5`</span> |</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>| **Comparison** | Compare models | AIC, BIC, t-tests |</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="fu">## Component Architecture</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>All evaluation components follow protocols defined in <span class="in">`jaxcmr/typing.py`</span>:</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Loss function generator creates trial-specific loss functions</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LossFnGenerator(Protocol):</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        trial_indices: Int[Array, <span class="st">"trials"</span>],</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        parameters: <span class="bu">dict</span>[<span class="bu">str</span>, Array],</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        free_param_names: <span class="bu">list</span>[<span class="bu">str</span>],</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> Callable[[Float[Array, <span class="st">"params"</span>]], Float[Array, <span class="st">""</span>]]: ...</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitting algorithm finds optimal parameters</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> FittingAlgorithm(Protocol):</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        trial_mask: Bool[Array, <span class="st">"subjects trials"</span>],</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> FitResult: ...</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Protocols</span><span class="co">](protocols.qmd)</span> for complete definitions.</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="fu">## Loss Functions</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>| Loss Function | Module | Description |</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>|---------------|--------|-------------|</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">Sequence Likelihood</span><span class="co">](loss/likelihood.qmd)</span> | <span class="in">`loss.sequence_likelihood`</span> | Standard negative log-likelihood |</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">Transform Likelihood</span><span class="co">](loss/likelihood.qmd#transform-sequence-likelihood)</span> | <span class="in">`loss.transform_sequence_likelihood`</span> | Likelihood with pluggable masking |</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">Set Permutation</span><span class="co">](loss/permutation.qmd)</span> | <span class="in">`loss.set_permutation_likelihood`</span> | Monte Carlo for unordered recall |</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">SPC MSE</span><span class="co">](loss/mse.qmd#spc-mse)</span> | <span class="in">`loss.spc_mse`</span> | Serial position curve fitting |</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">Category SPC MSE</span><span class="co">](loss/mse.qmd#category-spc-mse)</span> | <span class="in">`loss.cat_spc_mse`</span> | Category-filtered SPC |</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Loss Functions</span><span class="co">](loss/index.qmd)</span> for detailed documentation.</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="fu">## Fitting Algorithms</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>| Algorithm | Module | Description |</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>|-----------|--------|-------------|</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>| <span class="co">[</span><span class="ot">ScipyDE</span><span class="co">](fitting/scipy-de.qmd)</span> | <span class="in">`fitting`</span> | Differential evolution via SciPy |</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>See <span class="co">[</span><span class="ot">Fitting</span><span class="co">](fitting/index.qmd)</span> for usage patterns.</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quick Start</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.sequence_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGenerator</span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Create model factory</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>factory <span class="op">=</span> make_factory(...)</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Define parameters</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>fixed_params <span class="op">=</span> {<span class="st">"allow_repeated_recalls"</span>: <span class="va">False</span>, ...}</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>hyperparams <span class="op">=</span> {</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>    <span class="st">"bounds"</span>: {</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>        <span class="st">"encoding_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>        <span class="st">"recall_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>    <span class="st">"num_steps"</span>: <span class="dv">1000</span>,</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Fit model</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>    dataset<span class="op">=</span>data,</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>    base_params<span class="op">=</span>fixed_params,</span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>    model_factory<span class="op">=</span>factory,</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>    loss_fn_generator<span class="op">=</span>MemorySearchLikelihoodFnGenerator,</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>    hyperparams<span class="op">=</span>hyperparams,</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> fitter.fit(trial_mask)</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Simulate</span></span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_h5_from_h5</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>    factory, data, <span class="va">None</span>, results[<span class="st">"fits"</span>],</span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>    trial_mask, experiment_count<span class="op">=</span><span class="dv">100</span>, rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Compare to data</span></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.analyses.spc <span class="im">import</span> plot_spc</span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a>plot_spc([data, sim], [trial_mask, trial_mask], [<span class="st">"Data"</span>, <span class="st">"Model"</span>])</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a><span class="fu">## Section Contents</span></span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Protocols</span><span class="co">](protocols.qmd)</span> — LossFnGenerator and FittingAlgorithm protocols</span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Loss Functions**</span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">Overview</span><span class="co">](loss/index.qmd)</span> — Loss function families and selection guide</span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">Sequence Likelihood</span><span class="co">](loss/likelihood.qmd)</span> — Standard and transform variants</span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">Set Permutation</span><span class="co">](loss/permutation.qmd)</span> — Monte Carlo for unordered recall</span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">MSE-Based</span><span class="co">](loss/mse.qmd)</span> — Summary statistic fitting</span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Fitting**</span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">Overview</span><span class="co">](fitting/index.qmd)</span> — Fitting algorithms and patterns</span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">ScipyDE</span><span class="co">](fitting/scipy-de.qmd)</span> — Differential evolution optimizer</span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Simulation</span><span class="co">](simulation.qmd)</span> — Generating predictions from fitted parameters</span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Model Comparison</span><span class="co">](comparison.qmd)</span> — AIC, BIC, t-tests, and winner analysis</span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a><span class="fu">## Choosing an Approach</span></span>
+<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### For Standard Free Recall</span></span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>Use **Sequence Likelihood** with **ScipyDE**:</span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Captures full temporal dynamics (order, transitions)</span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Maximum likelihood estimation</span>
+<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Per-subject parameter fitting</span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a><span class="fu">### For Unordered Recall</span></span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>Use **Set Permutation Likelihood**:</span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>When only the recall set is recorded</span>
+<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Final free recall paradigms</span>
+<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Monte Carlo handles factorial complexity</span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a><span class="fu">### For Shape Matching</span></span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>Use **SPC MSE** or **Category SPC MSE**:</span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Fits to aggregate curves</span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Useful when likelihood is computationally prohibitive</span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Ignores recall order information</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

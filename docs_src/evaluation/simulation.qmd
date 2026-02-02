@@ -1,0 +1,393 @@
+---
+title: "Simulation"
+description: "Generating predictions from fitted models"
+---
+
+After fitting a model, simulation generates **synthetic recall data** that can be compared to observed behavior. This validates the fit and generates predictions.
+
+## Why Simulate?
+
+Simulation serves multiple purposes:
+
+- **Model validation**: Do fitted parameters reproduce observed patterns?
+- **Predictions**: What does the model predict for new conditions?
+- **Parameter recovery**: Can we recover true parameters from simulated data?
+- **Power analysis**: How much data is needed to detect effects?
+
+## Core Functions
+
+| Function | Description |
+|----------|-------------|
+| `simulate_free_recall` | Single trial: free recall until stop |
+| `simulate_free_recall_count` | Single trial: fixed number of recalls |
+| `simulate_study_and_free_recall` | Full trial: study + retrieval |
+| `simulate_h5_from_h5` | Generate synthetic dataset from fitted parameters |
+| `parameter_shifted_simulate_h5_from_h5` | Parameter sweep across values |
+
+## Mathematical Specification
+
+### Single Free Recall Step
+
+At each retrieval step, sample from the outcome distribution:
+
+$$r_j \sim \text{Categorical}(P(r_j \mid c_j, \theta))$$
+
+where $P$ is given by `model.outcome_probabilities()`:
+- $P[0]$ = probability of stopping
+- $P[i]$ = probability of recalling item $i$
+
+### Study and Free Recall
+
+A complete trial:
+
+1. **Study phase**: For $i = 1, \ldots, L$:
+   ```python
+   model = model.experience(item[i])
+   ```
+
+2. **Transition**: Prepare for retrieval:
+   ```python
+   model = model.start_retrieving()
+   ```
+
+3. **Retrieval phase**: Repeat until stop:
+   ```python
+   probs = model.outcome_probabilities()
+   choice = sample_categorical(probs, rng)
+   if choice == 0:  # Stop
+       break
+   model = model.retrieve(choice)
+   recalls.append(choice)
+   ```
+
+## MemorySearchSimulator Class
+
+The `MemorySearchSimulator` class provides stateless trial-level simulation compatible with JAX's `vmap`:
+
+```python
+from jaxcmr.simulation import MemorySearchSimulator
+
+simulator = MemorySearchSimulator(
+    model_create_fn=factory.create_trial_model,
+    trial_simulator=simulate_study_and_free_recall,
+)
+
+# Simulate a single trial
+model, recalls = simulator(trial_index, params, present, recalls_buffer, rng)
+```
+
+### Vectorization
+
+Use `vmap` to simulate multiple trials in parallel:
+
+```python
+from jax import vmap
+
+# Vectorize over trials
+batch_simulate = vmap(simulator, in_axes=(0, None, 0, 0, 0))
+
+# Simulate all trials
+models, all_recalls = batch_simulate(
+    trial_indices, params, all_presentations, all_buffers, rngs
+)
+```
+
+## simulate_h5_from_h5
+
+The primary function for generating synthetic datasets from fitted parameters:
+
+```python
+from jaxcmr.simulation import simulate_h5_from_h5
+from jax import random
+
+sim = simulate_h5_from_h5(
+    model_factory,       # Model factory instance
+    dataset,             # Original dataset
+    features,            # Semantic features (or None)
+    params,              # Fitted parameters dict
+    trial_mask,          # Which trials to simulate
+    experiment_count,    # Simulations per subject
+    rng,                 # Random key
+)
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `model_factory` | `Type[MemorySearchModelFactory]` | Factory class |
+| `dataset` | `RecallDataset` | Original data structure |
+| `features` | `Optional[Array]` | Semantic embeddings |
+| `params` | `dict[str, Array]` | Fitted parameters (per-subject) |
+| `trial_mask` | `Bool[Array]` | Which trials to simulate |
+| `experiment_count` | `int` | Simulations per subject |
+| `rng` | `PRNGKeyArray` | Random seed |
+
+### Output
+
+Returns a dataset with the same structure as the input, but with simulated recalls:
+
+```python
+sim["recalls"]     # Simulated recall sequences
+sim["subject"]     # Subject IDs (repeated for experiment_count)
+sim["pres_itemnos"] # Presentation sequences (copied)
+sim["listLength"]  # List lengths (copied)
+```
+
+### Per-Subject Parameters
+
+The `params` dict should have arrays with one value per subject:
+
+```python
+params = {
+    "encoding_drift_rate": jnp.array([0.5, 0.6, 0.4, ...]),  # Per subject
+    "recall_drift_rate": jnp.array([0.3, 0.4, 0.35, ...]),
+    # ...
+}
+```
+
+This allows each simulated subject to use their fitted parameters.
+
+### Multiple Experiments
+
+With `experiment_count=100`:
+- Each subject's trials are simulated 100 times
+- Output has `n_subjects × experiment_count × n_trials` rows
+- Reduces sampling variance in aggregate statistics
+
+## Usage Example
+
+### Basic Simulation
+
+```python
+from jaxcmr.simulation import simulate_h5_from_h5
+from jaxcmr.models.cmr import make_factory
+from jax import random
+import jax.numpy as jnp
+
+# Prepare fitted parameters
+fitted_params = {
+    k: jnp.array(v) for k, v in results["fits"].items()
+    if k != "subject"
+}
+
+# Simulate
+rng = random.PRNGKey(42)
+sim = simulate_h5_from_h5(
+    model_factory,
+    data,
+    features=None,
+    params=fitted_params,
+    trial_mask=trial_mask,
+    experiment_count=100,
+    rng=rng,
+)
+```
+
+### Comparing to Data
+
+```python
+from jaxcmr.analyses.spc import plot_spc
+
+# Compare serial position curves
+plot_spc(
+    datasets=[data, sim],
+    trial_masks=[trial_mask, trial_mask],
+    labels=["Data", "Model"],
+)
+```
+
+```python
+from jaxcmr.analyses.crp import plot_crp
+
+# Compare lag-CRP
+plot_crp(
+    datasets=[data, sim],
+    trial_masks=[trial_mask, trial_mask],
+    labels=["Data", "Model"],
+)
+```
+
+## Parameter Sweeps
+
+`parameter_shifted_simulate_h5_from_h5` generates predictions across parameter values:
+
+```python
+from jaxcmr.simulation import parameter_shifted_simulate_h5_from_h5
+
+# Sweep encoding_drift_rate from 0.2 to 0.8
+datasets = parameter_shifted_simulate_h5_from_h5(
+    model_factory,
+    data,
+    features=None,
+    params=base_params,
+    trial_mask=trial_mask,
+    experiment_count=50,
+    varied_parameter="encoding_drift_rate",
+    parameter_values=[0.2, 0.4, 0.6, 0.8],
+    rng=rng,
+)
+
+# datasets is a list of simulated datasets, one per parameter value
+for value, sim in zip([0.2, 0.4, 0.6, 0.8], datasets):
+    print(f"encoding_drift_rate = {value}")
+    # Analyze sim...
+```
+
+### Use Cases
+
+- **Sensitivity analysis**: How do predictions change with parameters?
+- **Model predictions**: What behavior changes across conditions?
+- **Parameter recovery**: Generate data with known parameters, then fit
+
+## Trial Simulation Functions
+
+### simulate_free_recall
+
+Simulates free recall until the model stops:
+
+```python
+from jaxcmr.simulation import simulate_free_recall
+
+# model: initialized and ready for retrieval
+# list_length: maximum recalls to attempt
+# rng: random key
+
+final_model, recalls = simulate_free_recall(model, list_length, rng)
+```
+
+### simulate_free_recall_count
+
+Simulates exactly `count` recall attempts (may include stops):
+
+```python
+from jaxcmr.simulation import simulate_free_recall_count
+
+final_model, recalls = simulate_free_recall_count(model, count, rng)
+```
+
+### simulate_study_and_free_recall
+
+Complete trial from study through retrieval:
+
+```python
+from jaxcmr.simulation import simulate_study_and_free_recall
+
+final_model, recalls = simulate_study_and_free_recall(
+    model,           # Fresh model
+    present,         # Study sequence (1-indexed)
+    recalls_buffer,  # Pre-allocated buffer
+    rng,
+)
+```
+
+## Computational Notes
+
+### JAX Random Keys
+
+JAX requires explicit random key management:
+
+```python
+from jax import random
+
+# Create initial key
+rng = random.PRNGKey(42)
+
+# Split for multiple uses
+rng, sim_key = random.split(rng)
+sim = simulate_h5_from_h5(..., rng=sim_key)
+
+# Split for another simulation
+rng, sim_key2 = random.split(rng)
+sim2 = simulate_h5_from_h5(..., rng=sim_key2)
+```
+
+### Memory
+
+Large simulations require memory for:
+- All recall sequences: `n_subjects × experiment_count × n_trials × max_recalls`
+- Model states (if tracked)
+
+For very large datasets:
+- Reduce `experiment_count`
+- Simulate subjects in batches
+- Use streaming aggregation
+
+### JIT Compilation
+
+First simulation triggers JAX compilation:
+- Initial call is slow (compiling)
+- Subsequent calls are fast (cached)
+
+```python
+# First call: slow (compiling)
+sim1 = simulate_h5_from_h5(...)
+
+# Second call: fast (cached)
+sim2 = simulate_h5_from_h5(...)
+```
+
+## Helper Functions
+
+### item_to_study_positions
+
+Maps recalled item indices to their study positions:
+
+```python
+from jaxcmr.simulation import item_to_study_positions
+
+# recalls: (trials, max_recalls) - 1-indexed item IDs
+# pres: (trials, list_length) - 1-indexed item IDs
+
+positions = item_to_study_positions(recalls, pres)
+# positions: (trials, max_recalls) - 1-indexed study positions
+```
+
+### preallocate_for_h5_dataset
+
+Pre-allocates output arrays for simulation:
+
+```python
+from jaxcmr.simulation import preallocate_for_h5_dataset
+
+output = preallocate_for_h5_dataset(
+    dataset,
+    trial_mask,
+    experiment_count,
+)
+# output has pre-allocated arrays matching expected dimensions
+```
+
+## Example: Full Workflow
+
+```python
+from jaxcmr.fitting import ScipyDE
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator
+from jaxcmr.simulation import simulate_h5_from_h5
+from jaxcmr.analyses.spc import spc, plot_spc
+from jaxcmr.models.cmr import make_factory
+from jax import random
+import jax.numpy as jnp
+
+# 1. Fit model
+fitter = ScipyDE(data, None, fixed_params, model_factory,
+                 MemorySearchLikelihoodFnGenerator, hyperparams)
+results = fitter.fit(trial_mask)
+
+# 2. Extract fitted parameters
+fitted_params = {k: jnp.array(v) for k, v in results["fits"].items()
+                 if k != "subject"}
+
+# 3. Simulate
+rng = random.PRNGKey(0)
+sim = simulate_h5_from_h5(
+    model_factory, data, None, fitted_params,
+    trial_mask, experiment_count=100, rng=rng,
+)
+
+# 4. Compare
+observed_spc = spc(data, trial_mask)
+simulated_spc = spc(sim, trial_mask)
+
+plot_spc([data, sim], [trial_mask, trial_mask], ["Data", "Model"])
+```

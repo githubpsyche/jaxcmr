@@ -1,0 +1,196 @@
+---
+title: "Strength Model"
+description: "EEG-modulated encoding without context retrieval"
+---
+
+The Strength Model is a **baseline** that tests whether context-based retrieval is necessary to explain EEG-memory relationships. It implements pure strength-based recall without the temporal context mechanism.
+
+## Purpose
+
+The strength model answers: *Can we explain the data without retrieved context?*
+
+If this simpler model fits as well as eCMR, it suggests that:
+- Context retrieval is not essential for the observed effects
+- Simple encoding strength variation suffices
+- The LPP effect is purely about trace strength, not context
+
+If eCMR fits better, it demonstrates that:
+- Context-based dynamics add explanatory power
+- Temporal organization (contiguity) requires context
+- The full CMR machinery is justified
+
+## The Mechanism
+
+### No Context Drift
+
+Unlike CMR, the strength model has:
+- No temporal context vector
+- No MFC or MCF associative memories
+- No context-based retrieval competition
+
+### Pure Strength Encoding
+
+Each item receives a strength based on:
+
+$$s_i = \phi_i + \kappa_{EL} (L_i - \lambda_L) \cdot e_i$$
+
+Or with multiplicative primacy interaction:
+
+$$s_i = \phi_i \cdot \max(1, 1 + \kappa_{EL} (L_i - \lambda_L) \cdot e_i)$$
+
+### Retrieval by Strength
+
+Recall probability is proportional to strength:
+
+$$P(i) = (1 - P_{stop}) \cdot \frac{s_i^\tau}{\sum_j s_j^\tau}$$
+
+The power scaling ($\tau$) provides winner-take-all dynamics similar to MCF sensitivity in CMR.
+
+## Mathematical Specification
+
+### Encoding
+
+```python
+def experience_item(self, item_index):
+    primacy = self.primacy[self.study_index]
+    emotion_modulation = self.emotion_modulation[item_index]
+
+    total_strength = lax.cond(
+        self.modulate_emotion_by_primacy,
+        lambda: primacy * jnp.maximum(1, 1 + emotion_modulation),
+        lambda: primacy + jnp.maximum(-primacy, emotion_modulation),
+    )
+
+    return self.replace(
+        strengths=self.strengths.at[item_index].set(total_strength),
+        recallable=self.recallable.at[item_index].set(True),
+        study_index=self.study_index + 1,
+    )
+```
+
+### Retrieval
+
+```python
+def activations(self):
+    _activations = self.strengths * self.recallable
+    return (power_scale(_activations, self.choice_sensitivity) + lb) * self.recallable
+```
+
+Note: `start_retrieving()` is a no-op since there's no context to drift.
+
+## Parameters
+
+| Parameter | Symbol | Description |
+|-----------|--------|-------------|
+| `primacy_scale` | $\phi_s$ | Primacy boost magnitude |
+| `primacy_decay` | $\phi_d$ | Primacy decay rate |
+| `choice_sensitivity` | $\tau$ | Winner-take-all sharpness |
+| `lpp_slope` | $\kappa_{EL}$ | LPP effect on emotional items |
+| `lpp_threshold` | $\lambda_L$ | LPP threshold for effect |
+| `modulate_emotion_by_primacy` | — | Multiplicative vs additive |
+
+Plus termination parameters.
+
+## Usage
+
+```python
+from jaxcmr.models_eeg.eeg_strength import StrengthSearch, make_factory
+from jaxcmr.components.termination import PositionalTermination
+
+# Note: MFC/MCF/context factories are ignored but required by interface
+Factory = make_factory(
+    None,  # mfc_create_fn (ignored)
+    None,  # mcf_create_fn (ignored)
+    None,  # context_create_fn (ignored)
+    PositionalTermination,
+)
+
+factory = Factory(dataset, features=None)
+
+params = {
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "choice_sensitivity": 1.0,
+    "lpp_slope": 0.5,
+    "lpp_threshold": 0.0,
+    "modulate_emotion_by_primacy": True,
+    "allow_repeated_recalls": False,
+    "stop_probability_scale": 0.05,
+    "stop_probability_growth": 0.2,
+}
+
+model = factory.create_trial_model(trial_index=0, parameters=params)
+```
+
+## Predictions
+
+### What It Can Explain
+
+The strength model can explain:
+- **Primacy effects**: Higher strength for early items
+- **Emotional enhancement**: LPP-modulated strength boost
+- **Probability of recall**: Items with higher strength are more likely recalled
+- **Individual differences**: Trial-by-trial LPP variation
+
+### What It Cannot Explain
+
+The strength model **cannot** explain:
+- **Temporal contiguity**: No mechanism for lag-CRP effects
+- **Forward asymmetry**: No directional bias in transitions
+- **Clustering by context**: No similarity-based retrieval
+- **Recall order dynamics**: Order is purely by strength
+
+This is intentional—it isolates what context retrieval adds.
+
+## Comparison: Strength vs CMR
+
+| Phenomenon | Strength Model | CMR |
+|------------|---------------|-----|
+| Primacy effect | Yes (explicit) | Yes (primacy + context) |
+| Recency effect | No | Yes (context) |
+| Contiguity | No | Yes (context) |
+| Forward asymmetry | No | Yes (context) |
+| Emotional enhancement | Yes (LPP) | Yes (LPP) |
+| Emotional clustering | No | Yes (eCMR) |
+
+## LPP Centering
+
+The factory centers LPP values within each trial, but **only for emotional items**:
+
+```python
+# Only emotional items contribute to the mean
+valid_lpp = jnp.where(self.trial_emotions, lpp_raw, 0.0)
+emotional_count = jnp.sum(self.trial_emotions, axis=1, keepdims=True)
+emotional_mean = jnp.sum(valid_lpp, axis=1, keepdims=True) / emotional_count
+self.lpp_centered = jnp.where(self.trial_emotions, valid_lpp - emotional_mean, 0.0)
+```
+
+This ensures that:
+- LPP effects are relative to the trial's emotional items
+- Neutral items always have zero LPP modulation
+- Between-trial LPP variation doesn't confound the effect
+
+## When to Use
+
+Use the strength model when:
+- You need a **baseline** for model comparison
+- Testing whether context retrieval adds explanatory power
+- You have **unordered recall data** where contiguity can't be assessed
+- Interested in pure **encoding effects** without retrieval dynamics
+
+Do not use when:
+- Recall order is important
+- You expect temporal clustering
+- The full CMR dynamics are theoretically motivated
+
+## Theoretical Significance
+
+The strength model represents the **null hypothesis** that:
+- Memory is a simple encoding-strength competition
+- No retrieval dynamics beyond strength-based sampling
+- LPP effects are purely about trace creation
+
+Rejecting this model (i.e., finding eCMR fits better) provides evidence that:
+- Context-based retrieval mechanisms are necessary
+- The temporal structure of recall is informative
+- CMR-type models capture something beyond strength

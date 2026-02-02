@@ -1,0 +1,203 @@
+---
+title: "Competitive Termination"
+description: "Context-based termination as item competition"
+---
+
+The Competitive Termination variants replace CMR's item-independent stopping rule with a **context-based termination mechanism**. Instead of stopping probability growing independently of memory state, termination competes directly with item retrieval.
+
+## The Mechanism
+
+### Standard CMR Termination
+
+In standard CMR, stopping probability is independent of memory content:
+
+$$P(stop) = \theta_s \cdot e^{j \cdot \theta_r}$$
+
+This grows exponentially with recall count $j$, regardless of what's in memory.
+
+### Competitive Termination
+
+In competitive termination, an **end-of-list marker** is encoded and competes with items for retrieval:
+
+1. At list end, encode a termination "item" linked to end-of-list context
+2. During recall, this termination item competes with studied items
+3. When termination wins the competition, recall stops
+
+The probability of stopping becomes:
+
+$$P(stop) = \frac{A_{term}}{\sum_i A_i + A_{term}}$$
+
+Where $A_{term}$ is the activation of the termination item and $A_i$ are item activations.
+
+## Mathematical Specification
+
+### Encoding the Termination Marker
+
+At the end of the study phase:
+
+```python
+def start_retrieving(self):
+    # Drift context toward start
+    start_context = self.context.integrate(
+        self.context.initial_state, self.start_drift_rate
+    )
+
+    # Encode termination item linked to end-of-list context
+    termination_item = self.items[self.item_count]  # Extra item slot
+    return self.replace(
+        context=start_context,
+        mfc=self.mfc.associate(
+            termination_item, self.context.state, self.mfc_learning_rate
+        ),
+        mcf=self.mcf.associate(
+            self.context.state, termination_item, self.mcf_learning_rate
+        ),
+        recallable=self.recallable.at[self.item_count].set(True),
+    )
+```
+
+### Stop Probability
+
+During retrieval, stopping is determined by the termination item's relative activation:
+
+```python
+def stop_probability(self):
+    total_recallable = jnp.sum(self.recallable)
+    return lax.cond(
+        jnp.logical_or(total_recallable == 0, ~self.is_active),
+        lambda: 1.0,
+        lambda: self.decision_strategy.outcome_probability(
+            self.item_count,  # Index of termination item
+            self.activations()
+        ),
+    )
+```
+
+## Parameters
+
+The competitive termination models use standard CMR parameters without the explicit stopping parameters (`stop_probability_scale`, `stop_probability_growth`).
+
+| Parameter | Description |
+|-----------|-------------|
+| `encoding_drift_rate` | Context drift during study |
+| `start_drift_rate` | Drift toward start at retrieval onset |
+| `recall_drift_rate` | Context drift during recall |
+| `choice_sensitivity` | Winner-take-all sharpness |
+| `learning_rate` | MFC association strength |
+| `primacy_scale` | MCF primacy boost |
+| `primacy_decay` | Primacy decay rate |
+
+## Model Variants
+
+### CMR CompTerm
+
+CMR with competitive termination but **perfect item identification**:
+
+```python
+from jaxcmr.models_cru_to_cmr.cmr_compterm import CMR, CMRFactory
+
+params = {
+    "encoding_drift_rate": 0.8,
+    "start_drift_rate": 0.3,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 1.0,
+    "encoding_drift_decrease": 0.95,
+}
+
+factory = CMRFactory(dataset, features=None)
+model = factory.create_model(params)
+```
+
+### CompTerm CRU-CMR
+
+Competitive termination **with confusability-based item identification**:
+
+```python
+from jaxcmr.models_cru_to_cmr.compterm_omnibus_cru_cmr import CMR, BaseCMRFactory
+
+params = {
+    # Standard parameters
+    "encoding_drift_rate": 0.8,
+    "start_drift_rate": 0.3,
+    "recall_drift_rate": 0.5,
+    "learning_rate": 0.5,
+    "primacy_scale": 2.0,
+    "primacy_decay": 0.8,
+    "shared_support": 0.05,
+    "item_support": 0.25,
+    "choice_sensitivity": 1.0,
+
+    # CRU-specific
+    "item_sensitivity_max": 5.0,
+    "item_sensitivity_decrease": 0.9,
+    "encoding_drift_decrease": 0.95,
+}
+
+factory = BaseCMRFactory(dataset, features=None)
+model = factory.create_model(params)
+```
+
+## Theoretical Motivation
+
+### End-of-List as Context Cue
+
+The key insight is that the **end of a study list** has a distinctive context that can cue recall termination. When context drifts back toward end-of-list during retrieval, the termination marker becomes more active.
+
+### Unified Competition
+
+This makes termination part of the same competitive process as item retrieval:
+- No separate stopping mechanism needed
+- Termination sensitivity controlled by the same `choice_sensitivity` parameter
+- Memory dynamics naturally influence when recall stops
+
+### Predictions
+
+**Context-dependent stopping:**
+- Stopping more likely when context is similar to end-of-list
+- Stopping less likely when context is in the "middle" of list representations
+
+**Recall dynamics:**
+- After recalling late-list items, context is near end → more likely to stop
+- After recalling early items, context is far from end → less likely to stop
+
+## Comparison: Termination Mechanisms
+
+| Aspect | Item-Independent | Competitive |
+|--------|-----------------|-------------|
+| Parameters | $\theta_s$, $\theta_r$ | None (implicit) |
+| Mechanism | Exponential growth | Context-based competition |
+| Memory dependence | None | Termination item activation |
+| Context sensitivity | No | Yes |
+| List-end encoding | Not required | Required |
+
+## Empirical Predictions
+
+### When Context Matters
+
+Competitive termination predicts that stopping depends on **where in the list** context currently points:
+
+1. **Early recall of late items**: Context near end → higher stop probability
+2. **Late recall of early items**: Context near start → lower stop probability
+3. **Systematic order effects**: Forward recall may show different stopping than backward
+
+### Free vs Serial Recall
+
+In **serial recall**, strict output order means context moves predictably toward end-of-list, producing systematic stopping.
+
+In **free recall**, order variability means context wanders more, potentially producing more variable stopping patterns.
+
+## Implementation Notes
+
+The item count is expanded by 1 to accommodate the termination item:
+
+```python
+self.items = jnp.eye(self.item_count + 1)  # +1 for termination
+self.recallable = jnp.zeros(self.item_count + 1, dtype=bool)
+```
+
+This termination item is only marked recallable after study completes, ensuring it doesn't interfere with encoding dynamics.

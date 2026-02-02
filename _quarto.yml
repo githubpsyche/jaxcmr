@@ -7,7 +7,13 @@ project:
     - docs_src/concepts/*.qmd
     - docs_src/analyses/**/*.qmd
     - docs_src/models/*.qmd
+    - docs_src/models/repetition/*.qmd
+    - docs_src/models/semantic/*.qmd
+    - docs_src/models/cru/*.qmd
+    - docs_src/models/eeg/*.qmd
     - docs_src/evaluation/*.qmd
+    - docs_src/evaluation/loss/*.qmd
+    - docs_src/evaluation/fitting/*.qmd
     - docs_src/workflow/*.qmd
     - projects/index.qmd
     - docs_src/blog/**/*.qmd
@@ -82,12 +88,53 @@ website:
     - title: "Models"
       contents:
         - docs_src/models/index.qmd
+        - section: "Baseline"
+          contents:
+            - docs_src/models/cmr.qmd
+            - docs_src/models/context.qmd
+            - docs_src/models/memory.qmd
         - docs_src/models/parameters.qmd
+        - section: "Repetition Variants"
+          contents:
+            - docs_src/models/repetition/positional.qmd
+            - docs_src/models/repetition/drift.qmd
+            - docs_src/models/repetition/reinforcement.qmd
+            - docs_src/models/repetition/outlist.qmd
+            - docs_src/models/repetition/blend.qmd
+            - docs_src/models/repetition/distinct.qmd
+            - docs_src/models/repetition/no-reinstate.qmd
+        - section: "Semantic Variants"
+          contents:
+            - docs_src/models/semantic/additive.qmd
+            - docs_src/models/semantic/multiplicative.qmd
+        - section: "CRU Variants"
+          contents:
+            - docs_src/models/cru/index.qmd
+            - docs_src/models/cru/omnibus.qmd
+            - docs_src/models/cru/cmr-compare.qmd
+            - docs_src/models/cru/compterm.qmd
+        - section: "EEG Variants"
+          contents:
+            - docs_src/models/eeg/index.qmd
+            - docs_src/models/eeg/ecmr.qmd
+            - docs_src/models/eeg/strength.qmd
 
     - title: "Evaluation"
       contents:
         - docs_src/evaluation/index.qmd
-        - docs_src/evaluation/fitting.qmd
+        - docs_src/evaluation/protocols.qmd
+        - section: "Loss Functions"
+          contents:
+            - docs_src/evaluation/loss/index.qmd
+            - docs_src/evaluation/loss/likelihood.qmd
+            - docs_src/evaluation/loss/permutation.qmd
+            - docs_src/evaluation/loss/mse.qmd
+        - section: "Fitting"
+          contents:
+            - docs_src/evaluation/fitting/index.qmd
+            - docs_src/evaluation/fitting/scipy-de.qmd
+        - docs_src/evaluation/simulation.qmd
+        - docs_src/evaluation/comparison.qmd
 
     - title: "Workflow"
       contents:

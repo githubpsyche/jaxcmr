@@ -1,0 +1,378 @@
+---
+title: "Model Comparison"
+description: "Comparing and selecting between models"
+---
+
+After fitting multiple models, comparison metrics help determine which model best explains the data. jaxcmr provides tools for information criteria, statistical tests, and winner analysis.
+
+## Why Compare Models?
+
+Model comparison addresses fundamental questions:
+- Which model best explains the observed data?
+- Is the additional complexity of Model A justified over Model B?
+- How confident can we be in our model selection?
+
+## Available Metrics
+
+| Metric | Formula | Interpretation |
+|--------|---------|----------------|
+| AIC | $2k - 2\log\mathcal{L}$ | Penalize complexity (Akaike) |
+| BIC | $k\log(n) - 2\log\mathcal{L}$ | Stronger complexity penalty |
+| AIC Weights | $\frac{e^{-\Delta_i/2}}{\sum_j e^{-\Delta_j/2}}$ | Model probabilities |
+| Paired t-test | $t = \frac{\bar{d}}{s_d / \sqrt{n}}$ | Subject-level comparison |
+| Winner Matrix | Fraction $i < j$ | Direct fitness comparison |
+
+## Information Criteria
+
+### Akaike Information Criterion (AIC)
+
+$$\text{AIC} = 2k - 2\log\mathcal{L}$$
+
+where:
+- $k$ = number of free parameters
+- $\mathcal{L}$ = maximized likelihood
+
+**Interpretation:**
+- Lower AIC = better model (accounting for complexity)
+- Penalizes models with more parameters
+- Balances fit against parsimony
+
+```python
+from jaxcmr.summarize import calculate_aic
+
+# results_list: list of FitResult dicts
+aic_df = calculate_aic(results_list)
+```
+
+### Bayesian Information Criterion (BIC)
+
+$$\text{BIC} = k\log(n) - 2\log\mathcal{L}$$
+
+where $n$ is the number of observations (trials).
+
+**Interpretation:**
+- Stronger penalty for complexity than AIC
+- Preferred when sample size is large
+- More conservative model selection
+
+```python
+from jaxcmr.summarize import calculate_bic_scores
+
+bic_df = calculate_bic_scores(results_list)
+```
+
+### AIC Weights
+
+Transform AIC differences into probabilities:
+
+$$w_i = \frac{e^{-\Delta_i/2}}{\sum_{j=1}^{M} e^{-\Delta_j/2}}$$
+
+where $\Delta_i = \text{AIC}_i - \text{AIC}_{\min}$.
+
+**Interpretation:**
+- $w_i$ = probability that model $i$ is best
+- Weights sum to 1 across models
+- Directly comparable relative support
+
+```python
+from jaxcmr.summarize import calculate_aic_weights
+
+weights_df = calculate_aic_weights(results_list)
+```
+
+## Pairwise Comparisons
+
+### AIC Differences
+
+Compare models pairwise with confidence intervals:
+
+```python
+from jaxcmr.summarize import pairwise_aic_differences
+
+mean_delta, ci_half, equivalent = pairwise_aic_differences(
+    results_list,
+    confidence=0.95,
+    equivalence_margin=2.0,
+)
+```
+
+**Returns:**
+- `mean_delta`: Mean ΔAIC between models
+- `ci_half`: Half-width of confidence interval
+- `equivalent`: Boolean matrix (within equivalence margin)
+
+### Interpretation Guide
+
+| ΔAIC | Evidence |
+|------|----------|
+| 0-2 | Essentially equivalent |
+| 2-7 | Some evidence for better model |
+| 7-10 | Considerable evidence |
+| >10 | Strong evidence |
+
+### Paired t-Tests
+
+Compare subject-level fitness values:
+
+```python
+from jaxcmr.summarize import generate_t_p_matrices
+
+t_matrix, p_matrix = generate_t_p_matrices(results_list)
+```
+
+**Returns:**
+- `t_matrix`: t-statistics for each model pair
+- `p_matrix`: p-values (two-tailed)
+
+**Interpretation:**
+- $p < 0.05$: Significant difference
+- Positive $t$: Row model worse than column model
+- Tests individual differences, not just aggregates
+
+## Winner Analysis
+
+### Winner Comparison Matrix
+
+Fraction of subjects where model $i$ outperforms model $j$:
+
+```python
+from jaxcmr.summarize import winner_comparison_matrix
+
+winner_df = winner_comparison_matrix(results_list)
+```
+
+**Interpretation:**
+- Values near 1.0: Model $i$ almost always wins
+- Values near 0.5: Models are equivalent
+- Values near 0.0: Model $j$ almost always wins
+
+**Note:** This version penalizes based on parameter count.
+
+### Raw Winner Matrix
+
+Without complexity penalty:
+
+```python
+from jaxcmr.summarize import raw_winner_comparison_matrix
+
+raw_df = raw_winner_comparison_matrix(results_list)
+```
+
+## Parameter Summary
+
+Summarize fitted parameters across models:
+
+```python
+from jaxcmr.summarize import summarize_parameters
+
+md_table = summarize_parameters(
+    results_list,
+    query_params=["encoding_drift_rate", "recall_drift_rate", ...],
+    include_std=True,
+    include_ci=True,
+)
+print(md_table)
+```
+
+**Output (Markdown table):**
+
+| Parameter | Model1 Mean (SD) [CI] | Model2 Mean (SD) [CI] |
+|-----------|----------------------|----------------------|
+| encoding_drift_rate | 0.52 (0.15) [0.48, 0.56] | 0.61 (0.12) [0.57, 0.65] |
+
+## Workflow Example
+
+### Fitting Multiple Models
+
+```python
+from jaxcmr.fitting import ScipyDE
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator
+
+# Define models to compare
+models = {
+    "CMR": make_cmr_factory(...),
+    "CMR-Semantic": make_semantic_factory(...),
+    "CMR-Instance": make_instance_factory(...),
+}
+
+# Fit each model
+results_list = []
+for name, factory in models.items():
+    fitter = ScipyDE(
+        data, features, base_params, factory,
+        MemorySearchLikelihoodFnGenerator, hyperparams,
+    )
+    fit = fitter.fit(trial_mask)
+    fit["name"] = name  # Tag with model name
+    results_list.append(fit)
+```
+
+### Comparing Results
+
+```python
+from jaxcmr.summarize import (
+    summarize_parameters,
+    calculate_aic,
+    calculate_aic_weights,
+    pairwise_aic_differences,
+    generate_t_p_matrices,
+)
+
+# 1. Parameter summary
+print("Parameter Estimates:")
+print(summarize_parameters(results_list, free_param_names))
+
+# 2. Information criteria
+print("\nAIC:")
+print(calculate_aic(results_list))
+
+print("\nAIC Weights:")
+print(calculate_aic_weights(results_list))
+
+# 3. Pairwise comparisons
+mean_delta, ci, equiv = pairwise_aic_differences(results_list)
+print("\nΔAIC (Mean ± CI):")
+for i, res_i in enumerate(results_list):
+    for j, res_j in enumerate(results_list):
+        if i < j:
+            print(f"{res_i['name']} vs {res_j['name']}: "
+                  f"{mean_delta[i,j]:.2f} ± {ci[i,j]:.2f}")
+
+# 4. Statistical tests
+t_mat, p_mat = generate_t_p_matrices(results_list)
+print("\nPaired t-tests (p-values):")
+print(p_mat)
+```
+
+## Interpretation Guidelines
+
+### When Models Are Equivalent
+
+If ΔAIC < 2 or AIC weights are similar:
+- Models explain data equally well
+- Choose based on theoretical preference
+- Consider parsimony (simpler is better)
+
+### When One Model Wins
+
+If ΔAIC > 10 or one model has weight > 0.9:
+- Strong evidence for that model
+- Report both fit and complexity
+- Discuss theoretical implications
+
+### When Results Are Mixed
+
+If different metrics disagree:
+- Report all metrics transparently
+- Consider sample size effects
+- Check for outlier subjects
+
+## Functions Reference
+
+### summarize_parameters
+
+```python
+summarize_parameters(
+    results_list: list[FitResult],
+    query_params: list[str],
+    include_std: bool = True,
+    include_ci: bool = True,
+) -> str
+```
+
+Returns Markdown table of parameter statistics.
+
+### calculate_aic
+
+```python
+calculate_aic(results_list: list[FitResult]) -> pd.DataFrame
+```
+
+Returns DataFrame with AIC for each model.
+
+### calculate_bic_scores
+
+```python
+calculate_bic_scores(results_list: list[FitResult]) -> pd.DataFrame
+```
+
+Returns DataFrame with BIC for each model.
+
+### calculate_aic_weights
+
+```python
+calculate_aic_weights(results_list: list[FitResult]) -> pd.DataFrame
+```
+
+Returns DataFrame with AIC weights (probabilities).
+
+### pairwise_aic_differences
+
+```python
+pairwise_aic_differences(
+    results_list: list[FitResult],
+    confidence: float = 0.95,
+    equivalence_margin: float = 2.0,
+) -> tuple[Array, Array, Array]
+```
+
+Returns (mean_delta, ci_half, equivalent_mask).
+
+### generate_t_p_matrices
+
+```python
+generate_t_p_matrices(
+    results_list: list[FitResult],
+) -> tuple[Array, Array]
+```
+
+Returns (t_statistics, p_values).
+
+### winner_comparison_matrix
+
+```python
+winner_comparison_matrix(
+    results_list: list[FitResult],
+) -> pd.DataFrame
+```
+
+Returns DataFrame with win fractions (complexity-penalized).
+
+### raw_winner_comparison_matrix
+
+```python
+raw_winner_comparison_matrix(
+    results_list: list[FitResult],
+) -> pd.DataFrame
+```
+
+Returns DataFrame with raw win fractions.
+
+## Best Practices
+
+### Report Multiple Metrics
+
+Don't rely on a single metric:
+- AIC and BIC may disagree
+- Winner analysis provides intuition
+- t-tests show statistical significance
+
+### Consider Sample Size
+
+- AIC is preferred for small samples
+- BIC is preferred for large samples
+- Both are asymptotic approximations
+
+### Check Individual Differences
+
+Aggregate metrics can hide variability:
+- Some subjects may favor different models
+- Winner matrices reveal this
+- Consider subject-level analysis
+
+### Account for Model Complexity
+
+More parameters ≠ better model:
+- Information criteria penalize complexity
+- Overfitting is a real concern
+- Prefer simpler models when fit is similar
