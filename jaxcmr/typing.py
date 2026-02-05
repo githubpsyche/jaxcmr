@@ -53,17 +53,17 @@ class RecallDataset(TypedDict):
     Zeros are used to indicate unused or padding entries, with values starting from 1.
 
     Required fields:
-        - subject:       Subject IDs (one per trial).
-        - listLength:    The length of the list presented in each trial.
-        - pres_itemids:  Cross-list item IDs presented in each trial
-                         (points to a global word pool).
-        - pres_itemnos:  Within-list item numbers (1-based indices; 0 indicates padding).
-        - rec_itemids:   Cross-list item IDs corresponding to items recalled.
-        - recalls:       Within-list item numbers for recalled items
-                         (1-based indices; 0 indicates padding).
 
-    Optional fields:
-        - You can add as many as needed, with `NotRequired[...]`.
+    - subject:       Subject IDs (one per trial).
+    - listLength:    The length of the list presented in each trial.
+    - pres_itemids:  Cross-list item IDs presented in each trial
+                        (points to a global word pool).
+    - pres_itemnos:  Within-list item numbers (1-based indices; 0 indicates padding).
+    - rec_itemids:   Cross-list item IDs corresponding to items recalled.
+    - recalls:       Within-list item numbers for recalled items
+                        (1-based indices; 0 indicates padding).
+
+    You can add as many as needed, with `NotRequired[...]`.
     """
 
     # REQUIRED FIELDS

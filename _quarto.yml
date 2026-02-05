@@ -2,21 +2,11 @@ project:
   type: website
   output-dir: docs
   render:
-    - index.qmd
-    - docs_src/get-started/*.qmd
-    - docs_src/concepts/*.qmd
-    - docs_src/analyses/**/*.qmd
-    - docs_src/models/*.qmd
-    - docs_src/models/repetition/*.qmd
-    - docs_src/models/semantic/*.qmd
-    - docs_src/models/cru/*.qmd
-    - docs_src/models/eeg/*.qmd
-    - docs_src/evaluation/*.qmd
-    - docs_src/evaluation/loss/*.qmd
-    - docs_src/evaluation/fitting/*.qmd
-    - docs_src/workflow/*.qmd
+    - index.ipynb
+    - notebooks/**/*.ipynb
     - projects/index.qmd
-    - docs_src/blog/**/*.qmd
+    - blog/**/*.qmd
+    - "!projects/**/*.ipynb"
 
 website:
   title: "jaxcmr"
@@ -28,118 +18,140 @@ website:
   navbar:
     background: dark
     left:
-      - text: "Get Started"
-        href: docs_src/get-started/index.qmd
-      - text: "Concepts"
-        href: docs_src/concepts/index.qmd
+      - text: "Guide"
+        href: notebooks/guide/index.ipynb
       - text: "Analyses"
-        href: docs_src/analyses/index.qmd
+        href: notebooks/analyses/index.ipynb
       - text: "Models"
-        href: docs_src/models/index.qmd
+        href: notebooks/models/index.ipynb
       - text: "Evaluation"
-        href: docs_src/evaluation/index.qmd
+        href: notebooks/evaluation/index.ipynb
       - text: "Workflow"
-        href: docs_src/workflow/index.qmd
+        href: notebooks/workflow/index.ipynb
       - text: "Projects"
         href: projects/index.qmd
       - text: "Blog"
-        href: docs_src/blog/index.qmd
+        href: blog/index.qmd
     right:
       - icon: github
         href: https://github.com/githubpsyche/jaxcmr
 
   sidebar:
-    - title: "Get Started"
+    - title: "Guide"
       contents:
-        - docs_src/get-started/index.qmd
-
-    - title: "Concepts"
-      contents:
-        - docs_src/concepts/index.qmd
-        - docs_src/concepts/jax.qmd
-        - docs_src/concepts/data-format.qmd
-        - docs_src/concepts/architecture.qmd
-        - docs_src/concepts/evaluation-pipeline.qmd
+        - notebooks/guide/index.ipynb
+        - notebooks/guide/jax.ipynb
+        - notebooks/guide/data-format.ipynb
+        - notebooks/guide/architecture.ipynb
+        - notebooks/guide/evaluation-pipeline.ipynb
 
     - title: "Analyses"
       contents:
-        - docs_src/analyses/index.qmd
-        - docs_src/analyses/importing-data.qmd
-        - docs_src/analyses/scoring-data.qmd
+        - notebooks/analyses/index.ipynb
+        - notebooks/analyses/importing-data.ipynb
+        - notebooks/analyses/scoring-data.ipynb
         - section: "Serial Position"
           contents:
-            - docs_src/analyses/serial-position/spc.qmd
-            - docs_src/analyses/serial-position/pnr.qmd
+            - notebooks/analyses/serial-position/spc.ipynb
+            - notebooks/analyses/serial-position/pnr.ipynb
         - section: "Temporal Contiguity"
           contents:
-            - docs_src/analyses/temporal-contiguity/crp.qmd
+            - notebooks/analyses/temporal-contiguity/crp.ipynb
         - section: "Category Effects"
           contents:
-            - docs_src/analyses/category/catcrp.qmd
+            - notebooks/analyses/category/catcrp.ipynb
+            - notebooks/analyses/category/cat_spc.ipynb
         - section: "Repetition"
           contents:
-            - docs_src/analyses/repetition/repcrp.qmd
+            - notebooks/analyses/repetition/repcrp.ipynb
+            - notebooks/analyses/repetition/backrepcrp.ipynb
+            - notebooks/analyses/repetition/serialrepcrp.ipynb
+            - notebooks/analyses/repetition/repneighborcrp.ipynb
         - section: "Error Analyses"
           contents:
-            - docs_src/analyses/error-analyses/intrusion.qmd
-            - docs_src/analyses/error-analyses/omission.qmd
-        - docs_src/analyses/custom-analyses.qmd
+            - notebooks/analyses/error/intrusion_error_rate.ipynb
+            - notebooks/analyses/error/omission_error_rate.ipynb
+            - notebooks/analyses/error/order_error_rate.ipynb
+            - notebooks/analyses/error/termination_probability.ipynb
+        - section: "Semantic"
+          contents:
+            - notebooks/analyses/semantic/distcrp.ipynb
+            - notebooks/analyses/semantic/srac.ipynb
+            - notebooks/analyses/semantic/relative_srac.ipynb
+        - section: "Co-Recall"
+          contents:
+            - notebooks/analyses/co-recall/conditional_corec_by_lag.ipynb
+            - notebooks/analyses/co-recall/conditional_corec_by_cat.ipynb
+            - notebooks/analyses/co-recall/joint_corec_by_lag.ipynb
+            - notebooks/analyses/co-recall/compound_cueing.ipynb
+        - section: "EEG"
+          contents:
+            - notebooks/analyses/eeg/cat_lpp_spc.ipynb
+            - notebooks/analyses/eeg/cat_lpp_by_recall.ipynb
+            - notebooks/analyses/eeg/cat_recall_by_lpp.ipynb
+        - section: "Other"
+          contents:
+            - notebooks/analyses/other/nth_item_recall.ipynb
+            - notebooks/analyses/other/rpl.ipynb
+            - notebooks/analyses/other/log_odds_crp.ipynb
+        - notebooks/analyses/custom-analyses.ipynb
 
     - title: "Models"
       contents:
-        - docs_src/models/index.qmd
+        - notebooks/models/index.ipynb
         - section: "Baseline"
           contents:
-            - docs_src/models/cmr.qmd
-            - docs_src/models/context.qmd
-            - docs_src/models/memory.qmd
-        - docs_src/models/parameters.qmd
+            - notebooks/models/cmr.ipynb
+            - notebooks/models/context.ipynb
+            - notebooks/models/linear_memory.ipynb
+        - notebooks/models/parameters.ipynb
         - section: "Repetition Variants"
           contents:
-            - docs_src/models/repetition/positional.qmd
-            - docs_src/models/repetition/drift.qmd
-            - docs_src/models/repetition/reinforcement.qmd
-            - docs_src/models/repetition/outlist.qmd
-            - docs_src/models/repetition/blend.qmd
-            - docs_src/models/repetition/distinct.qmd
-            - docs_src/models/repetition/no-reinstate.qmd
+            - notebooks/models/repetition/positional.ipynb
+            - notebooks/models/repetition/drift.ipynb
+            - notebooks/models/repetition/reinforcement.ipynb
+            - notebooks/models/repetition/outlist.ipynb
+            - notebooks/models/repetition/blend.ipynb
+            - notebooks/models/repetition/distinct.ipynb
+            - notebooks/models/repetition/no-reinstate.ipynb
         - section: "Semantic Variants"
           contents:
-            - docs_src/models/semantic/additive.qmd
-            - docs_src/models/semantic/multiplicative.qmd
+            - notebooks/models/semantic/additive.ipynb
+            - notebooks/models/semantic/multiplicative.ipynb
         - section: "CRU Variants"
           contents:
-            - docs_src/models/cru/index.qmd
-            - docs_src/models/cru/omnibus.qmd
-            - docs_src/models/cru/cmr-compare.qmd
-            - docs_src/models/cru/compterm.qmd
+            - notebooks/models/cru/index.ipynb
+            - notebooks/models/cru/omnibus.ipynb
+            - notebooks/models/cru/cmr-compare.ipynb
+            - notebooks/models/cru/compterm.ipynb
         - section: "EEG Variants"
           contents:
-            - docs_src/models/eeg/index.qmd
-            - docs_src/models/eeg/ecmr.qmd
-            - docs_src/models/eeg/strength.qmd
+            - notebooks/models/eeg/index.ipynb
+            - notebooks/models/eeg/ecmr.ipynb
+            - notebooks/models/eeg/strength.ipynb
 
     - title: "Evaluation"
       contents:
-        - docs_src/evaluation/index.qmd
-        - docs_src/evaluation/protocols.qmd
+        - notebooks/evaluation/index.ipynb
+        - notebooks/evaluation/protocols.ipynb
         - section: "Loss Functions"
           contents:
-            - docs_src/evaluation/loss/index.qmd
-            - docs_src/evaluation/loss/likelihood.qmd
-            - docs_src/evaluation/loss/permutation.qmd
-            - docs_src/evaluation/loss/mse.qmd
+            - notebooks/evaluation/loss/index.ipynb
+            - notebooks/evaluation/loss/likelihood.ipynb
+            - notebooks/evaluation/loss/permutation.ipynb
+            - notebooks/evaluation/loss/mse.ipynb
         - section: "Fitting"
           contents:
-            - docs_src/evaluation/fitting/index.qmd
-            - docs_src/evaluation/fitting/scipy-de.qmd
-        - docs_src/evaluation/simulation.qmd
-        - docs_src/evaluation/comparison.qmd
+            - notebooks/evaluation/fitting/index.ipynb
+            - notebooks/evaluation/fitting/scipy-de.ipynb
+            - notebooks/evaluation/fitting.ipynb
+        - notebooks/evaluation/parameter_shifting.ipynb
+        - notebooks/evaluation/compare_simulation_loss.ipynb
+        - notebooks/evaluation/selective_interference.ipynb
 
     - title: "Workflow"
       contents:
-        - docs_src/workflow/index.qmd
-        - docs_src/workflow/parameter-sensitivity.qmd
+        - notebooks/workflow/index.ipynb
 
   page-footer:
     left: "Built with [Quarto](https://quarto.org/)"

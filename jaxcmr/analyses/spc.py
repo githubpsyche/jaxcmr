@@ -95,7 +95,7 @@ def plot_spc(
             )
         )
 
-        color = color_cycle.pop(0)
+        color = color_cycle[data_index % len(color_cycle)]
         plot_data(
             axis,
             jnp.arange(max_list_length, dtype=int) + 1,
