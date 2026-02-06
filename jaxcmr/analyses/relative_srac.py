@@ -1,9 +1,4 @@
-"""Relative serial recall accuracy utilities.
-
-Compute an accuracy curve where a recall is “correct” when it immediately
-follows its predecessor in the study list. The first recall is scored relative
-to position 0, so only study position 1 counts as correct at the first output slot.
-"""
+"""Relative Serial Recall Accuracy Curve."""
 
 __all__ = ["Tabulation", "tabulate_trial", "relative_srac", "plot_relative_srac"]
 
@@ -14,7 +9,7 @@ from jax import jit, lax, vmap
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..helpers import find_max_list_length
+from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
@@ -48,11 +43,7 @@ class Tabulation(Pytree):
         )
 
     def tabulate_transition(self, recall: Int_) -> Bool[Array, " positions"]:
-        """Returns position flags when recall follows a +1 neighbor.
-
-        Args:
-            recall: Recalled item number (1-based).
-        """
+        """Position flags when recall follows a +1 neighbor."""
         recall_positions = self.item_study_positions[recall - 1]
         prev_plus_one = jnp.array(jnp.where(self.previous > 0, self.previous + 1, 0))
 
@@ -68,11 +59,7 @@ class Tabulation(Pytree):
         return jnp.zeros_like(self.recalled).at[idx].set(positions_to_flag > 0)
 
     def tabulate(self, recall: Int_) -> "Tabulation":
-        """Returns tabulation updated with a single recall.
-
-        Args:
-            recall: Recalled item number (1-based).
-        """
+        """Update tabulation with a single recall."""
         return self.replace(
             previous=self.item_study_positions[recall - 1],
             recalled=self.recalled | self.tabulate_transition(recall),
@@ -84,12 +71,22 @@ def tabulate_trial(
     presentation: Integer[Array, " study_events"],
     size: int = 3,
 ) -> Float[Array, " study_events"]:
-    """Returns study-position flags for recalls following their serial predecessor.
+    """Flag study positions where recall follows its predecessor.
 
-    Args:
-        trial: Recalled item numbers in retrieval order; 0 pads unused events.
-        presentation: Presented item numbers in study order.
-        size: Maximum number of study positions an item may occupy.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        1-indexed recalls; 0 pads unused events.
+    presentation : Integer[Array, " study_events"]
+        Item IDs in study order.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " study_events"]
+        True at positions recalled after their neighbor.
+
     """
     trial = trial[:presentation.size]
     init = Tabulation(presentation, trial[0], size)
@@ -101,11 +98,20 @@ def relative_srac(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """Returns relative serial recall accuracy by study position.
+    """Relative serial recall accuracy by study position.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: Maximum number of study positions an item may occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Mean accuracy at each study position.
+
     """
     scores = vmap(tabulate_trial, in_axes=(0, 0, None))(
         dataset["recalls"],
@@ -126,17 +132,32 @@ def plot_relative_srac(
     confidence_level: float = 0.95,
 
 ) -> Axes:
-    """Returns axis with plotted relative serial recall accuracy curve.
+    """Plot relative serial recall accuracy with intervals.
 
-    Args:
-        datasets: Trial data for plotting.
-        trial_masks: Masks to filter trials in each dataset.
-        color_cycle: Colors for each dataset.
-        labels: Legend labels for datasets.
-        contrast_name: Name of contrast for labeling.
-        axis: Pre-existing axis to plot on.
-        size: Maximum number of study positions an item may occupy.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    size : int
+        Max study positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the relative SRAC plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
 

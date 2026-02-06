@@ -1,8 +1,4 @@
-"""Recall probability by lag.
-
-Compute how recall varies with the spacing between repeated item presentations and
-provide plotting utilities for visualizing repetition lag effects.
-"""
+"""Recall Probability by Lag (RPL)."""
 
 from __future__ import annotations
 
@@ -54,19 +50,26 @@ def item_lag_counts(
     max_lag: int,
     n_bins: int,
 ) -> tuple[Bool[Array, " lag_bins"], Bool[Array, " lag_bins"]]:
-    """Return one-hot vectors (presented, recalled) for ``target_item``'s lag bin.
+    """One-hot presented/recalled vectors for an item's lag bin.
 
-    Args:
-        target_item: Item ID to tabulate.
-        recalls: First study positions of recalled items (1-indexed; 0 marks no recall).
-        presentation: Item IDs presented at each study position (1-indexed).
-        max_lag: Largest explicit lag bucket.
-            - bin 0 → single presentation
-            - bin k → k intervening items for 1 ≤ k ≤ ``max_lag``
-            - bin ``max_lag + 1`` → lag exceeds ``max_lag``
-        n_bins: Total number of bins (``max_lag + 2``).
+    Parameters
+    ----------
+    target_item : Int_
+        Item ID to tabulate.
+    recalls : Integer[Array, " recall_events"]
+        1-indexed recalled positions; 0 for no recall.
+    presentation : Integer[Array, " study_events"]
+        Item IDs at each study position.
+    max_lag : int
+        Largest explicit lag bucket.
+    n_bins : int
+        Total number of bins (``max_lag + 2``).
 
-    Each vector has at most one ``True``. Summing over items or trials yields counts.
+    Returns
+    -------
+    tuple[Bool[Array, " lag_bins"], Bool[Array, " lag_bins"]]
+        Presented and recalled one-hot vectors.
+
     """
     first_pos, second_pos = item_to_study_positions(target_item, presentation, size=2)
     lag = jnp.maximum(second_pos - first_pos, 0)
@@ -96,14 +99,20 @@ def recall_probability_by_lag(
     dataset: RecallDataset,
     max_lag: int = 8,
 ) -> Float[Array, " lag_bins"]:
-    """Return recall probability for lag 0, 1, ..., ``max_lag``, plus once-presented items.
+    """Recall probability by repetition lag.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        max_lag: Largest explicit lag bucket.
-            - bin 0 → single presentation
-            - bin k → k intervening items for 1 ≤ k ≤ ``max_lag``
-            - bin ``max_lag + 1`` → lag exceeds ``max_lag``
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    max_lag : int
+        Largest explicit lag bucket.
+
+    Returns
+    -------
+    Float[Array, " lag_bins"]
+        Recall probability per lag bin.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -121,14 +130,20 @@ def binned_recall_probability_by_lag(
     dataset: RecallDataset,
     max_lag: int = 8,
 ) -> Float[Array, " lag_bins"]:
-    """Return binned recall probability for lag 0, 1, ..., ``max_lag``, plus once-presented items.
+    """Binned recall probability by repetition lag.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        max_lag: Largest explicit lag bucket.
-            - bin 0 → single presentation
-            - bin k → k intervening items for 1 ≤ k ≤ ``max_lag``
-            - bin ``max_lag + 1`` → lag exceeds ``max_lag``
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    max_lag : int
+        Largest explicit lag bucket.
+
+    Returns
+    -------
+    Float[Array, " lag_bins"]
+        Recall probability per binned lag.
+
     """
     result = recall_probability_by_lag(dataset, max_lag)
     return (
@@ -155,16 +170,30 @@ def plot_full_rpl(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return ``Axes`` with repetition-lag curves for each dataset and mask.
+    """Plot full-resolution repetition-lag curves.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Boolean masks to filter trials.
-        color_cycle: Colors for plotting each dataset.
-        labels: Names for each dataset for the legend.
-        contrast_name: Legend title for the plotted contrast.
-        axis: Existing Matplotlib axes to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the RPL plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -209,16 +238,30 @@ def plot_rpl(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return ``Axes`` with binned repetition-lag curves for each dataset and mask.
+    """Plot binned repetition-lag curves.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Boolean masks to filter trials.
-        color_cycle: Colors for plotting each dataset.
-        labels: Names for each dataset for the legend.
-        contrast_name: Legend title for the plotted contrast.
-        axis: Existing Matplotlib axes to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the binned RPL plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -277,15 +320,22 @@ def subject_full_rpl(
     trial_mask: Bool[Array, " trial_count"],
     max_lag: int | None = None,
 ) -> np.ndarray:
-    """Compute subject-level recall probability by lag.
+    """Subject-level recall probability by lag.
 
-    Args:
-        dataset: Recall dataset containing trial data.
-        trial_mask: Boolean mask selecting trials to include.
-        max_lag: Largest explicit lag bucket to use.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing trial data.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials.
+    max_lag : int or None
+        Largest explicit lag bucket.
 
-    Returns:
-        Array of shape [n_subjects, max_lag + 2] with recall probabilities by lag.
+    Returns
+    -------
+    np.ndarray
+        Shape [n_subjects, max_lag + 2].
+
     """
     max_lag = _resolve_max_lag(dataset, max_lag)
     subject_values = apply_by_subject(
@@ -302,15 +352,22 @@ def subject_binned_rpl(
     trial_mask: Bool[Array, " trial_count"],
     max_lag: int | None = None,
 ) -> np.ndarray:
-    """Compute subject-level binned recall probability by lag.
+    """Subject-level binned recall probability by lag.
 
-    Args:
-        dataset: Recall dataset containing trial data.
-        trial_mask: Boolean mask selecting trials to include.
-        max_lag: Largest explicit lag bucket to use.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing trial data.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials.
+    max_lag : int or None
+        Largest explicit lag bucket.
 
-    Returns:
-        Array of shape [n_subjects, 5] with binned recall probabilities by lag.
+    Returns
+    -------
+    np.ndarray
+        Shape [n_subjects, 5].
+
     """
     max_lag = _resolve_max_lag(dataset, max_lag)
     subject_values = apply_by_subject(
@@ -415,15 +472,18 @@ def test_rpl_slope(
 ) -> RPLSlopeTestResult:
     """Test whether recall probability increases with spacing.
 
-    Fits a slope for each subject across lag bins (excluding the
-    single-presentation bin) and tests whether the mean slope differs from zero.
+    Parameters
+    ----------
+    subject_rpl : np.ndarray
+        Subject-level recall probabilities by lag.
+    mode : str
+        ``"full"`` or ``"binned"``.
 
-    Args:
-        subject_rpl: Subject-level recall probabilities by lag.
-        mode: "full" or "binned".
+    Returns
+    -------
+    RPLSlopeTestResult
+        Test statistics for per-subject slopes.
 
-    Returns:
-        RPLSlopeTestResult with test statistics for the per-subject slopes.
     """
     values = subject_rpl[:, 1:]
     lag_values = _lag_values_for_mode(mode, values.shape[1])
@@ -452,18 +512,22 @@ def test_rpl_slope_vs_comparison(
     comparison_rpl: np.ndarray,
     mode: str = "full",
 ) -> RPLSlopeComparisonResult:
-    """Test whether observed and comparison spacing slopes differ.
+    """Test whether observed and comparison slopes differ.
 
-    Fits per-subject slopes across lag bins (excluding the single-presentation bin)
-    and compares observed and comparison slopes.
+    Parameters
+    ----------
+    observed_rpl : np.ndarray
+        Subject-level recall probabilities (observed).
+    comparison_rpl : np.ndarray
+        Subject-level recall probabilities (comparison).
+    mode : str
+        ``"full"`` or ``"binned"``.
 
-    Args:
-        observed_rpl: Subject-level recall probabilities by lag from observed data.
-        comparison_rpl: Subject-level recall probabilities by lag from comparison data.
-        mode: "full" or "binned".
+    Returns
+    -------
+    RPLSlopeComparisonResult
+        Test statistics for slope differences.
 
-    Returns:
-        RPLSlopeComparisonResult with test statistics for slope differences.
     """
     obs_values = observed_rpl[:, 1:]
     comparison_values = comparison_rpl[:, 1:]
@@ -507,19 +571,28 @@ def run_rpl_slope_analysis(
     mode: str = "full",
     max_lag: int | None = None,
 ) -> tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]:
-    """Compute spacing-effect slope tests for observed and comparison datasets.
+    """Slope tests for observed and comparison datasets.
 
-    Args:
-        dataset: Observed recall dataset.
-        trial_mask: Boolean mask selecting observed trials.
-        comparison_dataset: Comparison recall dataset.
-        comparison_mask: Boolean mask selecting comparison trials.
-        mode: Spacing resolution to use ("full" or "binned").
-        max_lag: Largest explicit lag bucket to use.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Observed recall dataset.
+    trial_mask : Bool[Array, " trial_count"]
+        Mask selecting observed trials.
+    comparison_dataset : RecallDataset
+        Comparison recall dataset.
+    comparison_mask : Bool[Array, " trial_count"]
+        Mask selecting comparison trials.
+    mode : str
+        ``"full"`` or ``"binned"``.
+    max_lag : int or None
+        Largest explicit lag bucket.
 
-    Returns:
-        (observed_result, comparison_result, difference_result): Slope tests for the
-            observed dataset, the comparison dataset, and their difference.
+    Returns
+    -------
+    tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]
+        Observed, comparison, and difference results.
+
     """
     max_lag = _resolve_max_lag(dataset, max_lag)
     if mode == "full":

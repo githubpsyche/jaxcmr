@@ -39,16 +39,21 @@ def compute_distance_bins_percentiles(
     distance_matrix: Float[Array, " item_count item_count"],
     percentiles: Float[Array, " percentiles"],
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Returns percentile-based distance bin edges and representative centers.
+    """Percentile-based distance bin edges and centers.
 
-    Args:
-      distance_matrix: Pairwise distances for the item vocabulary.
-      percentiles: Percentiles (0–100) that define interior bin edges.
+    Parameters
+    ----------
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise distances for the item vocabulary.
+    percentiles : Float[Array, " percentiles"]
+        Percentiles (0--100) defining interior bin edges.
 
-    Returns:
-      Tuple ``(interior_edges, bin_centers)`` where ``interior_edges`` contains
-      the percentile cut points and ``bin_centers`` provides the midpoint of the
-      corresponding distance ranges.
+    Returns
+    -------
+    tuple[jnp.ndarray, jnp.ndarray]
+        ``(interior_edges, bin_centers)`` where edges are the
+        percentile cut points and centers are bin midpoints.
+
     """
 
     upper_indices = jnp.triu_indices(distance_matrix.shape[0], k=1)
@@ -65,9 +70,8 @@ def compute_distance_bin_edges(
     distance_matrix: Float[Array, " item_count item_count"],
     percentiles: Float[Array, " percentiles"],
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Returns percentile-based distance bin edges.
+    """Deprecated alias for :func:`compute_distance_bins_percentiles`.
 
-    Deprecated alias for :func:`compute_distance_bins_percentiles`.
     """
 
     return compute_distance_bins_percentiles(distance_matrix, percentiles)
@@ -76,17 +80,6 @@ def compute_distance_bin_edges(
 class DistanceTabulation(Pytree):
     """Accumulates per-bin transition counts for a single trial.
 
-    Assumes:
-        - ``trial[0] > 0`` (first recall exists).
-        - ``presentation`` supplies item identifiers compatible with the global
-          ``distance_matrix``.
-        - Subsequent zeros in ``trial`` are padding and ignored.
-
-    Behavior:
-        - Tracks availability per study position, clearing positions as they are
-          recalled.
-        - Computes distances between the previously recalled item and each
-          unrecalled study item before binning.
     """
 
     def __init__(
@@ -136,13 +129,24 @@ def tabulate_trial(
     distance_matrix: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"],
 ) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
-    """Return actual and available bin counts for a single trial.
+    """Actual and available bin counts for a single trial.
 
-    Args:
-      trial: Sequence of recall events encoded as study positions.
-      present_ids: Item identifiers presented at each study position.
-      distance_matrix: Pairwise distances indexed by item identifier.
-      bin_edges: Interior bin edges shared across trials.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events encoded as study positions.
+    present_ids : Integer[Array, " study_item_ids"]
+        Item identifiers at each study position.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise distances indexed by item identifier.
+    bin_edges : Float[Array, " edges"]
+        Interior bin edges shared across trials.
+
+    Returns
+    -------
+    tuple[Integer[Array, " bins"], Integer[Array, " bins"]]
+        Actual and available transition counts per bin.
+
     """
 
     valid = present_ids > 0
@@ -166,23 +170,23 @@ def raw_candidate_transitions(
 ) -> tuple[
     Float[Array, " transitions study_events"], Bool[Array, " transitions study_events"]
 ]:
-    """Returns the available transition distances per recall step.
+    """Available transition distances per recall step.
 
-    Following the “available transitions” tally described in the semantic-CRP
-    methodology, the function records, for each recall step, the distance from
-    the previously recalled item to every study item that remains available.
-    Callers can aggregate these distances across subjects to determine bin
-    boundaries that guarantee a minimum average number of opportunities in each
-    bin.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events encoded as study positions.
+    present_ids : Integer[Array, " study_item_ids"]
+        Item identifiers at each study position.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise item distances indexed by identifier.
 
-    Args:
-      trial: Sequence of recall events encoded as study positions.
-      present_ids: Item identifiers presented at each study position.
-      distance_matrix: Pairwise item distances indexed by identifier.
+    Returns
+    -------
+    tuple
+        ``(distances, mask)`` with distance candidates and
+        their availability mask per transition.
 
-    Returns:
-      (distances, mask): Distance candidates and their availability mask per
-      transition.
     """
 
     valid = present_ids > 0
@@ -229,24 +233,25 @@ def compute_min_count_distance_bins(
     min_transitions_per_subject: int,
     step: float = 0.05,
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Returns distance bins that satisfy the per-subject availability minimum.
+    """Distance bins satisfying per-subject availability minimum.
 
-    Mirrors the semantic-CRP procedure by sweeping from the smallest distances
-    (strongest similarities) upward in ``step`` increments, accumulating
-    available transitions until each bin contains at least
-    ``min_transitions_per_subject`` on average across subjects. The lower bound
-    of the completed bin seeds the next bin, and any remaining distances form a
-    final bin whose center is the mean distance of its members.
+    Parameters
+    ----------
+    candidates : Float[Array, "subject_count transition_count"]
+        Distance values for every available transition.
+    mask : Bool[Array, "subject_count transition_count"]
+        Boolean mask selecting valid entries in ``candidates``.
+    min_transitions_per_subject : int
+        Minimum average available transitions per bin.
+    step : float
+        Increment used when widening the current bin.
 
-    Args:
-      candidates: Distance values for every available transition per subject.
-      mask: Boolean mask selecting valid entries in ``candidates``.
-      min_transitions_per_subject: Minimum average number of available transitions.
-      step: Increment used when widening the current bin.
+    Returns
+    -------
+    tuple[jnp.ndarray, jnp.ndarray]
+        ``(edges, centers)`` with interior bin boundaries and
+        mean distances per bin.
 
-    Returns:
-      Tuple ``(edges, centers)`` where ``edges`` are the interior bin boundaries
-      and ``centers`` are the mean distances within each bin.
     """
 
     subject_count = candidates.shape[0]
@@ -289,27 +294,27 @@ def compute_distance_bins_min_count(
     step: float = 0.05,
     trial_mask: Optional[Bool[Array, " trial_count"]] = None,
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Returns distance bins derived from availability counts.
+    """Distance bins derived from dataset availability counts.
 
-    The function gathers the available transition distances across the dataset
-    and applies ``compute_min_count_distance_bins`` so that each distance bin
-    contains, on average, at least ``min_transitions_per_subject`` transition
-    opportunities per subject. This mirrors the semantic-CRP binning rule that
-    decrements the lower distance boundary by roughly 0.05 until the required
-    availability is met.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemids``.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise distances indexed by item identifier.
+    min_transitions_per_subject : int
+        Minimum available transitions per bin per subject.
+    step : float
+        Distance increment used while expanding each bin.
+    trial_mask : Bool[Array, " trial_count"], optional
+        Mask selecting trials for bin computation.
 
-    Args:
-      dataset: Recall dataset with ``recalls`` and ``pres_itemids`` fields.
-      distance_matrix: Pairwise distances indexed by item identifier.
-      min_transitions_per_subject: Minimum number of available transitions per
-        bin, averaged across subjects.
-      step: Distance increment used while expanding each bin.
-      trial_mask: Optional mask selecting which trials contribute to the bin
-        definition.
+    Returns
+    -------
+    tuple[jnp.ndarray, jnp.ndarray]
+        ``(edges, centers)`` with interior boundaries and
+        mean distances per bin.
 
-    Returns:
-      Tuple ``(edges, centers)`` where ``edges`` are the interior boundaries and
-      ``centers`` are the mean distances per bin.
     """
 
     recalls = dataset["recalls"]
@@ -355,12 +360,22 @@ def dist_crp(
     distance_matrix: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"],
 ) -> Float[Array, " bins"]:
-    """Return the distance-conditioned response probability.
+    """Distance-conditioned response probability.
 
-    Args:
-      dataset: recall dataset containing at least ``recalls`` and ``pres_itemids``
-      distance_matrix: Pairwise item distances.
-      bin_edges: Interior boundaries for distance bins.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemids``.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise item distances.
+    bin_edges : Float[Array, " edges"]
+        Interior boundaries for distance bins.
+
+    Returns
+    -------
+    Float[Array, " bins"]
+        Conditional response probability per distance bin.
+
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
         dataset["recalls"],
@@ -388,24 +403,40 @@ def plot_dist_crp(
 ) -> Axes:
     """Plot distance-binned CRP curves aggregated by subject.
 
-    Args:
-      datasets: Collection of recall datasets to contrast.
-      trial_masks: Boolean masks selecting trials per dataset.
-      features: Feature matrix whose rows align with the vocabulary items
-      color_cycle: Colors used for successive datasets.
-      labels: Legend labels corresponding to ``datasets``.
-      contrast_name: Optional legend title.
-      axis: Optional matplotlib axis to draw on.
-      bin_edges: Interior bin edges supplied by caller. If omitted, percentile-
-        style bins are derived from the availability counts.
-      bin_centers: Optional centers matching ``bin_edges``. Ignored when
-        ``bin_edges`` is ``None``.
-      min_transitions_per_subject: Minimum number of available transitions per
-        bin, averaged across subjects, used when defining distance bins.
-      bin_step: Distance increment applied while expanding each bin.
-      bin_source_index: Index selecting which dataset provides the binning
-        availability counts.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Recall datasets to contrast.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials per dataset.
+    features : Float[Array, "word_count features_count"]
+        Feature matrix whose rows align with vocabulary items.
+    color_cycle : list[str], optional
+        Colors for successive datasets.
+    labels : Sequence[str], optional
+        Legend labels for ``datasets``.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Matplotlib Axes to plot on.
+    min_transitions_per_subject : int
+        Minimum available transitions per bin per subject.
+    bin_step : float
+        Distance increment for expanding each bin.
+    bin_source_index : int
+        Dataset index providing binning availability counts.
+    bin_edges : Float[Array, " edges"], optional
+        Interior bin edges; computed from data if ``None``.
+    bin_centers : Float[Array, " bins"], optional
+        Bin centers matching ``bin_edges``.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with distance-binned CRP curves.
+
     """
 
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
@@ -471,20 +502,36 @@ def plot_cat_crp(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot category-binned CRP curves using a single feature column.
+    """Plot category-binned CRP curves from a single feature column.
 
-    Args:
-      datasets: Recall datasets to compare.
-      trial_masks: Boolean trial-selection masks aligned with ``datasets``.
-      features: Matrix whose rows align with the vocabulary; the specified column
-        encodes categorical assignments.
-      feature_column: Zero-based index of ``features`` used to derive categories.
-      feature_label: Human-readable label for the feature column.
-      color_cycle: Matplotlib-compatible color sequence used per dataset.
-      labels: Legend labels corresponding to ``datasets``.
-      contrast_name: Optional legend title.
-      axis: Existing Matplotlib axis to plot on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Recall datasets to compare.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials per dataset.
+    features : Float[Array, "word_count features_count"]
+        Feature matrix; specified column encodes categories.
+    feature_column : int
+        Zero-based column index in ``features``.
+    feature_label : str
+        Human-readable label for the feature column.
+    color_cycle : list[str], optional
+        Colors for each dataset.
+    labels : Sequence[str], optional
+        Legend labels for ``datasets``.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Matplotlib Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with category-binned CRP curves.
+
     """
 
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)

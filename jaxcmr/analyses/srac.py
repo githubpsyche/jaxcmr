@@ -1,9 +1,4 @@
-"""Compute and plot serial recall accuracy.
-
-The Serial Recall Accuracy Curve (SRAC) reports the
-proportion of trials on which the item studied at each
-position is recalled in the matching output position.
-"""
+"""Serial Recall Accuracy Curve (SRAC)."""
 
 from typing import Optional, Sequence
 
@@ -24,14 +19,22 @@ def trial_srac(
     presentations: Integer[Array, " study_positions"],
     size: int = 3,
 ) -> Bool[Array, " study_positions"]:
-    """Return a flag for each study position indicating correct recall.
+    """Flag each study position as correctly recalled or not.
 
-    Args:
-      recalls: Recalled item indices for one trial. Shape
-        ``[recall_positions]``; 1-indexed with 0 for no recall.
-      presentations: Item identifiers in study order. Shape
-        ``[study_positions]``; 1-indexed.
-      size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        1-indexed recalls for one trial; 0 for no recall.
+    presentations : Integer[Array, " study_positions"]
+        Item IDs in study order.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Bool[Array, " study_positions"]
+        True where the study position was correctly recalled.
+
     """
     list_length = presentations.shape[0]
     recalls = recalls[:list_length]
@@ -46,11 +49,20 @@ def srac(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """Return the proportion of correct recalls for each study position.
+    """Proportion of correct recalls at each study position.
 
-    Args:
-      dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-      size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Mean accuracy at each study position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -72,20 +84,32 @@ def plot_srac(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot serial recall accuracy curves for one or more datasets.
+    """Plot serial recall accuracy with confidence intervals.
 
-    Args:
-      datasets: Recall datasets to plot.
-      trial_masks: Boolean masks selecting trials for each dataset.
-      color_cycle: Line colors for each dataset.
-      labels: Legend entries corresponding to each dataset.
-      contrast_name: Name of the contrast used in labeling.
-      axis: Existing Matplotlib axes to draw on.
-      size: Maximum number of study positions an item may occupy.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    size : int
+        Max study positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
 
-    Returns:
-      The Matplotlib axes containing the plot.
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the SRAC plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

@@ -1,0 +1,45 @@
+Okay let's think.
+
+I think I'm hobbled by a few things.
+
+First, each document is kind of standalone so I miss context from adjacent documents. I should try harder to keep everything in one place unless there's a good reason to split things up.
+
+Second, there's my desire to avoid making too many artifacts that won't be used for research or could be deprecated when the library is updated. I should try to keep a few core artifacts and otherwise render documentation directly from the source code, which is more likely to be maintained and updated.
+
+What's the most bare documentation that gets the work done?
+
+If template notebooks reliably got an overview and walkthrough each parameter and key functions, and I included a "setup" page explaining how to use them, the documentation for analyses and key workflows would probably be sufficient. 
+
+The model pages are a bit more complicated. 
+But one wonders if they should be. 
+
+Let's lock in some decisions.
+I certainly won't use nbdev to bind source code and documentation.
+I won't even use show_doc, since it doesn't like my docstring style.
+
+What's left?
+How thoroughly will I document template notebooks? 
+Clear overview, walkthrough of key parameters and functions, and a rendered example.
+Oh, and I'll be a bit more literate in my presentation of code cells and their outputs.
+
+Will they stand in for documentation of the library itself?
+No, I will still generate an API reference from docstrings, but I won't worry about making it look nice. I'll just make sure the docstrings are clear and comprehensive.
+
+From there, I still need to document models and workflows.
+Workflows themselves can be documented like template notebooks.
+So what's left is model documentation.
+I have the memory and context components documented, so what's left is just CMR itself. 
+I have the math for those; I just also need to relate them to the code and make sure I explain how the different components fit together.
+
+Then there's the development guide / architecture stuff.
+Data format page is still necessary.
+
+The nbdev docs are kind of bad.
+What are some docs I like?
+
+Psifr's guide is pretty good.
+But incompatible with the template notebooks, which are more focused on workflows and analyses than on the library itself.
+
+So I have to decide whether I will lean into that style of documentation or write documentation that I'm ok being kind of bad.
+
+Maybe claude can still write good documentation if I keep guide focused. Hmmm...

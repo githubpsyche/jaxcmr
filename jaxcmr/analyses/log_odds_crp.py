@@ -1,13 +1,4 @@
-"""
-Lag-CRP log-odds contrasts.
-
-Utilities to compute Lag-Conditional Response Probability (Lag-CRP) counts and
-express them as log-odds differences relative to a reference lag. Serial lag ℓ
-is defined by the study positions of successive recalls (ℓ = Y - X for recalls
-at positions X then Y). All outputs retain the standard Lag-CRP axis
-conventions—length ``2*L - 1`` with index ``i`` corresponding to lag
-``ℓ = i - (L - 1)``.
-"""
+"""Lag-CRP log-odds contrasts."""
 
 __all__ = [
     "SimpleTabulation",
@@ -35,16 +26,8 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
 class SimpleTabulation(Pytree):
-    """
-    Uniform-list CRP tabulator.
+    """Uniform-list CRP tabulator.
 
-    Assumes:
-        - `trial[0] > 0` (first recall exists).
-        - Subsequent zeros are pads; ignored.
-
-    Behavior:
-        - Marks the first recall's item as unavailable for subsequent transitions.
-        - Bounds-checks choices to [1..L]; others are ignored.
     """
 
     def __init__(self, list_length: int, first_recall: Int_):
@@ -76,18 +59,20 @@ class SimpleTabulation(Pytree):
 def simple_tabulate_trial(
     trial: Integer[Array, " recall_events"], list_length: int
 ) -> SimpleTabulation:
-    """Compute Lag-CRP tabulation for a single trial with no repeated items.
+    """Lag-CRP tabulation for a single no-repeat trial.
 
-    Args:
-        trial: int array [n_recall_events]; serial positions in 1..L with 0 pads.
-        list_length: Study-list length ``L``.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Serial positions in ``1..L`` with ``0`` pads.
+    list_length : int
+        Study-list length ``L``.
 
-    Returns:
-        SimpleTabulation tracking actual and available transitions.
+    Returns
+    -------
+    SimpleTabulation
+        Tabulation tracking actual and available transitions.
 
-    Notes:
-        * Ignores zeros (pads) and out-of-range positions.
-        * Divides by available transitions; zero denominators yield NaN.
     """
     return lax.scan(
         lambda tabulation, recall: (tabulation.update(recall), None),
@@ -99,14 +84,20 @@ def simple_tabulate_trial(
 def simple_crp(
     trials: Integer[Array, "trials recall_events"], list_length: int
 ) -> Float[Array, " lags"]:
-    """Compute Lag-CRP across multiple recall trials.
+    """Lag-CRP across multiple recall trials.
 
-    Args:
-        trials: int array [n_trials, n_recall_events]; serial positions in 1..L, 0 pads.
-        list_length: L.
+    Parameters
+    ----------
+    trials : Integer[Array, "trials recall_events"]
+        Serial positions in ``1..L`` with ``0`` pads.
+    list_length : int
+        Study-list length ``L``.
 
-    Returns:
-        1-D float array of length (2*L - 1), indexed by lag offset (lag + (L - 1)).
+    Returns
+    -------
+    Float[Array, " lags"]
+        CRP of length ``2*L - 1`` indexed by lag offset.
+
     """
     tabulated_trials = lax.map(lambda t: simple_tabulate_trial(t, list_length), trials)
     total_actual_transitions = jnp.sum(tabulated_trials.actual_transitions, axis=0)
@@ -119,11 +110,18 @@ def set_false_at_index(
 ) -> tuple[Bool[Array, " positions"], None]:
     """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
 
-    Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
-    ``[1, vec.size]`` are ignored.
+    Parameters
+    ----------
+    vec : Bool[Array, " positions"]
+        Boolean vector to modify.
+    i : Int_
+        1-based index; ``0`` is a no-op sentinel.
 
-    Returns:
-        Tuple of the (possibly updated) vector and ``None``.
+    Returns
+    -------
+    tuple[Bool[Array, " positions"], None]
+        Updated vector and ``None``.
+
     """
 
     should_update = (i > 0) & (i <= vec.size)
@@ -133,25 +131,8 @@ def set_false_at_index(
 
 
 class Tabulation(Pytree):
-    """
-    Maintains per-transition state for CRP with repeats.
+    """Per-transition CRP state supporting repeated items.
 
-    State:
-        - previous_positions: study positions of previously recalled item
-        - avail_recalls: boolean [L], study positions still available
-        - actual_lags, avail_lags: int [2*L - 1], accumulated
-
-    Update steps executed on each valid recall (in order):
-        1) Previous item positions -> `previous_positions`.
-        2) Available positions -> `avail_recalls = available_recalls_after(recall)`.
-        3) Actual lags: union of unique lags from `previous_positions` to the
-           current item's study positions (`tabulate_actual_lags`).
-        4) Available lags: union of unique lags from each `previous_positions`
-           to all currently available positions (`tabulate_available_lags`).
-
-    Conventions:
-        - Zeros in `recall_study_positions` are padding; safely ignored.
-        - Indices are 1-based for positions; internal arrays use zero-based.
     """
 
     def __init__(
@@ -266,7 +247,23 @@ def tabulate_trial(
     presentation: Integer[Array, " study_events"],
     size: int = 3,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
-    """Tabulate actual and available lags for a single trial."""
+    """Actual and available lags for a single trial.
+
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events as study positions.
+    presentation : Integer[Array, " study_events"]
+        Item identifiers at each study position.
+    size : int
+        Maximum positions an item can occupy.
+
+    Returns
+    -------
+    tuple[Float[Array, " lags"], Float[Array, " lags"]]
+        Actual and available lag counts.
+
+    """
 
     init = Tabulation(presentation, trial[0], size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
@@ -279,14 +276,24 @@ def log_odds_crp(
     epsilon: float = 1e-6,
     size: int = 3,
 ) -> Float[Array, " lags"]:
-    """
-    Returns Lag-CRP log-odds relative to a reference lag.
+    """Lag-CRP log-odds relative to a reference lag.
 
-    Args:
-        dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
-        reference_lag: Lag (ℓ) used as the zero-log-odds baseline.
-        epsilon: Lower/upper bound for probabilities before taking the logit.
-        size: Max number of study positions an item can occupy (compile-time constant).
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    reference_lag : int
+        Lag used as the zero-log-odds baseline.
+    epsilon : float
+        Probability clamp before the logit transform.
+    size : int
+        Maximum positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " lags"]
+        Log-odds CRP relative to ``reference_lag``.
+
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None))(
         dataset["recalls"], dataset["pres_itemnos"], size
@@ -319,30 +326,38 @@ def plot_log_odds_crp(
     confidence_level: float = 0.95,
 
 ) -> Axes:
-    """
-    Plot subject-wise Lag-CRP log-odds and their mean ± error.
+    """Plot subject-wise Lag-CRP log-odds with error bounds.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum lag to plot.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        reference_lag: Lag that defines the zero log-odds baseline.
-        epsilon: Probability clamp used inside the logit transform.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Recall datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials per dataset.
+    max_lag : int
+        Maximum lag to plot.
+    color_cycle : list[str], optional
+        Colors for each dataset.
+    labels : Sequence[str], optional
+        Legend labels for ``datasets``.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Matplotlib Axes to plot on.
+    reference_lag : int
+        Lag defining the zero-log-odds baseline.
+    epsilon : float
+        Probability clamp for the logit transform.
+    size : int
+        Maximum positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
 
+    Returns
+    -------
+    Axes
+        Axes with the Lag-CRP log-odds plot.
 
-    Returns:
-        Matplotlib Axes with the Lag-CRP plot.
-
-    Notes:
-        - `datasets` must contain 'recalls', 'pres_itemnos', 'listLength'.
-        - `trial_masks` filters trials; lengths must match datasets.
-        - Color cycle wraps if more datasets than colors.
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
 

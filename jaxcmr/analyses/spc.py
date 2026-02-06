@@ -24,11 +24,20 @@ def fixed_pres_spc(
     recalls: Integer[Array, " trial_count recall_positions"],
     list_length: int,
 ) -> Float[Array, " study_positions"]:
-    """Returns recall rate as a function of study position for uniform lists.
+    """Compute recall rate by study position for fixed-length lists.
 
-    Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        list_length: Length of the study list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_positions"]
+        Trial by recall position array of recalled items (1-indexed; 0 = no recall).
+    list_length : int
+        Number of items in the study list.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall probability at each serial position.
+
     """
     return jnp.bincount(recalls.flatten(), length=list_length + 1)[1:] / len(recalls)
 
@@ -37,11 +46,20 @@ def spc(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """Returns recall rate as a function of study position.
+    """Compute recall rate by study position, handling repeated items.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: Maximum number of study positions an item can be presented at.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing ``recalls`` and ``pres_itemnos``.
+    size : int, optional
+        Maximum study positions an item can occupy (default: 3).
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall probability at each serial position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -65,17 +83,32 @@ def plot_spc(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with serial position curves for datasets.
+    """Plot serial position curves with confidence intervals.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks selecting trials in each dataset.
-        color_cycle: Colors for plotting each dataset.
-        labels: Legend labels for each dataset.
-        contrast_name: Legend title for contrasts.
-        axis: Existing Matplotlib ``Axes`` to plot on.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets. Each is paired with the mask at the same index.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials. Length must match ``datasets``.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels for each curve.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    size : int, optional
+        Maximum study positions an item can occupy (default: 3).
+    confidence_level : float, optional
+        Confidence level for error bounds (default: 0.95).
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with serial position curves.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

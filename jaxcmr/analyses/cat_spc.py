@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import find_max_list_length
+from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
@@ -32,13 +32,24 @@ def fixed_pres_cat_spc(
     category_value: int,
     list_length: int,
 ) -> Float[Array, " study_positions"]:
-    """Returns category-filtered recall rate as a function of study position.
+    """Category-filtered recall rate by study position.
 
-    Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        categories: Trial by study position array of item categories.
-        category_value: Category value to compute the SPC over.
-        list_length: Length of the study list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_positions"]
+        Recalled items (1-indexed; 0 for no recall).
+    categories : Integer[Array, " trial_count study_positions"]
+        Item categories per study position.
+    category_value : int
+        Category to filter on.
+    list_length : int
+        Study-list length.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall rate at each position for the category.
+
     """
 
     recall_counts = vmap(
@@ -56,12 +67,22 @@ def cat_spc(
     category_field: str,
     category_value: int,
 ) -> Float[Array, " study_positions"]:
-    """Returns category-filtered recall rate as a function of study position.
+    """Category-filtered recall rate by study position.
 
-    Args:
-        dataset: Recall dataset containing per-item category metadata.
-        category_field: Key in ``dataset`` providing item categories per study position.
-        category_value: Category value to compute the SPC over.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with per-item category metadata.
+    category_field : str
+        Key providing item categories per study position.
+    category_value : int
+        Category to filter on.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall rate at each position for the category.
+
     """
     recalls = dataset["recalls"]
     categories = dataset[category_field]
@@ -81,18 +102,33 @@ def plot_cat_spc(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with category-filtered SPC curves.
+    """Plot category-filtered SPC curves.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks selecting trials in each dataset.
-        category_field: Keys providing item categories per study position.
-        category_value: Category values to compute the SPC over.
-        color_cycle: Colors for plotting each dataset.
-        labels: Labels per dataset or category. Assumed per-category if multiple values provided.
-        contrast_name: Legend title for contrasts.
-        axis: Existing Matplotlib ``Axes`` to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    category_field : str
+        Key providing item categories per study position.
+    category_values : Sequence[int]
+        Categories to plot.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the category SPC plot.
 
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(

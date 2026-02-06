@@ -105,60 +105,6 @@ class RecallDataset(TypedDict):
 
 
 @runtime_checkable
-class MemorySearch(Protocol):
-    """A model of memory search.
-
-    Attributes:
-        item_count: the number of item slots reserved in the model.
-        is_active: indicates whether the model is active or not.
-        recallable: indicates whether each item can currently be recalled.
-        recall_total: the number of recalled items so far.
-    """
-
-    item_count: int
-    is_active: Bool[Array, ""]
-    recallable: Bool[Array, " item_count"]
-    recall_total: Integer[Array, ""]
-
-    def experience(self, choice: Int_) -> "MemorySearch":
-        """Returns model after experiencing the specified study item.
-
-        Args:
-            choice: the index of the item to experience (1-indexed). 0 is ignored.
-        """
-        ...
-
-    def start_retrieving(self) -> "MemorySearch":
-        """Returns model after transitioning from study to retrieval mode."""
-        ...
-
-    def retrieve(self, choice: Int_) -> "MemorySearch":
-        """Return model after simulating retrieval of the specified item or stopping.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed). 0 terminates retrieval.
-
-        """
-        ...
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        ...
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
-        """
-        ...
-
-    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return probabilities of all possible retrieval events."""
-        ...
-
-
-@runtime_checkable
 class Memory(Protocol):
     state: Float[Array, " input_size output_size"]
 
@@ -241,6 +187,63 @@ class TerminationPolicy(Protocol):
         """
         ...
 
+
+@runtime_checkable
+class MemorySearch(Protocol):
+    """A model of memory search.
+
+    Attributes:
+        item_count: the number of item slots reserved in the model.
+        is_active: indicates whether the model is active or not.
+        recallable: indicates whether each item can currently be recalled.
+        recall_total: the number of recalled items so far.
+        study_index: the number of items studied so far.
+        context: the current context state.
+    """
+
+    item_count: int
+    is_active: Bool[Array, ""]
+    recallable: Bool[Array, " item_count"]
+    recall_total: Integer[Array, ""]
+    study_index: Integer[Array, ""]
+    context: Context
+
+    def experience(self, choice: Int_) -> "MemorySearch":
+        """Returns model after experiencing the specified study item.
+
+        Args:
+            choice: the index of the item to experience (1-indexed). 0 is ignored.
+        """
+        ...
+
+    def start_retrieving(self) -> "MemorySearch":
+        """Returns model after transitioning from study to retrieval mode."""
+        ...
+
+    def retrieve(self, choice: Int_) -> "MemorySearch":
+        """Return model after simulating retrieval of the specified item or stopping.
+
+        Args:
+            choice: the index of the item to retrieve (1-indexed). 0 terminates retrieval.
+
+        """
+        ...
+
+    def activations(self) -> Float[Array, " item_count"]:
+        """Returns relative support for retrieval of each item given model state"""
+        ...
+
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Return probability of the specified retrieval event.
+
+        Args:
+            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
+        """
+        ...
+
+    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
+        """Return probabilities of all possible retrieval events."""
+        ...
 
 class ContextCreateFn(Protocol):
     """Callable that returns a context instance."""

@@ -24,10 +24,14 @@ from . import repcrp as repcrp_module
 def _reverse_nonzero_recalls(
     recalls: Integer[Array, " trial_count recall_events"],
 ) -> Integer[Array, " trial_count recall_events"]:
-    """Reverse recall sequences while keeping padding at the end.
+    """Reverse recall sequences keeping padding at end.
 
-    Args:
-        recalls: Recall sequences with zero padding after termination.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_events"]
+        Recall sequences with zero padding after
+        termination.
+
     """
 
     def reverse_row(
@@ -55,20 +59,39 @@ def plot_back_rep_crp(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Axes with incoming repetition lag-CRP plots for datasets and trial masks.
+    """Plot incoming repetition lag-CRP with CIs.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum lag to plot.
-        min_lag: Minimum separation between repeated presentations.
-        size: Maximum number of study positions an item can be presented at.
-        repetition_index: Specific repetition index to plot, optional.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Labels for repetition-index lines when plotting a single dataset.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Datasets containing trial data to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Masks to filter trials in datasets.
+    max_lag : int, optional
+        Maximum lag to plot.
+    min_lag : int, optional
+        Minimum separation between repeated
+        presentations.
+    size : int, optional
+        Maximum study positions per item.
+    repetition_index : int or None, optional
+        Specific repetition index to plot.
+    color_cycle : list[str] or None, optional
+        Colors for plotting each dataset.
+    labels : Sequence[str] or None, optional
+        Labels for repetition-index lines.
+    contrast_name : str or None, optional
+        Legend title.
+    axis : Axes or None, optional
+        Existing Axes to plot on.
+    confidence_level : float, optional
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the incoming repetition CRP plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -125,18 +148,26 @@ def subject_back_rep_crp(
     max_lag: int = 5,
     size: int = 2,
 ) -> np.ndarray:
-    """Compute subject-level incoming repetition CRP values.
+    """Compute subject-level incoming repetition CRP.
 
-    Args:
-        dataset: Recall dataset.
-        trial_mask: Boolean mask selecting trials to include.
-        min_lag: Minimum spacing between item repetitions.
-        max_lag: Maximum lag to include in output.
-        size: Maximum number of presentations per item.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials to include.
+    min_lag : int, optional
+        Minimum spacing between item repetitions.
+    max_lag : int, optional
+        Maximum lag to include in output.
+    size : int, optional
+        Maximum presentations per item.
 
-    Returns:
-        Array of shape [n_subjects, size, 2*max_lag+1] with CRP values per subject,
-        repetition index, and lag.
+    Returns
+    -------
+    np.ndarray
+        Shape ``(n_subjects, size, 2*max_lag+1)``.
+
     """
     lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)

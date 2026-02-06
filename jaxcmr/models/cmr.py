@@ -1,6 +1,4 @@
-"""
-CMR: Context Maintenance and Retrieval model of memory search.
-"""
+"""Context Maintenance and Retrieval (CMR) model of memory search."""
 
 from typing import Mapping, Optional, Type
 
@@ -38,7 +36,6 @@ __all__ = [
 
 
 class CMR(Pytree):
-    """The Context Maintenance and Retrieval (CMR) model of memory search."""
 
     def __init__(
         self,
@@ -49,6 +46,25 @@ class CMR(Pytree):
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
     ):
+        """Context Maintenance and Retrieval model of memory search.
+
+        Parameters
+        ----------
+        list_length : int
+            Number of items in the study list.
+        parameters : Mapping[str, Float_]
+            Model parameters including drift rates, learning rates, and
+            sensitivity values.
+        mfc_create_fn : MemoryCreateFn, optional
+            Factory function for item-to-context memory (M_FC).
+        mcf_create_fn : MemoryCreateFn, optional
+            Factory function for context-to-item memory (M_CF).
+        context_create_fn : ContextCreateFn, optional
+            Factory function for temporal context representation.
+        termination_policy_create_fn : TerminationPolicyCreateFn, optional
+            Factory function for recall termination policy.
+
+        """
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         # self.delay_drift_rate = parameters["delay_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -76,14 +92,29 @@ class CMR(Pytree):
 
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
-        """The learning rate for the MCF memory under its current state."""
+        """Learning rate for context-to-item memory at current study position.
+
+        Returns
+        -------
+        Float[Array, ""]
+            Position-dependent learning rate from primacy gradient.
+
+        """
         return self._mcf_learning_rate[self.study_index]
 
     def experience_item(self, item_index: Int_) -> "CMR":
-        """Return the model after experiencing item with the specified index.
+        """Simulate encoding of an item during study, updating context and memories.
 
-        Args:
-            item_index: the index of the item to experience. 0-indexed.
+        Parameters
+        ----------
+        item_index : Int_
+            Index of the item to experience (0-indexed).
+
+        Returns
+        -------
+        CMR
+            Updated model state after encoding the item.
+
         """
         item = self.items[item_index]
         context_input = self.mfc.probe(item)
@@ -103,10 +134,19 @@ class CMR(Pytree):
         )
 
     def experience(self, choice: Int_) -> "CMR":
-        """Returns model after simulating the specified study event.
+        """Simulate a study event.
 
-        Args:
-            choice: the index of the item to experience (1-indexed). 0 is ignored.
+        Parameters
+        ----------
+        choice : Int_
+            Index of item to experience (1-indexed). A value of 0 is
+            ignored and returns the model unchanged.
+
+        Returns
+        -------
+        CMR
+            Updated model state after the study event.
+
         """
         return lax.cond(
             choice == 0,
@@ -115,8 +155,14 @@ class CMR(Pytree):
         )
 
     def start_retrieving(self) -> "CMR":
-        """Returns model after transitioning from study to retrieval mode."""
+        """Transition from study to retrieval mode by reinstating start context.
 
+        Returns
+        -------
+        CMR
+            Model state ready to begin retrieval.
+
+        """
         # delay_input = jnp.mean(self.mcf.state, axis=1)
         start_input = self.context.initial_state
         # start_context = self.context.integrate(
@@ -126,10 +172,18 @@ class CMR(Pytree):
         return self.replace(context=start_context)
 
     def retrieve_item(self, item_index: Int_) -> "CMR":
-        """Return model after simulating retrieval of item with the specified index.
+        """Simulate retrieval of a specific item, updating context and records.
 
-        Args:
-            choice: the index of the item to retrieve (0-indexed)
+        Parameters
+        ----------
+        item_index : Int_
+            Index of the item to retrieve (0-indexed).
+
+        Returns
+        -------
+        CMR
+            Updated model state after retrieval.
+
         """
         new_context = self.context.integrate(
             self.mfc.probe(self.items[item_index]),
@@ -143,10 +197,19 @@ class CMR(Pytree):
         )
 
     def retrieve(self, choice: Int_) -> "CMR":
-        """Return model after simulating the specified retrieval event.
+        """Simulate a retrieval event.
 
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
+        Parameters
+        ----------
+        choice : Int_
+            Index of item to retrieve (1-indexed), or 0 to terminate
+            recall.
+
+        Returns
+        -------
+        CMR
+            Updated model state after the retrieval event.
+
         """
         return lax.cond(
             choice == 0,
@@ -155,30 +218,59 @@ class CMR(Pytree):
         )
 
     def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
+        """Compute retrieval activations for all items from context-to-item memory.
+
+        Returns
+        -------
+        Float[Array, " item_count"]
+            Relative retrieval support for each item.
+
+        """
         _activations = self.mcf.probe(self.context.state) * self.recallable
         return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
-        """Returns probability of stopping retrieval given model state"""
+        """Compute probability of terminating recall.
+
+        Returns
+        -------
+        Float[Array, ""]
+            Probability of stopping retrieval given current state.
+
+        """
         return self.termination_policy.stop_probability(self)
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return the probability of retrieval of an item at the specified index.
+        """Compute probability of retrieving a specific item, assuming recall continues.
 
-        Assumes that some items are recallable, with at least the minimum recall probability.
+        Parameters
+        ----------
+        item_index : Int_
+            Index of the item (0-indexed).
 
-        Args:
-            item_index: the index of the item to retrieve.
+        Returns
+        -------
+        Float[Array, ""]
+            Probability of retrieving the specified item.
+
         """
         item_activations = self.activations()
         return item_activations[item_index] / jnp.sum(item_activations)
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
+        """Compute probability of a specific retrieval outcome.
 
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
+        Parameters
+        ----------
+        choice : Int_
+            Index of item to retrieve (1-indexed), or 0 for recall
+            termination.
+
+        Returns
+        -------
+        Float[Array, ""]
+            Probability of the specified outcome.
+
         """
         p_stop = self.stop_probability()
         return lax.cond(
@@ -192,7 +284,15 @@ class CMR(Pytree):
         )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return the outcome probabilities of all recall events."""
+        """Compute probabilities for all possible retrieval outcomes.
+
+        Returns
+        -------
+        Float[Array, " recall_outcomes"]
+            Probability distribution over outcomes, where index 0 is
+            termination and indices 1 to item_count are item recalls.
+
+        """
         p_stop = self.stop_probability()
         item_activation = self.activations()
         item_activation_sum = jnp.sum(item_activation)
@@ -214,7 +314,38 @@ def make_factory(
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
 ) -> Type[MemorySearchModelFactory]:
+    """Create a CMR model factory with specified component functions.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Factory function for item-to-context memory (M_FC).
+    mcf_create_fn : MemoryCreateFn
+        Factory function for context-to-item memory (M_CF).
+    context_create_fn : ContextCreateFn
+        Factory function for temporal context representation.
+    termination_policy_create_fn : TerminationPolicyCreateFn
+        Factory function for recall termination policy.
+
+    Returns
+    -------
+    Type[MemorySearchModelFactory]
+        A factory class that creates CMR model instances.
+
+    """
+
     class CMRModelFactory:
+        """Factory for creating CMR model instances; sets `max_list_length` from dataset.
+
+        Parameters
+        ----------
+        dataset : RecallDataset
+            Dataset containing recall trials with list length information.
+        features : Float[Array, " word_pool_items features_count"] or None
+            Optional semantic feature vectors for items in the word pool.
+
+        """
+
         def __init__(
             self,
             dataset: RecallDataset,
@@ -238,6 +369,19 @@ def make_factory(
             self.model_create_fn = model_create_fn
 
         def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+            """Create a CMR model instance with the given parameters.
+
+            Parameters
+            ----------
+            parameters : Mapping[str, Float_]
+                Model parameters.
+
+            Returns
+            -------
+            MemorySearch
+                Initialized CMR model instance.
+
+            """
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
@@ -245,6 +389,21 @@ def make_factory(
             trial_index: Integer[Array, ""],
             parameters: Mapping[str, Float_],
         ) -> MemorySearch:
+            """Create a CMR model instance for a specific trial.
+
+            Parameters
+            ----------
+            trial_index : Integer[Array, ""]
+                Index of the trial (unused in base CMR).
+            parameters : Mapping[str, Float_]
+                Model parameters.
+
+            Returns
+            -------
+            MemorySearch
+                Initialized CMR model instance.
+
+            """
             return self.model_create_fn(self.max_list_length, parameters)
 
     return CMRModelFactory

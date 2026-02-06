@@ -62,12 +62,39 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
 def set_false_at_index(vec: Bool[Array, " positions"], i: Int_):
-    """Return ``vec`` with ``vec[i-1]`` set to ``False`` when ``i`` is positive."""
+    """Set ``vec[i-1]`` to ``False`` (1-based; 0 is a no-op).
+
+    Parameters
+    ----------
+    vec : Bool[Array, " positions"]
+        Boolean vector.
+    i : Int_
+        1-based index; 0 is a no-op sentinel.
+
+    Returns
+    -------
+    tuple
+        Updated vector and ``None``.
+
+    """
     return lax.cond(i, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None))
 
 
 class RepCRPTabulation(Pytree):
-    "Tabulation of lag transitions for repeated items during recall."
+    """Tabulate lag transitions for repeated items during recall.
+
+    Parameters
+    ----------
+    presentation : Integer[Array, " study_events"]
+        Item numbers at each study position (1-indexed).
+    first_recall : Int_
+        First recalled item number (1-indexed).
+    min_lag : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum positions an item can occupy.
+
+    """
 
     def __init__(
         self,
@@ -175,13 +202,24 @@ def tabulate_trial(
     min_lag: int = 4,
     size: int = 2,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
-    """Return tabulations of observed and available lags for a trial.
+    """Tabulate observed and available lags for a trial.
 
-    Args:
-        trial: Recall events for a single trial.
-        presentation: Study events for the trial.
-        min_lag: Minimum spacing between item repetitions.
-        size: Maximum number of study positions an item may occupy.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events for a single trial.
+    presentation : Integer[Array, " study_events"]
+        Study events for the trial.
+    min_lag : int
+        Minimum spacing between item repetitions.
+    size : int
+        Maximum positions an item can occupy.
+
+    Returns
+    -------
+    tuple[Float[Array, " lags"], Float[Array, " lags"]]
+        Actual and available lag tabulations.
+
     """
     init = RepCRPTabulation(presentation, trial[0], min_lag, size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
@@ -192,12 +230,22 @@ def repcrp(
     min_lag: int = 4,
     size: int = 2,
 ) -> Float[Array, " lags"]:
-    """Returns lag-CRP centered around each study position of repeated items.
+    """Lag-CRP centered on each presentation of repeated items.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        min_lag: Minimum number of study positions between presentations.
-        size: Maximum number of presentations per item.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    min_lag : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum presentations per item.
+
+    Returns
+    -------
+    Float[Array, " lags"]
+        CRP of shape ``(size, 2*L - 1)`` per repetition index.
+
     """
     trials = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -220,19 +268,38 @@ def plot_rep_crp(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Axes object with plotted prob of repetition lag-crp for datasets and trial masks.
+    """Plot repetition Lag-CRP with confidence intervals.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum number of study positions an item can be presented at.
-        min_lag: Minimum amount of study positions between two presentations of an item.
-        size: Maximum number of study positions an item can be presented at.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Labels for repetition-index lines when plotting a single dataset.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    max_lag : int
+        Maximum lag to display.
+    min_lag : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum presentations per item.
+    repetition_index : int, optional
+        Plot only this repetition index.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels for repetition-index lines.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the repetition Lag-CRP plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -292,19 +359,36 @@ def plot_difference_rep_crp(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Axes object with plotted prob of repetition lag-crp for datasets and trial masks.
+    """Plot difference between first and second presentation CRPs.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum number of study positions an item can be presented at.
-        min_lag: Minimum amount of study positions between two presentations of an item.
-        size: Maximum number of study positions an item can be presented at.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    max_lag : int
+        Maximum lag to display.
+    min_lag : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum presentations per item.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels for each dataset.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the difference CRP plot.
+
     """
 
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
@@ -417,16 +501,24 @@ def subject_rep_crp(
 ) -> np.ndarray:
     """Compute subject-level repetition CRP values.
 
-    Args:
-        dataset: Recall dataset.
-        trial_mask: Boolean mask selecting trials to include.
-        min_lag: Minimum spacing between item repetitions.
-        max_lag: Maximum lag to include in output.
-        size: Maximum number of presentations per item.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials.
+    min_lag : int
+        Minimum spacing between item repetitions.
+    max_lag : int
+        Maximum lag to include in output.
+    size : int
+        Maximum presentations per item.
 
-    Returns:
-        Array of shape [n_subjects, size, 2*max_lag+1] with CRP values per subject,
-        repetition index, and lag.
+    Returns
+    -------
+    np.ndarray
+        Shape ``(n_subjects, size, 2*max_lag+1)``.
+
     """
     lag_range = dataset["pres_itemnos"].shape[1] - 1
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
@@ -468,20 +560,22 @@ def test_rep_crp_vs_control(
     control_crp: np.ndarray,
     max_lag: int = 5,
 ) -> dict[str, RepCRPTestResult]:
-    """Test observed vs control CRP for each presentation index.
+    """Test observed vs control CRP per presentation index.
 
-    Performs paired t-tests and Wilcoxon signed-rank tests comparing observed
-    and control CRP values at each lag, separately for each presentation.
+    Parameters
+    ----------
+    observed_crp : np.ndarray
+        Subject-level CRP, shape ``(n_subjects, size, 2*max_lag+1)``.
+    control_crp : np.ndarray
+        Subject-level control CRP, same shape.
+    max_lag : int
+        Maximum lag (used for labeling).
 
-    Args:
-        observed_crp: Subject-level CRP from observed data.
-            Shape [n_subjects, size, 2*max_lag+1].
-        control_crp: Subject-level CRP from control data.
-            Shape [n_subjects, size, 2*max_lag+1].
-        max_lag: Maximum lag (used for labeling).
+    Returns
+    -------
+    dict[str, RepCRPTestResult]
+        Results keyed by presentation label.
 
-    Returns:
-        Dictionary mapping presentation labels to RepCRPTestResult objects.
     """
     lag_labels = np.arange(-max_lag, max_lag + 1)
     n_lags = len(lag_labels)
@@ -536,23 +630,22 @@ def test_first_second_bias(
     control_crp: np.ndarray,
     max_lag: int = 5,
 ) -> RepCRPTestResult:
-    """Test whether first-presentation bias differs between observed and control.
+    """Test whether first-presentation bias differs from control.
 
-    Computes (First - Second) CRP difference for both observed and control,
-    then tests whether the observed bias exceeds the control bias.
+    Parameters
+    ----------
+    observed_crp : np.ndarray
+        Subject-level CRP, shape ``(n_subjects, size, 2*max_lag+1)``.
+    control_crp : np.ndarray
+        Subject-level control CRP, same shape.
+    max_lag : int
+        Maximum lag (used for labeling).
 
-    H0: The preference for first-presentation neighbors over second-presentation
-        neighbors is the same in observed data as in the shuffled control.
+    Returns
+    -------
+    RepCRPTestResult
+        Test statistics for the difference of differences.
 
-    Args:
-        observed_crp: Subject-level CRP from observed data.
-            Shape [n_subjects, size, 2*max_lag+1].
-        control_crp: Subject-level CRP from control data.
-            Shape [n_subjects, size, 2*max_lag+1].
-        max_lag: Maximum lag (used for labeling).
-
-    Returns:
-        RepCRPTestResult with test statistics for the difference of differences.
     """
     lag_labels = np.arange(-max_lag, max_lag + 1)
     n_lags = len(lag_labels)

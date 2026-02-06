@@ -1,9 +1,4 @@
-"""Conditional co-recall probability grouped by category relation.
-
-Returns the probability that a study position from the same or a different
-category as a recalled anchor was also recalled, relative to a specified
-reference category.
-"""
+"""Conditional co-recall probability by category relation."""
 
 from __future__ import annotations
 
@@ -24,11 +19,16 @@ def _trial_recall_mask(
     recalls: Integer[Array, " recall_events"],
     list_length: int,
 ) -> Bool[Array, " study_positions"]:
-    """Returns a boolean mask indicating which study positions were recalled.
+    """Return a boolean mask of recalled study positions.
 
-    Args:
-      recalls: One-indexed recall positions for a single trial (0 pads).
-      list_length: Number of studied items in the list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_events"]
+        One-indexed recall positions for a single
+        trial (0 pads).
+    list_length : int
+        Number of studied items in the list.
+
     """
 
     counts = jnp.bincount(recalls, length=list_length + 1)[1:]
@@ -40,12 +40,26 @@ def _conditional_category_counts(
     categories: Integer[Array, " study_positions"],
     category_value: int,
 ) -> tuple[Float[Array, " relation"], Float[Array, " relation"]]:
-    """Returns category-conditioned co-recall counts for a single trial.
+    """Return category-conditioned co-recall counts for a trial.
 
-    Args:
-      recalls: One-indexed recall positions for a single trial (0 pads).
-      categories: Category identifiers ordered by study position.
-      category_value: Reference category defining which recalled items act as anchors.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_events"]
+        One-indexed recall positions for a single
+        trial (0 pads).
+    categories : Integer[Array, " study_positions"]
+        Category identifiers ordered by study
+        position.
+    category_value : int
+        Reference category defining which recalled
+        items act as anchors.
+
+    Returns
+    -------
+    tuple[Float[Array, " relation"], Float[Array, " relation"]]
+        Actual and possible same- and different-
+        category co-recall counts.
+
     """
 
     mask = _trial_recall_mask(recalls, categories.shape[0]).astype(jnp.float32)
@@ -75,12 +89,25 @@ def conditional_corec_by_cat(
     category_field: str,
     category_value: int,
 ) -> Float[Array, " relation"]:
-    """Returns conditional category-wise co-recall probabilities.
+    """Return conditional category-wise co-recall probabilities.
 
-    Args:
-      dataset: Recall dataset containing ``recalls`` and the requested category field.
-      category_field: Key mapping to per-trial study-item categories.
-      category_value: Reference category defining the anchor items.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing ``recalls`` and
+        the requested category field.
+    category_field : str
+        Key mapping to per-trial study-item
+        categories.
+    category_value : int
+        Reference category defining the anchor items.
+
+    Returns
+    -------
+    Float[Array, " relation"]
+        Same- and different-category conditional
+        co-recall probabilities.
+
     """
 
     categories = dataset[category_field]
@@ -102,20 +129,40 @@ def plot_conditional_corec_by_cat(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with conditional co-recall by category curves.
+    """Plot conditional co-recall by category with confidence intervals.
 
-    Args:
-      datasets: Dataset or list of datasets to plot.
-      trial_masks: Boolean masks selecting trials within each dataset.
-      category_field: Dataset key containing per-study-item categories.
-      category_value: Reference category defining the anchors.
-      relation_labels: Tick labels corresponding to the same- and different-category
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Dataset or list of datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials within each
+        dataset.
+    category_field : str
+        Dataset key containing per-study-item
+        categories.
+    category_value : int
+        Reference category defining the anchors.
+    relation_labels : Sequence[str], optional
+        Tick labels for same- and different-category
         neighbor probabilities.
-      color_cycle: Colors for plotting each dataset.
-      labels: Legend labels for each dataset.
-      contrast_name: Legend title for contrasts.
-      axis: Existing Matplotlib ``Axes`` to plot on.
-      confidence_level: Confidence level for the bounds.
+    color_cycle : list[str], optional
+        Colors for plotting each dataset.
+    labels : Sequence[str], optional
+        Legend labels for each dataset.
+    contrast_name : str, optional
+        Legend title for contrasts.
+    axis : Axes, optional
+        Existing Matplotlib ``Axes`` to plot on.
+    confidence_level : float, optional
+        Confidence level for the bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with conditional co-recall
+        by category curves.
+
     """
 
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(

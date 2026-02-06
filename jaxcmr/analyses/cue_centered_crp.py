@@ -1,9 +1,4 @@
-"""Cue-centered Lag-CRP.
-
-Computes a lag-CRP where lags are defined relative to the study position of a
-retrieval cue, rather than the previously recalled item. This is useful for
-assessing whether cues reinstate temporal context.
-"""
+"""Cue-centered Lag-CRP."""
 
 from __future__ import annotations
 
@@ -24,6 +19,7 @@ __all__ = [
     "tabulate_trial",
     "cue_centered_crp",
     "plot_cue_centered_crp",
+    "set_false_at_index",
 ]
 
 
@@ -32,12 +28,18 @@ def set_false_at_index(
 ) -> tuple[Bool[Array, " positions"], None]:
     """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
 
-    Args:
-        vec: Boolean availability vector.
-        i: 1-based index to clear; ``0`` is a no-op sentinel.
+    Parameters
+    ----------
+    vec : Bool[Array, " positions"]
+        Boolean availability vector.
+    i : Int_
+        1-based index to clear; ``0`` is a no-op sentinel.
 
-    Returns:
-        Tuple of the (possibly updated) vector and ``None``.
+    Returns
+    -------
+    tuple[Bool[Array, " positions"], None]
+        Updated vector and ``None``.
+
     """
     should_update = (i > 0) & (i <= vec.size)
     return lax.cond(
@@ -46,12 +48,7 @@ def set_false_at_index(
 
 
 class CueCenteredTabulation(Pytree):
-    """Maintain state for cue-centered CRP with repeats.
-
-    Args:
-        presentation: Study presentation order for a single trial.
-        size: Maximum number of study positions an item can occupy.
-    """
+    """Per-transition state for cue-centered Lag-CRP."""
 
     def __init__(self, presentation: Integer[Array, " study_events"], size: int = 3):
         self.list_length = presentation.size
@@ -72,8 +69,16 @@ class CueCenteredTabulation(Pytree):
     def item_positions(self, item: Int_) -> Integer[Array, " size"]:
         """Return study positions for an item identifier.
 
-        Args:
-            item: Item identifier; ``0`` returns all zeros.
+        Parameters
+        ----------
+        item : Int_
+            Item identifier; ``0`` returns all zeros.
+
+        Returns
+        -------
+        Integer[Array, " size"]
+            Study positions occupied by the item.
+
         """
         zeros = jnp.zeros_like(self.item_study_positions[0])
         return lax.cond(
@@ -83,16 +88,36 @@ class CueCenteredTabulation(Pytree):
         )
 
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
-        """Clear availability for all study positions of ``recall``.
+        """Clear availability for study positions of ``recall``.
 
-        Args:
-            recall: Recalled item identifier.
+        Parameters
+        ----------
+        recall : Int_
+            Recalled item identifier.
+
+        Returns
+        -------
+        Bool[Array, " positions"]
+            Updated availability vector.
+
         """
         study_positions = self.item_positions(recall)
         return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
 
     def is_valid_recall(self, recall: Int_) -> Bool:
-        """Return True when the recall maps to any available study position."""
+        """Return True when recall maps to an available position.
+
+        Parameters
+        ----------
+        recall : Int_
+            Recalled item identifier.
+
+        Returns
+        -------
+        Bool
+            Whether the recall is valid.
+
+        """
 
         def _for_nonzero():
             recall_study_positions = self.item_positions(recall)
@@ -111,7 +136,21 @@ class CueCenteredTabulation(Pytree):
         cue_pos: Int_,
         recall_positions: Integer[Array, " size"],
     ) -> Bool[Array, " lags"]:
-        """Return unique lags from a cue position to recall positions."""
+        """Return unique lags from a cue position to recall positions.
+
+        Parameters
+        ----------
+        cue_pos : Int_
+            Study position of the cue item.
+        recall_positions : Integer[Array, " size"]
+            Study positions of the recalled item.
+
+        Returns
+        -------
+        Bool[Array, " lags"]
+            Boolean lag vector with True at each unique lag.
+
+        """
 
         def f(recall_pos):
             return lax.cond(
@@ -127,7 +166,21 @@ class CueCenteredTabulation(Pytree):
         cue_positions: Integer[Array, " size"],
         recall: Int_,
     ) -> Integer[Array, " lags"]:
-        """Tabulate cue-centered lags for the current recall."""
+        """Tabulate cue-centered lags for the current recall.
+
+        Parameters
+        ----------
+        cue_positions : Integer[Array, " size"]
+            Study positions of the cue item.
+        recall : Int_
+            Recalled item identifier.
+
+        Returns
+        -------
+        Integer[Array, " lags"]
+            Accumulated actual lag counts.
+
+        """
         recall_positions = self.item_positions(recall)
         new_lags = (
             lax.map(
@@ -139,7 +192,19 @@ class CueCenteredTabulation(Pytree):
         return self.actual_lags + new_lags
 
     def available_lags_from_cue(self, cue_pos: Int_) -> Bool[Array, " lags"]:
-        """Identify available lags from a cue position."""
+        """Identify available lags from a cue position.
+
+        Parameters
+        ----------
+        cue_pos : Int_
+            Study position of the cue item.
+
+        Returns
+        -------
+        Bool[Array, " lags"]
+            Boolean lag vector of available transitions.
+
+        """
         return lax.cond(
             cue_pos == 0,
             lambda: self.base_lags,
@@ -151,7 +216,19 @@ class CueCenteredTabulation(Pytree):
     def tabulate_available_lags(
         self, cue_positions: Integer[Array, " size"]
     ) -> Integer[Array, " lags"]:
-        """Tabulate available lags from cue positions."""
+        """Tabulate available lags from cue positions.
+
+        Parameters
+        ----------
+        cue_positions : Integer[Array, " size"]
+            Study positions of the cue item.
+
+        Returns
+        -------
+        Integer[Array, " lags"]
+            Accumulated available lag counts.
+
+        """
         new_lags = (
             lax.map(self.available_lags_from_cue, cue_positions).sum(0).astype(bool)
         )
@@ -160,7 +237,23 @@ class CueCenteredTabulation(Pytree):
     def tabulate(
         self, recall: Int_, cue: Int_, should_tabulate: Bool_
     ) -> "CueCenteredTabulation":
-        """Update state and optionally count the cue-centered transition."""
+        """Update state and optionally count the transition.
+
+        Parameters
+        ----------
+        recall : Int_
+            Recalled item identifier.
+        cue : Int_
+            Cue item identifier for this recall event.
+        should_tabulate : Bool_
+            Whether to count this transition.
+
+        Returns
+        -------
+        CueCenteredTabulation
+            Updated tabulation state.
+
+        """
 
         def _update_state() -> "CueCenteredTabulation":
             new_avail_recalls = self.available_recalls_after(recall)
@@ -194,12 +287,24 @@ def tabulate_trial(
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
     """Tabulate cue-centered actual and available lags for a trial.
 
-    Args:
-        recalls: Recall sequence encoded as item identifiers.
-        presentation: Study presentation order for the trial.
-        cues: Cue item identifiers aligned to recall events.
-        should_tabulate: Boolean mask aligned to recall events.
-        size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_events"]
+        Recall sequence as item identifiers.
+    presentation : Integer[Array, " study_events"]
+        Study presentation order for the trial.
+    cues : Integer[Array, " recall_events"]
+        Cue item identifiers aligned to recall events.
+    should_tabulate : Bool[Array, " recall_events"]
+        Boolean mask; True counts the transition.
+    size : int, optional
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    tuple[Float[Array, " lags"], Float[Array, " lags"]]
+        Actual and available lag counts.
+
     """
     init = CueCenteredTabulation(presentation, size)
     tab = lax.fori_loop(
@@ -217,10 +322,19 @@ def cue_centered_crp(
 ) -> Float[Array, " lags"]:
     """Compute cue-centered Lag-CRP.
 
-    Args:
-        dataset: Dataset containing ``recalls``, ``pres_itemnos``, ``cue_clips``, and
-            a boolean ``_should_tabulate`` field aligned to recall events.
-        size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Dataset with ``recalls``, ``pres_itemnos``,
+        ``cue_clips``, and ``_should_tabulate``.
+    size : int, optional
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " lags"]
+        CRP of length 2*L - 1; NaN where denominator is zero.
+
     """
     should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)  # type: ignore
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, 0, None))(
@@ -251,18 +365,36 @@ def plot_cue_centered_crp(
 ) -> Axes:
     """Plot cue-centered Lag-CRP curves.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks selecting trials in datasets.
-        should_tabulate: Boolean masks aligned to recall events, one per dataset.
-        max_lag: Maximum lag to plot.
-        exclude_zero_lag: Whether to omit the zero-lag bin from plotting.
-        color_cycle: Colors for plotting each dataset.
-        labels: Legend labels for each dataset.
-        contrast_name: Legend title for contrasts.
-        axis: Existing Matplotlib axis to plot on.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Datasets containing trial data to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Masks selecting trials in datasets.
+    should_tabulate : Sequence | array
+        Boolean masks aligned to recall events.
+    max_lag : int, optional
+        Maximum lag to plot.
+    exclude_zero_lag : bool, optional
+        Whether to omit the zero-lag bin from plotting.
+    color_cycle : list[str], optional
+        Colors for plotting each dataset.
+    labels : Sequence[str], optional
+        Legend labels for each dataset.
+    contrast_name : str, optional
+        Legend title for contrasts.
+    axis : Axes, optional
+        Existing matplotlib Axes to plot on.
+    size : int, optional
+        Max study positions an item can occupy.
+    confidence_level : float, optional
+        Confidence level for the bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with cue-centered Lag-CRP plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

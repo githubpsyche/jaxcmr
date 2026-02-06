@@ -1,3 +1,5 @@
+"""Order error rate analysis."""
+
 __all__ = ["trial_order_error_rate", "order_error_rate", "plot_order_error_rate"]
 
 from typing import Optional, Sequence
@@ -17,13 +19,23 @@ def trial_order_error_rate(
     presentations: Integer[Array, " study_positions"],
     size: int = 3,
 ) -> Bool[Array, " study_positions"]:
-    """
-    One Boolean per study slot:
-        True  → an item from the list was reported in output slot *i*,
-                but that item does *not* belong to this study position.
-        False → correct, omission, intrusion, or padded study slot.
-    """
+    """Flag order errors at each study position for one trial.
 
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        Recall sequence for a trial. 1-indexed; 0 pads.
+    presentations : Integer[Array, " study_positions"]
+        Presented item IDs for the trial. 1-indexed; 0 pads.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Bool[Array, " study_positions"]
+        True where a list item was recalled in the wrong position.
+
+    """
     list_len = presentations.shape[0]
     study_pos_1 = jnp.arange(1, list_len + 1)  # 1-based indexes
 
@@ -31,11 +43,11 @@ def trial_order_error_rate(
     recall_tokens = jnp.where(
         study_pos_1 - 1 < recalls.shape[0],  # convert to 0-based for slicing
         recalls[:list_len],
-        0,  # no response → treat as 0
+        0,  # no response -> treat as 0
     )
 
-    # 2. Is that token on today’s list (and non-zero)?
-    #    token k is "on the list" if 1 ≤ k ≤ list_len and presentations[k-1] ≠ 0
+    # 2. Is that token on today's list (and non-zero)?
+    #    token k is "on the list" if 1 <= k <= list_len and presentations[k-1] != 0
     token_on_list = (
         (recall_tokens > 0)
         & (recall_tokens <= list_len)
@@ -43,7 +55,7 @@ def trial_order_error_rate(
     )
 
     # 3. For each output slot, does its token actually belong here?
-    #    Use all_study_positions to map token → all study slots of that item.
+    #    Use all_study_positions to map token -> all study slots of that item.
     expanded = vmap(all_study_positions, in_axes=(0, None, None))(
         recall_tokens, presentations, size
     )  # shape: (list_len, size)
@@ -58,12 +70,20 @@ def order_error_rate(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """
-    Returns position-specific recall accuracy, not assuming uniform study lists.
+    """Return position-specific order error rate.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: the number of studied items in each trial.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Mean order error rate at each study position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -85,22 +105,32 @@ def plot_order_error_rate(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """
-    Plots serial recall accuracy curve for one or more datasets.
+    """Plot order error rate curves with confidence intervals.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    size : int
+        Max study positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
 
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with order error rate curves.
 
-    Returns:
-        The matplotlib Axes object containing the plot.
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

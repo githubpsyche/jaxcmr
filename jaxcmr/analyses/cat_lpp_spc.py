@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from jax import jit
 from matplotlib.axes import Axes
 
-from ..helpers import find_max_list_length
+from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
@@ -33,13 +33,24 @@ def cat_lpp_spc(
     category_value: int,
     lpp_field: str = "EarlyLPP",
 ) -> Float[Array, " study_positions"]:
-    """Returns category-filtered mean LPP as a function of study position.
+    """Category-filtered mean LPP by study position.
 
-    Args:
-        dataset: Recall dataset containing per-item LPP metadata.
-        category_field: Key in ``dataset`` providing item categories per study position.
-        category_value: Category value to compute the LPP curve over.
-        lpp_field: Key in ``dataset`` providing LPP values per study position.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with per-item LPP metadata.
+    category_field : str
+        Key providing item categories per study position.
+    category_value : int
+        Category to filter on.
+    lpp_field : str
+        Key providing LPP values per study position.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Mean LPP at each position for the category.
+
     """
     lpp = dataset[lpp_field]
     categories = dataset[category_field]
@@ -58,19 +69,36 @@ def plot_cat_lpp_spc(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with category-filtered LPP curves.
+    """Plot category-filtered LPP curves by study position.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks selecting trials in each dataset.
-        category_field: Keys providing item categories per study position.
-        category_values: Category values to compute the LPP over.
-        lpp_field: Key in ``dataset`` providing LPP values per study position.
-        color_cycle: Colors for plotting each dataset.
-        labels: Labels per dataset or category. Assumed per-category if multiple values provided.
-        contrast_name: Legend title for contrasts.
-        axis: Existing Matplotlib ``Axes`` to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    category_field : str
+        Key providing item categories per study position.
+    category_values : Sequence[int]
+        Categories to plot.
+    lpp_field : str
+        Key providing LPP values per study position.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the category LPP plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

@@ -8,9 +8,10 @@ import jax.numpy as jnp
 from jax import jit
 from matplotlib.axes import Axes
 
-from ..helpers import find_max_list_length
+from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Integer, RecallDataset
+from .cat_lpp_spc import cat_lpp_spc
 
 __all__ = ["plot_cat_lpp_by_recall", "expand_categories_by_recall"]
 
@@ -19,11 +20,20 @@ def expand_categories_by_recall(
     dataset: RecallDataset,
     category_field: str,
 ) -> Integer[Array, " trial_count study_positions"]:
-    """Returns category labels split by recall outcome.
+    """Category labels split by recall outcome.
 
-    Args:
-      dataset: Recall dataset providing study event metadata.
-      category_field: Key in ``dataset`` with per-item category labels.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with study event metadata.
+    category_field : str
+        Key with per-item category labels.
+
+    Returns
+    -------
+    Integer[Array, " trial_count study_positions"]
+        Remapped category labels encoding recall outcome.
+
     """
     categories = dataset[category_field]
     presentations = dataset["pres_itemnos"]
@@ -51,20 +61,38 @@ def plot_cat_lpp_by_recall(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with recall-filtered LPP curves for specified category.
+    """Plot recall-split LPP curves for a category.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks selecting trials in each dataset.
-        category_field: Keys providing item categories per study position.
-        category_value: Category value to compute the LPPs over.
-        lpp_field: Key in ``dataset`` providing LPP values per study position.
-        exclude_ci: If ``True``, confidence intervals will not be plotted.
-        color_cycle: Colors for plotting each dataset.
-        labels: Labels per dataset or category. Assumed per-category if multiple values provided.
-        contrast_name: Legend title for contrasts.
-        axis: Existing Matplotlib ``Axes`` to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    category_field : str
+        Key providing item categories per study position.
+    category_value : int | Sequence[int]
+        Category to split by recall outcome.
+    lpp_field : str
+        Key providing LPP values per study position.
+    exclude_ci : bool
+        If ``True``, skip confidence intervals.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the recall-split LPP plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

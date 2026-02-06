@@ -70,13 +70,20 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 def set_false_at_index(
     vec: Bool[Array, " positions"], i: Int_
 ) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
+    """Set ``vec[i - 1]`` to ``False`` (1-based; 0 is a no-op).
 
-    Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
-    ``[1, vec.size]`` are ignored.
+    Parameters
+    ----------
+    vec : Bool[Array, " positions"]
+        Boolean vector.
+    i : Int_
+        1-based index; 0 is a no-op sentinel.
 
-    Returns:
-        Tuple of the (possibly updated) vector and ``None``.
+    Returns
+    -------
+    tuple
+        Updated vector and ``None``.
+
     """
     should_update = (i > 0) & (i <= vec.size)
     return lax.cond(
@@ -85,22 +92,19 @@ def set_false_at_index(
 
 
 class CompoundCueingTabulation(Pytree):
-    """Tabulation of compound cueing effects for transitions to repeated items.
+    """Tabulate compound cueing transitions to repeated items.
 
-    Tracks two-item recall history to detect pure ({i-2, i-1} or {j-2, j-1})
-    and mixed ({j-2, i-1} or {i-2, j-1}) patterns, then tabulates transitions
-    to repeated items.
+    Parameters
+    ----------
+    presentation : Integer[Array, " study_events"]
+        Item numbers at each study position (1-indexed).
+    first_recall : Int_
+        First recalled item number (1-indexed).
+    min_spacing : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum positions an item can occupy.
 
-    State:
-        - prev_position, prev_prev_position: last two recalled study positions
-        - avail_recalls: boolean [L], study positions still available
-        - counts: int [4], accumulated [pure_actual, pure_avail, mixed_actual, mixed_avail]
-
-    Args:
-        presentation: Item numbers at each study position (1-indexed; 0 = padding).
-        first_recall: First recalled item number (1-indexed).
-        min_spacing: Minimum spacing between repeated item occurrences.
-        size: Maximum number of positions an item can occupy.
     """
 
     def __init__(
@@ -159,10 +163,21 @@ class CompoundCueingTabulation(Pytree):
         return jnp.any(is_valid_study_position & is_available_study_position)
 
     def check_and_count_item(self, item_idx: Int_, recall: Int_) -> Integer[Array, "4"]:
-        """Check cueing conditions for one item and return count updates.
+        """Check cueing conditions for one item and return updates.
 
-        Returns:
-            Array of [pure_actual, pure_avail, mixed_actual, mixed_avail].
+        Parameters
+        ----------
+        item_idx : Int_
+            0-indexed item position.
+        recall : Int_
+            Currently recalled item (1-indexed).
+
+        Returns
+        -------
+        Integer[Array, "4"]
+            Counts [pure_actual, pure_avail, mixed_actual,
+            mixed_avail].
+
         """
         positions = self.item_study_positions[item_idx]
         i_pos = positions[0]  # First occurrence position
@@ -243,14 +258,23 @@ def tabulate_trial(
 ) -> Integer[Array, "4"]:
     """Tabulate compound cueing counts for a single trial.
 
-    Args:
-        trial: Recalled item numbers (1-indexed; 0 = padding).
-        presentation: Item numbers at each study position.
-        min_spacing: Minimum spacing between repeated item occurrences.
-        size: Maximum number of positions an item can occupy.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recalled item numbers (1-indexed; 0 = padding).
+    presentation : Integer[Array, " study_events"]
+        Item numbers at each study position.
+    min_spacing : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum positions an item can occupy.
 
-    Returns:
-        Array of [pure_actual, pure_avail, mixed_actual, mixed_avail] counts.
+    Returns
+    -------
+    Integer[Array, "4"]
+        Counts [pure_actual, pure_avail, mixed_actual,
+        mixed_avail].
+
     """
     init = CompoundCueingTabulation(presentation, trial[0], min_spacing, size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
@@ -264,19 +288,20 @@ def compound_cueing_crp(
 ) -> Float[Array, "2"]:
     """Compute compound cueing conditional response probabilities.
 
-    Args:
-        dataset: Recall dataset with ``recalls`` and ``pres_itemnos``.
-        min_spacing: Minimum spacing between repeated item occurrences.
-        size: Maximum number of positions an item can occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    min_spacing : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum positions an item can occupy.
 
-    Returns:
-        Array of [pure_crp, mixed_crp] - conditional probabilities of
-        transitioning to repeated item given pure vs mixed cueing.
+    Returns
+    -------
+    Float[Array, "2"]
+        [pure_crp, mixed_crp]; NaN where no opportunities.
 
-    Notes:
-        - Pure cueing: last two recalls = {i-2, i-1} or {j-2, j-1}
-        - Mixed cueing: last two recalls = {j-2, i-1} or {i-2, j-1}
-        - NaN returned if no opportunities for a condition.
     """
     trials = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -305,24 +330,32 @@ def plot_compound_cueing(
     contrast_name: Optional[str] = None,
     axis: Optional[Axes] = None,
 ) -> Axes:
-    """Plot compound cueing analysis as grouped bar chart.
+    """Plot compound cueing as a grouped bar chart.
 
-    Args:
-        datasets: Datasets containing trial data.
-        trial_masks: Masks to filter trials.
-        min_spacing: Minimum spacing between repeated item occurrences.
-        size: Maximum number of positions an item can occupy.
-        color_cycle: Colors for plotting each dataset.
-        labels: Dataset labels for legend.
-        contrast_name: Name of contrast for legend labeling.
-        axis: Existing Matplotlib ``Axes`` to plot on.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    min_spacing : int
+        Minimum spacing between repeated occurrences.
+    size : int
+        Maximum positions an item can occupy.
+    color_cycle : list[str], optional
+        Colors for each dataset.
+    labels : Sequence[str], optional
+        Legend labels for each dataset.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
 
-    Returns:
-        Matplotlib Axes with bar plot comparing pure vs mixed cueing.
+    Returns
+    -------
+    Axes
+        Axes with bar plot comparing pure vs mixed cueing.
 
-    Notes:
-        - Error bars show standard error of the mean across subjects.
-        - ICMR predicts pure > mixed; CMR predicts mixed >= pure.
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

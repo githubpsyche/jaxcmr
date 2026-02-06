@@ -47,10 +47,20 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 def set_false_at_index(
     vec: Bool[Array, " positions"], i: Int_
 ) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
+    """Set ``vec[i - 1]`` to False using 1-based indexing.
 
-    Indices are 1-based; ``0`` is a no-op sentinel. Indices outside
-    ``[1, vec.size]`` are ignored.
+    Parameters
+    ----------
+    vec : Bool[Array, " positions"]
+        Boolean vector of available positions.
+    i : Int_
+        1-based index to clear; 0 is a no-op sentinel.
+
+    Returns
+    -------
+    tuple
+        Updated vector and ``None`` carry value.
+
     """
     should_update = (i > 0) & (i <= vec.size)
     return lax.cond(
@@ -59,21 +69,21 @@ def set_false_at_index(
 
 
 class NeighborCRPTabulation(Pytree):
-    """Tabulate transitions between items during free recall.
+    """Tabulate neighbor transitions for repeated items.
 
-    This generalizes several "repetition-neighbor" contiguity analyses by letting you
-    choose whether to count transitions:
-        - from j-neighbor → i (“j2i”),
-        - from i-neighbor → j (“i2j”),
-        - or both.
-    It also optionally includes lag-2 offsets.
+    Parameters
+    ----------
+    presentation : Integer[Array, " study_events"]
+        Presented item indices (1-indexed; 0 = pad).
+    first_recall : Int_
+        Study position of the first recalled item.
+    direction : {"j2i", "i2j", "both"}, optional
+        Which neighbor-transition direction to count.
+    use_lag2 : bool, optional
+        Include +2 neighbor offsets when True.
+    min_lag : int, optional
+        Minimum spacing between repeated presentations.
 
-    Args:
-        presentation: Sequence of presented item indices (1-indexed; padding = 0).
-        first_recall: Study position of the first recalled item (1-indexed).
-        direction: "j2i", "i2j", or "both".
-        use_lag2: Include +2 neighbor offsets when True; otherwise only +1.
-        min_lag: Minimum spacing between first and second presentations of the same item.
     """
 
     def __init__(
@@ -229,14 +239,26 @@ def tabulate_trial(
     use_lag2: bool = False,
     min_lag: int = 4,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
-    """Returns actual and available neighbor-lag transition counts for a single recall trial.
+    """Tabulate observed and available lags for a trial.
 
-    Args:
-        trial: First study position of recalled items in order of recall (1-indexed; padding = 0).
-        presentation: Sequence of presented item indices (1-indexed; padding = 0).
-        direction: "j2i", "i2j", or "both".
-        use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
-        min_lag: Minimum spacing between first and second presentations of repeated items.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events for a single trial.
+    presentation : Integer[Array, " study_events"]
+        Study events for the trial.
+    direction : {"j2i", "i2j", "both"}, optional
+        Which neighbor-transition direction to count.
+    use_lag2 : bool, optional
+        Include +2 neighbor offsets when True.
+    min_lag : int, optional
+        Minimum spacing between repeated presentations.
+
+    Returns
+    -------
+    tuple of Float[Array, " lags"]
+        Actual and available lag tabulations.
+
     """
     init = NeighborCRPTabulation(
         presentation, trial[0], min_lag=min_lag, direction=direction, use_lag2=use_lag2
@@ -251,13 +273,24 @@ def repneighborcrp(
     use_lag2: bool = True,
     min_lag: int = 4,
 ) -> Float[Array, " lags"]:
-    """Return repetition-neighbor lag-CRP probabilities per lag.
+    """Repetition-neighbor lag-CRP probabilities per lag.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        direction: "j2i", "i2j", or "both".
-        use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
-        min_lag: Minimum spacing between first and second presentations of repeated items.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Dataset with ``recalls`` and ``pres_itemnos``.
+    direction : {"j2i", "i2j", "both"}, optional
+        Which neighbor-transition direction to count.
+    use_lag2 : bool, optional
+        Include +2 neighbor offsets when True.
+    min_lag : int, optional
+        Minimum spacing between repeated presentations.
+
+    Returns
+    -------
+    Float[Array, " lags"]
+        CRP of shape ``(2*L-1,)`` per lag bin.
+
     """
 
     trials = dataset["recalls"]
@@ -281,20 +314,37 @@ def plot_rep_neighbor_crp(
     confidence_level: float = 0.95,
 
 ) -> Axes:
-    """Return Axes with plotted lag-CRP probabilities for datasets and trial masks.
+    """Plot repetition-neighbor lag-CRP with CIs.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        max_lag: Maximum lag to plot.
-        min_lag: Minimum spacing between first and second presentations of repeated items.
-        direction: Direction of neighbor transitions ("j2i", "i2j", or "both").
-        use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
-        color_cycle: Colors for plotting each dataset.
-        labels: Names for each dataset for legend.
-        contrast_name: Name of contrast for legend labeling.
-        axis: Existing Matplotlib ``Axes`` to plot on.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Datasets containing trial data to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Masks to filter trials in datasets.
+    max_lag : int, optional
+        Maximum lag to display.
+    min_lag : int, optional
+        Minimum spacing between repeated occurrences.
+    direction : str, optional
+        Direction of neighbor transitions.
+    use_lag2 : bool, optional
+        Include +2 neighbor offsets when True.
+    color_cycle : list[str] or None, optional
+        Colors for each curve.
+    labels : Sequence[str] or None, optional
+        Legend labels for each dataset.
+    contrast_name : str or None, optional
+        Legend title.
+    axis : Axes or None, optional
+        Existing Axes to plot on.
+    confidence_level : float, optional
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the neighbor CRP plot.
 
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
@@ -437,18 +487,23 @@ def subject_rep_neighbor_crp(
     min_lag: int = 4,
     max_lag: int = 3,
 ) -> np.ndarray:
-    """Compute subject-level repetition-neighbor CRP values.
+    """Compute subject-level repetition-neighbor CRP.
 
-    Args:
-        dataset: Recall dataset.
-        trial_mask: Boolean mask selecting trials to include.
-        direction: "j2i", "i2j", or "both".
-        use_lag2: Include both +1 and +2 neighbor offsets when True; otherwise only +1.
-        min_lag: Minimum spacing between first and second presentations of repeated items.
-        max_lag: Maximum lag to include in output.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials to include.
+    direction : {"j2i", "i2j", "both"}, optional
+        Which neighbor-transition direction to count.
+    use_lag2 : bool, optional
+        Include +2 neighbor offsets when True.
+    min_lag : int, optional
+        Minimum spacing between repeated presentations.
+    max_lag : int, optional
+        Maximum lag to include in output.
 
-    Returns:
-        Array of shape [n_subjects, 2*max_lag+1] with CRP values per subject and lag.
     """
     lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
@@ -500,19 +555,19 @@ def test_rep_neighbor_crp_vs_control(
 ) -> RepNeighborCRPTestResult:
     """Test observed vs control repetition-neighbor CRP.
 
-    Performs paired t-tests and Wilcoxon signed-rank tests comparing observed
-    and control CRP values at each lag.
+    Parameters
+    ----------
+    observed_crp : np.ndarray
+        Subject-level CRP from observed data.
+        Shape ``(n_subjects, 2*max_lag+1)``.
+    control_crp : np.ndarray
+        Subject-level CRP from control data.
+        Shape ``(n_subjects, 2*max_lag+1)``.
+    max_lag : int, optional
+        Maximum lag used for labeling.
+    direction : str, optional
+        Direction label for results.
 
-    Args:
-        observed_crp: Subject-level CRP from observed data.
-            Shape [n_subjects, 2*max_lag+1].
-        control_crp: Subject-level CRP from control data.
-            Shape [n_subjects, 2*max_lag+1].
-        max_lag: Maximum lag (used for labeling).
-        direction: Direction label for results ("j2i", "i2j", or "both").
-
-    Returns:
-        RepNeighborCRPTestResult with test statistics.
     """
     lag_labels = np.arange(-max_lag, max_lag + 1)
     n_lags = len(lag_labels)

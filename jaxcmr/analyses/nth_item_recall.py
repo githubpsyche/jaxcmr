@@ -1,8 +1,4 @@
-"""Compute nth-item recall curves.
-
-Compute and visualize the probability that a studied position is produced
-at each recall (output) position.
-"""
+"""Nth-item recall curves."""
 
 from __future__ import annotations
 
@@ -29,11 +25,20 @@ def simple_nth_item_recall_curve(
     dataset: RecallDataset,
     query_study_position: int = 0,
 ) -> Float[Array, " recall_positions"]:
-    """Returns recall-position probability of the queried studied item.
+    """Recall-position probability of the queried study item.
 
-    Args:
-      dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
-      query_study_position: Zero-based study position to analyze.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    query_study_position : int
+        0-based study position to analyze.
+
+    Returns
+    -------
+    Float[Array, " recall_positions"]
+        Probability at each recall output position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -48,11 +53,20 @@ def extra_conditional_nth_item_recall_curve(
     dataset: RecallDataset,
     query_study_position: int = 0,
 ) -> Float[Array, " recall_positions"]:
-    """Returns nth-item recall rate by output position conditional on availability and continuation.
+    """Nth-item recall conditioned on availability and continuation.
 
-    Args:
-      dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
-      query_study_position: Zero-based study position to analyze.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    query_study_position : int
+        0-based study position to analyze.
+
+    Returns
+    -------
+    Float[Array, " recall_positions"]
+        Conditional probability at each output position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -73,11 +87,20 @@ def conditional_nth_item_recall_curve(
     dataset: RecallDataset,
     query_study_position: int = 0,
 ) -> Float[Array, " recall_positions"]:
-    """Returns nth-item recall rate by output position conditional on availability and a prior recall event.
+    """Nth-item recall conditioned on availability and prior recall.
 
-    Args:
-      dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
-      query_study_position: Zero-based study position to analyze.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    query_study_position : int
+        0-based study position to analyze.
+
+    Returns
+    -------
+    Float[Array, " recall_positions"]
+        Conditional probability at each output position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -111,21 +134,32 @@ def plot_conditional_nth_item_recall_curve(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot the recall-position curve for a specific study position.
+    """Plot conditional nth-item recall curve.
 
-    Args:
-      datasets: Collection of recall datasets to plot.
-      trial_masks: Boolean masks selecting trials in each dataset.
-      query_study_position: Zero-based study position to analyze.
-      color_cycle: Colors for successive datasets.
-      labels: Legend labels for each dataset.
-      contrast_name: Optional legend title.
-      axis: Existing Matplotlib axis to draw on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    query_study_position : int
+        0-based study position to analyze.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
 
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the recall curve.
 
-    Returns:
-      The Matplotlib axis containing the plot.
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -179,20 +213,32 @@ def plot_simple_nth_item_recall_curve(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot the recall-position curve without availability gating.
+    """Plot simple nth-item recall curve.
 
-    Args:
-      datasets: Collection of recall datasets to plot.
-      trial_masks: Boolean masks selecting trials in each dataset.
-      query_study_position: Zero-based study position to analyze.
-      color_cycle: Colors for successive datasets.
-      labels: Legend labels for each dataset.
-      contrast_name: Optional legend title.
-      axis: Existing Matplotlib axis to draw on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    query_study_position : int
+        0-based study position to analyze.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
 
-    Returns:
-      The Matplotlib axis containing the plot.
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the recall curve.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

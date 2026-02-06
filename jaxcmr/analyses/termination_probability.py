@@ -1,8 +1,4 @@
-"""Compute termination probability curves.
-
-These utilities summarize how often participants stop recalling at each
-output position and provide plotting helpers for group comparisons.
-"""
+"""Termination probability curves."""
 
 from __future__ import annotations
 
@@ -33,10 +29,18 @@ __all__ = [
 def simple_termination_probability(
     dataset: RecallDataset,
 ) -> Float[Array, " recall_positions"]:
-    """Returns termination probability by recall position.
+    """Termination probability by recall position.
 
-    Args:
-      dataset: Recall dataset containing ``recalls``.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing ``recalls``.
+
+    Returns
+    -------
+    Float[Array, " recall_positions"]
+        Probability of stopping at each output position.
+
     """
     recalls = dataset["recalls"]
     zero_mask = recalls == 0
@@ -51,10 +55,18 @@ def simple_termination_probability(
 def conditional_termination_probability(
     dataset: RecallDataset,
 ) -> Float[Array, " recall_positions"]:
-    """Returns conditional termination probability by recall position.
+    """Conditional termination probability by recall position.
 
-    Args:
-      dataset: Recall dataset containing ``recalls``.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing ``recalls``.
+
+    Returns
+    -------
+    Float[Array, " recall_positions"]
+        P(stop | reached) at each output position.
+
     """
     recalls = dataset["recalls"]
     zero_mask = recalls == 0
@@ -79,20 +91,32 @@ def plot_termination_probability(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plots termination probability curves for the requested mode.
+    """Plot termination probability curves.
 
-    Args:
-      datasets: Recall datasets to plot.
-      trial_masks: Boolean masks selecting trials in each dataset.
-      mode: `"conditional"` divides by reach counts; `"simple"` uses raw stops.
-      color_cycle: Colors for successive datasets.
-      labels: Legend labels for each dataset.
-      contrast_name: Optional legend title.
-      axis: Existing Matplotlib axis to draw on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    mode : str
+        ``"conditional"`` or ``"simple"``.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
 
-    Returns:
-      Matplotlib axis with the rendered curves.
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with termination curves.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -165,14 +189,20 @@ def subject_output_length_mean(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
 ) -> np.ndarray:
-    """Return mean output lengths per subject.
+    """Mean output lengths per subject.
 
-    Args:
-      dataset: Recall dataset containing trial data.
-      trial_mask: Boolean mask selecting trials to include.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing trial data.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials.
 
-    Returns:
-      Array of per-subject mean output lengths.
+    Returns
+    -------
+    np.ndarray
+        Per-subject mean output lengths.
+
     """
     subject_values = apply_by_subject(dataset, trial_mask, _mean_output_length)
     return np.asarray(subject_values, dtype=float)
@@ -182,14 +212,20 @@ def subject_output_length_median(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
 ) -> np.ndarray:
-    """Return median output lengths per subject.
+    """Median output lengths per subject.
 
-    Args:
-      dataset: Recall dataset containing trial data.
-      trial_mask: Boolean mask selecting trials to include.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing trial data.
+    trial_mask : Bool[Array, " trial_count"]
+        Boolean mask selecting trials.
 
-    Returns:
-      Array of per-subject median output lengths.
+    Returns
+    -------
+    np.ndarray
+        Per-subject median output lengths.
+
     """
     subject_values = apply_by_subject(dataset, trial_mask, _median_output_length)
     return np.asarray(subject_values, dtype=float)
@@ -253,14 +289,20 @@ def test_output_length_mean_vs_control(
     observed_means: np.ndarray,
     control_means: np.ndarray,
 ) -> OutputLengthTestResult:
-    """Test mean output length differences between observed and control.
+    """Test mean output length: observed vs control.
 
-    Args:
-      observed_means: Per-subject mean output lengths from observed data.
-      control_means: Per-subject mean output lengths from control data.
+    Parameters
+    ----------
+    observed_means : np.ndarray
+        Per-subject mean output lengths (observed).
+    control_means : np.ndarray
+        Per-subject mean output lengths (control).
 
-    Returns:
-      OutputLengthTestResult with test statistics.
+    Returns
+    -------
+    OutputLengthTestResult
+        Paired test statistics.
+
     """
     return _test_output_lengths(observed_means, control_means)
 
@@ -269,13 +311,19 @@ def test_output_length_median_vs_control(
     observed_medians: np.ndarray,
     control_medians: np.ndarray,
 ) -> OutputLengthTestResult:
-    """Test median output length differences between observed and control.
+    """Test median output length: observed vs control.
 
-    Args:
-      observed_medians: Per-subject median output lengths from observed data.
-      control_medians: Per-subject median output lengths from control data.
+    Parameters
+    ----------
+    observed_medians : np.ndarray
+        Per-subject median output lengths (observed).
+    control_medians : np.ndarray
+        Per-subject median output lengths (control).
 
-    Returns:
-      OutputLengthTestResult with test statistics.
+    Returns
+    -------
+    OutputLengthTestResult
+        Paired test statistics.
+
     """
     return _test_output_lengths(observed_medians, control_medians)

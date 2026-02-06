@@ -1,3 +1,5 @@
+"""Omission error rate analysis."""
+
 __all__ = [
     "trial_omission_error_rate",
     "omission_error_rate",
@@ -21,12 +23,22 @@ def trial_omission_error_rate(
     presentations: Integer[Array, " study_positions"],
     size: int = 3,
 ) -> Bool[Array, " study_positions"]:
-    """Return omission error flags for each study position in a trial.
+    """Flag omission errors at each study position for one trial.
 
-    Args:
-        recalls: Recall sequence for a trial. 1-indexed; 0 pads.
-        presentations: Presented item IDs for the trial. 1-indexed; 0 pads.
-        size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        Recall sequence for a trial. 1-indexed; 0 pads.
+    presentations : Integer[Array, " study_positions"]
+        Presented item IDs for the trial. 1-indexed; 0 pads.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Bool[Array, " study_positions"]
+        True where the study position was never recalled.
+
     """
     # Expand each recall token into every study position it could refer to
     list_length = presentations.shape[0]
@@ -42,7 +54,7 @@ def trial_omission_error_rate(
         lambda pos: jnp.any(expanded_recalls == pos)
     )(study_positions)
 
-    # Omission = never recalled AND study slot isn’t padding (presentation ≠ 0)
+    # Omission = never recalled AND study slot isn't padding (presentation != 0)
     return (~position_was_recalled) & (presentations != 0)
 
 
@@ -50,11 +62,20 @@ def omission_error_rate(
     dataset: RecallDataset,
     size: int = 3,
 ) -> Float[Array, " study_positions"]:
-    """Return position-specific omission rate.
+    """Return position-specific omission error rate.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Mean omission rate at each study position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -75,20 +96,32 @@ def plot_omission_error_rate(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot omission error rate curves for one or more datasets.
+    """Plot omission error rate curves with confidence intervals.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    size : int
+        Max study positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
 
-    Returns:
-        The matplotlib Axes object containing the plot.
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with omission error rate curves.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

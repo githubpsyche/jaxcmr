@@ -1,8 +1,4 @@
-"""Conditional co-recall probability as a function of study lag.
-
-Estimates the probability that a neighbor ``lag`` positions away was recalled
-given that the anchor position was recalled, ignoring recall order.
-"""
+"""Conditional co-recall probability by study lag."""
 
 from __future__ import annotations
 
@@ -23,11 +19,16 @@ def _trial_recall_mask(
     recalls: Integer[Array, " recall_events"],
     list_length: int,
 ) -> Bool[Array, " study_positions"]:
-    """Returns a boolean mask indicating which study positions were recalled.
+    """Return a boolean mask of recalled study positions.
 
-    Args:
-      recalls: One-indexed recall positions for a single trial (0 pads).
-      list_length: Number of studied items in the list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_events"]
+        One-indexed recall positions for a single
+        trial (0 pads).
+    list_length : int
+        Number of studied items in the list.
+
     """
 
     counts = jnp.bincount(recalls, length=list_length + 1)[1:]
@@ -37,10 +38,13 @@ def _trial_recall_mask(
 def _available_anchor_counts(
     mask: Float[Array, " study_positions"],
 ) -> Float[Array, " lags"]:
-    """Returns anchor counts for each positive lag.
+    """Return anchor counts for each positive lag.
 
-    Args:
-      mask: Float mask indicating recalled study positions.
+    Parameters
+    ----------
+    mask : Float[Array, " study_positions"]
+        Float mask indicating recalled study positions.
+
     """
 
     total_recalled = mask.sum()
@@ -52,15 +56,22 @@ def _conditional_corec_counts(
     recalls: Integer[Array, " recall_events"],
     list_length: int,
 ) -> tuple[Float[Array, " lags"], Float[Array, " lags"]]:
-    """Returns conditional co-recall numerators and denominators for a trial.
+    """Return conditional co-recall counts for a trial.
 
-    Args:
-      recalls: One-indexed recall positions for a single trial (0 pads).
-      list_length: Number of studied items in the list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_events"]
+        One-indexed recall positions for a single
+        trial (0 pads).
+    list_length : int
+        Number of studied items in the list.
 
-    Returns:
-      (actual_pairs, anchor_counts): Positive-lag co-recall counts and the number
-      of recalled anchors contributing to each lag.
+    Returns
+    -------
+    tuple[Float[Array, " lags"], Float[Array, " lags"]]
+        Positive-lag co-recall counts and the number
+        of recalled anchors contributing to each lag.
+
     """
 
     mask = _trial_recall_mask(recalls, list_length).astype(jnp.float32)
@@ -71,10 +82,20 @@ def _conditional_corec_counts(
 
 
 def conditional_corec_by_lag(dataset: RecallDataset) -> Float[Array, " lags"]:
-    """Returns conditional CoRec(d) for positive lags.
+    """Return conditional CoRec(d) for positive lags.
 
-    Args:
-      dataset: Recall dataset containing ``recalls`` and ``pres_itemnos``.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset containing ``recalls`` and
+        ``pres_itemnos``.
+
+    Returns
+    -------
+    Float[Array, " lags"]
+        Conditional co-recall probability at each
+        positive lag.
+
     """
 
     list_length = dataset["pres_itemnos"].shape[1]
@@ -94,17 +115,34 @@ def plot_conditional_corec_by_lag(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with conditional co-recall curves.
+    """Plot conditional co-recall curves with confidence intervals.
 
-    Args:
-      datasets: Dataset or list of datasets to plot.
-      trial_masks: Boolean masks selecting trials within each dataset.
-      max_lag: Maximum lag to display (defaults to full range).
-      color_cycle: Colors for plotting each dataset.
-      labels: Legend labels for each dataset.
-      contrast_name: Legend title for contrasts.
-      axis: Existing Matplotlib ``Axes`` to plot on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Dataset or list of datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials within each
+        dataset.
+    max_lag : int, optional
+        Maximum lag to display (defaults to full range).
+    color_cycle : list[str], optional
+        Colors for plotting each dataset.
+    labels : Sequence[str], optional
+        Legend labels for each dataset.
+    contrast_name : str, optional
+        Legend title for contrasts.
+    axis : Axes, optional
+        Existing Matplotlib ``Axes`` to plot on.
+    confidence_level : float, optional
+        Confidence level for the bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with conditional co-recall
+        curves.
+
     """
 
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(

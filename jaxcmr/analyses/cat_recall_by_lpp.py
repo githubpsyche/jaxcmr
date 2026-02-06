@@ -9,6 +9,7 @@ from jax import jit, vmap
 from jax.nn import one_hot
 from matplotlib.axes import Axes
 
+from ..helpers import apply_by_subject
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
@@ -39,15 +40,28 @@ def category_lpp_recall_histogram(
     bin_edges: Float[Array, " bin_count_plus_one"],
     list_length: int,
 ) -> Float[Array, " bin_count"]:
-    """Returns category-filtered recall rate as a function of LPP bins.
+    """Category-filtered recall rate binned by LPP.
 
-    Args:
-      recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-      lpp: Trial by study position array of LPP values.
-      categories: Trial by study position array of item categories.
-      category_value: Category value to compute recall rates over.
-      bin_edges: LPP bin edges used for aggregation.
-      list_length: Length of the study list.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_positions"]
+        Recalled items (1-indexed; 0 for no recall).
+    lpp : Float[Array, " trial_count study_positions"]
+        LPP values per study position.
+    categories : Integer[Array, " trial_count study_positions"]
+        Item categories per study position.
+    category_value : int
+        Category to filter on.
+    bin_edges : Float[Array, " bin_count_plus_one"]
+        LPP bin edges.
+    list_length : int
+        Study-list length.
+
+    Returns
+    -------
+    Float[Array, " bin_count"]
+        Recall rate per LPP bin.
+
     """
     thresholds = bin_edges[1:-1]
     num_bins = bin_edges.shape[0] - 1
@@ -74,15 +88,28 @@ def cat_recall_by_lpp(
     bin_edges: Optional[Float[Array, " bin_count_plus_one"]] = None,
     bin_count: int = 10,
 ) -> Float[Array, " bin_count"]:
-    """Returns category-filtered recall rate as a function of LPP bins.
+    """Category-filtered recall rate by LPP bins.
 
-    Args:
-      dataset: Recall dataset containing per-item LPP metadata.
-      category_field: Key in ``dataset`` providing item categories per study position.
-      category_value: Category value to compute the recall curve over.
-      lpp_field: Key in ``dataset`` providing LPP values per study position.
-      bin_edges: LPP bin edges used for aggregation. Computed from the dataset if ``None``.
-      bin_count: Number of LPP bins when ``bin_edges`` is not provided.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with per-item LPP metadata.
+    category_field : str
+        Key providing item categories per study position.
+    category_value : int
+        Category to filter on.
+    lpp_field : str
+        Key providing LPP values per study position.
+    bin_edges : Float[Array, " bin_count_plus_one"], optional
+        LPP bin edges; computed from data if ``None``.
+    bin_count : int
+        Number of bins when ``bin_edges`` is not provided.
+
+    Returns
+    -------
+    Float[Array, " bin_count"]
+        Recall rate per LPP bin.
+
     """
     recalls = dataset["recalls"]
     lpp = dataset[lpp_field]
@@ -113,21 +140,40 @@ def plot_cat_recall_by_lpp(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Matplotlib ``Axes`` with category-filtered LPP-binned recall curves.
+    """Plot category-filtered recall rate by LPP bins.
 
-    Args:
-      datasets: Datasets containing trial data to be plotted.
-      trial_masks: Masks selecting trials in each dataset.
-      category_field: Keys providing item categories per study position.
-      category_values: Category values to compute the recall curves over.
-      lpp_field: Key in ``dataset`` providing LPP values per study position.
-      bin_edges: LPP bin edges used for aggregation. Computed from the datasets if ``None``.
-      bin_count: Number of bins when ``bin_edges`` is not provided.
-      color_cycle: Colors for plotting each dataset.
-      labels: Labels per dataset or category. Assumed per-category if multiple values provided.
-      contrast_name: Legend title for contrasts.
-      axis: Existing Matplotlib ``Axes`` to plot on.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    category_field : str
+        Key providing item categories per study position.
+    category_values : Sequence[int]
+        Categories to plot.
+    lpp_field : str
+        Key providing LPP values per study position.
+    bin_edges : Float[Array, " bin_count_plus_one"], optional
+        LPP bin edges; computed from data if ``None``.
+    bin_count : int
+        Number of bins when ``bin_edges`` is not provided.
+    color_cycle : list[str], optional
+        Colors for each curve.
+    labels : Sequence[str], optional
+        Legend labels.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with the LPP-binned recall plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

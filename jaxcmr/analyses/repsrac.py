@@ -1,8 +1,4 @@
-"""Compute and plot repetition-index serial recall accuracy.
-
-The repetition-index SRAC reports accuracy at repeated study positions,
-stratified by repetition index (first vs second occurrence, etc.).
-"""
+"""Repetition-index serial recall accuracy."""
 
 from typing import Optional, Sequence
 
@@ -23,17 +19,24 @@ def trial_repsrac_counts(
     presentations: Integer[Array, " study_positions"],
     size: int = 3,
 ) -> tuple[Integer[Array, " repetition_index"], Integer[Array, " repetition_index"]]:
-    """Return correct and total counts for each repetition index in a trial.
+    """Return correct and total counts per repetition index.
 
-    Args:
-      recalls: Recalled item indices for one trial. Shape
-        ``[recall_positions]``; 1-indexed with 0 for no recall.
-      presentations: Item identifiers in study order. Shape
-        ``[study_positions]``; 1-indexed.
-      size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        Recalled item indices for one trial (1-indexed,
+        0 = no recall).
+    presentations : Integer[Array, " study_positions"]
+        Item identifiers in study order (1-indexed).
+    size : int, optional
+        Maximum study positions per item.
 
-    Returns:
-      (correct_counts, total_counts): Counts per repetition index for repeated items.
+    Returns
+    -------
+    tuple of Integer[Array, " repetition_index"]
+        Correct counts and total counts per repetition
+        index.
+
     """
     list_length = presentations.shape[0]
     recalls = recalls[:list_length]
@@ -65,9 +68,19 @@ def repsrac(
 ) -> Float[Array, " repetition_index"]:
     """Return recall accuracy for each repetition index.
 
-    Args:
-      dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-      size: Maximum number of study positions an item can occupy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and
+        ``pres_itemnos``.
+    size : int, optional
+        Maximum study positions per item.
+
+    Returns
+    -------
+    Float[Array, " repetition_index"]
+        Accuracy for each repetition index.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -90,20 +103,32 @@ def plot_repsrac(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot repetition-index serial recall accuracy for one or more datasets.
+    """Plot repetition-index serial recall accuracy.
 
-    Args:
-      datasets: Recall datasets to plot.
-      trial_masks: Boolean masks selecting trials for each dataset.
-      color_cycle: Line colors for each dataset.
-      labels: Legend entries corresponding to each dataset.
-      contrast_name: Name of the contrast used in labeling.
-      axis: Existing Matplotlib axes to draw on.
-      size: Maximum number of study positions an item may occupy.
-      confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Recall datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials for each dataset.
+    color_cycle : list[str] or None, optional
+        Line colors for each dataset.
+    labels : Sequence[str] or None, optional
+        Legend entries for each dataset.
+    contrast_name : str or None, optional
+        Legend title.
+    axis : Axes or None, optional
+        Existing Axes to draw on.
+    size : int, optional
+        Maximum study positions per item.
+    confidence_level : float, optional
+        Confidence level for error bounds.
 
-    Returns:
-      The Matplotlib axes containing the plot.
+    Returns
+    -------
+    Axes
+        Axes containing the plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

@@ -1,8 +1,4 @@
-"""Probability of nth recall (PNR) metrics and plots.
-
-Utilities for computing how often study positions produce the n-th recall,
-with support for repeated study items.
-"""
+"""Probability of nth recall (PNR)."""
 
 __all__ = [
     "fixed_pres_pnr",
@@ -33,12 +29,22 @@ def fixed_pres_pnr(
     list_length: int,
     query_recall_position: int = 0,
 ) -> Float[Array, " study_positions"]:
-    """Returns probability of n-th recall as a function of study position.
+    """Probability of nth recall by study position.
 
-    Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed; 0 for no recall.
-        list_length: Length of the study list.
-        query_recall_position: Recall index (0-based) to analyze.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_positions"]
+        1-indexed recall array; 0 for no recall.
+    list_length : int
+        Number of items in the study list.
+    query_recall_position : int
+        0-based recall index to analyze.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall probability at each study position.
+
     """
     # Identify the item recalled at the query_recall_position for each trial.
     # Bin counts for each item number, ignoring 0 (no recall).
@@ -53,14 +59,22 @@ def available_recalls(
     query_recall_position: int,
     list_length: int,
 ) -> Bool[Array, " list_length"]:
-    """Returns mask of study positions still available at a recall position.
+    """Mask of study positions available at a recall position.
 
-    Assumes recalls are 1-indexed with 0 meaning no recall.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        1-indexed recalls for a single trial.
+    query_recall_position : int
+        Index in the recall sequence to evaluate.
+    list_length : int
+        Number of items in the study list.
 
-    Args:
-        recalls: Recalled items for a single trial.
-        query_recall_position: Index in the recall sequence to evaluate.
-        list_length: Length of the study list.
+    Returns
+    -------
+    Bool[Array, " list_length"]
+        True for positions not yet recalled.
+
     """
     prior = recalls[:query_recall_position]
     init = jnp.ones(list_length + 1, dtype=bool)
@@ -74,14 +88,22 @@ def actual_recalls(
     query_recall_position: int,
     list_length: int,
 ) -> Bool[Array, " list_length"]:
-    """Returns mask with the recalled study position set to True.
+    """Mask with the recalled study position set to True.
 
-    Assumes items are 1-indexed with 0 for no recall.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        1-indexed recalls for a single trial.
+    query_recall_position : int
+        Index in the recall sequence to evaluate.
+    list_length : int
+        Number of items in the study list.
 
-    Args:
-        recalls: Recalled items for a single trial.
-        query_recall_position: Index in the recall sequence to evaluate.
-        list_length: Length of the study list.
+    Returns
+    -------
+    Bool[Array, " list_length"]
+        True at the recalled position, False elsewhere.
+
     """
     item = recalls[query_recall_position]
     return lax.cond(
@@ -96,15 +118,22 @@ def conditional_fixed_pres_pnr(
     list_length: int,
     query_recall_position: int,
 ) -> Float[Array, " list_length"]:
-    """Returns conditional PNR as actual over available per study position.
+    """Conditional PNR: actual over available per position.
 
-    Each element gives the probability that a study position was recalled
-    at ``query_recall_position`` conditioned on it being available.
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial recall_positions"]
+        1-indexed recall array.
+    list_length : int
+        Number of items in the study list.
+    query_recall_position : int
+        0-based recall index to analyze.
 
-    Args:
-        recalls: Trial by recall position array of recalled items. 1-indexed.
-        list_length: Length of the study list.
-        query_recall_position: Recall index (0-based) to analyze.
+    Returns
+    -------
+    Float[Array, " list_length"]
+        Conditional probability at each study position.
+
     """
 
     # shape (trial, list_length)
@@ -125,12 +154,22 @@ def pnr(
     size: int = 3,
     query_recall_position: int = 0,
 ) -> Float[Array, " study_positions"]:
-    """Returns probability of n-th recall allowing item repetitions.
+    """Probability of nth recall with item repetitions.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: Maximum number of study positions an item can be presented at.
-        query_recall_position: Recall index (0-based) to analyze.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+    query_recall_position : int
+        0-based recall index to analyze.
+
+    Returns
+    -------
+    Float[Array, " study_positions"]
+        Recall probability at each study position.
+
     """
     presentations = dataset["pres_itemnos"]
     list_length = presentations.shape[1]
@@ -150,16 +189,26 @@ def available_recalls_with_repeats(
     list_length: int,
     size: int,
 ) -> Bool[Array, " list_length"]:
-    """Returns mask of available study positions when items may repeat.
+    """Mask of available positions when items may repeat.
 
-    A study position is unavailable if its item has been recalled earlier.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        1-indexed recalls for a single trial.
+    presentations : Integer[Array, " list_length"]
+        Items presented at each study position.
+    query_recall_position : int
+        Index in the recall sequence to evaluate.
+    list_length : int
+        Number of items in the study list.
+    size : int
+        Max study positions an item can occupy.
 
-    Args:
-        recalls: Recalled items for a single trial.
-        presentations: Items presented at each study position.
-        query_recall_position: Recall index to evaluate.
-        list_length: Length of the study list.
-        size: Maximum number of study positions an item can occupy.
+    Returns
+    -------
+    Bool[Array, " list_length"]
+        True for positions not yet recalled.
+
     """
     prior = vmap(all_study_positions, in_axes=(0, None, None))(
         recalls[:query_recall_position], presentations, size
@@ -178,16 +227,26 @@ def actual_recalls_with_repeats(
     list_length: int,
     size: int,
 ) -> Bool[Array, " list_length"]:
-    """Returns mask with study positions of the recalled item set to True.
+    """Mask with study positions of the recalled item as True.
 
-    Uses ``all_study_positions`` to handle item repetitions.
+    Parameters
+    ----------
+    recalls : Integer[Array, " recall_positions"]
+        1-indexed recalls for a single trial.
+    presentations : Integer[Array, " list_length"]
+        Items presented at each study position.
+    query_recall_position : int
+        Index in the recall sequence to evaluate.
+    list_length : int
+        Number of items in the study list.
+    size : int
+        Max study positions an item can occupy.
 
-    Args:
-        recalls: Recalled items for a single trial.
-        presentations: Items presented at each study position.
-        query_recall_position: Recall index to evaluate.
-        list_length: Length of the study list.
-        size: Maximum number of study positions an item can occupy.
+    Returns
+    -------
+    Bool[Array, " list_length"]
+        True at all positions of the recalled item.
+
     """
     item = recalls[query_recall_position]
     current = all_study_positions(item, presentations, size)  # shape: (size,)
@@ -202,14 +261,22 @@ def conditional_pnr_with_repeats(
     size: int,
     query_recall_position: int,
 ) -> Float[Array, " list_length"]:
-    """Returns conditional PNR when study items may repeat.
+    """Conditional PNR when study items may repeat.
 
-    Computes ``actual / available`` for each study position across trials.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    size : int
+        Max study positions an item can occupy.
+    query_recall_position : int
+        0-based recall index to analyze.
 
-    Args:
-        dataset: Recall dataset containing at least ``recalls`` and ``pres_itemnos``.
-        size: Maximum number of study positions an item can occupy.
-        query_recall_position: Recall index (0-based) to analyze.
+    Returns
+    -------
+    Float[Array, " list_length"]
+        Conditional probability at each study position.
+
     """
     recalls = dataset["recalls"]
     presentations = dataset["pres_itemnos"]
@@ -238,18 +305,34 @@ def plot_pnr(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Returns Axes object with plotted probability of nth recall for given datasets and trial masks.
+    """Plot probability of nth recall with confidence intervals.
 
-    Args:
-        datasets: Datasets containing trial data to be plotted.
-        trial_masks: Masks to filter trials in datasets.
-        query_recall_position: Which recall index (0-based) to plot (e.g., 0 for first recall).
-        color_cycle: List of colors for plotting each dataset.
-        labels: Names for each dataset for legend, optional.
-        contrast_name: Name of contrast for legend labeling, optional.
-        axis: Existing matplotlib Axes to plot on, optional.
-        size: Maximum number of study positions an item can be presented at.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    query_recall_position : int
+        0-based recall index to plot.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    size : int
+        Max study positions an item can occupy.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the PNR plot.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis

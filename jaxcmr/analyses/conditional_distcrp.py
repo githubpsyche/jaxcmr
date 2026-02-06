@@ -1,15 +1,4 @@
-"""Compute distance-binned conditional response probabilities with transition filtering.
-
-This module extends distcrp.py by adding support for a `should_tabulate` mask
-that controls which transitions are counted. This mirrors the conditional_crp.py
-pattern, allowing analyses to exclude specific transitions (e.g., cued recalls).
-
-When `should_tabulate[i]` is False for a recall:
-- State is still updated (availability, previous_item)
-- But the transition INTO that recall is NOT counted in actual/available tallies
-
-This preserves correct availability tracking while filtering out unwanted transitions.
-"""
+"""Distance-binned CRP with conditional transition filtering."""
 
 from __future__ import annotations
 
@@ -35,17 +24,7 @@ from .distcrp import compute_distance_bins_min_count
 
 
 class DistanceTabulation(Pytree):
-    """Accumulates per-bin transition counts for a single trial with conditional tabulation.
-
-    This version adds `should_tabulate` support: when False, state is updated but
-    transition counts are not incremented.
-
-    Assumes:
-        - ``trial[0] > 0`` (first recall exists).
-        - ``presentation`` supplies item identifiers compatible with the global
-          ``distance_matrix``.
-        - Subsequent zeros in ``trial`` are padding and ignored.
-    """
+    """Per-bin transition counts with conditional tabulation."""
 
     def __init__(
         self,
@@ -66,7 +45,19 @@ class DistanceTabulation(Pytree):
     def _compute_transition_counts(
         self, current_item: Int_
     ) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
-        """Compute actual and available bin counts for a transition."""
+        """Compute actual and available bin counts for a transition.
+
+        Parameters
+        ----------
+        current_item : Int_
+            Currently recalled item (1-indexed).
+
+        Returns
+        -------
+        tuple[Integer[Array, " bins"], Integer[Array, " bins"]]
+            Updated actual and available bin counts.
+
+        """
         distances_from_prev = self.trial_distances[self.previous_item - 1]
         actual_distance = distances_from_prev[current_item - 1]
         actual_bin = jnp.digitize(actual_distance, self.bin_edges)
@@ -82,11 +73,20 @@ class DistanceTabulation(Pytree):
         return new_actual, new_avail
 
     def tabulate(self, choice: Int_, should_tabulate: Bool_) -> "DistanceTabulation":
-        """Update state and optionally count the transition into this recall.
+        """Update state and optionally count the transition.
 
-        Args:
-            choice: The recalled item (study position, 1-indexed). Zero = padding.
-            should_tabulate: If True, count this transition. If False, only update state.
+        Parameters
+        ----------
+        choice : Int_
+            Recalled item (1-indexed study position).
+        should_tabulate : Bool_
+            Whether to count this transition.
+
+        Returns
+        -------
+        DistanceTabulation
+            Updated tabulation state.
+
         """
 
         def _update_state() -> "DistanceTabulation":
@@ -120,15 +120,26 @@ def tabulate_trial(
     distance_matrix: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"],
 ) -> tuple[Integer[Array, " bins"], Integer[Array, " bins"]]:
-    """Return actual and available bin counts for a single trial.
+    """Return actual and available bin counts for a trial.
 
-    Args:
-        trial: Sequence of recall events encoded as study positions.
-        present_ids: Item identifiers presented at each study position.
-        should_tabulate: Boolean mask aligned to recall events; True means count the
-            transition into that recall.
-        distance_matrix: Pairwise distances indexed by item identifier.
-        bin_edges: Interior bin edges shared across trials.
+    Parameters
+    ----------
+    trial : Integer[Array, " recall_events"]
+        Recall events as study positions.
+    present_ids : Integer[Array, " study_item_ids"]
+        Item identifiers at each study position.
+    should_tabulate : Bool[Array, " recall_events"]
+        Boolean mask; True counts the transition.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise distances indexed by item identifier.
+    bin_edges : Float[Array, " edges"]
+        Interior bin edges shared across trials.
+
+    Returns
+    -------
+    tuple[Integer[Array, " bins"], Integer[Array, " bins"]]
+        Actual and available transition counts per bin.
+
     """
     valid = present_ids > 0
     remapped = jnp.where(valid, present_ids - 1, 0)
@@ -154,13 +165,23 @@ def dist_crp(
     distance_matrix: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"],
 ) -> Float[Array, " bins"]:
-    """Return the distance-conditioned response probability with conditional tabulation.
+    """Return distance-conditioned CRP with transition filtering.
 
-    Args:
-        dataset: Recall dataset containing ``recalls``, ``pres_itemids``, and
-            ``_should_tabulate`` (boolean mask aligned to recall events).
-        distance_matrix: Pairwise item distances.
-        bin_edges: Interior boundaries for distance bins.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Dataset with ``recalls``, ``pres_itemids``, and
+        ``_should_tabulate``.
+    distance_matrix : Float[Array, " item_count item_count"]
+        Pairwise item distances.
+    bin_edges : Float[Array, " edges"]
+        Interior boundaries for distance bins.
+
+    Returns
+    -------
+    Float[Array, " bins"]
+        Conditional response probability per distance bin.
+
     """
     should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)
 
@@ -193,26 +214,44 @@ def plot_dist_crp(
     bin_centers: Optional[Float[Array, " bins"]] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot distance-binned CRP curves with conditional tabulation.
+    """Plot distance-binned CRP with conditional tabulation.
 
-    Args:
-        datasets: Collection of recall datasets to contrast.
-        trial_masks: Boolean masks selecting trials per dataset.
-        should_tabulate: Boolean masks aligned to recall events, one per dataset,
-            indicating which transitions to include in tabulation.
-        features: Feature matrix whose rows align with the vocabulary items.
-        color_cycle: Colors used for successive datasets.
-        labels: Legend labels corresponding to ``datasets``.
-        contrast_name: Optional legend title.
-        axis: Optional matplotlib axis to draw on.
-        min_transitions_per_subject: Minimum number of available transitions per
-            bin, averaged across subjects, used when defining distance bins.
-        bin_step: Distance increment applied while expanding each bin.
-        bin_source_index: Index selecting which dataset provides the binning
-            availability counts.
-        bin_edges: Interior bin edges supplied by caller.
-        bin_centers: Optional centers matching ``bin_edges``.
-        confidence_level: Confidence level for the bounds.
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        Recall datasets to contrast.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean masks selecting trials per dataset.
+    should_tabulate : Sequence | array
+        Boolean masks aligned to recall events.
+    features : Float[Array, "word_count features_count"]
+        Feature matrix aligned with vocabulary items.
+    color_cycle : list[str], optional
+        Colors for successive datasets.
+    labels : Sequence[str], optional
+        Legend labels for ``datasets``.
+    contrast_name : str, optional
+        Legend title.
+    axis : Axes, optional
+        Existing matplotlib Axes to plot on.
+    min_transitions_per_subject : int, optional
+        Minimum available transitions per bin per subject.
+    bin_step : float, optional
+        Distance increment for expanding each bin.
+    bin_source_index : int, optional
+        Dataset index providing binning availability.
+    bin_edges : Float[Array, " edges"], optional
+        Interior bin edges; computed if ``None``.
+    bin_centers : Float[Array, " bins"], optional
+        Bin centers matching ``bin_edges``.
+    confidence_level : float, optional
+        Confidence level for the bounds.
+
+    Returns
+    -------
+    Axes
+        Axes with distance-binned CRP curves.
+
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
