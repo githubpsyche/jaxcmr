@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Incomplete background_map in cue-similarity analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+
+
+<meta name="citation_title" content="Incomplete `background_map` in cue-similarity analysis">
+<meta name="citation_language" content="en">
+</head>
+
+<body>
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Incomplete <code>background_map</code> in cue-similarity analysis</h1>
+          </div>
+
+    
+    <div class="quarto-title-meta-container">
+      <div class="quarto-title-meta-column-start">
+        
+        <div class="quarto-title-meta">
+
+                
+          
+                
+              </div>
+      </div>
+      <div class="quarto-title-meta-column-end quarto-other-formats-target">
+      </div>
+    </div>
+
+
+
+    <div class="quarto-other-links-text-target">
+    </div>  </div>
+</header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
+  <li><a href="#replicating-the-published-match-counts" id="toc-replicating-the-published-match-counts" class="nav-link" data-scroll-target="#replicating-the-published-match-counts">Replicating the published match counts</a></li>
+  <li><a href="#diagnosing-the-discrepancy" id="toc-diagnosing-the-discrepancy" class="nav-link" data-scroll-target="#diagnosing-the-discrepancy">Diagnosing the discrepancy</a></li>
+  <li><a href="#corrected-results" id="toc-corrected-results" class="nav-link" data-scroll-target="#corrected-results">Corrected results</a></li>
+  <li><a href="#convergent-evidence-human-coded-analysis" id="toc-convergent-evidence-human-coded-analysis" class="nav-link" data-scroll-target="#convergent-evidence-human-coded-analysis">Convergent evidence: human-coded analysis</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#suggested-fix" id="toc-suggested-fix" class="nav-link" data-scroll-target="#suggested-fix">Suggested fix</a></li>
+  </ul>
+<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li></ul></div></nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+  
+
+
+<p>The <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (lines 82–93) was built from background codes observed in the negative film’s Excel files. Six of the eleven neutral film cue codes use a <code>_1</code> scene suffix that has no entry in this map, so they pass through <code>dplyr::recode()</code> unchanged and then fail the <code>cue %in% as.character(1:11)</code> check in the match calculation. This silently excludes 757 neutral memories (34.6% of all neutral memory events) from ever being counted as matches, regardless of their content. Adding the six missing entries reverses the emotion main effect: neutral match percentage rises from 18.8% to 47.7%, exceeding negative (36.7%).</p>
+<p>This report walks through four steps:</p>
+<ol type="1">
+<li><strong>Replication</strong> — we reproduce the published match counts and boxplot figure in Python, working from the pipeline’s own CSV output, to confirm we faithfully represent the original analysis.</li>
+<li><strong>Diagnosis</strong> — we inspect the <code>cue_background</code> field and trace the six missing entries in the map, showing exactly which neutral memories are affected and why.</li>
+<li><strong>Correction</strong> — we add the six missing entries and recompute, showing that the emotion main effect reverses.</li>
+<li><strong>Convergent evidence</strong> — an independent human-coded analysis of the same dataset (conducted before the bug was identified) confirms the corrected direction.</li>
+</ol>
+<section id="context" class="level2">
+<h2 class="anchored" data-anchor-id="context">Context</h2>
+<p>The cue-similarity analysis attributes each recalled memory to the most recent background image (film cue or foil) and then compares the memory’s embedding-assigned clip against that background. A memory counts as a “match” when <code>cue_background == assigned_clip</code> and both values are in <code>{"1", "2", ..., "11"}</code> — i.e., both refer to a valid film clip rather than a foil or external detail. The per-participant match percentage is <code>mean(match) × 100</code> across all of that participant’s memory events, and the paper reports a large emotion main effect: F(1,229) = 38.27, p &lt; .001, η² = .13, with negative film participants showing higher match percentages than neutral.</p>
+<p>Everything below uses the analysis pipeline’s own output CSV — no re-running of the R script or embedding model is required.</p>
+<div id="cell-4" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.106623Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.106528Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.116765Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.116577Z&quot;}" data-execution_count="2">
+<div class="cell-output cell-output-stdout">
+<pre><code>Total memory events: 4101
+Columns: ['', 'Participant_Number', 'memory_description', 'cue_background', 'reaction_sum', 'assigned_clip', 'condition', 'match_status']
+
+Memories per condition group:
+  Negative Film No Intervention, Involuntary: 362
+  Negative Film No Intervention, Voluntary: 574
+  Negative Film Visuo-Spatial, Involuntary: 429
+  Negative Film Visuo-Spatial, Voluntary: 551
+  Neutral Film No Intervention, Involuntary: 479
+  Neutral Film No Intervention, Voluntary: 674
+  Neutral Film Visuo-Spatial, Involuntary: 495
+  Neutral Film Visuo-Spatial, Voluntary: 537</code></pre>
+</div>
+<a class="quarto-notebook-link" id="nblink-1" href="index-preview.html#cell-4">Source: Article Notebook</a></div>
+</section>
+<section id="replicating-the-published-match-counts" class="level2">
+<h2 class="anchored" data-anchor-id="replicating-the-published-match-counts">Replicating the published match counts</h2>
+<p>Before investigating anything, we first confirm that we can exactly reproduce the published numbers from the pipeline’s output data. This establishes that any discrepancy we later identify is genuinely in the pipeline, not an artefact of our re-analysis.</p>
+<p>The R function <code>calculate_cue_memory_similarity()</code> (line 374 of the 2×2×2 script) computes a per-participant match percentage as follows: for every memory event, <code>match = 1</code> if <code>cue_background == assigned_clip</code> and both are in <code>{"1", ..., "11"}</code>; otherwise <code>match = 0</code>. The participant’s percentage is <code>mean(match) × 100</code>. Participants with fewer than 4 total memories are excluded (line 34 of <code>ANOVA_MATCH_PERCENTAGE.R</code>). We replicate this logic in Python.</p>
+<div id="cell-6" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.133631Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.133510Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.139373Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.139177Z&quot;}" data-execution_count="3">
+<div class="cell-output cell-output-stdout">
+<pre><code>Per-condition match counts (replicating published numbers):
+
+  Negative Film No Intervention, Involuntary
+    N=28, mean matches=5.4, mean match %=43.5% (SE=4.7%)
+  Negative Film No Intervention, Voluntary
+    N=30, mean matches=6.4, mean match %=28.4% (SE=5.0%)
+  Negative Film Visuo-Spatial, Involuntary
+    N=29, mean matches=6.3, mean match %=44.9% (SE=4.5%)
+  Negative Film Visuo-Spatial, Voluntary
+    N=30, mean matches=5.6, mean match %=30.7% (SE=5.4%)
+  Neutral Film No Intervention, Involuntary
+    N=27, mean matches=3.7, mean match %=22.7% (SE=2.0%)
+  Neutral Film No Intervention, Voluntary
+    N=29, mean matches=3.3, mean match %=16.5% (SE=2.7%)
+  Neutral Film Visuo-Spatial, Involuntary
+    N=27, mean matches=3.3, mean match %=21.5% (SE=3.3%)
+  Neutral Film Visuo-Spatial, Voluntary
+    N=29, mean matches=3.0, mean match %=15.2% (SE=2.0%)
+
+  Negative overall: 36.7% (SE=2.5%, N=117)
+
+  Neutral overall: 18.8% (SE=1.3%, N=112)</code></pre>
+</div>
+</div>
+<div id="cell-7" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.140326Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.140232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.199441Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.199228Z&quot;}" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-5-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="index_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Takeaway.</strong> Our Python replication reproduces the published numbers exactly: Negative 36.7%, Neutral 18.8%, with a ~18 percentage-point gap. The boxplot above matches the figure in <code>ANOVA_MATCH_PERCENTAGE.R</code>. We can now investigate where this gap comes from, confident that we are working with the same data and logic as the original analysis.</p>
+</section>
+<section id="diagnosing-the-discrepancy" class="level2">
+<h2 class="anchored" data-anchor-id="diagnosing-the-discrepancy">Diagnosing the discrepancy</h2>
+<p>If the emotion main effect is genuine, we would expect it to arise from differences in how well the embedding model assigns clips for emotional versus neutral memories. But an alternative explanation is that the two film types differ in how their data is <em>preprocessed</em> — specifically, whether all valid cue backgrounds end up in the set <code>{"1", ..., "11"}</code> that the match check requires.</p>
+<p>To test this, we classify every <code>cue_background</code> value in the CSV as either a recognised cue code (in <code>1</code>–<code>11</code>), a foil, or something else. If there are “something else” values that should have been cue codes, they would be silently treated as non-matches and depress the match percentage for whichever film type they belong to.</p>
+<div id="cell-10" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.200467Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.200377Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.203944Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.203739Z&quot;}" data-execution_count="5">
+<div class="cell-output cell-output-stdout">
+<pre><code>Negative film (1916 memories):
+    cue:  1072  (55.9%)
+   foil:   844  (44.1%)
+  other:     0  (0.0%)
+
+Neutral film (2185 memories):
+    cue:   591  (27.0%)
+   foil:   837  (38.3%)
+  other:   757  (34.6%)
+  --- 'other' values ---
+    '7_1': 155
+    '3_1': 154
+    '11_1': 149
+    '10_1': 135
+    '1_1': 128
+    '6_1': 36
+</code></pre>
+</div>
+</div>
+<p>The negative film has zero “other” backgrounds — every memory is attributed to either a recognised cue (<code>1</code>–<code>11</code>) or a foil. The neutral film has 757 memories (34.6%) attributed to backgrounds like <code>7_1</code>, <code>3_1</code>, <code>11_1</code>, etc. These are <code>clip_scene</code> codes from the raw Excel files — clip number followed by an underscore and the scene number within that clip. The <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (lines 82–93) is responsible for stripping the scene suffix:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_3"</span> <span class="ot">=</span> <span class="st">"1"</span>, <span class="st">"1_5"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"2_1"</span> <span class="ot">=</span> <span class="st">"2"</span>, <span class="st">"2_3"</span> <span class="ot">=</span> <span class="st">"2"</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_3"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_9"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_IPT"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"4_1"</span> <span class="ot">=</span> <span class="st">"4"</span>, <span class="st">"4_7"</span> <span class="ot">=</span> <span class="st">"4"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"5_1"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_8"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_IPT"</span> <span class="ot">=</span> <span class="st">"5"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_2"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_12"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_IPT"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_3"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_6"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_IPT"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"8_1"</span> <span class="ot">=</span> <span class="st">"8"</span>, <span class="st">"8_8"</span> <span class="ot">=</span> <span class="st">"8"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"9_1"</span> <span class="ot">=</span> <span class="st">"9"</span>, <span class="st">"9_12"</span> <span class="ot">=</span> <span class="st">"9"</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_9"</span> <span class="ot">=</span> <span class="st">"10"</span>, <span class="st">"10_10"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_8"</span> <span class="ot">=</span> <span class="st">"11"</span>, <span class="st">"11_12"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This map was built from codes observed in the <strong>negative film’s</strong> Excel files. The negative film uses various scene suffixes (<code>_3</code>, <code>_5</code>, <code>_8</code>, <code>_9</code>, etc.), and these are all present in the map. The neutral film predominantly uses <code>_1</code> as the scene suffix. Five of those codes happen to already be in the map because the negative film also uses <code>_1</code> for those clip numbers:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Neutral code</th>
+<th>In map?</th>
+<th>Negative counterparts in the map</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>2_1</code></td>
+<td><strong>Yes</strong></td>
+<td><code>2_1</code>, <code>2_3</code></td>
+</tr>
+<tr class="even">
+<td><code>4_1</code></td>
+<td><strong>Yes</strong></td>
+<td><code>4_1</code>, <code>4_7</code></td>
+</tr>
+<tr class="odd">
+<td><code>5_1</code></td>
+<td><strong>Yes</strong></td>
+<td><code>5_1</code>, <code>5_8</code>, <code>5_IPT</code></td>
+</tr>
+<tr class="even">
+<td><code>8_1</code></td>
+<td><strong>Yes</strong></td>
+<td><code>8_1</code>, <code>8_8</code></td>
+</tr>
+<tr class="odd">
+<td><code>9_1</code></td>
+<td><strong>Yes</strong></td>
+<td><code>9_1</code>, <code>9_12</code></td>
+</tr>
+<tr class="even">
+<td><strong><code>1_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>1_3</code>, <code>1_5</code> only</td>
+</tr>
+<tr class="odd">
+<td><strong><code>3_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>3_3</code>, <code>3_9</code>, <code>3_IPT</code> only</td>
+</tr>
+<tr class="even">
+<td><strong><code>6_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>6_2</code>, <code>6_12</code>, <code>6_IPT</code> only</td>
+</tr>
+<tr class="odd">
+<td><strong><code>7_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>7_3</code>, <code>7_6</code>, <code>7_IPT</code> only</td>
+</tr>
+<tr class="even">
+<td><strong><code>10_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>10_9</code>, <code>10_10</code> only</td>
+</tr>
+<tr class="odd">
+<td><strong><code>11_1</code></strong></td>
+<td><strong>No</strong></td>
+<td><code>11_8</code>, <code>11_12</code> only</td>
+</tr>
+</tbody>
+</table>
+<p>The six missing codes pass through <code>dplyr::recode()</code> unchanged as <code>"1_1"</code>, <code>"3_1"</code>, etc. These strings are not in <code>as.character(1:11)</code>, so the match check on line 379 always returns 0 for any memory attributed to these backgrounds — regardless of whether the embedding correctly identified the clip. These 757 memories contribute zeros to both the numerator and the denominator inflation, systematically depressing neutral match percentages.</p>
+<p><strong>Takeaway.</strong> The bug is entirely in the preprocessing: <code>background_map</code> was constructed from negative film scene codes only. Six of the eleven neutral film cue codes (<code>1_1</code>, <code>3_1</code>, <code>6_1</code>, <code>7_1</code>, <code>10_1</code>, <code>11_1</code>) have no entry, so 757 neutral memories — over a third of all neutral data — are permanently ineligible for matching. The five neutral codes that <em>do</em> work (<code>2_1</code>, <code>4_1</code>, <code>5_1</code>, <code>8_1</code>, <code>9_1</code>) are coincidental overlaps where the negative film happens to use the same <code>_1</code> suffix. This asymmetry alone is sufficient to produce the apparent emotion main effect, regardless of the embedding model’s accuracy.</p>
+</section>
+<section id="corrected-results" class="level2">
+<h2 class="anchored" data-anchor-id="corrected-results">Corrected results</h2>
+<p>Now that we have identified the six missing entries, we can test whether fixing them changes the result. We add the six mappings and recompute match percentages from the same CSV data. Because the bug only affects neutral film codes, negative film results should remain unchanged — this serves as a built-in control.</p>
+<div id="cell-13" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.204841Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.204775Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.209303Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.209109Z&quot;}" data-execution_count="6">
+<div class="cell-output cell-output-stdout">
+<pre><code>Condition                                       Original      Fixed
+-------------------------------------------------------------------
+  Negative Film No Intervention, Involuntary      43.5%     43.5%
+  Negative Film No Intervention, Voluntary        28.4%     28.4%
+  Negative Film Visuo-Spatial, Involuntary        44.9%     44.9%
+  Negative Film Visuo-Spatial, Voluntary          30.7%     30.7%
+  Neutral Film No Intervention, Involuntary       22.7%     63.0% ***
+  Neutral Film No Intervention, Voluntary         16.5%     39.5% ***
+  Neutral Film Visuo-Spatial, Involuntary         21.5%     53.3% ***
+  Neutral Film Visuo-Spatial, Voluntary           15.2%     36.5% ***
+
+                            Emotion aggregate   Original      Fixed
+-------------------------------------------------------------------
+  Negative                                        36.7%     36.7%
+  Neutral                                         18.8%     47.7%
+
+Newly eligible neutral memories: 757
+Of those, correctly matched by embedding: 590 (77.9%)</code></pre>
+</div>
+</div>
+<div id="cell-14" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.210317Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.210250Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.281877Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.281615Z&quot;}" data-execution_count="7">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="index_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Takeaway.</strong> The fix leaves negative match percentages completely unchanged (36.7%), confirming that the bug is isolated to neutral codes. Neutral match percentage rises from 18.8% to 47.7% — a 29 percentage-point increase — reversing the direction of the emotion effect. Of the 757 newly eligible neutral memories, 590 (77.9%) are correctly matched by the embedding model, indicating that these were genuine cue-attributed memories that were being silently discarded. The corrected data show that neutral cues produce <em>higher</em> match rates than negative cues, not lower.</p>
+</section>
+<section id="convergent-evidence-human-coded-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="convergent-evidence-human-coded-analysis">Convergent evidence: human-coded analysis</h2>
+<p>The embedding-based reanalysis above depends on the same data pipeline that produced the original result, so it is reasonable to ask whether an entirely independent analysis agrees. As a check, we analysed the same 240 participants using human-coded clip labels from the scored <code>.docx</code> files rather than embedding-based assignment. Cue attribution is derived from the interleaved event stream (cue, foil, and recall events in temporal order), with foils clearing the pending cue. This analysis was conducted before the <code>background_map</code> bug was identified, and uses a different metric — cue-driven recall as a percentage of the 22 cues presented per trial — with a fixed denominator that is unaffected by any code-cleaning step.</p>
+<div id="cell-17" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.282992Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.282914Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:35.340139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:35.339929Z&quot;}" data-execution_count="8">
+<div class="cell-output cell-output-stdout">
+<pre><code>Human-coded cue effectiveness (hits / 22 cues):
+
+     Emotional: 13.6% (SE=1.1%, N=120)
+       Neutral: 20.2% (SE=1.3%, N=120)
+   Involuntary: 20.0% (SE=1.2%, N=120)
+     Voluntary: 13.8% (SE=1.3%, N=120)</code></pre>
+</div>
+</div>
+<div id="cell-18" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:35.341204Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:35.341067Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:35.493943Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:35.493706Z&quot;}" data-execution_count="9">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="index_files/figure-html/cell-10-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="index_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Negative Film – Involuntary: mean=15.2%, N=60
+  Negative Film – Voluntary: mean=12.0%, N=60
+  Neutral Film – Involuntary: mean=24.8%, N=60
+  Neutral Film – Voluntary: mean=15.5%, N=60</code></pre>
+</div>
+</div>
+<p><strong>Takeaway.</strong> The human-coded analysis shows the same pattern: neutral cue effectiveness (20.2%) exceeds emotional (13.6%), and this holds within both intentionality conditions. The absolute percentages are lower than the corrected embedding analysis because the denominator is fixed at 22 cue opportunities per trial rather than all memory events, but the direction is consistent. This convergence across two completely independent methods — one using an embedding model with the corrected pipeline, one using hand-scored clip labels with no pipeline involvement — strengthens the conclusion that neutral cues genuinely produce more cue-driven recall than negative cues.</p>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>Three analyses of the same dataset, two using embedding-based clip assignment and one using human-coded labels:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Analysis</th>
+<th>Negative</th>
+<th>Neutral</th>
+<th>Direction</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Embedding (original <code>background_map</code>)</td>
+<td>36.7%</td>
+<td>18.8%</td>
+<td>Neg &gt; Neu</td>
+</tr>
+<tr class="even">
+<td>Embedding (6 missing codes added)</td>
+<td>36.7%</td>
+<td>47.7%</td>
+<td><strong>Neu &gt; Neg</strong></td>
+</tr>
+<tr class="odd">
+<td>Human-coded (no embedding)</td>
+<td>13.6%</td>
+<td>20.2%</td>
+<td><strong>Neu &gt; Neg</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The absolute values differ between the embedding-based and human-coded analyses because the denominators differ (all memories vs.&nbsp;22 cue slots) and the embedding model is not perfectly accurate. The critical point is the <strong>direction</strong>: once the six missing neutral codes are added to the map, the embedding analysis agrees with the human-coded analysis that neutral cues produce <em>more</em> matches than negative cues, not fewer.</p>
+</section>
+<section id="suggested-fix" class="level2">
+<h2 class="anchored" data-anchor-id="suggested-fix">Suggested fix</h2>
+<p>Add the six missing neutral film entries to <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (after line 93):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  background_map,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_1"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_1"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_1"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_1"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_1"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_1"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This ensures all eleven neutral film cue codes are remapped to their clip numbers before the match check. No other part of the pipeline needs to change.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","openEffect":"zoom","selector":".lightbox","loop":false});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
