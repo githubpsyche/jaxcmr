@@ -1,3 +1,10 @@
+"""Omnibus CRU-CMR with competitive termination.
+
+Extends the omnibus CRU-CMR hybrid with an activation-dependent
+termination rule instead of a fixed stop probability.
+
+"""
+
 from typing import Mapping, Optional
 
 import numpy as np

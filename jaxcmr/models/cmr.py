@@ -1,4 +1,10 @@
-"""Context Maintenance and Retrieval (CMR) model of memory search."""
+"""Context Maintenance and Retrieval (CMR) model of memory search.
+
+Implements the core CMR architecture: study-phase context
+integration, associative encoding via outer-product learning, and
+retrieval via context-cued competition with a Luce choice rule.
+
+"""
 
 from typing import Mapping, Optional, Type
 

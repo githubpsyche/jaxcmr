@@ -1,4 +1,10 @@
-"""Relative Serial Recall Accuracy Curve."""
+"""Relative Serial Recall Accuracy Curve.
+
+Computes the probability of recalling the correct item at each
+output position relative to the expected serial position, accounting
+for items that may repeat across study positions.
+
+"""
 
 __all__ = ["Tabulation", "tabulate_trial", "relative_srac", "plot_relative_srac"]
 

@@ -1,5 +1,4 @@
-"""
-Blend Positional CMR.
+"""Blend Positional CMR.
 
 Maintains dual context streams: one item-dependent (CMR-style) and one
 position-dependent (positional CMR-style). A blend_weight parameter controls
@@ -13,6 +12,7 @@ This allows modeling intermediate levels of context sharing across repeated
 item presentations, addressing the empirical finding that erroneous transitions
 to neighbors of second occurrences are above chance (unlike pure positional CMR)
 but below what pure CMR predicts.
+
 """
 
 from typing import Mapping, Optional, Type

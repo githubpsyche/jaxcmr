@@ -1,4 +1,10 @@
-"""Recall Probability by Lag (RPL)."""
+"""Recall Probability by Lag (RPL).
+
+Computes recall probability as a function of the lag between a
+repeated item's two study presentations. Quantifies how spacing
+between presentations affects subsequent memory.
+
+"""
 
 from __future__ import annotations
 
@@ -304,11 +310,20 @@ def _resolve_max_lag(
     dataset: RecallDataset,
     max_lag: int | None,
 ) -> int:
-    """Returns the explicit lag bucket limit.
+    """Return the explicit lag bucket limit.
 
-    Args:
-        dataset: Dataset used to infer the lag limit when ``max_lag`` is None.
-        max_lag: Explicit lag bucket limit to use when provided.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Dataset used to infer the limit when ``max_lag`` is None.
+    max_lag : int or None
+        Explicit lag bucket limit if provided.
+
+    Returns
+    -------
+    int
+        Resolved lag bucket limit.
+
     """
     if max_lag is not None:
         return max_lag
@@ -382,12 +397,18 @@ def subject_binned_rpl(
 def _lag_values_for_mode(mode: str, n_bins: int) -> np.ndarray:
     """Return lag values for slope fits.
 
-    Args:
-        mode: "full" or "binned".
-        n_bins: Number of lag bins excluding the single-presentation bin.
+    Parameters
+    ----------
+    mode : str
+        ``"full"`` or ``"binned"``.
+    n_bins : int
+        Number of lag bins excluding single-presentation bin.
 
-    Returns:
-        Array of lag values aligned to the slope-fit columns.
+    Returns
+    -------
+    np.ndarray
+        Lag values aligned to the slope-fit columns.
+
     """
     if mode == "full":
         return np.arange(n_bins, dtype=float)
@@ -402,14 +423,20 @@ def _fit_subject_slopes(
     subject_values: np.ndarray,
     lag_values: np.ndarray,
 ) -> np.ndarray:
-    """Return per-subject slope estimates for recall probability by lag.
+    """Per-subject slope estimates for recall probability by lag.
 
-    Args:
-        subject_values: Subject-level recall probabilities for each lag.
-        lag_values: Lag values aligned to the columns in ``subject_values``.
+    Parameters
+    ----------
+    subject_values : np.ndarray
+        Subject-level recall probabilities for each lag.
+    lag_values : np.ndarray
+        Lag values aligned to columns in ``subject_values``.
 
-    Returns:
-        Array of shape [n_subjects] with slope estimates; NaN when insufficient data.
+    Returns
+    -------
+    np.ndarray
+        Shape ``[n_subjects]``; NaN where insufficient data.
+
     """
     slopes = np.full(subject_values.shape[0], np.nan)
     for idx, values in enumerate(subject_values):

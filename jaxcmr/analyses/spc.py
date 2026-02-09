@@ -1,7 +1,9 @@
 """Serial position curve analyses.
 
-Utilities to compute and visualize recall rates as a function of study
-position.
+Computes recall probability at each study position, producing the
+classic U-shaped serial position curve with primacy and recency
+effects. Supports both unique-item and repeated-item lists.
+
 """
 
 from __future__ import annotations

@@ -1,48 +1,54 @@
 """Utilities for handling item repetitions in study lists.
 
-Provides helpers to map recalled items to all of their valid study positions,
-drop repeated recalls within trials, relabel recalls to the first occurrence
-when items repeat at study, and build a shuffled control dataset for
-mixed/pure-list comparisons.
+Provides helpers to map recalled items to all of their valid study
+positions, drop repeated recalls within trials, relabel recalls to
+the first occurrence when items repeat at study, and build a shuffled
+control dataset for mixed/pure-list comparisons.
 
-Methodological stance — shuffled controls for mixed vs pure
------------------------------------------------------------
+Notes
+-----
+**Shuffled controls for mixed vs pure lists**
 
-Goal: estimate the transition rates one would expect **absent** repeated items,
-under the same serial-position scaffolding used by mixed lists.
+Goal: estimate the transition rates one would expect absent repeated
+items, under the same serial-position scaffolding used by mixed
+lists. For each subject with both mixed and pure trials, we randomly
+permute that subject's pure-list recall rows and pair them with the
+subject's mixed-list presentation rows. We repeat this pairing many
+times (e.g., 100 shuffles) and aggregate across the shuffles to form
+a baseline expectation.
 
-Implementation used here:
-* For each subject with both mixed and pure trials, we randomly permute that
-  subject's **pure-list recall rows** and pair them with the subject's **mixed-list
-  presentation rows**. We repeat this pairing many times (e.g., 100 shuffles) and
-  aggregate across the shuffles to form a baseline expectation.
-* When a mixed-list item was studied at two positions, the control analysis
-  treats recall of **either** position as recall of the same logical item. In other
-  words, the null hypothesis is that the two study positions are equivalent for
-  that item. Operationally, we **collapse positional codes to the first occurrence**
-  (see `relabel_trial_to_firstpos`), so both study positions map to one code.
-* Within-trial **repeated recalls** of the same logical item are optionally
-  **zeroed** (kept only on first mention; see `filter_repeated_recalls`). This
-  mirrors the usual gate in transition analyses that tabulates only while an item
-  remains "not yet recalled" on the current trial.
+When a mixed-list item was studied at two positions, the control
+analysis treats recall of either position as recall of the same
+logical item. The null hypothesis is that the two study positions
+are equivalent for that item. Operationally, we collapse positional
+codes to the first occurrence (see ``relabel_trial_to_firstpos``),
+so both study positions map to one code.
 
-Rationale:
-* Counting **either** position for a repeater in controls avoids mechanically
-  depressing the control transition rates relative to the mixed analysis. If one
-  were to count only a single, pre-specified position, the control baseline will
-  be lower by construction—biasing toward "detecting" an effect of repetition.
-  Our approach tests the stricter null that the two positions are functionally
-  the same item (encoding and retrieval treat them as such).
+Within-trial repeated recalls of the same logical item are
+optionally zeroed (kept only on first mention; see
+``filter_repeated_recalls``). This mirrors the usual gate in
+transition analyses that tabulates only while an item remains "not
+yet recalled" on the current trial.
 
-Key helpers:
-* `relabel_trial_to_firstpos`: collapses repeated study positions to a single
-  positional code per item (implements the "either-position counts" policy).
-* `filter_repeated_recalls`: zeros within-trial repeated recalls, keeping first.
-* `make_control_dataset`: builds the per-subject shuffled control dataset aligned
-  to mixed-list presentations, applying the above normalization steps.
+Counting either position for a repeater in controls avoids
+mechanically depressing the control transition rates relative to the
+mixed analysis. If one were to count only a single, pre-specified
+position, the control baseline will be lower by construction, biasing
+toward "detecting" an effect of repetition. This approach tests the
+stricter null that the two positions are functionally the same item.
 
-Terminology:
-* "Mixed" lists contain repeated items; "pure" lists do not.
+**Key helpers**
+
+- ``relabel_trial_to_firstpos``: collapses repeated study positions
+  to a single positional code per item.
+- ``filter_repeated_recalls``: zeros within-trial repeated recalls,
+  keeping first.
+- ``make_control_dataset``: builds the per-subject shuffled control
+  dataset aligned to mixed-list presentations.
+
+**Terminology**: "mixed" lists contain repeated items; "pure" lists
+do not.
+
 """
 
 import math

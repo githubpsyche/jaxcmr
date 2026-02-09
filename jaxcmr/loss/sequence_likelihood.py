@@ -2,6 +2,7 @@
 
 Provides utilities to simulate retrieval event likelihoods per trial and to
 aggregate them into a negative log-likelihood objective for fitting.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

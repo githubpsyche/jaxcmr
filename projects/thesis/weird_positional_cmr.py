@@ -112,7 +112,7 @@ query_parameters = [
 
 single_analysis_paths = [
     "jaxcmr.analyses.repcrp.plot_rep_crp",
-    "jaxcmr.analyses.backrepcrp.plot_back_rep_crp",
+    "jaxcmr.analyses.cleanbackrepcrp.plot_back_rep_crp",
 ]
 
 comparison_analysis_paths = [

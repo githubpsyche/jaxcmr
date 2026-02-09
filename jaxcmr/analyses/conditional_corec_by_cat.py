@@ -1,4 +1,11 @@
-"""Conditional co-recall probability by category relation."""
+"""Conditional co-recall probability by category relation.
+
+Given that an item was recalled, computes the probability that a
+same-category or different-category item at each study lag was also
+recalled. Separates co-recall curves by within-category vs
+between-category pairs.
+
+"""
 
 from __future__ import annotations
 

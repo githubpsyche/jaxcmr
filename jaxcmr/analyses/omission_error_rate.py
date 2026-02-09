@@ -1,4 +1,9 @@
-"""Omission error rate analysis."""
+"""Omission error rate analysis.
+
+Computes the proportion of study positions that are not recalled
+(omissions) as a function of serial position.
+
+"""
 
 __all__ = [
     "trial_omission_error_rate",

@@ -1,3 +1,12 @@
+"""Type definitions and protocols for the jaxcmr package.
+
+Defines array type aliases (via jaxtyping), model protocols
+(``MemorySearch``, ``TrialSimulator``), dataset type dictionaries
+(``RecallDataset``), and callable type aliases used throughout the
+package.
+
+"""
+
 from typing import (
     Any,
     Callable,
@@ -308,12 +317,38 @@ class LikelihoodMaskFn(Protocol):
 
 
 @runtime_checkable
+class MemorySearchModelFactory(Protocol):
+    def __init__(
+        self,
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        """Initialize the factory with the specified trials and trial data."""
+        ...
+
+    def create_model(
+        self,
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+    def create_trial_model(
+        self,
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> MemorySearch:
+        """Create a new memory search model with the specified parameters for the specified trial."""
+        ...
+
+
+@runtime_checkable
 class LossFnGenerator(Protocol):
     """Generates loss function for model fitting."""
 
     def __init__(
         self,
-        model_create_fn: MemorySearchCreateFn,
+        model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
@@ -349,32 +384,6 @@ class FitResult(TypedDict):
 
     fit_time: float
     """Total time (in seconds) taken to perform the fitting."""
-
-
-@runtime_checkable
-class MemorySearchModelFactory(Protocol):
-    def __init__(
-        self,
-        dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
-    ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
-        ...
-
-    def create_model(
-        self,
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
-
-    def create_trial_model(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
 
 
 @runtime_checkable

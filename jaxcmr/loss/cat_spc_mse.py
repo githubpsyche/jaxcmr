@@ -3,6 +3,7 @@
 Computes mean squared error between observed and simulated category-specific
 serial position curves by simulating recall chains per trial and aggregating the
 results with ``fixed_pres_cat_spc``.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

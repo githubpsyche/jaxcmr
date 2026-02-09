@@ -1,3 +1,11 @@
+"""Data loading and general-purpose helpers.
+
+Provides HDF5 dataset loading, trial and recall mask generation,
+subject-level analysis application, and assorted utility functions
+used across the package.
+
+"""
+
 import importlib
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional, Sequence
@@ -26,6 +34,7 @@ __all__ = [
     "apply_by_subject",
     "has_repeats_per_row",
 ]
+
 
 def have_common_nonzero(
     a: Integer[Array, " size"],

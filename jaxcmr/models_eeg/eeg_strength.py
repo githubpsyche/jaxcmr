@@ -1,4 +1,10 @@
-"""Plain attentional-strength memory search model."""
+"""Plain attentional-strength memory search model.
+
+A minimal memory search model that uses EEG-derived encoding
+strength to modulate item recallability without the temporal
+context machinery of CMR.
+
+"""
 
 from typing import Mapping, Optional, Type
 

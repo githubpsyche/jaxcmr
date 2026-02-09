@@ -1,4 +1,10 @@
-"""Probability of nth recall (PNR)."""
+"""Probability of nth recall (PNR).
+
+Computes the probability that each serial position is recalled at
+each output position. Supports both unique-item and repeated-item
+lists, with optional conditioning on a ``_should_tabulate`` mask.
+
+"""
 
 __all__ = [
     "fixed_pres_pnr",

@@ -1,5 +1,9 @@
-"""
-CMR: Context Maintenance and Retrieval model of memory search.
+"""CMR with additive semantic associations.
+
+Extends the base CMR model by adding pre-experimental semantic
+associations (from a feature similarity matrix) to the MCF
+association matrix before retrieval.
+
 """
 
 from typing import Mapping, Optional, Type

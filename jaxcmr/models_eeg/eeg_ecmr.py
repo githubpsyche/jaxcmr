@@ -1,5 +1,10 @@
-"""
-CMR: Context Maintenance and Retrieval model of memory search with EEG inputs.
+"""CMR with EEG-modulated emotional context channel.
+
+Extends CMR with a separate emotional context channel whose encoding
+strength is modulated by EEG (LPP) signals and experimental
+condition, allowing emotion and neural activity to influence both
+encoding and retrieval.
+
 """
 
 from typing import Mapping, Optional, Type

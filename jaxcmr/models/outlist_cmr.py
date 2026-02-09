@@ -1,10 +1,11 @@
-"""
-Outlist CMR (CMR-DE variant).
+"""Outlist CMR (CMR-DE variant).
 
-Standard item-based CMR that uses `integrate_with_outlist` for repeated items.
-When an item is re-presented (already encoded), uses a special integration process
-that scales the context input by `mfc_sensitivity` before integration.
-Requires `TemporalContext.init_expanded` for expanded context representation.
+Standard item-based CMR that uses ``integrate_with_outlist`` for
+repeated items. When an item is re-presented (already encoded), uses
+a special integration process that scales the context input by
+``mfc_sensitivity`` before integration. Requires
+``TemporalContext.init_expanded`` for expanded context representation.
+
 """
 
 from typing import Mapping, Optional, Type

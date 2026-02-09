@@ -1,11 +1,10 @@
-"""
-CMR with distinct positional contexts.
+"""CMR with distinct positional contexts.
 
-Items are encoded using positional representations rather than item representations.
-This allows repeated items to have distinct contextual associations for each presentation.
-Recallability is tracked at the item level (not position level).
+Items are encoded using positional representations rather than item
+representations. This allows repeated items to have distinct
+contextual associations for each presentation. Recallability is
+tracked at the item level (not position level).
 
-This keeps the core CMR architecture while allowing for positional effects
 """
 
 from typing import Mapping, Optional, Type

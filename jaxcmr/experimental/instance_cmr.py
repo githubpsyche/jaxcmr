@@ -1,3 +1,11 @@
+"""Instance-based CMR model.
+
+Extends CMR to use instance-based memory (``InstanceMemory``)
+alongside or instead of the standard linear associative memory,
+storing separate traces per encoding event for retrieval.
+
+"""
+
 from typing import Mapping, Optional
 
 import numpy as np

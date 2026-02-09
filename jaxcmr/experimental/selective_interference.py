@@ -3,6 +3,7 @@
 Provides composable building blocks to model trauma-film + reminder +
 interference paradigms with any memory-search model that exposes context
 integration and cue-driven retrieval.
+
 """
 
 from typing import Callable

@@ -1,4 +1,10 @@
-"""Co-recall probability as a function of study lag."""
+"""Co-recall probability as a function of study lag.
+
+For each pair of items separated by a given study lag, computes the
+joint probability that both items are recalled on the same trial.
+Produces a co-recall curve as a function of absolute lag.
+
+"""
 
 from __future__ import annotations
 

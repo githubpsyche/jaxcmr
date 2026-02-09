@@ -1,4 +1,11 @@
-"""Linear associative memory operations for CMR."""
+"""Linear associative memory operations for CMR.
+
+Implements the ``LinearMemory`` state object that stores and
+retrieves item-context associations via outer-product learning and
+matrix-vector retrieval. Provides both MFC (memory-to-context) and
+MCF (memory-to-feature/item) association matrices.
+
+"""
 
 from typing import Mapping
 

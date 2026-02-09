@@ -1,4 +1,10 @@
-"""Nth-item recall curves."""
+"""Nth-item recall curves.
+
+Computes recall probability at each output position conditioned on
+which serial position is recalled, producing a matrix of serial
+position by output position recall curves.
+
+"""
 
 from __future__ import annotations
 

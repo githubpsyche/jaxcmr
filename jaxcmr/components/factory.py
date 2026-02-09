@@ -1,3 +1,10 @@
+"""Pre-experimental semantic connection factory.
+
+Builds per-trial semantic connection matrices from item feature
+vectors for models that use pre-experimental associations.
+
+"""
+
 from typing import Optional
 
 import jax.numpy as jnp

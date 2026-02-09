@@ -2,6 +2,7 @@
 
 Approximates recall likelihoods by sampling permutations of observed recall bags
 and evaluating their sequential probabilities under the model.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

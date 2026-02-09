@@ -1,4 +1,11 @@
-"""Temporal context utilities for memory search models."""
+"""Temporal context utilities for memory search models.
+
+Implements the ``TemporalContext`` state object that maintains and
+updates the drifting temporal context vector central to CMR-family
+models. Supports standard integration, expanded representations,
+and outlist integration for repeated items.
+
+"""
 
 __all__ = ["TemporalContext"]
 

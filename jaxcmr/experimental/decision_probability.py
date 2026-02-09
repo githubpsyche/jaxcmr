@@ -1,3 +1,11 @@
+"""Decision-probability retrieval model components.
+
+Provides accumulator-based decision mechanisms (race, threshold)
+for computing recall probabilities as an alternative to the Luce
+choice rule used in standard CMR.
+
+"""
+
 import jax.numpy as jnp
 import numpy as np
 from jax import lax, vmap

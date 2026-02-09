@@ -1,50 +1,20 @@
-"""
-Compound Cueing Conditional Response Probability.
+"""Compound cueing conditional response probability.
 
-Overview:
-    Utilities to compute and plot compound cueing effects for transitions to
-    repeated items. This analysis tests a prediction that differentiates
-    composite memory models (CMR) from instance-based models (ICMR).
+Tests whether recall of a repeated item is influenced by the two most
+recent recalls jointly (compound cue) rather than just the immediately
+preceding item. Classifies each transition to a repeated item as
+"pure" (both prior recalls neighbor the same presentation) or "mixed"
+(prior recalls neighbor different presentations).
 
-Background:
-    For a repeated item at study positions i and j (with sufficient spacing),
-    the compound cueing analysis examines how the *two most recent* recalls
-    influence the probability of transitioning to the repeated item.
+Notes
+-----
+- Tracks a two-item recall history (``prev_position`` and
+  ``prev_prev_position``) to classify the cueing pattern.
+- Counts are stored as int [4]: ``[pure_actual, pure_avail,
+  mixed_actual, mixed_avail]``.
+- Only transitions TO repeated items with sufficient spacing
+  (``min_spacing``) are counted.
 
-    - "Pure" cueing: last two recalls are {i-2, i-1} or {j-2, j-1} (both from
-      one occurrence's neighborhood)
-    - "Mixed" cueing: last two recalls are {j-2, i-1} or {i-2, j-1} (one from
-      each occurrence's neighborhood)
-
-Theoretical predictions:
-    - CMR (tau=1): Mixed cueing provides equal or greater support because
-      similarities sum linearly: moderate + moderate ≈ high + low.
-    - ICMR (tau>1): Pure cueing provides greater support because sharpening
-      happens before summing: high^τ > moderate^τ + moderate^τ when τ > 1.
-
-Definition:
-    P(pure) = actual_pure / available_pure
-    P(mixed) = actual_mixed / available_mixed
-
-    Where:
-    - actual_{type} = count of transitions to repeated items after {type} cueing
-    - available_{type} = count of opportunities where repeated item was available
-
-Conventions:
-    - Study positions are 1-indexed; 0 indicates padding.
-    - min_spacing: Minimum separation between repeated item occurrences to be
-      included in analysis (default 6).
-    - size: Maximum number of study positions an item can occupy (default 2).
-
-Design decisions:
-    - Padding & bounds: Zeros and invalid recalls are ignored via guards.
-    - Division by zero: Conditions with zero availability yield NaN.
-    - Repeat tracking: Uses pre-computed item_study_positions for efficiency.
-
-JAX compilation:
-    - All functions are side-effect-free and JIT-safe.
-    - Use `jit(compound_cueing_crp, static_argnames=("min_spacing", "size"))`.
-    - Keep shapes consistent within a compiled call to avoid recompiles.
 """
 
 __all__ = [

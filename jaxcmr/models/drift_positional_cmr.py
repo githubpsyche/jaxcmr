@@ -1,9 +1,10 @@
-"""
-Drift Positional CMR.
+"""Drift Positional CMR.
 
-Items are encoded using positional representations rather than item representations.
-This allows repeated items to have distinct contextual associations for each presentation.
-Uses a different drift rate (`repetition_drift_rate`) for items that have been studied before.
+Items are encoded using positional representations rather than item
+representations. This allows repeated items to have distinct
+contextual associations for each presentation. Uses a different
+drift rate (``repetition_drift_rate``) for re-presented items.
+
 """
 
 from typing import Mapping, Optional, Type

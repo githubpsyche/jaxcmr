@@ -3,6 +3,7 @@
 Computes an average squared error between observed and simulated serial position
 curves by simulating recall chains per trial and aggregating the results with
 ``fixed_pres_spc``.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

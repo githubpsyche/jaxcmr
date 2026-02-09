@@ -1,9 +1,21 @@
-"""Compute distance-binned conditional response probabilities.
+"""Distance-binned conditional response probabilities.
 
-The module mirrors the lag-based CRP workflow but replaces lags with semantic or
-spatial distances supplied by the caller. Each transition contributes to a
-single distance bin, and availability is tallied as the set of bins containing
-at least one unrecalled item at the moment of choice.
+Replaces the lag axis of standard CRP with semantic (or other)
+distance bins. At each transition, computes pairwise distances from
+the previously recalled item to all unrecalled items, digitizes into
+bins, and tallies actual vs available transitions per bin.
+
+Notes
+-----
+- ``DistanceTabulation`` expects a trial-local distance matrix
+  already sliced from the global vocabulary distance matrix.
+- Bin edges can be computed from percentiles
+  (``compute_distance_bins_percentiles``) or by expanding bins
+  until a minimum per-subject transition count is reached
+  (``compute_distance_bins_min_count``).
+- ``plot_cat_crp`` is a convenience wrapper that uses two bins
+  (same-category vs different-category) for categorical analyses.
+
 """
 
 from __future__ import annotations
@@ -78,9 +90,7 @@ def compute_distance_bin_edges(
 
 
 class DistanceTabulation(Pytree):
-    """Accumulates per-bin transition counts for a single trial.
-
-    """
+    """Accumulates per-bin transition counts for a single trial."""
 
     def __init__(
         self,

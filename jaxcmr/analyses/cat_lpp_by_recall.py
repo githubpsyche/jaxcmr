@@ -1,4 +1,10 @@
-"""Category-filtered LPP analyses."""
+"""Category-filtered LPP analyses.
+
+Splits LPP (late positive potential) values by whether each item was
+recalled or not, then plots category-specific LPP serial position
+curves for recalled vs non-recalled items.
+
+"""
 
 from __future__ import annotations
 

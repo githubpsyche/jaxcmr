@@ -1,4 +1,15 @@
-"""Lag-CRP with conditional transition filtering."""
+"""Lag-CRP with conditional transition filtering.
+
+Extends ``crp.Tabulation`` with a per-event ``_should_tabulate`` mask
+so that only a subset of transitions contribute to actual and available
+lag counts, while all recalls still update availability tracking. This
+supports analyses that condition on properties of the transition (e.g.,
+lag direction, item category, or repetition status).
+
+The ``Tabulation`` class shares its state layout and update logic with
+``crp.Tabulation``; see that module for conventions and update steps.
+
+"""
 
 __all__ = [
     "set_false_at_index",

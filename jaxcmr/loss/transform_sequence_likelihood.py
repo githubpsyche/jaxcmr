@@ -4,6 +4,7 @@ Applies a user-specified mask to per-trial likelihood arrays before computing
 negative log-likelihood, enabling exclusion of selected recall events without
 altering simulation behavior. Mask entries of 1 retain events; 0 neutralizes
 them.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

@@ -1,3 +1,11 @@
+"""Model fitting utilities.
+
+Provides differential-evolution parameter optimization for
+memory-search models, including subject-level trial masking and
+loss function evaluation.
+
+"""
+
 import time
 from typing import Any, Mapping, Optional, Type
 
@@ -14,8 +22,8 @@ from jaxcmr.typing import (
     Float_,
     Integer,
     LossFnGenerator,
+    MemorySearchModelFactory,
     RecallDataset,
-    MemorySearchCreateFn
 )
 
 
@@ -43,7 +51,7 @@ class ScipyDE:
         dataset: RecallDataset,
         features: Optional[Float[Array, "word_count features_count"]],
         base_params: Mapping[str, Float_],
-        model_create_fn: MemorySearchCreateFn,
+        model_create_fn: Type[MemorySearchModelFactory],
         loss_fn_generator: Type[LossFnGenerator],
         hyperparams: Optional[dict[str, Any]] = None,
     ):

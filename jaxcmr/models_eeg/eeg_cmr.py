@@ -5,6 +5,7 @@ EEG (LPP) signals modulate the main context–item association directly. By
 choosing which parameters are fixed or free during fitting, it can represent
 both a pure main-effects encoding rule and an encoding rule with an explicit
 Condition×LPP interaction term.
+
 """
 
 from typing import Mapping, Optional, Type

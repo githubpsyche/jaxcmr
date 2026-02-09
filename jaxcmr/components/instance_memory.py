@@ -1,3 +1,12 @@
+"""Instance-based memory operations for CMR.
+
+Implements ``InstanceMemory``, which stores item-context
+associations as separate memory traces (instances) rather than a
+summed outer-product matrix, supporting instance-based retrieval
+models.
+
+"""
+
 from typing import Mapping
 
 from jax import numpy as jnp

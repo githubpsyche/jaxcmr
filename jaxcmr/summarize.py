@@ -1,3 +1,11 @@
+"""Parameter summary and model comparison utilities.
+
+Provides functions for loading optimized parameters, computing
+confidence intervals, generating t-test matrices, and computing
+AIC/BIC model comparison statistics.
+
+"""
+
 import json
 from typing import Callable, Mapping, Optional
 

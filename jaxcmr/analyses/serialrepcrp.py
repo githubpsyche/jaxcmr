@@ -12,11 +12,10 @@
 
 """Serial repetition CRP conditioned on correct run-up.
 
-Tabulates repetition-index CRPs for serial recall while conditioning on
-correctly ordered output up to the point of analysis. Once an out-of-position
-response occurs, subsequent transitions are not counted. For repeated items,
-an output is treated as in-position if it matches any of the item's study
-positions.
+Computes lag-CRP restricted to transitions that follow a correct
+serial run-up, measuring how repetition affects forward transitions
+when recall is already proceeding in order.
+
 """
 
 # %% auto 0

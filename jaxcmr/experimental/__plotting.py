@@ -1,3 +1,11 @@
+"""Experimental plotting utilities.
+
+Extended plotting helpers for experimental analysis modules,
+providing bootstrap-based confidence intervals and additional
+plot formatting options.
+
+"""
+
 from collections.abc import Sequence
 from typing import Callable, Optional, TypeVar, cast
 

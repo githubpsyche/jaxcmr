@@ -1,3 +1,10 @@
+"""Array manipulation utilities.
+
+Provides segment-by-index operations, repeat-matrix helpers, and
+other array utilities used by experimental analysis code.
+
+"""
+
 from typing import Any, Callable
 
 import numpy as np

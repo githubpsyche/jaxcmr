@@ -1,4 +1,19 @@
-"""Cue-centered Lag-CRP."""
+"""Cue-centered Lag-CRP.
+
+Computes lag-CRP where lags are measured from a retrieval cue to the
+recalled item, rather than from the previously recalled item. Designed
+for paradigms where participants receive an external cue at each
+recall event (e.g., video-recall tasks with clip cues).
+
+Notes
+-----
+- Cue identity is supplied per recall event via ``cue_clips``;
+  each cue is mapped to its study positions the same way recalls
+  are, allowing repeated cue items.
+- A ``_should_tabulate`` mask controls which events contribute to
+  lag counts (e.g., to exclude uncued or practice events).
+
+"""
 
 from __future__ import annotations
 

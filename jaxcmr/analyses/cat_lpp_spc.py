@@ -1,4 +1,11 @@
-"""Category-filtered LPP analyses."""
+"""Category-filtered LPP serial position curves.
+
+Computes mean LPP (late positive potential) amplitude at each study
+position, separately for each stimulus category. The resulting curves
+show how neural encoding strength varies across serial position and
+category.
+
+"""
 
 from __future__ import annotations
 

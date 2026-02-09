@@ -1,4 +1,11 @@
-"""Simulation utilities for memory-search models."""
+"""Simulation utilities for memory-search models.
+
+Provides functions to run forward simulations of memory-search models,
+converting model parameters and study lists into simulated recall
+sequences. Supports single-trial, multi-trial (vmapped), and
+dataset-level simulation with optional study-phase replay.
+
+"""
 
 from typing import Mapping, Optional, Sequence, Type
 

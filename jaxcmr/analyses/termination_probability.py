@@ -1,4 +1,10 @@
-"""Termination probability curves."""
+"""Termination probability curves.
+
+Computes the probability of stopping recall at each output position,
+measuring how termination likelihood changes across successive
+retrieval attempts.
+
+"""
 
 from __future__ import annotations
 

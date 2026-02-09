@@ -1,4 +1,10 @@
-"""Intrusion error rate analysis."""
+"""Intrusion error rate analysis.
+
+Computes the proportion of recall attempts that are extra-list
+intrusions (items not on the current study list) as a function of
+output position.
+
+"""
 
 __all__ = [
     "trial_intrusion_error_rate",

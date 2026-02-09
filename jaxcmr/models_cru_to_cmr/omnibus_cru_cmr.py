@@ -1,3 +1,11 @@
+"""Omnibus CRU-CMR hybrid model.
+
+Implements a model that combines CRU (Context Retrieval and
+Updating) and CMR retrieval mechanisms, allowing parameter-level
+interpolation between the two architectures.
+
+"""
+
 from typing import Mapping, Optional
 
 import numpy as np

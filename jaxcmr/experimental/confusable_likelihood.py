@@ -1,3 +1,11 @@
+"""Confusable-item likelihood loss function.
+
+Extends the standard sequence likelihood to support recall events
+where the recalled item may be confused with a similar item,
+computing likelihoods under an error-tolerant retrieval model.
+
+"""
+
 from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np

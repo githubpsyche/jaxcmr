@@ -1,4 +1,10 @@
-"""Termination policies for memory search models."""
+"""Termination policies for memory search models.
+
+Provides functions that compute the probability of terminating
+recall at each retrieval step, including fixed-rate and
+activation-dependent termination rules.
+
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,10 @@
-"""Repetition-index serial recall accuracy."""
+"""Repetition-index serial recall accuracy.
+
+Computes serial recall accuracy separately for each presentation of
+a repeated item, showing how recall at the first vs second (or
+later) study position varies.
+
+"""
 
 from typing import Optional, Sequence
 

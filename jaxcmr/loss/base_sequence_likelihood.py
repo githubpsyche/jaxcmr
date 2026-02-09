@@ -6,6 +6,7 @@ sequence and therefore never replays item presentations per trial. The class is
 useful for legacy experiments that relied on the old behaviour, but new code
 should prefer the standard sequence likelihood which always re-presents the
 study list.
+
 """
 
 from typing import Callable, Iterable, Mapping, Type, Optional

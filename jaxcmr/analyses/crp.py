@@ -1,4 +1,57 @@
-"""Lag-Conditional Response Probability (Lag-CRP)."""
+"""Lag-Conditional Response Probability (Lag-CRP).
+
+Provides tabulators and CRP functions for computing lag-conditional
+response probability curves from free recall data. Supports both
+unique-item lists (``SimpleTabulation``) and lists with repeated
+items (``Tabulation``).
+
+Notes
+-----
+**Conventions**
+
+- list_length (L): fixed study-list length within a call.
+- trials (recalls): int array ``[n_trials, n_recall_events]`` of
+  serial positions in ``1..L``; ``0`` pads after termination.
+- presentations: int array ``[n_trials, L]`` of item IDs at study
+  positions; required only when items may repeat.
+- size: upper bound on how many distinct study positions a single
+  item can occupy within a list.
+- Lag axis: all CRP outputs are length ``2*L - 1``. Index *i*
+  corresponds to lag ``i - (L - 1)``; the center is lag 0.
+
+**Design decisions**
+
+- Zeros (pads) and out-of-range recalls are ignored via guards in
+  the tabulators.
+- Lags with zero availability yield NaN.
+- A recall of a repeated item is treated as recalling all of that
+  item's study positions. Actual and available lags are computed as
+  unique lag set unions (boolean one-hot union per lag) to avoid
+  multiplicity inflation.
+- The first non-zero recall marks that item's study positions as
+  unavailable and defines the reference for the next transition.
+
+**SimpleTabulation** (no repeats): assumes ``trial[0] > 0`` (first
+recall exists) and subsequent zeros are pads. Marks the first
+recall's item as unavailable and bounds-checks choices to ``[1..L]``.
+
+**Tabulation** (with repeats): tracks ``previous_positions``,
+``avail_recalls`` (boolean ``[L]``), and ``actual_lags`` /
+``avail_lags`` (int ``[2*L - 1]``). On each valid recall executes
+four ordered steps: (1) update previous positions, (2) update
+availability, (3) accumulate actual lags as the union of unique lags
+from previous to current positions, (4) accumulate available lags
+from each previous position to all currently available positions.
+Zeros in position arrays are padding; indices are 1-based for
+positions, 0-based internally.
+
+**JAX compilation**: all public functions are side-effect-free and
+JIT-safe. Use ``jit(crp, static_argnames=("size",))``; keep shapes
+(L, number of recall events) consistent within a compiled call to
+avoid recompiles. Ensure ``size`` >= the true maximum per-item
+repetition; compute it once outside JIT if needed.
+
+"""
 
 __all__ = [
     "SimpleTabulation",

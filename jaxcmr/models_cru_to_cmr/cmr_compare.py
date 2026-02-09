@@ -1,3 +1,11 @@
+"""CMR comparison variant for CRU-to-CMR transition studies.
+
+Implements a CMR variant used to compare CRU and CMR retrieval
+dynamics, with explicit stop-probability and primacy-decay
+parameters.
+
+"""
+
 from typing import Mapping, Optional
 
 import numpy as np

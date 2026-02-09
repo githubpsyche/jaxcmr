@@ -1,4 +1,10 @@
-"""Category-filtered serial position curve analyses."""
+"""Category-filtered serial position curve analyses.
+
+Computes recall probability at each study position separately for
+each stimulus category, producing category-specific serial position
+curves.
+
+"""
 
 from __future__ import annotations
 

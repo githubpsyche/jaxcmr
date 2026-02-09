@@ -1,9 +1,10 @@
-"""
-Positional CMR.
+"""Positional CMR with reinforcement.
 
-Items are encoded using positional representations rather than item representations.
-This allows repeated items to have distinct contextual associations for each presentation.
-Recallability is tracked at the position level (not item level).
+Items are encoded using positional representations rather than item
+representations. This allows repeated items to have distinct
+contextual associations for each presentation. Recallability is
+tracked at the position level (not item level).
+
 """
 
 from typing import Mapping, Optional, Type

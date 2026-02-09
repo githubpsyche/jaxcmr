@@ -1,10 +1,11 @@
-"""
-Dual Cue CMR.
+"""Dual Cue CMR.
 
-Standard item-based CMR (not positional) with dual MCF sensitivity parameters.
-Activations are computed as the product of local (current context) and global
-(initial context) cues, each with their own sensitivity parameter.
-No explicit stop probability - stops only when no items are recallable.
+Standard item-based CMR (not positional) with dual MCF sensitivity
+parameters. Activations are computed as the product of local (current
+context) and global (initial context) cues, each with their own
+sensitivity parameter. No explicit stop probability; stops only when
+no items are recallable.
+
 """
 
 from typing import Mapping, Optional, Type

@@ -1,3 +1,12 @@
+"""Simulation utilities for confusable-item models.
+
+Extends the standard simulation pipeline to handle recall events
+where the model may output a confused (similar) item instead of the
+target, matching the error-tolerant retrieval in
+``confusable_likelihood``.
+
+"""
+
 from typing import Mapping, Optional, Sequence, Type
 
 import numpy as np

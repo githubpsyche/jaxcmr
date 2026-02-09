@@ -1,3 +1,11 @@
+"""CMR with competitive termination for CRU-to-CMR studies.
+
+Implements a CMR variant that uses an activation-dependent
+termination rule (competitive termination) instead of a fixed
+stop probability.
+
+"""
+
 from typing import Mapping, Optional
 
 import numpy as np

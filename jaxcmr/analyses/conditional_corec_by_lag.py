@@ -1,4 +1,10 @@
-"""Conditional co-recall probability by study lag."""
+"""Conditional co-recall probability by study lag.
+
+Given that an item was recalled, computes the probability that the
+item at each study lag was also recalled. Produces a co-recall curve
+as a function of absolute study lag.
+
+"""
 
 from __future__ import annotations
 

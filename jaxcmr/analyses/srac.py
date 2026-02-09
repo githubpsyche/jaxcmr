@@ -1,4 +1,10 @@
-"""Serial Recall Accuracy Curve (SRAC)."""
+"""Serial Recall Accuracy Curve (SRAC).
+
+Computes the probability that the item recalled at each output
+position matches the item studied at that position (strict serial
+recall accuracy).
+
+"""
 
 from typing import Optional, Sequence
 

@@ -1,3 +1,11 @@
+"""Shared plotting utilities for analysis modules.
+
+Provides axis initialization, confidence-interval computation via
+bootstrap, and standardized plot-data / label-setting helpers used
+by all analysis plot functions.
+
+"""
+
 from collections.abc import Sequence
 from typing import Optional, TypeVar, cast
 

@@ -1,5 +1,9 @@
-"""
-CMR: Context Maintenance and Retrieval model of memory search.
+"""CMR without context reinstatement at retrieval.
+
+Variant of CMR that skips the context reinstatement step after each
+recall, so the temporal context does not drift toward the retrieved
+item's encoding context during retrieval.
+
 """
 
 from typing import Mapping, Optional, Type

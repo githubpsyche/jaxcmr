@@ -1,3 +1,10 @@
+"""Numerical primitives for memory-search models.
+
+Provides power-scaling, normalization, primacy decay, and cosine
+similarity functions used by model components and analyses.
+
+"""
+
 import jax.numpy as jnp
 from jax import lax
 

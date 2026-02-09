@@ -1,17 +1,25 @@
-"""Repetition-neighbor lag-conditional response probability analyses.
+"""Repetition-neighbor lag-conditional response probability.
 
-The lag-CRP measures the probability of recalling an item at a particular lag **given the current recall position**, conditional on items that remain available for recall. 
-Here we follow up on our previous repetition-robust implementation of the Lag-CRP analysis, as well as our Repetition Lag-CRP analysis that separately tracks transitions from repeated items to their neighbors, with a new implementation that allows us to calculate the **Repetition-Neighbor Lag-CRP**.
+Measures whether recalling the neighbor of one presentation of a
+repeated item facilitates transition to the neighborhood of the
+other presentation, testing for associative linking across
+repetitions.
 
-In this analysis, we calculate transition probabilities from neighbors of the second presentation of repeated items to neighbors of the first presentation of the same repeated items, and/or vice versa.
-This allows us to investigate how item repetition affects the contextual features associated with neighboring items in a study list as indicated in free recall.
+Notes
+-----
+- For a repeated item at study positions i and j, three direction
+  modes are supported:
 
-For repeated items studied at positions $i$ and $j$ with spacing of at least 4 study positions, in this version of the analysis:
+  - ``j2i``: from j-neighbor to i's neighborhood
+  - ``i2j``: from i-neighbor to j's neighborhood
+  - ``both``: union of both directions
 
-1. We only tabulate lag-transitions from recalls of items studied at position $j+1$ and/or $j+2$.
-2. We tabulate lags according to the study position of the first presentation of the repeated item, so that we can calculate associations with neighbors of position $i$.
+- ``use_lag2`` extends the neighbor definition to include +2
+  offsets in addition to the default +1.
+- ``test_rep_neighbor_crp_vs_control`` compares observed
+  neighbor CRP against a shuffled control to test for
+  above-chance cross-presentation linking.
 
-We optionally also or alternatively consider transitions from recalls of items studied at position $i+1$ and/or $i+2$ to neighbors of the repeated item at position $j$.
 """
 
 __all__ = [

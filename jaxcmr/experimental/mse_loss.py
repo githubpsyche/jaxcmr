@@ -2,6 +2,7 @@
 
 Provides dataset-aware helpers to compare recall-derived analyses between
 observed and simulated trials using pluggable analysis functions.
+
 """
 
 from typing import Callable, Iterable, Mapping, Optional, Type

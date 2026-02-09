@@ -1,4 +1,10 @@
-"""Order error rate analysis."""
+"""Order error rate analysis.
+
+Computes the proportion of recall attempts where the recalled item
+appears at the wrong serial position (transposition errors) as a
+function of output position.
+
+"""
 
 __all__ = ["trial_order_error_rate", "order_error_rate", "plot_order_error_rate"]
 

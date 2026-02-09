@@ -1,4 +1,11 @@
-"""Category-filtered LPP-binned recall analyses."""
+"""Category-filtered LPP-binned recall analyses.
+
+Bins items by their LPP (late positive potential) amplitude and
+computes recall probability within each bin, separately for each
+stimulus category. Tests how neural encoding strength predicts
+subsequent memory as a function of category.
+
+"""
 
 from __future__ import annotations
 

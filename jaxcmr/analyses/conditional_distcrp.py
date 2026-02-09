@@ -1,4 +1,11 @@
-"""Distance-binned CRP with conditional transition filtering."""
+"""Distance-binned CRP with conditional transition filtering.
+
+Extends ``distcrp.DistanceTabulation`` with a per-event
+``_should_tabulate`` mask so that only selected transitions
+contribute to distance-bin counts, while all recalls still update
+availability tracking.
+
+"""
 
 from __future__ import annotations
 

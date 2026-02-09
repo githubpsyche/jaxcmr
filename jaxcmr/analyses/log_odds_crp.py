@@ -1,4 +1,18 @@
-"""Lag-CRP log-odds contrasts."""
+"""Lag-CRP log-odds contrasts.
+
+Reuses the tabulation machinery from ``crp`` (``SimpleTabulation`` for
+no-repeat lists, ``Tabulation`` for repeated items) to accumulate
+actual and available lag counts per subject, then applies a logit
+transform and subtracts a reference lag to produce log-odds contrasts.
+
+Notes
+-----
+- Probabilities are clamped to ``[epsilon, 1 - epsilon]`` before the
+  logit to avoid infinities; lags with zero availability stay NaN.
+- Subtracting the reference lag removes subject-level baseline
+  differences, making the contrast more comparable across subjects.
+
+"""
 
 __all__ = [
     "SimpleTabulation",
@@ -26,9 +40,7 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
 class SimpleTabulation(Pytree):
-    """Uniform-list CRP tabulator.
-
-    """
+    """Uniform-list CRP tabulator."""
 
     def __init__(self, list_length: int, first_recall: Int_):
         self.lag_range = list_length - 1
@@ -131,9 +143,7 @@ def set_false_at_index(
 
 
 class Tabulation(Pytree):
-    """Per-transition CRP state supporting repeated items.
-
-    """
+    """Per-transition CRP state supporting repeated items."""
 
     def __init__(
         self,

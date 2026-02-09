@@ -1,3 +1,11 @@
+"""Model state visualization utilities.
+
+Provides heatmap plotting for association matrices and instance
+memory stores, useful for inspecting internal model state during
+debugging and development.
+
+"""
+
 from typing import Optional
 
 import matplotlib.pyplot as plt
