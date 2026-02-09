@@ -1,74 +1,74 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
 \documentclass[
-  man,
-  longtable,
-  nolmodern,
-  notxfonts,
-  notimes,
-  draftfirst,
-  colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{apa7}
+  letterpaper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
 
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-
-
-
-\RequirePackage{longtable}
-\RequirePackage{threeparttablex}
-
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
 \makeatletter
-\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
-	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
-	{-.5em}%
-	{\normalfont\normalsize\bfseries\typesectitle}}
-
-\renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{0.5em}%
-	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
-	{-\z@\relax}%
-	{\normalfont\normalsize\bfseries\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{5}
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
 \makeatother
 
 
-
-
-\usepackage{longtable, booktabs, multirow, multicol, colortbl, hhline, caption, array, float, xpatch}
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}
-\renewcommand{\topfraction}{0.85}
-\renewcommand{\bottomfraction}{0.85}
-\renewcommand{\textfraction}{0.15}
-\renewcommand{\floatpagefraction}{0.7}
-
-\usepackage{tcolorbox}
-\tcbuselibrary{listings,theorems, breakable, skins}
-\usepackage{fontawesome5}
-
-\definecolor{quarto-callout-color}{HTML}{909090}
-\definecolor{quarto-callout-note-color}{HTML}{0758E5}
-\definecolor{quarto-callout-important-color}{HTML}{CC1914}
-\definecolor{quarto-callout-warning-color}{HTML}{EB9113}
-\definecolor{quarto-callout-tip-color}{HTML}{00A047}
-\definecolor{quarto-callout-caution-color}{HTML}{FC5300}
-\definecolor{quarto-callout-color-frame}{HTML}{ACACAC}
-\definecolor{quarto-callout-note-color-frame}{HTML}{4582EC}
-\definecolor{quarto-callout-important-color-frame}{HTML}{D9534F}
-\definecolor{quarto-callout-warning-color-frame}{HTML}{F0AD4E}
-\definecolor{quarto-callout-tip-color-frame}{HTML}{02B875}
-\definecolor{quarto-callout-caution-color-frame}{HTML}{FD7E14}
-
-%\newlength\Oldarrayrulewidth
-%\newlength\Oldtabcolsep
-
-
-\usepackage{hyperref}
-
-
-
-
 \providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\usepackage{longtable,booktabs,array}
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -78,7 +78,6 @@
 % Allow footnotes in longtable head/foot
 \IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
 \makesavenoteenv{longtable}
-
 \usepackage{graphicx}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -92,8 +91,6 @@
 \makeatletter
 \def\fps@figure{htbp}
 \makeatother
-
-
 % definitions for citeproc citations
 \NewDocumentCommand\citeproctext{}{}
 \NewDocumentCommand\citeproc{mm}{%
@@ -128,69 +125,7 @@
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
-
-
-
-
-\usepackage{newtx}
-
-\defaultfontfeatures{Scale=MatchLowercase}
-\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
-
-
-
-
-
-\title{EEG-ECMR}
-
-
-\shorttitle{EEG-ECMR}
-
-
-\usepackage{etoolbox}
-
-
-
-
-
-
-\author{Jordan B Gunn}
-
-
-
-\affiliation{
-{Department of Psychology, University of Cambridge}}
-
-
-
-
-\leftheader{Gunn}
-
-\date{2026-01-21}
-
-
-
-
-
-\authornote{ 
-
-\par{       }
-}
-
-\makeatletter
-\let\endoldlt\endlongtable
-\def\endlongtable{
-\hline
-\endoldlt
-}
-\makeatother
-\RequirePackage{longtable}
-\DeclareDelayedFloatFlavor{longtable}{table}
-
-\urlstyle{same}
-
-
-
+\KOMAoption{captions}{tableheading}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -233,44 +168,30 @@
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
 
-% From https://tex.stackexchange.com/a/645996/211326
-%%% apa7 doesn't want to add appendix section titles in the toc
-%%% let's make it do it
-\makeatletter
-\xpatchcmd{\appendix}
-  {\par}
-  {\addcontentsline{toc}{section}{\@currentlabelname}\par}
-  {}{}
-\makeatother
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
 
-%% Disable longtable counter
-%% https://tex.stackexchange.com/a/248395/211326
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={EEG-ECMR},
+  pdfauthor={Jordan B Gunn},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
 
-\usepackage{etoolbox}
 
-\makeatletter
-\patchcmd{\LT@caption}
-  {\bgroup}
-  {\bgroup\global\LTpatch@captiontrue}
-  {}{}
-\patchcmd{\longtable}
-  {\par}
-  {\par\global\LTpatch@captionfalse}
-  {}{}
-\apptocmd{\endlongtable}
-  {\ifLTpatch@caption\else\addtocounter{table}{-1}\fi}
-  {}{}
-\newif\ifLTpatch@caption
-\makeatother
+\title{EEG-ECMR}
+\author{Jordan B Gunn}
+\date{2026-01-21}
 
 \begin{document}
-
 \maketitle
-
-
-\setcounter{secnumdepth}{5}
-
-\setlength\LTleft{0pt}
 
 
 This document records our progress and key decisions as we build a
@@ -365,15 +286,15 @@ positions with emotional \textgreater{} neutral = 20/20.
 
 \begin{figure}
 
-\caption{\label{fig-reference_catspc}Recall rate by study position and
-item type from reference materials (LEFT) and from the present dataset
-(RIGHT).}
-
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/daw_meeting_slide5.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/reference_catspc.png}\end{minipage}%
+
+\caption{\label{fig-reference_catspc}Recall rate by study position and
+item type from reference materials (LEFT) and from the present dataset
+(RIGHT).}
 
 \end{figure}%
 
@@ -392,14 +313,14 @@ standardized difference (Cohen's d\_Early, d\_Late) = 0.23, 0.18.
 
 \begin{figure}
 
-\caption{\label{fig-cat_lpp_spc}LPP by study position and item type.
-Early window (LEFT), Late window (RIGHT).}
-
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_lpp_spc_EarlyLPP.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_lpp_spc_LateLPP.png}\end{minipage}%
+
+\caption{\label{fig-cat_lpp_spc}LPP by study position and item type.
+Early window (LEFT), Late window (RIGHT).}
 
 \end{figure}%
 
@@ -420,10 +341,6 @@ estimate is 0.10 µV, 95\% CI {[}-0.07, 0.28{]}. Late-window differences
 
 \begin{figure}
 
-\caption{\label{fig-cat_lpp_by_recall_split}LPP by recall status and
-item type: Early LPP (TOP row) and Late LPP (BOTTOM row), split by
-NEGATIVE items (LEFT) and NEUTRAL items (RIGHT).}
-
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_lpp_by_recall_EarlyLPP_Negative.png}\end{minipage}%
 %
@@ -435,6 +352,10 @@ NEGATIVE items (LEFT) and NEUTRAL items (RIGHT).}
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_lpp_by_recall_LateLPP_Neutral.png}\end{minipage}%
+
+\caption{\label{fig-cat_lpp_by_recall_split}LPP by recall status and
+item type: Early LPP (TOP row) and Late LPP (BOTTOM row), split by
+NEGATIVE items (LEFT) and NEUTRAL items (RIGHT).}
 
 \end{figure}%
 
@@ -452,14 +373,14 @@ indicating an interaction between LPP and item type.
 
 \begin{figure}
 
-\caption{\label{fig-cat_lpp_by_recall}Early LPP by recall status and
-item type. CIs omitted for clarity; data pooled across participants.}
-
 \centering{
 
 \includegraphics{results/figures/cat_lpp_by_recall.png}
 
 }
+
+\caption{\label{fig-cat_lpp_by_recall}Early LPP by recall status and
+item type. CIs omitted for clarity; data pooled across participants.}
 
 \end{figure}%
 
@@ -473,9 +394,6 @@ emotion and later recall line up, reinforcing the interaction pattern
 above.
 
 \begin{figure}
-
-\caption{\label{fig-early-lpp-contrasts}Early LPP contrasts (mean ΔµV
-with 95\% CIs).}
 
 \centering{
 
@@ -508,6 +426,9 @@ N\_recalled -- N\_unrecalled & 0.10 & {[}-0.07, 0.28{]} & n.s. \\
 
 }
 
+\caption{\label{fig-early-lpp-contrasts}Early LPP contrasts (mean ΔµV
+with 95\% CIs).}
+
 \end{figure}%
 
 \subsubsection{Statistical Cross-Check}\label{statistical-cross-check}
@@ -523,15 +444,15 @@ effect for emotional items than for neutral items.
 
 \begin{figure}
 
-\caption{\label{fig-reference_gmm}Description of a generalized mixed
-effects model predicting recall as a function of condition, earlyLPP,
-and their interaction.}
-
 \centering{
 
 \includegraphics{results/figures/reference_gmm.png}
 
 }
+
+\caption{\label{fig-reference_gmm}Description of a generalized mixed
+effects model predicting recall as a function of condition, earlyLPP,
+and their interaction.}
 
 \end{figure}%
 
@@ -563,36 +484,35 @@ sequences.
 
 To validate this measure, we first applied it to a dataset where recall
 order is available. For this comparison we used a subset of PEERS
-(\citeproc{ref-healey2014memory}{Healey \& Kahana, 2014}): 126
-participants aged 17--30 completed 112 trials in which they studied
-lists of 16 unique words and then immediately recalled them. Words were
-sampled without replacement from the Toronto Word Pool
-(\citeproc{ref-friendly1982toronto}{Friendly et al., 1982}), a set of
-high-frequency nouns, adjectives, and verbs with low interitem
-similarity. The left panel of Figure~\ref{fig-peers_lagcrp_condcorec}
-shows the standard lag-CRP for this dataset, with a strong contiguity
-effect: recall transitions are most likely at lag +1, somewhat less
-likely at lag −1, and fall off rapidly for larger \(|lag|\). The right
-panel shows the corresponding conditional co-recall curve
-\(\text{CoRec}(d)\), collapsed over lag sign. Conditional co-recall is
-highest for short lags and decreases steadily with distance, closely
-mirroring the lag-CRP gradient despite ignoring recall order. These
-results confirm that the conditional co-recall analysis is sensitive to
-temporal contiguity when it is present.
+(Healey and Kahana 2014): 126 participants aged 17--30 completed 112
+trials in which they studied lists of 16 unique words and then
+immediately recalled them. Words were sampled without replacement from
+the Toronto Word Pool (Friendly et al. 1982), a set of high-frequency
+nouns, adjectives, and verbs with low interitem similarity. The left
+panel of Figure~\ref{fig-peers_lagcrp_condcorec} shows the standard
+lag-CRP for this dataset, with a strong contiguity effect: recall
+transitions are most likely at lag +1, somewhat less likely at lag −1,
+and fall off rapidly for larger \(|lag|\). The right panel shows the
+corresponding conditional co-recall curve \(\text{CoRec}(d)\), collapsed
+over lag sign. Conditional co-recall is highest for short lags and
+decreases steadily with distance, closely mirroring the lag-CRP gradient
+despite ignoring recall order. These results confirm that the
+conditional co-recall analysis is sensitive to temporal contiguity when
+it is present.
 
 \begin{figure}
-
-\caption{\label{fig-peers_lagcrp_condcorec}Standard lag-CRP (LEFT) and
-order-agnostic conditional co-recall by lag (RIGHT) for a subset of the
-PEERS dataset (\citeproc{ref-healey2014memory}{Healey \& Kahana, 2014}).
-The conditional co-recall curve reproduces the short-lag advantage
-observed in the lag-CRP despite not using recall order information.}
 
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/peers_lagcrp.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/peers_condcorec_by_lag.png}\end{minipage}%
+
+\caption{\label{fig-peers_lagcrp_condcorec}Standard lag-CRP (LEFT) and
+order-agnostic conditional co-recall by lag (RIGHT) for a subset of the
+PEERS dataset (Healey and Kahana 2014). The conditional co-recall curve
+reproduces the short-lag advantage observed in the lag-CRP despite not
+using recall order information.}
 
 \end{figure}%
 
@@ -607,16 +527,16 @@ constraint on the temporal-context dynamics in our models.
 
 \begin{figure}
 
-\caption{\label{fig-zarubin_condcorec_by_lag}Order-agnostic conditional
-co-recall by lag for the Zarubin EEG dataset. Conditional co-recall
-probabilities vary little with lag, indicating weak temporal clustering
-of recalled items in this paradigm.}
-
 \centering{
 
 \includegraphics{results/figures/analyses/zarubin_condcorec_by_lag.png}
 
 }
+
+\caption{\label{fig-zarubin_condcorec_by_lag}Order-agnostic conditional
+co-recall by lag for the Zarubin EEG dataset. Conditional co-recall
+probabilities vary little with lag, indicating weak temporal clustering
+of recalled items in this paradigm.}
 
 \end{figure}%
 
@@ -677,16 +597,22 @@ loci for neutral versus emotional items. We denote temporal context as
 features to temporal context, and \(M^{CF}\) binds temporal context to
 item features.
 
-\begin{table}
-
-{\caption{{Parameters and structures specifying
-eCMR.}{\label{tbl-ecmr-parameters}}}
-\vspace{-20pt}}
-
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\caption{Parameters and structures specifying
+eCMR.}\label{tbl-ecmr-parameters}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Symbol
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Name
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Symbol
@@ -732,8 +658,6 @@ interaction. \\
 \(\lambda_{EL}\) & LPP interaction threshold & Centering offset for the
 interaction term. \\
 \end{longtable}
-
-\end{table}
 
 Temporal context uses the standard CMR pre-experimental initializations:
 
@@ -944,12 +868,11 @@ that trial. We then sum log likelihoods across trials for each
 participant and choose parameter values that maximize this approximate
 set-based log likelihood.
 
-We maximize the objective with differential evolution
-(\citeproc{ref-storn1997differential}{Storn \& Price, 1997}). Because
-differential evolution is stochastic, we run three independent
-optimizations per participant and model variant and retain the
-best-performing fit. For model comparison, we compute per-subject AIC
-values and summarize mean \(\Delta\)AIC with t-based 95\% confidence
+We maximize the objective with differential evolution (Storn and Price
+1997). Because differential evolution is stochastic, we run three
+independent optimizations per participant and model variant and retain
+the best-performing fit. For model comparison, we compute per-subject
+AIC values and summarize mean \(\Delta\)AIC with t-based 95\% confidence
 intervals, alongside AIC weights and winner ratios.
 
 We also simulate each fitted model variant on the same list structure
@@ -1031,18 +954,26 @@ estimates with 95\% t-based confidence intervals. Termination parameters
 are omitted because the fitting procedure does not include a stopping
 mechanism.
 
-\begin{table}
-
-{\caption{{Parameter estimates and fit summaries for TalmiEEG model
-variants (mean +/- 95\% t-based CI across
-participants).}{\label{tbl-talmi-parameter-estimates}}}
-\vspace{-20pt}}
-
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.3400}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}@{}}
+\caption{Parameter estimates and fit summaries for TalmiEEG model
+variants (mean +/- 95\% t-based CI across
+participants).}\label{tbl-talmi-parameter-estimates}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Parameter
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (main effects)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (interaction)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion-only
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Parameter
@@ -1075,22 +1006,27 @@ lpp inter scale & 0.00 +/- 0.00 & 53.95 +/- 11.17 & 0.00 +/- 0.00 \\
 lpp inter threshold & 0.00 +/- 0.00 & -0.90 +/- 0.98 & 0.00 +/- 0.00 \\
 \end{longtable}
 
-\end{table}
-
 Table~\ref{tbl-talmi-delta-aic} reports pairwise delta AIC values used
 in the comparisons above.
-
-\begin{table}
-
-{\caption{{Pairwise delta AIC (row minus column; mean {[}95\% t-based
-CI{]}).}{\label{tbl-talmi-delta-aic}}}
-\vspace{-20pt}}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.3400}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}
   >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2200}}@{}}
+\caption{Pairwise delta AIC (row minus column; mean {[}95\% t-based
+CI{]}).}\label{tbl-talmi-delta-aic}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (main effects)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion + LPP (interaction)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Emotion-only
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
@@ -1111,8 +1047,6 @@ Emotion + LPP (interaction) & -1.12 {[}-2.11, -0.13{]} & NA & -3.98
 Emotion-only & 2.86 {[}1.57, 4.14{]} & 3.98 {[}2.25, 5.71{]} & NA \\
 \end{longtable}
 
-\end{table}
-
 \subsection{Benchmark Fits}\label{benchmark-fits}
 
 We next inspect simulated benchmark patterns for each fitted model
@@ -1124,6 +1058,12 @@ LPP--recall association.
 
 \begin{figure}
 
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/analyses/reference_catspc.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/cat_lpp_by_recall.png}\end{minipage}%
+
 \caption{\label{fig-data_benchmarks}Empirical benchmarks for model
 evaluation. Left: Category-SPC for negative (red) and neutral (black)
 items, with bootstrapped 95\% CIs across participants. Right: Early LPP
@@ -1131,15 +1071,15 @@ by recall status and item type, with lines following the legend labels
 (recalled/unrecalled negative and recalled/unrecalled neutral) and CIs
 omitted for clarity.}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/analyses/reference_catspc.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/cat_lpp_by_recall.png}\end{minipage}%
-
 \end{figure}%
 
 \begin{figure}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
 
 \caption{\label{fig-eeg_emotion_only_fits}Simulated benchmarks for the
 Emotion-only model. Left: Category-SPC from simulations using
@@ -1149,15 +1089,15 @@ recall status from the same simulations, with lines following the legend
 labels (recalled/unrecalled negative and recalled/unrecalled neutral)
 and CIs omitted.}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGEmotionOnly_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
-
 \end{figure}%
 
 \begin{figure}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
 
 \caption{\label{fig-eeg_main_effects_fits}Simulated benchmarks for the
 Emotion + LPP (main effects) model. Left: Category-SPC from simulations
@@ -1167,15 +1107,15 @@ LPP by recall status from the same simulations, with lines following the
 legend labels (recalled/unrecalled negative and recalled/unrecalled
 neutral) and CIs omitted.}
 
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffects_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
-
 \end{figure}%
 
 \begin{figure}
+
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
+%
+\begin{minipage}{0.50\linewidth}
+\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
 
 \caption{\label{fig-eeg_main_effects_plus_interaction_fits}Simulated
 benchmarks for the Emotion + LPP (interaction) model. Left: Category-SPC
@@ -1184,12 +1124,6 @@ from simulations using per-subject fitted parameters, with negative
 subjects. Right: Early LPP by recall status from the same simulations,
 with lines following the legend labels (recalled/unrecalled negative and
 recalled/unrecalled neutral) and CIs omitted.}
-
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_spc.png}\end{minipage}%
-%
-\begin{minipage}{0.50\linewidth}
-\includegraphics{results/figures/fitting/TalmiEEG_EEGMainEffectsPlusInteraction_50_set_likelihood_fixed_term_best_of_3_cat_lpp_by_recall.png}\end{minipage}%
 
 \end{figure}%
 
@@ -1210,21 +1144,21 @@ items. Together these benchmarks indicate that combining emotion and LPP
 with an interaction provides the most faithful account of both the
 category-level advantage and the emotion-specific LPP--recall pattern.
 
-\appendix
+\section{Appendix}\label{appendix}
 
 \subsection{LPP by Item Type and Recall
 Status}\label{lpp-by-item-type-and-recall-status}
 
 \begin{figure}
 
-\caption{\label{fig-amplitude_by_cat_by_recalled}LPP by time, recall
-status, and item type.}
-
 \centering{
 
 \includegraphics{results/figures/amplitude_by_cat_by_recalled.png}
 
 }
+
+\caption{\label{fig-amplitude_by_cat_by_recalled}LPP by time, recall
+status, and item type.}
 
 \end{figure}%
 
@@ -1259,15 +1193,15 @@ intervals at extreme LPP values reflect very low occupancy in those bins
 
 \begin{figure}
 
-\caption{\label{fig-cat_recall_by_early_lpp}Recall rate by Early LPP
-amplitude and item type in reference materials (LEFT) and in the present
-dataset (RIGHT).}
-
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/reference_cat_recall_by_lpp.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_recall_by_lpp_EarlyLPP.png}\end{minipage}%
+
+\caption{\label{fig-cat_recall_by_early_lpp}Recall rate by Early LPP
+amplitude and item type in reference materials (LEFT) and in the present
+dataset (RIGHT).}
 
 \end{figure}%
 
@@ -1285,14 +1219,14 @@ retained only as qualitative checks against the reference analysis.
 
 \begin{figure}
 
-\caption{\label{fig-cat_recall_by_lpp_counts}Counts of observations per
-bin for Early LPP (LEFT) and Late LPP (RIGHT).}
-
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_recall_by_lpp_EarlyLPP_counts.png}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
 \includegraphics{results/figures/analyses/cat_recall_by_lpp_LateLPP_counts.png}\end{minipage}%
+
+\caption{\label{fig-cat_recall_by_lpp_counts}Counts of observations per
+bin for Early LPP (LEFT) and Late LPP (RIGHT).}
 
 \end{figure}%
 
@@ -1413,24 +1347,22 @@ variants.
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
 \bibitem[\citeproctext]{ref-friendly1982toronto}
-Friendly, M., Franklin, P. E., Hoffman, D., \& Rubin, D. C. (1982). The
-toronto word pool: Norms for imagery, concreteness, orthographic
-variables, and grammatical usage for 1,080 words. \emph{Behavior
-Research Methods \& Instrumentation}, \emph{14}(4), 375--399.
+Friendly, Michael, Patricia E Franklin, David Hoffman, and David C
+Rubin. 1982. {``The Toronto Word Pool: Norms for Imagery, Concreteness,
+Orthographic Variables, and Grammatical Usage for 1,080 Words.''}
+\emph{Behavior Research Methods \& Instrumentation} 14 (4): 375--99.
 
 \bibitem[\citeproctext]{ref-healey2014memory}
-Healey, M. K., \& Kahana, M. J. (2014). Is memory search governed by
-universal principles or idiosyncratic strategies? \emph{Journal of
-Experimental Psychology: General}, \emph{143}(2), 575.
+Healey, M Karl, and Michael J Kahana. 2014. {``Is Memory Search Governed
+by Universal Principles or Idiosyncratic Strategies?''} \emph{Journal of
+Experimental Psychology: General} 143 (2): 575.
 
 \bibitem[\citeproctext]{ref-storn1997differential}
-Storn, R., \& Price, K. (1997). Differential evolution--a simple and
-efficient heuristic for global optimization over continuous spaces.
-\emph{Journal of Global Optimization}, \emph{11}(4), 341--359.
+Storn, Rainer, and Kenneth Price. 1997. {``Differential Evolution--a
+Simple and Efficient Heuristic for Global Optimization over Continuous
+Spaces.''} \emph{Journal of Global Optimization} 11 (4): 341--59.
 
 \end{CSLReferences}
-
-
 
 
 

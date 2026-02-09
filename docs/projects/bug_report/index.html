@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Incomplete background_map in cue-similarity analysis</title>
+<title>Two issues in the cue-similarity analysis</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -72,7 +72,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 
 
-<meta name="citation_title" content="Incomplete `background_map` in cue-similarity analysis">
+<meta name="citation_title" content="Two issues in the cue-similarity analysis">
 <meta name="citation_language" content="en">
 </head>
 
@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Incomplete <code>background_map</code> in cue-similarity analysis</h1>
+      <h1 class="title">Two issues in the cue-similarity analysis</h1>
           </div>
 
     
@@ -113,9 +113,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#replicating-the-published-match-counts" id="toc-replicating-the-published-match-counts" class="nav-link" data-scroll-target="#replicating-the-published-match-counts">Replicating the published match counts</a></li>
   <li><a href="#diagnosing-the-discrepancy" id="toc-diagnosing-the-discrepancy" class="nav-link" data-scroll-target="#diagnosing-the-discrepancy">Diagnosing the discrepancy</a></li>
   <li><a href="#corrected-results" id="toc-corrected-results" class="nav-link" data-scroll-target="#corrected-results">Corrected results</a></li>
-  <li><a href="#convergent-evidence-human-coded-analysis" id="toc-convergent-evidence-human-coded-analysis" class="nav-link" data-scroll-target="#convergent-evidence-human-coded-analysis">Convergent evidence: human-coded analysis</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
-  <li><a href="#suggested-fix" id="toc-suggested-fix" class="nav-link" data-scroll-target="#suggested-fix">Suggested fix</a></li>
+  <li><a href="#metric-comparison" id="toc-metric-comparison" class="nav-link" data-scroll-target="#metric-comparison">Metric comparison</a></li>
+  <li><a href="#convergent-evidence" id="toc-convergent-evidence" class="nav-link" data-scroll-target="#convergent-evidence">Convergent evidence</a></li>
+  <li><a href="#suggested-fixes" id="toc-suggested-fixes" class="nav-link" data-scroll-target="#suggested-fixes">Suggested fixes</a></li>
   </ul>
 <div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="index-preview.html"><i class="bi bi-journal-code"></i>Article Notebook</a></li></ul></div></nav>
 </div>
@@ -128,19 +128,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   
 
 
-<p>The <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (lines 82–93) was built from background codes observed in the negative film’s Excel files. Six of the eleven neutral film cue codes use a <code>_1</code> scene suffix that has no entry in this map, so they pass through <code>dplyr::recode()</code> unchanged and then fail the <code>cue %in% as.character(1:11)</code> check in the match calculation. This silently excludes 757 neutral memories (34.6% of all neutral memory events) from ever being counted as matches, regardless of their content. Adding the six missing entries reverses the emotion main effect: neutral match percentage rises from 18.8% to 47.7%, exceeding negative (36.7%).</p>
-<p>This report walks through four steps:</p>
+<p>This report identifies two issues in the cue-similarity analysis reported in <code>Semantic Analysis: 2x2x2 comparison.R</code>:</p>
+<ol type="1">
+<li><p><strong>Incomplete <code>background_map</code>.</strong> The map (lines 82–93) was built from background codes observed in the negative film’s Excel files. Six of the eleven neutral film cue codes use a <code>_1</code> scene suffix that has no entry, so they pass through <code>dplyr::recode()</code> unchanged and fail the <code>cue %in% as.character(1:11)</code> match check. This silently excludes 757 neutral memories (34.6% of all neutral memory events) from ever being counted as matches. Adding the six missing entries reverses the emotion main effect: neutral match percentage rises from 18.8% to 47.7%, exceeding negative (36.7%).</p></li>
+<li><p><strong>Variable-denominator metric.</strong> The match percentage is computed as <code>matches / total_memories</code> per participant. The denominator includes every memory event — including those attributed to foils, which can never match a cue. Because total memory counts vary systematically across conditions (voluntary sessions produce more memories than involuntary sessions), the metric conflates recall volume with cue effectiveness. A fixed-denominator alternative (cue hits / 22 cue presentations) removes this confound and shows that the intentionality main effect is non-significant.</p></li>
+</ol>
+<p>The report walks through five steps:</p>
 <ol type="1">
 <li><strong>Replication</strong> — we reproduce the published match counts and boxplot figure in Python, working from the pipeline’s own CSV output, to confirm we faithfully represent the original analysis.</li>
 <li><strong>Diagnosis</strong> — we inspect the <code>cue_background</code> field and trace the six missing entries in the map, showing exactly which neutral memories are affected and why.</li>
 <li><strong>Correction</strong> — we add the six missing entries and recompute, showing that the emotion main effect reverses.</li>
-<li><strong>Convergent evidence</strong> — an independent human-coded analysis of the same dataset (conducted before the bug was identified) confirms the corrected direction.</li>
+<li><strong>Metric comparison</strong> — we show that the variable denominator inflates the intentionality effect, and that a fixed-denominator metric eliminates it.</li>
+<li><strong>Convergent evidence</strong> — three analyses of the same dataset agree on the corrected emotion direction.</li>
 </ol>
+<p>All analyses are fully reproducible. The Python code behind each figure and test is available in the <a href="index-preview.html">Article Notebook</a>.</p>
 <section id="context" class="level2">
 <h2 class="anchored" data-anchor-id="context">Context</h2>
 <p>The cue-similarity analysis attributes each recalled memory to the most recent background image (film cue or foil) and then compares the memory’s embedding-assigned clip against that background. A memory counts as a “match” when <code>cue_background == assigned_clip</code> and both values are in <code>{"1", "2", ..., "11"}</code> — i.e., both refer to a valid film clip rather than a foil or external detail. The per-participant match percentage is <code>mean(match) × 100</code> across all of that participant’s memory events, and the paper reports a large emotion main effect: F(1,229) = 38.27, p &lt; .001, η² = .13, with negative film participants showing higher match percentages than neutral.</p>
 <p>Everything below uses the analysis pipeline’s own output CSV — no re-running of the R script or embedding model is required.</p>
-<div id="cell-4" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.106623Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.106528Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.116765Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.116577Z&quot;}" data-execution_count="2">
+<div id="cell-4" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:14.123963Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:14.123848Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:14.133661Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:14.133471Z&quot;}" data-execution_count="2">
 <div class="cell-output cell-output-stdout">
 <pre><code>Total memory events: 4101
 Columns: ['', 'Participant_Number', 'memory_description', 'cue_background', 'reaction_sum', 'assigned_clip', 'condition', 'match_status']
@@ -161,7 +167,7 @@ Memories per condition group:
 <h2 class="anchored" data-anchor-id="replicating-the-published-match-counts">Replicating the published match counts</h2>
 <p>Before investigating anything, we first confirm that we can exactly reproduce the published numbers from the pipeline’s output data. This establishes that any discrepancy we later identify is genuinely in the pipeline, not an artefact of our re-analysis.</p>
 <p>The R function <code>calculate_cue_memory_similarity()</code> (line 374 of the 2×2×2 script) computes a per-participant match percentage as follows: for every memory event, <code>match = 1</code> if <code>cue_background == assigned_clip</code> and both are in <code>{"1", ..., "11"}</code>; otherwise <code>match = 0</code>. The participant’s percentage is <code>mean(match) × 100</code>. Participants with fewer than 4 total memories are excluded (line 34 of <code>ANOVA_MATCH_PERCENTAGE.R</code>). We replicate this logic in Python.</p>
-<div id="cell-6" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.133631Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.133510Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.139373Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.139177Z&quot;}" data-execution_count="3">
+<div id="cell-6" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:14.149138Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:14.149039Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:14.175467Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:14.175246Z&quot;}" data-execution_count="3">
 <div class="cell-output cell-output-stdout">
 <pre><code>Per-condition match counts (replicating published numbers):
 
@@ -187,22 +193,45 @@ Memories per condition group:
   Neutral overall: 18.8% (SE=1.3%, N=112)</code></pre>
 </div>
 </div>
-<div id="cell-7" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.140326Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.140232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.199441Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.199228Z&quot;}" data-execution_count="4">
+<div id="cell-fig-replication" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:14.176566Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:14.176494Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:14.235812Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:14.235601Z&quot;}" data-execution_count="4">
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><a href="index_files/figure-html/cell-5-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="index_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></a></p>
+<div id="fig-replication" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-replication-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-replication-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Replication of the published boxplot. Per-participant matched memory percentage by Emotion and Intentionality, using the original background_map."><img src="index_files/figure-html/fig-replication-output-1.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-replication-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Replication of the published boxplot. Per-participant matched memory percentage by Emotion and Intentionality, using the original background_map.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><strong>Takeaway.</strong> Our Python replication reproduces the published numbers exactly: Negative 36.7%, Neutral 18.8%, with a ~18 percentage-point gap. The boxplot above matches the figure in <code>ANOVA_MATCH_PERCENTAGE.R</code>. We can now investigate where this gap comes from, confident that we are working with the same data and logic as the original analysis.</p>
+<div id="cell-8" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:14.236863Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:14.236774Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:15.245050Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:15.244807Z&quot;}" data-execution_count="5">
+<div class="cell-output cell-output-stdout">
+<pre><code>=== 2×2×2 ANOVA — Original embedding data (replicating published result) ===
+
+  emotion                                       F(1,221)=  41.02, p=0.0000, η²=0.147 ***
+  intervention                                  F(1,221)=   0.01, p=0.9128, η²=0.000
+  intentionality                                F(1,221)=  13.99, p=0.0002, η²=0.050 ***
+  emotion:intervention                          F(1,221)=   0.31, p=0.5805, η²=0.001
+  emotion:intentionality                        F(1,221)=   2.31, p=0.1301, η²=0.008
+  intervention:intentionality                   F(1,221)=   0.00, p=0.9471, η²=0.000
+  emotion:intervention:intentionality           F(1,221)=   0.01, p=0.9329, η²=0.000
+  Residual                                      SS=   98890.5  df=221
+
+  N = 235</code></pre>
+</div>
+</div>
+<p><strong>Takeaway.</strong> Our Python replication reproduces the published numbers exactly: Negative 36.7%, Neutral 18.8%, with a ~18 percentage-point gap. The boxplot above matches the figure in <code>ANOVA_MATCH_PERCENTAGE.R</code>. The 2×2×2 ANOVA replicates the reported emotion main effect — the paper reports F(1,229) = 38.27, p &lt; .001, η² = .13; we obtain F(1,221) = 41.02, p &lt; .0001, η² = .15 (the small difference in degrees of freedom reflects the ≥4 filter applied per condition rather than overall).</p>
+<p>The ANOVA also suggests a significant intentionality main effect: involuntary (intrusion) sessions show higher match percentages than voluntary (free recall) sessions, F(1,221) = 13.99, p = .0002, η² = .05. Neither the emotion × intentionality interaction (p = .13) nor any other interaction reaches significance. We return to the intentionality effect in the metric comparison section, where a different denominator yields a different conclusion.</p>
+<p>We can now investigate where the emotion gap comes from, confident that we are working with the same data and logic as the original analysis.</p>
 </section>
 <section id="diagnosing-the-discrepancy" class="level2">
 <h2 class="anchored" data-anchor-id="diagnosing-the-discrepancy">Diagnosing the discrepancy</h2>
 <p>If the emotion main effect is genuine, we would expect it to arise from differences in how well the embedding model assigns clips for emotional versus neutral memories. But an alternative explanation is that the two film types differ in how their data is <em>preprocessed</em> — specifically, whether all valid cue backgrounds end up in the set <code>{"1", ..., "11"}</code> that the match check requires.</p>
 <p>To test this, we classify every <code>cue_background</code> value in the CSV as either a recognised cue code (in <code>1</code>–<code>11</code>), a foil, or something else. If there are “something else” values that should have been cue codes, they would be silently treated as non-matches and depress the match percentage for whichever film type they belong to.</p>
-<div id="cell-10" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.200467Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.200377Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.203944Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.203739Z&quot;}" data-execution_count="5">
+<div id="cell-11" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:15.246241Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:15.246104Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:15.250390Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:15.250195Z&quot;}" data-execution_count="6">
 <div class="cell-output cell-output-stdout">
 <pre><code>Negative film (1916 memories):
     cue:  1072  (55.9%)
@@ -224,19 +253,19 @@ Neutral film (2185 memories):
 </div>
 </div>
 <p>The negative film has zero “other” backgrounds — every memory is attributed to either a recognised cue (<code>1</code>–<code>11</code>) or a foil. The neutral film has 757 memories (34.6%) attributed to backgrounds like <code>7_1</code>, <code>3_1</code>, <code>11_1</code>, etc. These are <code>clip_scene</code> codes from the raw Excel files — clip number followed by an underscore and the scene number within that clip. The <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (lines 82–93) is responsible for stripping the scene suffix:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_3"</span> <span class="ot">=</span> <span class="st">"1"</span>, <span class="st">"1_5"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"2_1"</span> <span class="ot">=</span> <span class="st">"2"</span>, <span class="st">"2_3"</span> <span class="ot">=</span> <span class="st">"2"</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_3"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_9"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_IPT"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"4_1"</span> <span class="ot">=</span> <span class="st">"4"</span>, <span class="st">"4_7"</span> <span class="ot">=</span> <span class="st">"4"</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"5_1"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_8"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_IPT"</span> <span class="ot">=</span> <span class="st">"5"</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_2"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_12"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_IPT"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_3"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_6"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_IPT"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"8_1"</span> <span class="ot">=</span> <span class="st">"8"</span>, <span class="st">"8_8"</span> <span class="ot">=</span> <span class="st">"8"</span>,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"9_1"</span> <span class="ot">=</span> <span class="st">"9"</span>, <span class="st">"9_12"</span> <span class="ot">=</span> <span class="st">"9"</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_9"</span> <span class="ot">=</span> <span class="st">"10"</span>, <span class="st">"10_10"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_8"</span> <span class="ot">=</span> <span class="st">"11"</span>, <span class="st">"11_12"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_3"</span> <span class="ot">=</span> <span class="st">"1"</span>, <span class="st">"1_5"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"2_1"</span> <span class="ot">=</span> <span class="st">"2"</span>, <span class="st">"2_3"</span> <span class="ot">=</span> <span class="st">"2"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_3"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_9"</span> <span class="ot">=</span> <span class="st">"3"</span>, <span class="st">"3_IPT"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"4_1"</span> <span class="ot">=</span> <span class="st">"4"</span>, <span class="st">"4_7"</span> <span class="ot">=</span> <span class="st">"4"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"5_1"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_8"</span> <span class="ot">=</span> <span class="st">"5"</span>, <span class="st">"5_IPT"</span> <span class="ot">=</span> <span class="st">"5"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_2"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_12"</span> <span class="ot">=</span> <span class="st">"6"</span>, <span class="st">"6_IPT"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_3"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_6"</span> <span class="ot">=</span> <span class="st">"7"</span>, <span class="st">"7_IPT"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"8_1"</span> <span class="ot">=</span> <span class="st">"8"</span>, <span class="st">"8_8"</span> <span class="ot">=</span> <span class="st">"8"</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"9_1"</span> <span class="ot">=</span> <span class="st">"9"</span>, <span class="st">"9_12"</span> <span class="ot">=</span> <span class="st">"9"</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_9"</span> <span class="ot">=</span> <span class="st">"10"</span>, <span class="st">"10_10"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_8"</span> <span class="ot">=</span> <span class="st">"11"</span>, <span class="st">"11_12"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This map was built from codes observed in the <strong>negative film’s</strong> Excel files. The negative film uses various scene suffixes (<code>_3</code>, <code>_5</code>, <code>_8</code>, <code>_9</code>, etc.), and these are all present in the map. The neutral film predominantly uses <code>_1</code> as the scene suffix. Five of those codes happen to already be in the map because the negative film also uses <code>_1</code> for those clip numbers:</p>
 <table class="caption-top table">
 <thead>
@@ -304,13 +333,13 @@ Neutral film (2185 memories):
 </tr>
 </tbody>
 </table>
-<p>The six missing codes pass through <code>dplyr::recode()</code> unchanged as <code>"1_1"</code>, <code>"3_1"</code>, etc. These strings are not in <code>as.character(1:11)</code>, so the match check on line 379 always returns 0 for any memory attributed to these backgrounds — regardless of whether the embedding correctly identified the clip. These 757 memories contribute zeros to both the numerator and the denominator inflation, systematically depressing neutral match percentages.</p>
+<p>The six missing codes pass through <code>dplyr::recode()</code> unchanged as <code>"1_1"</code>, <code>"3_1"</code>, etc. These strings are not in <code>as.character(1:11)</code>, so the match check on line 379 always returns 0 for any memory attributed to these backgrounds — regardless of whether the embedding correctly identified the clip. These 757 memories still count toward each participant’s total memory events (the denominator) but can never count as matches (the numerator), systematically depressing neutral match percentages.</p>
 <p><strong>Takeaway.</strong> The bug is entirely in the preprocessing: <code>background_map</code> was constructed from negative film scene codes only. Six of the eleven neutral film cue codes (<code>1_1</code>, <code>3_1</code>, <code>6_1</code>, <code>7_1</code>, <code>10_1</code>, <code>11_1</code>) have no entry, so 757 neutral memories — over a third of all neutral data — are permanently ineligible for matching. The five neutral codes that <em>do</em> work (<code>2_1</code>, <code>4_1</code>, <code>5_1</code>, <code>8_1</code>, <code>9_1</code>) are coincidental overlaps where the negative film happens to use the same <code>_1</code> suffix. This asymmetry alone is sufficient to produce the apparent emotion main effect, regardless of the embedding model’s accuracy.</p>
 </section>
 <section id="corrected-results" class="level2">
 <h2 class="anchored" data-anchor-id="corrected-results">Corrected results</h2>
 <p>Now that we have identified the six missing entries, we can test whether fixing them changes the result. We add the six mappings and recompute match percentages from the same CSV data. Because the bug only affects neutral film codes, negative film results should remain unchanged — this serves as a built-in control.</p>
-<div id="cell-13" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.204841Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.204775Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.209303Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.209109Z&quot;}" data-execution_count="6">
+<div id="cell-14" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:15.251457Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:15.251372Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:15.256351Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:15.256156Z&quot;}" data-execution_count="7">
 <div class="cell-output cell-output-stdout">
 <pre><code>Condition                                       Original      Fixed
 -------------------------------------------------------------------
@@ -332,95 +361,228 @@ Newly eligible neutral memories: 757
 Of those, correctly matched by embedding: 590 (77.9%)</code></pre>
 </div>
 </div>
-<div id="cell-14" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.210317Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.210250Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:31.281877Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:31.281615Z&quot;}" data-execution_count="7">
-<div class="cell-output cell-output-display">
 <div>
-<figure class="figure">
-<p><a href="index_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="index_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
-</figure>
-</div>
-</div>
-</div>
-<p><strong>Takeaway.</strong> The fix leaves negative match percentages completely unchanged (36.7%), confirming that the bug is isolated to neutral codes. Neutral match percentage rises from 18.8% to 47.7% — a 29 percentage-point increase — reversing the direction of the emotion effect. Of the 757 newly eligible neutral memories, 590 (77.9%) are correctly matched by the embedding model, indicating that these were genuine cue-attributed memories that were being silently discarded. The corrected data show that neutral cues produce <em>higher</em> match rates than negative cues, not lower.</p>
-</section>
-<section id="convergent-evidence-human-coded-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="convergent-evidence-human-coded-analysis">Convergent evidence: human-coded analysis</h2>
-<p>The embedding-based reanalysis above depends on the same data pipeline that produced the original result, so it is reasonable to ask whether an entirely independent analysis agrees. As a check, we analysed the same 240 participants using human-coded clip labels from the scored <code>.docx</code> files rather than embedding-based assignment. Cue attribution is derived from the interleaved event stream (cue, foil, and recall events in temporal order), with foils clearing the pending cue. This analysis was conducted before the <code>background_map</code> bug was identified, and uses a different metric — cue-driven recall as a percentage of the 22 cues presented per trial — with a fixed denominator that is unaffected by any code-cleaning step.</p>
-<div id="cell-17" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:31.282992Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:31.282914Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:35.340139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:35.339929Z&quot;}" data-execution_count="8">
-<div class="cell-output cell-output-stdout">
-<pre><code>Human-coded cue effectiveness (hits / 22 cues):
 
-     Emotional: 13.6% (SE=1.1%, N=120)
-       Neutral: 20.2% (SE=1.3%, N=120)
-   Involuntary: 20.0% (SE=1.2%, N=120)
-     Voluntary: 13.8% (SE=1.3%, N=120)</code></pre>
+</div>
+<div id="cell-15" class="cell quarto-layout-panel" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:15.257393Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:15.257315Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:15.335050Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:15.334810Z&quot;}" data-execution_count="8" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="index_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="index_files/figure-html/cell-9-output-1.png" class="img-fluid"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="index_files/figure-html/cell-9-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="index_files/figure-html/cell-9-output-2.png" class="img-fluid"></a></p>
 </div>
 </div>
-<div id="cell-18" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T12:58:35.341204Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T12:58:35.341067Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T12:58:35.493943Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T12:58:35.493706Z&quot;}" data-execution_count="9">
+</div>
+<div id="cell-16" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:15.336140Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:15.336055Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:15.339986Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:15.339772Z&quot;}" data-execution_count="9">
+<div class="cell-output cell-output-stdout">
+<pre><code>=== 2×2×2 ANOVA — Corrected embedding data ===
+
+  emotion                                       F(1,221)=  10.25, p=0.0016, η²=0.040 **
+  intervention                                  F(1,221)=   0.42, p=0.5187, η²=0.002
+  intentionality                                F(1,221)=  24.76, p=0.0000, η²=0.096 ***
+  emotion:intervention                          F(1,221)=   1.38, p=0.2408, η²=0.005
+  emotion:intentionality                        F(1,221)=   0.60, p=0.4399, η²=0.002
+  intervention:intentionality                   F(1,221)=   0.29, p=0.5897, η²=0.001
+  emotion:intervention:intentionality           F(1,221)=   0.18, p=0.6752, η²=0.001
+  Residual                                      SS=  154908.5  df=221
+
+  N = 235</code></pre>
+</div>
+</div>
+<p><strong>Takeaway.</strong> The fix leaves negative match percentages completely unchanged (36.7%), confirming that the bug is isolated to neutral codes. Neutral match percentage rises from 18.8% to 47.7% — a 29 percentage-point increase — reversing the direction of the emotion effect. The emotion main effect remains significant after correction but reverses: F(1,221) = 10.25, p = .002, η² = .04 (Neu &gt; Neg), compared with F(1,221) = 41.02, p &lt; .0001, η² = .15 (Neg &gt; Neu) in the original. Of the 757 newly eligible neutral memories, 590 (77.9%) are correctly matched by the embedding model, indicating that these were genuine cue-attributed memories that were silently rendered ineligible for matching.</p>
+<p>The intentionality main effect strengthens after correction: F(1,221) = 24.76, p &lt; .0001, η² = .10, up from η² = .05 in the original. This near-doubling of the effect size suggests that the 757 recovered neutral memories are disproportionately concentrated in involuntary sessions. Whether this reflects genuine cue sensitivity or a denominator artefact is addressed in the metric comparison section below.</p>
+</section>
+<section id="metric-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="metric-comparison">Metric comparison</h2>
+<p>The embedding analysis computes match percentage as <code>matches / total_memories</code> per participant. This denominator includes every memory event, including those attributed to foils — which can never match a cue regardless of content. If foil-attributed events are unevenly distributed across conditions, the denominator introduces a confound: the metric conflates recall source composition with match accuracy.</p>
+<p>To test whether the denominator matters, we use independently collected human-coded clip labels from the scored <code>.docx</code> files (rather than embedding-based assignment) and compute two metrics side by side. Cue attribution is derived from the interleaved event stream (cue, foil, recall, and unclassified events in temporal order), with foils and unclassified utterances clearing the pending cue. An unclassified utterance is a button press that the human rater could not assign to any film clip; it consumes the cue opportunity so that a subsequent recall is not misattributed as cue-driven.</p>
+<p>The first metric, <code>cue-driven recalls / total recalls</code>, is structurally parallel to the embedding metric — it divides by total output. The second, <code>cue hits / 22 cue presentations</code>, uses a fixed denominator that does not vary across conditions.</p>
+<div id="cell-19" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:15.340973Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:15.340901Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:17.636363Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:17.636027Z&quot;}" data-execution_count="10">
+<div class="cell-output cell-output-stdout">
+<pre><code>Metric 1: cue-driven recalls / total recalls
+
+     Emotional: 44.2% (SE=3.1%, N=120, mean total recalls=15.2)
+       Neutral: 55.6% (SE=3.1%, N=120, mean total recalls=18.1)
+   Involuntary: 61.8% (SE=3.0%, N=120, mean total recalls=13.6)
+     Voluntary: 38.0% (SE=2.9%, N=120, mean total recalls=19.8)</code></pre>
+</div>
+</div>
+<p>The hits/total_recalls metric has the same structure as the embedding’s matches/total_memories — both divide cue-matching events by total output — but they are computed from different data sources. The embedding metric uses the model’s <code>assigned_clip</code> for clip identity and the R script’s <code>background_map</code> for cue attribution; the denominator is all memory events, including foil-attributed ones that can never match. The human-coded metric uses hand-scored clip labels and derives cue attribution from the interleaved event stream; the denominator is all recall events, including repeats. Despite these differences, both metrics share the same structural weakness: the denominator varies systematically across conditions. Voluntary sessions produce more total recalls than involuntary sessions (mean ~20 vs ~14), so dividing by total output confounds cue effectiveness with overall recall volume.</p>
+<p>The fixed denominator of 22 cue opportunities avoids this confound. Each cue either produced a matching recall or it did not, with no distortion from condition-varying recall totals. The metric is not a pure measure of cue effectiveness — participants who recall more clips overall have more chances to match a pending cue — but it cleanly separates the denominator from the conditions being compared, which is what we need for a fair test. This is the metric we use for the boxplot, ANOVA, and summary below.</p>
+<div id="cell-21" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:17.637556Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:17.637468Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:17.730987Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:17.730682Z&quot;}" data-execution_count="11">
+<div class="cell-output cell-output-stdout">
+<pre><code>Metric 2: cue-driven recalls / 22 cues (fixed denominator)
+
+     Emotional: 30.2% (SE=2.3%, N=120)
+       Neutral: 44.2% (SE=2.7%, N=120)
+   Involuntary: 39.6% (SE=2.5%, N=120)
+     Voluntary: 34.8% (SE=2.7%, N=120)</code></pre>
+</div>
+</div>
+<div id="cell-fig-human-coded" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:17.732241Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:17.732142Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:17.865931Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:17.865697Z&quot;}" data-execution_count="12">
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><a href="index_files/figure-html/cell-10-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="index_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></a></p>
+<div id="fig-human-coded" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-human-coded-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="index_files/figure-html/fig-human-coded-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;2: Human-coded cue effectiveness by Emotion and Intentionality. Cue-driven recall as a percentage of 22 cue opportunities, from hand-scored clip labels."><img src="index_files/figure-html/fig-human-coded-output-1.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-human-coded-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Human-coded cue effectiveness by Emotion and Intentionality. Cue-driven recall as a percentage of 22 cue opportunities, from hand-scored clip labels.
+</figcaption>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  Negative Film – Involuntary: mean=15.2%, N=60
-  Negative Film – Voluntary: mean=12.0%, N=60
-  Neutral Film – Involuntary: mean=24.8%, N=60
-  Neutral Film – Voluntary: mean=15.5%, N=60</code></pre>
+<pre><code>  Negative Film – Involuntary: mean=30.4%, median=29.5%, N=60
+  Negative Film – Voluntary: mean=30.0%, median=20.5%, N=60
+  Neutral Film – Involuntary: mean=48.8%, median=54.5%, N=60
+  Neutral Film – Voluntary: mean=39.6%, median=38.6%, N=60</code></pre>
 </div>
 </div>
-<p><strong>Takeaway.</strong> The human-coded analysis shows the same pattern: neutral cue effectiveness (20.2%) exceeds emotional (13.6%), and this holds within both intentionality conditions. The absolute percentages are lower than the corrected embedding analysis because the denominator is fixed at 22 cue opportunities per trial rather than all memory events, but the direction is consistent. This convergence across two completely independent methods — one using an embedding model with the corrected pipeline, one using hand-scored clip labels with no pipeline involvement — strengthens the conclusion that neutral cues genuinely produce more cue-driven recall than negative cues.</p>
+<div id="cell-23" class="cell" data-execution="{&quot;iopub.execute_input&quot;:&quot;2026-02-09T16:30:17.867003Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-02-09T16:30:17.866904Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-02-09T16:30:17.900172Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-02-09T16:30:17.899940Z&quot;}" data-execution_count="13">
+<div class="cell-output cell-output-stdout">
+<pre><code>=== 2×2×2 ANOVA — Human-coded data ===
+
+  emotion                                       F(1,232)=  15.73, p=0.0001, η²=0.062 ***
+  intervention                                  F(1,232)=   0.74, p=0.3920, η²=0.003
+  intentionality                                F(1,232)=   1.82, p=0.1781, η²=0.007
+  emotion:intervention                          F(1,232)=   0.70, p=0.4040, η²=0.003
+  emotion:intentionality                        F(1,232)=   1.55, p=0.2150, η²=0.006
+  intervention:intentionality                   F(1,232)=   0.01, p=0.9147, η²=0.000
+  emotion:intervention:intentionality           F(1,232)=   0.81, p=0.3688, η²=0.003
+  Residual                                      SS=  173832.0  df=232
+
+  N = 246</code></pre>
+</div>
+</div>
+<p><strong>Takeaway.</strong> The emotion effect is robust to the choice of denominator: neutral cue effectiveness (44.2%) exceeds emotional (30.2%) regardless of whether we divide by total recalls or by 22 cues. The intentionality effect, however, depends entirely on the denominator. With hits/total_recalls (the variable-denominator metric parallel to the embedding analysis), involuntary sessions score higher (61.8% vs 38.0%) — but this is confounded by the fact that voluntary sessions produce far more total recalls (~20 vs ~14), which inflates the denominator and mechanically depresses the percentage. With hits/22 (the fixed-denominator metric), the intentionality gap shrinks to 39.6% vs 34.8% and is non-significant: F(1,232) = 1.82, p = .18. This suggests that the significant intentionality effect in the embedding analyses (both original and corrected) is a denominator artefact rather than a genuine difference in cue effectiveness.</p>
 </section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>Three analyses of the same dataset, two using embedding-based clip assignment and one using human-coded labels:</p>
+<section id="convergent-evidence" class="level2">
+<h2 class="anchored" data-anchor-id="convergent-evidence">Convergent evidence</h2>
+<p>The human-coded analysis above is fully independent of the embedding pipeline: it uses hand-scored clip labels from the <code>.docx</code> files rather than embedding-assigned clips, and derives cue attribution from the interleaved event stream rather than from the R script’s <code>background_map</code>. It was conducted before the <code>background_map</code> bug was identified. Comparing the three analyses side by side:</p>
+<p><strong>Emotion main effect:</strong></p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Analysis</th>
 <th>Negative</th>
 <th>Neutral</th>
 <th>Direction</th>
+<th>F</th>
+<th>p</th>
+<th>η²</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Embedding (original <code>background_map</code>)</td>
+<td>Embedding (original)</td>
 <td>36.7%</td>
 <td>18.8%</td>
 <td>Neg &gt; Neu</td>
+<td>41.02</td>
+<td>&lt; .0001</td>
+<td>.147</td>
 </tr>
 <tr class="even">
-<td>Embedding (6 missing codes added)</td>
+<td>Embedding (corrected)</td>
 <td>36.7%</td>
 <td>47.7%</td>
 <td><strong>Neu &gt; Neg</strong></td>
+<td>10.25</td>
+<td>.002</td>
+<td>.040</td>
 </tr>
 <tr class="odd">
-<td>Human-coded (no embedding)</td>
-<td>13.6%</td>
-<td>20.2%</td>
+<td>Human-coded (hits/22)</td>
+<td>30.2%</td>
+<td>44.2%</td>
 <td><strong>Neu &gt; Neg</strong></td>
+<td>15.73</td>
+<td>.0001</td>
+<td>.062</td>
 </tr>
 </tbody>
 </table>
-<p>The absolute values differ between the embedding-based and human-coded analyses because the denominators differ (all memories vs.&nbsp;22 cue slots) and the embedding model is not perfectly accurate. The critical point is the <strong>direction</strong>: once the six missing neutral codes are added to the map, the embedding analysis agrees with the human-coded analysis that neutral cues produce <em>more</em> matches than negative cues, not fewer.</p>
+<p><strong>Intentionality main effect:</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Analysis</th>
+<th>Involuntary</th>
+<th>Voluntary</th>
+<th>Direction</th>
+<th>F</th>
+<th>p</th>
+<th>η²</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Embedding (original)</td>
+<td>33.4%</td>
+<td>22.8%</td>
+<td>Invol &gt; Vol</td>
+<td>13.99</td>
+<td>.0002</td>
+<td>.050</td>
+</tr>
+<tr class="even">
+<td>Embedding (corrected)</td>
+<td>51.0%</td>
+<td>33.7%</td>
+<td>Invol &gt; Vol</td>
+<td>24.76</td>
+<td>&lt; .0001</td>
+<td>.096</td>
+</tr>
+<tr class="odd">
+<td>Human-coded (hits/22)</td>
+<td>39.6%</td>
+<td>34.8%</td>
+<td>Invol &gt; Vol</td>
+<td>1.82</td>
+<td>.178</td>
+<td>.007</td>
+</tr>
+</tbody>
+</table>
+<p>The emotion effect reverses once the six missing neutral codes are added: the original Neg &gt; Neu direction is an artefact of incomplete preprocessing, and all three analyses agree on Neu &gt; Neg after correction. The corrected embedding and human-coded emotion effect sizes are comparable (η² = .040 and .062 respectively).</p>
+<p>The intentionality effect is significant in both embedding analyses but not in the human-coded analysis. This divergence reflects the different denominators. The embedding metric divides by total memories, which includes foil-attributed events that can never match and that vary in number by condition. This makes the metric sensitive to recall volume differences between involuntary and voluntary sessions. The human-coded metric uses a fixed denominator of 22 cue opportunities, which removes this confound. The metric does not fully isolate cue effectiveness from recall propensity (participants who recall more have more chances to match a pending cue), but it eliminates the condition-varying denominator that drives the embedding result.</p>
+<p>The absolute values differ between embedding-based and human-coded analyses because the denominators are structurally different. The embedding metric computes <code>matches / total_memories</code>, where “total memories” includes foil-attributed events that can never match a cue. The human-coded metric counts cue-matching recall events out of 22 cue presentations. The comparison is directional, not absolute.</p>
 </section>
-<section id="suggested-fix" class="level2">
-<h2 class="anchored" data-anchor-id="suggested-fix">Suggested fix</h2>
-<p>Add the six missing neutral film entries to <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (after line 93):</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  background_map,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_1"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_1"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_1"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_1"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_1"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_1"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="suggested-fixes" class="level2">
+<h2 class="anchored" data-anchor-id="suggested-fixes">Suggested fixes</h2>
+<p><strong>Issue 1: Incomplete <code>background_map</code>.</strong> Add the six missing neutral film entries to <code>background_map</code> in <code>Semantic Analysis: 2x2x2 comparison.R</code> (after line 93):</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>background_map <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  background_map,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"1_1"</span> <span class="ot">=</span> <span class="st">"1"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"3_1"</span> <span class="ot">=</span> <span class="st">"3"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"6_1"</span> <span class="ot">=</span> <span class="st">"6"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"7_1"</span> <span class="ot">=</span> <span class="st">"7"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"10_1"</span> <span class="ot">=</span> <span class="st">"10"</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"11_1"</span> <span class="ot">=</span> <span class="st">"11"</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This ensures all eleven neutral film cue codes are remapped to their clip numbers before the match check. No other part of the pipeline needs to change.</p>
+<p><strong>Issue 2: Variable-denominator metric.</strong> The current metric (<code>matches / total_memories</code>) includes foil-attributed events in the denominator, which can never match and which vary in number across conditions. Consider reporting a fixed-denominator metric (e.g., cue matches / number of cue presentations) alongside or instead of the current one, particularly for any analysis involving the intentionality factor.</p>
 </section>
 
 </main>
@@ -897,7 +1059,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","openEffect":"zoom","selector":".lightbox","loop":false});
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","descPosition":"bottom","selector":".lightbox","closeEffect":"zoom","loop":false});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
