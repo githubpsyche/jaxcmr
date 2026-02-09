@@ -9,7 +9,7 @@ selective interference analyses.
 import numpy as np
 
 
-def derive_cue_clips(recall_items, recall_types, recalls):
+def derive_cue_clips(recall_items, recall_types):
     """Derive cue attributions from the interleaved event sequence.
 
     Parameters
@@ -17,25 +17,24 @@ def derive_cue_clips(recall_items, recall_types, recalls):
     recall_items : ndarray, shape [n_trials, max_events]
         Clip/scene numbers from the interleaved event stream.
     recall_types : ndarray, shape [n_trials, max_events]
-        Event type codes: 0=padding, 1=cue, 2=recall, 3=foil.
-    recalls : ndarray, shape [n_trials, max_recalls]
-        Unique-first recall sequence (within-list positions).
+        Event type codes: 0=padding, 1=cue, 2=recall, 3=foil,
+        4=unclassified.
 
     Returns
     -------
-    ndarray, shape [n_trials, max_recalls]
-        Cue clip number preceding each recall entry:
-        0 = no cue, 1..11 = clip number of the preceding cue.
+    ndarray, shape [n_trials, max_events]
+        Pending cue at each event position: nonzero only at recall
+        events (type 2) where a cue was active.  Zero elsewhere.
+        Unclassified utterances (type 4) consume the pending cue
+        without producing a match.
 
     """
-    n_trials = recall_items.shape[0]
-    cue_clips = np.zeros_like(recalls)
+    n_trials, max_events = recall_items.shape
+    cue_clips = np.zeros_like(recall_items)
 
     for t in range(n_trials):
         pending_cue = 0
-        matched = set()
-
-        for e in range(recall_items.shape[1]):
+        for e in range(max_events):
             etype = int(recall_types[t, e])
             item = int(recall_items[t, e])
 
@@ -46,47 +45,60 @@ def derive_cue_clips(recall_items, recall_types, recalls):
             elif etype == 3:
                 pending_cue = 0
             elif etype == 2:
-                for r in range(recalls.shape[1]):
-                    if int(recalls[t, r]) == 0:
-                        break
-                    if int(recalls[t, r]) == item and r not in matched:
-                        cue_clips[t, r] = pending_cue
-                        matched.add(r)
-                        break
+                cue_clips[t, e] = pending_cue
+                pending_cue = 0
+            elif etype == 4:
                 pending_cue = 0
 
     return cue_clips
 
 
-def build_transition_masks(recalls, cue_clips):
+def build_transition_masks(recall_items, recall_types, cue_clips):
     """Construct boolean masks for transition-type filtering.
 
     Parameters
     ----------
-    recalls : ndarray, shape [n_trials, max_recalls]
-        Unique-first recall sequence.
-    cue_clips : ndarray, shape [n_trials, max_recalls]
+    recall_items : ndarray, shape [n_trials, max_events]
+        Clip/scene numbers from the interleaved event stream.
+    recall_types : ndarray, shape [n_trials, max_events]
+        Event type codes: 0=padding, 1=cue, 2=recall, 3=foil,
+        4=unclassified.
+    cue_clips : ndarray, shape [n_trials, max_events]
         Cue attributions from ``derive_cue_clips``.
 
     Returns
     -------
     dict
-        Boolean masks shaped [n_trials, max_recalls]:
-        ``uncued``, ``cue_matched``, ``doubly_uncued``, ``from_cued``.
+        Boolean masks shaped [n_trials, max_events], nonzero only at
+        recall events: ``uncued``, ``cue_matched``, ``doubly_uncued``,
+        ``from_cued``.
 
     """
-    valid = recalls > 0
-    cue_matched = (cue_clips == recalls) & (cue_clips > 0) & valid
-    uncued = (cue_clips == 0) & valid
+    is_recall = recall_types == 2
+    cue_matched = (cue_clips == recall_items) & (cue_clips > 0) & is_recall
+    uncued = (cue_clips == 0) & is_recall
 
+    # Build "previous recall" masks by finding recall-to-recall adjacency.
+    # For each recall event, look back to the most recent prior recall event.
+    n_trials, max_events = recall_items.shape
     prev_matched = np.zeros_like(cue_matched)
-    prev_matched[:, 1:] = cue_matched[:, :-1]
-
     prev_not_matched = np.zeros_like(cue_matched)
-    prev_not_matched[:, 1:] = ~cue_matched[:, :-1] & valid[:, :-1]
 
-    doubly_uncued = (~cue_matched & valid) & prev_not_matched
-    from_cued = prev_matched & valid
+    for t in range(n_trials):
+        last_recall_matched = None
+        for e in range(max_events):
+            if int(recall_types[t, e]) == 0:
+                break
+            if int(recall_types[t, e]) == 2:
+                if last_recall_matched is not None:
+                    if last_recall_matched:
+                        prev_matched[t, e] = True
+                    else:
+                        prev_not_matched[t, e] = True
+                last_recall_matched = bool(cue_matched[t, e])
+
+    doubly_uncued = (~cue_matched & is_recall) & prev_not_matched
+    from_cued = prev_matched & is_recall
 
     return {
         "uncued": uncued,

@@ -13,7 +13,7 @@ Develop a paper with simulations that progressively build a single-system retrie
 
 4. **Retrieval control via choice sensitivity (tau)**: Voluntary recall is distinguished from involuntary by sharper competition (higher tau) in the Luce choice rule. Higher tau amplifies the advantage of strongly-matched items, functionally approximating CMR2's context-monitoring mechanism without the added complexity of a full retrieval-monitoring implementation. Combined with starting-context reinstatement, this produces graded immunity: recognition (item-to-context) > intentional recall with control > unguided recall.
 
-5. **Reminder-based context reinstatement**: Reminders of a previously-viewed trauma film retrieve associated context through item-to-context associations, driving current context back toward the trauma-film region. Subsequent experiences (interference task) are then bound to this reinstated context, creating competitors even at temporal delay. This provides an alternative to reconsolidation accounts of delayed interference.
+5. **Reminder-based context reinstatement**: Reminders of a previously-viewed trauma film retrieve associated context through item-to-context associations, driving current context back toward the trauma-film region. Two scale parameters give continuous control over pre-interference context state: `reminder_start_drift_scale` controls how much context drifts toward start-of-list after film encoding (simulating the passage of time), and `reminder_drift_scale` controls how strongly the reminder reinstates film context. Competitors encoded after reinstatement land in reinstated context, producing interference even at temporal delay. This provides an alternative to reconsolidation accounts of delayed interference. Importantly, reminders modulate interference *targeting* (which film items are most vulnerable) rather than interference *intensity* (how many film items are recalled). This mechanism is demonstrated in Sim 2.
 
 6. **eCMR arousal context**: High-arousal items encode and reinstate shared arousal context features (using eCMR's emotional source memory mechanism, interpreting the emotion flag as high-arousal). High-arousal competitors preferentially interfere with recall of high-arousal study events via shared arousal context, producing arousal-selective interference.
 
@@ -27,35 +27,33 @@ The full trauma-film paradigm involves many interacting components, each involvi
 
 The paper's argument: a single retrieved-context system can explain selective interference without dual traces, reconsolidation windows, or modality-specific disruption.
 
-### Simulation progression (6 simulations)
+### Simulation progression (5 simulations)
 
 | Sim | Conceptual question | What it clarifies for the reader | Commitment it resolves for later sims |
 |-----|-------------------|--------------------------------|--------------------------------------|
 | 1 | Does competitor encoding produce mode-dependent interference? | The recall/recognition dissociation is architectural: competitors hurt context-to-item retrieval (recall) more than item-to-context retrieval (recognition). No trauma-specific mechanism needed. | Validates the recognition pathway and basic competitor-encoding mechanism. |
-| 2 | What intensifies interference from competing events? | Explores interference intensifiers (M_CF encoding strength, context proximity, competitor density) via dose-response tracking. Identifies which factors drive interference and where ceilings emerge. | Resolves how to parameterize competitor encoding in later sims. |
+| 2 | What intensifies interference, and how does pre-interference context state shape impairment? | Explores interference intensifiers (M_CF encoding strength, context proximity, competitor density) and shows how delay + reminder modulate which film items are most vulnerable. Subsumes the delayed-interference question (originally Sim 5) via continuous two-parameter sweep. | Resolves how to parameterize competitor encoding in later sims. Validates reminder-based context reinstatement as a targeting mechanism. |
 | 3 | Why is intentional free recall sometimes spared? | Starting-context reinstatement and sharpened competition (tau) provide graded protection for intentional context-to-item recall. | Clarifies how to operationalize voluntary vs involuntary retrieval. Establishes control parameter values. |
-| 4 | How do reminder cues during recall affect performance? | Film cues reinstate trauma context, partially overriding retrieval-control mechanisms. This explains heterogeneity across cued vs uncued paradigms. | Informs test-phase design for Sims 5-6 and interpretation of VIT-style paradigms. |
-| 5 | How do reminders enable delayed interference? | Reminders reinstate trauma context via item-to-context retrieval. Competitors encoded after reinstatement land in trauma-adjacent context, producing interference even at delay. No reconsolidation window needed. | Validates reminder + competitor encoding as the delayed-interference mechanism. |
-| 6 | Does arousal-matched competition produce arousal-selective interference? | High-arousal competitors preferentially reduce intrusions of high-arousal film items via shared arousal context features (eCMR). | (Final extension; no downstream dependencies.) |
+| 4 | How do reminder cues during recall affect performance? | Film cues reinstate trauma context, partially overriding retrieval-control mechanisms. This explains heterogeneity across cued vs uncued paradigms. | Informs test-phase design for Sim 5 and interpretation of VIT-style paradigms. |
+| 5 | Does arousal-matched competition produce arousal-selective interference? | High-arousal competitors preferentially reduce intrusions of high-arousal film items via shared arousal context features (eCMR). | (Final extension; no downstream dependencies.) |
 
 ### Postdictions vs. predictions
 
 | Sim | Postdiction (reproduces known finding) | Prediction (novel or underexplored) |
 |-----|---------------------------------------|-------------------------------------|
 | 1 | Recognition is more resistant to retroactive interference than free recall. | The dissociation arises because competitors only affect context-to-item retrieval; item-to-context associations in M_FC are structurally unaffected by additional items encoded in shared context. |
-| 2 | More engaging interference tasks produce stronger effects; simply increasing task duration shows diminishing returns (Holmes et al. 2009; James et al. 2015). | Interference is primarily driven by M_CF encoding strength and context proximity of competitors, not count alone. Sequential encoding shows diminishing returns due to context drift away from the film region. |
+| 2 | More engaging interference tasks produce stronger effects; simply increasing task duration shows diminishing returns (Holmes et al. 2009; James et al. 2015). Delayed Tetris + reminder reduces intrusions (James et al. 2015); Tetris without reminder is less effective. | Interference is primarily driven by M_CF encoding strength and context proximity of competitors, not count alone. Sequential encoding shows diminishing returns due to context drift. Reminders modulate interference *targeting* (which film items are vulnerable) rather than *intensity* (how many are recalled): the reminder reinstates context overlap so competitors are encoded in film-adjacent context, but total film recall is relatively stable across reminder strength. No reconsolidation window is needed. |
 | 3 | Intentional free recall of film content is sometimes spared despite being context-to-item (Lau-Zhu et al. 2019 Exp 1 vs Exp 2). | Starting-context reinstatement and tau produce graded immunity across context-to-item tasks. Both contribute, but their individual effects differ in shape. |
 | 4 | Selective interference findings are inconsistent across VIT-style paradigms that present film cues during the test phase. | Film cues reinstate trauma context, partially overriding retrieval-control mechanisms and flattening the voluntary/involuntary distinction. Cue-free paradigms are cleaner tests of the control hypothesis. Cue frequency and strength modulate the effect. |
-| 5 | Delayed Tetris + reminder reduces intrusions (James et al. 2015); Tetris without reminder is less effective. | Reminder reinstates trauma context so competitor encoding effectiveness is a function of reinstatement strength, not temporal delay per se. Reminder-only (no competitors) has no effect. |
-| 6 | Emotional film content produces more intrusions than neutral (Brewin 2014; Holmes & Bourne 2008). | High-arousal competitors preferentially reduce intrusions of high-arousal film items. Arousal-matched interference shows a flatter serial position profile than the recency-weighted pattern in Sims 1-5, because arousal context bridges items independently of temporal position. |
+| 5 | Emotional film content produces more intrusions than neutral (Brewin 2014; Holmes & Bourne 2008). | High-arousal competitors preferentially reduce intrusions of high-arousal film items. Arousal-matched interference shows a flatter serial position profile than the recency-weighted pattern in Sims 1-4, because arousal context bridges items independently of temporal position. |
 
 ---
 
 ## Simulation designs (presentation order)
 
-All simulations use fitted parameters from Healey & Kahana (2014) free recall data as a base, with parameter shifting to explore mechanism engagement. The primary visualization for Sims 2-6 is the **serial position curve (SPC)** pooling study and interference items as study positions, with formatting to distinguish film vs. interference regions. Only Sim 1 includes recognition.
+All simulations use fitted parameters from Healey & Kahana (2014) free recall data as a base, with parameter shifting to explore mechanism engagement. The primary visualization for Sims 2-5 is the **serial position curve (SPC)** pooling study and interference items as study positions, with formatting to distinguish film vs. interference regions. Only Sim 1 includes recognition.
 
-A general prediction across Sims 1-5: interference should show a **recency gradient** in which later-studied film items are disproportionately suppressed because they share more temporal context with competitors (which are encoded immediately after the film phase). This position-dependent interference pattern is a natural consequence of context drift and should be visible in the SPC as greater control vs interference divergence at late film positions than early ones. Sim 6 then contrasts this: arousal context features operate independently of temporal position, so arousal-matched interference should partially flatten this recency gradient for high-arousal film items.
+A general prediction across Sims 1-4: interference should show a **recency gradient** in which later-studied film items are disproportionately suppressed because they share more temporal context with competitors (which are encoded immediately after the film phase). This position-dependent interference pattern is a natural consequence of context drift and should be visible in the SPC as greater control vs interference divergence at late film positions than early ones. Sim 5 then contrasts this: arousal context features operate independently of temporal position, so arousal-matched interference should partially flatten this recency gradient for high-arousal film items.
 
 ### Sim 1: Context-Based Competition in Free Recall vs. Recognition
 
@@ -77,29 +75,35 @@ A general prediction across Sims 1-5: interference should show a **recency gradi
 
 ---
 
-### Sim 2: Manipulating Interference Intensity
+### Sim 2: Manipulating Interference Intensity and Pre-Interference Context State
 
-**Purpose**: Explore what intensifies interference from competing events. Evaluates proposed interference intensifiers via dose-response tracking.
+**Purpose**: Explore what intensifies interference from competing events, and how pre-interference context state shapes the pattern of impairment. This simulation also subsumes the delayed-interference question originally planned as a separate simulation, demonstrating that reminders modulate interference targeting without requiring a reconsolidation window.
 
-**Interference intensifiers to evaluate**:
-1. **M_CF encoding strength** (boosted M_CF learning rate): Higher engagement produces stronger context-to-item associations for competitors, increasing competition during retrieval.
-2. **Context proximity** (interference-specific encoding drift rate): Competitors encoded with lower drift stay in film-adjacent context longer, producing more context overlap and stronger competition.
+**Trial sequence**: Film encoding (16 items, fitted parameters) → delay drift toward start-of-list (`reminder_start_drift_scale` x fitted `start_drift_rate`) → reminder (reinstate film context via M_FC without learning, at `reminder_drift_scale` x fitted `encoding_drift_rate`) → interference encoding (up to 32 items, with interference-specific drift and M_CF scales) → filler encoding (suppresses interference recency) → `start_retrieving()` → free recall.
+
+**Interference intensifiers**:
+1. **M_CF encoding strength**: Scale factor on M_CF learning rate during interference. Higher engagement produces stronger context-to-item associations for competitors.
+2. **Context proximity**: Scale factor on encoding drift rate during interference. Lower drift keeps competitors in film-adjacent context.
 3. **Number of competitors**: More encoded events means more competition, subject to a context-drift ceiling.
 
-**Design** (film + interference):
-- **Film phase**: Encode N_film film hotspot items using standard encoding parameters
-- **Interference phase**: Encode M competitor items using interference-specific encoding drift rate and M_CF learning rate
-- **Test**: Context-to-item recall (free recall)
+**Pre-interference context state**: Two parameters control the context state at the moment competitors are encoded:
+- **`reminder_start_drift_scale`**: Controls the delay drift toward start-of-list after film encoding (simulates passage of time)
+- **`reminder_drift_scale`**: Controls how strongly the reminder reinstates film context
+
+Together, these give continuous control over the pre-interference context landscape, subsuming the discrete conditions originally planned as Sim 5 (delayed interference with reminder).
 
 **Parameter-shifting explorations** (~10 values each):
-1. **Interference M_CF learning rate sweep**: From baseline to boosted values, holding other parameters fixed. Does stronger encoding produce more interference?
-2. **Interference encoding drift rate sweep**: From low (competitors stay in film context) to high (competitors drift away quickly). Shows the context-proximity effect and where the ceiling emerges.
-3. **Competitor count sweep**: With fixed interference parameters, vary M. Shows diminishing returns due to context drift.
-4. **Context trajectory visualization**: Plot context similarity to a film-context reference after each competitor encoding step, for several interference encoding drift rate values. Directly shows how context leaves the film region.
+1. **Filler count calibration**: Determines how many filler items are needed to suppress interference recency (N_FILLER_DEFAULT = 16)
+2. **M_CF learning rate sweep**: Does stronger encoding produce more interference? (Monotonic decrease in film recall)
+3. **Encoding drift rate sweep**: Shows context-proximity dose-response with ceiling
+4. **Context trajectory visualization**: Similarity to pre-interference context after each competitor encoding step, at several drift scales
+5. **Competitor count sweep**: Shows diminishing returns due to context drift
+6. **Start-of-list drift scale sweep**: How the delay between film and interference modulates interference
+7. **Reminder drift scale sweep**: How strongly the reminder reinstates film context, with diagnostic plots showing film-item SPC and post-reminder context state
 
-**Primary visualization**: SPC with film/interference boundary (vertical line). Multiple lines for parameter-shifted values. Intrusion count (number of film items recalled) as a summary DV across conditions.
+**Primary visualization**: SPC with film/interference/filler boundary lines. Multiple lines for parameter-shifted values. Film items recalled (mean with 95% CI) as a summary DV across conditions.
 
-**Key findings**: Which intensifiers work under CMR logic. The dose-response shape for each intensifier. Parameter values to carry forward into Sims 3-6.
+**Key findings**: M_CF encoding strength and context proximity are the primary drivers of interference intensity. Competitor count shows diminishing returns. Reminders modulate interference *targeting* (which film items are vulnerable) rather than *intensity* (how many are recalled): total film recall is relatively stable across the reminder sweep, but the SPC shape shifts. The delay drifts context away from film, reducing interference from context overlap; the reminder reinstates it. No reconsolidation window is needed. Parameter values to carry forward into Sims 3-5.
 
 ---
 
@@ -120,7 +124,7 @@ A general prediction across Sims 1-5: interference should show a **recency gradi
 
 **Primary visualization**: SPC with film/interference boundary, parameter-shifted lines. One figure per sweep, plus the 2x2 summary. Intrusion count as a summary DV.
 
-**Key findings**: Graded immunity across context-to-item tasks. Both mechanisms contribute. Establishes control parameter values for Sims 4-6.
+**Key findings**: Graded immunity across context-to-item tasks. Both mechanisms contribute. Establishes control parameter values for Sims 4-5.
 
 ---
 
@@ -137,36 +141,11 @@ A general prediction across Sims 1-5: interference should show a **recency gradi
 
 **Primary visualization**: SPC with film/interference boundary, parameter-shifted lines. One figure per sweep. Intrusion count as a summary DV.
 
-**Key findings**: Film cues reinstate trauma context, overriding retrieval-control mechanisms. Cue frequency and strength modulate the effect. Cue-free paradigms yield cleaner tests of the control hypothesis.
+**Key findings**: Film cues reinstate trauma context, overriding retrieval-control mechanisms. Cue frequency and strength modulate the effect. Cue-free paradigms yield cleaner tests of the control hypothesis. Informs test-phase design for Sim 5 and interpretation of VIT-style paradigms.
 
 ---
 
-### Sim 5: Delayed Interference with Reminder
-
-**Purpose**: Show that context reinstatement via reminder enables delayed interference without a reconsolidation window. The reminder retrieves associated context, driving the model back to the film region so competitors can be encoded there.
-
-**Design**:
-- **Film phase**: Encode film items with standard parameters
-- **Delay**: Drift context to an out-of-list state with maximal drift rate (locked, not varied)
-- **Reminder**: Walk through film items in order, probing M_FC for each and integrating the retrieved context (updates context but does NOT update M_FC or M_CF) with a reminder-specific drift rate
-- **Interference phase**: Encode competitor items (using Sim 2 parameters)
-- **Test**: Context-to-item recall (free recall), using control parameters from Sim 3. No cues during recall.
-
-**Parameter-shifting explorations**:
-1. **Reminder drift rate sweep** (~10 values): How strongly does the reminder reinstate film context? At what drift rate is reinstatement sufficient for competitor encoding to produce interference?
-
-**Conditions**:
-- *Reminder + competitors*: Full reminder sequence, then interference encoding, then test
-- *Reminder only*: Full reminder sequence, no interference, then test
-- *No reminder + competitors*: Skip reminder, interference encoding (in distant context), then test
-
-**Primary visualization**: SPC with film/interference boundary, parameter-shifted lines for reminder drift rate. Intrusion count as a summary DV across the three conditions.
-
-**Key findings**: Reminder reinstatement is sufficient for delayed interference. Without reminder, competitors are ineffective. Reminder-only (no competitors) has no effect on later retrieval.
-
----
-
-### Sim 6: Arousal-Specific Interference
+### Sim 5: Arousal-Specific Interference
 
 **Purpose**: Extend the account to arousal-specific interference using eCMR. High-arousal items share arousal context features, creating a context subspace where arousal-matched competitors compete preferentially.
 
@@ -182,24 +161,23 @@ A general prediction across Sims 1-5: interference should show a **recency gradi
 
 **Primary visualization**: SPC with film/interference boundary. Separate lines or panels for high-arousal vs. neutral film items. Parameter-shifted by arousal context strength. Intrusion counts split by arousal category.
 
-**Key findings**: High-arousal competitors preferentially reduce intrusions of high-arousal film items via shared arousal context. The effect scales with arousal context strength and with the ratio of high-arousal items in the film. Critically, arousal-matched interference should show a flatter serial position profile than the recency-weighted pattern seen in Sims 1-5, because arousal context features bridge film and competitor items independently of temporal position while neutral film items retain the standard recency gradient.
+**Key findings**: High-arousal competitors preferentially reduce intrusions of high-arousal film items via shared arousal context. The effect scales with arousal context strength and with the ratio of high-arousal items in the film. Critically, arousal-matched interference should show a flatter serial position profile than the recency-weighted pattern seen in Sims 1-4, because arousal context features bridge film and competitor items independently of temporal position while neutral film items retain the standard recency gradient.
 
 ---
 
 ## Work order
 
 1. **Shared infrastructure** (recognition pathway, context trajectory diagnostics, paradigm orchestration, shared visualization)
-2. **Sim 2** (interference intensity) -- worked before Sim 1 since its findings about intensifiers inform Sim 1's configuration
+2. **Sim 2** (interference intensity + pre-interference context state) -- done; findings inform all subsequent sims
 3. **Sim 1** (mode dissociation) -- uses parameter values informed by Sim 2
 4. **Sim 3** (retrieval control) -- starting-context reinstatement and tau sweeps
 5. **Sim 4** (cues at test) -- extends Sim 3 with cue manipulation
-6. **Sim 5** (delayed interference) -- reminder sequence
-7. **Sim 6** (arousal-specific) -- eCMR model variant; last
+6. **Sim 5** (arousal-specific) -- eCMR model variant; last
 
 ## Verification
 
 Each simulation should produce:
 1. **Parameter-shifting SPC** showing how mechanism engagement shifts recall of film vs interference items
-2. **Context trajectory visualizations** where relevant (Sims 1, 2, 5)
+2. **Context trajectory visualizations** where relevant (Sims 1, 2)
 3. **Intrusion count** (number of film items recalled) as summary DV across conditions
 4. Clear labeling of postdiction vs. prediction for each result
