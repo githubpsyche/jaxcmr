@@ -43,6 +43,7 @@ def plot_interference_spc(
     labels: Sequence[str],
     n_film: int,
     *,
+    n_presented: Optional[Union[int, Sequence[int]]] = None,
     colors: Optional[Sequence[str]] = None,
     ax: Optional[Axes] = None,
     ylabel: str = "Recall Probability",
@@ -57,6 +58,10 @@ def plot_interference_spc(
         Legend label for each curve.
     n_film : int
         Number of film items (boundary position).
+    n_presented : int or Sequence[int], optional
+        Number of valid study positions per curve. Positions beyond
+        this are masked so the line terminates at the last real item.
+        A single int applies to all curves.
     colors : Sequence[str], optional
         Colours for each curve; defaults to light-to-dark grey.
     ax : Axes, optional
@@ -79,8 +84,12 @@ def plot_interference_spc(
     list_length = len(spc_curves[0])
     positions = np.arange(1, list_length + 1)
 
-    for curve, label, color in zip(spc_curves, labels, colors):
-        ax.plot(positions, np.asarray(curve), color=color, label=label, linewidth=1.5)
+    for i, (curve, label, color) in enumerate(zip(spc_curves, labels, colors)):
+        arr = np.asarray(curve, dtype=float)
+        if n_presented is not None:
+            n = n_presented[i] if not isinstance(n_presented, (int, np.integer)) else n_presented
+            arr[n:] = np.nan
+        ax.plot(positions, arr, color=color, label=label, linewidth=1.5)
 
     ax.axvline(x=n_film + 0.5, color="red", linewidth=1.5, linestyle="--", alpha=0.7)
 
