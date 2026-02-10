@@ -43,12 +43,13 @@ def plot_interference_spc(
     labels: Sequence[str],
     n_film: int,
     *,
+    n_break: int = 0,
     n_presented: Optional[Union[int, Sequence[int]]] = None,
     colors: Optional[Sequence[str]] = None,
     ax: Optional[Axes] = None,
     ylabel: str = "Recall Probability",
 ) -> tuple[Figure, Axes]:
-    """Plot multi-line SPC with a film / interference boundary.
+    """Plot multi-line SPC with film / break / interference boundaries.
 
     Parameters
     ----------
@@ -58,6 +59,8 @@ def plot_interference_spc(
         Legend label for each curve.
     n_film : int
         Number of film items (boundary position).
+    n_break : int
+        Number of break items shown (0 = no break zone).
     n_presented : int or Sequence[int], optional
         Number of valid study positions per curve. Positions beyond
         this are masked so the line terminates at the last real item.
@@ -91,15 +94,34 @@ def plot_interference_spc(
             arr[n:] = np.nan
         ax.plot(positions, arr, color=color, label=label, linewidth=1.5)
 
-    ax.axvline(x=n_film + 0.5, color="red", linewidth=1.5, linestyle="--", alpha=0.7)
+    # Boundary lines
+    film_end = n_film + 0.5
+    ax.axvline(x=film_end, color="red", linewidth=1.5, linestyle="--", alpha=0.7)
+    if n_break > 0:
+        break_end = n_film + n_break + 0.5
+        ax.axvline(x=break_end, color="red", linewidth=1.5, linestyle="--", alpha=0.7)
 
-    film_x = (0 + (n_film + 0.5) / list_length) / 2
-    interf_x = ((n_film + 0.5) / list_length + 1) / 2
-    ax.text(film_x, 0.97, "Film", ha="center", va="top",
-            fontsize=12, fontweight="bold", transform=ax.transAxes)
-    ax.text(interf_x, 0.97, "Interference", ha="center",
-            va="top", fontsize=12, fontweight="bold", color="red",
-            transform=ax.transAxes)
+    # Zone labels
+    film_x = film_end / list_length / 2
+    if n_break > 0:
+        break_end_frac = break_end / list_length
+        break_x = (film_end / list_length + break_end_frac) / 2
+        interf_x = (break_end_frac + 1) / 2
+        ax.text(film_x, 0.97, "Film", ha="center", va="top",
+                fontsize=12, fontweight="bold", transform=ax.transAxes)
+        ax.text(break_x, 0.97, "Break", ha="center", va="top",
+                fontsize=12, fontweight="bold", color="gray",
+                transform=ax.transAxes)
+        ax.text(interf_x, 0.97, "Interference", ha="center",
+                va="top", fontsize=12, fontweight="bold", color="red",
+                transform=ax.transAxes)
+    else:
+        interf_x = (film_end / list_length + 1) / 2
+        ax.text(film_x, 0.97, "Film", ha="center", va="top",
+                fontsize=12, fontweight="bold", transform=ax.transAxes)
+        ax.text(interf_x, 0.97, "Interference", ha="center",
+                va="top", fontsize=12, fontweight="bold", color="red",
+                transform=ax.transAxes)
 
     ax.set_xlabel("Study Position", fontsize=16)
     ax.set_ylabel(ylabel, fontsize=16)
