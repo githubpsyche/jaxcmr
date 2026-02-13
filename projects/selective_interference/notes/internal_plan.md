@@ -46,7 +46,7 @@ The paper's argument: a single retrieved-context system can explain selective in
 ### Simulation progression (6 simulations)
 
 | Sim | Conceptual question | What it clarifies for the reader | Commitment it resolves for later sims |
-|--------------|--------------|--------------------|------------------------|
+|----------------|----------------|------------------|----------------------|
 | 1 | Does competitor encoding produce mode-dependent interference? | The recall/recognition dissociation is architectural — competitors hurt context→item (recall) more than item→context (recognition). No trauma-specific mechanism needed. | Validates the recognition pathway and basic competitor-encoding mechanism. |
 | 2 | What intensifies interference from competing events? | Explores interference intensifiers (MCF encoding strength, context proximity, competitor density) via dose-response tracking. Identifies which factors drive interference and where ceilings emerge. | Resolves how to parameterize competitor encoding in later sims. |
 | 3 | Why is intentional free recall sometimes spared? | Starting-context bias (`start_drift_rate`) and sharpened competition (`choice_sensitivity`) provide graded protection for intentional context→item recall. | Clarifies how to operationalize voluntary vs involuntary retrieval. Establishes control parameter values. |
@@ -57,7 +57,7 @@ The paper's argument: a single retrieved-context system can explain selective in
 ### Postdictions vs. predictions
 
 | Sim | Postdiction (reproduces known finding) | Prediction (novel or underexplored) |
-|--------------|------------------------------|----------------------------|
+|-----------------|-----------------------------|---------------------------|
 | 1 | Recognition is more resistant to retroactive interference than free recall. | The dissociation arises because competitors only affect context→item retrieval; item→context associations in M_FC are structurally unaffected by additional items encoded in shared context. |
 | 2 | More engaging interference tasks produce stronger effects; simply increasing task duration shows diminishing returns (Holmes et al. 2009; James et al. 2015). | Interference is primarily driven by MCF encoding strength and context proximity of competitors, not count alone. Sequential encoding shows diminishing returns due to context drift away from the film region. |
 | 3 | Intentional free recall of film content is sometimes spared despite being context→item (Lau-Zhu et al. 2019 Exp 1 vs Exp 2). | `start_drift_rate` and `choice_sensitivity` produce graded immunity across context→item tasks. Both contribute, but their individual effects differ in shape. |

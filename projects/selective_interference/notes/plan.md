@@ -49,7 +49,7 @@ The paper's argument: a single retrieved-context system can explain selective in
 ### Simulation progression (6 simulations)
 
 | Sim | Conceptual question | What it clarifies for the reader | Commitment it resolves for later sims |
-|----------------|------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+|--------------|--------------|------------------------------------------|------------------------------------------------------------------------|
 | 1 | Does competitor encoding produce mode-dependent interference? | The recall/recognition dissociation is architectural: competitors hurt context-to-item retrieval (recall) more than item-to-context retrieval (recognition). No trauma-specific mechanism needed. | Validates the recognition pathway and basic competitor-encoding mechanism. |
 | 2 | What intensifies interference, and how does pre-interference context state shape impairment? | Explores interference intensifiers (M_CF encoding strength, context proximity, competitor density) and shows how delay + reminder modulate which film items are most vulnerable. | Resolves how to parameterize competitor encoding in later sims. Establishes the delay/reminder mechanism developed in Sim 5. |
 | 3 | Why is intentional free recall sometimes spared? | Starting-context reinstatement and sharpened competition (tau) provide graded protection for intentional context-to-item recall. | Clarifies how to operationalize voluntary vs involuntary retrieval. Establishes control parameter values. |
@@ -60,7 +60,7 @@ The paper's argument: a single retrieved-context system can explain selective in
 ### Postdictions vs. predictions
 
 | Sim | Postdiction (reproduces known finding) | Prediction (novel or underexplored) |
-|-----------------|----------------------------|---------------------------|
+|------------------|----------------------------|---------------------------|
 | 1 | Recognition is more resistant to retroactive interference than free recall. | The dissociation arises because competitors only affect context-to-item retrieval; item-to-context associations in M_FC are structurally unaffected by additional items encoded in shared context. |
 | 2 | More engaging interference tasks produce stronger effects; simply increasing task duration shows diminishing returns (Holmes et al. 2009; James et al. 2015). | Interference is primarily driven by M_CF encoding strength and context proximity of competitors, not count alone. Sequential encoding shows diminishing returns due to context drift. Reminders modulate interference *targeting* (which film items are vulnerable) rather than *intensity* (how many are recalled): the reminder reinstates context overlap so competitors are encoded in film-adjacent context, but total film recall is relatively stable across reminder strength. |
 | 3 | Intentional free recall of film content is sometimes spared despite being context-to-item (Lau-Zhu et al. 2019 Exp 1 vs Exp 2). | Starting-context reinstatement and tau produce graded immunity across context-to-item tasks. Both contribute, but their individual effects differ in shape. |
@@ -123,7 +123,8 @@ Lower drift keeps competitors in film-adjacent context.
 
 **Pre-interference context state**: Two parameters control the context state at the moment competitors are encoded: - **`reminder_start_drift_scale`**: Controls the delay drift toward start-of-list after film encoding (simulates passage of time) - **`reminder_drift_scale`**: Controls how strongly the reminder reinstates film context
 
-Together, these give continuous control over the pre-interference context landscape. Sim 5 develops this mechanism into a focused delayed-interference demonstration.
+Together, these give continuous control over the pre-interference context landscape.
+Sim 5 develops this mechanism into a focused delayed-interference demonstration.
 
 **Parameter-shifting explorations** (\~10 values each): 1.
 **Filler count calibration**: Determines how many filler items are needed to suppress interference recency (N_FILLER_DEFAULT = 16) 2.
@@ -214,24 +215,21 @@ Informs test-phase design for Sims 5-6 and interpretation of VIT-style paradigms
 The reminder retrieves associated context, driving the model back to the film region so competitors can be encoded there.
 This simulation presents a focused demonstration of the delay/reminder mechanism explored parametrically in Sim 2.
 
-**Design**:
-- **Film phase**: Encode film items with standard parameters
-- **Delay**: Drift context toward start-of-list (`reminder_start_drift_scale` x fitted `start_drift_rate`)
-- **Reminder**: Walk through film items in order, probing M_FC for each and integrating the retrieved context (updates context but does NOT update M_FC or M_CF) at `reminder_drift_scale` x fitted `encoding_drift_rate`
-- **Interference phase**: Encode competitor items (using Sim 2 parameters)
-- **Test**: Context-to-item recall (free recall), using control parameters from Sim 3. No cues during recall.
+**Design**: - **Film phase**: Encode film items with standard parameters - **Delay**: Drift context toward start-of-list (`reminder_start_drift_scale` x fitted `start_drift_rate`) - **Reminder**: Walk through film items in order, probing M_FC for each and integrating the retrieved context (updates context but does NOT update M_FC or M_CF) at `reminder_drift_scale` x fitted `encoding_drift_rate` - **Interference phase**: Encode competitor items (using Sim 2 parameters) - **Test**: Context-to-item recall (free recall), using control parameters from Sim 3.
+No cues during recall.
 
-**Parameter-shifting explorations**:
-1. **Reminder drift scale sweep** (~10 values): How strongly does the reminder reinstate film context? At what drift rate is reinstatement sufficient for competitor encoding to produce interference?
+**Parameter-shifting explorations**: 1.
+**Reminder drift scale sweep** (\~10 values): How strongly does the reminder reinstate film context?
+At what drift rate is reinstatement sufficient for competitor encoding to produce interference?
 
-**Conditions**:
-- *Reminder + competitors*: Full reminder sequence, then interference encoding, then test
-- *Reminder only*: Full reminder sequence, no interference, then test
-- *No reminder + competitors*: Skip reminder, interference encoding (in distant context), then test
+**Conditions**: - *Reminder + competitors*: Full reminder sequence, then interference encoding, then test - *Reminder only*: Full reminder sequence, no interference, then test - *No reminder + competitors*: Skip reminder, interference encoding (in distant context), then test
 
-**Primary visualization**: SPC with film/interference boundary, parameter-shifted lines for reminder drift scale. Intrusion count as a summary DV across the three conditions.
+**Primary visualization**: SPC with film/interference boundary, parameter-shifted lines for reminder drift scale.
+Intrusion count as a summary DV across the three conditions.
 
-**Key findings**: Reminder reinstatement is sufficient for delayed interference. Without reminder, competitors are ineffective. Reminder-only (no competitors) has no effect on later retrieval.
+**Key findings**: Reminder reinstatement is sufficient for delayed interference.
+Without reminder, competitors are ineffective.
+Reminder-only (no competitors) has no effect on later retrieval.
 
 ------------------------------------------------------------------------
 
