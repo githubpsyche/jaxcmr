@@ -6,9 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Updates, tutorials, and research notes">
+<meta name="author" content="Jordan Gunn">
+<meta name="dcterms.date" content="2026-02-14">
+<meta name="description" content="An SVG-based workflow for developing precise, editable scientific figures with large language models">
 
-<title>Blog – jaxcmr</title>
+<title>Iterating on Scientific Diagrams with LLMs – jaxcmr</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,24 +60,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-listing/list.min.js"></script>
-<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="../site_libs/quarto-html/quarto.js"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -102,67 +102,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script>
 
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
 
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
-
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
-
-<link rel="alternate" type="application/rss+xml" title="jaxcmr" href="index.xml" data-external="1"></head>
+</head>
 
 <body class="nav-fixed">
 
@@ -171,7 +113,7 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="../../../index.html">
     <span class="navbar-title">jaxcmr</span>
     </a>
   </div>
@@ -182,31 +124,31 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/guide/index.html"> 
+    <a class="nav-link" href="../../../notebooks/guide/index.html"> 
 <span class="menu-text">Guide</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/analyses/index.html"> 
+    <a class="nav-link" href="../../../notebooks/analyses/index.html"> 
 <span class="menu-text">Analyses</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/models/index.html"> 
+    <a class="nav-link" href="../../../notebooks/models/index.html"> 
 <span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/evaluation/index.html"> 
+    <a class="nav-link" href="../../../notebooks/evaluation/index.html"> 
 <span class="menu-text">Evaluation</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/workflow/index.html"> 
+    <a class="nav-link" href="../../../notebooks/workflow/index.html"> 
 <span class="menu-text">Workflow</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notebooks/index.html"> 
+    <a class="nav-link" href="../../../notebooks/index.html"> 
 <span class="menu-text">Projects</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="../blog/index.html" aria-current="page"> 
+    <a class="nav-link" href="../../../blog/index.html"> 
 <span class="menu-text">Blog</span></a>
   </li>  
 </ul>
@@ -227,27 +169,43 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
         
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(2)</span></div><div class="category" data-category="announcement">announcement <span class="quarto-category-count">(1)</span></div><div class="category" data-category="visualization">visualization <span class="quarto-category-count">(1)</span></div><div class="category" data-category="workflow">workflow <span class="quarto-category-count">(1)</span></div></div></div>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Blog</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
-</div>
+<div class="quarto-title-block"><div><h1 class="title">Iterating on Scientific Diagrams with LLMs</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">workflow</div>
+    <div class="quarto-category">visualization</div>
+  </div>
+  </div>
 
 <div>
   <div class="description">
-    Updates, tutorials, and research notes
+    An SVG-based workflow for developing precise, editable scientific figures with large language models
   </div>
 </div>
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jordan Gunn </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 14, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -257,89 +215,24 @@ window.Quarto = {
 </header>
 
 
-<p>Research updates, technical tutorials, and notes on computational memory modeling with jaxcmr.</p>
-
+<p>Recently (as part of prep for upcoming talks), I’ve been exploring AI tools’ ability to help develop and iterate scientific diagrams so they’re visually appealing and genuinely informative instead of just a pretty (or ugly) blob of shapes/text. I think I’ve found an approach that works around as well as, say, using an LLM to explore different ways to word a paragraph. Here’s an explanation of the CMR model as presented in Morton &amp; Polyn (2016) that I made while exploring:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="rct_2.svg" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption>Retrieved-Context Theory diagram developed iteratively with an LLM and SVG.</figcaption>
+</figure>
+</div>
+<p>Three tricks seem to make steady iteration feasible enough to actually save time/effort.</p>
+<p>First, you can have LLMs primarily develop diagrams in the SVG format as opposed to PNG or other pixel-based formats. Unlike pixel-based formats, SVG uses a text-based syntax called XML to specify locations and other features of a set of objects to build a figure. This means LLMs can read and modify SVG files like code to change features based on your prompts. Current models seem to finally be really good at that.</p>
+<p>Second, if your LLM is both multimodal and can execute code, you can have it render these SVGs as normal pixelated images (like PNGs) to then visually review and iteratively refine layout and other issues without you having to chime in yourself! This often (though not always) saves you the trouble of having to enumerate issues like these to the LLM and improves accuracy a lot.</p>
+<p>Finally, a key feature of the SVG format compared to other formats is that SVG files are easy to clean up or repurpose manually. SVG files can be imported into software like Inkscape (open source), Adobe Illustrator (proprietary), or PowerPoint (proprietary) to then be given additional changes manually, including to details like text, shape size, positioning, and so on. You can also just open the <code>.svg</code> file in a text editor and hand-edit the XML directly — adjust a coordinate, change a color, fix a label. Interestingly, plotting libraries like ggplot and matplotlib can also save figures as SVG, making them also editable by these AI and human means to clarify the lessons readers should take from them (such as by adding additional labels or highlighting specific elements).</p>
+<p>There are of course many ways to generate diagrams with AI. Google’s Nano Banana Pro tool in particular is considered state-of-the-art for image generation at the moment and has been advertised as a useful tool to visualize scientific information, especially in their NotebookLM tool. But I personally think two problems with this and similar tools are that 1) it’s tough to make precise changes to the images when they inevitably don’t match exactly what you want to convey (besides giving the AI a follow-up prompt), and 2) despite progress, the images still tend to exhibit visual signatures of AI generation that can be distracting or off-putting. An SVG-based loop seems to sidestep both these issues, achieving a similar level of steerability as you get from iterating on text where you can choose to take or leave parts of model outputs that you find good and true.</p>
 
 
 <!-- -->
 
 
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="workflow,visualization" data-listing-date-sort="1771027200000" data-listing-file-modified-sort="1771065079319" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="511">
-<div class="thumbnail">
-<p><a href="../blog/posts/svg-diagrams/index.html" class="no-external"></a></p><a href="../blog/posts/svg-diagrams/index.html" class="no-external">
-<p class="card-img-top"><img src="posts/svg-diagrams/rct_2.svg"  class="thumbnail-image card-img"/></p>
-</a><p><a href="../blog/posts/svg-diagrams/index.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../blog/posts/svg-diagrams/index.html" class="no-external">Iterating on Scientific Diagrams with LLMs</a>
-</h3>
-<div class="listing-subtitle">
-<a href="../blog/posts/svg-diagrams/index.html" class="no-external"></a>
-</div>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('workflow'); return false;">
-workflow
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('visualization'); return false;">
-visualization
-</div>
-</div>
-<div class="listing-description">
-<a href="../blog/posts/svg-diagrams/index.html" class="no-external">An SVG-based workflow for developing precise, editable scientific figures with large language models</a>
-</div>
-</div>
-<div class="metadata">
-<a href="../blog/posts/svg-diagrams/index.html" class="no-external">
-<div class="listing-date">
-Feb 14, 2026
-</div>
-<div class="listing-author">
-Jordan Gunn
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="announcement" data-listing-date-sort="1704067200000" data-listing-file-modified-sort="1769853685037" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="106">
-<div class="thumbnail">
-<p><a href="../blog/posts/welcome.html" class="no-external"></a></p><a href="../blog/posts/welcome.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="../blog/posts/welcome.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="../blog/posts/welcome.html" class="no-external">Welcome to jaxcmr</a>
-</h3>
-<div class="listing-subtitle">
-<a href="../blog/posts/welcome.html" class="no-external"></a>
-</div>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('announcement'); return false;">
-announcement
-</div>
-</div>
-<div class="listing-description">
-<a href="../blog/posts/welcome.html" class="no-external">Introducing jaxcmr: JAX-accelerated computational memory modeling</a>
-</div>
-</div>
-<div class="metadata">
-<a href="../blog/posts/welcome.html" class="no-external">
-<div class="listing-date">
-Jan 1, 2024
-</div>
-<div class="listing-author">
-jaxcmr team
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
@@ -812,17 +705,26 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Blog"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Updates, tutorials, and research notes"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">listing:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">  contents: posts</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">  sort: "date desc"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">  type: default</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">  categories: true</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">  feed: true</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Research updates, technical tutorials, and notes on computational memory modeling with jaxcmr.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Iterating on Scientific Diagrams with LLMs"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "An SVG-based workflow for developing precise, editable scientific figures with large language models"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Jordan Gunn"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "2026-02-14"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [workflow, visualization]</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Recently (as part of prep for upcoming talks), I've been exploring AI tools' ability to help develop and iterate scientific diagrams so they're visually appealing and genuinely informative instead of just a pretty (or ugly) blob of shapes/text. I think I've found an approach that works around as well as, say, using an LLM to explore different ways to word a paragraph. Here's an explanation of the CMR model as presented in Morton &amp; Polyn (2016) that I made while exploring:</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="al">![Retrieved-Context Theory diagram developed iteratively with an LLM and SVG.](rct_2.svg)</span>{width="100%"}</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>Three tricks seem to make steady iteration feasible enough to actually save time/effort.</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>First, you can have LLMs primarily develop diagrams in the SVG format as opposed to PNG or other pixel-based formats. Unlike pixel-based formats, SVG uses a text-based syntax called XML to specify locations and other features of a set of objects to build a figure. This means LLMs can read and modify SVG files like code to change features based on your prompts. Current models seem to finally be really good at that.</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>Second, if your LLM is both multimodal and can execute code, you can have it render these SVGs as normal pixelated images (like PNGs) to then visually review and iteratively refine layout and other issues without you having to chime in yourself! This often (though not always) saves you the trouble of having to enumerate issues like these to the LLM and improves accuracy a lot.</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>Finally, a key feature of the SVG format compared to other formats is that SVG files are easy to clean up or repurpose manually. SVG files can be imported into software like Inkscape (open source), Adobe Illustrator (proprietary), or PowerPoint (proprietary) to then be given additional changes manually, including to details like text, shape size, positioning, and so on. You can also just open the <span class="in">`.svg`</span> file in a text editor and hand-edit the XML directly --- adjust a coordinate, change a color, fix a label. Interestingly, plotting libraries like ggplot and matplotlib can also save figures as SVG, making them also editable by these AI and human means to clarify the lessons readers should take from them (such as by adding additional labels or highlighting specific elements).</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>There are of course many ways to generate diagrams with AI. Google's Nano Banana Pro tool in particular is considered state-of-the-art for image generation at the moment and has been advertised as a useful tool to visualize scientific information, especially in their NotebookLM tool. But I personally think two problems with this and similar tools are that 1) it's tough to make precise changes to the images when they inevitably don't match exactly what you want to convey (besides giving the AI a follow-up prompt), and 2) despite progress, the images still tend to exhibit visual signatures of AI generation that can be distracting or off-putting. An SVG-based loop seems to sidestep both these issues, achieving a similar level of steerability as you get from iterating on text where you can choose to take or leave parts of model outputs that you find good and true.</span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">
@@ -832,7 +734,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </div>   
     <div class="nav-footer-center">
       &nbsp;
-    <div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/edit/main/blog/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="toc-actions"><ul><li><a href="https://github.com/githubpsyche/jaxcmr/edit/main/blog/posts/svg-diagrams/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
 <p>jaxcmr</p>
 </div>

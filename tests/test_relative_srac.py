@@ -8,7 +8,6 @@ from matplotlib.figure import Figure
 
 from jaxcmr.analyses import relative_srac
 from jaxcmr.helpers import make_dataset
-from jaxcmr.typing import RecallDataset
 
 
 def test_flags_all_positions_when_recall_in_forward_order():
@@ -116,13 +115,10 @@ def test_returns_axes_object_when_plotting_rspc():
       - Confirms visualization utility uses standard objects.
     """
     # Arrange / Given
-    dataset: RecallDataset = {
-        "subject": jnp.array([[1], [1]], dtype=jnp.int32),
-        "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
-        "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-        "recalls": jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32),
-        "pres_itemids": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-    }
+    dataset = make_dataset(
+        recalls=jnp.array([[1, 2, 0], [2, 3, 0]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
+    )
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When
@@ -136,6 +132,6 @@ def test_returns_axes_object_when_plotting_rspc():
 
 def test_repetitions():
     # | code-summary: Repetitions, all satisfied
-  pres = jnp.array([1, 2, 1])
-  rec = jnp.array([1, 2, 1])
-  assert jnp.array_equal(relative_srac.tabulate_trial(rec, pres), jnp.array([True, True, True]))
+    pres = jnp.array([1, 2, 1])
+    rec = jnp.array([1, 2, 1])
+    assert jnp.array_equal(relative_srac.tabulate_trial(rec, pres), jnp.array([True, True, True]))

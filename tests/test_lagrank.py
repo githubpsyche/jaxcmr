@@ -26,7 +26,6 @@ from jaxcmr.analyses.lagrank import (
 from jaxcmr.analyses.lagrank import test_lagrank as run_test_lagrank
 from jaxcmr.analyses.lagrank import test_lagrank_vs_comparison as run_test_comparison
 from jaxcmr.helpers import make_dataset
-from jaxcmr.typing import RecallDataset
 
 
 # ---------------------------------------------------------------------------
@@ -389,22 +388,15 @@ class TestSubjectLagrank:
         Then: returns array of length 2
         Why this matters: subject-level aggregation is needed for stats.
         """
-        recalls = jnp.array(
-            [[1, 2, 3, 0], [3, 2, 1, 0], [1, 3, 2, 0], [2, 1, 3, 0]],
-            dtype=jnp.int32,
+        ds = make_dataset(
+            recalls=jnp.array(
+                [[1, 2, 3, 0], [3, 2, 1, 0], [1, 3, 2, 0], [2, 1, 3, 0]],
+            ),
+            pres_itemnos=jnp.array(
+                [[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]],
+            ),
+            subject=jnp.array([[1], [1], [2], [2]]),
         )
-        pres = jnp.tile(jnp.arange(1, 4, dtype=jnp.int32), (4, 1))
-        # pad pres to match list_length if needed
-        pres = jnp.concatenate(
-            [pres, jnp.full((4, 1), 4, dtype=jnp.int32)], axis=1
-        )
-        subjects = jnp.array([[1], [1], [2], [2]], dtype=jnp.int32)
-        ds: RecallDataset = {
-            "subject": subjects,
-            "listLength": jnp.full((4, 1), 4, dtype=jnp.int32),
-            "pres_itemnos": pres,
-            "recalls": recalls,
-        }
         mask = jnp.ones(4, dtype=bool)
         factors = subject_lagrank(ds, mask, size=1)
         assert len(factors) == 2

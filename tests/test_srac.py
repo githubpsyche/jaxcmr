@@ -1,12 +1,14 @@
 import matplotlib
+
 matplotlib.use("Agg", force=True)
+
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from jaxcmr.analyses import srac
 from jaxcmr.helpers import make_dataset
-from jaxcmr.typing import RecallDataset
 
 
 def test_identifies_recalled_positions_when_single_trial():
@@ -72,13 +74,10 @@ def test_returns_axes_when_plotting_srac():
       - Confirms visualization interface.
     """
     # Arrange / Given
-    dataset: RecallDataset = {
-        "subject": jnp.array([[1], [1]], dtype=jnp.int32),
-        "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
-        "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-        "recalls": jnp.array([[1, 2, 0], [3, 0, 0]], dtype=jnp.int32),
-        "pres_itemids": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-    }
+    dataset = make_dataset(
+        recalls=jnp.array([[1, 2, 0], [3, 0, 0]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
+    )
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When
@@ -88,6 +87,7 @@ def test_returns_axes_when_plotting_srac():
     assert isinstance(axis, Axes)
     fig = axis.figure
     assert isinstance(fig, Figure)
+    plt.close(fig)
 
 def test_srac_all_correct():
     presentations = jnp.array([[1, 2, 3]])

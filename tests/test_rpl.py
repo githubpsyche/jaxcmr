@@ -52,5 +52,5 @@ def test_reports_unity_probability_when_only_repeated_item_recalled():
     probs = rpl.recall_probability_by_lag(dataset, max_lag=2)
 
     # Assert / Then
-    expected = jnp.array([0.0, 0.0, 1.0, 0.0], dtype=jnp.float32)
-    assert jnp.array_equal(probs, expected).item()
+    expected = jnp.array([0.0, jnp.nan, 1.0, jnp.nan], dtype=jnp.float32)
+    assert jnp.allclose(probs, expected, equal_nan=True).item()

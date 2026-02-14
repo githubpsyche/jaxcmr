@@ -1,9 +1,19 @@
 import numpy as np
 import jax.numpy as jnp
 
+import jaxcmr.components.context as TemporalContext
+import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator
-from jaxcmr.models_repfr.cmr import BaseCMRFactory
+from jaxcmr.models.cmr import make_factory
 from jaxcmr.helpers import make_dataset
+
+BaseCMRFactory = make_factory(
+    LinearMemory.init_mfc,
+    LinearMemory.init_mcf,
+    TemporalContext.init,
+    PositionalTermination,
+)
 
 
 def _params():
@@ -20,7 +30,7 @@ def _params():
         "stop_probability_scale": 0.05,
         "stop_probability_growth": 0.2,
         "choice_sensitivity": 2.0,
-        # Optional for cmr.CMR, but include to be explicit across variants
+        "learn_after_context_update": False,
         "allow_repeated_recalls": False,
     }
 
@@ -50,7 +60,7 @@ def test_preserves_recalls_when_item_ids_match_canonical_positions():
     )
 
     # Act / When
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, connections=None)
+    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     expected = jnp.array([[1, 3, 2]], dtype=jnp.int32)
@@ -79,7 +89,7 @@ def test_preserves_recalls_when_already_serial_positions():
     )
 
     # Act / When
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, connections=None)
+    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     expected = jnp.array([[2, 1, 3]], dtype=jnp.int32)

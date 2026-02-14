@@ -44,9 +44,9 @@ class _FakeMemorySearch:
 class _FakeModelFactory:
     """Minimal factory matching MemorySearchModelFactory for tests."""
 
-    def __init__(self, dataset, connections):  # noqa: D401 - protocol impl
+    def __init__(self, dataset, features):  # noqa: D401 - protocol impl
         self.dataset = dataset
-        self.connections = connections
+        self.features = features
 
     def create_model(self, parameters):  # noqa: D401 - protocol impl
         return _FakeMemorySearch(item_count=int(self.dataset["pres_itemnos"].shape[1]))
@@ -66,22 +66,22 @@ class _IndexedMemorySearch(_FakeMemorySearch):
 class _IndexedFactory:
     """Factory that encodes an integer recall index from the ``alpha`` parameter."""
 
-    def __init__(self, dataset, connections):
+    def __init__(self, dataset, features):
         self.dataset = dataset
-        self.connections = connections
+        self.features = features
 
     def create_model(self, parameters):
         item_count = int(self.dataset["pres_itemnos"].shape[1])
-        return _IndexedMemorySearch(item_count, int(parameters["alpha"]))
+        return _IndexedMemorySearch(item_count, parameters["alpha"])
 
     def create_trial_model(self, trial_index, parameters):
         item_count = int(self.dataset["pres_itemnos"].shape[1])
-        return _IndexedMemorySearch(item_count, int(parameters["alpha"]))
+        return _IndexedMemorySearch(item_count, parameters["alpha"])
 
 
 def _recall_item_selected_by_parameter(model, present, trial, rng):
     """Returns a single recalled item chosen by the model's encoded index."""
-    recall_item = present[int(model.recall_index)]
+    recall_item = present[model.recall_index]
     return model, jnp.array([recall_item, 0], dtype=jnp.int32)
 
 
@@ -147,7 +147,7 @@ def test_reindexes_recalls_when_given_within_list_positions():
     }
 
     # Act / When
-    sim = MemorySearchSimulator(_FakeModelFactory, dataset, connections=None)
+    sim = MemorySearchSimulator(_FakeModelFactory, dataset, features=None)
 
     # Assert / Then
     assert sim.present_lists.shape == (1, 3)
@@ -187,7 +187,7 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
     out = simulate_h5_from_h5(
         _FakeModelFactory,
         dataset,
-        connections=None,
+        features=None,
         parameters=params,
         trial_mask=mask,
         experiment_count=2,
@@ -234,7 +234,7 @@ def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
     out = simulate_h5_from_h5(
         _IndexedFactory,
         dataset,
-        connections=None,
+        features=None,
         parameters=params,
         trial_mask=mask,
         experiment_count=1,
@@ -279,7 +279,7 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
     sims = parameter_shifted_simulate_h5_from_h5(
         _IndexedFactory,
         dataset,
-        connections=None,
+        features=None,
         parameters=params,
         trial_mask=mask,
         experiment_count=1,

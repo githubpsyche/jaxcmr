@@ -1,5 +1,6 @@
 import jax.numpy as jnp
-from jaxcmr.components.linear_memory import LinearMemory
+from jaxcmr.components.context import init as init_context
+from jaxcmr.components.linear_memory import LinearMemory, init_mfc, init_mcf
 
 
 def test_updates_state_when_associating_patterns():
@@ -81,7 +82,7 @@ def test_initializes_mfc_with_shifted_identity_when_init_mfc():
     """Behavior: ``init_mfc`` seeds item-to-context associations on a superdiagonal.
 
     Given:
-      - Item and context counts with a learning rate.
+      - A list length, learning rate, and context with 5 features.
     When:
       - ``init_mfc`` is invoked.
     Then:
@@ -90,15 +91,15 @@ def test_initializes_mfc_with_shifted_identity_when_init_mfc():
       - Establishes baseline item-context links.
     """
     # Arrange / Given
-    item_count = 3
-    context_count = 5
+    list_length = 3
     lr = 0.2
+    context = init_context(4)  # size = 5
 
     # Act / When
-    mem = LinearMemory.init_mfc(item_count, context_count, lr)
+    mem = init_mfc(list_length, {"learning_rate": lr}, context)
 
     # Assert / Then
-    expected = jnp.eye(item_count, context_count, 1) * (1 - lr)
+    expected = jnp.eye(list_length, context.size, 1) * (1 - lr)
     assert jnp.allclose(mem.state, expected)
 
 
@@ -106,7 +107,7 @@ def test_initializes_mcf_with_shared_and_item_support_when_init_mcf():
     """Behavior: ``init_mcf`` mixes shared and item-specific support.
 
     Given:
-      - Item and context counts with support parameters.
+      - A list length, support parameters, and context with 4 features.
     When:
       - ``init_mcf`` is called.
     Then:
@@ -115,13 +116,14 @@ def test_initializes_mcf_with_shared_and_item_support_when_init_mcf():
       - Provides expected starting weights for retrieval.
     """
     # Arrange / Given
-    item_count = 2
-    context_count = 4
+    list_length = 2
     item_support = 0.7
     shared_support = 0.3
+    context = init_context(3)  # size = 4
 
     # Act / When
-    mem = LinearMemory.init_mcf(item_count, context_count, item_support, shared_support)
+    params = {"item_support": item_support, "shared_support": shared_support}
+    mem = init_mcf(list_length, params, context)
 
     # Assert / Then
     expected = jnp.array([

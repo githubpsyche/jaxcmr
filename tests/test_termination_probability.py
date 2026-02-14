@@ -5,7 +5,8 @@ from matplotlib.figure import Figure
 
 from jaxcmr.analyses.termination_probability import (
     plot_termination_probability,
-    termination_probability,
+    simple_termination_probability,
+    conditional_termination_probability,
 )
 from jaxcmr.helpers import make_dataset
 
@@ -33,7 +34,7 @@ def test_returns_point_mass_when_all_trials_stop_together():
     )
 
     # Act / When
-    curve = termination_probability(dataset, mode="simple")
+    curve = simple_termination_probability(dataset)
 
     # Assert / Then
     expected = jnp.array([0.0, 1.0, 0.0, 0.0])
@@ -63,7 +64,7 @@ def test_uses_final_slot_when_trials_never_enter_padding():
     )
 
     # Act / When
-    curve = termination_probability(dataset, mode="simple")
+    curve = simple_termination_probability(dataset)
 
     # Assert / Then
     expected = jnp.array([0.0, 0.5, 0.0, 0.5])
@@ -93,7 +94,7 @@ def test_returns_hazard_when_trials_drop_out():
     )
 
     # Act / When
-    hazard = termination_probability(dataset, mode="conditional")
+    hazard = conditional_termination_probability(dataset)
 
     # Assert / Then
     expected = jnp.array([0.0, 0.5, 0.0, 1.0])

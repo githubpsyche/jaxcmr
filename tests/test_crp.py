@@ -8,7 +8,6 @@ from matplotlib.figure import Figure
 import pytest
 from jaxcmr.analyses import crp
 from jaxcmr.helpers import make_dataset
-from jaxcmr.typing import RecallDataset
 
 
 # -----------------------------------------------------------------------------
@@ -532,13 +531,10 @@ def test_returns_axes_object_when_plotting_crp():
       - Ensures visualization utility returns standard objects.
     """
     # Arrange / Given
-    dataset: RecallDataset = {
-        "subject": jnp.array([[1], [1]], dtype=jnp.int32),
-        "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
-        "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-        "recalls": jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32),
-        "pres_itemids": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-    }
+    dataset = make_dataset(
+        recalls=jnp.array([[1, 2, 0], [2, 3, 0]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
+    )
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When

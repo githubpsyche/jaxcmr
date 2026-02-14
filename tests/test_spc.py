@@ -1,3 +1,7 @@
+import matplotlib
+
+matplotlib.use("Agg", force=True)
+
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -5,7 +9,6 @@ from matplotlib.figure import Figure
 
 from jaxcmr.analyses import spc
 from jaxcmr.helpers import make_dataset
-from jaxcmr.typing import RecallDataset
 
 
 def test_returns_recall_rates_when_lists_are_uniform():
@@ -68,13 +71,10 @@ def test_returns_axes_when_plotting_spc():
       - Ensures visualization utility returns standard objects.
     """
     # Arrange / Given
-    dataset: RecallDataset = {
-        "subject": jnp.array([[1], [1]], dtype=jnp.int32),
-        "listLength": jnp.array([[3], [3]], dtype=jnp.int32),
-        "pres_itemnos": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-        "recalls": jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32),
-        "pres_itemids": jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32),
-    }
+    dataset = make_dataset(
+        recalls=jnp.array([[1, 2, 0], [2, 3, 0]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
+    )
     trial_mask = jnp.array([True, True], dtype=bool)
 
     # Act / When

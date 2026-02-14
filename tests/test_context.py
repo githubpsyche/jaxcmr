@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jaxcmr.components.context import TemporalContext
+from jaxcmr.components.context import TemporalContext, init
 
 
 def test_preserves_unit_length_when_integrating_input():
@@ -16,7 +16,7 @@ def test_preserves_unit_length_when_integrating_input():
       - Prevents drift from altering context magnitude.
     """
     # Arrange / Given
-    context = TemporalContext.init(2)
+    context = init(2)
     input_vec = jnp.array([0.0, 1.0, 0.0])
 
     # Act / When
@@ -88,7 +88,7 @@ def test_retains_state_when_drift_rate_zero():
       - Validates the zero-drift boundary condition.
     """
     # Arrange / Given
-    context = TemporalContext.init(2)
+    context = init(2)
     input_vec = jnp.array([0.0, 1.0, 0.0])
 
     # Act / When

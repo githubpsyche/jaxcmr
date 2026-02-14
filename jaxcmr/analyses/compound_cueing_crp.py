@@ -160,7 +160,8 @@ class CompoundCueingTabulation(Pytree):
         current_is_this_item = recall == (item_idx + 1)  # recall is 1-indexed
         have_two_recalls = self.prev_prev_position > 0
 
-        valid = is_repeated & has_spacing & have_two_recalls
+        is_first_occurrence = (item_idx + 1) == i_pos
+        valid = is_repeated & has_spacing & have_two_recalls & is_first_occurrence
 
         # Pure cueing: {i-2, i-1} or {j-2, j-1}
         pure_near_i = (self.prev_position == (i_pos - 1)) & (
