@@ -1,19 +1,6 @@
 import jax.numpy as jnp
 from jaxcmr.analyses import rpl
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDataset:
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials = recalls.shape[0]
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    } # type: ignore
+from jaxcmr.helpers import make_dataset
 
 
 def test_marks_bin_as_present_and_recalled_when_item_repeats():
@@ -59,7 +46,7 @@ def test_reports_unity_probability_when_only_repeated_item_recalled():
     # Arrange / Given
     recalls = jnp.array([[1, 0, 0]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 1, 3]], dtype=jnp.int32)
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
 
     # Act / When
     probs = rpl.recall_probability_by_lag(dataset, max_lag=2)

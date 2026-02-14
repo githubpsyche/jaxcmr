@@ -22,29 +22,7 @@ from jaxcmr.analyses.compound_cueing_crp import (
     tabulate_trial,
     compound_cueing_crp,
 )
-from jaxcmr.typing import RecallDataset
-
-
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
-
-
-def _make_dataset(
-    recalls: jnp.ndarray,
-    presentations: jnp.ndarray,
-) -> RecallDataset:
-    """Return minimal dataset keyed for the compound cueing analysis."""
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials, _ = recalls.shape
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    }
+from jaxcmr.helpers import make_dataset
 
 
 # -----------------------------------------------------------------------------
@@ -421,7 +399,7 @@ def test_crp_computation_single_trial():
     # Arrange
     presentation = jnp.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 3, 10, 11]], dtype=jnp.int32)
     trial = jnp.array([[1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=jnp.int32)
-    dataset = _make_dataset(trial, presentation)
+    dataset = make_dataset(trial, presentation)
 
     # Act
     result = compound_cueing_crp(dataset, min_spacing=6, size=2)
@@ -447,7 +425,7 @@ def test_crp_nan_when_no_opportunities():
     # Arrange
     presentation = jnp.array([[1, 2, 3, 4, 5, 6, 7, 8]], dtype=jnp.int32)
     trial = jnp.array([[1, 2, 3, 4, 5, 6, 7, 8]], dtype=jnp.int32)
-    dataset = _make_dataset(trial, presentation)
+    dataset = make_dataset(trial, presentation)
 
     # Act
     result = compound_cueing_crp(dataset, min_spacing=6, size=2)
@@ -483,7 +461,7 @@ def test_crp_aggregates_across_trials():
         ],
         dtype=jnp.int32,
     )
-    dataset = _make_dataset(trials, presentation)
+    dataset = make_dataset(trials, presentation)
 
     # Act
     result = compound_cueing_crp(dataset, min_spacing=6, size=2)

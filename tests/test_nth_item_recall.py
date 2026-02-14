@@ -1,20 +1,7 @@
 import jax.numpy as jnp
 
 from jaxcmr.analyses import nth_item_recall
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDataset:
-    recalls_arr = jnp.asarray(recalls, dtype=jnp.int32)
-    pres_arr = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials = recalls_arr.shape[0]
-    list_length = pres_arr.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": pres_arr,
-        "recalls": recalls_arr,
-    }  # type: ignore
+from jaxcmr.helpers import make_dataset
 
 
 def test_returns_expected_probabilities_when_using_simple_curve():
@@ -30,9 +17,9 @@ def test_returns_expected_probabilities_when_using_simple_curve():
       - Confirms the baseline calculation before availability gating is applied.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         recalls=jnp.array([[1, 2, 3], [2, 1, 3]]),
-        presentations=jnp.array([[1, 2, 3], [1, 2, 3]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
     )
 
     # Act / When
@@ -56,9 +43,9 @@ def test_reports_probability_until_target_is_recalled():
       - Confirms conditioning only requires the preceding recall to be non-terminating.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         recalls=jnp.array([[1, 2, 3], [2, 1, 3]]),
-        presentations=jnp.array([[1, 2, 3], [1, 2, 3]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
     )
 
     # Act / When
@@ -82,9 +69,9 @@ def test_returns_unity_when_query_last_remaining():
       - Ensures the conditioning captures certainty when the query is the sole option.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         recalls=jnp.array([[2, 3, 4, 1], [4, 3, 2, 1]]),
-        presentations=jnp.array([[1, 2, 3, 4], [1, 2, 3, 4]]),
+        pres_itemnos=jnp.array([[1, 2, 3, 4], [1, 2, 3, 4]]),
     )
 
     # Act / When
@@ -108,9 +95,9 @@ def test_handles_positions_not_reached_before_stop():
       - Ensures conditioning still counts opportunities even when the outcome is a stop.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         recalls=jnp.array([[2, 3, 0], [1, 3, 4]]),
-        presentations=jnp.array([[1, 2, 3], [1, 2, 3]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
     )
 
     # Act / When
@@ -134,9 +121,9 @@ def test_ignores_trials_that_stop_before_slot():
       - Confirms the denominator ignores exposures that follow a termination.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         recalls=jnp.array([[1, 0, 0], [2, 1, 3]]),
-        presentations=jnp.array([[1, 2, 3], [1, 2, 3]]),
+        pres_itemnos=jnp.array([[1, 2, 3], [1, 2, 3]]),
     )
 
     # Act / When

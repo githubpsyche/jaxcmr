@@ -3,24 +3,7 @@ import jax.numpy as jnp
 
 from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator
 from jaxcmr.models_repfr.cmr import BaseCMRFactory
-from jaxcmr.typing import RecallDataset
-
-
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
-
-
-def _make_dataset(presents: list[list[int]], recalls: list[list[int]], list_length: int) -> RecallDataset:
-    """Returns a minimal RecallDataset-like dict for likelihood tests."""
-    n_trials = len(presents)
-    return {
-        "pres_itemnos": jnp.array(presents, dtype=jnp.int32),
-        "recalls": jnp.array(recalls, dtype=jnp.int32),
-        "listLength": jnp.array([list_length] * n_trials, dtype=jnp.int32),
-        # Subject vector is unused by the likelihood generator but present for completeness
-        "subject": jnp.arange(n_trials, dtype=jnp.int32).reshape(-1, 1),
-    } # type: ignore
+from jaxcmr.helpers import make_dataset
 
 
 def _params():
@@ -60,10 +43,10 @@ def test_preserves_recalls_when_item_ids_match_canonical_positions():
       - Confirms canonical presentations survive preprocessing unchanged.
     """
     # Arrange / Given
-    dataset = _make_dataset(
-        presents=[[1, 2, 3]],
+    dataset = make_dataset(
         recalls=[[1, 3, 2]],  # canonical item IDs == serial positions
-        list_length=3,
+        pres_itemnos=[[1, 2, 3]],
+        listLength=3,
     )
 
     # Act / When
@@ -89,10 +72,10 @@ def test_preserves_recalls_when_already_serial_positions():
       - Ensures position-based inputs persist through preprocessing.
     """
     # Arrange / Given
-    dataset = _make_dataset(
-        presents=[[1, 2, 3]],
+    dataset = make_dataset(
         recalls=[[2, 1, 3]],  # serial positions
-        list_length=3,
+        pres_itemnos=[[1, 2, 3]],
+        listLength=3,
     )
 
     # Act / When
@@ -123,10 +106,10 @@ def test_predict_trial_returns_positive_probabilities_when_single_trial():
       - Ensures trial-level predictions remain valid probabilities.
     """
     # Arrange / Given
-    dataset = _make_dataset(
-        presents=[[1, 2, 3]],
+    dataset = make_dataset(
         recalls=[[1, 2, 0]],
-        list_length=3,
+        pres_itemnos=[[1, 2, 3]],
+        listLength=3,
     )
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
@@ -155,7 +138,7 @@ def test_present_and_predict_loss_matches_manual_when_lists_identical():
     # Arrange / Given
     presents = [[1, 2, 3], [1, 2, 3]]
     recalls = [[1, 2, 0], [2, 3, 0]]
-    dataset = _make_dataset(presents, recalls, list_length=3)
+    dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
@@ -196,7 +179,7 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
     # Arrange / Given
     presents = [[1, 2, 3], [1, 2, 3]]
     recalls = [[1, 2, 0], [2, 3, 0]]
-    dataset = _make_dataset(presents, recalls, list_length=3)
+    dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)

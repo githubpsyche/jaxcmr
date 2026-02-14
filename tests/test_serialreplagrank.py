@@ -17,24 +17,7 @@ from jaxcmr.analyses.serialreplagrank import (
     test_first_second_bias as run_test_bias,
     SerialRepLagRankTestResult,
 )
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls, presentations, subjects=None) -> RecallDataset:
-    """Wrap arrays into a RecallDataset dict."""
-    recalls = jnp.array(recalls)
-    presentations = jnp.array(presentations)
-    n = recalls.shape[0]
-    if subjects is None:
-        subjects = jnp.zeros(n, dtype=int)
-    else:
-        subjects = jnp.array(subjects)
-    return {
-        "recalls": recalls,
-        "pres_itemnos": presentations,
-        "subject": subjects,
-        "listLength": jnp.full(n, presentations.shape[1]),
-    }
+from jaxcmr.helpers import make_dataset
 
 
 # ---- Tabulation: only tabulates once ----
@@ -103,7 +86,7 @@ class TestSerialReplagrankIntegration:
             [3, 1, 2, 5, 0, 0, 0, 0],  # out of order
             [1, 2, 3, 5, 0, 0, 0, 0],  # serial order through pos 3
         ])
-        return _make_dataset(recalls, pres)
+        return make_dataset(recalls, pres)
 
     def test_returns_shape(self, dataset):
         """serialreplagrank returns (n_trials, size)."""
@@ -144,7 +127,7 @@ class TestSubjectSerialRepLagrank:
             [1, 2, 4, 3, 0, 0, 0, 0],
         ])
         subjects = jnp.array([0, 0, 1, 1])
-        dataset = _make_dataset(recalls, pres, subjects)
+        dataset = make_dataset(recalls, pres, subject=subjects)
         mask = jnp.ones(4, dtype=bool)
         result = subject_serial_rep_lagrank(dataset, mask, min_lag=2, size=2)
         assert result.shape == (2, 2)
@@ -180,7 +163,7 @@ class TestPlotSerialRepLagrank:
             [1, 2, 3, 4, 0, 0, 0, 0],
             [1, 2, 3, 5, 0, 0, 0, 0],
         ])
-        dataset = _make_dataset(recalls, pres)
+        dataset = make_dataset(recalls, pres)
         mask = jnp.ones(2, dtype=bool)
         ax = plot_serial_rep_lagrank(
             dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"]
@@ -203,7 +186,7 @@ class TestSerialReplagrankJIT:
             [1, 2, 3, 4, 0, 0, 0, 0],
             [1, 2, 3, 5, 0, 0, 0, 0],
         ])
-        dataset = _make_dataset(recalls, pres)
+        dataset = make_dataset(recalls, pres)
         result_nojit = serialreplagrank(dataset, min_lag=2, size=2)
         result_jit = jit(serialreplagrank, static_argnames=("min_lag", "size"))(
             dataset, min_lag=2, size=2

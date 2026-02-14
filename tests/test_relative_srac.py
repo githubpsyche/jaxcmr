@@ -7,20 +7,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from jaxcmr.analyses import relative_srac
+from jaxcmr.helpers import make_dataset
 from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDataset:
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials = recalls.shape[0]
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    } # type: ignore
 
 
 def test_flags_all_positions_when_recall_in_forward_order():
@@ -106,7 +94,7 @@ def test_computes_mean_accuracy_when_multiple_trials():
     # Arrange / Given
     recalls = jnp.array([[1, 2, 3], [1, 2, 1]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
 
     # Act / When
     scores = relative_srac.relative_srac(dataset)

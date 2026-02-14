@@ -7,17 +7,7 @@ from jaxcmr.analyses.termination_probability import (
     plot_termination_probability,
     termination_probability,
 )
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray) -> RecallDataset:
-    recalls_arr = jnp.asarray(recalls, dtype=jnp.int32)
-    trial_count, recall_slots = recalls_arr.shape
-    return {
-        "subject": jnp.ones((trial_count, 1), dtype=jnp.int32),
-        "listLength": jnp.full((trial_count, 1), recall_slots, dtype=jnp.int32),
-        "recalls": recalls_arr,
-    }  # type: ignore
+from jaxcmr.helpers import make_dataset
 
 
 def test_returns_point_mass_when_all_trials_stop_together():
@@ -33,7 +23,7 @@ def test_returns_point_mass_when_all_trials_stop_together():
       - Confirms the analysis counts first zero per trial before plotting.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         jnp.array(
             [
                 [5, 0, 0, 0],
@@ -63,7 +53,7 @@ def test_uses_final_slot_when_trials_never_enter_padding():
       - Ensures the analysis remains well-defined for fully populated recall streams.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         jnp.array(
             [
                 [1, 2, 3, 4],
@@ -93,7 +83,7 @@ def test_returns_hazard_when_trials_drop_out():
       - Confirms the analysis reports the stop hazard rather than raw mass.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         jnp.array(
             [
                 [1, 2, 3, 4],
@@ -123,7 +113,7 @@ def test_plot_functions_return_axes():
       - Ensures the visualization helpers integrate with plotting workflows.
     """
     # Arrange / Given
-    dataset = _make_dataset(
+    dataset = make_dataset(
         jnp.array(
             [
                 [5, 0, 0],

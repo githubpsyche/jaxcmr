@@ -33,6 +33,7 @@ __all__ = [
     "find_max_list_length",
     "apply_by_subject",
     "has_repeats_per_row",
+    "make_dataset",
 ]
 
 
@@ -260,3 +261,119 @@ def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
         return jnp.any(valid_repeats)
 
     return vmap(check_row)(arr)
+
+
+def make_dataset(
+    recalls: Integer[Array, "n_trials num_recalled"],
+    pres_itemnos: Integer[Array, "n_trials num_presented"] | None = None,
+    listLength: Integer[Array, "n_trials 1"] | int | None = None,
+    subject: Integer[Array, "n_trials 1"] | int = 1,
+    *,
+    reps: int = 1,
+) -> RecallDataset:
+    """Construct a ``RecallDataset`` from flexible inputs.
+
+    Parameters
+    ----------
+    recalls
+        Within-list recall events (1-indexed, 0 = padding). A 1-D vector is
+        treated as a single trial.
+    pres_itemnos
+        Within-list presentation items. When omitted, generated as
+        ``arange(1, list_length + 1)`` per trial.
+    listLength
+        List length per trial. Inferred from *pres_itemnos* when omitted.
+        When both are provided, an assertion checks compatibility.
+        When neither is provided, inferred as
+        ``max(recalls.shape[1], recalls.max())``.
+    subject
+        Subject identifier per trial. Defaults to ``1`` (single subject).
+    reps
+        Number of times to tile the resulting trials along axis 0.
+
+    Returns
+    -------
+    RecallDataset
+        Dictionary with keys ``recalls``, ``pres_itemnos``, ``listLength``,
+        and ``subject``, all shaped ``(n_trials * reps, ...)``.
+
+    """
+    # -- normalise recalls (required) -----------------------------------------
+    recalls_arr = jnp.atleast_2d(jnp.asarray(recalls, dtype=jnp.int32))
+
+    # -- normalise pres_itemnos (optional) ------------------------------------
+    pres_arr: jnp.ndarray | None = None
+    if pres_itemnos is not None:
+        pres_arr = jnp.atleast_2d(jnp.asarray(pres_itemnos, dtype=jnp.int32))
+
+    # -- normalise listLength (optional) --------------------------------------
+    ll_arr: jnp.ndarray | None = None
+    if listLength is not None:
+        if isinstance(listLength, int):
+            ll_arr = jnp.array([[listLength]], dtype=jnp.int32)
+        else:
+            ll_arr = jnp.asarray(listLength, dtype=jnp.int32).reshape(-1, 1)
+
+    # -- normalise subject ----------------------------------------------------
+    if isinstance(subject, int):
+        subj_arr = jnp.array([[subject]], dtype=jnp.int32)
+    else:
+        subj_arr = jnp.asarray(subject, dtype=jnp.int32).reshape(-1, 1)
+
+    # -- resolve n_trials -----------------------------------------------------
+    sizes: list[int] = []
+    for arr in (recalls_arr, pres_arr, ll_arr, subj_arr):
+        if arr is not None and arr.shape[0] > 1:
+            sizes.append(arr.shape[0])
+    if sizes:
+        n_trials = sizes[0]
+        assert all(s == n_trials for s in sizes), (
+            f"Multi-trial args disagree on n_trials: {sizes}"
+        )
+    else:
+        n_trials = 1
+
+    # -- tile single-trial args to n_trials -----------------------------------
+    if recalls_arr.shape[0] == 1 and n_trials > 1:
+        recalls_arr = jnp.tile(recalls_arr, (n_trials, 1))
+    if pres_arr is not None and pres_arr.shape[0] == 1 and n_trials > 1:
+        pres_arr = jnp.tile(pres_arr, (n_trials, 1))
+    if ll_arr is not None and ll_arr.shape[0] == 1 and n_trials > 1:
+        ll_arr = jnp.tile(ll_arr, (n_trials, 1))
+    if subj_arr.shape[0] == 1 and n_trials > 1:
+        subj_arr = jnp.tile(subj_arr, (n_trials, 1))
+
+    # -- infer / validate list_length -----------------------------------------
+    if pres_arr is not None and ll_arr is not None:
+        assert jnp.all(ll_arr == pres_arr.shape[1]), (
+            f"listLength ({ll_arr.ravel()}) incompatible with "
+            f"pres_itemnos width ({pres_arr.shape[1]})"
+        )
+        list_length = int(pres_arr.shape[1])
+    elif pres_arr is not None:
+        list_length = int(pres_arr.shape[1])
+        ll_arr = jnp.full((n_trials, 1), list_length, dtype=jnp.int32)
+    elif ll_arr is not None:
+        list_length = int(ll_arr[0, 0])
+    else:
+        list_length = int(max(recalls_arr.shape[1], jnp.max(recalls_arr)))
+        ll_arr = jnp.full((n_trials, 1), list_length, dtype=jnp.int32)
+
+    # -- generate default pres_itemnos ----------------------------------------
+    if pres_arr is None:
+        row = jnp.arange(1, list_length + 1, dtype=jnp.int32)
+        pres_arr = jnp.tile(row[None, :], (n_trials, 1))
+
+    # -- apply reps -----------------------------------------------------------
+    if reps > 1:
+        recalls_arr = jnp.tile(recalls_arr, (reps, 1))
+        pres_arr = jnp.tile(pres_arr, (reps, 1))
+        ll_arr = jnp.tile(ll_arr, (reps, 1))
+        subj_arr = jnp.tile(subj_arr, (reps, 1))
+
+    return {
+        "recalls": recalls_arr,
+        "pres_itemnos": pres_arr,
+        "listLength": ll_arr,
+        "subject": subj_arr,
+    }  # type: ignore

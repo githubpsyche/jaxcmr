@@ -16,28 +16,7 @@ from jaxcmr.analyses.cue_centered_lagrank import (
     test_cue_centered_lagrank as run_test,
 )
 from jaxcmr.analyses.lagrank import LagRankTestResult
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls, presentations, cues, should_tabulate, subjects=None) -> RecallDataset:
-    """Wrap arrays into a RecallDataset dict with cue fields."""
-    recalls = jnp.array(recalls)
-    presentations = jnp.array(presentations)
-    cues = jnp.array(cues)
-    should_tab = jnp.array(should_tabulate, dtype=bool)
-    n = recalls.shape[0]
-    if subjects is None:
-        subjects = jnp.zeros(n, dtype=int)
-    else:
-        subjects = jnp.array(subjects)
-    return {
-        "recalls": recalls,
-        "pres_itemnos": presentations,
-        "cue_clips": cues,
-        "_should_tabulate": should_tab,
-        "subject": subjects,
-        "listLength": jnp.full(n, presentations.shape[1]),
-    }
+from jaxcmr.helpers import make_dataset
 
 
 # ---- Tabulation: no cue → skipped ----
@@ -98,7 +77,7 @@ class TestCueCenteredLagrankIntegration:
             [3, 2, 1, 0],
         ])
         should_tab = recalls > 0
-        return _make_dataset(recalls, pres, cues, should_tab)
+        return {**make_dataset(recalls, pres), "cue_clips": cues, "_should_tabulate": should_tab}
 
     def test_returns_1d(self, dataset):
         """cue_centered_lagrank returns (n_trials,)."""
@@ -140,7 +119,7 @@ class TestSubjectCueCenteredLagrank:
         ])
         should_tab = recalls > 0
         subjects = jnp.array([0, 0, 1, 1])
-        dataset = _make_dataset(recalls, pres, cues, should_tab, subjects)
+        dataset = {**make_dataset(recalls, pres, subject=subjects), "cue_clips": cues, "_should_tabulate": should_tab}
         mask = jnp.ones(4, dtype=bool)
         result = subject_cue_centered_lagrank(dataset, mask, size=1)
         assert result.shape == (2,)
@@ -178,7 +157,7 @@ class TestPlotCueCenteredLagrank:
             [1, 2, 0, 0],
         ])
         should_tab = recalls > 0
-        dataset = _make_dataset(recalls, pres, cues, should_tab)
+        dataset = {**make_dataset(recalls, pres), "cue_clips": cues, "_should_tabulate": should_tab}
         mask = jnp.ones(2, dtype=bool)
         ax = plot_cue_centered_lagrank(
             dataset, mask, should_tabulate=should_tab, size=1, labels=["Test"]
@@ -206,7 +185,7 @@ class TestCueCenteredLagrankJIT:
             [1, 2, 0, 0],
         ])
         should_tab = recalls > 0
-        dataset = _make_dataset(recalls, pres, cues, should_tab)
+        dataset = {**make_dataset(recalls, pres), "cue_clips": cues, "_should_tabulate": should_tab}
         result_nojit = cue_centered_lagrank(dataset, size=1)
         result_jit = jit(cue_centered_lagrank, static_argnames=("size",))(
             dataset, size=1

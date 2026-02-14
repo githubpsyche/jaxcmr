@@ -25,34 +25,8 @@ from jaxcmr.analyses.lagrank import (
 )
 from jaxcmr.analyses.lagrank import test_lagrank as run_test_lagrank
 from jaxcmr.analyses.lagrank import test_lagrank_vs_comparison as run_test_comparison
+from jaxcmr.helpers import make_dataset
 from jaxcmr.typing import RecallDataset
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_dataset(recalls, presentations) -> RecallDataset:
-    """Wrap arrays into a RecallDataset dict."""
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials, _ = recalls.shape
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    }
-
-
-def _simple_dataset(recalls, list_length) -> RecallDataset:
-    """Shorthand for unique-item lists: presentations = [[1..L], ...]."""
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    n_trials = recalls.shape[0]
-    pres = jnp.tile(jnp.arange(1, list_length + 1, dtype=jnp.int32), (n_trials, 1))
-    return _make_dataset(recalls, pres)
 
 
 # ---------------------------------------------------------------------------
@@ -284,7 +258,7 @@ class TestLagrank:
         """
         recalls = [[1, 2, 3, 0], [3, 2, 1, 0], [1, 3, 2, 0]]
         pres = [[1, 2, 3, 4]] * 3
-        ds = _make_dataset(recalls, pres)
+        ds = make_dataset(recalls, pres)
         factors = lagrank(ds, size=1)
         assert factors.shape == (3,)
         assert all(jnp.isfinite(factors))
@@ -309,7 +283,7 @@ class TestAgreement:
             [5, 4, 3, 2, 1],
         ]
         list_length = 5
-        ds = _simple_dataset(recalls, list_length)
+        ds = make_dataset(recalls, listLength=list_length)
         trials = jnp.asarray(recalls, dtype=jnp.int32)
 
         simple_factors = simple_lagrank(trials, list_length)
@@ -332,7 +306,7 @@ class TestJIT:
         Then: results are allclose
         Why this matters: JIT is the expected usage pattern.
         """
-        ds = _simple_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], 4)
+        ds = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
         eager = lagrank(ds, size=1)
         compiled = jit(lagrank, static_argnames=("size",))(ds, size=1)
         np.testing.assert_allclose(
@@ -450,7 +424,7 @@ class TestPlotLagrank:
         Then: returns matplotlib Axes
         Why this matters: plotting API must be consistent.
         """
-        ds = _simple_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], 4)
+        ds = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
         mask = jnp.ones(2, dtype=bool)
         ax = plot_lagrank(ds, mask, size=1)
         assert isinstance(ax, matplotlib.axes.Axes)
@@ -463,8 +437,8 @@ class TestPlotLagrank:
         Then: returns Axes without error
         Why this matters: multi-condition comparison is common.
         """
-        ds1 = _simple_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], 4)
-        ds2 = _simple_dataset([[2, 1, 3, 0], [1, 3, 2, 0]], 4)
+        ds1 = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
+        ds2 = make_dataset([[2, 1, 3, 0], [1, 3, 2, 0]], listLength=4)
         masks = [jnp.ones(2, dtype=bool), jnp.ones(2, dtype=bool)]
         ax = plot_lagrank([ds1, ds2], masks, labels=["A", "B"], size=1)
         assert isinstance(ax, matplotlib.axes.Axes)

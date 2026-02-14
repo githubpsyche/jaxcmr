@@ -13,23 +13,7 @@ from jaxcmr.analyses.backreplagrank import (
     plot_back_rep_lagrank,
 )
 from jaxcmr.analyses.replagrank import replagrank
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls, presentations, subjects=None) -> RecallDataset:
-    recalls = jnp.array(recalls)
-    presentations = jnp.array(presentations)
-    n = recalls.shape[0]
-    if subjects is None:
-        subjects = jnp.zeros(n, dtype=int)
-    else:
-        subjects = jnp.array(subjects)
-    return {
-        "recalls": recalls,
-        "pres_itemnos": presentations,
-        "subject": subjects,
-        "listLength": jnp.full(n, presentations.shape[1]),
-    }
+from jaxcmr.helpers import make_dataset
 
 
 def _rep_dataset():
@@ -45,7 +29,7 @@ def _rep_dataset():
         [3, 1, 2, 4, 5, 0, 0, 0],
         [1, 3, 5, 2, 0, 0, 0, 0],
     ])
-    return _make_dataset(recalls, pres, subjects=[0, 0, 1, 1])
+    return make_dataset(recalls, pres, subject=jnp.array([0, 0, 1, 1]))
 
 
 class TestReversalChangesResults:

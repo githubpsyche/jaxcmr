@@ -5,20 +5,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from jaxcmr.analyses import srac
+from jaxcmr.helpers import make_dataset
 from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDataset:
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials = recalls.shape[0]
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    } # type: ignore
 
 
 def test_identifies_recalled_positions_when_single_trial():
@@ -61,7 +49,7 @@ def test_averages_accuracy_when_multiple_trials():
     # Arrange / Given
     recalls = jnp.array([[1, 2, 0], [1, 0, 3]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
 
     # Act / When
     result = srac.srac(dataset)
@@ -124,7 +112,7 @@ def test_srac_with_repetition():
     # study pos 1: item 2, recalled item 2 → correct
     # study pos 2: item 1, recalled item 1 (again) → correct
     expected = jnp.array([1.0, 1.0, 1.0])
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
     result = srac.srac(dataset)
     assert jnp.allclose(result, expected), result
 
@@ -137,7 +125,7 @@ def test_srac_with_no_recalls():
         ]
     )
     expected = jnp.array([0.0, 0.0, 0.0])
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
     result = srac.srac(dataset)
     assert jnp.allclose(result, expected), result
 
@@ -146,7 +134,7 @@ def test_srac_with_some_missing_and_errors():
     presentations = jnp.array([[1, 1, 2, 2]])
     recalls = jnp.array([[1, 1, 3, 0]])
     expected = jnp.array([1.0, 1.0, 1.0, 0])
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
     result = srac.srac(dataset)
     assert jnp.allclose(result, expected), result
 
@@ -174,6 +162,6 @@ def test_srac_deflates_accuracy_by_including_padded_positions():
     # Correct behavior: (1)/1 = 1.0
     expected = jnp.array([1.0, 1.0, 0.0])  # strict SRAC: don't penalize for padding
 
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
     result = srac.srac(dataset)
     assert jnp.allclose(result, expected), f"Expected {expected}, got {result}"

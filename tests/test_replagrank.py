@@ -17,24 +17,7 @@ from jaxcmr.analyses.replagrank import (
     test_first_second_bias as run_test_bias,
     RepLagRankTestResult,
 )
-from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls, presentations, subjects=None) -> RecallDataset:
-    """Wrap arrays into a RecallDataset dict."""
-    recalls = jnp.array(recalls)
-    presentations = jnp.array(presentations)
-    n = recalls.shape[0]
-    if subjects is None:
-        subjects = jnp.zeros(n, dtype=int)
-    else:
-        subjects = jnp.array(subjects)
-    return {
-        "recalls": recalls,
-        "pres_itemnos": presentations,
-        "subject": subjects,
-        "listLength": jnp.full(n, presentations.shape[1]),
-    }
+from jaxcmr.helpers import make_dataset
 
 
 # ---- Tabulation: non-repeated items are skipped ----
@@ -101,7 +84,7 @@ class TestReplagrankIntegration:
             [1, 2, 3, 5, 0, 0, 0, 0],
             [3, 1, 2, 4, 5, 0, 0, 0],
         ])
-        return _make_dataset(recalls, pres)
+        return make_dataset(recalls, pres)
 
     def test_replagrank_returns_shape(self, dataset):
         """replagrank returns (n_trials, size)."""
@@ -136,7 +119,7 @@ class TestSubjectRepLagrank:
             [1, 3, 5, 2, 0, 0, 0, 0],
         ])
         subjects = jnp.array([0, 0, 1, 1])
-        dataset = _make_dataset(recalls, pres, subjects)
+        dataset = make_dataset(recalls, pres, subject=subjects)
         mask = jnp.ones(4, dtype=bool)
         result = subject_rep_lagrank(dataset, mask, min_lag=2, size=2)
         assert result.shape == (2, 2)
@@ -178,7 +161,7 @@ class TestPlotRepLagrank:
             [1, 3, 2, 4, 0, 0, 0, 0],
             [1, 2, 3, 5, 0, 0, 0, 0],
         ])
-        dataset = _make_dataset(recalls, pres)
+        dataset = make_dataset(recalls, pres)
         mask = jnp.ones(2, dtype=bool)
         ax = plot_rep_lagrank(dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"])
         from matplotlib.axes import Axes
@@ -199,7 +182,7 @@ class TestReplagrankJIT:
             [1, 3, 2, 4, 0, 0, 0, 0],
             [1, 2, 3, 5, 0, 0, 0, 0],
         ])
-        dataset = _make_dataset(recalls, pres)
+        dataset = make_dataset(recalls, pres)
         result_nojit = replagrank(dataset, min_lag=2, size=2)
         result_jit = jit(replagrank, static_argnames=("min_lag", "size"))(
             dataset, min_lag=2, size=2

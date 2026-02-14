@@ -4,20 +4,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from jaxcmr.analyses import spc
+from jaxcmr.helpers import make_dataset
 from jaxcmr.typing import RecallDataset
-
-
-def _make_dataset(recalls: jnp.ndarray, presentations: jnp.ndarray) -> RecallDataset:
-    recalls = jnp.asarray(recalls, dtype=jnp.int32)
-    presentations = jnp.asarray(presentations, dtype=jnp.int32)
-    n_trials, _ = recalls.shape
-    list_length = presentations.shape[1]
-    return {
-        "subject": jnp.ones((n_trials, 1), dtype=jnp.int32),
-        "listLength": jnp.full((n_trials, 1), list_length, dtype=jnp.int32),
-        "pres_itemnos": presentations,
-        "recalls": recalls,
-    } # type: ignore
 
 
 def test_returns_recall_rates_when_lists_are_uniform():
@@ -58,7 +46,7 @@ def test_returns_recall_rates_when_using_presentations():
     # Arrange / Given
     recalls = jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32)
     presentations = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
-    dataset = _make_dataset(recalls, presentations)
+    dataset = make_dataset(recalls, presentations)
 
     # Act / When
     rates = spc.spc(dataset, size=1)
