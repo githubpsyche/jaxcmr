@@ -10,12 +10,28 @@ from jaxcmr.simulation import (
 )
 
 
+class _FakeContext:
+    """Minimal context satisfying the Context protocol."""
+
+    def __init__(self, size: int = 3):
+        self.size = size
+        self.state = jnp.zeros(size)
+        self.initial_state = jnp.zeros(size)
+
+    def integrate(self, context_input, drift_rate):  # noqa: D401
+        return self
+
+
 class _FakeMemorySearch:
     """Minimal in-memory implementation of the MemorySearch protocol for tests."""
 
     def __init__(self, item_count: int = 3, active: bool = True):
         self.item_count = item_count
         self.is_active = jnp.array(active)
+        self.recallable = jnp.ones(item_count, dtype=bool)
+        self.recall_total = jnp.array(0, dtype=int)
+        self.study_index = jnp.array(item_count, dtype=int)
+        self.context = _FakeContext(item_count)
 
     # Study/retrieval transitions
     def experience(self, choice):  # noqa: D401 - protocol impl
@@ -147,7 +163,11 @@ def test_reindexes_recalls_when_given_within_list_positions():
     }
 
     # Act / When
-    sim = MemorySearchSimulator(_FakeModelFactory, dataset, features=None)
+    sim = MemorySearchSimulator(
+        _FakeModelFactory,  # type: ignore[arg-type]
+        dataset,  # type: ignore[arg-type]
+        features=None,
+    )
 
     # Assert / Then
     assert sim.present_lists.shape == (1, 3)
@@ -185,8 +205,8 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
 
     # Act / When
     out = simulate_h5_from_h5(
-        _FakeModelFactory,
-        dataset,
+        _FakeModelFactory,  # type: ignore[arg-type]
+        dataset,  # type: ignore[arg-type]
         features=None,
         parameters=params,
         trial_mask=mask,
@@ -232,8 +252,8 @@ def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
 
     # Act / When
     out = simulate_h5_from_h5(
-        _IndexedFactory,
-        dataset,
+        _IndexedFactory,  # type: ignore[arg-type]
+        dataset,  # type: ignore[arg-type]
         features=None,
         parameters=params,
         trial_mask=mask,
@@ -277,8 +297,8 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
 
     # Act / When
     sims = parameter_shifted_simulate_h5_from_h5(
-        _IndexedFactory,
-        dataset,
+        _IndexedFactory,  # type: ignore[arg-type]
+        dataset,  # type: ignore[arg-type]
         features=None,
         parameters=params,
         trial_mask=mask,
@@ -318,7 +338,11 @@ def test_replicates_selected_trials_when_preallocating_dataset():
     mask = jnp.array([True, False])
 
     # Act / When
-    out = preallocate_for_h5_dataset(data, mask, experiment_count=2)
+    out = preallocate_for_h5_dataset(
+        data,  # type: ignore[arg-type]
+        mask,
+        experiment_count=2,
+    )
 
     # Assert / Then
     assert out["subject"].shape[0] == 2

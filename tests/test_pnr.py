@@ -1,11 +1,8 @@
-import pytest
-
-jnp = pytest.importorskip("jax.numpy")
+import jax.numpy as jnp
 
 from jaxcmr.analyses.pnr import (
     fixed_pres_pnr,
     available_recalls,
-    conditional_fixed_pres_pnr,
     pnr,
 )
 from jaxcmr.helpers import make_dataset

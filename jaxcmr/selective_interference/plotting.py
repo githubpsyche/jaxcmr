@@ -21,6 +21,8 @@ __all__ = [
     "plot_interference_spc",
     "plot_context_trajectory",
     "plot_summary_dv",
+    "plot_sweep",
+    "add_filler_boundary",
 ]
 
 
@@ -223,3 +225,156 @@ def plot_summary_dv(
     _style_ax(ax)
     fig.tight_layout()
     return fig, ax
+
+
+def add_filler_boundary(
+    ax: Axes,
+    n_film: int,
+    n_interference: int,
+    n_filler: int,
+    n_presented: int,
+    *,
+    n_break: int = 0,
+    show_fillers: bool = True,
+) -> None:
+    """Add filler zone boundary and relabel zones on an SPC axes.
+
+    Parameters
+    ----------
+    ax : Axes
+        Matplotlib axes with an existing SPC plot.
+    n_film : int
+        Number of film items.
+    n_interference : int
+        Number of interference items.
+    n_filler : int
+        Number of filler items.
+    n_presented : int
+        Total presented positions (after remapping).
+    n_break : int
+        Number of break items shown (0 = no break zone).
+    show_fillers : bool
+        Whether to draw the filler boundary.
+
+    Returns
+    -------
+    None
+
+    """
+    if not show_fillers or n_filler <= 0:
+        return
+    filler_start = n_film + n_break + n_interference + 0.5
+    ax.axvline(
+        x=filler_start, color="blue", linewidth=1.5, linestyle=":", alpha=0.7
+    )
+    for txt in list(ax.texts):
+        txt.remove()
+    film_end_frac = (n_film + 0.5) / n_presented
+    filler_start_frac = filler_start / n_presented
+    film_x = film_end_frac / 2
+    filler_x = (filler_start_frac + 1) / 2
+    if n_break > 0:
+        break_end_frac = (n_film + n_break + 0.5) / n_presented
+        break_x = (film_end_frac + break_end_frac) / 2
+        interf_x = (break_end_frac + filler_start_frac) / 2
+        ax.text(film_x, 0.97, "Film", ha="center", va="top",
+                fontsize=12, fontweight="bold", transform=ax.transAxes)
+        ax.text(break_x, 0.97, "Break", ha="center", va="top",
+                fontsize=12, fontweight="bold", color="gray",
+                transform=ax.transAxes)
+        ax.text(interf_x, 0.97, "Interference", ha="center", va="top",
+                fontsize=12, fontweight="bold", color="red",
+                transform=ax.transAxes)
+    else:
+        interf_x = (film_end_frac + filler_start_frac) / 2
+        ax.text(film_x, 0.97, "Film", ha="center", va="top",
+                fontsize=12, fontweight="bold", transform=ax.transAxes)
+        ax.text(interf_x, 0.97, "Interference", ha="center", va="top",
+                fontsize=12, fontweight="bold", color="red",
+                transform=ax.transAxes)
+    ax.text(filler_x, 0.97, "Filler", ha="center", va="top",
+            fontsize=12, fontweight="bold", color="blue",
+            transform=ax.transAxes)
+
+
+def plot_sweep(
+    spcs: Sequence[ArrayLike],
+    stats: Sequence[tuple[float, float, float]],
+    sweep_values: ArrayLike,
+    *,
+    n_film: int,
+    xlabel: str,
+    sweep_title: Optional[str] = None,
+    labels: Optional[Sequence[str]] = None,
+    fmt: str = "{:.2f}",
+    n_break: int = 0,
+    n_presented: Optional[int] = None,
+    n_interference: Optional[int] = None,
+    n_filler: Optional[int] = None,
+    show_fillers: bool = True,
+    film_recalled_ylim: Optional[tuple[float, float]] = None,
+) -> Figure:
+    """Two-panel figure: SPC (left) + film-recalled DV (right).
+
+    Parameters
+    ----------
+    spcs : Sequence[ArrayLike]
+        SPC curves, one per sweep value.
+    stats : Sequence[tuple[float, float, float]]
+        ``(mean, ci_lo, ci_hi)`` per sweep value.
+    sweep_values : ArrayLike
+        Swept parameter values.
+    n_film : int
+        Number of film items.
+    xlabel : str
+        X-axis label for the DV panel.
+    sweep_title : str, optional
+        Title for the SPC panel.
+    labels : Sequence[str], optional
+        Legend labels; defaults to formatted sweep values.
+    fmt : str
+        Format string for auto-generated labels.
+    n_break : int
+        Number of break items shown.
+    n_presented : int, optional
+        Total presented positions. Inferred from SPC length
+        if not given.
+    n_interference : int, optional
+        Number of interference items (for filler boundary).
+    n_filler : int, optional
+        Number of filler items (for filler boundary).
+    show_fillers : bool
+        Whether to draw the filler zone boundary.
+    film_recalled_ylim : tuple[float, float], optional
+        Fixed y-axis limits for the DV panel.
+
+    Returns
+    -------
+    Figure
+
+    """
+    if labels is None:
+        labels = [fmt.format(v) for v in sweep_values]
+    if n_presented is None:
+        n_presented = len(spcs[0])
+    means, ci_lo, ci_hi = zip(*stats)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    plot_interference_spc(spcs, labels, n_film, n_break=n_break, ax=axes[0])
+    if n_interference is not None and n_filler is not None:
+        add_filler_boundary(
+            axes[0], n_film, n_interference, n_filler, n_presented,
+            n_break=n_break, show_fillers=show_fillers,
+        )
+    if sweep_title:
+        axes[0].set_title(sweep_title, fontsize=16)
+
+    plot_summary_dv(
+        sweep_values, means, ci_lo, ci_hi, xlabel=xlabel, ax=axes[1]
+    )
+    axes[1].set_title("Film Items Recalled", fontsize=16)
+    if film_recalled_ylim is not None:
+        axes[1].set_ylim(*film_recalled_ylim)
+    plt.tight_layout()
+    plt.show()
+    return fig

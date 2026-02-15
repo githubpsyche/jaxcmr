@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from jax import jit
 from jax import numpy as jnp
+from matplotlib.axes import Axes
 
 from jaxcmr.analyses.serialreplagrank import (
     SerialRepLagRankTabulation,
@@ -14,7 +15,6 @@ from jaxcmr.analyses.serialreplagrank import (
     subject_serial_rep_lagrank,
     plot_serial_rep_lagrank,
     test_serial_rep_lagrank_vs_control as run_test_vs_control,
-    test_first_second_bias as run_test_bias,
     SerialRepLagRankTestResult,
 )
 from jaxcmr.helpers import make_dataset
@@ -168,7 +168,6 @@ class TestPlotSerialRepLagrank:
         ax = plot_serial_rep_lagrank(
             dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"]
         )
-        from matplotlib.axes import Axes
         assert isinstance(ax, Axes)
 
 

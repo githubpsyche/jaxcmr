@@ -209,7 +209,7 @@ def test_builds_rows_aligned_to_mixed_trials_per_subject():
 
     # Act / When
     ctrl = make_control_dataset(
-        data=data,
+        data=data,  # type: ignore[arg-type]
         mixed_query="data['list_type'].flatten() == 1",
         control_query="data['list_type'].flatten() == 0",
         n_shuffles=1,
@@ -242,7 +242,7 @@ def test_toggles_repeated_recalls_removal(remove: bool):
 
     # Act / When
     ctrl = make_control_dataset(
-        data=data,
+        data=data,  # type: ignore[arg-type]
         mixed_query="data['list_type'].flatten() == 1",
         control_query="data['list_type'].flatten() == 0",
         n_shuffles=2,

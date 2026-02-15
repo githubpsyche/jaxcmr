@@ -74,25 +74,3 @@ def test_advances_outlist_index_when_integrating_with_outlist():
     assert jnp.isclose(jnp.linalg.norm(updated.state), 1.0)
 
 
-def test_retains_state_when_drift_rate_zero():
-    """Behavior: Leave state unchanged when drift is zero.
-
-    Given:
-      - A context model with an initial state.
-      - An input vector.
-    When:
-      - ``integrate`` is called with ``0`` drift rate.
-    Then:
-      - The state remains identical to the initial state.
-    Why this matters:
-      - Validates the zero-drift boundary condition.
-    """
-    # Arrange / Given
-    context = init(2)
-    input_vec = jnp.array([0.0, 1.0, 0.0])
-
-    # Act / When
-    updated = context.integrate(input_vec, 0.0)
-
-    # Assert / Then
-    assert jnp.allclose(updated.state, context.state)

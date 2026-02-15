@@ -16,9 +16,7 @@ P(recall repeated item | mixed cueing).
 """
 
 import jax.numpy as jnp
-import pytest
 from jaxcmr.analyses.compound_cueing_crp import (
-    CompoundCueingTabulation,
     tabulate_trial,
     compound_cueing_crp,
 )

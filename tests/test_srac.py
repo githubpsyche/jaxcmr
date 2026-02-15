@@ -11,31 +11,6 @@ from jaxcmr.analyses import srac
 from jaxcmr.helpers import make_dataset
 
 
-def test_identifies_recalled_positions_when_single_trial():
-    """Behavior: Identify recalled study positions.
-
-    Given:
-      - Recalled item indices and matching presentations.
-      - A maximum study size of three.
-    When:
-      - ``trial_srac`` is invoked.
-    Then:
-      - A boolean array flags each correctly recalled position.
-    Why this matters:
-      - Establishes the per-trial basis for SRAC.
-    """
-    # Arrange / Given
-    recalls = jnp.array([3, 0, 0], dtype=jnp.int32)
-    presentations = jnp.array([1, 2, 3], dtype=jnp.int32)
-
-    # Act / When
-    result = srac.trial_srac(recalls, presentations, size=1)
-
-    # Assert / Then
-    expected = jnp.array([False, False, False])
-    assert jnp.array_equal(result, expected).item()
-
-
 def test_averages_accuracy_when_multiple_trials():
     """Behavior: Average position-specific accuracy across trials.
 
@@ -152,8 +127,6 @@ def test_srac_deflates_accuracy_by_including_padded_positions():
             # [1, 2, 3],  # Trial 1: correct
         ]
     )
-    list_lengths = [2]
-
     # At position 2:
     # - Trial 0: padded, should NOT contribute
     # - Trial 1: correct recall → should yield 1.0

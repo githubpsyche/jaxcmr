@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from jax import jit
 from jax import numpy as jnp
+from matplotlib.axes import Axes
 
 from jaxcmr.analyses.replagrank import (
     RepLagRankTabulation,
@@ -164,7 +165,6 @@ class TestPlotRepLagrank:
         dataset = make_dataset(recalls, pres)
         mask = jnp.ones(2, dtype=bool)
         ax = plot_rep_lagrank(dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"])
-        from matplotlib.axes import Axes
         assert isinstance(ax, Axes)
 
 

@@ -1,3 +1,7 @@
+import matplotlib
+
+matplotlib.use("Agg", force=True)
+
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes

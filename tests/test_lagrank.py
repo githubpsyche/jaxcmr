@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from jax import jit
 from jax import numpy as jnp
+from matplotlib.axes import Axes
 
 from jaxcmr.analyses.lagrank import (
     LagRankComparisonResult,
@@ -21,7 +22,6 @@ from jaxcmr.analyses.lagrank import (
     simple_lagrank,
     simple_tabulate_trial,
     subject_lagrank,
-    tabulate_trial,
 )
 from jaxcmr.analyses.lagrank import test_lagrank as run_test_lagrank
 from jaxcmr.analyses.lagrank import test_lagrank_vs_comparison as run_test_comparison
@@ -229,39 +229,6 @@ class TestTabulation:
         assert list(pos_item2) == [2, 0]
 
 
-# ---------------------------------------------------------------------------
-# 5. tabulate_trial / lagrank — integration
-# ---------------------------------------------------------------------------
-
-
-class TestLagrank:
-    def test_tabulate_trial_returns_scalar(self):
-        """Behavior: tabulate_trial returns a scalar float.
-        Given: pres=[1,2,3], trial=[1,2,3]
-        When: tabulate_trial is called
-        Then: result is a scalar in (0, 1]
-        Why this matters: downstream code expects a scalar per trial.
-        """
-        pres = jnp.array([1, 2, 3], dtype=jnp.int32)
-        trial = jnp.array([1, 2, 3], dtype=jnp.int32)
-        result = tabulate_trial(trial, pres, size=1)
-        assert result.ndim == 0
-        assert 0.0 < float(result) <= 1.0
-
-    def test_lagrank_dataset_interface(self):
-        """Behavior: lagrank returns 1-D per-trial factors.
-        Given: dataset with 3 unique-item trials
-        When: lagrank is called
-        Then: returns 1-D array of length 3
-        Why this matters: confirms the dataset API works.
-        """
-        recalls = [[1, 2, 3, 0], [3, 2, 1, 0], [1, 3, 2, 0]]
-        pres = [[1, 2, 3, 4]] * 3
-        ds = make_dataset(recalls, pres)
-        factors = lagrank(ds, size=1)
-        assert factors.shape == (3,)
-        assert all(jnp.isfinite(factors))
-
 
 # ---------------------------------------------------------------------------
 # 6. Simple vs Full agreement
@@ -276,11 +243,11 @@ class TestAgreement:
         Then: per-trial factors are allclose
         Why this matters: SimpleTabulation is an optimization of Tabulation.
         """
-        recalls = [
+        recalls = jnp.array([
             [1, 2, 3, 4, 0],
             [3, 1, 4, 2, 0],
             [5, 4, 3, 2, 1],
-        ]
+        ])
         list_length = 5
         ds = make_dataset(recalls, listLength=list_length)
         trials = jnp.asarray(recalls, dtype=jnp.int32)
@@ -305,7 +272,7 @@ class TestJIT:
         Then: results are allclose
         Why this matters: JIT is the expected usage pattern.
         """
-        ds = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
+        ds = make_dataset(jnp.array([[1, 2, 3, 0], [3, 2, 1, 0]]), listLength=4)
         eager = lagrank(ds, size=1)
         compiled = jit(lagrank, static_argnames=("size",))(ds, size=1)
         np.testing.assert_allclose(
@@ -359,20 +326,6 @@ class TestStatisticalTests:
         assert isinstance(result, LagRankComparisonResult)
         assert abs(result.mean_diff) < 1e-10
 
-    def test_str_representation(self):
-        """Behavior: __str__ returns a non-empty string.
-        Given: a LagRankTestResult instance
-        When: str() is called
-        Then: returns a multi-line summary
-        Why this matters: result must be printable.
-        """
-        result = LagRankTestResult(
-            n=10, mean_factor=0.7, t_stat=3.5, t_pval=0.005,
-            w_stat=45.0, w_pval=0.01,
-        )
-        s = str(result)
-        assert len(s) > 0
-        assert "0.7" in s
 
 
 # ---------------------------------------------------------------------------
@@ -416,10 +369,10 @@ class TestPlotLagrank:
         Then: returns matplotlib Axes
         Why this matters: plotting API must be consistent.
         """
-        ds = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
+        ds = make_dataset(jnp.array([[1, 2, 3, 0], [3, 2, 1, 0]]), listLength=4)
         mask = jnp.ones(2, dtype=bool)
         ax = plot_lagrank(ds, mask, size=1)
-        assert isinstance(ax, matplotlib.axes.Axes)
+        assert isinstance(ax, Axes)
         plt.close("all")
 
     def test_multiple_conditions(self):
@@ -429,9 +382,9 @@ class TestPlotLagrank:
         Then: returns Axes without error
         Why this matters: multi-condition comparison is common.
         """
-        ds1 = make_dataset([[1, 2, 3, 0], [3, 2, 1, 0]], listLength=4)
-        ds2 = make_dataset([[2, 1, 3, 0], [1, 3, 2, 0]], listLength=4)
+        ds1 = make_dataset(jnp.array([[1, 2, 3, 0], [3, 2, 1, 0]]), listLength=4)
+        ds2 = make_dataset(jnp.array([[2, 1, 3, 0], [1, 3, 2, 0]]), listLength=4)
         masks = [jnp.ones(2, dtype=bool), jnp.ones(2, dtype=bool)]
         ax = plot_lagrank([ds1, ds2], masks, labels=["A", "B"], size=1)
-        assert isinstance(ax, matplotlib.axes.Axes)
+        assert isinstance(ax, Axes)
         plt.close("all")

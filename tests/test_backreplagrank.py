@@ -4,8 +4,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 import numpy as np
-from jax import jit
 from jax import numpy as jnp
+from matplotlib.axes import Axes
 
 from jaxcmr.analyses.backreplagrank import (
     backreplagrank,
@@ -72,5 +72,4 @@ class TestPlotBackRepLagrank:
         dataset = _rep_dataset()
         mask = jnp.ones(4, dtype=bool)
         ax = plot_back_rep_lagrank(dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"])
-        from matplotlib.axes import Axes
         assert isinstance(ax, Axes)

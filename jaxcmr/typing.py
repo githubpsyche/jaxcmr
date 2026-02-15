@@ -215,7 +215,6 @@ class MemorySearch(Protocol):
     recallable: Bool[Array, " item_count"]
     recall_total: Integer[Array, ""]
     study_index: Integer[Array, ""]
-    context: Context
 
     def experience(self, choice: Int_) -> "MemorySearch":
         """Returns model after experiencing the specified study item.
@@ -253,6 +252,7 @@ class MemorySearch(Protocol):
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
         """Return probabilities of all possible retrieval events."""
         ...
+
 
 class ContextCreateFn(Protocol):
     """Callable that returns a context instance."""

@@ -54,8 +54,8 @@ def test_preserves_recalls_when_item_ids_match_canonical_positions():
     """
     # Arrange / Given
     dataset = make_dataset(
-        recalls=[[1, 3, 2]],  # canonical item IDs == serial positions
-        pres_itemnos=[[1, 2, 3]],
+        recalls=jnp.array([[1, 3, 2]]),  # canonical item IDs == serial positions
+        pres_itemnos=jnp.array([[1, 2, 3]]),
         listLength=3,
     )
 
@@ -83,8 +83,8 @@ def test_preserves_recalls_when_already_serial_positions():
     """
     # Arrange / Given
     dataset = make_dataset(
-        recalls=[[2, 1, 3]],  # serial positions
-        pres_itemnos=[[1, 2, 3]],
+        recalls=jnp.array([[2, 1, 3]]),  # serial positions
+        pres_itemnos=jnp.array([[1, 2, 3]]),
         listLength=3,
     )
 
@@ -117,15 +117,15 @@ def test_predict_trial_returns_positive_probabilities_when_single_trial():
     """
     # Arrange / Given
     dataset = make_dataset(
-        recalls=[[1, 2, 0]],
-        pres_itemnos=[[1, 2, 3]],
+        recalls=jnp.array([[1, 2, 0]]),
+        pres_itemnos=jnp.array([[1, 2, 3]]),
         listLength=3,
     )
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
 
     # Act / When
-    probabilities = gen.predict_trial(0, params)
+    probabilities = gen.predict_trial(jnp.int32(0), params)
 
     # Assert / Then
     assert probabilities.shape == (3,)
@@ -146,8 +146,8 @@ def test_present_and_predict_loss_matches_manual_when_lists_identical():
       - Validates the helper after removal of the base path.
     """
     # Arrange / Given
-    presents = [[1, 2, 3], [1, 2, 3]]
-    recalls = [[1, 2, 0], [2, 3, 0]]
+    presents = jnp.array([[1, 2, 3], [1, 2, 3]])
+    recalls = jnp.array([[1, 2, 0], [2, 3, 0]])
     dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
@@ -160,7 +160,7 @@ def test_present_and_predict_loss_matches_manual_when_lists_identical():
         -jnp.sum(
             jnp.log(
                 jnp.stack(
-                    [gen.predict_trial(int(i), params) for i in trial_idx.tolist()],
+                    [gen.predict_trial(jnp.int32(i), params) for i in trial_idx.tolist()],
                     axis=0,
                 )
             )
@@ -187,8 +187,8 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
       - Confirms compatibility with vectorized differential evolution APIs.
     """
     # Arrange / Given
-    presents = [[1, 2, 3], [1, 2, 3]]
-    recalls = [[1, 2, 0], [2, 3, 0]]
+    presents = jnp.array([[1, 2, 3], [1, 2, 3]])
+    recalls = jnp.array([[1, 2, 0], [2, 3, 0]])
     dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
     gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
