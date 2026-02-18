@@ -12,7 +12,7 @@ phase-specific methods delegate to.
 
 """
 
-from typing import Mapping
+from typing import Callable, Mapping, Optional
 
 from jax import lax
 from jax import numpy as jnp
@@ -28,7 +28,6 @@ from jaxcmr.typing import (
     Float,
     Float_,
     Int_,
-    Integer,
     MemoryCreateFn,
     TerminationPolicyCreateFn,
 )
@@ -100,9 +99,6 @@ class PhasedCMR(Pytree):
         # Model state
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
-        self._mcf_learning_rate = exponential_primacy_decay(
-            jnp.arange(list_length), self.primacy_scale, self.primacy_decay
-        )
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
@@ -124,7 +120,9 @@ class PhasedCMR(Pytree):
         Float[Array, ""]
 
         """
-        return self._mcf_learning_rate[self.study_index]
+        return exponential_primacy_decay(
+            self.study_index, self.primacy_scale, self.primacy_decay
+        )
 
     # ── Shared encoding engine 
     
@@ -265,8 +263,8 @@ class PhasedCMR(Pytree):
 
     # ── Context operations ──────────────────────────────────────────
 
-    def reinstate_start_context(self) -> "PhasedCMR":
-        """Reinstate start-of-list context before reminder.
+    def start_reminders(self) -> "PhasedCMR":
+        """Transition to reminder phase.
 
         Returns
         -------
@@ -278,13 +276,13 @@ class PhasedCMR(Pytree):
         )
         return self.replace(context=new_context)
 
-    def remind(self, items: Integer[Array, " n_items"]) -> "PhasedCMR":
-        """Replay item context associations without learning.
+    def remind(self, choice: Int_) -> "PhasedCMR":
+        """Replay a single item's context association without learning.
 
         Parameters
         ----------
-        items : Integer[Array, " n_items"]
-            One-indexed items to reinstate.
+        choice : Int_
+            Index of item (1-indexed). 0 is ignored.
 
         Returns
         -------
@@ -292,13 +290,15 @@ class PhasedCMR(Pytree):
 
         """
 
-        def step(i, m):
-            item = m.items[items[i] - 1]
-            context_input = m.mfc.probe(item)
-            new_context = m.context.integrate(context_input, m.reminder_drift_rate)
-            return m.replace(context=new_context)
+        def _remind_item(self_inner):
+            item = self_inner.items[choice - 1]
+            context_input = self_inner.mfc.probe(item)
+            new_context = self_inner.context.integrate(
+                context_input, self_inner.reminder_drift_rate
+            )
+            return self_inner.replace(context=new_context)
 
-        return lax.fori_loop(0, items.size, step, self)
+        return lax.cond(choice == 0, lambda: self, lambda: _remind_item(self))
 
     # ── Retrieval ───────────────────────────────────────────────────
 
@@ -422,3 +422,43 @@ class PhasedCMR(Pytree):
                 ),
             )
         )
+
+
+def make_factory(
+    mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
+    mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
+    context_create_fn: ContextCreateFn = TemporalContext.init,
+    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+) -> Callable:
+    """Build a PhasedCMR factory compatible with prepare_sweep.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn, optional
+        Factory for item-to-context memory.
+    mcf_create_fn : MemoryCreateFn, optional
+        Factory for context-to-item memory.
+    context_create_fn : ContextCreateFn, optional
+        Factory for temporal context.
+    termination_policy_create_fn : TerminationPolicyCreateFn, optional
+        Factory for recall termination policy.
+
+    Returns
+    -------
+    Callable
+
+    """
+    def factory(
+        list_length: int,
+        parameters: Mapping[str, Float_],
+        connections: Optional[Float[Array, " n n"]] = None,
+    ) -> PhasedCMR:
+        return PhasedCMR(
+            list_length,
+            parameters,
+            mfc_create_fn=mfc_create_fn,
+            mcf_create_fn=mcf_create_fn,
+            context_create_fn=context_create_fn,
+            termination_policy_create_fn=termination_policy_create_fn,
+        )
+    return factory

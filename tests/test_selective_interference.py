@@ -1,9 +1,10 @@
-"""Tests for selective interference preparation pipeline."""
+"""Tests for selective interference model creation and composition."""
 
 import jax.numpy as jnp
+from jax import lax, vmap
 
 from jaxcmr.selective_interference.cmr import PhasedCMR
-from jaxcmr.selective_interference.preparation import prepare_all_subjects
+from jaxcmr.selective_interference.pipeline import configure_rates
 
 
 def _model_factory(list_length, parameters, _connections):
@@ -36,53 +37,39 @@ def _make_batched_params():
     return {k: jnp.full(_N_SUBJECTS, v) for k, v in _BASE_PARAMS.items()}
 
 
-def test_returns_batched_models_when_jit_compiled():
-    """Behavior: prepare_all_subjects produces one model per subject under JIT.
+def test_creates_batched_models_when_called():
+    """Behavior: vmap model construction produces one model per subject.
 
     Given:
       - Per-subject parameter arrays for 2 subjects
-      - Film and break item ID arrays
     When:
-      - prepare_all_subjects is called (JIT-compiled)
+      - Model factory is vmapped over params
     Then:
       - Returned model has batched leading dimension equal to n_subjects
-      - All study indices equal n_film + n_break (all items encoded)
-      - Context state is finite (no NaN/Inf from encoding or reminder)
+      - All study indices are 0 (no items encoded yet)
+      - Context state is finite
     Why this matters:
-      - Verifies JIT compilation + vmap over params dict works end-to-end
+      - Verifies vmap over params dict works for model construction
     """
     # Arrange / Given
     params = _make_batched_params()
-    film_items = jnp.arange(1, _N_FILM + 1)
-    break_items = jnp.arange(_N_FILM + 1, _N_FILM + _N_BREAK + 1)
 
     # Act / When
-    models = prepare_all_subjects(
-        params,
-        film_items,
-        break_items,
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        _LIST_LENGTH,
-        _model_factory,
-    )
+    models = vmap(lambda p: _model_factory(_LIST_LENGTH, p, None))(params)
 
     # Assert / Then
     assert models.study_index.shape == (_N_SUBJECTS,)
-    expected_study_count = _N_FILM + _N_BREAK
-    assert jnp.all(models.study_index == expected_study_count)
+    assert jnp.all(models.study_index == 0)
     assert jnp.all(jnp.isfinite(models.context.state))
 
 
-def test_context_differs_from_initial_when_prepared():
-    """Behavior: preparation changes context away from its initial state.
+def test_context_differs_from_initial_when_phases_composed():
+    """Behavior: composing phases changes context away from initial state.
 
     Given:
-      - Per-subject parameter arrays with nonzero drift rates
+      - Batched models with default rates configured
     When:
-      - prepare_all_subjects encodes film, break, and runs reminder
+      - Film, break, and reminder phases are composed via vmap
     Then:
       - Context state differs from the initial context state
     Why this matters:
@@ -90,33 +77,39 @@ def test_context_differs_from_initial_when_prepared():
     """
     # Arrange / Given
     params = _make_batched_params()
+    models = vmap(lambda p: _model_factory(_LIST_LENGTH, p, None))(params)
+    configured = configure_rates(models)
     film_items = jnp.arange(1, _N_FILM + 1)
     break_items = jnp.arange(_N_FILM + 1, _N_FILM + _N_BREAK + 1)
 
     # Act / When
-    models = prepare_all_subjects(
-        params,
-        film_items,
-        break_items,
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        _LIST_LENGTH,
-        _model_factory,
-    )
+    def _encode_through_reminder(m):
+        m = lax.fori_loop(
+            0, film_items.size,
+            lambda i, m: m.experience_film(film_items[i]), m,
+        )
+        m = lax.fori_loop(
+            0, break_items.size,
+            lambda i, m: m.experience_break(break_items[i]), m,
+        )
+        m = m.start_reminders()
+        return lax.fori_loop(
+            0, film_items.size, lambda i, m: m.remind(film_items[i]), m,
+        )
+
+    cached = vmap(_encode_through_reminder)(configured)
 
     # Assert / Then
-    assert not jnp.allclose(models.context.state, models.context.initial_state)
+    assert not jnp.allclose(cached.context.state, cached.context.initial_state)
 
 
-def test_film_and_break_items_are_recallable_when_prepared():
-    """Behavior: all film and break items are marked recallable after preparation.
+def test_film_and_break_items_are_recallable_when_composed():
+    """Behavior: all film and break items are marked recallable after encoding.
 
     Given:
       - 3 film items and 2 break items
     When:
-      - prepare_all_subjects encodes both phases
+      - Film and break phases are composed via vmap
     Then:
       - Recallable flags are True for film and break item indices
       - Recallable flags are False for unencoded item indices
@@ -125,24 +118,26 @@ def test_film_and_break_items_are_recallable_when_prepared():
     """
     # Arrange / Given
     params = _make_batched_params()
+    models = vmap(lambda p: _model_factory(_LIST_LENGTH, p, None))(params)
+    configured = configure_rates(models)
     film_items = jnp.arange(1, _N_FILM + 1)
     break_items = jnp.arange(_N_FILM + 1, _N_FILM + _N_BREAK + 1)
 
     # Act / When
-    models = prepare_all_subjects(
-        params,
-        film_items,
-        break_items,
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        jnp.float32(1.0),
-        _LIST_LENGTH,
-        _model_factory,
-    )
+    def _encode_film_and_break(m):
+        m = lax.fori_loop(
+            0, film_items.size,
+            lambda i, m: m.experience_film(film_items[i]), m,
+        )
+        return lax.fori_loop(
+            0, break_items.size,
+            lambda i, m: m.experience_break(break_items[i]), m,
+        )
+
+    cached = vmap(_encode_film_and_break)(configured)
 
     # Assert / Then
     encoded_count = _N_FILM + _N_BREAK
     for s in range(_N_SUBJECTS):
-        assert jnp.all(models.recallable[s, :encoded_count])
-        assert not jnp.any(models.recallable[s, encoded_count:])
+        assert jnp.all(cached.recallable[s, :encoded_count])
+        assert not jnp.any(cached.recallable[s, encoded_count:])

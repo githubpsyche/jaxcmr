@@ -106,10 +106,27 @@ class Paradigm:
         return jnp.arange(s, s + self.n_interference)
 
     @property
+    def break_extended_break_items(self) -> jax.Array:
+        """Break item IDs for the break-extended tier (n_break_max slots)."""
+        return jnp.arange(self.n_film + 1, self.n_film + self.n_break_max + 1)
+
+    @property
     def break_extended_filler_items(self) -> jax.Array:
         """Filler items in the break-extended tier."""
         s = self.n_film + self.n_break_max + self.n_interference + 1
         return jnp.arange(s, s + self.n_filler)
+
+    @property
+    def interference_extended_interference_items(self) -> jax.Array:
+        """Interference item IDs for the interference-extended tier."""
+        s = self.n_film + self.n_break + 1
+        return jnp.arange(s, s + self.n_interference_max)
+
+    @property
+    def filler_extended_filler_items(self) -> jax.Array:
+        """Filler item IDs for the filler-extended tier."""
+        s = self.n_film + self.n_break + self.n_interference + 1
+        return jnp.arange(s, s + self.n_filler_max)
 
 
 def make_extended_interference(paradigm: Paradigm, m: int) -> jax.Array:

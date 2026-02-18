@@ -2,6 +2,7 @@
 
 from .analysis import build_transition_masks, derive_cue_clips
 from .context_tracking import track_context_trajectory
+from .cmr import make_factory
 from .fitting import load_or_fit_params
 from .paradigm import (
     Paradigm,
@@ -10,7 +11,16 @@ from .paradigm import (
     make_extended_filler,
     make_extended_interference,
 )
-from .preparation import prepare_all_subjects
+from .pipeline import (
+    PreparedSweep,
+    batch_trial,
+    configure_rates,
+    film_recalled_stats,
+    prepare_sweep,
+    run_count_sweep,
+    run_sweep,
+    sweep_rngs,
+)
 from .remapping import (
     break_extended_remap,
     filler_extended_remap,
@@ -18,19 +28,12 @@ from .remapping import (
     remap_recalls,
     standard_remap,
 )
-from .sweep import (
-    batched_sweep,
-    film_recalled_stats,
-    run_sweep,
-    sweep_defaults,
-    sweep_rngs,
-)
 from .plotting import (
     add_filler_boundary,
+    light_to_dark_colors,
     plot_context_trajectory,
     plot_interference_spc,
     plot_summary_dv,
-    plot_sweep,
 )
 
 __all__ = [
@@ -38,9 +41,12 @@ __all__ = [
     "derive_cue_clips",
     "track_context_trajectory",
     "Paradigm",
-    "prepare_all_subjects",
-    "batched_sweep",
+    "PreparedSweep",
+    "prepare_sweep",
+    "run_count_sweep",
     "run_sweep",
+    "batch_trial",
+    "configure_rates",
     "sweep_rngs",
     "remap_recalls",
     "standard_remap",
@@ -49,14 +55,14 @@ __all__ = [
     "break_extended_remap",
     "film_recalled_stats",
     "load_or_fit_params",
+    "make_factory",
     "compute_n_presented",
     "make_extended_interference",
     "make_extended_break",
     "make_extended_filler",
-    "sweep_defaults",
     "plot_interference_spc",
     "plot_context_trajectory",
     "plot_summary_dv",
-    "plot_sweep",
     "add_filler_boundary",
+    "light_to_dark_colors",
 ]
