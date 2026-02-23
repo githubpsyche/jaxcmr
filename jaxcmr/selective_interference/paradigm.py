@@ -230,3 +230,33 @@ def compute_n_presented(
         + ni
         + (nf if show_fillers else 0)
     )
+
+
+def make_is_emotional(
+    paradigm: Paradigm,
+    film_emotional: bool = False,
+    interference_emotional: bool = False,
+) -> jax.Array:
+    """Build per-item emotional flag array for the standard tier.
+
+    Parameters
+    ----------
+    paradigm : Paradigm
+        Paradigm geometry.
+    film_emotional : bool
+        Whether film items are emotional (1.0).
+    interference_emotional : bool
+        Whether interference items are emotional (1.0).
+
+    Returns
+    -------
+    jax.Array
+
+    """
+    arr = jnp.zeros(paradigm.list_length)
+    if film_emotional:
+        arr = arr.at[:paradigm.n_film].set(1.0)
+    if interference_emotional:
+        start = paradigm.n_film + paradigm.n_break
+        arr = arr.at[start:start + paradigm.n_interference].set(1.0)
+    return arr

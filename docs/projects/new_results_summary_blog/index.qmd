@@ -1,0 +1,276 @@
+---
+title: "Why Doesn't 'Stronger' Mean 'More'? The Pure-List Puzzle in eCMR"
+author: "Jordan Gunn"
+date: today
+format:
+  html:
+    toc: true
+---
+
+## Introduction {#sec-intro}
+
+The emotional Context Maintenance and Retrieval model [eCMR, @talmi2019] gives emotional items a substantial boost in how strongly they bind to emotional source context during encoding.
+In *mixed* lists, where emotional and neutral items are interleaved, this boost produces a large recall advantage: emotional items are recalled 54.0% of the time versus 43.2% for neutral items, an 11 percentage-point gap.
+In *pure* lists, where all items are the same type, the boost has no detectable effect: pure emotional lists are recalled at 54.7%, pure neutral lists at 54.5%.
+Intuition suggests that if every item in a pure emotional list receives a uniform encoding advantage, the model should recall more of them, but @talmi2019 did not obtain this result.
+Why?
+
+The answer stems from how the model handles already-recalled items during the competitive accumulator recall process.
+eCMR recalls items through noisy races to a threshold, with lateral inhibition between all competitors, and the first item to cross threshold is recalled.
+Critically, already-recalled items do not leave the competition.
+The code resets them to just below threshold (0.95 out of 1.0), where they immediately re-cross, get reset again, and enter a rapid cycling loop that maintains near-maximal activation.
+While cycling, each recalled item exerts strong lateral inhibition on every other item still in the race, collectively slowing down the remaining unrecalled items.
+
+This inhibition-of-return (IOR) mechanism is absent from the paper's formal model specification.
+It describes the accumulator dynamics but says nothing about what happens to already-recalled items in subsequent races.
+The two predecessor models that eCMR inherits its accumulator from both describe their own IOR mechanisms explicitly, but they describe different ones: @sederberg2008 reset recalled items to zero, and @polyn2009 clamped them at threshold.
+eCMR's reset to 0.95 does not quite match either.
+The choice has large consequences, because recalled items that maintain high activation absorb much of any uniform encoding boost through increased lateral inhibition.
+
+In this report, we replicate simulations of the emotional list-composition effect from @talmi2019.
+We then sweep the emotional encoding boost from 1.0 to 3.0 while holding all other parameters fixed, performing the sweep twice: once using @sederberg2008's reset-to-zero rule for already-recalled items, and once using eCMR's reset-to-0.95.
+Under both regimes, a uniform encoding boost speeds up individual races and, if large enough, produces more recalls from pure emotional lists than from pure neutral lists.
+However, this pure gap grows roughly 2-3 times faster under @sederberg2008's reset-to-zero than under eCMR's reset-to-0.95.
+Nonetheless, across all parameter configurations considered, the pure gap is consistently weaker than the mixed-list gap between emotional and neutral items.
+
+These results confirm the characterization by @talmi2019 that eCMR systematically predicts a weaker — though not absent — emotional advantage in pure lists compared to mixed lists.
+But their encoding-level explanation does not address why the remaining absolute speedup fails to produce detectably more total recalls; that question is answered by the recall-stage IOR dynamics described above and excluded from the published specification.
+The mixed-list emotional advantage, by contrast, is robust across all implementations, because it operates through asymmetric within-race competition rather than total recall.
+
+## The Accumulator and Its Undocumented Mechanism {#sec-accumulator}
+
+We begin with a quick reminder of the details behind eCMR's recall loop.
+When a participant begins free recall, the model takes the current mental context (a combination of temporal and source context) and uses it to activate all studied items by probing the context-to-feature association matrix $M^{CF}$.
+
+Each item receives an input signal proportional to how well its stored context matches the current retrieval context.
+These signals feed into a leaky competitive accumulator [@usher2001], where each item starts at zero activation and accumulates toward a threshold ($\theta$ = 1.0):
+
+$$
+\Delta x_i = \left( f_i^{IN} - \kappa x_i - \lambda \sum_{j \neq i} x_j \right) \frac{dt}{\tau} + \eta \cdot \varepsilon \sqrt{\frac{dt}{\tau}}
+$$
+
+The input signal $f_i^{IN}$ drives accumulation upward.
+Leak ($\kappa$) pulls each item back toward zero.
+Noise ($\eta$) introduces stochasticity so that the strongest input does not always win the competition.
+Finally, lateral inhibition ($\lambda \sum x_j$) makes every item's activation push down on every other item.
+
+The first item to cross threshold is recalled, then the model reinstates that item's context.
+From there, a new pattern of input signals is computed, and a fresh race begins.
+This repeats until the 90-second recall period runs out.
+If a race fails to produce a threshold crossing before the remaining time is exhausted, that race consumes all remaining time and recall ends.
+
+### What happens to recalled items
+
+Already-recalled items do not leave the competition.
+They continue accumulating and competing in all subsequent races.
+This means the model needs a mechanism to prevent the same item from being recalled repeatedly.
+The @talmi2019 paper does not describe this mechanism.
+It states that a recalled item's context is reinstated and "the recall process in Equation 10 begins again," which is consistent with recalled items remaining in the competition, but says nothing about what happens to their activation — the operationally critical detail that determines how much lateral inhibition they exert in subsequent races.
+The term "inhibition of return" never appears.
+
+The code (`decision_accum.m`) provides an explicit answer.
+When a previously recalled item re-crosses threshold, it is reset to 0.95 (5% below threshold):
+
+``` matlab
+reset_val = thresh - thresh*0.05;   % = 0.95
+x(recalled & x >= thresh) = reset_val;
+```
+
+Because 0.95 is so close to threshold, the item immediately re-accumulates, re-crosses, and gets reset again, entering a rapid cycling loop between 0.95 and 1.0.
+While cycling, it maintains near-maximal activation and therefore contributes near-maximal lateral inhibition to every other item in the race.
+A single cycling item is a modest drag on the competition.
+Nine or ten of them collectively generate enough lateral inhibition to dramatically slow down the remaining unrecalled items.
+
+### The specification gap
+
+The two predecessor models that eCMR inherits its accumulator from both describe their repetition-prevention mechanisms explicitly, but they describe different ones.
+@sederberg2008 (TCM-A) reset recalled items to zero: "if an accumulator for a recalled item crosses threshold it is reset to zero without being recalled, thus precluding it from being repeated." @polyn2009 (CMR) clamped recalled items at threshold: "the threshold serves as an upper limit on their activity value, and they can not be recalled again." eCMR's reset to 0.95 matches neither, and a commented-out alternative in the code (`reset_val = thresh - thresh*0.30`, i.e., reset to 0.70) suggests the value was explored during development.
+
+| Model                  | Mechanism          | Reset value | Source             |
+|------------------------|--------------------|-------------|--------------------|
+| TCM-A [@sederberg2008] | Reset to zero      | 0.0         | Described in paper |
+| CMR [@polyn2009]       | Clamp at threshold | 1.0         | Described in paper |
+| eCMR [@talmi2019]      | Reset to 0.95      | 0.95        | **Code only**      |
+
+These three implementations produce very different lateral inhibition profiles.
+Items reset to 0 spend most of each race at low activation, contributing little inhibition.
+Items clamped at 1.0 sit permanently at maximal activation, contributing maximal inhibition.
+Items cycling between 0.95 and 1.0 contribute nearly as much inhibition as clamped items but with brief dips on each reset.
+The choice controls how much collective pressure recalled items exert on the remaining unrecalled items, with consequences for both total recall output and the pure-list prediction.
+
+## Why the Boost Should Help but Doesn't {#sec-chain}
+
+### The intuitive chain
+
+The 25% source-context encoding boost produces a 10% higher total input signal for pure emotional versus pure neutral items (0.252 vs. 0.229).
+In a controlled test with a single race and fresh starting conditions, a 10% input boost reliably speeds up threshold crossing by about 8%, saving roughly 620 ms per race.
+The natural prediction follows: if each race is faster, the model should complete more races within the 90-second budget, and pure emotional lists should have higher total recall than pure neutral lists.
+The first two links in this chain hold.
+The third does not.
+
+### Where the chain breaks
+
+At the model's production recall level (about 54%), roughly 9 items have been recalled when the terminal failure occurs.
+Every list ends with a single failed race that exhausts the remaining time.
+Those 9 recalled items are cycling near threshold under eCMR's IOR mechanism, collectively generating substantial lateral inhibition.
+To measure the severity of this barrier, we extracted the exact model state at the moment of terminal failure and replayed the race 500 times with fresh noise, both with and without the cycling recalled items present.
+
+With IOR active, an unrecalled item takes about 65 cycles to cross threshold.
+Without IOR (recalled items removed), it takes about 13 cycles, a 5-fold slowdown.
+Despite this slowdown, the terminal attempt would succeed about 73% of the time if the noise were drawn independently on each attempt.
+This means IOR alone cannot explain why recall stops at 54%.
+
+The second factor is a stochastic one.
+The model's code (`recall_CMR.m`) reseeds MATLAB's random number generator before each recall attempt.
+Because consecutive reseeds execute within the same millisecond, 92% of consecutive attempts receive identical seeds, producing identical noise matrices.
+Items that failed to cross threshold on the previous attempt face the same noise realization on the next one, eliminating the stochastic diversity that would otherwise let different items succeed on different attempts.
+The combination of IOR lateral inhibition (which slows threshold crossing) and RNG noise correlation (which prevents fresh attempts from producing different outcomes) jointly limits recall to the observed \~54%.
+
+The emod boost is negligible against this combined barrier.
+Scaling all inputs by 1.10x (the maximum the uniform boost provides) increases the probability that a terminal attempt succeeds by about 2.5 percentage points, from roughly 73% to 75.5%.
+Pure emotional and pure neutral lists respond identically to this scaling.
+The boost is real, but it is too small relative to the barriers to produce a detectable difference in total recall.
+
+## The Implementation Matters {#sec-implementation}
+
+### Three implementations, three outcomes
+
+Because @sec-accumulator established how the three published IOR implementations differ in their treatment of recalled items, we can test directly whether the choice matters for the model's predictions.
+We parameterized `decision_accum.m` to accept different reset values and ran the full Simulation 2 pipeline (7,200 lists per condition type) under each implementation, holding all other parameters at their original values ($\eta$ = 0.38):
+
+| Condition      | Reset value | Pure E (SE) | Pure N (SE) | Pure gap | Mean pure recall |
+|------------|------------|------------|------------|------------|------------|
+| eCMR (current) | 0.95        | 57.2% (0.2) | 56.9% (0.2) | +0.3 pp  | 57.1%            |
+| Sederberg      | 0.0         | 76.0% (0.2) | 74.5% (0.2) | +1.5 pp  | 75.3%            |
+| Polyn (clamp)  | 1.0         | 52.5% (0.2) | 52.0% (0.2) | +0.5 pp  | 52.3%            |
+
+The IOR reset value shifts total recall output by 23 percentage points across the range of published implementations (52% to 75%).
+It is a de facto model parameter that was never reported or fit, yet it has a larger effect on total recall than most parameters listed in the paper's Table 2.
+The pure-list gap also varies with the implementation, from +0.3 pp under eCMR to +1.5 pp under Sederberg.
+However, the Sederberg condition produces 75% recall, far above the empirical range of roughly 54-57%, so this comparison is not straightforward.
+
+### Sensitivity to the encoding boost
+
+The three-condition comparison above changes the IOR mechanism, but it also changes total recall (from 52% to 75%), making it hard to isolate which change matters for the pure-list prediction.
+A cleaner test holds everything fixed except the encoding boost itself: we swept the emod parameter (which scales the emotional source-context binding) from 1.0 (no boost) to 3.0 under both eCMR's and Sederberg's IOR implementations, with all other parameters at their original Simulation 2 values ($\eta$ = 0.38, 7,200 lists per condition type).
+
+**eCMR IOR (reset to 0.95):**
+
+| emod | Pure E (SE) | Pure N (SE) | Pure gap | Mixed E (SE) | Mixed N (SE) | Mixed gap |
+|------|-------------|-------------|----------|--------------|--------------|-----------|
+| 1.00 | 53.8% (0.2) | 53.8% (0.2) | +0.0 pp | 49.1% (0.3) | 48.1% (0.3) | +1.0 pp |
+| 1.25 | 54.1% (0.2) | 54.3% (0.2) | -0.2 pp | 53.8% (0.3) | 43.2% (0.3) | +10.6 pp |
+| 1.50 | 54.7% (0.2) | 53.9% (0.2) | +0.9 pp | 59.2% (0.3) | 38.2% (0.3) | +21.0 pp |
+| 1.75 | 55.0% (0.2) | 54.2% (0.2) | +0.8 pp | 63.8% (0.3) | 34.1% (0.3) | +29.7 pp |
+| 2.00 | 56.6% (0.2) | 54.3% (0.2) | +2.3 pp | 69.3% (0.2) | 30.2% (0.2) | +39.0 pp |
+| 2.50 | 57.7% (0.2) | 54.3% (0.2) | +3.4 pp | 78.4% (0.2) | 23.0% (0.2) | +55.5 pp |
+| 3.00 | 59.8% (0.2) | 54.0% (0.2) | +5.8 pp | 85.1% (0.2) | 16.1% (0.2) | +68.9 pp |
+
+**Sederberg IOR (reset to 0.0):**
+
+| emod | Pure E (SE) | Pure N (SE) | Pure gap | Mixed E (SE) | Mixed N (SE) | Mixed gap |
+|------|-------------|-------------|----------|--------------|--------------|-----------|
+| 1.00 | 74.0% (0.2) | 74.6% (0.2) | -0.5 pp | 65.9% (0.2) | 64.8% (0.2) | +1.2 pp |
+| 1.25 | 76.1% (0.2) | 74.5% (0.2) | +1.6 pp | 71.5% (0.2) | 61.3% (0.3) | +10.2 pp |
+| 1.50 | 78.0% (0.2) | 74.2% (0.2) | +3.8 pp | 77.1% (0.2) | 59.1% (0.2) | +18.0 pp |
+| 1.75 | 79.3% (0.2) | 73.9% (0.2) | +5.4 pp | 81.8% (0.2) | 55.7% (0.2) | +26.1 pp |
+| 2.00 | 81.3% (0.2) | 73.9% (0.2) | +7.4 pp | 86.1% (0.2) | 53.0% (0.3) | +33.1 pp |
+| 2.50 | 84.6% (0.2) | 74.0% (0.2) | +10.6 pp | 92.5% (0.1) | 47.8% (0.2) | +44.7 pp |
+| 3.00 | 87.9% (0.1) | 74.5% (0.2) | +13.4 pp | 96.7% (0.1) | 44.1% (0.2) | +52.6 pp |
+
+Both implementations respond to the encoding boost, but at very different rates.
+Under eCMR's IOR, the pure gap grows from 0 to +5.8 pp as emod increases from 1.0 to 3.0.
+Under Sederberg's, it grows from -0.5 to +13.4 pp over the same range, roughly 2-3 times faster.
+At the published emod value of 1.25, eCMR's pure gap is indistinguishable from zero (-0.2 pp) while Sederberg's is already +1.6 pp.
+
+Pure neutral recall is essentially flat under both implementations regardless of emod (~54% for eCMR, ~74% for Sederberg), and all the movement is in pure emotional recall climbing as emod increases.
+The emod boost raises emotional items' input signal, which should speed their races and produce more successful recalls before time runs out.
+Under Sederberg's IOR, this is exactly what happens.
+Under eCMR's IOR, the recalled items cycling near threshold absorb most of the benefit through increased lateral inhibition, suppressing the pure gap.
+
+The mixed-list columns tell a complementary story.
+At emod=1.0 (no boost), neither implementation produces a meaningful mixed-list gap (+1.0 pp and +1.2 pp), confirming that the mixed-list advantage depends on the encoding boost, not on the IOR mechanism.
+As emod increases, the mixed gap grows rapidly under both implementations, reaching +10.6 pp (eCMR) and +10.2 pp (Sederberg) at the published value of 1.25.
+At every emod value, the mixed gap far exceeds the pure gap under both IOR conditions, consistent with the paper's characterization that the emotional advantage is expressed more strongly in mixed lists.
+
+## A Shared Principle Across Frameworks {#sec-frameworks}
+
+The IOR reset value controls the pure-list prediction because it determines how much competitive influence recalled items retain.
+This connects to a principle that spans different recall dynamics frameworks.
+
+In ratio-based termination models [@kragel2015; @zhang2023], the probability of stopping recall at a given step depends on the ratio of total retrieval support for not-yet-recalled items over total support for already-recalled items.
+Uniform scaling across all studied items does not change this ratio, because numerator and denominator both scale by the same factor.
+These models therefore do not predict that uniformly stronger memory leads to more total recalls.
+
+The competitive accumulator used in eCMR and its predecessors [@sederberg2008; @polyn2009; @lohnas2015; @cohen2023] handles recall dynamics differently, through races to threshold with lateral inhibition.
+But there is a structural analogy.
+Already-recalled items continue exerting lateral inhibition on unrecalled items in subsequent races, and as more items are recalled, this cumulative inhibition grows, much as the "recalled support" denominator grows in ratio-based models.
+In both frameworks, whether uniform boosting helps total recall depends on whether the recalled items' influence scales proportionally with the boost to unrecalled items.
+
+In ratio-based models, this cancellation is clean and built into the architecture.
+In the accumulator, whether it happens depends on how much activation recalled items maintain.
+When recalled items stay near threshold (eCMR's 0.95 reset), they contribute near-maximal lateral inhibition that scales with the uniform boost almost as much as the unrecalled items' input signals do.
+The lateral inhibition "denominator" keeps pace with the boosted "numerator," and the boost washes out, producing a result analogous to the clean ratio cancellation.
+When recalled items are reset to zero (Sederberg's implementation), they contribute little lateral inhibition regardless of the boost.
+The "denominator" stays low while the "numerator" scales up, the cancellation breaks down, and the uniform boost does translate into more total recalls.
+The eCMR implementation sits at a point on this continuum where the cancellation is nearly complete, but that point is determined by an undocumented implementation choice rather than by the model's formal architecture.
+The emod sweep confirms this directly: under eCMR's IOR, the pure gap barely grows even when the encoding boost is tripled, because the lateral inhibition "denominator" scales in tandem with the boosted "numerator."
+Under Sederberg's IOR, the denominator stays low and the gap grows roughly linearly with the boost.
+
+## Mixed Lists: The Robust Finding {#sec-mixed}
+
+The mixed-list emotional advantage is robust across every IOR implementation tested.
+The three-condition comparison at emod=1.25 shows the mixed gap holding steady near the empirical ~11 pp regardless of IOR:
+
+| Condition              | Mixed E-N gap |
+|------------------------|---------------|
+| eCMR (0.95)            | +11.1 pp      |
+| Sederberg (0.0)        | +9.4 pp       |
+| Polyn (clamp)          | +10.8 pp      |
+
+The full sweep tables in @sec-implementation confirm this robustness extends across the entire emod range: at the published emod=1.25, the mixed gap is +10.6 pp under eCMR and +10.2 pp under Sederberg, and at every emod value the mixed gap far exceeds the corresponding pure gap.
+
+This robustness reflects the fact that the mixed-list mechanism operates on a fundamentally different principle than the total-recall mechanism that the pure-list prediction depends on.
+In mixed lists, emotional and neutral items compete against each other within the same race.
+Emotional items have a 5.3% higher input signal, giving them a small asymmetric advantage.
+This advantage is amplified by context reinstatement: once any emotional item is recalled, it reinstates emotional source context, biasing subsequent races further toward other emotional items.
+The probability that a recalled item is emotional starts at 45% (chance level) on the first race, jumps to 59-62% on races 2 through 4, and gradually settles as the emotional item pool shrinks.
+Task-shift disruption amplifies this further, because mixed lists involve task switches between emotional and neutral encoding that disrupt temporal context (the dominant retrieval cue) for all items, making the source-context boost that only emotional items have relatively more important.
+
+The mixed-list advantage is about redistribution of recall probability across item types within each race, not about increasing the total number of races.
+The IOR mechanism affects total recall output, but the within-race competition that drives the mixed-list gap is independent of how recalled items are handled after they win.
+
+::: callout-note
+## The central finding is sound
+
+The mixed-list emotional advantage does not depend on the IOR implementation, the RNG reseeding, or any of the undocumented mechanisms discussed above.
+It is driven by asymmetric within-race competition and context reinstatement, both of which are fully specified in the paper.
+:::
+
+## Conclusion {#sec-conclusion}
+
+The qualitative pattern predicted by eCMR — that the emotional advantage is weaker in pure lists than in mixed lists — is robust across IOR implementations.
+But the degree to which the pure-list advantage is suppressed depends on an undocumented implementation choice: the model's accumulator handles already-recalled items by resetting them to 0.95, just below threshold, where they cycle rapidly and generate near-maximal lateral inhibition that absorbs most of the encoding advantage.
+This mechanism is absent from the paper's formal model specification (Equations 1-11) and matches neither predecessor [@sederberg2008 reset to 0; @polyn2009 clamp at threshold].
+It acts as a de facto model parameter, shifting total recall by roughly 23 percentage points across the range of published implementations and controlling how sensitively the pure-list prediction responds to the encoding boost.
+
+Sweeping the encoding boost across a wide range reveals the structural nature of this dependence.
+Under eCMR's IOR, the pure gap grows slowly with the boost (from 0 to +5.8 pp as emod goes from 1.0 to 3.0), because recalled items cycling near threshold absorb much of the benefit through increased lateral inhibition.
+Under @sederberg2008's IOR, the gap grows roughly 2-3 times faster (from -0.5 to +13.4 pp), because recalled items reset to zero contribute little inhibition regardless of the boost.
+The mixed-list emotional advantage, by contrast, is robust across all implementations (+9.4 to +11.1 pp), because it operates through asymmetric within-race competition rather than total recall.
+
+The paper's verbal explanation of the pure-list result — "when emotional items compete against other highly attended emotional items, the extra attention they receive at encoding does not help very much at retrieval" [@talmi2019, p. 476] — is correct but incomplete.
+It accurately identifies why the boost does not help items win races against each other: there is no differential advantage within a pure-list race.
+But the explanation stops at the encoding level and does not address why the absolute speedup from the boost fails to translate into more total recalls.
+That suppression occurs at the recall stage, driven by the IOR lateral inhibition barrier, and the answer depends on an undocumented implementation choice that connects to a broader principle shared across recall dynamics frameworks: whether a uniform encoding boost increases total recall depends on how much the recalled items' competitive influence scales with the same boost.
+
+::: callout-tip
+## In one sentence
+
+The paper correctly predicts that the emotional advantage is weaker in pure lists, but its encoding-level explanation is incomplete: whether the uniform boost translates into more total recalls depends on how much the already-recalled items' competitive influence scales with the same boost, and in eCMR, the answer to that question is determined by an implementation choice the paper never documents. Without these details, the model _would_ predict a consistent pure e > pure n advantage.
+:::
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

@@ -40,6 +40,7 @@ class PhasedCMR(Pytree):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
+        is_emotional: Optional[Float[Array, " items"]] = None,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -55,6 +56,9 @@ class PhasedCMR(Pytree):
             Model parameters.  Phase-specific keys
             (``break_drift_rate``, ``break_mcf_scale``, etc.)
             default to base-model values when absent.
+        is_emotional : Float[Array, " items"] or None, optional
+            Per-item emotional flag (1.0 = emotional, 0.0 = neutral).
+            Defaults to all-zeros (no emotional items).
         mfc_create_fn : MemoryCreateFn, optional
             Factory function for item-to-context memory.
         mcf_create_fn : MemoryCreateFn, optional
@@ -75,6 +79,12 @@ class PhasedCMR(Pytree):
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
+
+        # Emotional mechanism (defaults off when is_emotional is None or emotion_scale is 0)
+        self.emotion_scale = parameters.get("emotion_scale", 0.0)
+        _is_emo = is_emotional if is_emotional is not None else jnp.zeros(list_length)
+        self.is_emotional = jnp.array(_is_emo, dtype=jnp.float32)
+        self.emotional_mcf = jnp.array(_is_emo, dtype=jnp.float32)
 
         # Phase-specific params (default to base rates when absent)
         self.break_drift_rate = parameters.get(
@@ -157,12 +167,15 @@ class PhasedCMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
+        # Emotional MCF encoding (eeg_ecmr pattern minus LPP/primacy)
+        emcf_lr = self.emotion_scale * self.is_emotional[item_index]
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
             mcf=self.mcf.associate(
                 learning_state, item, mcf_lr_scale * self.mcf_learning_rate
             ),
+            emotional_mcf=self.emotional_mcf.at[item_index].multiply(emcf_lr),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -357,8 +370,17 @@ class PhasedCMR(Pytree):
 
         """
         _activations = self.mcf.probe(self.context.state) * self.recallable
+
+        # Emotional clustering: boost emotional items when last recall was emotional
+        last_emotional = lax.cond(
+            self.recall_total > 0,
+            lambda: self.is_emotional[self.recalls[self.recall_total - 1] - 1] > 0,
+            lambda: False,
+        )
+        emotion_support = last_emotional * self.emotional_mcf
+
         return (
-            power_scale(_activations, self.mcf_sensitivity) + lb
+            power_scale(_activations + emotion_support, self.mcf_sensitivity) + lb
         ) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
@@ -429,6 +451,7 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
     termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    is_emotional: Optional[Float[Array, " items"]] = None,
 ) -> Callable:
     """Build a PhasedCMR factory compatible with prepare_sweep.
 
@@ -442,6 +465,9 @@ def make_factory(
         Factory for temporal context.
     termination_policy_create_fn : TerminationPolicyCreateFn, optional
         Factory for recall termination policy.
+    is_emotional : Float[Array, " items"] or None, optional
+        Per-item emotional flag (1.0 = emotional, 0.0 = neutral).
+        Captured in the closure; defaults to all-zeros.
 
     Returns
     -------
@@ -453,9 +479,17 @@ def make_factory(
         parameters: Mapping[str, Float_],
         connections: Optional[Float[Array, " n n"]] = None,
     ) -> PhasedCMR:
+        if is_emotional is None:
+            _is_emotional = jnp.zeros(list_length)
+        else:
+            # Pad to list_length for extended tiers (extra slots are neutral).
+            _is_emotional = jnp.zeros(list_length).at[
+                :is_emotional.shape[0]
+            ].set(is_emotional)
         return PhasedCMR(
             list_length,
             parameters,
+            is_emotional=_is_emotional,
             mfc_create_fn=mfc_create_fn,
             mcf_create_fn=mcf_create_fn,
             context_create_fn=context_create_fn,

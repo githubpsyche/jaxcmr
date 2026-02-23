@@ -117,10 +117,10 @@ def configure_rates(
         ``reminder_start_drift_scale``, ``reminder_drift_scale``,
         ``interference_drift_scale``, ``interference_mcf_scale``,
         ``filler_drift_scale``, ``filler_mcf_scale``,
-        ``start_drift_scale``, ``tau_scale``.
+        ``start_drift_scale``, ``tau_scale``, ``emotion_scale``.
         Unspecified scales default to 1.0.
-        ``primacy_scale`` and ``primacy_decay`` replace the
-        model values directly when provided.
+        ``primacy_scale``, ``primacy_decay``, and ``emotion_scale``
+        replace the model values directly when provided.
 
     Returns
     -------
@@ -168,6 +168,7 @@ def configure_rates(
             ),
             primacy_scale=scales.get("primacy_scale", model.primacy_scale),
             primacy_decay=scales.get("primacy_decay", model.primacy_decay),
+            emotion_scale=scales.get("emotion_scale", model.emotion_scale),
         )
     return vmap(_apply)(models)
 
