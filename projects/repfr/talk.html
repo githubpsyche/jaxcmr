@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="talk_files/libs/clipboard/clipboard.min.js"></script>
+<script src="talk_files/libs/quarto-html/tabby.min.js"></script>
+<script src="talk_files/libs/quarto-html/popper.min.js"></script>
+<script src="talk_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="talk_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="talk_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="talk_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.27">
+
+  <meta name="author" content="Jordan B Gunn &amp; Sean M Polyn">
+  <title>Same Item, Distinct Contexts</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="talk_files/libs/revealjs/dist/theme/quarto-0fde88a82f0356838740f155f1088782.css">
+  <link href="talk_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="talk_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Same Item, Distinct Contexts</h1>
+  <p class="subtitle">Episode-specific reinstatement in free and serial recall</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Jordan B Gunn &amp; Sean M Polyn 
+</div>
+        <p class="quarto-title-affiliation">
+            University of Cambridge / Vanderbilt University
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="section" class="slide level2 center">
+<h2></h2>
+<aside class="notes">
+<p>Thank you for the introduction. Today I want to talk about a problem that arises when memory encounters the same thing more than once.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-challenge-of-repeated-experience" class="slide level2 center">
+<h2>The Challenge of Repeated Experience</h2>
+<p>Episodic memory faces two competing demands:</p>
+<div class="fragment">
+<p><strong>Integration</strong> — Partial cues in the present should retrieve relevant details from the past</p>
+</div>
+<div class="fragment">
+<p><strong>Differentiation</strong> — Details from one moment should not be confused with those of another</p>
+</div>
+<div class="fragment">
+<p>Consider the word <em>canoe</em> appearing at position 5 and again at position 15 in a study list. Each occurrence has different temporal neighbors. Can memory keep them apart?</p>
+<aside class="notes">
+<p>Memory must do two things at once. It must connect related experiences so a partial cue can retrieve useful information. But it must also keep those experiences distinct so you don’t confuse what happened when. This is especially challenging when the same item appears more than once. If canoe shows up twice in a study list, each occurrence has different neighbors — different context. The question is whether memory keeps those two canoe episodes apart or blurs them together.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="free-and-serial-recall-as-a-window" class="slide level2 center">
+<h2>Free and Serial Recall as a Window</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="repeat_cmr_figures/rep_lag_crp_schematic.png" class="quarto-figure quarto-figure-center" height="750"></p>
+</figure>
+</div>
+<aside class="notes">
+<p>We study this in two classic paradigms. In the top panel, participants study a list of words and then recall them in any order — free recall. We know from decades of work that recall is temporally organized: recalling A tends to lead to recalling B, its neighbor. In the bottom panel, we add item repetitions — the same item, C, appears at two positions. Now when you recall C, where does memory take you? To the first occurrence’s neighbors? The second’s? Both? That’s the diagnostic question. Participants do both mixed lists, which contain repeated items, and control lists with all unique items at matched positions. We also test this in serial recall, where participants must output items in study order.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="retrieved-context-theory" class="slide level2 center">
+<h2>Retrieved-Context Theory</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="repeat_cmr_figures/cmr_schematic.png" class="quarto-figure quarto-figure-center" height="650"></p>
+</figure>
+</div>
+<p>The dominant account of temporal organization in episodic memory search.</p>
+<aside class="notes">
+<p>The leading theory for explaining these temporal organization patterns is retrieved-context theory, implemented in models like the Context Maintenance and Retrieval model, or CMR. The core idea: studied items get associated with a continuously drifting temporal context. At recall, retrieving an item reinstates its study context, and that reinstated context guides what comes to mind next. This cycle of context cueing items, and items reinstating context, explains why recall is temporally organized. It also accounts for spacing effects, serial order memory, and other benchmark phenomena.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-lag-crp" class="slide level2 center">
+<h2>The Lag-CRP</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="repeat_cmr_figures/lag_crp.png" class="quarto-figure quarto-figure-center" height="750"></p>
+</figure>
+</div>
+<aside class="notes">
+<p>Here is the signature prediction of retrieved-context theory: the lag-CRP. On the x-axis is lag — the distance between successive recalls in terms of their original study positions. On the y-axis is the conditional probability of making that transition. The peak at plus-one means that after recalling an item, you are most likely to recall the item that immediately followed it during study. The forward asymmetry — plus-one being higher than minus-one — reflects the forward drift of context during encoding. This pattern is robust and well-explained by context reinstatement.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="section-1" class="slide level2 center">
+<h2></h2>
+<p>RCT explains these patterns beautifully for unique items.</p>
+<p><strong>But what happens when an item repeats?</strong></p>
+<div class="fragment">
+<p>The theory predicts that repeated occurrences get <strong>blended</strong> together in memory.</p>
+</div>
+<div class="fragment">
+<p>Today I will show you:</p>
+<ol type="1">
+<li class="fragment">What that prediction looks like</li>
+<li class="fragment">That the data <strong>contradict</strong> it across free and serial recall</li>
+<li class="fragment">A targeted fix that keeps what works</li>
+</ol>
+<aside class="notes">
+<p>So RCT handles unique items very well. But what does it predict when the same item appears twice? Because each occurrence of canoe updates and reinstates the same item representation, the theory predicts that the two episodes get blended together — their contexts overlap, and retrieving canoe reinstates a composite of both contexts. Today I will lay out what that blending prediction looks like in detail, show you across multiple datasets and two recall tasks that the data contradict it, and then propose a targeted reformulation called Instance-CMR that fixes the problem while preserving everything that works.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="what-happens-when-an-item-repeats" class="slide level2 center">
+<h2>What Happens When an Item Repeats?</h2>
+<div class="columns">
+<div class="column" style="width:100%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="schematic.png" class="quarto-figure quarto-figure-center" height="650"></p>
+</figure>
+</div>
+</div></div>
+<div class="fragment">
+<p>In standard CMR, item identity drives context evolution at <strong>both stages</strong>:</p>
+<ul>
+<li><strong>At study</strong>: Re-encountering canoe reinstates its prior context, pulling the two occurrence contexts toward each other</li>
+<li><strong>At retrieval</strong>: Recalling canoe reinstates a composite blend of both contexts</li>
+</ul>
+</div>
+<aside class="notes">
+<p>Focus on the left side of this figure. In standard CMR, item identity is the key that drives context evolution. At study, when canoe appears the second time, the model reinstates context from the first occurrence — this is study-phase retrieval. It pulls the two occurrence contexts toward each other, making them overlap. At retrieval, recalling canoe reinstates a composite of all the contexts associated with that item. Both mechanisms predict that cuing one occurrence also substantially cues the other. The contexts get knit together.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="three-testable-predictions" class="slide level2 center">
+<h2>Three Testable Predictions</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="repeat_cmr_figures/neighbor_contiguity_schematic.png" class="quarto-figure quarto-figure-center" height="350"></p>
+</figure>
+</div>
+<div class="fragment">
+<p><strong>1. Neighbor knitting</strong>: Recalling a neighbor of one occurrence should elevate transitions to neighbors of the other occurrence</p>
+</div>
+<div class="fragment">
+<p><strong>2. Balanced access</strong>: After recalling a repeated item, transitions should be equally split between both occurrences’ neighborhoods</p>
+</div>
+<div class="fragment">
+<p><strong>3. Forward chaining errors</strong>: In serial recall, correctly outputting one occurrence should sometimes propel recall to the other occurrence’s neighbor</p>
+</div>
+<aside class="notes">
+<p>We derive three testable predictions from item-based context reinstatement. First, neighbor knitting: if recalling E activates the first D’s context, and that context overlaps with the second D’s context, then E should also transition to K and L — the second D’s neighbors. The neighborhoods get linked. Second, balanced access: after recalling D itself, the reinstated composite context should cue both neighborhoods roughly equally, rather than favoring one occurrence. Third, in serial recall: after correctly producing the item at one position, the model predicts errors to the other occurrence’s forward neighbor. If any of these patterns show up above a proper baseline, it supports blending. If they don’t, the theory has a problem.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="no-neighbor-knitting" class="slide level2 smaller center">
+<h2>No Neighbor Knitting</h2>
+<div class="fragment">
+<p>We compare <strong>mixed lists</strong> (blue, containing repeats) to <strong>position-matched control lists</strong> (orange, all unique items). Any elevation of blue above orange isolates the repetition effect.</p>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="fragment">
+<h3 id="data">Data</h3>
+<p><img data-src="figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png" height="550"></p>
+<p>No elevation at the other occurrence’s neighbors.</p>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="fragment">
+<h3 id="cmr-prediction">CMR Prediction</h3>
+<p><img data-src="figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png" height="550"></p>
+<p>CMR falsely predicts elevated transitions.</p>
+</div>
+</div></div>
+<aside class="notes">
+<p>Here is the first diagnostic. We compare mixed lists, which contain repeated items, to position-matched control lists where all items are unique. This is a between-trial comparison that isolates the specific contribution of repetition. The x-axis shows lag from the second occurrence — so lag zero is the repeated item itself, and the surrounding positions are its neighbors. On the left, the data. Blue is mixed, orange is control. The two lines overlay almost perfectly at the neighboring positions. There is no knitting. The only notable feature is an elevation at lag zero itself in the first-to-second direction, suggesting heightened access to the repeated item without linking the neighborhoods. On the right, CMR predicts the blue line should sit well above orange — it predicts knitting that we do not observe.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="how-to-read-the-repetition-lag-crp" class="slide level2 center">
+<h2>How to Read the Repetition Lag-CRP</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="repeat_cmr_figures/rep_lag_crp_schematic.png" class="quarto-figure quarto-figure-center" height="550"></p>
+</figure>
+</div>
+<p>After recalling a repeated item, we plot transitions <strong>centered separately on each occurrence</strong>:</p>
+<ul>
+<li><strong>Blue</strong> = centered on the 1st occurrence</li>
+<li><strong>Orange</strong> = centered on the 2nd occurrence</li>
+<li>If blending occurs, the two lines should <strong>converge</strong></li>
+</ul>
+<aside class="notes">
+<p>Before showing the key result, let me explain how to read the repetition lag-CRP. After recalling a repeated item like C, we ask: where does the next recall go? We compute a lag-CRP centered on each occurrence separately. The blue line is centered on the first occurrence. So lag plus-one on the blue line means the item that followed the first C during study. The orange line is centered on the second occurrence. If the model reinstates a composite context that contacts both occurrences equally, the blue and orange lines should converge — balanced access. If memory is episode-specific, the lines should separate, with one occurrence dominating.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="first-over-second-not-balanced-access" class="slide level2 smaller center">
+<h2>First-Over-Second, Not Balanced Access</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="data-1">Data</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_data_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div><div class="column" style="width:50%;">
+<h3 id="cmr-prediction-1">CMR Prediction</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div></div>
+<div class="fragment">
+<p>Data show strong <strong>first-over-second</strong> asymmetry. CMR predicts <strong>convergence</strong>.</p>
+</div>
+<aside class="notes">
+<p>This is the key result. On the left, the data. After recalling a repeated item, transitions at lag plus-one strongly favor the first occurrence — blue is well above orange. Memory preferentially returns to the first occurrence’s neighborhood. On the right, CMR. The two lines nearly converge at plus-one — the model predicts balanced access. This is the opposite of the data. The model reinstates a composite context that contacts both occurrences, but people route through one episode — specifically, the first one. This pattern replicates across additional datasets.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="forward-chaining-preserved-in-serial-recall" class="slide level2 smaller center">
+<h2>Forward Chaining Preserved in Serial Recall</h2>
+<div class="fragment">
+<p>In serial recall, you must output items in study order. If blending occurs, after producing <em>canoe</em> at position <em>i</em>, the system should sometimes jump to position <em>j+1</em> — the neighbor after the <strong>other</strong> occurrence.</p>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="fragment">
+<h3 id="data-2">Data</h3>
+<p><img data-src="figures/RepeatedRecallsGordonRanschburg2021_mixed_data_full_best_of_3_rep_crp.png" height="550"></p>
+<p>Correct forward chaining intact. No cross-occurrence errors.</p>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="fragment">
+<h3 id="cmr-prediction-2">CMR Prediction</h3>
+<p><img data-src="figures/RepeatedRecallsGordonRanschburg2021_mixed_WeirdCMR_full_best_of_3_rep_crp.png" height="550"></p>
+<p>CMR predicts elevated errors to the other occurrence’s neighbor.</p>
+</div>
+</div></div>
+<aside class="notes">
+<p>Serial recall sharpens the prediction further. Here, participants must output items in study order. After correctly producing canoe at its first position, the next response should be the item that followed it — position i plus one. If blending occurs, the model predicts the system should sometimes jump to the other occurrence’s forward neighbor — position j plus one. On the left, the data: the first occurrence line dominates, correct forward chaining is intact, and cross-occurrence errors are at floor. On the right, CMR predicts elevated j-plus-one errors that simply do not occur. This extends a constraint that has been clear in serial recall for decades but has not been carried over to evaluations of retrieved-context theory.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="noninterference-across-tasks" class="slide level2 center">
+<h2>Noninterference Across Tasks</h2>
+<p>Three predictions derived from item-based context reinstatement.</p>
+<p>Three failures.</p>
+<div class="fragment">
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Prediction</th>
+<th style="text-align: center;">Free Recall</th>
+<th style="text-align: center;">Serial Recall</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Neighbor knitting</td>
+<td style="text-align: center;">Not observed</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Balanced access</td>
+<td style="text-align: center;">Not observed</td>
+<td style="text-align: center;">Not observed</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Forward chaining errors</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">Not observed</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="fragment">
+<p>Replicated across <strong>6 datasets</strong>. Occurrences stay separate.</p>
+<aside class="notes">
+<p>To summarize: all three predictions derived from item-based context reinstatement are contradicted by the data. No neighbor knitting, no balanced access, no forward chaining errors. This holds across six published datasets spanning both free and serial recall. The message is clear: occurrences stay separate in memory. The question now is how to fix the theory.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="where-does-blending-come-from" class="slide level2 center">
+<h2>Where Does Blending Come From?</h2>
+<p>The blending prediction has <strong>two sources</strong> in CMR — each needs a separate fix:</p>
+<div class="fragment">
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="at-study">At Study</h3>
+<p>Item identity drives context evolution. Restudying <em>canoe</em> reinstates context from its first occurrence, pulling the two contexts toward each other.</p>
+<p><strong>Fix</strong>: Drive context with item-independent position codes. Each occurrence gets a fresh, non-overlapping context.</p>
+</div><div class="column" style="width:50%;">
+<h3 id="at-retrieval">At Retrieval</h3>
+<p>Recalling <em>canoe</em> reinstates a composite context blending all occurrences.</p>
+<p><strong>Fix</strong>: Let occurrence traces compete. The winning trace reinstates its own context — not a blend.</p>
+</div></div>
+<aside class="notes">
+<p>Where exactly does blending come from in CMR? There are two sources and each needs its own fix. At study, item identity drives context evolution. When canoe appears the second time, the model reinstates context from the first canoe, pulling the two occurrence contexts toward each other. The fix is to drive context with item-independent position codes, so each occurrence encodes into a fresh, non-overlapping context. At retrieval, recalling canoe reinstates a composite that blends all occurrences. The fix is to let occurrence traces compete for retrieval, so the winning trace reinstates its own specific context rather than a blend. Together, these two changes yield Instance-CMR.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="cmr-vs.-instance-cmr" class="slide level2 center">
+<h2>CMR vs.&nbsp;Instance-CMR</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="schematic.png" class="quarto-figure quarto-figure-center" height="800"></p>
+</figure>
+</div>
+<aside class="notes">
+<p>Here is the full comparison. On the left, standard CMR: item C drives context evolution at both study and recall. Restudy produces overlapping context. Retrieval reinstates an item-level composite. The two contexts get knit together. On the right, Instance-CMR: context evolves independently of item identity. Each occurrence of C encodes into a fresh, distinct context. At retrieval, occurrence traces compete, and only the winner’s context is reinstated. The contexts are kept distinct and separate. Instance-CMR is still a retrieved-context model — context cues retrieval, and retrieved memories reinstate context. The difference is that these dynamics are organized around study events rather than item-level aggregates.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="instance-cmr-eliminates-blending" class="slide level2 smaller center">
+<h2>Instance-CMR Eliminates Blending</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="data-3">Data</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_data_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div><div class="column" style="width:50%;">
+<h3 id="instance-cmr">Instance-CMR</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div></div>
+<div class="fragment">
+<p>Balanced access eliminated. First-over-second restored.</p>
+<p>But the data show the first occurrence is <strong><em>even more</em></strong> dominant than the baseline predicts. Something beyond non-interference is at work.</p>
+</div>
+<aside class="notes">
+<p>Here is the same repetition lag-CRP, now with Instance-CMR on the right. Compare this to the CMR prediction we saw earlier where the lines converged. Instance-CMR now shows clear first-over-second separation. Balanced access is gone. But notice something: the data on the left show an even larger separation than the model produces. The first occurrence is more dominant than what mere non-interference would predict. Something is actively boosting the first occurrence. This motivates one more refinement.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="reinforcement-without-blending" class="slide level2 smaller center">
+<h2>Reinforcement Without Blending</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="data-4">Data</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_data_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div><div class="column" style="width:50%;">
+<h3 id="instance-cmr-reinforcement">Instance-CMR + Reinforcement</h3>
+<p><img data-src="figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png" height="650"></p>
+</div></div>
+<div class="fragment">
+<p>When the item repeats, <strong>strengthen the first-occurrence trace</strong> without reinstating its context. Study-phase retrieval reconceived as reinforcement rather than associative knitting. One added parameter.</p>
+</div>
+<aside class="notes">
+<p>The final refinement: Instance-CMR with reinforcement. When canoe appears the second time, instead of reinstating the first occurrence’s context and blending, we simply strengthen the first-occurrence trace in memory. This boosts its competitive advantage at retrieval without knitting the contexts together. Study-phase retrieval is reconceived as reinforcement rather than associative knitting. The result, on the right, now captures the amplified first-over-second asymmetry we see in the data. This adds one parameter to the model. The key insight is that repetition can strengthen access to a prior episode without blurring its contextual specificity.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="does-fixing-repetition-break-what-works" class="slide level2 smaller center">
+<h2>Does Fixing Repetition Break What Works?</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="serial-position-curve">Serial Position Curve</h3>
+<p><img data-src="figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png" height="550"></p>
+</div><div class="column" style="width:50%;">
+<h3 id="lag-crp">Lag-CRP</h3>
+<p><img data-src="figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_crp.png" height="550"></p>
+</div></div>
+<div class="fragment">
+<p>All standard benchmarks preserved: primacy, recency, contiguity, forward asymmetry. The spacing effect is likewise maintained — contextual variability is sufficient without study-phase retrieval.</p>
+</div>
+<aside class="notes">
+<p>A natural worry: if you change the model to fix repetition, do you break the phenomena that made CMR successful in the first place? No.&nbsp;On the left, the serial position curve is preserved — primacy and recency are intact. On the right, the lag-CRP is preserved — the contiguity effect and forward asymmetry are fully maintained. We also verified that the spacing effect is preserved. Contextual variability — encoding in more distinct contexts with wider spacing — is sufficient to produce spacing benefits without study-phase retrieval. Removing study-phase retrieval primarily removed knitting, not the spacing effect.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="model-comparison" class="slide level2 smaller center">
+<h2>Model Comparison</h2>
+<table class="table-striped caption-top">
+<caption>AIC weights across four datasets.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: center;">Free Recall</th>
+<th style="text-align: center;">Free Recall</th>
+<th style="text-align: center;">Serial Recall</th>
+<th style="text-align: center;">Serial Recall</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: center;">Lohnas 2014</td>
+<td style="text-align: center;">Broitman 2024</td>
+<td style="text-align: center;">Gordon 2021</td>
+<td style="text-align: center;">Kahana 2000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CMR</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CMR-NoSPR</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICMR-OS</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;">0.00</td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICMR-Reinf</td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+<td style="text-align: center;"><strong>1.00</strong></td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">1.00</td>
+</tr>
+</tbody>
+</table>
+<div class="fragment">
+<p>Removing study-phase retrieval alone fixes knitting but not balanced access — you need both changes.</p>
+<p>ICMR dominates CMR for <strong>80–100%</strong> of individual participants.</p>
+<aside class="notes">
+<p>Here is the formal model comparison using AIC weights across four datasets. Standard CMR never wins. Removing study-phase retrieval alone, CMR-NoSPR, improves fits but is insufficient — it fixes neighbor knitting but not balanced access. Instance-CMR with occurrence-specific reinstatement dominates in serial recall. Adding reinforcement provides a further edge in free recall. These are not marginal differences — AIC weights are essentially one versus zero. Instance-CMR is preferred for 80 to 100 percent of individual participants across datasets.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="what-this-means-for-retrieved-context-theory" class="slide level2 center">
+<h2>What This Means for Retrieved-Context Theory</h2>
+<p>Retrieved-context theory is <strong>not wrong</strong> — context reinstatement remains the core mechanism.</p>
+<div class="fragment">
+<p>But the <strong>unit of reinstatement</strong> must be the episode, not the item.</p>
+</div>
+<div class="fragment">
+<p>Context must evolve <strong>independently of item identity</strong> to preserve access to occurrence-specific detail.</p>
+</div>
+<div class="fragment">
+<p><em>Retrieved-context theory, refined for episodes.</em></p>
+<aside class="notes">
+<p>What does this mean for the theory? We are not abandoning retrieved-context theory. Context reinstatement remains the core mechanism driving memory search. But the unit of reinstatement must change. It must be the specific study event — the episode — not the item category. And temporal context must evolve independently of item identity so that the contexts associated with repeated occurrences remain distinct. This is a narrower change than it might sound. Everything else about the theory stays the same. It is retrieved-context theory, refined for episodes.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="connections-and-future-directions" class="slide level2 center">
+<h2>Connections and Future Directions</h2>
+<ul>
+<li><strong>Positional codes in serial recall</strong>: The serial recall literature has long emphasized position-based representations. Instance-CMR imports that insight into free recall within a formal retrieved-context framework.</li>
+</ul>
+<div class="fragment">
+<ul>
+<li><strong>Instance-based traditions</strong>: Connects to MINERVA, Logan’s instance theory, and exemplar models — approaches that have been underrepresented in retrieved-context modeling.</li>
+</ul>
+</div>
+<div class="fragment">
+<ul>
+<li><strong>Open questions</strong>: Individual differences (does a subset of participants show blending?), richer repeated-event paradigms, semantic organization of repeated items.</li>
+</ul>
+<aside class="notes">
+<p>This work connects to several broader themes. The serial recall literature has emphasized positional and timeline codes for decades — our results import that insight into free recall and formalize it within the retrieved-context framework. It also connects to instance-based traditions in memory and categorization — Hintzman’s MINERVA, Logan’s instance theory — that have been surprisingly underrepresented in retrieved-context modeling despite natural compatibility. Looking forward, there are open questions about individual differences — do some participants show blending even though the group does not? — and about extending these tests to richer paradigms with meaningful repeated events, semantic structure, and source memory demands.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="section-2" class="slide level2 center">
+<h2></h2>
+<p>Repeated experience <strong>strengthens access</strong> without sacrificing <strong>specificity</strong>.</p>
+<div class="fragment">
+<p>Not through contextual blending, but through <strong>differentiated competition</strong>.</p>
+</div>
+<div class="fragment">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="schematic.png" class="quarto-figure quarto-figure-center" height="500"></p>
+</figure>
+</div>
+<aside class="notes">
+<p>To close: the challenge we opened with was how memory balances integration and differentiation for repeated experience. The answer is not contextual blending — it is differentiated competition. Each occurrence maintains its own distinct context. At retrieval, traces compete, and the winner reinstates its own episode-specific context. Memory can strengthen access to repeated items without sacrificing the specificity of individual episodes. Thank you.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</div>
+</section>
+<section id="section-3" class="slide level2 center">
+<h2></h2>
+<h3 id="thank-you">Thank You</h3>
+<p>Jordan B Gunn — University of Cambridge</p>
+<p>Sean M Polyn — Vanderbilt University</p>
+<aside class="notes">
+<p>Thank you. I’m happy to take questions.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>Gunn &amp; Polyn — Same Item, Distinct Contexts</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="talk_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="talk_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="talk_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="talk_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: true,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'fast',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1920,
+
+        height: 1080,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
