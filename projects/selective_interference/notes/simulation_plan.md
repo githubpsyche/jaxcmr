@@ -28,9 +28,9 @@ Three conditions at delay: reminder + competitors, no-reminder + competitors, re
 
 Postdiction: Delayed Tetris + reminder reduces intrusions; neither alone is effective.
 
-Prediction: Interference effectiveness is a continuous function of reinstatement strength — how strongly the reminder pulls context back to the film region — not a time-limited window that opens and closes. Stronger reinstatement means more context overlap between competitors and film items. There is no reconsolidation window; there is no labile trace.
+Prediction: Interference effectiveness depends on two continuous variables: how strongly the reminder reinstates film context, and how much subsequent experience has caused the reinstated context to drift before the interference task begins. Stronger reinstatement means more context overlap between competitors and film items; more intervening experience erodes that overlap. There is no reconsolidation window and no labile trace, but there is a temporal constraint arising from context drift rather than a discrete molecular process.
 
-*Existing accounts assume that a reminder reactivates a consolidated memory trace, making it labile during a time-limited window. An interfering task during this window disrupts restabilization. Our account: the reminder reinstates context via item-to-context retrieval, driving the model back into the film region. Competitors encoded there produce interference through the same mechanism as immediate interference — context overlap and retrieval competition. The critical variable is reinstatement strength, not timing.*
+*Existing accounts assume that a reminder reactivates a consolidated memory trace, making it labile during a time-limited window. An interfering task during this window disrupts restabilization. Our account: the reminder reinstates context via item-to-context retrieval, driving the model back into the film region. Competitors encoded there produce interference through the same mechanism as immediate interference — context overlap and retrieval competition. The critical variables are reinstatement strength and context maintenance — how much intervening experience erodes the reinstated state before the interference task begins. Timing matters, but through continuous context drift rather than a discrete window.*
 
 ### Decompose control — What protects voluntary recall
 

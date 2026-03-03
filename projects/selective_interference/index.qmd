@@ -1,6 +1,6 @@
 ---
-title: ""
-shorttitle: ""
+title: "Intrusive and Voluntary Memory from a Single System: A Retrieved-Context Account of Selective Interference"
+shorttitle: "Intrusive and Voluntary Memory from a Single System"
 author:
   - name: Jordan B Gunn
     affiliations:
@@ -20,28 +20,465 @@ floatsintext: true
 bibliography: references.bib
 ---
 
+# Abstract
+
+Post-encoding visuospatial tasks such as playing Tetris after a trauma reminder can reduce subsequent intrusive memories while leaving voluntary memory (e.g., recognition and intentional recall) relatively intact.
+This selective interference effect has been taken as evidence for separate "intrusive" versus "voluntary" memory traces or for modality-specific disruption of consolidation or reconsolidation.
+Here we develop a single-system account within retrieved-context theory (CMR3) that derives selective interference from generic episodic binding and retrieval dynamics.
+In the model, reminders reinstate trauma-associated context, and experiences during the interference task are encoded in that reinstated context, creating many strong competitor episodes.
+Later, as ongoing context drifts through the trauma region, uncontrolled context-to-item retrieval is increasingly captured by these competitors, reducing the probability that any single trauma memory is sampled as an intrusion.
+In contrast, probe-driven item-to-context retrieval and controlled context-to-item recall can remain largely intact, explaining spared recognition and (under sufficient control) intentional recall.
+Simulations of trauma-film paradigms reproduce the intrusion–recognition dissociation and its heterogeneity across designs, and yield testable predictions about timing, cueing, emotional arousal, and retrieval-control manipulations.
+This framework reframes visuospatial tasks as one instantiation of a broader competitor-encoding intervention strategy and provides principled boundary conditions for translating lab effects to clinical settings.
+
 # Introduction
 
-Traumatic experience highlights a trade-off between durability and selectivity in episodic remembering.
+Traumatic experience foregrounds a trade-off between durability and selectivity in episodic remembering.
 Memory should retain highly consequential episodes so critical details stay accessible long into the future.
 At the same time, adaptive retrieval is selective: what comes to mind should normally depend on current cues, goals, and safety.
 Intrusive memories after trauma suggest that durable encoding can outpace regulatory control.
-The event returns repeatedly and indiscriminately, despite the demands of the present [@ehlers2000; @brewin2010; @krans2009; @iyadurai2019].
+The event returns repeatedly and indiscriminately, despite the demands of the present [@ehlers2000cognitive; @brewin2010intrusive; @krans2009intrusive; @iyadurai2019intrusive].
 
-The present work examines this trade-off in the trauma-film paradigm [@james2016; @holmes2008].
-Participants watch a distressing film depicting scenes of injury or threat [@holmes2008; @james2016].
-Intrusive memories commonly emerge over the following days in diary measures [@holmes2004; @holmes2008; @james2016].
-When asked to recall or recognize the same material deliberately, voluntary memory can be relatively preserved, and its relationship to intrusion frequency can be weak, such that the two measures dissociate [@holmes2004; @james2016].
-The same encoded episode can therefore support both uncontrolled and controlled access, and these modes can come apart empirically [@holmes2004; @iyadurai2019].
+The present work examines this trade-off in the trauma-film paradigm [@james2016trauma; @holmes2008inducing].
+Participants watch a distressing film depicting scenes of injury or threat [@holmes2008inducing; @james2016trauma].
+Intrusive memories commonly emerge over the following days in diary measures [@holmes2004trauma; @holmes2008inducing; @james2016trauma].
+When asked to recall or recognize the same material deliberately, voluntary memory can be relatively preserved, and its relationship to intrusion frequency can be weak, such that the two measures dissociate [@holmes2004trauma; @james2016trauma].
+The same encoded episode can therefore support both uncontrolled and controlled access, and these modes can come apart empirically [@holmes2004trauma; @iyadurai2019intrusive].
 
-A sharper dissociation emerges when a brief visuospatial task follows the film or a later film reminder [@holmes2009; @james2015; @kessler2020].
-Across studies, participants who play Tetris or perform a similarly visually-engaging task report fewer intrusive memories over the following days [@holmes2009; @holmes2010; @deeprose2012].
-Voluntary memory for the same material generally shows little measureable impact even when retrieval conditions are matched [@lauzhu2019; @asselbergs2023].
-Such interventions are effective even after prompting reinstatement of real-life traumatic memories, reducing intrusions while preserving deliberate recall for life experiences such as motor vehicle accidents, traumatic childbirth following emergency caesarean section, and war-related trauma in refugees [@iyadurai2018; @horsch2017; @kanstrup2021].
+A sharper dissociation emerges when a brief visuospatial task follows the film or a later film reminder [@holmes2009can; @james2015computer; @kessler2020visuospatial].
+Across studies, participants who play Tetris or perform a similarly visually-engaging task report fewer intrusive memories over the following days [@holmes2009can; @holmes2010key; @deeprose2012imagery].
+Voluntary memory for the same material generally shows little measurable impact even when retrieval conditions are matched [@lau2019intrusive; @asselbergs2023systematic].
+Such interventions are effective even after prompting reinstatement of real-life traumatic memories, reducing intrusions while preserving deliberate recall for life experiences such as motor vehicle accidents, traumatic childbirth following emergency caesarean section, and war-related trauma in refugees [@iyadurai2018preventing; @horsch2017reducing; @kanstrup2021single].
+This selective interference effect deepens the dissociation.
 A post-encoding or post-reminder manipulation appears to alter one mode of retrieval more than the other, even when both draw on the same recent experience.
 
-A prominent interpretation attributes this selectivity to separable memory representations. [@brewin1996; @brewin2014].
-Under this dual representation account, traumatic experience gives rise to distinct sensory and contextual traces, and a post-encoding task preferentially disrupts the sensory trace while leaving the contextual trace (and the voluntary memory it supports) relatively intact.
-Here we develop an alternative within a unitary retrieved-context framework and demonstrate it in a formal model.
-In this account, the degree of contextual overlap between the interference task and the original event governs retrieval competition, while the amount of control available at test governs which memories are expressed.
-The dissociation between involuntary and voluntary recall emerges from these interacting constraints without requiring separate traces as a modeling prerequisite.
+A prominent interpretation attributes this selectivity to separable memory representations [@brewin1996dual; @brewin2014episodic].
+Under the dual-representation account, traumatic experience produces distinct sensory and contextual memory traces — the first supporting involuntary re-experiencing, the second supporting deliberate recall [@brewin2010intrusive; @brewin2014episodic].
+A visuospatial interference task competes for the perceptual processing resources needed to consolidate the sensory trace, reducing later intrusions while leaving the contextual trace and the voluntary memory it supports relatively intact [@holmes2009can; @james2015computer].
+When the intervention follows a reminder at longer delays, the account invokes reconsolidation: the reminder reactivates the sensory trace, and the interfering task disrupts its restabilization during a time-limited window [@kindt2009beyond; @james2015computer].
+The account thus ties selective interference to separate memory representations, modality-specific disruption of one trace, and — for delayed effects — a discrete reconsolidation window.
+
+Here we develop an alternative within a unitary retrieved-context framework and demonstrate it through simulations of a formal model.
+The framework holds that items are bound to a continuously evolving temporal context that later serves as the primary retrieval cue [@howard2002distributed; @polyn2009context].
+In this account, the original event and a later interference task deposit traces in this shared context, and the degree of overlap between their contexts governs retrieval competition.
+Retrieval control mechanisms available during deliberate recall, reinstating the event's context and sharpening competition among candidates, can preserve the target's advantage over competitors.
+The dissociation between involuntary and voluntary recall emerges from these interacting constraints without requiring separate traces, reconsolidation windows, or modality-specific disruption as modeling prerequisites.
+By grounding selective interference in general principles of temporal context and retrieval competition, the account connects a clinical phenomenon to the broader episodic memory literature and generates predictions that diverge from the dual-representation account and can sharpen intervention designs.
+
+# Overview of the Model
+
+The account developed here builds on a contextual binding theory of episodic memory [@yonelinas2019contextual; @howard2002distributed].
+In this framework, each experienced event is encoded by binding it to the current state of a continuously evolving context representation.
+Context encompasses temporal, spatial, and cognitive features, some of which change rapidly from one event to the next while others shift gradually with ongoing experience [@yonelinas2019contextual].
+Forgetting, on this view, arises primarily from contextual interference rather than time-dependent decay or consolidation.
+Events encoded in similar context states compete during retrieval, and the more competitors share a target's contextual neighborhood, the less likely the target is to be retrieved [@mensink1989model; @yonelinas2019contextual].
+
+Retrieved-context theory formalizes this binding framework with two associative pathways [@howard2002distributed; @polyn2009context].
+Context-to-item associations allow the current context state to cue all events encoded in similar states, producing competitive retrieval in which events vie for recall based on the strength of their contextual match.
+Item-to-context associations allow a recalled or re-encountered event to reinstate the context in which it was originally experienced, a mechanism absent from earlier context theories.
+This reinstatement mechanism creates a bidirectional loop: retrieving an event drives context back toward the state present at encoding, which in turn cues neighboring events, producing the temporal contiguity effect [@kahana1996associative; @sederberg2008context].
+
+The critical property for the present account is that context-to-item retrieval is competitive: any event encoded in the current contextual neighborhood is a candidate, and adding new events to that neighborhood increases retrieval competition.
+In the trauma-film paradigm, intrusive memories arise through this pathway as ongoing context drifts near states associated with the film, cueing film events without intention.
+When a participant performs a visuospatial task such as Tetris immediately after viewing a distressing film, the events the task produces are encoded in temporal context that overlaps substantially with the film's contextual neighborhood.
+When context later drifts near the film region, interference events compete alongside film events, reducing the probability that any single film event is retrieved as an intrusion.
+The strength of this interference depends on how many competitors are encoded and how much their context overlaps with the film's, not on whether the task shares the film's perceptual modality.
+
+The item-to-context pathway extends this account to delayed interventions.
+In the trauma-film paradigm, presenting a film clip as a reminder retrieves its associated film context via item-to-context retrieval, pulling the current context back toward the state present during the original viewing [@james2015computer; @kessler2020visuospatial].
+In clinical interventions at longer delays, directed recollection of a real-life traumatic experience serves the same function, reinstating the original trauma context through the same associative pathway [@iyadurai2018preventing; @horsch2017reducing].
+A visuospatial task performed in this reinstated state encodes competitors that overlap with the trauma context, enabling interference through the same contextual competition as the immediate case.
+Interference effectiveness depends on two continuous variables: how strongly the reminder reinstates film context, and how much subsequent experience has caused the reinstated context to drift before the interference task begins.
+Both are governed by context overlap rather than a discrete reconsolidation window that opens and closes.
+
+Item-to-context associations also create a retrieval pathway that is structurally immune to contextual competition.
+When a film event is presented as a recognition probe, it retrieves its own associated context through its item-to-context associations.
+Competitor events encoded after the film modify only their own associations; they do not alter the film event's stored context.
+Recognition therefore bypasses the competitive dynamics of context-to-item retrieval entirely.
+This architectural immunity contrasts with the graded protection that retrieval control provides to deliberate recall, a distinction developed below.
+
+Deliberate recall of the film presents a subtler case.
+Like intrusions, it uses context-to-item retrieval and is therefore exposed to competitor interference.
+Two control mechanisms can partially offset this vulnerability.
+Reinstating the film's starting context as the initial retrieval cue biases recall toward the film region and away from the interference neighborhood; sharpening competition among candidates amplifies strongly associated film events relative to weakly matched competitors.
+Together, these mechanisms produce graded protection.
+This protection falls short of recognition's architectural immunity but meaningfully reduces vulnerability, with the degree of sparing depending on how much control the participant exerts.
+
+These mechanisms reproduce several core findings from the episodic memory literature.
+In free recall, the context-reinstatement loop accounts for temporal contiguity (the tendency to recall temporally neighboring events in sequence) and for the persistence of this pattern across long filled delays [@kahana1996associative; @howard2002distributed; @sederberg2008context].
+Memories from recent but irrelevant experiences also intrude during recall of a target episode, with a frequency that decays gradually over intervening time [@howard2008persistence; @zaromb2006temporal; @lohnas2015expanding].
+Extensions of the model (eCMR, CMR3) add emotional arousal and valence as dimensions of context, so that high-arousal events are bound not only to temporal context but also to an emotional context reflecting the affective state at encoding [@talmi2019retrieved].
+This extension is directly relevant to the present work, as traumatic film material is encoded with strong arousal, and the model's treatment of arousal as context captures the enhanced encoding and distinctive retrieval dynamics that characterize emotional material.
+
+This account replaces each of the three commitments that the dual-representation account requires.
+The dissociation between involuntary and voluntary retrieval emerges from two retrieval pathways operating on a single set of memory associations, not from separate sensory and contextual traces.
+Interference depends on competitor encoding strength and context overlap, not on modality-specific disruption of a sensory trace.
+Delayed effects follow from context reinstatement and its maintenance across intervening experience, rather than from a time-limited reconsolidation window.
+
+These mechanisms jointly predict a gradient of vulnerability to interference.
+Recognition should be fully spared because it uses a pathway that is architecturally immune to competitor encoding.
+Deliberate recall should be partially spared because control mechanisms can offset competition, with the degree of protection varying with the control resources available.
+Unguided recall, the pathway that produces intrusions, should be most vulnerable because it lacks both architectural immunity and active control.
+This graded immunity prediction falls out of the model's architecture without additional assumptions and cannot be produced by an account in which the dissociation arises from separate memory stores, one disrupted and one intact.
+The simulations that follow test this prediction across a series of trauma-film paradigm designs.
+
+# Model and Paradigm
+
+## Representations and Memory Architecture
+
+The model represents each study event as an orthonormal feature vector $f_i$.
+In the trauma-film paradigm, events span four experimental phases presented in fixed order: film clips, break activities, interference items, and filler items, for a total of $N$ items.
+Each item carries an emotional flag $e_i \in \{0, 1\}$ indicating whether it was encoded under heightened arousal.
+
+Two context representations evolve across the experiment.
+Temporal context $c^T$ is a unit-length vector of dimension $N + 1$, initialized with all activation on a dedicated start-of-list unit.
+As each item is encoded, $c^T$ drifts toward the item's retrieved context.
+The result is a recency-weighted trace of recent experience that serves as the primary retrieval cue.
+Emotional context $c^E$ is a separate unit-length vector with two dimensions — a neutral pole and an arousal pole — initialized at $c^E_0 = [1, 0]$.
+When emotional items are encoded, $c^E$ drifts toward the arousal pole, creating shared emotional context among co-aroused items.
+
+Four associative memory matrices link items to contexts.
+Item-to-context memory $M^{FC}$ stores associations from item features to temporal context and supports context reinstatement when an item is retrieved or re-encountered.
+Context-to-item memory $M^{CF}$ stores the reverse associations and supports competitive retrieval: the current temporal context cues all items encoded in similar states.
+Two parallel matrices serve the emotional pathway: $M^{FC}_E$ maps item features to emotional context, and $M^{CF}_E$ maps emotional context to item features.
+
+@tbl-parameters lists all model structures and parameters; these representations and their initializations underpin every simulation in this paper.
+
+| Symbol | Name | Description |
+|------------------------|------------------------|------------------------|
+| $c^T$ | temporal context | Recency-weighted summary of recent items |
+| $c^E$ | emotional context | Arousal state at encoding (2-D) |
+| $f_i$ | item features | Orthonormal representation of item $i$ |
+| $e_i$ | emotional flag | 1 for emotional items, 0 for neutral |
+| $M^{FC}$, $M^{CF}$ | temporal memories | Item $\leftrightarrow$ temporal-context associations |
+| $M^{FC}_E$, $M^{CF}_E$ | emotional memories | Item $\leftrightarrow$ emotional-context associations |
+| $\beta_{enc}$ | encoding drift rate | Temporal context drift during study |
+| $\beta_{start}$ | start drift rate | Start-of-list reinstatement at recall onset |
+| $\beta_{rec}$ | recall drift rate | Context drift during recall |
+| $\beta_{emot}$ | emotional drift rate | Emotional context drift during encoding |
+| $\gamma$ | learning rate | Feature-to-context learning rate |
+| $\alpha$ | shared support | Pre-experimental shared support in $M^{CF}$ |
+| $\delta$ | item support | Pre-experimental self-support in $M^{CF}$ and $M^{CF}_E$ |
+| $\phi_s$ | primacy scale | Initial boost to context-to-item learning |
+| $\phi_d$ | primacy decay | Decay rate of the primacy boost |
+| $\tau$ | choice sensitivity | Exponent for Luce-style retrieval competition |
+| $\omega_E$ | emotional weight | Strength of emotional pathway in activation |
+| $\theta_s$ | stop scale | Baseline termination probability |
+| $\theta_r$ | stop growth | Termination growth with recall position |
+
+: Model structures and parameters.  Base parameters ($\beta_{enc}$ through $\theta_r$, excluding $\beta_{emot}$ and $\omega_E$) are fitted per-subject to the free-recall benchmark of @healey2014memory. {#tbl-parameters}
+
+Pre-experimental initialization establishes baseline associations before the experiment.
+For the temporal pathway:
+
+$$
+M^{FC}_{pre(ij)} =
+\begin{cases}
+1 - \gamma & \text{if } j = i \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+$$
+M^{CF}_{pre(ij)} =
+\begin{cases}
+\delta & \text{if } i = j \\
+\alpha & \text{otherwise}
+\end{cases}
+$$
+
+Here, $\gamma$ scales the ratio of experimental to pre-experimental item-to-context associations, $\delta$ sets each item's pre-experimental self-support, and $\alpha$ sets shared support across all items.
+
+For the emotional pathway, pre-experimental associations link emotional items to the arousal pole of emotional context:
+
+$$
+M^{FC}_{E,pre(ik)} =
+\begin{cases}
+(1 - \gamma) \cdot e_i & \text{if } k = 1 \text{ (arousal)} \\
+0 & \text{if } k = 0 \text{ (neutral)}
+\end{cases}
+$$
+
+$$
+M^{CF}_{E,pre(kj)} =
+\begin{cases}
+\delta \cdot e_j & \text{if } k = 1 \text{ (arousal)} \\
+0 & \text{if } k = 0 \text{ (neutral)}
+\end{cases}
+$$
+
+Here, $k$ indexes the two emotional context units.
+Emotional items ($e_i = 1$) establish pre-experimental links through the arousal pole, creating a channel for emotional retrieval competition distinct from temporal proximity.
+Neutral items have no emotional associations.
+
+## Encoding: Film, Interference, and Filler Phases
+
+All four experimental phases — film, break, interference, and filler — use the same encoding machinery, differing only in phase-specific rates.
+On each encoding step, the model retrieves context input, updates both context streams, and strengthens item–context associations in all four memory matrices.
+
+Temporal context input for item $i$ is retrieved by probing $M^{FC}$:
+
+$$
+c^{IN}_i = M^{FC} f_i
+$$
+
+The model normalizes the input to unit length.
+Temporal context then drifts toward the normalized input:
+
+$$
+c^T_i = \rho_i \, c^T_{i-1} + \beta_{enc} \, c^{IN}_i
+$$
+
+$$
+\rho_i = \sqrt{1 + \beta_{enc}^2 \left[\left(c^T_{i-1} \cdot c^{IN}_i\right)^2 - 1\right]} - \beta_{enc} \left(c^T_{i-1} \cdot c^{IN}_i\right)
+$$
+
+Here, $\beta_{enc}$ controls how rapidly temporal context drifts toward newly encoded items, and $\rho_i$ preserves unit length.
+
+Feature-to-context associations update with a Hebbian outer product:
+
+$$
+\Delta M^{FC}_{ij} = \gamma \, f_i \, c^T_j
+$$
+
+Here, $\gamma$ is the feature-to-context learning rate.
+A primacy function that decays with serial position weights context-to-item associations:
+
+$$
+\phi_i = \phi_s \, e^{-\phi_d \cdot i} + 1
+$$
+
+$$
+\Delta M^{CF}_{ij} = \phi_i \, c^T_j \, f_i
+$$
+
+Here, $\phi_s$ sets the initial primacy boost and $\phi_d$ controls its decay.
+Items encoded early in a phase receive stronger context-to-item associations, producing a primacy gradient in later retrieval.
+
+Emotional context updates in parallel.
+The model retrieves emotional context input as $c^{IN}_{E,i} = M^{FC}_E f_i$, normalizes it, and integrates:
+
+$$
+c^E_i = \rho_{E,i} \, c^E_{i-1} + \beta_{emot} \, c^{IN}_{E,i}
+$$
+
+For emotional items ($e_i = 1$), $M^{FC}_E$ returns input weighted toward the arousal pole, causing $c^E$ to drift toward shared arousal.
+For neutral items ($e_i = 0$), $M^{FC}_E$ returns near-zero input, leaving $c^E$ essentially unchanged.
+
+Emotional memory learning mirrors the temporal pathway, but the emotional flag gates it:
+
+$$
+\Delta M^{FC}_{E,ij} = \gamma \cdot e_i \, f_i \, c^E_j
+$$
+
+$$
+\Delta M^{CF}_{E,ij} = \phi_i \cdot e_i \, c^E_j \, f_i
+$$
+
+Only emotional items form new emotional associations during encoding.
+Neutral events pass through the emotional pathway without modification, confining emotional retrieval competition to material encoded under heightened arousal.
+
+Each phase applies multiplicative scale factors to the base encoding rates.
+The film phase uses base rates directly.
+Subsequent phases modulate two quantities: drift rate, which controls context proximity to preceding items, and $M^{CF}$ learning rate, which controls competitor encoding strength.
+
+| Phase | Drift rate | $M^{CF}$ learning scale | Paradigm role |
+|---|---|---|---|
+| Film | $\beta_{enc}$ | $1$ | Target encoding |
+| Break | $s^{\beta}_\text{break} \cdot \beta_{enc}$ | $s^{\phi}_\text{break}$ | Retention interval |
+| Interference | $s^{\beta}_\text{int} \cdot \beta_{enc}$ | $s^{\phi}_\text{int}$ | Competitor encoding |
+| Filler | $s^{\beta}_\text{fill} \cdot \beta_{enc}$ | $s^{\phi}_\text{fill}$ | Pre-recall buffer |
+
+: Phase-specific encoding rates. Drift scales multiply $\beta_{enc}$ and are clipped to $[0, 1]$. {#tbl-phase-scales}
+
+The interference scales $s^{\beta}_\text{int}$ and $s^{\phi}_\text{int}$ are central to the simulations.
+The drift scale controls how much temporal context drifts during interference encoding: higher values produce interference items whose temporal context overlaps more with the film neighborhood, strengthening competition.
+The MCF scale controls competitor encoding strength: stronger competitors capture more retrieval probability from film targets.
+The mechanism is straightforward: because $M^{CF}$ rows encode the temporal context present at study, interference items encoded in context that overlaps the film neighborhood activate whenever the retrieval cue revisits that region.
+These two scales jointly define the intervention's competitive impact and are the primary parameters varied in the *Selective Interference Effect* and *What Makes Interference Stronger* simulations.
+
+## Reminders and Context Reinstatement
+
+In the trauma-film paradigm, a film clip presented as a reminder between the break and interference phases serves to reinstate the film's encoding context.
+The model implements this in two steps.
+First, both context representations drift toward their respective start-of-list states:
+
+$$
+c^T_\text{rem} = \rho \, c^T + \beta_\text{rem,start} \, c^T_0
+$$
+
+$$
+c^E_\text{rem} = \rho_E \, c^E + \beta_\text{rem,start} \, c^E_0
+$$
+
+Here, $\beta_\text{rem,start} = s^{\beta}_\text{rem,start} \cdot \beta_{start}$ sets how strongly context shifts toward the pre-experimental state before the reminder arrives.
+This partial reinstatement moves context back toward the general region of the film's temporal neighborhood.
+
+Second, each reminder item reinstates its specific temporal and emotional context through the same item-to-context retrieval used during recall:
+
+$$
+c^{IN}_\text{cue} = M^{FC} f_\text{cue}
+$$
+
+$$
+c^T \leftarrow \rho \, c^T + \beta_\text{rem} \, c^{IN}_\text{cue}
+$$
+
+$$
+c^{IN}_{E,\text{cue}} = M^{FC}_E f_\text{cue}
+$$
+
+$$
+c^E \leftarrow \rho_E \, c^E + \beta_\text{rem} \, c^{IN}_{E,\text{cue}}
+$$
+
+Here, $\beta_\text{rem} = s^{\beta}_\text{rem} \cdot \beta_{enc}$ controls how strongly the reminder pulls context toward the film's encoding state.
+Critically, reminders reinstate context without forming new associations: $M^{FC}$, $M^{CF}$, $M^{FC}_E$, and $M^{CF}_E$ remain unchanged.
+This distinction mirrors the clinical logic of a reminder cue — it reactivates the memory without adding new content.
+
+The reminder mechanism has a direct consequence for interference.
+By pulling temporal context back toward the film neighborhood, the reminder ensures that interference items encoded immediately afterward share temporal context with the film.
+Stronger reinstatement ($s^{\beta}_\text{rem}$ closer to 1) produces more overlap, and hence more competition, between film targets and interference competitors.
+These dynamics are tested in the *Context Reinstatement and Delayed Interference* simulations, which sweep $s^{\beta}_\text{rem,start}$ and $s^{\beta}_\text{rem}$ to examine how reinstatement strength modulates interference effectiveness.
+
+## Retrieval: Three Modes
+
+The model distinguishes three retrieval modes that share the same memory architecture but differ in pathway, control, and vulnerability to interference.
+
+**Context-to-item retrieval** underlies both unguided intrusions and directed free recall.
+At the start of recall, both context streams drift toward their initial states:
+
+$$
+c^T_\text{start} = \rho \, c^T_N + \beta_{start} \, c^T_0
+$$
+
+$$
+c^E_\text{start} = \rho_E \, c^E_N + \beta_{start} \, c^E_0
+$$
+
+Here, $\beta_{start}$ controls how much start-of-list context is reinstated at retrieval onset.
+The current temporal and emotional contexts then cue all items through $M^{CF}$ and $M^{CF}_E$:
+
+$$
+A_T = M^{CF} \, c^T \odot r
+$$
+
+$$
+A_E = \omega_E \cdot M^{CF}_E \, c^E \odot r
+$$
+
+$$
+A = A_T + A_E
+$$
+
+Here, $r$ is a binary mask over recallable items (studied and not yet recalled), and $\omega_E$ weights the emotional pathway's contribution.
+Because all recallable items contribute to the denominator, encoding additional competitors in contextually similar states dilutes each film item's share of retrieval probability.
+The choice sensitivity $\tau$ power-scales the combined activation vector $A$.
+The probability of recalling item $i$ then follows a Luce choice rule:
+
+$$
+P(i \mid \text{recall}) = \frac{A_i^{\tau}}{\sum_k A_k^{\tau}}
+$$
+
+At each retrieval step, the model may terminate with probability $p_\text{stop}$ or recall an item with probability $(1 - p_\text{stop}) \cdot P(i \mid \text{recall})$.
+Termination probability grows with recall position:
+
+$$
+p_\text{stop}(j) = \theta_s \, e^{\theta_r \cdot j}
+$$
+
+Here, $j$ is the number of items already recalled, $\theta_s$ sets the baseline termination probability, and $\theta_r$ controls its growth.
+When an item is recalled, both context streams reinstate its associated context:
+
+$$
+c^T \leftarrow \rho \, c^T + \beta_{rec} \, M^{FC} \, f_\text{recalled}
+$$
+
+$$
+c^E \leftarrow \rho_E \, c^E + \beta_{rec} \, M^{FC}_E \, f_\text{recalled}
+$$
+
+This reinstatement drives context toward the recalled item's encoding neighborhood, biasing subsequent retrievals toward temporally and emotionally proximate items.
+This mechanism produces the contiguity and emotional clustering effects observed in free recall.
+
+Unguided versus directed retrieval differ in their control parameters, not their computational pathway.
+Unguided recall — the pathway that produces intrusions — uses moderate start reinstatement and competition sharpness.
+Directed recall uses stronger reinstatement ($s^{\beta}_\text{start} \cdot \beta_{start}$) and sharper competition ($s^{\tau} \cdot \tau$).
+Together, these bias retrieval toward film targets because film items, encoded earlier in the sequence, have temporal context closer to the start-of-list state than interference items do.
+These control parameters do not change the retrieval architecture; they adjust how aggressively the participant's current context cue favors the target episode.
+The *What Protects Voluntary Recall* simulations sweep $s^{\beta}_\text{start}$ and $s^{\tau}$ to quantify how much retrieval control can offset competitor interference.
+
+Item-to-context retrieval underlies recognition.
+When a film event is presented as a recognition probe, it retrieves its own associated temporal context through $M^{FC}$:
+
+$$
+P(\text{recognized} \mid f_i) = P(i \mid f_i \text{ cues context})
+$$
+
+The critical property is architectural immunity.
+Competitor items encoded during the interference phase modify only their own rows in $M^{FC}$ and $M^{CF}$; they do not alter the film item's stored associations.
+Recognition therefore bypasses the competitive dynamics of context-to-item retrieval entirely.
+No amount of competitor encoding can degrade a film item's recognition signal, because the signal depends on the film item's own item-to-context associations, which interference leaves untouched.
+This immunity is a structural consequence of the model's associative architecture, not a parameter-dependent effect that could be tuned away.
+The *Recognition Immunity* simulations verify this prediction by sweeping interference strength and confirming that recognition performance remains flat.
+
+## Calibration and Paradigm Geometry
+
+Differential evolution fits eleven base parameters per-subject to the free-recall data of @healey2014memory.
+This dataset provides recall sequences from 126 participants across multiple sessions of standard list-learning.
+These data yield stable per-subject estimates of encoding, retrieval, and termination parameters.
+The fitting procedure maximizes the likelihood of observed recall sequences under the model.
+Two additional parameters — $\beta_{emot}$ and $\omega_E$ — control the emotional pathway and default to $\beta_{enc}$ and 0, respectively, when emotional context is not manipulated.
+
+Scale factors are not fitted.
+Each scale factor multiplies a base parameter to implement a phase-specific encoding or retrieval condition and is either set to a theoretically motivated value or systematically varied in parameter sweeps.
+@tbl-scale-factors lists all scale factors with their base parameters and simulation connections.
+
+| Scale factor | Base parameter | Role | Simulation connection |
+|---|---|---|---|
+| $s^{\beta}_\text{break}$ | $\beta_{enc}$ | Break-phase drift rate | Calibration |
+| $s^{\phi}_\text{break}$ | $\phi_i$ | Break-phase MCF learning | Calibration |
+| $s^{\beta}_\text{rem,start}$ | $\beta_{start}$ | Context reinstatement before reminder | Context Reinstatement |
+| $s^{\beta}_\text{rem}$ | $\beta_{enc}$ | Reminder context drift | Context Reinstatement |
+| $s^{\beta}_\text{int}$ | $\beta_{enc}$ | Interference-phase drift rate | Selective Interference, What Makes Interference Stronger |
+| $s^{\phi}_\text{int}$ | $\phi_i$ | Interference-phase MCF learning | Selective Interference, What Makes Interference Stronger |
+| $s^{\beta}_\text{fill}$ | $\beta_{enc}$ | Filler-phase drift rate | Calibration |
+| $s^{\phi}_\text{fill}$ | $\phi_i$ | Filler-phase MCF learning | Calibration |
+| $s^{\beta}_\text{start}$ | $\beta_{start}$ | Start-of-recall reinstatement | What Protects Voluntary Recall |
+| $s^{\tau}$ | $\tau$ | Retrieval competition sharpness | What Protects Voluntary Recall |
+| $\omega_E$ | — | Emotional pathway activation weight | What Makes Interference Stronger |
+| $s^{\beta}_\text{emot}$ | $\beta_{emot}$ | Emotional context drift rate | What Makes Interference Stronger |
+
+: Scale factors and their simulation connections.  Drift scales are clipped to $[0, 1]$ after multiplication. {#tbl-scale-factors}
+
+The paradigm geometry mirrors the trauma-film experiments simulated in later sections.
+Each simulated trial presents $N_\text{film} = 16$ film items, $N_\text{break} = 16$ break items, a reminder phase (one film clip re-presented without new learning), $N_\text{int} = 16$ interference items, and $N_\text{fill} = 16$ filler items, for a total list length of $N = 64$.
+Recall allows up to 48 retrieval attempts per trial.
+Simulations average over 100 replications per subject using the 126 per-subject parameter sets from the @healey2014memory fits.
+
+The primary dependent measure is film-item recall under context-to-item retrieval.
+Because retrieval proceeds as a sequence of competitive samples terminated by a growing stop probability, the expected number of film items recalled depends on how much retrieval probability competitors capture at each step.
+Recognition is operationalized as the probability of retrieving the correct item given its context, using the model's item-to-context pathway.
+These dependent measures map directly onto the intrusion diaries and recognition tests used in trauma-film studies.
+They provide a bridge between the model's formal predictions and the empirical phenomena the simulations target.
+
+# Simulations
+
+## The Selective Interference Effect
+
+## Context Reinstatement and Delayed Interference
+
+## What Protects Voluntary Recall
+
+## What Makes Interference Stronger
+
+## Recognition Immunity
+
+## Test-Phase Cues and Paradigm Heterogeneity
+
+# General Discussion
+
+# References
+
+::: {#refs}
+:::

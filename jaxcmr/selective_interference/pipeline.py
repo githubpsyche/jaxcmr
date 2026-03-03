@@ -117,10 +117,19 @@ def configure_rates(
         ``reminder_start_drift_scale``, ``reminder_drift_scale``,
         ``interference_drift_scale``, ``interference_mcf_scale``,
         ``filler_drift_scale``, ``filler_mcf_scale``,
-        ``start_drift_scale``, ``tau_scale``, ``emotion_scale``.
+        ``start_drift_scale``, ``tau_scale``, ``emotion_scale``,
+        ``emotion_drift_scale``, ``shared_support_scale``,
+        ``film_shared_support_scale``,
+        ``competitor_shared_support_scale``.
         Unspecified scales default to 1.0.
         ``primacy_scale``, ``primacy_decay``, and ``emotion_scale``
         replace the model values directly when provided.
+        ``shared_support_scale`` scales the pre-experimental MCF
+        baseline globally; ``film_shared_support_scale`` and
+        ``competitor_shared_support_scale`` further scale film
+        (columns 0..n_film-1) and non-film columns respectively.
+        All three are only valid when MCF is pristine
+        (``cache_after="creation"``).
 
     Returns
     -------
@@ -130,6 +139,33 @@ def configure_rates(
     def _apply(model):
         encoding_drift = model.encoding_drift_rate
         start_drift = model.start_drift_rate
+
+        # Scale shared_support in MCF (off-diagonal of rows 1+).
+        # Only valid when MCF is pristine (CACHE_AFTER="creation").
+        ss_scale = scales.get("shared_support_scale", 1.0)
+        old_ss = model.shared_support
+        new_ss = old_ss * ss_scale
+        mcf_state = model.mcf.state
+        n_ctx, n_items = mcf_state.shape
+        # Mask: 1 for off-diagonal cells in rows 1+, 0 elsewhere
+        off_diag = 1.0 - jnp.eye(n_ctx, n_items)
+        row_mask = jnp.concatenate([jnp.zeros((1, n_items)),
+                                    jnp.ones((n_ctx - 1, n_items))])
+        mask = off_diag * row_mask
+        new_mcf_state = mcf_state + (new_ss - old_ss) * mask
+
+        # Phase-selective shared_support scaling (film vs non-film columns).
+        film_ss_scale = scales.get("film_shared_support_scale", 1.0)
+        comp_ss_scale = scales.get("competitor_shared_support_scale", 1.0)
+        film_cols = jnp.arange(n_items) < model.n_film
+        col_delta = jnp.where(
+            film_cols,
+            new_ss * (film_ss_scale - 1.0),
+            new_ss * (comp_ss_scale - 1.0),
+        )
+        new_mcf_state = new_mcf_state + mask * col_delta[None, :]
+        new_mcf = model.mcf.replace(state=new_mcf_state)
+
         return model.replace(
             encoding_drift_rate=jnp.clip(
                 scales.get("encoding_drift_scale", 1.0)
@@ -169,6 +205,12 @@ def configure_rates(
             primacy_scale=scales.get("primacy_scale", model.primacy_scale),
             primacy_decay=scales.get("primacy_decay", model.primacy_decay),
             emotion_scale=scales.get("emotion_scale", model.emotion_scale),
+            emotion_drift_rate=jnp.clip(
+                scales.get("emotion_drift_scale", 1.0)
+                * model.emotion_drift_rate, 0.0, 1.0,
+            ),
+            mcf=new_mcf,
+            shared_support=new_ss,
         )
     return vmap(_apply)(models)
 
@@ -482,6 +524,7 @@ def prepare_sweep(
     models = vmap(
         lambda p: model_factory(list_length, p, None),
     )(params)
+    models = models.replace(n_film=jnp.full((n_subjects,), paradigm.n_film))
 
     # 2. Apply fixed pre-cache scales
     configured = configure_rates(models, **scales)
@@ -582,6 +625,7 @@ def run_count_sweep(
     paradigm: Paradigm,
     phase: str,
     count_values: Sequence[int],
+    **scales: float,
 ) -> tuple[Integer[Array, "n_values n_subjects n_reps max_recall"], PRNGKeyArray]:
     """Run an item-count sweep on prepared models.
 
@@ -598,6 +642,9 @@ def run_count_sweep(
         ``"n_interference"``, or ``"n_filler"``.
     count_values : Sequence[int]
         Item counts to sweep over.
+    **scales : float
+        Fixed scale factors applied via ``configure_rates`` before
+        each iteration.
 
     Returns
     -------
@@ -611,6 +658,12 @@ def run_count_sweep(
     attr, make_fn = _COUNT_PHASE[phase]
     slot = prepared.item_slots[attr]
 
+    models = (
+        configure_rates(prepared.models, **scales)
+        if scales
+        else prepared.models
+    )
+
     results = []
     for n in count_values:
         items = make_fn(paradigm, int(n))
@@ -619,6 +672,6 @@ def run_count_sweep(
         rngs, rng = sweep_rngs(
             rng, prepared.n_subjects, prepared.experiment_count,
         )
-        results.append(prepared.batched(prepared.models, rngs, *args))
+        results.append(prepared.batched(models, rngs, *args))
 
     return jnp.stack(results), rng

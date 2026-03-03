@@ -10,6 +10,13 @@ The shared ``experience`` method accepts drift rate and MCF scale
 as arguments, providing the common encoding logic that all
 phase-specific methods delegate to.
 
+The model supports an optional emotional context channel
+(source-context eCMR).  When ``emotion_scale > 0`` and items are
+flagged as emotional via ``is_emotional``, a separate 2-D
+emotional context vector drifts alongside temporal context.
+Emotional items share emotional context, creating retrieval
+competition beyond temporal proximity.
+
 """
 
 from typing import Callable, Mapping, Optional
@@ -80,11 +87,13 @@ class PhasedCMR(Pytree):
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
 
-        # Emotional mechanism (defaults off when is_emotional is None or emotion_scale is 0)
+        # Emotional context channel (source-context eCMR)
         self.emotion_scale = parameters.get("emotion_scale", 0.0)
+        self.emotion_drift_rate = parameters.get(
+            "emotion_drift_rate", self.encoding_drift_rate
+        )
         _is_emo = is_emotional if is_emotional is not None else jnp.zeros(list_length)
         self.is_emotional = jnp.array(_is_emo, dtype=jnp.float32)
-        self.emotional_mcf = jnp.array(_is_emo, dtype=jnp.float32)
 
         # Phase-specific params (default to base rates when absent)
         self.break_drift_rate = parameters.get(
@@ -106,7 +115,13 @@ class PhasedCMR(Pytree):
             "reminder_drift_rate", self.encoding_drift_rate
         )
 
-        # Model state
+        # Pre-experimental MCF baseline (needed for shared_support scaling)
+        self.shared_support = parameters["shared_support"]
+
+        # Phase boundary (overridden by pipeline after creation)
+        self.n_film = list_length
+
+        # Model state — temporal pathway
         self.item_count = list_length
         self.items = jnp.eye(self.item_count)
         self.context = context_create_fn(list_length)
@@ -121,6 +136,28 @@ class PhasedCMR(Pytree):
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
 
+        # Model state — emotional context pathway
+        # 2-D emotional context: [neutral_pole, arousal_pole]
+        self.emotion_context = TemporalContext.TemporalContext(
+            item_count=1, size=2
+        )
+        learning_rate = parameters["learning_rate"]
+        item_support = parameters["item_support"]
+        # emotion_mfc: item → emotional context (list_length × 2)
+        # Pre-experimental: emotional items link to arousal unit (index 1)
+        emot_mfc_state = jnp.zeros((list_length, 2))
+        emot_mfc_state = emot_mfc_state.at[:, 1].set(
+            (1 - learning_rate) * self.is_emotional
+        )
+        self.emotion_mfc = LinearMemory.LinearMemory(emot_mfc_state)
+        # emotion_mcf: emotional context → item (2 × list_length)
+        # Pre-experimental: arousal unit (index 1) links to emotional items
+        emot_mcf_state = jnp.zeros((2, list_length))
+        emot_mcf_state = emot_mcf_state.at[1, :].set(
+            item_support * self.is_emotional
+        )
+        self.emotion_mcf = LinearMemory.LinearMemory(emot_mcf_state)
+
     @property
     def mcf_learning_rate(self) -> Float[Array, ""]:
         """Learning rate for context-to-item memory at current position.
@@ -134,8 +171,8 @@ class PhasedCMR(Pytree):
             self.study_index, self.primacy_scale, self.primacy_decay
         )
 
-    # ── Shared encoding engine 
-    
+    # ── Shared encoding engine ─────────────────────────────────────
+
     def experience_item(
         self,
         item_index: Int_,
@@ -155,11 +192,14 @@ class PhasedCMR(Pytree):
 
         Returns
         -------
-        CMR
+        PhasedCMR
             Updated model state after encoding the item.
 
         """
         item = self.items[item_index]
+        e_i = self.is_emotional[item_index]
+
+        # --- Temporal pathway ---
         context_input = self.mfc.probe(item)
         new_context = self.context.integrate(context_input, drift_rate)
         learning_state = lax.cond(
@@ -167,15 +207,36 @@ class PhasedCMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        # Emotional MCF encoding (eeg_ecmr pattern minus LPP/primacy)
-        emcf_lr = self.emotion_scale * self.is_emotional[item_index]
+
+        # --- Emotional context pathway ---
+        # Emotional context input: probe emotion_mfc with item features.
+        # For neutral items this returns near-zero → minimal drift.
+        emot_context_input = self.emotion_mfc.probe(item)
+        new_emotion_context = self.emotion_context.integrate(
+            emot_context_input, self.emotion_drift_rate
+        )
+        emot_learning_state = lax.cond(
+            self.learn_after_context_update,
+            lambda: new_emotion_context.state,
+            lambda: self.emotion_context.state,
+        )
+
         return self.replace(
+            # Temporal pathway updates
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
             mcf=self.mcf.associate(
                 learning_state, item, mcf_lr_scale * self.mcf_learning_rate
             ),
-            emotional_mcf=self.emotional_mcf.at[item_index].multiply(emcf_lr),
+            # Emotional pathway updates (scaled by e_i: zero for neutral items)
+            emotion_context=new_emotion_context,
+            emotion_mfc=self.emotion_mfc.associate(
+                item, emot_learning_state, self.mfc_learning_rate * e_i
+            ),
+            emotion_mcf=self.emotion_mcf.associate(
+                emot_learning_state, item,
+                mcf_lr_scale * self.mcf_learning_rate * e_i
+            ),
             recallable=self.recallable.at[item_index].set(True),
             study_index=self.study_index + 1,
         )
@@ -287,7 +348,13 @@ class PhasedCMR(Pytree):
         new_context = self.context.integrate(
             self.context.initial_state, self.reminder_start_drift_rate
         )
-        return self.replace(context=new_context)
+        new_emotion_context = self.emotion_context.integrate(
+            self.emotion_context.initial_state, self.reminder_start_drift_rate
+        )
+        return self.replace(
+            context=new_context,
+            emotion_context=new_emotion_context,
+        )
 
     def remind(self, choice: Int_) -> "PhasedCMR":
         """Replay a single item's context association without learning.
@@ -305,11 +372,20 @@ class PhasedCMR(Pytree):
 
         def _remind_item(self_inner):
             item = self_inner.items[choice - 1]
+            # Temporal context reinstatement
             context_input = self_inner.mfc.probe(item)
             new_context = self_inner.context.integrate(
                 context_input, self_inner.reminder_drift_rate
             )
-            return self_inner.replace(context=new_context)
+            # Emotional context reinstatement
+            emot_input = self_inner.emotion_mfc.probe(item)
+            new_emotion_context = self_inner.emotion_context.integrate(
+                emot_input, self_inner.reminder_drift_rate
+            )
+            return self_inner.replace(
+                context=new_context,
+                emotion_context=new_emotion_context,
+            )
 
         return lax.cond(choice == 0, lambda: self, lambda: _remind_item(self))
 
@@ -326,7 +402,13 @@ class PhasedCMR(Pytree):
         start_context = self.context.integrate(
             self.context.initial_state, self.start_drift_rate
         )
-        return self.replace(context=start_context)
+        start_emotion_context = self.emotion_context.integrate(
+            self.emotion_context.initial_state, self.start_drift_rate
+        )
+        return self.replace(
+            context=start_context,
+            emotion_context=start_emotion_context,
+        )
 
     def retrieve(self, choice: Int_) -> "PhasedCMR":
         """Simulate a retrieval event.
@@ -348,12 +430,18 @@ class PhasedCMR(Pytree):
         )
 
     def _retrieve_item(self, item_index: Int_) -> "PhasedCMR":
+        item = self.items[item_index]
+        # Temporal context reinstatement
         new_context = self.context.integrate(
-            self.mfc.probe(self.items[item_index]),
-            self.recall_drift_rate,
+            self.mfc.probe(item), self.recall_drift_rate,
+        )
+        # Emotional context reinstatement
+        new_emotion_context = self.emotion_context.integrate(
+            self.emotion_mfc.probe(item), self.recall_drift_rate,
         )
         return self.replace(
             context=new_context,
+            emotion_context=new_emotion_context,
             recalls=self.recalls.at[self.recall_total].set(item_index + 1),
             recallable=self.recallable.at[item_index].set(
                 self.allow_repeated_recalls
@@ -369,18 +457,19 @@ class PhasedCMR(Pytree):
         Float[Array, " item_count"]
 
         """
-        _activations = self.mcf.probe(self.context.state) * self.recallable
+        # Temporal pathway activation
+        temporal_act = self.mcf.probe(self.context.state) * self.recallable
 
-        # Emotional clustering: boost emotional items when last recall was emotional
-        last_emotional = lax.cond(
-            self.recall_total > 0,
-            lambda: self.is_emotional[self.recalls[self.recall_total - 1] - 1] > 0,
-            lambda: False,
+        # Emotional pathway activation (weighted by emotion_scale)
+        emotional_act = (
+            self.emotion_scale
+            * self.emotion_mcf.probe(self.emotion_context.state)
+            * self.recallable
         )
-        emotion_support = last_emotional * self.emotional_mcf
 
+        combined = temporal_act + emotional_act
         return (
-            power_scale(_activations + emotion_support, self.mcf_sensitivity) + lb
+            power_scale(combined, self.mcf_sensitivity) + lb
         ) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
