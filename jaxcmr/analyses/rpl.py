@@ -27,8 +27,12 @@ __all__ = [
     "item_lag_counts",
     "recall_probability_by_lag",
     "binned_recall_probability_by_lag",
+    "bk2024_binned_recall_probability_by_lag",
+    "hk2005_binned_recall_probability_by_lag",
     "plot_full_rpl",
     "plot_rpl",
+    "plot_bk2024_rpl",
+    "plot_hk2005_rpl",
     "subject_full_rpl",
     "subject_binned_rpl",
     "test_rpl_slope",
@@ -167,6 +171,76 @@ def binned_recall_probability_by_lag(
     )
 
 
+def bk2024_binned_recall_probability_by_lag(
+    dataset: RecallDataset,
+    max_lag: int = 14,
+) -> Float[Array, " lag_bins"]:
+    """Binned recall probability by lag for BroitmanKahana2024.
+
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    max_lag : int
+        Largest explicit lag bucket.
+
+    Returns
+    -------
+    Float[Array, " lag_bins"]
+        Recall probability per binned lag.
+
+    """
+    result = recall_probability_by_lag(dataset, max_lag)
+    return (
+        jnp.zeros(5)
+        .at[0]
+        .set(result[0])
+        .at[1]
+        .set((result[4] + result[5] + result[6]) / 3)
+        .at[2]
+        .set((result[7] + result[8] + result[9]) / 3)
+        .at[3]
+        .set((result[10] + result[11] + result[12]) / 3)
+        .at[4]
+        .set((result[13] + result[14] + result[15]) / 3)
+    )
+
+
+def hk2005_binned_recall_probability_by_lag(
+    dataset: RecallDataset,
+    max_lag: int = 19,
+) -> Float[Array, " lag_bins"]:
+    """Binned recall probability by lag for HowardKahana2005.
+
+    Parameters
+    ----------
+    dataset : RecallDataset
+        Recall dataset with ``recalls`` and ``pres_itemnos``.
+    max_lag : int
+        Largest explicit lag bucket.
+
+    Returns
+    -------
+    Float[Array, " lag_bins"]
+        Recall probability per binned lag.
+
+    """
+    result = recall_probability_by_lag(dataset, max_lag)
+    return (
+        jnp.zeros(5)
+        .at[0]
+        .set(result[0])
+        .at[1]
+        .set((result[3] + result[4] + result[5] + result[6]) / 4)
+        .at[2]
+        .set((result[7] + result[8] + result[9] + result[10]) / 4)
+        .at[3]
+        .set((result[11] + result[12] + result[13] + result[14] + result[15]) / 5)
+        .at[4]
+        .set((result[16] + result[17] + result[18] + result[19] + result[20]) / 5)
+    )
+
+
 def plot_full_rpl(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
@@ -284,6 +358,148 @@ def plot_rpl(
                 data,
                 trial_masks[data_index],
                 jit(binned_recall_probability_by_lag, static_argnames=("max_lag",)),
+                max_lag,
+            )
+        )
+        color = color_cycle[data_index % len(color_cycle)]
+        plot_data(
+            axis,
+            jnp.arange(5),
+            subject_values,
+            labels[data_index],
+            color,
+            confidence_level=confidence_level,
+        )
+
+    axis.set_xticks(range(len(xticklabels)))
+    axis.set_xticklabels(xticklabels)
+    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
+    return axis
+
+
+def plot_bk2024_rpl(
+    datasets: Sequence[RecallDataset] | RecallDataset,
+    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    color_cycle: Optional[list[str]] = None,
+    labels: Optional[Sequence[str]] = None,
+    contrast_name: Optional[str] = None,
+    axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
+) -> Axes:
+    """Plot binned repetition-lag curves for BroitmanKahana2024.
+
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the binned RPL plot.
+
+    """
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
+    if labels is None:
+        labels = [""] * len(datasets)
+    max_lag = infer_max_lag(
+        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
+    )
+    xticklabels = ["N/A", "3-5", "6-8", "9-11", "12-14"]
+    for data_index, data in enumerate(datasets):
+        subject_values = jnp.vstack(
+            apply_by_subject(
+                data,
+                trial_masks[data_index],
+                jit(
+                    bk2024_binned_recall_probability_by_lag,
+                    static_argnames=("max_lag",),
+                ),
+                max_lag,
+            )
+        )
+        color = color_cycle[data_index % len(color_cycle)]
+        plot_data(
+            axis,
+            jnp.arange(5),
+            subject_values,
+            labels[data_index],
+            color,
+            confidence_level=confidence_level,
+        )
+
+    axis.set_xticks(range(len(xticklabels)))
+    axis.set_xticklabels(xticklabels)
+    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
+    return axis
+
+
+def plot_hk2005_rpl(
+    datasets: Sequence[RecallDataset] | RecallDataset,
+    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
+    color_cycle: Optional[list[str]] = None,
+    labels: Optional[Sequence[str]] = None,
+    contrast_name: Optional[str] = None,
+    axis: Optional[Axes] = None,
+    confidence_level: float = 0.95,
+) -> Axes:
+    """Plot binned repetition-lag curves for HowardKahana2005.
+
+    Parameters
+    ----------
+    datasets : Sequence[RecallDataset] | RecallDataset
+        One or more datasets to plot.
+    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
+        Boolean mask(s) selecting trials.
+    color_cycle : list[str] or None
+        Colors for each curve.
+    labels : Sequence[str] or None
+        Legend labels for each curve.
+    contrast_name : str or None
+        Legend title.
+    axis : Axes or None
+        Existing Axes to plot on.
+    confidence_level : float
+        Confidence level for error bounds.
+
+    Returns
+    -------
+    Axes
+        Matplotlib Axes with the binned RPL plot.
+
+    """
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
+    if labels is None:
+        labels = [""] * len(datasets)
+    max_lag = infer_max_lag(
+        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
+    )
+    xticklabels = ["N/A", "2-5", "6-9", "10-14", "15-19"]
+    for data_index, data in enumerate(datasets):
+        subject_values = jnp.vstack(
+            apply_by_subject(
+                data,
+                trial_masks[data_index],
+                jit(
+                    hk2005_binned_recall_probability_by_lag,
+                    static_argnames=("max_lag",),
+                ),
                 max_lag,
             )
         )

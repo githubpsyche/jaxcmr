@@ -82,15 +82,17 @@
 
 \usepackage{graphicx}
 \makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
 % Set default figure placement to htbp
-\makeatletter
 \def\fps@figure{htbp}
 \makeatother
 
@@ -192,9 +194,9 @@ toward first-occurrence neighbors, and (iii) preserved forward chaining
 in serial recall without cross-occurrence errors. To limit interference
 and improve fits, we advance a modified framework where repetitions (a)
 reinstate unique, non-overlapping contextual features and (b) produce
-traces that compete for retrieval. Episodic memory balances integration
-and specificity not through contextual blending, but differentiated
-competition. }
+traces that compete for retrieval. We argue that episodic memory for
+repeated experience balances integration and specificity not through
+contextual blending, but differentiated competition. }
 
 \keywords{episodic memory, repetiton effects, free recall, serial
 recall, retrieved-context theory, computational modeling}
@@ -412,6 +414,7 @@ from prior presentations of that item, linking separated moments in
 experience (\citeproc{ref-hintzman1975spacing}{Hintzman et al., 1975})
 Together, these mechanisms have been used to explain classic spacing
 effects and the superadditive benefits of repetition in free recall
+while predicting novel organizational phenomena
 (\citeproc{ref-benjamin2010distributed}{Benjamin \& Tullis, 2010};
 \citeproc{ref-cepeda2006distributed}{Cepeda et al., 2006};
 \citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Closely
@@ -452,7 +455,7 @@ neighbor. Together, these patterns would indicate that each occurrence
 and retrieval of the same item reinstates an item-level composite of
 contextual features, blending details across episodes rather than
 selecting details specific to one. Yet across multiple published
-datasets and analyses, the predicted elevations are not observed. By
+datasets and analyses, we do not observe the predicted elevations. By
 contrast, simulations of a standard retrieved-context implementation
 (CMR) robustly produce these elevations under both free and serial
 recall dynamics.
@@ -467,10 +470,10 @@ substituting neighbors from the other
 \citeproc{ref-kahana2000interresponse}{Kahana \& Jacobs, 2000}). This
 pattern helped rule out simple chaining accounts of sequential memory in
 which each item directly cues its immediate successor. Our contribution
-is to extend the same logic across tasks and frameworks. Prior work has
-suggested either that signatures of associative interference are in fact
-present in free recall or that retrieved-context models can avoid them
-via residual backward context in serial recall
+is to extend the same logic across tasks and modeling frameworks. Prior
+work has suggested either that signatures of associative interference
+are in fact present in free recall or that retrieved-context models can
+avoid them via residual backward context in serial recall
 (\citeproc{ref-logan2021serial}{Logan, 2021};
 \citeproc{ref-lohnas2014retrieved}{Lohnas \& Kahana, 2014}). Our
 findings contradict both claims and put pressure on any account of
@@ -488,7 +491,7 @@ with item repetitions.}
 
 \centering{
 
-\includegraphics{schematic.png}
+\pandocbounded{\includegraphics[keepaspectratio]{schematic.png}}
 
 }
 
@@ -645,9 +648,9 @@ Instance-CMR.}{\label{tbl-cmr-parameters}}}
 \vspace{-20pt}}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2639}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2639}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4722}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2639}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2639}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4722}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Symbol
@@ -1152,14 +1155,14 @@ Right: Instance-CMR. Top: lag-CRP. Middle: probability of first recall.
 Bottom: serial position curve.}
 
 \begin{minipage}{0.33\linewidth}
-\includegraphics{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_crp-1.png}
-\includegraphics{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_pfr-1.png}
-\includegraphics{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_spc-1.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_crp-1.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_pfr-1.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_ConnectionistCMR_Model_Fitting_spc-1.png}}\end{minipage}%
 %
 \begin{minipage}{0.33\linewidth}
-\includegraphics{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_crp-1.png}
-\includegraphics{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_pfr-1.png}
-\includegraphics{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_spc-1.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_crp-1.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_pfr-1.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{icmr_figures/HealyKahana2014_InstanceCMR_Model_Fitting_spc-1.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1203,22 +1206,22 @@ row: conditional response probability (CRP) by lag. Third row:
 probability of first recall by serial position.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_spc.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_spc.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolB_data_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1233,13 +1236,13 @@ probability (CRP) by lag. Right: probability of first recall by serial
 position.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_spc.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1290,10 +1293,10 @@ trials from Lohnas and Kahana
 simulations of standard CMR fitted to the data.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_full_rpl.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_full_rpl.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_full_rpl.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_full_rpl.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1331,7 +1334,7 @@ positions. Illustration from mixed lists in Lohnas and Kahana
 
 \centering{
 
-\includegraphics{repeat_cmr_figures/rep_lag_crp_schematic.png}
+\pandocbounded{\includegraphics[keepaspectratio]{repeat_cmr_figures/rep_lag_crp_schematic.png}}
 
 }
 
@@ -1343,7 +1346,7 @@ positions. Illustration from mixed lists in Lohnas and Kahana
 
 \centering{
 
-\includegraphics{repeat_cmr_figures/rep_crp_base.png}
+\pandocbounded{\includegraphics[keepaspectratio]{repeat_cmr_figures/rep_crp_base.png}}
 
 }
 
@@ -1528,16 +1531,16 @@ at the other occurrence's neighbors in both directions, consistent with
 associative blending.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_i2j.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_data_full_best_of_3_LT4_repneighborcrp_j2i.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1575,16 +1578,16 @@ is larger than in baseline; CMR predicts reduced separation (balanced
 access), consistent with blending.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1626,16 +1629,16 @@ baseline. By contrast, CMR predicts a weaker first-over-second advantage
 for incoming transitions.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_WeirdCMR_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1682,16 +1685,16 @@ elevation of \(i\!\rightarrow\!j{+}1/j{+}2\) errors relative to baseline
 (associative interference).}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1758,13 +1761,13 @@ baseline. Eliminating study-phase reinstatement leaves benchmark fits
 intact.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_spc.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1785,7 +1788,7 @@ preserved without study-phase reinstatement.}
 
 \begin{minipage}{0.50\linewidth}
 
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_full_rpl.png}
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_full_rpl.png}}
 
 \end{minipage}%
 
@@ -1816,10 +1819,10 @@ distinctive encoding contexts, cross-occurrence neighbor bins lie at
 baseline in both directions---neighbor knitting is abolished.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_i2j.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdCMRDistinctContexts_full_best_of_3_LT4_repneighborcrp_j2i.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1841,10 +1844,10 @@ baseline, consistent with lingering cross-occurrence blending at
 retrieval.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixed_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_control_WeirdCMRDistinctContexts_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1899,13 +1902,13 @@ matched-control lists from Lohnas and Kahana
 Occurrence-specific reinstatement at test preserves benchmark fits.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_spc.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1927,7 +1930,7 @@ not reproduce the apparent steeper slope for mixed lists in the data
 
 \begin{minipage}{\linewidth}
 
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_full_rpl.png}
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_full_rpl.png}}
 
 \end{minipage}%
 
@@ -1954,10 +1957,10 @@ sit at baseline in both directions, consistent with no knitting across
 neighborhoods.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -1996,16 +1999,16 @@ Instance-CMR, fixing interference but not the boosted first-over-second
 advantage.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixed_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixed_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_control_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_control_WeirdPositionalCMR_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2038,16 +2041,16 @@ Occurrence-Specific CMR simulations fitted separately to each dataset
 and scored with the identical baseline procedure.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdPositionalCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2108,13 +2111,13 @@ matched-control lists from Lohnas and Kahana
 Reinforcement at study preserves benchmark fits.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_spc.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_pnr.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_pnr.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2136,7 +2139,7 @@ Figure~\ref{fig-spacing}).}
 
 \begin{minipage}{\linewidth}
 
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_full_rpl.png}
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_full_rpl.png}}
 
 \end{minipage}%
 
@@ -2175,10 +2178,10 @@ emerges in the first→second variant, consistent with boosted access to
 the repeated item itself.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_i2j.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_LT4_repneighborcrp_j2i.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2204,16 +2207,16 @@ baseline---matching the data's boosted separation. Balanced-access
 (blending) is absent.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT4_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2239,16 +2242,16 @@ baseline---matching the data's boosted separation. Balanced-access
 (blending) is absent.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_mixed_data_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsLohnasKahana2014_control_data_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_mixed_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/LohnasKahana2014_control_WeirdReinfPositionalCMR_full_best_of_3_LT34_back_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2276,16 +2279,16 @@ contrasted with matched pseudo-repeater baselines. ICMR-Reinf reproduces
 the data's non-elevation.}
 
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_data_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 \newline
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsGordonRanschburg2021_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 %
 \begin{minipage}{0.50\linewidth}
-\includegraphics{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png}\end{minipage}%
+\pandocbounded{\includegraphics[keepaspectratio]{figures/RepeatedRecallsKahanaJacobs2000_mixedvscontrolA_WeirdReinfPositionalCMR_full_best_of_3_second_rep_crp.png}}\end{minipage}%
 
 \end{figure}%
 
@@ -2415,10 +2418,10 @@ competitive.}{\label{tbl-aic-fr}}}
 \vspace{-20pt}}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.5000}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1667}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.5000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1667}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Free-recall dataset

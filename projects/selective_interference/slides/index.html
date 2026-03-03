@@ -156,6 +156,23 @@ Jordan Gunn
 
 <img data-src="paradigm_timeline.svg" class="r-stretch quarto-figure quarto-figure-center"><p><strong>The selective interference effect</strong>: visuospatial interference task impairs involuntary recall but spares voluntary recall</p>
 </section>
+<section id="ecmr-architecture" class="slide level2 smaller center">
+<h2>eCMR Architecture</h2>
+
+<img data-src="ecmr_diagram.svg" class="r-stretch quarto-figure quarto-figure-center"><aside class="notes">
+<p>This is the full eCMR architecture — the model we simulate. Quick orientation for anyone who needs it. Top: encoding. Items are experienced sequentially, each updating context via drift. Primacy gives early items stronger M-C-F bindings. The emotional extension adds a second channel: emotional items accumulate additional MCF strength scaled by arousal. Middle: the two association matrices. M-F-C maps items to context — probe with an item, get back its encoding context. M-C-F maps context to items — probe with current context, get activations. Bottom: retrieval. Context probes M-C-F for activations, Luce choice rule selects an item, the recalled item reinstates its context via M-F-C, and the cycle repeats. Emotional clustering boosts co-emotional items when the last recall was emotional. The entire selective interference story plays out through the asymmetry between these two matrices.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
 <section id="the-dual-representation-account-brewin-2014" class="slide level2 smaller center">
 <h2>The Dual Representation Account (Brewin, 2014)</h2>
 
@@ -214,92 +231,67 @@ Jordan Gunn
 </ul>
 <p>Interference is possible in both modes, but goal reinstatement and monitoring can still target trauma items during voluntary recall!</p>
 </section>
-<section id="three-paper-goals" class="slide level2 center">
-<h2>Three paper goals</h2>
+<section id="three-questions-to-tackle-with-this-framework" class="slide level2 center">
+<h2>Three questions to tackle with this framework</h2>
 <ol type="1">
-<li>Specify and validate a <strong>model of interference</strong> — competitors encoded in shared context impair retrieval through competition, not trace degradation</li>
-<li>Specify and validate how <strong>voluntary recall suppresses interference</strong> — control mechanisms enacted at retrieval produce graded protection within the same architecture</li>
-<li>Interpret <strong>paradigm variations</strong> and derive new predictions — why the effect appears, disappears, or reverses across experimental designs</li>
+<li>How does <strong>interference</strong> arise from competitor encoding in shared context?</li>
+<li>What <strong>protects voluntary recall</strong> from the same interference that impairs involuntary recall?</li>
+<li>Why does the effect <strong>appear in some paradigms</strong> but not others, and what does that imply for intervention design?</li>
+<li>What novel predictions does this framework make that others don’t?</li>
 </ol>
-<aside class="notes">
-<p>The overarching goal is a formal specification of the unitary account. This breaks down into three linked contributions. First, specify and validate a model of interference — how competitors encoded in film-adjacent context impair recall through retrieval competition. Second, specify and validate the selectivity — how control mechanisms enacted during voluntary recall suppress that interference, producing graded protection rather than the binary intact/disrupted dissociation the DRA predicts. Third, interpret paradigm variations — why some designs show the effect cleanly, others don’t, and what that implies for intervention design. I want to walk through where we are on each of these today.</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
-</section>
-<section id="roadmap" class="slide level2 smaller center">
-<h2>Roadmap</h2>
-<p><strong>Today’s trajectory:</strong></p>
-<ol type="1">
-<li><strong>The model</strong> — architecture and key parameters</li>
-<li><strong>The selective interference effect</strong> — core factorial result</li>
-<li><strong>Context reinstatement</strong> — reminder + competitors mechanism</li>
-<li><strong>What protects voluntary recall</strong> — control decomposition</li>
-<li><strong>What makes interference stronger</strong> — interference decomposition</li>
-<li><strong>Paradigm variations</strong> — recognition, cue-at-test, VRT data</li>
-<li><strong>Wrap-up</strong> — paper structure, gaps, and next steps</li>
-</ol>
-<div class="fragment">
-<p><strong>Questions I want your help with:</strong></p>
-<ul>
-<li>Is the cue-at-test hypothesis sufficient to explain the VRT null?</li>
-<li>Which simulation gaps are critical for the paper vs.&nbsp;nice-to-have?</li>
-<li>Should we run Experiment 2 before submitting?</li>
-</ul>
-</div>
 </section></section>
 <section>
 <section id="the-model" class="title-slide slide level1 center">
 <h1>The Model</h1>
 
 </section>
-<section id="paradigm-architecture" class="slide level2 smaller center">
-<h2>Paradigm + Architecture</h2>
+<section id="simulation-setup" class="slide level2 smaller center">
+<h2>Simulation Setup</h2>
 <div class="quarto-layout-panel" data-layout-ncol="2">
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
-<p><strong>Paradigm phases:</strong></p>
+<p><strong>Paradigm geometry:</strong></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
 <table class="caption-top">
 <thead>
 <tr class="header">
 <th style="text-align: left;">Phase</th>
-<th style="text-align: left;">Model operation</th>
+<th style="text-align: left;">Items</th>
+<th style="text-align: left;">Drift</th>
+<th style="text-align: left;">MCF scale</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Film</td>
-<td style="text-align: left;">Encode targets in evolving context</td>
+<td style="text-align: left;">16 targets</td>
+<td style="text-align: left;">base rate</td>
+<td style="text-align: left;">1.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Break</td>
-<td style="text-align: left;">Context drifts away from film</td>
+<td style="text-align: left;">0 (default)</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">—</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reminder</td>
-<td style="text-align: left;">Reinstate film context via <span class="math inline">\(M_{FC}\)</span></td>
+<td style="text-align: left;">film items</td>
+<td style="text-align: left;">0.3<span class="math inline">\(\times\)</span> base</td>
+<td style="text-align: left;">no learning</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Interference</td>
-<td style="text-align: left;">Encode competitors in reinstated context</td>
+<td style="text-align: left;">16 competitors</td>
+<td style="text-align: left;">swept</td>
+<td style="text-align: left;">swept</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Filler</td>
-<td style="text-align: left;">Context drifts away from interference</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Recall</td>
-<td style="text-align: left;">Retrieve film items from current context</td>
+<td style="text-align: left;">16 distractors</td>
+<td style="text-align: left;">base rate</td>
+<td style="text-align: left;">1.0</td>
 </tr>
 </tbody>
 </table>
@@ -307,26 +299,19 @@ Jordan Gunn
 </div>
 <div class="quarto-layout-row">
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
-<p><strong>Two pathways:</strong></p>
+<p><strong>Calibration:</strong></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <ul>
-<li><span class="math inline">\(M_{CF}\)</span>: context <span class="math inline">\(\rightarrow\)</span> item
-<ul>
-<li>Generates retrieval activations</li>
-<li>Vulnerable to competitor encoding</li>
-</ul></li>
-<li><span class="math inline">\(M_{FC}\)</span>: item <span class="math inline">\(\rightarrow\)</span> context
-<ul>
-<li>Updates context during encoding</li>
-<li>Immune to competitors (orthogonal items)</li>
-</ul></li>
+<li>Base rates fitted to <strong>Healey &amp; Kahana 2014</strong> (126 subjects)</li>
+<li>Reminder: start-drift = 4<span class="math inline">\(\times\)</span> base (strong reinstatement), drift = 0.3<span class="math inline">\(\times\)</span> base</li>
+<li>Sweeps multiply base rates by scale factors</li>
 </ul>
 </div>
 </div>
 </div>
 <aside class="notes">
-<p>Quick architecture reminder. On the left, how the paradigm maps to model operations — six phases from film encoding through recall. The reminder phase is the key step: it reinstates film-era context via item-to-context retrieval without new associative learning, so that competitors encoded afterward land in context that overlaps with the film. On the right, the two pathways. M-C-F maps context to items and generates retrieval activations — this is what’s vulnerable to competition. M-F-C maps items to context and drives context updating — this pathway is immune because items are orthogonal, so probing a film item returns the same context regardless of how many competitors were encoded. The entire selective interference story plays out through this asymmetry.</p>
+<p>Here’s how the paradigm maps to simulation specifics. Sixteen film items are encoded at the fitted base drift rate. No break items by default — we vary this in calibration. The reminder phase has two steps: first, context drifts strongly toward the initial state at four times the base start-drift rate, then each film item’s context is reinstated via M-F-C probing without new associative learning. This is how we implement context reinstatement without reconsolidation — no trace is modified. Sixteen interference items encode at swept rates, and sixteen filler items suppress interference recency. All base rates come from fitting to Healey and Kahana 2014 free recall data across 126 subjects. The swept parameters are scale factors that multiply these base rates.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -339,9 +324,8 @@ Jordan Gunn
           display:block!important;
       }</style></aside>
 </section>
-<section id="key-parameters" class="slide level2 smaller center">
-<h2>Key Parameters</h2>
-<p>The simulation IVs we manipulate:</p>
+<section id="simulation-ivs" class="slide level2 smaller center">
+<h2>Simulation IVs</h2>
 <table class="caption-top">
 <colgroup>
 <col style="width: 33%">
@@ -350,43 +334,48 @@ Jordan Gunn
 </colgroup>
 <thead>
 <tr class="header">
-<th>Parameter</th>
-<th>Controls</th>
-<th>Varied across</th>
+<th>Scale factor</th>
+<th>What it multiplies</th>
+<th>Tests</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><strong>Drift rate</strong></td>
-<td>Context overlap between phases</td>
-<td>Encoding, interference, filler</td>
+<td><strong>interference_drift_scale</strong></td>
+<td>Encoding drift during interference</td>
+<td>Context overlap <span class="math inline">\(\rightarrow\)</span> competition strength</td>
 </tr>
 <tr class="even">
-<td><strong>MCF learning rate</strong></td>
-<td>Binding strength in <span class="math inline">\(M_{CF}\)</span></td>
-<td>Interference phase</td>
+<td><strong>interference_mcf_scale</strong></td>
+<td>MCF learning during interference</td>
+<td>Binding strength <span class="math inline">\(\rightarrow\)</span> competition strength</td>
 </tr>
 <tr class="odd">
-<td><strong>Start-drift</strong></td>
-<td>Context repositioning at recall onset</td>
-<td>Voluntary vs involuntary</td>
+<td><strong>n_interference</strong></td>
+<td>Number of competitor items</td>
+<td>Count <span class="math inline">\(\rightarrow\)</span> diminishing returns</td>
 </tr>
 <tr class="even">
-<td><strong><span class="math inline">\(\tau\)</span></strong></td>
-<td>Choice sensitivity (sharpens competition)</td>
-<td>Voluntary vs involuntary</td>
+<td><strong>start_drift_scale</strong></td>
+<td>Start-drift at recall onset</td>
+<td>Voluntary reinstatement strength</td>
 </tr>
 <tr class="odd">
+<td><strong>tau_scale</strong></td>
+<td>Choice sensitivity (<span class="math inline">\(\tau\)</span>)</td>
+<td>Competition sharpness</td>
+</tr>
+<tr class="even">
 <td><strong>emotion_scale</strong></td>
-<td>Arousal context contribution</td>
-<td>Film valence</td>
+<td>Emotional MCF contribution</td>
+<td>Arousal <span class="math inline">\(\rightarrow\)</span> broadened interference</td>
 </tr>
 </tbody>
 </table>
 <div class="fragment">
-<p>Drift rate and MCF learning rate control <strong>interference strength</strong>; start-drift and <span class="math inline">\(\tau\)</span> control <strong>retrieval protection</strong></p>
+<p><strong>Interference</strong> factors (rows 1–3) and <strong>control</strong> factors (rows 4–5) are swept independently; <strong>arousal</strong> (row 6) bridges both</p>
 <aside class="notes">
-<p>These are the parameters that appear in the simulations. Drift rate — set per phase — controls how much context overlap exists between phases; it’s the main lever for interference strength. MCF learning rate controls how strongly competitors bind into the retrieval matrix. Start-drift repositions context at the onset of recall, which is what differentiates directed from unguided retrieval. Tau sharpens the softmax competition, amplifying any activation advantage. And emotion scale controls how much arousal context contributes. The first two control interference strength; the last two control retrieval protection. That’s the design space we’re exploring.</p>
+<p>These are the actual scale factors we sweep in the simulations. Each multiplies a base rate fitted to Healey and Kahana data. The interference factors — drift scale, MCF scale, and item count — control how strongly competitors impair film recall. The control factors — start-drift scale and tau scale — control how much voluntary retrieval resists that interference. Emotion scale controls the emotional context channel, which bridges interference and control: it broadens interference for emotional film items and interacts with retrieval control. Each sweep holds all other factors at their defaults and varies one parameter across a range, producing the figures you’ll see in the results sections.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
@@ -524,7 +513,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../simulations/figures/retrieval_start_drift_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Start-Drift"><img data-src="../simulations/figures/retrieval_start_drift_scale.png" alt="Start-Drift"></a></p>
+<p><a href="../simulations/figures/retrieval_start_drift_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Start-Drift"><img data-src="../simulations/figures/retrieval_start_drift_scale.png" alt="Start-Drift"></a></p>
 <figcaption>Start-Drift</figcaption>
 </figure>
 </div>
@@ -532,7 +521,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../simulations/figures/retrieval_tau_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Choice Sensitivity (\tau)"><img data-src="../simulations/figures/retrieval_tau_scale.png" alt="Choice Sensitivity (\tau)"></a></p>
+<p><a href="../simulations/figures/retrieval_tau_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Choice Sensitivity (\tau)"><img data-src="../simulations/figures/retrieval_tau_scale.png" alt="Choice Sensitivity (\tau)"></a></p>
 <figcaption>Choice Sensitivity (<span class="math inline">\(\tau\)</span>)</figcaption>
 </figure>
 </div>
@@ -586,7 +575,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../simulations/figures/interference_mcf_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="MCF Binding Strength"><img data-src="../simulations/figures/interference_mcf_scale.png" alt="MCF Binding Strength"></a></p>
+<p><a href="../simulations/figures/interference_mcf_scale.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="MCF Binding Strength"><img data-src="../simulations/figures/interference_mcf_scale.png" alt="MCF Binding Strength"></a></p>
 <figcaption>MCF Binding Strength</figcaption>
 </figure>
 </div>
@@ -594,7 +583,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../simulations/figures/interference_n_interference.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Competitor Count"><img data-src="../simulations/figures/interference_n_interference.png" alt="Competitor Count"></a></p>
+<p><a href="../simulations/figures/interference_n_interference.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Competitor Count"><img data-src="../simulations/figures/interference_n_interference.png" alt="Competitor Count"></a></p>
 <figcaption>Competitor Count</figcaption>
 </figure>
 </div>
@@ -700,7 +689,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../../../results/figures/VRT_SPC_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Serial Position Curve"><img data-src="../../../results/figures/VRT_SPC_task.png" alt="Serial Position Curve"></a></p>
+<p><a href="../../../results/figures/VRT_SPC_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Serial Position Curve"><img data-src="../../../results/figures/VRT_SPC_task.png" alt="Serial Position Curve"></a></p>
 <figcaption>Serial Position Curve</figcaption>
 </figure>
 </div>
@@ -708,7 +697,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../../../results/figures/VRT_LAG_CRP_all_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Lag-CRP"><img data-src="../../../results/figures/VRT_LAG_CRP_all_task.png" alt="Lag-CRP"></a></p>
+<p><a href="../../../results/figures/VRT_LAG_CRP_all_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Lag-CRP"><img data-src="../../../results/figures/VRT_LAG_CRP_all_task.png" alt="Lag-CRP"></a></p>
 <figcaption>Lag-CRP</figcaption>
 </figure>
 </div>
@@ -716,7 +705,7 @@ Jordan Gunn
 <div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><a href="../../../results/figures/VRT_PNR_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Probability of Nth Recall"><img data-src="../../../results/figures/VRT_PNR_task.png" alt="Probability of Nth Recall"></a></p>
+<p><a href="../../../results/figures/VRT_PNR_task.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Probability of Nth Recall"><img data-src="../../../results/figures/VRT_PNR_task.png" alt="Probability of Nth Recall"></a></p>
 <figcaption>Probability of Nth Recall</figcaption>
 </figure>
 </div>

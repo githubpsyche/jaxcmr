@@ -1,12 +1,8 @@
-|    | Model                        |         AICw |
-|---:|:-----------------------------|-------------:|
-|  7 | FullReinfPositionalCMR       | 1            |
-|  9 | BlendPositionalCMR           | 6.42176e-22  |
-|  5 | MCFReinfPositionalCMR        | 7.51558e-31  |
-|  6 | MFCReinfPositionalCMR        | 1.0882e-43   |
-|  8 | SimpleFullReinfPositionalCMR | 4.11588e-45  |
-|  4 | FullPositionalCMR            | 1.56856e-53  |
-|  3 | BasePositionalCMR            | 1.24451e-54  |
-|  2 | DistinctContextsCMR          | 1.40764e-63  |
-|  0 | WeirdCMR                     | 6.24474e-152 |
-|  1 | NoReinstateCMR               | 1.5303e-200  |
+|    | Model               |         AICw |
+|---:|:--------------------|-------------:|
+|  5 | BlendPositionalCMR  | 1            |
+|  4 | FullPositionalCMR   | 2.44257e-32  |
+|  3 | BasePositionalCMR   | 1.93797e-33  |
+|  2 | DistinctContextsCMR | 2.19198e-42  |
+|  0 | WeirdCMR            | 9.72435e-131 |
+|  1 | NoReinstateCMR      | 2.383e-179   |

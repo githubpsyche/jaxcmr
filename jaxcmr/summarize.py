@@ -383,10 +383,9 @@ def pairwise_aic_differences(
     num_models = len(model_names)
 
     def subjectwise_aic(model: dict) -> np.ndarray:
-        """Return per-subject AIC values using the same fitness convention as AIC weights."""
+        """Return per-subject AIC values: AIC_s = 2k + 2*NLL_s."""
         fitness = np.asarray(model["fitness"], dtype=float)
-        subject_count = max(len(fitness), 1)
-        penalty = 2.0 * len(model.get("free", [])) / subject_count
+        penalty = 2.0 * len(model.get("free", []))
         return 2.0 * fitness + penalty
 
     aic_values = [subjectwise_aic(model) for model in results]
@@ -425,12 +424,11 @@ def pairwise_aic_differences(
 
 
 def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
-    """Returns matrix of fractions of penalized fitness in model i < model j.
+    """Returns matrix of fractions of AIC in model i < model j.
 
     Args:
         - results: dicts containing each containing 'name', 'fitness', and 'free' data.
-            The penalty applied is (2 * number_of_free_parameters) / n_subjects, mirroring
-            the per-model contribution of the AIC complexity term.
+            Per-subject AIC is computed as 2k + 2*NLL_s.
     """
     # Extract model names
     model_names = [model["name"] for model in results]
@@ -441,11 +439,10 @@ def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
 
     # Populate the matrix with comparison fractions
     def penalized_fitness(model: dict) -> np.ndarray:
-        """Return per-subject fitness plus AIC-style penalty."""
+        """Return per-subject AIC: 2k + 2*NLL_s."""
         fitness = np.array(model["fitness"])
-        subject_count = max(len(fitness), 1)
-        penalty = (2.0 * len(model.get("free", []))) / subject_count
-        return fitness + penalty
+        penalty = 2.0 * len(model.get("free", []))
+        return 2.0 * fitness + penalty
 
     penalized = [penalized_fitness(model) for model in results]
 
