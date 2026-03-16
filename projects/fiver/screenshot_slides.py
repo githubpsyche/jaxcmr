@@ -1,7 +1,6 @@
 """Take headless Chrome screenshots of each revealjs slide."""
 
 import subprocess
-import time
 from pathlib import Path
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
