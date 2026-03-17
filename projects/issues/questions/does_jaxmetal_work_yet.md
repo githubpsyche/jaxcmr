@@ -1,1 +1,0 @@
-Always keep an eye out for whether jax_metal is stable yet. 
