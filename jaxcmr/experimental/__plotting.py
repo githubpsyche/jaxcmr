@@ -1,8 +1,16 @@
-"""Experimental plotting utilities.
+"""Experimental plotting with hierarchical bootstrap CIs for ratio analyses.
 
-Extended plotting helpers for experimental analysis modules,
-providing bootstrap-based confidence intervals and additional
-plot formatting options.
+Extends ``jaxcmr.plotting`` with ``compute_ratio_ci`` and ``plot_ratio_data``,
+which compute bootstrapped confidence intervals for ratio curves (e.g.,
+conditional recall probability = recalled / presented).  Unlike the simple
+bootstrap in ``plotting.py`` (which treats all trials as exchangeable), the
+hierarchical bootstrap here resamples *subjects* first, correctly accounting
+for subject-level clustering.  This matters for analyses that compare recall
+rates across conditions (emotional vs. neutral, by serial position, etc.)
+where ignoring the nested structure would underestimate CI width.
+
+The remaining functions (``init_plot``, ``plot_data``, etc.) duplicate
+``jaxcmr.plotting`` and exist only to keep this module self-contained.
 
 """
 

@@ -21,9 +21,10 @@ from jaxcmr.typing import (
     MemorySearch,
     MemorySearchModelFactory,
     PRNGKeyArray,
-    RecallAnalysisFn,
     RecallDataset,
 )
+
+RecallAnalysisFn = Callable
 
 __all__ = [
     "simulate_masked_free_recall",
