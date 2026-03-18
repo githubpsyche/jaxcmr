@@ -202,22 +202,25 @@ def test_calculate_aic_weights_exact_values():
     """Behavior: AIC weights match exp(-0.5 * delta) / sum for known AICs.
 
     Given:
-      - ModelA: AIC = 2*2 + 2*33 = 70. ModelB: AIC = 2*1 + 2*30 = 62.
-      - min AIC = 62, deltas = [8, 0].
-      - wt_A = exp(-4)/(1+exp(-4)), wt_B = 1/(1+exp(-4)).
+      - n_subjects = 3.
+      - ModelA: AIC = 2*2*3 + 2*33 = 78. ModelB: AIC = 2*1*3 + 2*30 = 66.
+      - min AIC = 66, deltas = [12, 0].
+      - wt_A = exp(-6)/(1+exp(-6)), wt_B = 1/(1+exp(-6)).
     When:
       - ``calculate_aic_weights`` is called.
     Then:
       - Exact weight values match and sum to 1.0. ModelB has higher weight.
     Why this matters:
       - Verifies the exact AIC weight computation including delta
-        calculation and softmax normalization.
+        calculation and softmax normalization. Uses summed per-subject
+        AIC formula (2*k*n_subjects + 2*total_nll) consistent with
+        ``_subjectwise_aic``.
     """
     # Arrange / Given
     results = _model_results()
-    exp_neg4 = np.exp(-4.0)
-    expected_wt_b = 1.0 / (1.0 + exp_neg4)
-    expected_wt_a = exp_neg4 / (1.0 + exp_neg4)
+    exp_neg6 = np.exp(-6.0)
+    expected_wt_b = 1.0 / (1.0 + exp_neg6)
+    expected_wt_a = exp_neg6 / (1.0 + exp_neg6)
 
     # Act / When
     df = calculate_aic_weights(results)
@@ -235,15 +238,15 @@ def test_pairwise_aic_differences_exact_values():
     """Behavior: Mean delta-AIC matches hand-calculated per-subject diffs.
 
     Given:
-      - Per-subject AIC_A = 2*fitness_A + 4/3,
-        AIC_B = 2*fitness_B + 2/3.
-      - All subjects: diff = 2*(fitness_A-fitness_B) + 2/3 = 8/3.
+      - Per-subject AIC_A = 2*fitness_A + 2*k_A = 2*fitness_A + 4,
+        Per-subject AIC_B = 2*fitness_B + 2*k_B = 2*fitness_B + 2.
+      - Per-subject diffs: 2*(fitness_A - fitness_B) + 2 = 4 for all subjects.
     When:
       - ``pairwise_aic_differences`` is called.
     Then:
-      - mean_delta[A,B] = 8/3 (A has higher penalized fitness).
+      - mean_delta[A,B] = 4.0 (A has higher penalized fitness).
       - CI = 0.0 (constant differences → zero variance).
-      - Diagonal is NaN. Not equivalent (|8/3| > margin 2.0).
+      - Diagonal is NaN. Not equivalent (|4.0| > margin 2.0).
     Why this matters:
       - Verifies exact per-subject AIC penalty allocation and mean
         difference computation.
@@ -261,10 +264,10 @@ def test_pairwise_aic_differences_exact_values():
         assert equiv_df.loc[name, name] == False  # noqa: E712
 
     # Off-diagonal exact values
-    assert np.isclose(mean_df.loc["ModelA", "ModelB"], 8.0 / 3.0, atol=1e-10)
-    assert np.isclose(mean_df.loc["ModelB", "ModelA"], -8.0 / 3.0, atol=1e-10)
+    assert np.isclose(mean_df.loc["ModelA", "ModelB"], 4.0, atol=1e-10)
+    assert np.isclose(mean_df.loc["ModelB", "ModelA"], -4.0, atol=1e-10)
     assert np.isclose(ci_df.loc["ModelA", "ModelB"], 0.0, atol=1e-10)
-    # |8/3| ≈ 2.667 > equivalence_margin 2.0 → not equivalent
+    # |4.0| > equivalence_margin 2.0 → not equivalent
     assert equiv_df.loc["ModelA", "ModelB"] == False  # noqa: E712
 
 
@@ -272,8 +275,8 @@ def test_winner_comparison_exact_fractions():
     """Behavior: Penalized fractions match hand-calculated comparisons.
 
     Given:
-      - penalized_A = fitness_A + 4/3 = [34/3, 40/3, 37/3].
-      - penalized_B = fitness_B + 2/3 = [29/3, 35/3, 32/3].
+      - penalized_A = 2*fitness_A + 4 = [24, 28, 26].
+      - penalized_B = 2*fitness_B + 2 = [20, 24, 22].
       - B < A on all 3 subjects.
     When:
       - ``winner_comparison_matrix`` is called.
