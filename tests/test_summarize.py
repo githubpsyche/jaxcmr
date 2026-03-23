@@ -4,13 +4,18 @@ from scipy.stats import t as t_dist, ttest_rel
 
 from jaxcmr.summarize import (
     add_summary_lines,
+    aicc_winner_comparison_matrix,
     bound_params,
     calculate_aic,
+    calculate_aicc,
+    calculate_aicc_weights,
     calculate_aic_weights,
     calculate_bic_scores,
     calculate_ci,
     generate_t_p_matrices,
     pairwise_aic_differences,
+    pairwise_aicc_differences,
+    pairwise_median_aicc_differences,
     raw_winner_comparison_matrix,
     summarize_parameters,
     winner_comparison_matrix,
@@ -460,3 +465,186 @@ def test_add_summary_lines_exact_formatted_values():
     assert "mean" in lines[0]
     assert "min" in lines[1]
     assert "max" in lines[2]
+
+
+# ---------------------------------------------------------------------------
+# AICc tests
+# ---------------------------------------------------------------------------
+
+def test_calculate_aicc_exact_values():
+    """Behavior: AICc = AIC + 2k(k+1)/(n_s - k - 1) summed across subjects.
+
+    Given:
+      - ModelA: k=2, fitness=[10,12,11], n_obs=[20,20,20].
+        Per-subject AICc_s = 2*NLL + 4 + 2*2*3/(20-2-1) = 2*NLL + 4 + 12/17.
+        Total = 2*33 + 3*4 + 3*12/17 = 66 + 12 + 36/17 = 78 + 36/17.
+      - ModelB: k=1, fitness=[9,11,10], n_obs=[20,20,20].
+        Per-subject AICc_s = 2*NLL + 2 + 2*1*2/(20-1-1) = 2*NLL + 2 + 4/18.
+        Total = 2*30 + 3*2 + 3*4/18 = 60 + 6 + 12/18 = 66 + 2/3.
+    When:
+      - ``calculate_aicc`` is called.
+    Then:
+      - Values match the formula. ModelB (lower AICc) is first.
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    df = calculate_aicc(results, n_obs)
+
+    expected_a = 2 * 33.0 + 3 * 4.0 + 3 * (2 * 2 * 3) / (20 - 2 - 1)
+    expected_b = 2 * 30.0 + 3 * 2.0 + 3 * (2 * 1 * 2) / (20 - 1 - 1)
+
+    aicc_a = df[df["Model"] == "ModelA"]["AICc"].values[0]
+    aicc_b = df[df["Model"] == "ModelB"]["AICc"].values[0]
+    assert np.isclose(aicc_a, expected_a, atol=1e-10)
+    assert np.isclose(aicc_b, expected_b, atol=1e-10)
+    assert df.iloc[0]["Model"] == "ModelB"  # lower AICc first
+
+
+def test_calculate_aicc_weights_sum_to_one():
+    """Behavior: AICc weights sum to 1.0 and ModelB has higher weight.
+
+    Given:
+      - Same fixture as AIC weight test but with AICc correction.
+    When:
+      - ``calculate_aicc_weights`` is called.
+    Then:
+      - Weights sum to 1.0 and ModelB (fewer params, lower NLL) dominates.
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    df = calculate_aicc_weights(results, n_obs)
+
+    assert np.isclose(df["AICcw"].sum(), 1.0)
+    assert df.iloc[0]["Model"] == "ModelB"  # higher weight first
+
+
+def test_aicc_correction_increases_with_k():
+    """Behavior: AICc penalty exceeds AIC penalty, more so for larger k.
+
+    Given:
+      - ModelA (k=2) and ModelB (k=1) with n_obs=20.
+    When:
+      - AICc and AIC are computed.
+    Then:
+      - AICc > AIC for both models.
+      - The correction gap is larger for ModelA (k=2) than ModelB (k=1).
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    df_aic = calculate_aic(results)
+    df_aicc = calculate_aicc(results, n_obs)
+
+    aic_a = df_aic[df_aic["Model"] == "ModelA"]["AIC"].values[0]
+    aic_b = df_aic[df_aic["Model"] == "ModelB"]["AIC"].values[0]
+    aicc_a = df_aicc[df_aicc["Model"] == "ModelA"]["AICc"].values[0]
+    aicc_b = df_aicc[df_aicc["Model"] == "ModelB"]["AICc"].values[0]
+
+    # AICc sums per-subject (so AIC total is 2k*N + 2*NLL, not 2k - 2*LL)
+    # Compare corrections: aicc - per-subject-aic-total
+    aic_total_a = 2 * 2 * 3 + 2 * 33.0  # 78
+    aic_total_b = 2 * 1 * 3 + 2 * 30.0  # 66
+    correction_a = aicc_a - aic_total_a
+    correction_b = aicc_b - aic_total_b
+
+    assert correction_a > 0
+    assert correction_b > 0
+    assert correction_a > correction_b  # larger k → larger correction
+
+
+def test_aicc_raises_when_n_obs_too_small():
+    """Behavior: ValueError when n_obs <= k + 1 for any subject.
+
+    Given:
+      - ModelA has k=2, and one subject has n_obs=3 (= k+1).
+    When:
+      - ``calculate_aicc`` is called.
+    Then:
+      - ValueError is raised.
+    """
+    import pytest
+
+    results = _model_results()
+    n_obs = np.array([3.0, 20.0, 20.0])  # first subject: n=3, k=2, n-k-1=0
+
+    with pytest.raises(ValueError, match="AICc undefined"):
+        calculate_aicc(results, n_obs)
+
+
+def test_pairwise_aicc_differences_exact_values():
+    """Behavior: Pairwise ΔAICc matches hand-calculated per-subject diffs.
+
+    Given:
+      - Constant n_obs=20 for all subjects.
+      - Per-subject ΔAICc = (2*NLL_A + 4 + 12/17) - (2*NLL_B + 2 + 4/18).
+        = 2*(fitness_A - fitness_B) + 2 + 12/17 - 4/18.
+        fitness diffs are all 1.0, so Δ = 2 + 2 + 12/17 - 4/18 (constant).
+    When:
+      - ``pairwise_aicc_differences`` is called.
+    Then:
+      - mean_delta[A,B] matches the constant difference.
+      - CI = 0.0 (constant → zero variance).
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    mean_df, ci_df, equiv_df = pairwise_aicc_differences(results, n_obs)
+
+    # Per-subject difference is constant
+    k_a, k_b = 2, 1
+    n = 20.0
+    correction_a = 2 * k_a * (k_a + 1) / (n - k_a - 1)
+    correction_b = 2 * k_b * (k_b + 1) / (n - k_b - 1)
+    # Per-subject: (2*NLL_A + 2*k_a + corr_a) - (2*NLL_B + 2*k_b + corr_b)
+    # NLL diffs are all 1.0
+    expected_diff = 2.0 * 1.0 + 2 * (k_a - k_b) + (correction_a - correction_b)
+
+    assert np.isclose(mean_df.loc["ModelA", "ModelB"], expected_diff, atol=1e-10)
+    assert np.isclose(ci_df.loc["ModelA", "ModelB"], 0.0, atol=1e-10)
+
+
+def test_pairwise_median_aicc_differences_matches_mean_for_constant_diffs():
+    """Behavior: Median equals mean when per-subject diffs are constant.
+
+    Given:
+      - Same constant-diff fixture as pairwise_aicc_differences test.
+    When:
+      - ``pairwise_median_aicc_differences`` is called.
+    Then:
+      - Median matches mean exactly.
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    mean_df, _, _ = pairwise_aicc_differences(results, n_obs)
+    median_df, _ = pairwise_median_aicc_differences(results, n_obs)
+
+    assert np.isclose(
+        median_df.loc["ModelA", "ModelB"],
+        mean_df.loc["ModelA", "ModelB"],
+        atol=1e-10,
+    )
+
+
+def test_aicc_winner_comparison_exact_fractions():
+    """Behavior: AICc-penalized fractions match hand-calculated comparisons.
+
+    Given:
+      - With n_obs=20, ModelB has lower AICc on all 3 subjects (lower NLL
+        and fewer parameters).
+    When:
+      - ``aicc_winner_comparison_matrix`` is called.
+    Then:
+      - fraction(A<B) = 0.0, fraction(B<A) = 1.0.
+    """
+    results = _model_results()
+    n_obs = np.array([20.0, 20.0, 20.0])
+
+    df = aicc_winner_comparison_matrix(results, n_obs)
+
+    for name in ["ModelA", "ModelB"]:
+        assert np.isnan(df.loc[name, name])
+    assert np.isclose(df.loc["ModelA", "ModelB"], 0.0)
+    assert np.isclose(df.loc["ModelB", "ModelA"], 1.0)

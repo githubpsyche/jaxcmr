@@ -2,7 +2,7 @@
 
 Provides functions for loading optimized parameters, computing
 confidence intervals, generating t-test matrices, and computing
-AIC/BIC model comparison statistics.
+AIC/AICc/BIC model comparison statistics.
 
 """
 
@@ -36,6 +36,11 @@ __all__ = [
     "pairwise_median_aic_differences",
     "bayesian_model_selection",
     "floor_nested_fitness",
+    "calculate_aicc",
+    "calculate_aicc_weights",
+    "pairwise_aicc_differences",
+    "pairwise_median_aicc_differences",
+    "aicc_winner_comparison_matrix",
 ]
 
 def bound_params(
@@ -565,6 +570,47 @@ def _subjectwise_aic(model: dict) -> np.ndarray:
     return 2.0 * fitness + penalty
 
 
+def _subjectwise_aicc(model: dict, n_obs: np.ndarray) -> np.ndarray:
+    """Return per-subject AICc values: AICc_s = 2k + 2*NLL_s + 2k(k+1)/(n_s - k - 1).
+
+    AICc is the bias-corrected variant of AIC for finite samples. The
+    correction term vanishes as n_s → ∞, so AICc converges to AIC.
+    Burnham & Anderson (2002) recommend always using AICc; it is
+    especially important when n_s / k < 40.
+
+    Parameters
+    ----------
+    model : dict
+        Model summary with ``'fitness'`` (per-subject NLL) and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts (e.g. number of trials).
+
+    Returns
+    -------
+    np.ndarray
+        Per-subject AICc values.
+
+    Raises
+    ------
+    ValueError
+        If any subject has n_s <= k + 1, making the correction undefined.
+
+    """
+    fitness = np.asarray(model["fitness"], dtype=float)
+    n_obs = np.asarray(n_obs, dtype=float)
+    k = len(model.get("free", []))
+    denom = n_obs - k - 1.0
+    if np.any(denom <= 0):
+        bad = np.where(denom <= 0)[0]
+        raise ValueError(
+            f"AICc undefined for {len(bad)} subject(s) where n_obs <= k + 1 "
+            f"(k={k}). Subject indices: {bad.tolist()}"
+        )
+    aic = 2.0 * fitness + 2.0 * k
+    correction = 2.0 * k * (k + 1.0) / denom
+    return aic + correction
+
+
 def floor_nested_fitness(
     results: list[dict],
     nesting_pairs: list[tuple[str, str]],
@@ -680,6 +726,7 @@ def bayesian_model_selection(
     max_iter: int = 1000,
     tol: float = 1e-8,
     n_samples: int = 100_000,
+    n_obs: Optional[np.ndarray] = None,
 ) -> pd.DataFrame:
     """Random-effects Bayesian model selection.
 
@@ -696,6 +743,9 @@ def bayesian_model_selection(
         Convergence tolerance on Dirichlet parameters.
     n_samples : int
         Monte Carlo samples for exceedance probabilities.
+    n_obs : np.ndarray, optional
+        Per-subject observation counts. When provided, AICc is used
+        instead of AIC for the log-evidence approximation.
 
     Returns
     -------
@@ -707,7 +757,27 @@ def bayesian_model_selection(
     -----
     Implements the variational Bayes algorithm of Stephan et al. (2009)
     with protected exceedance probability from Rigoux et al. (2014).
-    Per-subject log model evidence is approximated as -0.5 * AIC_s.
+
+    Per-subject log model evidence is approximated as ``-0.5 * IC_s``,
+    where IC is AICc (when ``n_obs`` is provided) or AIC (otherwise).
+    This works because AIC ≈ -2·log p(data|model) asymptotically, so
+    multiplying by -0.5 recovers the log-evidence scale. The factor of
+    2 in AIC is a convention; the ``-0.5`` undoes it, leaving a single
+    complexity penalty of ``k`` (no double penalization). AICc adds a
+    finite-sample correction that improves the approximation when the
+    ratio of observations to parameters is small (Burnham & Anderson,
+    2002 recommend AICc whenever n/k < 40).
+
+    References
+    ----------
+    Stephan, K. E., et al. (2009). Bayesian model selection for group
+    studies. *NeuroImage*, 46(4), 1004–1017.
+
+    Rigoux, L., et al. (2014). Bayesian model selection for group
+    studies — revisited. *NeuroImage*, 84, 971–985.
+
+    Burnham, K. P., & Anderson, D. R. (2002). *Model Selection and
+    Multimodel Inference* (2nd ed.). Springer.
 
     """
     from scipy.special import digamma, gammaln
@@ -718,7 +788,10 @@ def bayesian_model_selection(
 
     log_evidence = np.zeros((N, K))
     for k, model in enumerate(results):
-        log_evidence[:, k] = -0.5 * _subjectwise_aic(model)
+        if n_obs is not None:
+            log_evidence[:, k] = -0.5 * _subjectwise_aicc(model, n_obs)
+        else:
+            log_evidence[:, k] = -0.5 * _subjectwise_aic(model)
 
     alpha = np.ones(K) * alpha0
 
@@ -750,7 +823,9 @@ def bayesian_model_selection(
         - gammaln(np.sum(alpha))
         + np.sum(gammaln(alpha))
     )
-    log_p_h0 = N * np.log(1.0 / K)
+    log_p_h0 = float(np.sum(
+        np.log(1.0 / K) + np.logaddexp.reduce(log_evidence, axis=1)
+    ))
     bor = float(np.exp(log_p_h0 - np.logaddexp(log_p_h0, free_energy)))
 
     pxp = bor * (1.0 / K) + (1.0 - bor) * xp
@@ -762,3 +837,222 @@ def bayesian_model_selection(
         "Protected XP": pxp,
         "Alpha": alpha,
     })
+
+
+def calculate_aicc(results: list[dict], n_obs: np.ndarray) -> pd.DataFrame:
+    """Return a DataFrame of corrected AIC (AICc) scores.
+
+    AICc = 2k - 2*LL + 2k(k+1)/(n - k - 1), summed across subjects.
+
+    Parameters
+    ----------
+    results : list[dict]
+        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: Model, AICc. Sorted ascending (best first).
+
+    """
+    aiccs, names = [], []
+    for model in results:
+        aicc_values = _subjectwise_aicc(model, n_obs)
+        aiccs.append(float(np.sum(aicc_values)))
+        names.append(model["name"])
+
+    df = pd.DataFrame({"Model": names, "AICc": aiccs})
+    return df.sort_values(by="AICc", ascending=True)
+
+
+def calculate_aicc_weights(results: list[dict], n_obs: np.ndarray) -> pd.DataFrame:
+    """Calculate AICc weights for a list of models.
+
+    Parameters
+    ----------
+    results : list[dict]
+        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: Model, AICcw. Sorted descending by weight.
+
+    """
+    aiccs = []
+    names = []
+
+    for model in results:
+        aicc_values = _subjectwise_aicc(model, n_obs)
+        aiccs.append(float(np.sum(aicc_values)))
+        names.append(model["name"])
+
+    aiccs = np.array(aiccs)
+    min_aicc = np.min(aiccs)
+    delta_aicc = aiccs - min_aicc
+    weights = np.exp(-0.5 * delta_aicc)
+    aicc_weights = weights / np.sum(weights)
+
+    df = pd.DataFrame({"Model": names, "AICcw": aicc_weights})
+    return df.sort_values(by="AICcw", ascending=False)
+
+
+def pairwise_aicc_differences(
+    results: list[dict],
+    n_obs: np.ndarray,
+    confidence: float = 0.95,
+    equivalence_margin: float = 2.0,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Compute pairwise AICc differences between models.
+
+    Parameters
+    ----------
+    results : list[dict]
+        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts.
+    confidence : float
+        Confidence level for the ΔAICc intervals.
+    equivalence_margin : float
+        Half-width in AICc units used for practical equivalence.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+        (mean_delta, ci_halfwidth, equivalent). Negative mean_delta[i, j]
+        favors model i.
+
+    """
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+
+    aicc_values = [_subjectwise_aicc(model, n_obs) for model in results]
+
+    mean_delta = np.full((num_models, num_models), np.nan, dtype=float)
+    ci_hw = np.full((num_models, num_models), np.nan, dtype=float)
+    equivalent = np.zeros((num_models, num_models), dtype=bool)
+
+    for i in range(num_models):
+        for j in range(num_models):
+            if i == j:
+                continue
+
+            diff = aicc_values[i] - aicc_values[j]
+            valid = ~np.isnan(diff)
+            if np.count_nonzero(valid) <= 1:
+                continue
+
+            diff_valid = diff[valid]
+            mean_value = float(np.mean(diff_valid))
+            ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
+
+            mean_delta[i, j] = mean_value
+            ci_hw[i, j] = ci
+
+            lower, upper = mean_value - ci, mean_value + ci
+            equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
+                lower <= 0.0 <= upper
+            )
+
+    return (
+        pd.DataFrame(mean_delta, index=model_names, columns=model_names),
+        pd.DataFrame(ci_hw, index=model_names, columns=model_names),
+        pd.DataFrame(equivalent, index=model_names, columns=model_names),
+    )
+
+
+def pairwise_median_aicc_differences(
+    results: list[dict],
+    n_obs: np.ndarray,
+    confidence: float = 0.95,
+    n_bootstrap: int = 10_000,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute pairwise median AICc differences between models.
+
+    Parameters
+    ----------
+    results : list[dict]
+        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts.
+    confidence : float
+        Confidence level for the bootstrap interval.
+    n_bootstrap : int
+        Number of bootstrap resamples.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame]
+        (median_delta, ci_halfwidth). Negative values favor model i.
+
+    """
+    model_names = [m["name"] for m in results]
+    num_models = len(model_names)
+    aicc_values = [_subjectwise_aicc(m, n_obs) for m in results]
+
+    median_delta = np.full((num_models, num_models), np.nan, dtype=float)
+    ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
+
+    rng = np.random.default_rng(42)
+    alpha = (1.0 - confidence) / 2.0
+
+    for i in range(num_models):
+        for j in range(num_models):
+            if i == j:
+                continue
+            diff = aicc_values[i] - aicc_values[j]
+            valid = ~np.isnan(diff)
+            if np.count_nonzero(valid) <= 1:
+                continue
+
+            diff_valid = diff[valid]
+            med = float(np.median(diff_valid))
+            median_delta[i, j] = med
+
+            boot_medians = np.array([
+                np.median(rng.choice(diff_valid, size=len(diff_valid), replace=True))
+                for _ in range(n_bootstrap)
+            ])
+            lo = float(np.percentile(boot_medians, 100 * alpha))
+            hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
+            ci_halfwidth[i, j] = (hi - lo) / 2.0
+
+    return (
+        pd.DataFrame(median_delta, index=model_names, columns=model_names),
+        pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names),
+    )
+
+
+def aicc_winner_comparison_matrix(
+    results: list[dict], n_obs: np.ndarray
+) -> pd.DataFrame:
+    """Return fraction of subjects where model i has lower AICc than model j.
+
+    Parameters
+    ----------
+    results : list[dict]
+        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
+    n_obs : np.ndarray
+        Per-subject observation counts.
+
+    Returns
+    -------
+    pd.DataFrame
+        Matrix with model names as row/column labels.
+
+    """
+    model_names = [model["name"] for model in results]
+    num_models = len(model_names)
+    penalized = [_subjectwise_aicc(model, n_obs) for model in results]
+
+    matrix = np.full((num_models, num_models), np.nan, dtype=float)
+    for i in range(num_models):
+        for j in range(num_models):
+            if i != j:
+                matrix[i, j] = float(np.mean(penalized[i] < penalized[j]))
+
+    return pd.DataFrame(matrix, index=model_names, columns=model_names)
