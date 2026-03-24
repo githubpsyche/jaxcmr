@@ -34,6 +34,7 @@ __all__ = [
     "apply_by_subject",
     "has_repeats_per_row",
     "make_dataset",
+    "save_figure",
 ]
 
 
@@ -377,3 +378,38 @@ def make_dataset(
         "listLength": ll_arr,
         "subject": subj_arr,
     }  # type: ignore
+
+
+def save_figure(
+    figure_dir: str,
+    figure_str: str,
+    suffix: Optional[str] = None,
+    dpi: int = 600,
+) -> None:
+    """Save the current matplotlib figure to disk, or just show it.
+
+    Parameters
+    ----------
+    figure_dir : str
+        Directory in which to save the figure.
+    figure_str : str
+        Base filename (without extension). If empty, the figure is
+        shown but not saved.
+    suffix : str, optional
+        Appended to *figure_str* with an underscore separator.
+    dpi : int, optional
+        Resolution for the saved image. Default 600.
+    """
+    import os
+
+    import matplotlib.pyplot as plt
+
+    plt.tight_layout()
+    if not figure_str:
+        plt.show()
+        return
+    os.makedirs(figure_dir, exist_ok=True)
+    suffix_str = f"_{suffix}" if suffix else ""
+    figure_path = os.path.join(figure_dir, f"{figure_str}{suffix_str}.png")
+    plt.savefig(figure_path, bbox_inches="tight", dpi=dpi)
+    plt.show()

@@ -462,9 +462,16 @@ class FittingAlgorithm(Protocol):
     def fit(
         self,
         trial_mask: Bool[Array, " trials"],
-        fit_to_subjects: bool = True,
+        subject_id: int = -1,
     ) -> FitResult:
-        """Convenience wrapper for either single-fit or subject-by-subject fitting."""
+        """Fit one parameter set to the trials selected by the mask."""
+        ...
+
+    def fit_subjects(
+        self,
+        trial_mask: Bool[Array, " trials"],
+    ) -> FitResult:
+        """Fit each subject independently and accumulate results."""
         ...
 
 

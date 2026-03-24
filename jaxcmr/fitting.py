@@ -97,10 +97,25 @@ class ScipyDE:
 
         self.loss_fn_generator = loss_fn_generator(model_create_fn, dataset, features)
 
-    def _fit_single_mask(
+    def fit(
         self, trial_mask: Bool[Array, " trials"], subject_id: int = -1
     ) -> FitResult:
-        """Returns result of fitting the model to the trials specified by the mask."""
+        """Fit one parameter set to the trials selected by the mask.
+
+        Parameters
+        ----------
+        trial_mask : Bool[Array, " trials"]
+            Boolean mask selecting which trials to include in the fit.
+        subject_id : int, optional
+            Label stored in the result dict. Defaults to -1.
+
+        Returns
+        -------
+        FitResult
+            Fitted parameters, fitness value, and metadata.
+        """
+        t0 = time.perf_counter()
+
         # Convert the mask to an array of trial indices
         trial_indices = jnp.where(trial_mask)[0]
 
@@ -146,25 +161,27 @@ class ScipyDE:
                 },
                 "subject": [subject_id],
             },
-            # These keys will be added at the top-level fit call
-            "hyperparameters": {},
-            "fit_time": 0.0,
+            "hyperparameters": self.all_hyperparams,
+            "fit_time": time.perf_counter() - t0,
         }
 
-    def fit(
-        self, trial_mask: Bool[Array, " trials"], fit_to_subjects: bool = True
+    def fit_subjects(
+        self, trial_mask: Bool[Array, " trials"]
     ) -> FitResult:
-        """Either fit the model to all subjects individually or do a single global fit."""
+        """Fit each subject independently and accumulate results.
+
+        Parameters
+        ----------
+        trial_mask : Bool[Array, " trials"]
+            Boolean mask selecting which trials to include.
+
+        Returns
+        -------
+        FitResult
+            Combined results with per-subject fitted parameters.
+        """
         t0 = time.perf_counter()
 
-        # If not per-subject, just do one global fit
-        if not fit_to_subjects:
-            result = self._fit_single_mask(trial_mask)
-            result["hyperparameters"] = self.all_hyperparams
-            result["fit_time"] = time.perf_counter() - t0
-            return result
-
-        # Otherwise, gather per-subject masks
         subject_trial_masks, unique_subjects = make_subject_trial_masks(
             trial_mask, self.subjects
         )
@@ -196,8 +213,7 @@ class ScipyDE:
             if np.sum(subject_trial_masks[s]) == 0:
                 continue
 
-            # Single-fit on the subject-specific mask
-            fit_result = self._fit_single_mask(
+            fit_result = self.fit(
                 subject_trial_masks[s], int(unique_subjects[s])
             )
             all_results["fitness"] += fit_result["fitness"]
