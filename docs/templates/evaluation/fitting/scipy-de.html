@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>ScipyDE – jaxcmr</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-4d9afe2b8d18ee9fa5d0d57b5ed4214d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-ef16540e296e6b0e79a742be48dd9205.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">jaxcmr</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/guide/index.html"> 
+<span class="menu-text">Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/index.html"> 
+<span class="menu-text">Analyses</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/models/index.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../../../templates/evaluation/index.html" aria-current="page"> 
+<span class="menu-text">Evaluation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/workflow/index.html"> 
+<span class="menu-text">Workflow</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../templates/evaluation/fitting/index.html">Fitting</a></li><li class="breadcrumb-item"><a href="../../../templates/evaluation/fitting/scipy-de.html">ScipyDE</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/protocols.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation Protocols</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Loss Functions</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loss Functions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/likelihood.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequence Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/permutation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Set Permutation Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MSE-Based Loss Functions</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Fitting</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fitting Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting/scipy-de.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">ScipyDE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">fitting.html</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">parameter_shifting.html</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/compare_simulation_loss.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">compare_simulation_loss.html</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-is-differential-evolution" id="toc-what-is-differential-evolution" class="nav-link active" data-scroll-target="#what-is-differential-evolution">What is Differential Evolution?</a></li>
+  <li><a href="#algorithm-overview" id="toc-algorithm-overview" class="nav-link" data-scroll-target="#algorithm-overview">Algorithm Overview</a>
+  <ul class="collapse">
+  <li><a href="#initialization" id="toc-initialization" class="nav-link" data-scroll-target="#initialization">Initialization</a></li>
+  <li><a href="#mutation" id="toc-mutation" class="nav-link" data-scroll-target="#mutation">Mutation</a></li>
+  <li><a href="#crossover" id="toc-crossover" class="nav-link" data-scroll-target="#crossover">Crossover</a></li>
+  <li><a href="#selection" id="toc-selection" class="nav-link" data-scroll-target="#selection">Selection</a></li>
+  <li><a href="#convergence" id="toc-convergence" class="nav-link" data-scroll-target="#convergence">Convergence</a></li>
+  </ul></li>
+  <li><a href="#hyperparameters" id="toc-hyperparameters" class="nav-link" data-scroll-target="#hyperparameters">Hyperparameters</a>
+  <ul class="collapse">
+  <li><a href="#population-size" id="toc-population-size" class="nav-link" data-scroll-target="#population-size">Population Size</a></li>
+  <li><a href="#relative-tolerance" id="toc-relative-tolerance" class="nav-link" data-scroll-target="#relative-tolerance">Relative Tolerance</a></li>
+  <li><a href="#best-of" id="toc-best-of" class="nav-link" data-scroll-target="#best-of">Best Of</a></li>
+  </ul></li>
+  <li><a href="#fitresult-structure" id="toc-fitresult-structure" class="nav-link" data-scroll-target="#fitresult-structure">FitResult Structure</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage">Usage</a>
+  <ul class="collapse">
+  <li><a href="#basic-per-subject-fitting" id="toc-basic-per-subject-fitting" class="nav-link" data-scroll-target="#basic-per-subject-fitting">Basic Per-Subject Fitting</a></li>
+  <li><a href="#pooled-fitting" id="toc-pooled-fitting" class="nav-link" data-scroll-target="#pooled-fitting">Pooled Fitting</a></li>
+  <li><a href="#with-different-loss-functions" id="toc-with-different-loss-functions" class="nav-link" data-scroll-target="#with-different-loss-functions">With Different Loss Functions</a></li>
+  </ul></li>
+  <li><a href="#helper-functions" id="toc-helper-functions" class="nav-link" data-scroll-target="#helper-functions">Helper Functions</a>
+  <ul class="collapse">
+  <li><a href="#make_subject_trial_masks" id="toc-make_subject_trial_masks" class="nav-link" data-scroll-target="#make_subject_trial_masks">make_subject_trial_masks</a></li>
+  </ul></li>
+  <li><a href="#computational-notes" id="toc-computational-notes" class="nav-link" data-scroll-target="#computational-notes">Computational Notes</a>
+  <ul class="collapse">
+  <li><a href="#vectorized-evaluation" id="toc-vectorized-evaluation" class="nav-link" data-scroll-target="#vectorized-evaluation">Vectorized Evaluation</a></li>
+  <li><a href="#memory-usage" id="toc-memory-usage" class="nav-link" data-scroll-target="#memory-usage">Memory Usage</a></li>
+  <li><a href="#time-estimates" id="toc-time-estimates" class="nav-link" data-scroll-target="#time-estimates">Time Estimates</a></li>
+  </ul></li>
+  <li><a href="#tuning-recommendations" id="toc-tuning-recommendations" class="nav-link" data-scroll-target="#tuning-recommendations">Tuning Recommendations</a>
+  <ul class="collapse">
+  <li><a href="#for-faster-convergence" id="toc-for-faster-convergence" class="nav-link" data-scroll-target="#for-faster-convergence">For Faster Convergence</a></li>
+  <li><a href="#for-better-optima" id="toc-for-better-optima" class="nav-link" data-scroll-target="#for-better-optima">For Better Optima</a></li>
+  <li><a href="#for-difficult-problems" id="toc-for-difficult-problems" class="nav-link" data-scroll-target="#for-difficult-problems">For Difficult Problems</a></li>
+  </ul></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">Troubleshooting</a>
+  <ul class="collapse">
+  <li><a href="#poor-convergence" id="toc-poor-convergence" class="nav-link" data-scroll-target="#poor-convergence">Poor Convergence</a></li>
+  <li><a href="#slow-fitting" id="toc-slow-fitting" class="nav-link" data-scroll-target="#slow-fitting">Slow Fitting</a></li>
+  <li><a href="#different-results-each-run" id="toc-different-results-each-run" class="nav-link" data-scroll-target="#different-results-each-run">Different Results Each Run</a></li>
+  </ul></li>
+  <li><a href="#example-full-workflow" id="toc-example-full-workflow" class="nav-link" data-scroll-target="#example-full-workflow">Example: Full Workflow</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.dev/githubpsyche/jaxcmr/blob/main/templates/evaluation/fitting/scipy-de.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../templates/evaluation/fitting/index.html">Fitting</a></li><li class="breadcrumb-item"><a href="../../../templates/evaluation/fitting/scipy-de.html">ScipyDE</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">ScipyDE</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Differential evolution fitting via SciPy</p>
+<p>ScipyDE uses <strong>Differential Evolution</strong> (DE), a population-based global optimization algorithm, to find model parameters that minimize a loss function.</p>
+<section id="what-is-differential-evolution" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-differential-evolution">What is Differential Evolution?</h2>
+<p>Differential Evolution is an <strong>evolutionary algorithm</strong> that: - Maintains a population of candidate solutions - Evolves the population through mutation, crossover, and selection - Converges to global optima without requiring gradients</p>
+<p>This makes it well-suited for: - Non-convex optimization landscapes - Loss functions with local minima - Black-box objective functions</p>
+</section>
+<section id="algorithm-overview" class="level2">
+<h2 class="anchored" data-anchor-id="algorithm-overview">Algorithm Overview</h2>
+<p>DE iteratively improves a population of parameter vectors:</p>
+<section id="initialization" class="level3">
+<h3 class="anchored" data-anchor-id="initialization">Initialization</h3>
+<p>Create a population of <span class="math inline">\(N\)</span> random parameter vectors: <span class="math display">\[\mathbf{x}_i \sim \text{Uniform}(\mathbf{lb}, \mathbf{ub})\]</span></p>
+<p>where <span class="math inline">\(\mathbf{lb}\)</span> and <span class="math inline">\(\mathbf{ub}\)</span> are the parameter bounds.</p>
+</section>
+<section id="mutation" class="level3">
+<h3 class="anchored" data-anchor-id="mutation">Mutation</h3>
+<p>For each vector <span class="math inline">\(\mathbf{x}_i\)</span>, create a mutant: <span class="math display">\[\mathbf{v}_i = \mathbf{x}_{r_1} + F \cdot (\mathbf{x}_{r_2} - \mathbf{x}_{r_3})\]</span></p>
+<p>where: - <span class="math inline">\(r_1, r_2, r_3\)</span> are distinct random indices - <span class="math inline">\(F\)</span> is the mutation scale factor (<code>diff_w</code>)</p>
+</section>
+<section id="crossover" class="level3">
+<h3 class="anchored" data-anchor-id="crossover">Crossover</h3>
+<p>Create a trial vector by mixing <span class="math inline">\(\mathbf{x}_i\)</span> and <span class="math inline">\(\mathbf{v}_i\)</span>: <span class="math display">\[u_{i,j} = \begin{cases} v_{i,j} &amp; \text{if } \text{rand}() &lt; CR \text{ or } j = j_{\text{rand}} \\ x_{i,j} &amp; \text{otherwise} \end{cases}\]</span></p>
+<p>where <span class="math inline">\(CR\)</span> is the crossover rate (<code>cross_over_rate</code>).</p>
+</section>
+<section id="selection" class="level3">
+<h3 class="anchored" data-anchor-id="selection">Selection</h3>
+<p>Keep the better vector: <span class="math display">\[\mathbf{x}_i' = \begin{cases} \mathbf{u}_i &amp; \text{if } f(\mathbf{u}_i) &lt; f(\mathbf{x}_i) \\ \mathbf{x}_i &amp; \text{otherwise} \end{cases}\]</span></p>
+</section>
+<section id="convergence" class="level3">
+<h3 class="anchored" data-anchor-id="convergence">Convergence</h3>
+<p>Repeat until: - Maximum iterations reached (<code>num_steps</code>) - Population converges (relative tolerance <code>relative_tolerance</code>)</p>
+</section>
+</section>
+<section id="hyperparameters" class="level2">
+<h2 class="anchored" data-anchor-id="hyperparameters">Hyperparameters</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Symbol</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>bounds</code></td>
+<td>—</td>
+<td>Parameter bounds <code>{"param": [lo, hi]}</code></td>
+<td>Required</td>
+</tr>
+<tr class="even">
+<td><code>num_steps</code></td>
+<td>—</td>
+<td>Maximum iterations</td>
+<td>1000</td>
+</tr>
+<tr class="odd">
+<td><code>pop_size</code></td>
+<td><span class="math inline">\(N\)</span></td>
+<td>Population size multiplier</td>
+<td>15</td>
+</tr>
+<tr class="even">
+<td><code>best_of</code></td>
+<td>—</td>
+<td>Independent restarts</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><code>relative_tolerance</code></td>
+<td><span class="math inline">\(tol\)</span></td>
+<td>Convergence threshold</td>
+<td>0.001</td>
+</tr>
+<tr class="even">
+<td><code>cross_over_rate</code></td>
+<td><span class="math inline">\(CR\)</span></td>
+<td>Crossover probability</td>
+<td>0.9</td>
+</tr>
+<tr class="odd">
+<td><code>diff_w</code></td>
+<td><span class="math inline">\(F\)</span></td>
+<td>Mutation scale factor</td>
+<td>0.85</td>
+</tr>
+<tr class="even">
+<td><code>progress_bar</code></td>
+<td>—</td>
+<td>Show progress</td>
+<td>True</td>
+</tr>
+<tr class="odd">
+<td><code>display_iterations</code></td>
+<td>—</td>
+<td>Show per-iteration info</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+<section id="population-size" class="level3">
+<h3 class="anchored" data-anchor-id="population-size">Population Size</h3>
+<p>The actual population is <code>pop_size × n_params</code>. For 10 parameters with <code>pop_size=15</code>: - Population = 150 candidate solutions - Each iteration evaluates 150 loss values</p>
+</section>
+<section id="relative-tolerance" class="level3">
+<h3 class="anchored" data-anchor-id="relative-tolerance">Relative Tolerance</h3>
+<p>Optimization stops early if the population standard deviation falls below: <span class="math display">\[\text{std}(\text{fitness}) &lt; tol \cdot |\text{mean}(\text{fitness})|\]</span></p>
+</section>
+<section id="best-of" class="level3">
+<h3 class="anchored" data-anchor-id="best-of">Best Of</h3>
+<p>With <code>best_of=3</code>: 1. Run optimization 3 independent times 2. Keep the result with lowest fitness 3. Guards against unlucky initialization</p>
+</section>
+</section>
+<section id="fitresult-structure" class="level2">
+<h2 class="anchored" data-anchor-id="fitresult-structure">FitResult Structure</h2>
+<div id="cell-3" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> fitter.fit_subjects(trial_mask)<span class="co"># Fixed parametersresults["fixed"]# {"allow_repeated_recalls": False, ...}# Parameter boundsresults["free"]# {"encoding_drift_rate": [0.0, 1.0], ...}# Loss values (one per subject when using fit_subjects)results["fitness"]# [loss_subj1, loss_subj2, ...]# Fitted parameter valuesresults["fits"]# {#     "encoding_drift_rate": [val_subj1, val_subj2, ...],#     "recall_drift_rate": [val_subj1, val_subj2, ...],#     ...,#     "subject": [id_subj1, id_subj2, ...]# }# Hyperparameters usedresults["hyperparameters"]# {"bounds": {...}, "num_steps": 1000, ...}# Total timeresults["fit_time"]# 123.45 (seconds)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<section id="basic-per-subject-fitting" class="level3">
+<h3 class="anchored" data-anchor-id="basic-per-subject-fitting">Basic Per-Subject Fitting</h3>
+<div id="cell-5" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDEfrom jaxcmr.loss.sequence_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGeneratorfrom jaxcmr.models.cmr <span class="im">import</span> make_factory<span class="co"># Create model factorymodel_factory = make_factory(    init_mfc, init_mcf, init_context, PositionalTermination)# Configure fitterfitter = ScipyDE(    dataset=data,    features=None,    base_params={        "allow_repeated_recalls": False,        "learn_after_context_update": True,    },    model_factory=model_factory,    loss_fn_generator=MemorySearchLikelihoodFnGenerator,    hyperparams={        "bounds": {            "encoding_drift_rate": [0.0, 1.0],            "start_drift_rate": [0.0, 1.0],            "recall_drift_rate": [0.0, 1.0],            "shared_support": [0.0, 10.0],            "item_support": [0.0, 10.0],            "learning_rate": [0.0, 1.0],            "primacy_scale": [0.0, 10.0],            "primacy_decay": [0.0, 5.0],            "choice_sensitivity": [0.0, 10.0],            "stop_probability_scale": [0.0, 1.0],            "stop_probability_growth": [0.0, 1.0],        },        "num_steps": 1000,        "pop_size": 15,        "best_of": 3,        "progress_bar": True,    },)# Fit all subjectsresults = fitter.fit_subjects(trial_mask)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="pooled-fitting" class="level3">
+<h3 class="anchored" data-anchor-id="pooled-fitting">Pooled Fitting</h3>
+<div id="cell-7" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Single fit across all subjects (pooled)results = fitter.fit(trial_mask)# Results have single values instead of listsprint(results["fitness"])  # [single_loss]print(results["fits"]["encoding_drift_rate"])  # [single_value]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="with-different-loss-functions" class="level3">
+<h3 class="anchored" data-anchor-id="with-different-loss-functions">With Different Loss Functions</h3>
+<div id="cell-9" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.spc_mse <span class="im">import</span> MemorySearchSpcMseFnGenerator</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># MSE-based fitting (may need more iterations)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    ...,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    loss_fn_generator<span class="op">=</span>MemorySearchSpcMseFnGenerator,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    hyperparams<span class="op">=</span>{</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        ...,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">"num_steps"</span>: <span class="dv">1500</span>,  <span class="co"># More iterations for MSE</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+</section>
+<section id="helper-functions" class="level2">
+<h2 class="anchored" data-anchor-id="helper-functions">Helper Functions</h2>
+<section id="make_subject_trial_masks" class="level3">
+<h3 class="anchored" data-anchor-id="make_subject_trial_masks">make_subject_trial_masks</h3>
+<p>Extract per-subject trial masks from a global mask:</p>
+<div id="cell-11" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> make_subject_trial_masks<span class="co"># Get masks for each subjectsubject_masks, unique_subjects = make_subject_trial_masks(trial_mask, data["subject"].flatten())# Manual per-subject fittingfor s, mask in enumerate(subject_masks):    results = fitter.fit(mask, subject_id=int(unique_subjects[s]))    # Process individual subject...</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+</section>
+<section id="computational-notes" class="level2">
+<h2 class="anchored" data-anchor-id="computational-notes">Computational Notes</h2>
+<section id="vectorized-evaluation" class="level3">
+<h3 class="anchored" data-anchor-id="vectorized-evaluation">Vectorized Evaluation</h3>
+<p>ScipyDE uses <code>vectorized=True</code> in SciPy’s differential_evolution:</p>
+<div id="cell-13" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>differential_evolution(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    loss_fn,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    bounds,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    vectorized<span class="op">=</span><span class="va">True</span>,  <span class="co"># Evaluate entire population at once</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The loss function receives parameters as: - Shape <code>(n_params, pop_size)</code> for vectorized evaluation - Returns shape <code>(pop_size,)</code> losses</p>
+<p>This enables efficient parallel evaluation in JAX.</p>
+</section>
+<section id="memory-usage" class="level3">
+<h3 class="anchored" data-anchor-id="memory-usage">Memory Usage</h3>
+<p>Memory scales with: - Population size: <code>pop_size × n_params</code> - Number of trials in the mask - Model size</p>
+<p>For large datasets, consider: - Reducing <code>pop_size</code> - Fitting subjects in batches - Using global fitting with subsampled trials</p>
+</section>
+<section id="time-estimates" class="level3">
+<h3 class="anchored" data-anchor-id="time-estimates">Time Estimates</h3>
+<p>Fitting time depends on: - Number of parameters (affects population size) - Number of trials (affects loss evaluation) - <code>num_steps</code> (affects iterations) - <code>best_of</code> (multiplies total time) - Loss function complexity</p>
+</section>
+</section>
+<section id="tuning-recommendations" class="level2">
+<h2 class="anchored" data-anchor-id="tuning-recommendations">Tuning Recommendations</h2>
+<section id="for-faster-convergence" class="level3">
+<h3 class="anchored" data-anchor-id="for-faster-convergence">For Faster Convergence</h3>
+<div id="cell-15" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>hyperparams <span class="op">=</span> {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pop_size"</span>: <span class="dv">10</span>,       <span class="co"># Smaller population</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"num_steps"</span>: <span class="dv">500</span>,     <span class="co"># Fewer iterations</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"best_of"</span>: <span class="dv">1</span>,         <span class="co"># Single run</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative_tolerance"</span>: <span class="fl">0.01</span>,  <span class="co"># Looser convergence</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="for-better-optima" class="level3">
+<h3 class="anchored" data-anchor-id="for-better-optima">For Better Optima</h3>
+<div id="cell-17" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>hyperparams <span class="op">=</span> {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pop_size"</span>: <span class="dv">20</span>,       <span class="co"># Larger population</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"num_steps"</span>: <span class="dv">2000</span>,    <span class="co"># More iterations</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"best_of"</span>: <span class="dv">5</span>,         <span class="co"># Multiple restarts</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relative_tolerance"</span>: <span class="fl">0.0001</span>,  <span class="co"># Tighter convergence</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="for-difficult-problems" class="level3">
+<h3 class="anchored" data-anchor-id="for-difficult-problems">For Difficult Problems</h3>
+<div id="cell-19" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>hyperparams <span class="op">=</span> {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cross_over_rate"</span>: <span class="fl">0.7</span>,  <span class="co"># More exploration</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"diff_w"</span>: <span class="fl">0.5</span>,           <span class="co"># Smaller mutations</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"num_steps"</span>: <span class="dv">3000</span>,       <span class="co"># Many iterations</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"best_of"</span>: <span class="dv">10</span>,           <span class="co"># Many restarts</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+</section>
+<section id="troubleshooting" class="level2">
+<h2 class="anchored" data-anchor-id="troubleshooting">Troubleshooting</h2>
+<section id="poor-convergence" class="level3">
+<h3 class="anchored" data-anchor-id="poor-convergence">Poor Convergence</h3>
+<p><strong>Symptoms:</strong> High loss values, unstable parameters</p>
+<p><strong>Solutions:</strong> - Increase <code>num_steps</code> - Increase <code>best_of</code> - Check parameter bounds (too wide?) - Verify loss function is correct</p>
+</section>
+<section id="slow-fitting" class="level3">
+<h3 class="anchored" data-anchor-id="slow-fitting">Slow Fitting</h3>
+<p><strong>Symptoms:</strong> Fitting takes too long</p>
+<p><strong>Solutions:</strong> - Reduce <code>pop_size</code> - Reduce <code>num_steps</code> - Use global fitting instead of per-subject - Reduce number of free parameters</p>
+</section>
+<section id="different-results-each-run" class="level3">
+<h3 class="anchored" data-anchor-id="different-results-each-run">Different Results Each Run</h3>
+<p><strong>Symptoms:</strong> Fitted parameters vary across runs</p>
+<p><strong>Solutions:</strong> - Increase <code>best_of</code> - Tighten <code>relative_tolerance</code> - Check for multimodal loss landscape - Consider identifiability issues</p>
+</section>
+</section>
+<section id="example-full-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="example-full-workflow">Example: Full Workflow</h2>
+<div id="cell-21" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.sequence_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGenerator</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> summarize_parameters</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_h5_from_h5</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> load_data(<span class="st">"experiment.h5"</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>trial_mask <span class="op">=</span> generate_trial_mask(data, <span class="st">"True"</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create model</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>model_factory <span class="op">=</span> make_factory(</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    init_mfc, init_mcf, init_context, PositionalTermination</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Define parameters</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>fixed <span class="op">=</span> {<span class="st">"allow_repeated_recalls"</span>: <span class="va">False</span>}</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>free <span class="op">=</span> {</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"encoding_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"recall_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"primacy_scale"</span>: [<span class="fl">0.0</span>, <span class="fl">10.0</span>],</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"primacy_decay"</span>: [<span class="fl">0.0</span>, <span class="fl">5.0</span>],</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    data, <span class="va">None</span>, fixed, model_factory,</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    MemorySearchLikelihoodFnGenerator,</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"bounds"</span>: free, <span class="st">"num_steps"</span>: <span class="dv">1000</span>, <span class="st">"best_of"</span>: <span class="dv">3</span>},</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> fitter.fit(trial_mask)</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(summarize_parameters([results], <span class="bu">list</span>(free.keys())))</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>fitted_params <span class="op">=</span> {k: jnp.array(v) <span class="cf">for</span> k, v <span class="kw">in</span> results[<span class="st">"fits"</span>].items()}</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    model_factory, data, <span class="va">None</span>, fitted_params,</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    trial_mask, experiment_count<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>    rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.dev/githubpsyche/jaxcmr/blob/main/templates/evaluation/fitting/scipy-de.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>jaxcmr</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

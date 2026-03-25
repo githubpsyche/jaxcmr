@@ -3,7 +3,7 @@ project:
   output-dir: docs
   render:
     - index.ipynb
-    - notebooks/**/*.ipynb
+    - templates/**/*.ipynb
 
 website:
   title: "jaxcmr"
@@ -16,15 +16,15 @@ website:
     background: dark
     left:
       - text: "Guide"
-        href: notebooks/guide/index.ipynb
+        href: templates/guide/index.ipynb
       - text: "Analyses"
-        href: notebooks/analyses/index.ipynb
+        href: templates/index.ipynb
       - text: "Models"
-        href: notebooks/models/index.ipynb
+        href: templates/models/index.ipynb
       - text: "Evaluation"
-        href: notebooks/evaluation/index.ipynb
+        href: templates/evaluation/index.ipynb
       - text: "Workflow"
-        href: notebooks/workflow/index.ipynb
+        href: templates/workflow/index.ipynb
     right:
       - icon: github
         href: https://github.com/githubpsyche/jaxcmr
@@ -32,101 +32,117 @@ website:
   sidebar:
     - title: "Guide"
       contents:
-        - notebooks/guide/index.ipynb
-        - notebooks/guide/jax.ipynb
-        - notebooks/guide/data-format.ipynb
-        - notebooks/guide/architecture.ipynb
-        - notebooks/guide/evaluation-pipeline.ipynb
+        - templates/guide/index.ipynb
+        - templates/guide/jax.ipynb
+        - templates/guide/data-format.ipynb
+        - templates/guide/architecture.ipynb
+        - templates/guide/evaluation-pipeline.ipynb
 
     - title: "Analyses"
       contents:
-        - notebooks/analyses/index.ipynb
-        - notebooks/analyses/importing-data.ipynb
-        - notebooks/analyses/scoring-data.ipynb
+        - templates/index.ipynb
+        - templates/importing-data.ipynb
+        - templates/scoring-data.ipynb
         - section: "Serial Position"
           contents:
-            - notebooks/analyses/serial-position/spc.ipynb
-            - notebooks/analyses/serial-position/pnr.ipynb
+            - templates/spc.ipynb
+            - templates/pnr.ipynb
         - section: "Temporal Contiguity"
           contents:
-            - notebooks/analyses/temporal-contiguity/crp.ipynb
+            - templates/crp.ipynb
+            - templates/conditional_crp.ipynb
+            - templates/lagrank.ipynb
         - section: "Category Effects"
           contents:
-            - notebooks/analyses/category/catcrp.ipynb
+            - templates/catcrp.ipynb
+            - templates/cat_spc.ipynb
+            - templates/cat_lpp_spc.ipynb
+            - templates/cat_lpp_by_recall.ipynb
+            - templates/cat_recall_by_lpp.ipynb
         - section: "Repetition"
           contents:
-            - notebooks/analyses/repetition/repcrp.ipynb
-            - notebooks/analyses/repetition/backrepcrp.ipynb
-            - notebooks/analyses/repetition/serialrepcrp.ipynb
-            - notebooks/analyses/repetition/repneighborcrp.ipynb
+            - templates/repcrp.ipynb
+            - templates/backrepcrp.ipynb
+            - templates/cleanbackrepcrp.ipynb
+            - templates/serialrepcrp.ipynb
+            - templates/repneighborcrp.ipynb
+            - templates/replagrank.ipynb
+            - templates/backreplagrank.ipynb
+            - templates/serialreplagrank.ipynb
+            - templates/repsrac.ipynb
+            - templates/rpl.ipynb
         - section: "Error Analyses"
           contents:
-            - notebooks/analyses/error/intrusion_error_rate.ipynb
-            - notebooks/analyses/error/omission_error_rate.ipynb
-            - notebooks/analyses/error/order_error_rate.ipynb
-            - notebooks/analyses/error/termination_probability.ipynb
+            - templates/intrusion_error_rate.ipynb
+            - templates/omission_error_rate.ipynb
+            - templates/order_error_rate.ipynb
+            - templates/termination_probability.ipynb
         - section: "Semantic"
           contents:
-            - notebooks/analyses/semantic/distcrp.ipynb
-            - notebooks/analyses/semantic/srac.ipynb
-            - notebooks/analyses/semantic/relative_srac.ipynb
+            - templates/distcrp.ipynb
+            - templates/conditional_distcrp.ipynb
+            - templates/srac.ipynb
+            - templates/relative_srac.ipynb
         - section: "Co-Recall"
           contents:
-            - notebooks/analyses/co-recall/conditional_corec_by_lag.ipynb
-            - notebooks/analyses/co-recall/conditional_corec_by_cat.ipynb
-            - notebooks/analyses/co-recall/joint_corec_by_lag.ipynb
-            - notebooks/analyses/co-recall/compound_cueing.ipynb
+            - templates/conditional_corec_by_lag.ipynb
+            - templates/conditional_corec_by_cat.ipynb
+            - templates/joint_corec_by_lag.ipynb
+            - templates/compound_cueing.ipynb
+        - section: "Cue-Centered"
+          contents:
+            - templates/cue_centered_crp.ipynb
+            - templates/cue_centered_lagrank.ipynb
         - section: "Other"
           contents:
-            - notebooks/analyses/other/nth_item_recall.ipynb
-            - notebooks/analyses/other/rpl.ipynb
-            - notebooks/analyses/other/log_odds_crp.ipynb
-        - notebooks/analyses/custom-analyses.ipynb
+            - templates/nth_item_recall.ipynb
+            - templates/log_odds_crp.ipynb
+        - templates/custom-analyses.ipynb
 
     - title: "Models"
       contents:
-        - notebooks/models/index.ipynb
+        - templates/models/index.ipynb
         - section: "Baseline"
           contents:
-            - notebooks/models/cmr.ipynb
-            - notebooks/models/context.ipynb
-            - notebooks/models/linear_memory.ipynb
-        - notebooks/models/parameters.ipynb
+            - templates/models/cmr.ipynb
+            - templates/models/context.ipynb
+            - templates/models/linear_memory.ipynb
+        - templates/models/parameters.ipynb
         - section: "Repetition Variants"
           contents:
-            - notebooks/models/repetition/positional.ipynb
-            - notebooks/models/repetition/drift.ipynb
-            - notebooks/models/repetition/reinforcement.ipynb
-            - notebooks/models/repetition/outlist.ipynb
-            - notebooks/models/repetition/blend.ipynb
-            - notebooks/models/repetition/distinct.ipynb
-            - notebooks/models/repetition/no-reinstate.ipynb
+            - templates/models/repetition/positional.ipynb
+            - templates/models/repetition/drift.ipynb
+            - templates/models/repetition/reinforcement.ipynb
+            - templates/models/repetition/outlist.ipynb
+            - templates/models/repetition/blend.ipynb
+            - templates/models/repetition/distinct.ipynb
+            - templates/models/repetition/no-reinstate.ipynb
         - section: "Semantic Variants"
           contents:
-            - notebooks/models/semantic/additive.ipynb
-            - notebooks/models/semantic/multiplicative.ipynb
+            - templates/models/semantic/additive.ipynb
+            - templates/models/semantic/multiplicative.ipynb
 
     - title: "Evaluation"
       contents:
-        - notebooks/evaluation/index.ipynb
-        - notebooks/evaluation/protocols.ipynb
+        - templates/evaluation/index.ipynb
+        - templates/evaluation/protocols.ipynb
         - section: "Loss Functions"
           contents:
-            - notebooks/evaluation/loss/index.ipynb
-            - notebooks/evaluation/loss/likelihood.ipynb
-            - notebooks/evaluation/loss/permutation.ipynb
-            - notebooks/evaluation/loss/mse.ipynb
+            - templates/evaluation/loss/index.ipynb
+            - templates/evaluation/loss/likelihood.ipynb
+            - templates/evaluation/loss/permutation.ipynb
+            - templates/evaluation/loss/mse.ipynb
         - section: "Fitting"
           contents:
-            - notebooks/evaluation/fitting/index.ipynb
-            - notebooks/evaluation/fitting/scipy-de.ipynb
-            - notebooks/evaluation/fitting.ipynb
-        - notebooks/evaluation/parameter_shifting.ipynb
-        - notebooks/evaluation/compare_simulation_loss.ipynb
+            - templates/evaluation/fitting/index.ipynb
+            - templates/evaluation/fitting/scipy-de.ipynb
+            - templates/evaluation/fitting.ipynb
+        - templates/evaluation/parameter_shifting.ipynb
+        - templates/evaluation/compare_simulation_loss.ipynb
 
     - title: "Workflow"
       contents:
-        - notebooks/workflow/index.ipynb
+        - templates/workflow/index.ipynb
 
   page-footer:
     left: "Built with [Quarto](https://quarto.org/)"
@@ -146,6 +162,6 @@ format:
     code-copy: true
 
 execute:
-  freeze: auto
+  enabled: false
 
 jupyter: python3

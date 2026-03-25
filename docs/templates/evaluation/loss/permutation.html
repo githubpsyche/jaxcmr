@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Set Permutation Likelihood – jaxcmr</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-4d9afe2b8d18ee9fa5d0d57b5ed4214d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-ef16540e296e6b0e79a742be48dd9205.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">jaxcmr</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/guide/index.html"> 
+<span class="menu-text">Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/index.html"> 
+<span class="menu-text">Analyses</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/models/index.html"> 
+<span class="menu-text">Models</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../../../templates/evaluation/index.html" aria-current="page"> 
+<span class="menu-text">Evaluation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../templates/workflow/index.html"> 
+<span class="menu-text">Workflow</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../templates/evaluation/loss/index.html">Loss Functions</a></li><li class="breadcrumb-item"><a href="../../../templates/evaluation/loss/permutation.html">Set Permutation Likelihood</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/protocols.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation Protocols</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Loss Functions</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loss Functions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/likelihood.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequence Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/permutation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Set Permutation Likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/loss/mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MSE-Based Loss Functions</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Fitting</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fitting Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting/scipy-de.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ScipyDE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">fitting.html</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">parameter_shifting.html</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../templates/evaluation/compare_simulation_loss.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">compare_simulation_loss.html</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-problem" id="toc-the-problem" class="nav-link active" data-scroll-target="#the-problem">The Problem</a></li>
+  <li><a href="#mathematical-specification" id="toc-mathematical-specification" class="nav-link" data-scroll-target="#mathematical-specification">Mathematical Specification</a>
+  <ul class="collapse">
+  <li><a href="#true-marginal-probability" id="toc-true-marginal-probability" class="nav-link" data-scroll-target="#true-marginal-probability">True Marginal Probability</a></li>
+  <li><a href="#computational-challenge" id="toc-computational-challenge" class="nav-link" data-scroll-target="#computational-challenge">Computational Challenge</a></li>
+  <li><a href="#monte-carlo-approximation" id="toc-monte-carlo-approximation" class="nav-link" data-scroll-target="#monte-carlo-approximation">Monte Carlo Approximation</a></li>
+  <li><a href="#loss-function" id="toc-loss-function" class="nav-link" data-scroll-target="#loss-function">Loss Function</a></li>
+  </ul></li>
+  <li><a href="#implementation" id="toc-implementation" class="nav-link" data-scroll-target="#implementation">Implementation</a>
+  <ul class="collapse">
+  <li><a href="#key-parameters" id="toc-key-parameters" class="nav-link" data-scroll-target="#key-parameters">Key Parameters</a></li>
+  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a></li>
+  </ul></li>
+  <li><a href="#when-to-use" id="toc-when-to-use" class="nav-link" data-scroll-target="#when-to-use">When to Use</a>
+  <ul class="collapse">
+  <li><a href="#use-set-permutation-when" id="toc-use-set-permutation-when" class="nav-link" data-scroll-target="#use-set-permutation-when">Use Set Permutation When:</a></li>
+  <li><a href="#dont-use-when" id="toc-dont-use-when" class="nav-link" data-scroll-target="#dont-use-when">Don’t Use When:</a></li>
+  </ul></li>
+  <li><a href="#comparison-with-standard-likelihood" id="toc-comparison-with-standard-likelihood" class="nav-link" data-scroll-target="#comparison-with-standard-likelihood">Comparison with Standard Likelihood</a>
+  <ul class="collapse">
+  <li><a href="#whats-lost" id="toc-whats-lost" class="nav-link" data-scroll-target="#whats-lost">What’s Lost</a></li>
+  <li><a href="#whats-preserved" id="toc-whats-preserved" class="nav-link" data-scroll-target="#whats-preserved">What’s Preserved</a></li>
+  </ul></li>
+  <li><a href="#usage-example" id="toc-usage-example" class="nav-link" data-scroll-target="#usage-example">Usage Example</a></li>
+  <li><a href="#variance-reduction" id="toc-variance-reduction" class="nav-link" data-scroll-target="#variance-reduction">Variance Reduction</a>
+  <ul class="collapse">
+  <li><a href="#more-samples" id="toc-more-samples" class="nav-link" data-scroll-target="#more-samples">More Samples</a></li>
+  <li><a href="#pre-sampling" id="toc-pre-sampling" class="nav-link" data-scroll-target="#pre-sampling">Pre-Sampling</a></li>
+  </ul></li>
+  <li><a href="#theoretical-notes" id="toc-theoretical-notes" class="nav-link" data-scroll-target="#theoretical-notes">Theoretical Notes</a>
+  <ul class="collapse">
+  <li><a href="#unbiased-estimation" id="toc-unbiased-estimation" class="nav-link" data-scroll-target="#unbiased-estimation">Unbiased Estimation</a></li>
+  <li><a href="#connection-to-exchangeability" id="toc-connection-to-exchangeability" class="nav-link" data-scroll-target="#connection-to-exchangeability">Connection to Exchangeability</a></li>
+  <li><a href="#relationship-to-sum-product" id="toc-relationship-to-sum-product" class="nav-link" data-scroll-target="#relationship-to-sum-product">Relationship to Sum-Product</a></li>
+  </ul></li>
+  <li><a href="#computational-considerations" id="toc-computational-considerations" class="nav-link" data-scroll-target="#computational-considerations">Computational Considerations</a>
+  <ul class="collapse">
+  <li><a href="#scaling" id="toc-scaling" class="nav-link" data-scroll-target="#scaling">Scaling</a></li>
+  <li><a href="#parallelization" id="toc-parallelization" class="nav-link" data-scroll-target="#parallelization">Parallelization</a></li>
+  <li><a href="#memory" id="toc-memory" class="nav-link" data-scroll-target="#memory">Memory</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.dev/githubpsyche/jaxcmr/blob/main/templates/evaluation/loss/permutation.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../templates/evaluation/loss/index.html">Loss Functions</a></li><li class="breadcrumb-item"><a href="../../../templates/evaluation/loss/permutation.html">Set Permutation Likelihood</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Set Permutation Likelihood</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Monte Carlo likelihood for unordered recall data</p>
+<p>Set Permutation Likelihood computes the probability of observing a <strong>recall set</strong> (ignoring order) by averaging over all possible orderings. This is essential when recall order is not recorded or not meaningful.</p>
+<section id="the-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-problem">The Problem</h2>
+<p>Sometimes only the <strong>set</strong> of recalled items matters: - Final free recall (FFR) where order isn’t recorded - Tasks focusing on recall probability, not temporal organization - Data where order information is unreliable</p>
+<p>Standard sequence likelihood requires a specific order. For unordered data, we need to marginalize over all possible orderings.</p>
+</section>
+<section id="mathematical-specification" class="level2">
+<h2 class="anchored" data-anchor-id="mathematical-specification">Mathematical Specification</h2>
+<section id="true-marginal-probability" class="level3">
+<h3 class="anchored" data-anchor-id="true-marginal-probability">True Marginal Probability</h3>
+<p>For a recall set <span class="math inline">\(R_t = \{r_1, \ldots, r_k\}\)</span>, the true probability is:</p>
+<p><span class="math display">\[P(R_t \mid \theta) = \sum_{\pi \in S_k} P(\pi(R_t) \mid \theta)\]</span></p>
+<p>where <span class="math inline">\(S_k\)</span> is the set of all <span class="math inline">\(k!\)</span> permutations and <span class="math inline">\(\pi(R_t)\)</span> is the ordered sequence under permutation <span class="math inline">\(\pi\)</span>.</p>
+</section>
+<section id="computational-challenge" class="level3">
+<h3 class="anchored" data-anchor-id="computational-challenge">Computational Challenge</h3>
+<p>Computing all <span class="math inline">\(k!\)</span> permutations is infeasible for typical recall lengths: - <span class="math inline">\(k = 5\)</span>: <span class="math inline">\(5! = 120\)</span> permutations - <span class="math inline">\(k = 10\)</span>: <span class="math inline">\(10! = 3,628,800\)</span> permutations - <span class="math inline">\(k = 15\)</span>: <span class="math inline">\(15! \approx 1.3 \times 10^{12}\)</span> permutations</p>
+</section>
+<section id="monte-carlo-approximation" class="level3">
+<h3 class="anchored" data-anchor-id="monte-carlo-approximation">Monte Carlo Approximation</h3>
+<p>Instead, we sample <span class="math inline">\(N\)</span> random permutations and average:</p>
+<p><span class="math display">\[\hat{P}(R_t \mid \theta) \approx \frac{1}{N} \sum_{i=1}^{N} \prod_{j=1}^{k} P(\pi_i(r_j) \mid \pi_i(r_{1:j-1}), \theta)\]</span></p>
+<p>where <span class="math inline">\(\pi_i \sim \text{Uniform}(S_k)\)</span> are independent random permutations.</p>
+</section>
+<section id="loss-function" class="level3">
+<h3 class="anchored" data-anchor-id="loss-function">Loss Function</h3>
+<p>The negative log-likelihood:</p>
+<p><span class="math display">\[L(\theta) = -\sum_t \log \hat{P}(R_t \mid \theta)\]</span></p>
+</section>
+</section>
+<section id="implementation" class="level2">
+<h2 class="anchored" data-anchor-id="implementation">Implementation</h2>
+<p><strong>Module:</strong> <code>jaxcmr.loss.set_permutation_likelihood</code></p>
+<div id="cell-3" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.set_permutation_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGenerator</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="key-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="key-parameters">Key Parameters</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>simulation_count</code></td>
+<td>50</td>
+<td>Number of permutation samples per trial</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="how-it-works" class="level3">
+<h3 class="anchored" data-anchor-id="how-it-works">How It Works</h3>
+<ol type="1">
+<li>Pre-sample random permutations for reproducibility</li>
+<li>For each trial:
+<ul>
+<li>Apply each permutation to the recall set</li>
+<li>Compute sequence probability for each ordering</li>
+<li>Average across permutations</li>
+</ul></li>
+<li>Sum negative log-probabilities across trials</li>
+</ol>
+<div id="cell-5" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict_trial(<span class="va">self</span>, model, present, recalls, permutations):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compute average probability across permutation samples."""</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    probs <span class="op">=</span> []</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> perm <span class="kw">in</span> permutations:</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        ordered_recalls <span class="op">=</span> recalls[perm]</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        prob <span class="op">=</span> sequence_probability(model, present, ordered_recalls)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        probs.append(prob)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> jnp.mean(probs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+</section>
+<section id="when-to-use" class="level2">
+<h2 class="anchored" data-anchor-id="when-to-use">When to Use</h2>
+<section id="use-set-permutation-when" class="level3">
+<h3 class="anchored" data-anchor-id="use-set-permutation-when">Use Set Permutation When:</h3>
+<ul>
+<li><strong>Order not recorded</strong>: Data only contains which items were recalled</li>
+<li><strong>Final free recall (FFR)</strong>: Extended recall period without order tracking</li>
+<li><strong>Order is unreliable</strong>: Noisy or incomplete order data</li>
+<li><strong>Theoretical focus</strong>: Testing recall probability, not temporal organization</li>
+</ul>
+</section>
+<section id="dont-use-when" class="level3">
+<h3 class="anchored" data-anchor-id="dont-use-when">Don’t Use When:</h3>
+<ul>
+<li><strong>Order is meaningful</strong>: Testing contiguity, forward asymmetry</li>
+<li><strong>Full sequence data</strong>: Standard likelihood is more informative</li>
+<li><strong>Computational constraints</strong>: Monte Carlo adds overhead</li>
+</ul>
+</section>
+</section>
+<section id="comparison-with-standard-likelihood" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-with-standard-likelihood">Comparison with Standard Likelihood</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Aspect</th>
+<th>Sequence Likelihood</th>
+<th>Set Permutation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Order information</td>
+<td>Full</td>
+<td>Ignored</td>
+</tr>
+<tr class="even">
+<td>Computation</td>
+<td><span class="math inline">\(O(k)\)</span> per trial</td>
+<td><span class="math inline">\(O(N \cdot k)\)</span> per trial</td>
+</tr>
+<tr class="odd">
+<td>Captures CRP</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Captures SPC</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr class="odd">
+<td>Contiguity</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td>Recall probability</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<section id="whats-lost" class="level3">
+<h3 class="anchored" data-anchor-id="whats-lost">What’s Lost</h3>
+<p>By ignoring order, set permutation likelihood <strong>cannot</strong> capture: - Lag-CRP (conditional response probability by lag) - Forward asymmetry - Temporal clustering - Initiation effects (which item is recalled first)</p>
+</section>
+<section id="whats-preserved" class="level3">
+<h3 class="anchored" data-anchor-id="whats-preserved">What’s Preserved</h3>
+<p>Set permutation likelihood <strong>does</strong> capture: - Serial position curve (which positions are recalled) - Overall recall probability - Item-level effects (primacy, recency)</p>
+</section>
+</section>
+<section id="usage-example" class="level2">
+<h2 class="anchored" data-anchor-id="usage-example">Usage Example</h2>
+<div id="cell-7" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.loss.set_permutation_likelihood <span class="im">import</span> MemorySearchLikelihoodFnGenerator</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create model factory</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>model_factory <span class="op">=</span> make_factory(</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    init_mfc, init_mcf, init_context, PositionalTermination</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit using set permutation likelihood</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    dataset<span class="op">=</span>data,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    base_params<span class="op">=</span>{<span class="st">"allow_repeated_recalls"</span>: <span class="va">False</span>, ...},</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    model_factory<span class="op">=</span>model_factory,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    loss_fn_generator<span class="op">=</span>MemorySearchLikelihoodFnGenerator,  <span class="co"># Same name, different module!</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    hyperparams<span class="op">=</span>{</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"bounds"</span>: {</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            <span class="st">"encoding_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>            <span class="st">"start_drift_rate"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>            ...</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        },</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"num_steps"</span>: <span class="dv">1000</span>,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> fitter.fit(trial_mask)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p><strong>Important:</strong> Note that the class name is the same (<code>MemorySearchLikelihoodFnGenerator</code>) but the module differs (<code>loss.set_permutation_likelihood</code> vs <code>loss.sequence_likelihood</code>).</p>
+</section>
+<section id="variance-reduction" class="level2">
+<h2 class="anchored" data-anchor-id="variance-reduction">Variance Reduction</h2>
+<section id="more-samples" class="level3">
+<h3 class="anchored" data-anchor-id="more-samples">More Samples</h3>
+<p>Increasing <code>simulation_count</code> reduces variance but increases computation:</p>
+<div id="cell-9" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Lower variance, slower</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>generator <span class="op">=</span> MemorySearchLikelihoodFnGenerator(...)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>generator.simulation_count <span class="op">=</span> <span class="dv">100</span>  <span class="co"># Default is 50</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="pre-sampling" class="level3">
+<h3 class="anchored" data-anchor-id="pre-sampling">Pre-Sampling</h3>
+<p>Permutations are pre-sampled for reproducibility. This means: - Same permutations used across optimization iterations - Gradient estimates are consistent - Different random seeds give different results</p>
+</section>
+</section>
+<section id="theoretical-notes" class="level2">
+<h2 class="anchored" data-anchor-id="theoretical-notes">Theoretical Notes</h2>
+<section id="unbiased-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="unbiased-estimation">Unbiased Estimation</h3>
+<p>Monte Carlo averaging produces an unbiased estimate:</p>
+<p><span class="math display">\[\mathbb{E}[\hat{P}(R_t)] = P(R_t)\]</span></p>
+<p>But the log of the average is <strong>not</strong> the average of the logs:</p>
+<p><span class="math display">\[\mathbb{E}[\log \hat{P}(R_t)] \neq \log P(R_t)\]</span></p>
+<p>This introduces a small bias, decreasing with sample count.</p>
+</section>
+<section id="connection-to-exchangeability" class="level3">
+<h3 class="anchored" data-anchor-id="connection-to-exchangeability">Connection to Exchangeability</h3>
+<p>If recall order were truly random (exchangeable), all permutations would have equal probability. The permutation-averaged likelihood tests whether the model’s predictions are consistent with the observed set, regardless of which order actually occurred.</p>
+</section>
+<section id="relationship-to-sum-product" class="level3">
+<h3 class="anchored" data-anchor-id="relationship-to-sum-product">Relationship to Sum-Product</h3>
+<p>An alternative is to compute the sum over item identities rather than permutations (sum-product algorithm). This is more efficient but requires model modifications. The permutation approach works with any model unchanged.</p>
+</section>
+</section>
+<section id="computational-considerations" class="level2">
+<h2 class="anchored" data-anchor-id="computational-considerations">Computational Considerations</h2>
+<section id="scaling" class="level3">
+<h3 class="anchored" data-anchor-id="scaling">Scaling</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Recall length <span class="math inline">\(k\)</span></th>
+<th>Sequence likelihood</th>
+<th>Set permutation (<span class="math inline">\(N=50\)</span>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>5</td>
+<td>5 steps</td>
+<td>250 steps</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>10 steps</td>
+<td>500 steps</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td>15 steps</td>
+<td>750 steps</td>
+</tr>
+</tbody>
+</table>
+<p>The overhead is a factor of <span class="math inline">\(N\)</span> (sample count).</p>
+</section>
+<section id="parallelization" class="level3">
+<h3 class="anchored" data-anchor-id="parallelization">Parallelization</h3>
+<p>Permutation samples are independent and can be parallelized:</p>
+<div id="cell-11" class="cell">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Vectorized over permutations using vmap</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>probs <span class="op">=</span> vmap(sequence_probability, in_axes<span class="op">=</span>(<span class="va">None</span>, <span class="va">None</span>, <span class="dv">0</span>))(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    model, present, permuted_recalls</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="memory" class="level3">
+<h3 class="anchored" data-anchor-id="memory">Memory</h3>
+<p>Pre-sampling permutations requires storage: - <span class="math inline">\(T\)</span> trials × <span class="math inline">\(N\)</span> samples × <span class="math inline">\(k\)</span> items - Typically a few MB for standard datasets</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Built with <a href="https://quarto.org/">Quarto</a></p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.dev/githubpsyche/jaxcmr/blob/main/templates/evaluation/loss/permutation.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/githubpsyche/jaxcmr/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>jaxcmr</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
