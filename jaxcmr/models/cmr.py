@@ -130,7 +130,6 @@ class CMR(Pytree):
             lambda: new_context.state,
             lambda: self.context.state,
         )
-        # learning_state = self.context.state
         return self.replace(
             context=new_context,
             mfc=self.mfc.associate(item, learning_state, self.mfc_learning_rate),
