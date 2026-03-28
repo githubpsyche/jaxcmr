@@ -164,8 +164,15 @@ def plot_cat_spc(
                 axis,
                 jnp.arange(max_list_length, dtype=int) + 1,
                 subject_values,
-                labels[label_index] if len(category_values) > 1 else labels[data_index],
+                labels[color_idx]
+                if len(labels) > len(category_values)
+                else (
+                    labels[label_index]
+                    if len(category_values) > 1
+                    else labels[data_index]
+                ),
                 color,
+                confidence_level=confidence_level,
             )
 
     set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)
