@@ -1,9 +1,9 @@
-"""Loss generator variant with a likelihood-masking hook.
+"""Sequential likelihood with masking, using per-trial study contexts.
 
-Applies a user-specified mask to per-trial likelihood arrays before computing
-negative log-likelihood, enabling exclusion of selected recall events without
-altering simulation behavior. Mask entries of 1 retain events; 0 neutralizes
-them.
+Scores recall sequences in observed order, re-presenting the study list
+for each trial so that trial-specific features (e.g. EEG, item order)
+are captured.  A user-specified mask controls which recall events
+contribute to the negative log-likelihood.
 
 """
 
@@ -58,11 +58,12 @@ def mask_first_recall(
 
 
 class MemorySearchLikelihoodFnGenerator:
-    """Generates a loss function with a likelihood masking hook.
+    """Masked sequential likelihood with per-trial study contexts.
 
-    The mask identifies recall events to retain before aggregation into
-    negative log-likelihood. Mask values of False neutralize the event while
-    keeping simulation behavior unchanged.
+    Re-presents the study list for each trial before scoring the recall
+    sequence, so trial-specific features are captured.  The mask
+    controls which recall events contribute to the negative
+    log-likelihood.
     """
 
     def __init__(
@@ -75,16 +76,14 @@ class MemorySearchLikelihoodFnGenerator:
         """Initializes the generator with dataset, factory, and mask.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
-          dataset: Recall dataset with presentations and recalls.
-          features: Optional feature matrix for word-pool items.
-          mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
+            model_factory: Class implementing `MemorySearchModelFactory`.
+            dataset: Recall dataset with presentations and recalls.
+            features: Optional feature matrix for word-pool items.
+            mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        self.factory = model_factory(dataset, features)
-        self.create_model = self.factory.create_trial_model
+        self.create_model = model_factory(dataset, features).create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.mask_likelihoods = vmap(mask_likelihoods)
-
+        
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
         for trial_index in range(trials.shape[0]):
@@ -96,6 +95,7 @@ class MemorySearchLikelihoodFnGenerator:
             trials[trial_index] = reindexed
 
         self.trials = jnp.array(trials)
+        self.trial_masks = vmap(mask_likelihoods)(self.trials)
 
     def predict_trial(
         self,
@@ -120,24 +120,6 @@ class MemorySearchLikelihoodFnGenerator:
             self.trials[trial_index],
         )[1]
 
-    def _apply_mask(
-        self,
-        raw_likelihoods: Float[Array, " trials recall_events"],
-        trial_indices: Integer[Array, " trials"],
-    ) -> Float[Array, " trials recall_events"]:
-        """Returns likelihoods with masked events neutralized.
-
-        Mask entries set to True keep the original event likelihood; False
-        entries are replaced with 1.0 to neutralize their contribution.
-
-        Args:
-          raw_likelihoods: Per-trial event likelihoods prior to masking.
-          trial_indices: Trials associated with the likelihood rows.
-        """
-        recalls = self.trials[trial_indices]
-        mask = self.mask_likelihoods(recalls)
-        return raw_likelihoods * mask + (1.0 - mask)
-
     def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
@@ -150,7 +132,8 @@ class MemorySearchLikelihoodFnGenerator:
           parameters: Model parameter mapping.
         """
         raw = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
-        masked = self._apply_mask(raw, trial_indices)
+        mask = self.trial_masks[trial_indices]
+        masked = raw * mask + (1.0 - mask)
         return log_likelihood(masked)
 
     def __call__(

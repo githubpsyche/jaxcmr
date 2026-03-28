@@ -126,13 +126,13 @@ def test_base_generator_returns_positive_finite_loss():
 
     dataset = _dataset()
     gen = MemorySearchLikelihoodFnGenerator(
-        BaseCMRFactory, dataset, mask_trailing_terminations
+        BaseCMRFactory, dataset, None, mask_trailing_terminations
     )
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
 
     # Act / When
-    loss = gen.base_predict_trials_loss(trial_idx, params)
+    loss = gen.present_and_predict_trials_loss(trial_idx, params)
 
     # Assert / Then
     assert jnp.isfinite(loss).item()
@@ -231,20 +231,20 @@ def test_set_permutation_generator_has_expected_structure():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        MemorySearchLikelihoodFnGenerator,
+        ExcludeTerminationLikelihoodFnGenerator,
     )
 
     dataset = _dataset()
 
     # Act / When
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = ExcludeTerminationLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
 
     # Assert / Then
-    assert gen.trial_permutations.shape[0] == 2  # n_trials
-    assert gen.trial_permutations.shape[1] == gen.simulation_count
-    assert gen.trial_permutations.shape[2] == 3  # list_length
+    assert gen._inner.trial_permutations.shape[0] == 2  # n_trials
+    assert gen._inner.trial_permutations.shape[1] == gen._inner.simulation_count
+    assert gen._inner.trial_permutations.shape[2] == 3  # list_length
     # Values are non-negative (valid item positions or zero padding)
-    assert jnp.all(gen.trial_permutations >= 0).item()
+    assert jnp.all(gen._inner.trial_permutations >= 0).item()
 
 
 def test_set_permutation_generator_returns_finite_loss():
@@ -264,21 +264,124 @@ def test_set_permutation_generator_returns_finite_loss():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        MemorySearchLikelihoodFnGenerator,
+        ExcludeTerminationLikelihoodFnGenerator,
     )
 
     dataset = _dataset()
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = ExcludeTerminationLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
 
     # Act / When
-    loss1 = gen.present_and_predict_trials_loss(trial_idx, params)
-    loss2 = gen.present_and_predict_trials_loss(trial_idx, params)
+    loss1 = gen._inner.present_and_predict_trials_loss(trial_idx, params)
+    loss2 = gen._inner.present_and_predict_trials_loss(trial_idx, params)
 
     # Assert / Then
     assert jnp.isfinite(loss1).item()
     assert jnp.isclose(loss1, loss2).item()  # deterministic
+
+
+# ── include_termination_set_permutation_likelihood ─────────────────────────
+
+
+def test_stop_permutation_structure():
+    """Behavior: Stop-aware permutations preserve the recall bag.
+
+    Given:
+      - A two-trial dataset where each trial recalls 2 of 3 items.
+    When:
+      - The stop-aware generator is instantiated.
+    Then:
+      - Each permutation is a valid permutation of the trial items
+        (same multiset of recalled items and zeros, just reordered).
+    """
+    # Arrange / Given
+    from jaxcmr.loss.set_permutation_likelihood import (
+        IncludeTerminationLikelihoodFnGenerator,
+    )
+
+    dataset = _dataset()
+
+    # Act / When
+    gen = IncludeTerminationLikelihoodFnGenerator(
+        BaseCMRFactory, dataset, None
+    )
+
+    # Assert / Then
+    inner = gen._inner
+    perms = inner.trial_permutations
+    assert perms.shape[0] == 2  # n_trials
+    assert perms.shape[1] == inner.simulation_count
+    assert perms.shape[2] == 3  # recall_width
+
+    for trial_idx in range(2):
+        # All permutations should contain the same multiset of values
+        reference = sorted(int(x) for x in perms[trial_idx, 0])
+        for sim_idx in range(inner.simulation_count):
+            perm = perms[trial_idx, sim_idx]
+            assert sorted(int(x) for x in perm) == reference
+
+
+def test_stop_aware_loss_returns_finite_positive():
+    """Behavior: Stop-aware generator returns a finite, positive loss.
+
+    Given:
+      - A two-trial dataset with the base CMR factory using
+        PositionalTermination.
+    When:
+      - ``present_and_predict_trials_loss`` is called.
+    Then:
+      - The returned scalar is finite and positive.
+      - Calling again produces the same value (deterministic).
+    """
+    # Arrange / Given
+    from jaxcmr.loss.set_permutation_likelihood import (
+        IncludeTerminationLikelihoodFnGenerator,
+    )
+
+    dataset = _dataset()
+    gen = IncludeTerminationLikelihoodFnGenerator(
+        BaseCMRFactory, dataset, None
+    )
+    params = _params()
+    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
+
+    # Act / When
+    loss1 = gen._inner.present_and_predict_trials_loss(trial_idx, params)
+    loss2 = gen._inner.present_and_predict_trials_loss(trial_idx, params)
+
+    # Assert / Then
+    assert jnp.isfinite(loss1).item()
+    assert float(loss1) > 0
+    assert jnp.isclose(loss1, loss2).item()
+
+
+def test_stop_aware_generator_rejects_full_recall():
+    """Behavior: Generator raises ValueError when no padding slot exists.
+
+    Given:
+      - A dataset where one trial recalls all items (no zero-padding).
+    When:
+      - The stop-aware generator is instantiated.
+    Then:
+      - A ValueError is raised.
+    """
+    # Arrange / Given
+    import pytest
+
+    from jaxcmr.loss.set_permutation_likelihood import (
+        IncludeTerminationLikelihoodFnGenerator,
+    )
+
+    presents = jnp.array([[1, 2, 3]], dtype=jnp.int32)
+    recalls = jnp.array([[1, 2, 3]], dtype=jnp.int32)  # full recall, no padding
+    dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
+
+    # Act / When / Assert / Then
+    with pytest.raises(ValueError, match="at least one padding slot"):
+        IncludeTerminationLikelihoodFnGenerator(
+            BaseCMRFactory, dataset, None
+        )
 
 
 # ── spc_mse ─────────────────────────────────────────────────────────────────

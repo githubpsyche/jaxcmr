@@ -1,15 +1,14 @@
-"""Legacy likelihood generator that reuses a single study context.
+"""Sequential likelihood with masking, using a shared study context.
 
-This module mirrors the former ``base_predict`` shortcut used in other
-likelihood generators. It assumes every trial shares the same presentation
-sequence and therefore never replays item presentations per trial. The class is
-useful for legacy experiments that relied on the old behaviour, but new code
-should prefer the standard sequence likelihood which always re-presents the
-study list.
+Scores recall sequences in observed order under a single model that is
+presented once (from trial 0) and reused across all trials.  A
+user-specified mask controls which recall events contribute to the
+negative log-likelihood.  Suitable for datasets where every trial
+shares the same presentation sequence.
 
 """
 
-from typing import Callable, Iterable, Mapping, Type, Optional
+from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -22,21 +21,19 @@ from jaxcmr.typing import (
     Float,
     Float_,
     Integer,
-    MemorySearch,
+    LikelihoodMaskFn,
     MemorySearchModelFactory,
     RecallDataset,
-    LikelihoodMaskFn,
 )
-
 
 __all__ = [
     "mask_trailing_terminations",
     "mask_first_recall",
-    "predict_and_simulate_recalls",
     "MemorySearchLikelihoodFnGenerator",
     "ExcludeFirstRecallLikelihoodFnGenerator",
     "ExcludeTerminationLikelihoodFnGenerator",
 ]
+
 
 def mask_trailing_terminations(
     recalls: Integer[Array, " recall_events"],
@@ -61,23 +58,19 @@ def mask_first_recall(
     return mask.at[0].set(False)
 
 
-def predict_and_simulate_recalls(
-    model: MemorySearch, choices: Integer[Array, " recall_events"]
-) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
-    """Returns updated model and event probabilities for the provided choices."""
-
-    return lax.scan(
-        lambda m, c: (m.retrieve(c), m.outcome_probability(c)), model, choices
-    )
-
-
 class MemorySearchLikelihoodFnGenerator:
-    """Likelihood generator that reuses a single initialized model among trials."""
+    """Masked sequential likelihood using a shared study context.
+
+    Presents items once (from trial 0) and evaluates all trials against
+    that single model state.  The mask controls which recall events
+    contribute to the negative log-likelihood.
+    """
 
     def __init__(
         self,
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
         mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
         """Initializes the generator with dataset, factory, and mask.
@@ -85,59 +78,62 @@ class MemorySearchLikelihoodFnGenerator:
         Args:
           model_factory: Class implementing `MemorySearchModelFactory`.
           dataset: Recall dataset with presentations and recalls.
+          features: Optional feature matrix for word-pool items.
           mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        factory = model_factory(dataset, None)
-        self.create_model = factory.create_trial_model
-        self.presentation = jnp.array(dataset["pres_itemnos"])[0]
-        self.mask_likelihoods = vmap(mask_likelihoods)
-
-        # Reindex recalls so they align with ``presentation``.
+        self.factory = model_factory(dataset, features)
+        self.create_model = self.factory.create_trial_model
+        self.present_lists = jnp.array(dataset["pres_itemnos"])
+        # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
         for trial_index in range(trials.shape[0]):
+            present = self.present_lists[trial_index]
             recall = trials[trial_index]
             reindexed = np.array(
-                [(self.presentation[item - 1] if item else 0) for item in recall]
+                [(present[item - 1] if item else 0) for item in recall]
             )
             trials[trial_index] = reindexed
 
         self.trials = jnp.array(trials)
+        self.trial_masks = vmap(mask_likelihoods)(self.trials)
 
-    def _apply_mask(
+    def predict_trial(
         self,
-        raw_likelihoods: Float[Array, " trials recall_events"],
-        recalls: Integer[Array, " trials recall_events"],
-    ) -> Float[Array, " trials recall_events"]:
-        """Returns likelihoods with masked events neutralized.
-
-        Mask entries set to True keep the original event likelihood; False
-        entries are replaced with 1.0 to neutralize their contribution.
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> Float[Array, " recall_events"]:
+        """Returns recall-event probabilities for one trial.
 
         Args:
-          raw_likelihoods: Per-trial event likelihoods prior to masking.
-          recalls: Trials associated with the likelihood rows.
+          trial_index: Index identifying which trial to simulate.
+          parameters: Model parameters specific to the trial simulation.
         """
-        mask = self.mask_likelihoods(recalls)
-        return raw_likelihoods * mask + (1.0 - mask)
+        present = self.present_lists[trial_index]
+        model = self.create_model(trial_index, parameters)
+        model = lax.fori_loop(
+            0, present.size, lambda i, m: m.experience(present[i]), model
+        )
+        model = model.start_retrieving()
+        return lax.scan(
+            lambda m, c: (m.retrieve(c), m.outcome_probability(c)),
+            model,
+            self.trials[trial_index],
+        )[1]
 
-    def base_predict_trials_loss(
+    def present_and_predict_trials_loss(
         self,
         trial_indices: Integer[Array, " trials"],
         parameters: Mapping[str, Float_],
     ) -> Float[Array, ""]:
-        """Returns negative log likelihood across the selected trials."""
-        model = self.create_model(0, parameters)
-        model = lax.fori_loop(
-            0,
-            self.presentation.size,
-            lambda i, m: m.experience(self.presentation[i]),
-            model,
-        )
-        recalls = self.trials[trial_indices]
-        raw = vmap(predict_and_simulate_recalls, in_axes=(None, 0))(
-            model.start_retrieving(), recalls
-        )[1]
-        masked = self._apply_mask(raw, recalls)
+        """Returns negative log-likelihood with per-trial models after masking.
+
+        Args:
+          trial_indices: Trials to evaluate.
+          parameters: Model parameter mapping.
+        """
+        raw = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
+        mask = self.trial_masks[trial_indices]
+        masked = raw * mask + (1.0 - mask)
         return log_likelihood(masked)
 
     def __call__(
@@ -146,31 +142,39 @@ class MemorySearchLikelihoodFnGenerator:
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
     ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Returns a loss function specialized to the requested trials.
+        """Returns a loss function specialized to trials and free parameters.
+
+        The returned function accepts either one parameter vector or a matrix of
+        parameter vectors and returns corresponding negative log-likelihood values.
 
         Args:
-            trial_indices: Trials to evaluate.
-            base_params: Fixed model parameters.
-            free_param_names: Names of parameters to optimize.
+          trial_indices: Trials to evaluate.
+          base_params: Fixed parameters.
+          free_param_names: Names and order of free parameters.
         """
 
         @jit
         def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
+            """Returns loss for one parameter vector."""
             param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
-            return self.base_predict_trials_loss(
+            return self.present_and_predict_trials_loss(
                 trial_indices, {**base_params, **param_dict}
             )
 
         @jit
         def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
+            """Returns one loss per parameter vector."""
+
             def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
                 param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return self.base_predict_trials_loss(
+                return self.present_and_predict_trials_loss(
                     trial_indices, {**base_params, **param_dict}
                 )
 
+            # vmap applies loss_for_one_sample across the leading dimension of x
             return vmap(loss_for_one_sample, in_axes=1)(x)
 
+        # Return a function that checks the dimensionality of x at runtime
         return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
 
 
@@ -190,6 +194,7 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
         self._inner = MemorySearchLikelihoodFnGenerator(
             model_factory,
             dataset,
+            features,
             mask_likelihoods=mask_first_recall,
         )
 
@@ -219,6 +224,7 @@ class ExcludeTerminationLikelihoodFnGenerator:
         self._inner = MemorySearchLikelihoodFnGenerator(
             model_factory,
             dataset,
+            features,
             mask_likelihoods=mask_trailing_terminations,
         )
 

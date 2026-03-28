@@ -1,7 +1,9 @@
-"""Likelihood-based loss function generator for memory-search models.
+"""Set-permutation likelihood with masking, using per-trial study contexts.
 
-Approximates recall likelihoods by sampling permutations of observed recall bags
-and evaluating their sequential probabilities under the model.
+Approximates recall-bag likelihoods by sampling permutations of observed
+recall sets and evaluating their sequential probabilities under the model.
+A user-specified mask controls which recall events contribute to the
+negative log-likelihood.
 
 """
 
@@ -14,10 +16,11 @@ from jax import numpy as jnp
 from jaxcmr.helpers import log_likelihood
 from jaxcmr.typing import (
     Array,
+    Bool,
     Float,
     Float_,
     Integer,
-    MemorySearch,
+    LikelihoodMaskFn,
     MemorySearchModelFactory,
     PRNGKeyArray,
     RecallDataset,
@@ -25,35 +28,72 @@ from jaxcmr.typing import (
 
 
 __all__ = [
-    "predict_and_simulate_recalls",
+    "mask_trailing_terminations",
     "MemorySearchLikelihoodFnGenerator",
+    "ExcludeTerminationLikelihoodFnGenerator",
+    "IncludeTerminationLikelihoodFnGenerator",
 ]
 
-def predict_and_simulate_recalls(
-    model: MemorySearch, choices: Integer[Array, " recall_events"]
-) -> tuple[MemorySearch, Float[Array, " recall_events"]]:
-    """Returns updated model and event probabilities.
+def mask_trailing_terminations(
+    recalls: Integer[Array, " recall_events"],
+) -> Bool[Array, " recall_events"]:
+    """Returns keep-mask that retains nonzero recall events.
 
     Args:
-      model: Current memory search model.
-      choices: Retrieval indices (1-indexed) or 0 to stop.
+      recalls: Recall indices for a single trial.
     """
-    return lax.scan(
-        lambda m, c: lax.cond(
-            c > 0,
-            lambda: (m.retrieve(c), m.outcome_probability(c)),
-            lambda: (m, jnp.array(1.0, dtype=jnp.float32)),
-        ),
-        model,
-        choices,
-    )
+    return jnp.not_equal(recalls, 0)
+
+
+def _sample_permutations(
+    trial_key: PRNGKeyArray,
+    items: Integer[Array, " recall_events"],
+    simulation_count: int,
+) -> Integer[Array, " simulation_count recall_events"]:
+    """Sample random permutations of a recall bag with zeros trailing.
+
+    Shuffles the full item array ``simulation_count`` times, then
+    stable-partitions each permutation so that all nonzero (recalled)
+    items precede the zero-padding.  This guarantees that the model
+    processes every recalled item before encountering any stop/padding
+    events, which is required for the unconditional scan in
+    ``predict_trial``.
+
+    Parameters
+    ----------
+    trial_key : PRNGKeyArray
+        Random key for this trial's permutations.
+    items : Integer[Array, " recall_events"]
+        Zero-padded recall bag (1-indexed item IDs, 0 for padding).
+    simulation_count : int
+        Number of permutations to sample.
+
+    Returns
+    -------
+    Integer[Array, " simulation_count recall_events"]
+        Permuted recall bags with zeros always trailing.
+
+    """
+    keys = random.split(trial_key, simulation_count)
+    perms = vmap(lambda k: random.permutation(k, items))(keys)
+    is_zero = (perms == 0).astype(jnp.int32)
+    order = jnp.argsort(is_zero, axis=-1, stable=True)
+    return jnp.take_along_axis(perms, order, axis=-1)
+
+
+def _keep_all(
+    recalls: Integer[Array, " recall_events"],
+) -> Bool[Array, " recall_events"]:
+    """Returns keep-mask that retains all recall events."""
+    return jnp.ones_like(recalls, dtype=bool)
 
 
 class MemorySearchLikelihoodFnGenerator:
-    """Generates loss functions for a given dataset and model factory.
+    """Masked set-permutation likelihood with per-trial study contexts.
 
-    Creates per-trial models, produces event likelihoods, and returns a callable
-    that evaluates negative log-likelihood for parameter vectors.
+    Approximates the recall-bag likelihood by averaging over random
+    permutations of the observed recall set.  The mask controls which
+    recall events contribute to the negative log-likelihood.
     """
 
     def __init__(
@@ -61,18 +101,18 @@ class MemorySearchLikelihoodFnGenerator:
         model_factory: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
+        mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
-          dataset: Trial-wise presentations and recalls.
-          features: Optional feature matrix describing word-pool items.
+            model_factory: Class implementing `MemorySearchModelFactory`.
+            dataset: Trial-wise presentations and recalls.
+            features: Optional feature matrix describing word-pool items.
+            mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        factory = model_factory(dataset, features)
-        self.create_model = factory.create_trial_model
+        self.create_model = model_factory(dataset, features).create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.list_length = self.present_lists.shape[1]
         self.simulation_count = 50
         self.base_key = random.PRNGKey(0)
 
@@ -85,21 +125,14 @@ class MemorySearchLikelihoodFnGenerator:
                 [(present[item - 1] if item else 0) for item in recall]
             )
             trials[trial_index] = reindexed
-        trials = jnp.array(trials, dtype=jnp.int32)
-        self.trial_items = trials
+        trial_items = jnp.array(trials, dtype=jnp.int32)
 
-        # Pre-sample permutations for each trial
-        def sample_permutations(
-            trial_key: PRNGKeyArray,
-            items: Integer[Array, " recall_events"],
-        ) -> Integer[Array, " simulation_count recall_events"]:
-            keys = random.split(trial_key, self.simulation_count)
-            return vmap(lambda k: random.permutation(k, items))(keys)
-
+        # Pre-sample permutations with zeros trailing
         trial_keys = random.split(self.base_key, trials.shape[0])
-        self.trial_permutations: Integer[Array, "trials simulations list_length"] = (
-            vmap(sample_permutations)(trial_keys, self.trial_items)
-        )
+        self.trial_permutations = vmap(
+            _sample_permutations, in_axes=(0, 0, None)
+        )(trial_keys, trial_items, self.simulation_count)
+        self.trial_masks = vmap(mask_likelihoods)(self.trial_permutations[:, 0])
 
     def predict_trial(
         self,
@@ -121,12 +154,18 @@ class MemorySearchLikelihoodFnGenerator:
         model = model.start_retrieving()
 
         # predict across pre-sampled permutations
+        def _scan_trial(perm):
+            return lax.scan(
+                lambda m, c: (m.retrieve(c), m.outcome_probability(c)),
+                model, perm,
+            )[1]
         permutations = self.trial_permutations[trial_index]
-        event_probs = vmap(
-            predict_and_simulate_recalls,
-            in_axes=(None, 0),
-        )(model, permutations)[1]
-        return jnp.mean(jnp.prod(event_probs, axis=-1))
+        event_probs = vmap(_scan_trial)(permutations)
+
+        # Apply pre-computed mask (same for all permutations since zeros trail)
+        mask = self.trial_masks[trial_index]
+        masked = event_probs * mask + (1.0 - mask)
+        return jnp.mean(jnp.prod(masked, axis=-1))
 
     def present_and_predict_trials_loss(
         self,
@@ -182,3 +221,73 @@ class MemorySearchLikelihoodFnGenerator:
 
         # Return a function that checks the dimensionality of x at runtime
         return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+
+
+class ExcludeTerminationLikelihoodFnGenerator:
+    """Returns loss while ignoring trailing termination events.
+
+    Trailing zeros in the recall matrix denote stop or padding events.
+    Neutralizing them avoids penalizing lists for early stopping or
+    padding conventions while keeping item recall events intact.
+    """
+
+    def __init__(
+        self,
+        model_factory: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        self._inner = MemorySearchLikelihoodFnGenerator(
+            model_factory,
+            dataset,
+            features,
+            mask_likelihoods=mask_trailing_terminations,
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+    ) -> Callable[[np.ndarray], Float[Array, ""]]:
+        return self._inner(trial_indices, base_params, free_param_names)
+
+
+class IncludeTerminationLikelihoodFnGenerator:
+    """Returns loss including stop event probabilities.
+
+    All events contribute to the likelihood, including the first
+    trailing zero (scored as the model's stop probability).  Subsequent
+    zeros contribute 1.0 naturally because the model deactivates after
+    the first stop.  Requires at least one padding slot per trial.
+    """
+
+    def __init__(
+        self,
+        model_factory: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        # Validate: every trial needs at least one padding slot for stop
+        recalled_counts = np.sum(np.array(dataset["recalls"]) > 0, axis=1)
+        recall_width = np.array(dataset["recalls"]).shape[1]
+        if np.any(recalled_counts >= recall_width):
+            raise ValueError(
+                "IncludeTerminationLikelihoodFnGenerator requires at least "
+                "one padding slot per trial for the stop event, but one or "
+                "more trials have no zero-padding in the recalls array."
+            )
+        self._inner = MemorySearchLikelihoodFnGenerator(
+            model_factory,
+            dataset,
+            features,
+            mask_likelihoods=_keep_all,
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+    ) -> Callable[[np.ndarray], Float[Array, ""]]:
+        return self._inner(trial_indices, base_params, free_param_names)

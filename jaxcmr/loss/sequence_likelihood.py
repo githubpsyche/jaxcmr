@@ -1,7 +1,8 @@
-"""Likelihood-based loss function generator for memory-search models.
+"""Unmasked sequential likelihood with per-trial study contexts.
 
-Provides utilities to simulate retrieval event likelihoods per trial and to
-aggregate them into a negative log-likelihood objective for fitting.
+Scores recall sequences in observed order, re-presenting the study list
+for each trial.  All events — including trailing zeros (stop/padding) —
+contribute to the negative log-likelihood.
 
 """
 
@@ -27,10 +28,11 @@ __all__ = [
 ]
 
 class MemorySearchLikelihoodFnGenerator:
-    """Generates loss functions for a given dataset and model factory.
+    """Unmasked sequential likelihood with per-trial study contexts.
 
-    Creates per-trial models, produces event likelihoods, and returns a callable
-    that evaluates negative log-likelihood for parameter vectors.
+    Re-presents the study list for each trial before scoring the recall
+    sequence.  All events contribute to the negative log-likelihood,
+    including trailing zeros (stop and padding events).
     """
 
     def __init__(
@@ -46,9 +48,8 @@ class MemorySearchLikelihoodFnGenerator:
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
-        factory = model_factory(dataset, features)
+        self.create_model = model_factory(dataset, features).create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        self.create_model = factory.create_trial_model
 
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
