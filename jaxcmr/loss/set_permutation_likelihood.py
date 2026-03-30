@@ -10,10 +10,9 @@ negative log-likelihood.
 from typing import Callable, Iterable, Mapping, Optional, Type
 
 import numpy as np
-from jax import jit, lax, random, vmap
+from jax import jit, lax, nn, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import log_likelihood
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -165,7 +164,8 @@ class MemorySearchLikelihoodFnGenerator:
         # Apply pre-computed mask (same for all permutations since zeros trail)
         mask = self.trial_masks[trial_index]
         masked = event_probs * mask + (1.0 - mask)
-        return jnp.mean(jnp.prod(masked, axis=-1))
+        log_perms = jnp.sum(jnp.log(masked), axis=-1)
+        return nn.logsumexp(log_perms) - jnp.log(log_perms.shape[0])
 
     def present_and_predict_trials_loss(
         self,
@@ -178,8 +178,8 @@ class MemorySearchLikelihoodFnGenerator:
           trial_indices: Trials to evaluate.
           parameters: Model parameters.
         """
-        raw = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
-        return log_likelihood(raw)
+        log_trial_probs = vmap(self.predict_trial, in_axes=(0, None))(trial_indices, parameters)
+        return -jnp.sum(log_trial_probs)
 
     def __call__(
         self,
