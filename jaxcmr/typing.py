@@ -208,6 +208,7 @@ class MemorySearch(Protocol):
     Attributes:
         item_count: the number of item slots reserved in the model.
         is_active: indicates whether the model is active or not.
+        studied: indicates whether each item has been studied.
         recallable: indicates whether each item can currently be recalled.
         recall_total: the number of recalled items so far.
         study_index: the number of items studied so far.
@@ -216,6 +217,7 @@ class MemorySearch(Protocol):
 
     item_count: int
     is_active: Bool[Array, ""]
+    studied: Bool[Array, " item_count"]
     recallable: Bool[Array, " item_count"]
     recall_total: Integer[Array, ""]
     study_index: Integer[Array, ""]
