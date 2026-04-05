@@ -37,6 +37,8 @@ _BASE_PARAMS: dict[str, Any] = {
     "allow_repeated_recalls": False,
 }
 
+_REPETITION_LIST = [1, 2, 1, 3]
+
 
 def _run_study_recall_cycle(factory_cls: Any, params: dict, dataset: Any = _DATASET) -> Any:
     """Construct a factory, create a model, study items, then return activations."""
@@ -58,6 +60,25 @@ def _run_semantic_study_recall_cycle(
         model = model.experience(jnp.int32(i))
     model = model.start_retrieving()
     return model.activations()
+
+
+def _run_sequence(model: Any, study_events: list[int], recall_prefix: list[int]) -> Any:
+    """Run matched study and recall events on a concrete model instance."""
+    for item in study_events:
+        model = model.experience(jnp.int32(item))
+    model = model.start_retrieving()
+    for item in recall_prefix:
+        model = model.retrieve(jnp.int32(item))
+    return model
+
+
+def _endpoint_parameters(blend_weight: float) -> dict[str, Any]:
+    """Return parameters for endpoint matching tests."""
+    return {
+        **_BASE_PARAMS,
+        "mfc_sensitivity": 1.0,
+        "blend_weight": blend_weight,
+    }
 
 
 # ── positional CMR ──────────────────────────────────────────────────────────
@@ -204,6 +225,83 @@ def test_blend_positional_cmr_shows_recency():
     assert activations[-1] > activations[0]  # recency
     for i in range(_LIST_LENGTH - 1):
         assert activations[i + 1] > activations[i]
+
+
+def test_blend_positional_endpoint_matches_positional_before_first_recall():
+    """Behavior: blend_weight=0 recovers PositionalCMR before first recall."""
+    from jaxcmr.models.blend_positional_cmr import CMR as BlendCMR
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+
+    params = _endpoint_parameters(0.0)
+    positional = _run_sequence(PositionalCMR(_LIST_LENGTH, params), _REPETITION_LIST, [])
+    blend = _run_sequence(BlendCMR(_LIST_LENGTH, params), _REPETITION_LIST, [])
+
+    assert jnp.allclose(blend.outcome_probabilities(), positional.outcome_probabilities())
+    assert jnp.allclose(blend.context.state, positional.context.state)
+
+
+def test_blend_positional_endpoint_matches_positional_after_recall():
+    """Behavior: blend_weight=0 recovers PositionalCMR after matched recall history."""
+    from jaxcmr.models.blend_positional_cmr import CMR as BlendCMR
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+
+    params = _endpoint_parameters(0.0)
+    positional = _run_sequence(
+        PositionalCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2]
+    )
+    blend = _run_sequence(BlendCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2])
+
+    assert jnp.allclose(blend.outcome_probabilities(), positional.outcome_probabilities())
+    assert jnp.allclose(blend.context.state, positional.context.state)
+
+
+def test_blend_positional_endpoint_matches_standard_before_first_recall():
+    """Behavior: blend_weight=1 recovers StandardCMR before first recall."""
+    from jaxcmr.models.blend_positional_cmr import CMR as BlendCMR
+    from jaxcmr.models.cmr import CMR as StandardCMR
+
+    params = _endpoint_parameters(1.0)
+    standard = _run_sequence(StandardCMR(_LIST_LENGTH, params), _REPETITION_LIST, [])
+    blend = _run_sequence(BlendCMR(_LIST_LENGTH, params), _REPETITION_LIST, [])
+
+    assert jnp.allclose(blend.outcome_probabilities(), standard.outcome_probabilities())
+    assert jnp.allclose(blend.context.state, standard.context.state)
+
+
+def test_blend_positional_endpoint_matches_standard_after_recall():
+    """Behavior: blend_weight=1 recovers StandardCMR after matched recall history."""
+    from jaxcmr.models.blend_positional_cmr import CMR as BlendCMR
+    from jaxcmr.models.cmr import CMR as StandardCMR
+
+    params = _endpoint_parameters(1.0)
+    standard = _run_sequence(StandardCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2])
+    blend = _run_sequence(BlendCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2])
+
+    assert jnp.allclose(blend.outcome_probabilities(), standard.outcome_probabilities())
+    assert jnp.allclose(blend.context.state, standard.context.state)
+
+
+def test_blend_positional_midpoint_is_finite_and_nontrivial():
+    """Behavior: interior blend weights yield valid non-endpoint behavior."""
+    from jaxcmr.models.blend_positional_cmr import CMR as BlendCMR
+    from jaxcmr.models.cmr import CMR as StandardCMR
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+
+    midpoint_params = _endpoint_parameters(0.5)
+    standard_params = _endpoint_parameters(1.0)
+    positional_params = _endpoint_parameters(0.0)
+
+    midpoint = _run_sequence(BlendCMR(_LIST_LENGTH, midpoint_params), _REPETITION_LIST, [2])
+    standard = _run_sequence(StandardCMR(_LIST_LENGTH, standard_params), _REPETITION_LIST, [2])
+    positional = _run_sequence(
+        PositionalCMR(_LIST_LENGTH, positional_params), _REPETITION_LIST, [2]
+    )
+
+    midpoint_probs = midpoint.outcome_probabilities()
+    assert jnp.all(jnp.isfinite(midpoint_probs)).item()
+    assert jnp.isclose(jnp.sum(midpoint_probs), 1.0).item()
+    assert not jnp.allclose(midpoint_probs, standard.outcome_probabilities())
+    assert not jnp.allclose(midpoint_probs, positional.outcome_probabilities())
 
 
 # ── drift positional CMR ────────────────────────────────────────────────────
