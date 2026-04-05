@@ -185,7 +185,6 @@ class CMR(Pytree):
         """Returns relative support for retrieval of each item given model state"""
         #! reworked to pool position activations by item
         position_activations = self.position_activations()
-        print(position_activations)
         return lax.map(
             lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
             self.item_ids,
