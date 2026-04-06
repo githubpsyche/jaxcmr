@@ -12,6 +12,7 @@ from jaxcmr.summarize import (
     calculate_aic_weights,
     calculate_bic_scores,
     calculate_ci,
+    floor_nested_fitness,
     generate_t_p_matrices,
     pairwise_aic_differences,
     pairwise_aicc_differences,
@@ -648,3 +649,48 @@ def test_aicc_winner_comparison_exact_fractions():
         assert np.isnan(df.loc[name, name])
     assert np.isclose(df.loc["ModelA", "ModelB"], 0.0)
     assert np.isclose(df.loc["ModelB", "ModelA"], 1.0)
+
+
+def test_floor_nested_fitness_accepts_list_pairs():
+    """Behavior: nested flooring accepts JSON-friendly list pairs.
+
+    Given:
+      - A parent/child pair provided as ``["Parent", "Child"]``.
+      - The child has worse fitness than the parent on 2 subjects.
+    When:
+      - ``floor_nested_fitness`` is called.
+    Then:
+      - The child is floored to the parent subjectwise.
+      - The function reports 2 floored entries.
+    """
+    results = [
+        {"name": "Parent", "fitness": [1.0, 2.0, 3.0]},
+        {"name": "Child", "fitness": [4.0, 1.0, 5.0]},
+    ]
+
+    n_floored = floor_nested_fitness(results, [["Parent", "Child"]])
+
+    assert n_floored == 2
+    assert results[1]["fitness"] == [1.0, 1.0, 3.0]
+
+
+def test_floor_nested_fitness_accepts_stringified_pairs():
+    """Behavior: nested flooring accepts stringified pair literals.
+
+    Given:
+      - A parent/child pair serialized as a string literal by notebook
+        parameterization.
+    When:
+      - ``floor_nested_fitness`` is called.
+    Then:
+      - The pair is parsed and the child fitness is floored correctly.
+    """
+    results = [
+        {"name": "Parent", "fitness": [2.0, 2.0]},
+        {"name": "Child", "fitness": [3.0, 1.0]},
+    ]
+
+    n_floored = floor_nested_fitness(results, ["('Parent', 'Child')"])
+
+    assert n_floored == 1
+    assert results[1]["fitness"] == [2.0, 1.0]

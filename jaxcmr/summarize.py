@@ -6,6 +6,7 @@ AIC/AICc/BIC model comparison statistics.
 
 """
 
+import ast
 import json
 from typing import Callable, Mapping, Optional
 
@@ -622,10 +623,12 @@ def floor_nested_fitness(
     results : list[dict]
         Model summaries with ``'name'`` and ``'fitness'``. Modified in place.
     nesting_pairs : list[tuple[str, str]]
-        Each tuple is ``(parent_name, child_name)`` where the child nests
-        the parent. The child's per-subject fitness is floored at the
-        parent's value (element-wise minimum), correcting optimizer
-        failures where a nested model reports worse NLL than its parent.
+        Each pair is ``(parent_name, child_name)`` where the child nests
+        the parent. Pairs may be provided as tuples, lists, or stringified
+        pairs emitted by notebook parameterization tools. The child's
+        per-subject fitness is floored at the parent's value (element-wise
+        minimum), correcting optimizer failures where a nested model
+        reports worse NLL than its parent.
 
     Returns
     -------
@@ -633,10 +636,33 @@ def floor_nested_fitness(
         Total number of subject-model entries that were floored.
 
     """
+    def _normalize_pair(pair: object) -> tuple[str, str]:
+        if isinstance(pair, str):
+            try:
+                pair = ast.literal_eval(pair)
+            except (ValueError, SyntaxError) as exc:
+                raise ValueError(
+                    f"Invalid nesting pair string {pair!r}; expected a "
+                    "two-element literal like ('Parent', 'Child')."
+                ) from exc
+
+        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+            raise ValueError(
+                f"Invalid nesting pair {pair!r}; expected a two-element sequence."
+            )
+
+        parent_name, child_name = pair
+        if not isinstance(parent_name, str) or not isinstance(child_name, str):
+            raise ValueError(
+                f"Invalid nesting pair {pair!r}; both entries must be strings."
+            )
+
+        return parent_name, child_name
+
     name_to_result = {r["name"]: r for r in results}
     total_floored = 0
 
-    for parent_name, child_name in nesting_pairs:
+    for parent_name, child_name in map(_normalize_pair, nesting_pairs):
         if parent_name not in name_to_result:
             raise ValueError(
                 f"Parent model '{parent_name}' not found in results. "
