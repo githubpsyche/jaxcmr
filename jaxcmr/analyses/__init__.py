@@ -26,6 +26,7 @@ __all__ = [
     "repcrp",
     "replagrank",
     "repneighborcrp",
+    "reproutecrp",
     "repsrac",
     "rpl",
     "serialrepcrp",
