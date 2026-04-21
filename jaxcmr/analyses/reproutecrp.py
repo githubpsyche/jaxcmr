@@ -1,24 +1,24 @@
 """Route-conditioned repetition lag-conditional response probability.
 
-Measures whether recalling a repeated item after entering from one
-occurrence's neighborhood routes the next recall back to that same
-neighborhood or to the other occurrence's neighborhood.
+Measures whether recalling a repeated item after entering from the
+predecessor side of one occurrence routes the next recall back to that
+same neighborhood or to the other occurrence's neighborhood.
 
 Notes
 -----
 - For a repeated item at study positions i and j, seven direction
   modes are supported:
 
-  - ``i2i``: from i-neighbor to i's neighborhood through the repeater
-  - ``i2j``: from i-neighbor to j's neighborhood through the repeater
-  - ``j2i``: from j-neighbor to i's neighborhood through the repeater
-  - ``j2j``: from j-neighbor to j's neighborhood through the repeater
+  - ``i2i``: from i predecessor-side neighbor to i's neighborhood through the repeater
+  - ``i2j``: from i predecessor-side neighbor to j's neighborhood through the repeater
+  - ``j2i``: from j predecessor-side neighbor to i's neighborhood through the repeater
+  - ``j2j``: from j predecessor-side neighbor to j's neighborhood through the repeater
   - ``same``: union of i2i and j2j
   - ``switch``: union of i2j and j2i
   - ``both``: full 2 x 2 route matrix
 
-- ``use_lag2`` extends the incoming-neighbor definition to include +2
-  offsets in addition to the default +1.
+- ``use_lag2`` extends the incoming-neighbor definition to include -2
+  offsets in addition to the default -1.
 - ``test_rep_route_crp_vs_control`` compares observed route CRP
   against a shuffled control.
 
@@ -123,7 +123,7 @@ class RepRouteCRPTabulation(Pytree):
     min_lag : int, optional
         Minimum spacing between repeated presentations.
     use_lag2 : bool, optional
-        Include +2 incoming-neighbor offsets when True.
+        Include -2 incoming-neighbor offsets when True.
 
     """
 
@@ -172,15 +172,32 @@ class RepRouteCRPTabulation(Pytree):
         second_pos = centers[1]
         spaced_repeater = (second_pos - first_pos) > self.min_lag
 
-        i_plus1 = jnp.any(self.previous_positions == (first_pos + 1))
-        i_plus2 = jnp.any(self.previous_positions == (first_pos + 2)) & self.use_lag2
-        j_plus1 = jnp.any(self.previous_positions == (second_pos + 1))
-        j_plus2 = jnp.any(self.previous_positions == (second_pos + 2)) & self.use_lag2
+        i_minus1_pos = first_pos - 1
+        i_minus2_pos = first_pos - 2
+        j_minus1_pos = second_pos - 1
+        j_minus2_pos = second_pos - 2
+
+        i_minus1 = (i_minus1_pos > 0) & jnp.any(
+            self.previous_positions == i_minus1_pos
+        )
+        i_minus2 = (
+            (i_minus2_pos > 0)
+            & jnp.any(self.previous_positions == i_minus2_pos)
+            & self.use_lag2
+        )
+        j_minus1 = (j_minus1_pos > 0) & jnp.any(
+            self.previous_positions == j_minus1_pos
+        )
+        j_minus2 = (
+            (j_minus2_pos > 0)
+            & jnp.any(self.previous_positions == j_minus2_pos)
+            & self.use_lag2
+        )
 
         routes = jnp.array(
             [
-                spaced_repeater & (i_plus1 | i_plus2),
-                spaced_repeater & (j_plus1 | j_plus2),
+                spaced_repeater & (i_minus1 | i_minus2),
+                spaced_repeater & (j_minus1 | j_minus2),
             ]
         )
         route_centers = jnp.where(jnp.any(routes), centers, 0)
@@ -313,7 +330,7 @@ def tabulate_trial(
     direction : str, optional
         Route-conditioned direction to count.
     use_lag2 : bool, optional
-        Include +2 incoming-neighbor offsets when True.
+        Include -2 incoming-neighbor offsets when True.
     min_lag : int, optional
         Minimum spacing between repeated presentations.
 
@@ -345,7 +362,7 @@ def reproutecrp(
     direction : str, optional
         Route-conditioned direction to count.
     use_lag2 : bool, optional
-        Include +2 incoming-neighbor offsets when True.
+        Include -2 incoming-neighbor offsets when True.
     min_lag : int, optional
         Minimum spacing between repeated presentations.
 
@@ -459,7 +476,7 @@ def plot_reproutecrp_i2i(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return plot configured for i-neighbor -> repeater -> i transitions."""
+    """Return plot configured for i predecessor-side neighbor -> repeater -> i."""
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -486,7 +503,7 @@ def plot_reproutecrp_i2j(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return plot configured for i-neighbor -> repeater -> j transitions."""
+    """Return plot configured for i predecessor-side neighbor -> repeater -> j."""
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -513,7 +530,7 @@ def plot_reproutecrp_j2i(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return plot configured for j-neighbor -> repeater -> i transitions."""
+    """Return plot configured for j predecessor-side neighbor -> repeater -> i."""
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -540,7 +557,7 @@ def plot_reproutecrp_j2j(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Return plot configured for j-neighbor -> repeater -> j transitions."""
+    """Return plot configured for j predecessor-side neighbor -> repeater -> j."""
     return plot_rep_route_crp(
         datasets,
         trial_masks,

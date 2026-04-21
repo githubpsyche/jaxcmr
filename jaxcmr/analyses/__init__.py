@@ -22,6 +22,8 @@ __all__ = [
     "omission_error_rate",
     "order_error_rate",
     "pnr",
+    "repaccesscrp",
+    "repcuecrp",
     "relative_srac",
     "repcrp",
     "replagrank",

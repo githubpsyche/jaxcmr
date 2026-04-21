@@ -10,8 +10,10 @@ from typing import Any
 import jax.numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jax import random
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.helpers import make_dataset
+from jaxcmr.simulation import simulate_study_free_recall_and_forced_stop
 
 # ── shared dataset and base parameters ──────────────────────────────────────
 
@@ -375,6 +377,156 @@ def test_reinf_positional_cmr_shows_recency():
     # Assert / Then
     assert jnp.all(jnp.isfinite(activations)).item()
     assert activations[-1] > activations[0]  # recency
+
+
+def _trace_reinforcement_parameters(reinforcement: float) -> dict[str, Any]:
+    """Return parameters for trace-reinforcement model tests."""
+    return {
+        **_BASE_PARAMS,
+        "mfc_sensitivity": 1.0,
+        "mcf_first_pres_reinforcement": reinforcement,
+    }
+
+
+def test_trace_and_probe_reinf_positional_cmr_run_simulation_path():
+    """Behavior: trace-reinforcement factories support the simulation path."""
+    from jaxcmr.models.probe_reinf_positional_cmr import make_factory as probe_factory
+    from jaxcmr.models.trace_reinf_positional_cmr import make_factory as trace_factory
+
+    dataset = make_dataset(
+        jnp.array([[1, 0, 0, 0]], dtype=jnp.int32),
+        pres_itemnos=jnp.array([[1, 2, 1, 3]], dtype=jnp.int32),
+    )
+    params = _trace_reinforcement_parameters(0.5)
+
+    for make_factory in (trace_factory, probe_factory):
+        Factory = make_factory(
+            LinearMemory.init_mfc,
+            LinearMemory.init_mcf,
+            TemporalContext.init,
+            PositionalTermination,
+        )
+        factory = Factory(dataset, None)
+        model = factory.create_trial_model(jnp.int32(0), params)
+        _, recalls = simulate_study_free_recall_and_forced_stop(
+            model,
+            dataset["pres_itemnos"][0],
+            dataset["recalls"][0],
+            random.PRNGKey(0),
+        )
+
+        assert recalls.shape == dataset["recalls"][0].shape
+        assert jnp.all(jnp.isfinite(recalls)).item()
+
+
+def test_trace_and_probe_reinf_neutral_value_matches_positional_cmr():
+    """Behavior: mcf_first_pres_reinforcement=0 recovers PositionalCMR."""
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+    from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
+    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
+
+    params = _trace_reinforcement_parameters(0.0)
+    positional = _run_sequence(
+        PositionalCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2]
+    )
+
+    for model_cls in (TraceCMR, ProbeCMR):
+        model = _run_sequence(model_cls(_LIST_LENGTH, params), _REPETITION_LIST, [2])
+
+        assert jnp.allclose(model.outcome_probabilities(), positional.outcome_probabilities())
+        assert jnp.allclose(model.context.state, positional.context.state)
+        assert jnp.allclose(model.mfc.state, positional.mfc.state)
+        assert jnp.allclose(model.mcf.state, positional.mcf.state)
+
+
+def test_trace_and_probe_reinf_do_not_reinforce_unique_items():
+    """Behavior: non-repeated lists match PositionalCMR even with reinforcement."""
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+    from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
+    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
+
+    params = _trace_reinforcement_parameters(5.0)
+    study_events = [1, 2, 3, 4]
+    positional = _run_sequence(PositionalCMR(_LIST_LENGTH, params), study_events, [])
+
+    for model_cls in (TraceCMR, ProbeCMR):
+        model = _run_sequence(model_cls(_LIST_LENGTH, params), study_events, [])
+
+        assert jnp.allclose(model.mcf.state, positional.mcf.state)
+        assert jnp.allclose(model.outcome_probabilities(), positional.outcome_probabilities())
+
+
+def test_trace_and_probe_reinf_target_first_prior_occurrence():
+    """Behavior: later repetitions reinforce the first prior occurrence only."""
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+    from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
+    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
+
+    params = _trace_reinforcement_parameters(2.0)
+    study_events = [1, 2, 1, 3, 1]
+    positional = _run_sequence(PositionalCMR(5, params), study_events, [])
+
+    for model_cls in (TraceCMR, ProbeCMR):
+        model = _run_sequence(model_cls(5, params), study_events, [])
+        delta = model.mcf.state - positional.mcf.state
+        other_columns = delta.at[:, 0].set(0.0)
+
+        assert jnp.any(jnp.abs(delta[:, 0]) > 1e-6).item()
+        assert jnp.allclose(other_columns, 0.0)
+
+
+def test_trace_reinf_stores_pre_update_learning_state():
+    """Behavior: trace variant stores the pre-update context for each position."""
+    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
+
+    params = _trace_reinforcement_parameters(0.5)
+    model = TraceCMR(_LIST_LENGTH, params)
+    pre_update_state = model.context.state
+
+    model = model.experience(jnp.int32(1))
+
+    assert jnp.allclose(model.trace_contexts[0], pre_update_state)
+
+
+def test_trace_reinf_can_store_post_update_learning_state():
+    """Behavior: trace variant can store the post-update context for each position."""
+    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
+
+    params = _trace_reinforcement_parameters(0.5) | {
+        "trace_reinforcement_after_context_update": True
+    }
+    model = TraceCMR(_LIST_LENGTH, params)
+    pre_update_state = model.context.state
+
+    model = model.experience(jnp.int32(1))
+
+    assert jnp.allclose(model.trace_contexts[0], model.context.state)
+    assert not jnp.allclose(model.trace_contexts[0], pre_update_state)
+
+
+def test_probe_reinf_uses_current_mfc_probe_for_first_occurrence():
+    """Behavior: probe variant reinforces the current MFC reconstruction."""
+    from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+    from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
+
+    params = _trace_reinforcement_parameters(2.0)
+    first_occurrence = jnp.array([True, False, False, False])
+    before_repeat = ProbeCMR(_LIST_LENGTH, params)
+    before_repeat = before_repeat.experience(jnp.int32(1))
+    before_repeat = before_repeat.experience(jnp.int32(2))
+    associated_context = before_repeat.mfc.probe(first_occurrence)
+
+    probe = before_repeat.experience(jnp.int32(1))
+    positional = PositionalCMR(_LIST_LENGTH, params)
+    positional = positional.experience(jnp.int32(1))
+    positional = positional.experience(jnp.int32(2))
+    positional = positional.experience(jnp.int32(1))
+    expected_delta = params["mcf_first_pres_reinforcement"] * jnp.outer(
+        associated_context,
+        first_occurrence,
+    )
+
+    assert jnp.allclose(probe.mcf.state - positional.mcf.state, expected_delta)
 
 
 # ── dual cue CMR ────────────────────────────────────────────────────────────

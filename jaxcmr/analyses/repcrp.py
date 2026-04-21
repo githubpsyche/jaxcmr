@@ -320,6 +320,9 @@ def plot_rep_crp(
             )[:, lag_range - max_lag : lag_range + max_lag + 1]
 
             label = (
+                labels_list[data_index]
+                if len(repetition_indices) == 1 and data_index < len(labels_list)
+                else
                 labels_list[repetition_index]
                 if len(datasets) == 1 and repetition_index < len(labels_list)
                 else str(repetition_index + 1)

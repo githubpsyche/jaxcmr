@@ -11,5 +11,7 @@ __all__ = [
     "no_reinstate_cmr",
     "outlist_cmr",
     "positional_cmr",
+    "probe_reinf_positional_cmr",
     "reinf_positional_cmr",
+    "trace_reinf_positional_cmr",
 ]

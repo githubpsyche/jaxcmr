@@ -1,8 +1,14 @@
+import matplotlib
+
+matplotlib.use("Agg")
+
 import jax.numpy as jnp
 import numpy as np
 from scipy import stats
 
 from jaxcmr.analyses.repcrp import (
+    plot_first_rep_crp,
+    plot_second_rep_crp,
     repcrp,
     test_rep_crp_vs_control as compare_rep_crp,
     test_first_second_bias as compare_first_second_bias,
@@ -157,3 +163,52 @@ def test_first_second_bias_positive_when_first_pres_dominates():
     assert np.isclose(result.mean_diffs[3], 0.5, atol=1e-6)
     assert result.t_stats[3] > 0  # positive bias toward 1st pres
     np.testing.assert_array_equal(result.lags, np.arange(-2, 3))
+
+
+def test_rep_crp_wrappers_use_dataset_labels_for_parameter_sweeps():
+    """Behavior: single-repetition CRP wrappers label multiple datasets.
+
+    Given:
+      - Two datasets passed to a single-repetition wrapper.
+      - Labels that represent parameter values.
+    When:
+      - ``plot_first_rep_crp`` and ``plot_second_rep_crp`` are called.
+    Then:
+      - Legend labels use the dataset labels, not the repetition index.
+    Why this matters:
+      - Parameter-shift plots overlay one curve per parameter value, so labels
+        must identify sweep values rather than all saying ``1`` or ``2``.
+    """
+    pres = jnp.array([[1, 2, 3, 4, 5, 1, 2, 8]] * 4, dtype=jnp.int32)
+    recalls = jnp.array([
+        [1, 3, 2, 4, 0, 0, 0, 0],
+        [1, 2, 3, 5, 0, 0, 0, 0],
+        [3, 1, 2, 4, 5, 0, 0, 0],
+        [1, 3, 5, 2, 0, 0, 0, 0],
+    ], dtype=jnp.int32)
+    dataset = make_dataset(recalls, pres, subject=jnp.array([0, 0, 1, 1]))
+    mask = jnp.ones(4, dtype=bool)
+
+    first_axis = plot_first_rep_crp(
+        [dataset, dataset],
+        [mask, mask],
+        max_lag=3,
+        min_lag=4,
+        size=2,
+        labels=["0.0", "1.0"],
+    )
+    first_labels = first_axis.get_legend_handles_labels()[1]
+    assert "0.0" in first_labels
+    assert "1.0" in first_labels
+
+    second_axis = plot_second_rep_crp(
+        [dataset, dataset],
+        [mask, mask],
+        max_lag=3,
+        min_lag=4,
+        size=2,
+        labels=["0.0", "1.0"],
+    )
+    second_labels = second_axis.get_legend_handles_labels()[1]
+    assert "0.0" in second_labels
+    assert "1.0" in second_labels
