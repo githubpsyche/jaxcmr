@@ -236,6 +236,51 @@ def test_subject_rep_cue_crp_matches_full_slice():
     np.testing.assert_allclose(full, window, equal_nan=True)
 
 
+def test_subject_rep_cue_crp_matches_jax_window_multi_subject_ambiguous():
+    """Behavior: optimized subject path matches JAX window tabulation."""
+    pres = jnp.array(
+        [
+            [1, 2, 1, 2, 3, 4, 5, 6],
+            [1, 2, 3, 4, 5, 1, 6, 7],
+            [1, 2, 1, 2, 3, 4, 5, 6],
+            [1, 2, 3, 4, 5, 1, 6, 7],
+        ],
+        dtype=jnp.int32,
+    )
+    recalls = jnp.array(
+        [
+            [1, 2, 0, 0, 0, 0, 0, 0],
+            [2, 1, 0, 0, 0, 0, 0, 0],
+            [2, 1, 0, 0, 0, 0, 0, 0],
+            [7, 1, 0, 0, 0, 0, 0, 0],
+        ],
+        dtype=jnp.int32,
+    )
+    subjects = jnp.array([0, 0, 1, 1])
+    dataset = make_dataset(recalls, pres, subject=subjects)
+    mask = jnp.ones(4, dtype=bool)
+
+    result = subject_rep_cue_crp(
+        dataset, mask, min_lag=0, max_lag=3, max_offset=3, size=2
+    )
+    subject_indices = np.asarray(dataset["subject"]).reshape(-1)
+    expected = []
+    for subject in np.unique(subject_indices):
+        subject_mask = subject_indices == subject
+        subject_dataset = {
+            key: value[subject_mask]
+            for key, value in dataset.items()
+        }
+        expected.append(
+            _repcuecrp_window(
+                subject_dataset, min_lag=0, max_lag=3, max_offset=3, size=2
+            )
+        )
+    expected = np.stack(expected)
+
+    np.testing.assert_allclose(expected, result, equal_nan=True)
+
+
 def test_access_diagonal_extraction():
     """Behavior: access diagonal extracts transition lag = -cue offset.
 

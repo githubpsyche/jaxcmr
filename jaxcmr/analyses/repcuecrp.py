@@ -541,6 +541,136 @@ def _repcuecrp_window(
     return actual.sum(0) / possible.sum(0)
 
 
+def _study_positions_by_position(
+    presentation: np.ndarray,
+    size: int = 2,
+) -> np.ndarray:
+    """Return study positions for each position's item."""
+    list_length = presentation.size
+    positions_by_study_position = np.zeros((list_length + 1, size), dtype=int)
+
+    for study_position in range(1, list_length + 1):
+        item = presentation[study_position - 1]
+        if item == 0:
+            continue
+        positions = np.flatnonzero(presentation == item)[:size] + 1
+        positions_by_study_position[study_position, : positions.size] = positions
+
+    return positions_by_study_position
+
+
+def _prepare_repcue_presentation(
+    presentation: np.ndarray,
+    min_lag: int = 4,
+    size: int = 2,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Precompute repeated-item centers for one presentation row."""
+    list_length = presentation.size
+    positions_by_study_position = _study_positions_by_position(presentation, size)
+    valid_centers = np.zeros((size, list_length + 1), dtype=bool)
+
+    for study_position in range(1, list_length + 1):
+        positions = positions_by_study_position[study_position]
+        if positions.size < 2:
+            continue
+        valid_target = (positions[1] - positions[0]) > min_lag
+        is_first_occurrence = study_position == positions[0]
+        if not (valid_target and is_first_occurrence):
+            continue
+        for repetition_index, center in enumerate(positions):
+            if center > 0:
+                valid_centers[repetition_index, center] = True
+
+    all_positions = np.arange(1, list_length + 1)
+    return positions_by_study_position, valid_centers, all_positions
+
+
+def _tabulate_subject_rep_cue_crp_window(
+    recalls: np.ndarray,
+    presentations: np.ndarray,
+    presentation_cache: dict[
+        tuple[tuple[int, ...], str, bytes], tuple[np.ndarray, np.ndarray, np.ndarray]
+    ],
+    min_lag: int = 4,
+    max_lag: int = 5,
+    max_offset: int = 5,
+    size: int = 2,
+) -> np.ndarray:
+    """Compute one subject's cue CRP with a fixed offset/lag window."""
+    offset_labels = np.arange(-max_offset, max_offset + 1)
+    actual_lags = np.zeros((size, offset_labels.size, max_lag * 2 + 1), dtype=int)
+    avail_lags = np.zeros_like(actual_lags)
+
+    for trial, presentation in zip(recalls, presentations):
+        key = (presentation.shape, presentation.dtype.str, presentation.tobytes())
+        if key not in presentation_cache:
+            presentation_cache[key] = _prepare_repcue_presentation(
+                presentation, min_lag, size
+            )
+        positions_by_study_position, valid_centers, all_positions = presentation_cache[
+            key
+        ]
+        list_length = presentation.size
+
+        first_recall = trial[0]
+        if first_recall <= 0 or first_recall > list_length:
+            continue
+
+        previous_positions = positions_by_study_position[first_recall]
+        avail_recalls = np.ones(list_length + 1, dtype=bool)
+        avail_recalls[0] = False
+        avail_recalls[previous_positions[previous_positions > 0]] = False
+
+        for recall in trial[1:]:
+            if recall <= 0 or recall > list_length:
+                continue
+
+            recall_positions = positions_by_study_position[recall]
+            actual_transition = np.zeros_like(actual_lags, dtype=bool)
+            avail_transition = np.zeros_like(avail_lags, dtype=bool)
+
+            for previous_position in previous_positions:
+                if previous_position <= 0:
+                    continue
+
+                transition_lags = all_positions - previous_position
+                valid_lags = np.abs(transition_lags) <= max_lag
+                possible_positions = avail_recalls[1:] & valid_lags
+                possible_counts = np.zeros(max_lag * 2 + 1, dtype=bool)
+                possible_counts[
+                    transition_lags[possible_positions] + max_lag
+                ] = True
+
+                actual_counts = np.zeros(max_lag * 2 + 1, dtype=bool)
+                for recall_position in recall_positions:
+                    transition_lag = recall_position - previous_position
+                    if recall_position > 0 and abs(transition_lag) <= max_lag:
+                        actual_counts[transition_lag + max_lag] = True
+
+                for offset_index, cue_offset in enumerate(offset_labels):
+                    if cue_offset == 0:
+                        continue
+                    center = previous_position - cue_offset
+                    if center <= 0 or center > list_length:
+                        continue
+                    repetition_indices = np.flatnonzero(valid_centers[:, center])
+                    for repetition_index in repetition_indices:
+                        actual_transition[repetition_index, offset_index] |= (
+                            actual_counts
+                        )
+                        avail_transition[repetition_index, offset_index] |= (
+                            possible_counts
+                        )
+
+            actual_lags += actual_transition
+            avail_lags += avail_transition
+            previous_positions = recall_positions
+            avail_recalls[recall_positions[recall_positions > 0]] = False
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return actual_lags / avail_lags
+
+
 def subject_rep_cue_crp(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
@@ -575,18 +705,31 @@ def subject_rep_cue_crp(
     if max_offset is None:
         max_offset = max_lag
 
-    subject_values = apply_by_subject(
-        dataset,
-        trial_mask,
-        jit(
-            _repcuecrp_window,
-            static_argnames=("min_lag", "max_lag", "max_offset", "size"),
-        ),
-        min_lag=min_lag,
-        max_lag=max_lag,
-        max_offset=max_offset,
-        size=size,
-    )
+    subject_indices = np.asarray(dataset["subject"]).reshape(-1)
+    trial_mask = np.asarray(trial_mask, dtype=bool).reshape(-1)
+    recalls = np.asarray(dataset["recalls"])
+    presentations = np.asarray(dataset["pres_itemnos"])
+    presentation_cache: dict[
+        tuple[tuple[int, ...], str, bytes], tuple[np.ndarray, np.ndarray, np.ndarray]
+    ] = {}
+    subject_values = []
+
+    for subject in np.unique(subject_indices):
+        subject_mask = (subject_indices == subject) & trial_mask
+        if subject_mask.sum() == 0:
+            continue
+        subject_values.append(
+            _tabulate_subject_rep_cue_crp_window(
+                recalls[subject_mask],
+                presentations[subject_mask],
+                presentation_cache,
+                min_lag=min_lag,
+                max_lag=max_lag,
+                max_offset=max_offset,
+                size=size,
+            )
+        )
+
     return np.stack(subject_values)
 
 
