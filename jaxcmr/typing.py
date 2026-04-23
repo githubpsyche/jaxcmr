@@ -440,7 +440,7 @@ class FittingAlgorithm(Protocol):
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Optional[Float[Array, "word_pool_items features_count"]],
         base_params: Mapping[str, Float_],
         model_factory: Type[MemorySearchModelFactory],
         loss_fn_generator: Type[LossFnGenerator],
