@@ -2,10 +2,8 @@
 
 Measures how strongly items at different lags from repeated-item
 presentations cue transition to the repeated item. This is the
-forward-conditioned counterpart to ``cleanbackrepcrp``: instead of
-asking where transitions to repeated items came from, it asks whether
-the previous recall position predicts access to an available repeated
-item.
+forward-conditioned access analysis: it asks whether the previous
+recall position predicts access to an available repeated item.
 
 """
 

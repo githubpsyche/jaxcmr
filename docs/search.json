@@ -2250,54 +2250,6 @@
     ]
   },
   {
-    "objectID": "templates/backrepcrp.html",
-    "href": "templates/backrepcrp.html",
-    "title": "Backward Repetition Lag-CRP",
-    "section": "",
-    "text": "Measure how strongly repeated items attract incoming transitions from temporal neighbors.\nThe incoming (“clean backward”) repetition CRP reverses each recall sequence before computing the standard repetition CRP. This measures the conditional probability of transitioning to a repeated item as a function of lag from each of its study positions, rather than transitioning from a repeated item. The analysis reveals how strongly repeated items attract incoming transitions from their temporal neighbors.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-CRP"
-    ]
-  },
-  {
-    "objectID": "templates/backrepcrp.html#workflow",
-    "href": "templates/backrepcrp.html#workflow",
-    "title": "Backward Repetition Lag-CRP",
-    "section": "Workflow",
-    "text": "Workflow\n\n\nCode\nimport matplotlib.pyplot as plt\nimport os\nfrom jaxcmr.analyses.cleanbackrepcrp import (\n    plot_back_rep_crp,\n    subject_back_rep_crp,\n    test_back_rep_crp_vs_control,\n    test_first_second_bias,\n)\nfrom jaxcmr.helpers import find_project_root, generate_trial_mask, load_data, save_figure\nfrom jaxcmr.repetition import make_control_dataset\n\n\n\n\nCode\ndata_path = \"data/LohnasKahana2014.h5\"\nfigure_dir = \"results/figures\"\nfigure_str = \"\"\nylim = None\nmixed_trial_query = \"data['list_type'] &gt; 2\"\ncontrol_trial_query = \"data['list_type'] == 1\"\ncontrol_shuffles = 10\nmin_lag = 4\nmax_lag = 5\nsize = 2\nconfidence_level = 0.95\n\n\n\n\nCode\nproject_root = find_project_root()\nfigure_dir = os.path.join(project_root, figure_dir)\ndata_path = os.path.join(project_root, data_path)\ndata = load_data(data_path)\ntrial_mask = generate_trial_mask(data, mixed_trial_query)\ncontrol_dataset = make_control_dataset(data, mixed_trial_query, control_trial_query, control_shuffles)\ncontrol_mask = generate_trial_mask(control_dataset, mixed_trial_query)\n\n\n\n\nCode\nplot_back_rep_crp(\n    datasets=data,\n    trial_masks=trial_mask,\n    max_lag=max_lag,\n    min_lag=min_lag,\n    size=size,\n    confidence_level=confidence_level,\n    labels=(\"First\", \"Second\"),\n    contrast_name=\"Repetition Index\",\n)\nif ylim is not None:\n    for ax in plt.gcf().axes:\n        ax.set_ylim(ylim)\nsave_figure(figure_dir, figure_str, suffix=\"mixed\")\n\nplot_back_rep_crp(\n    datasets=control_dataset,\n    trial_masks=control_mask,\n    max_lag=max_lag,\n    min_lag=min_lag,\n    size=size,\n    confidence_level=confidence_level,\n    labels=(\"First\", \"Second\"),\n    contrast_name=\"Repetition Index\",\n)\nif ylim is not None:\n    for ax in plt.gcf().axes:\n        ax.set_ylim(ylim)\nsave_figure(figure_dir, figure_str, suffix=\"control\")\n\n\n/Users/jordangunn/workspace/.venv/lib/python3.12/site-packages/scipy/_lib/_util.py:440: DegenerateDataWarning: The BCa confidence interval cannot be calculated. This problem is known to occur when the distribution is degenerate or the statistic is np.min.\n  return fun(*args, **kwargs)\n\n\n\n\n\n\n\n\n\n/Users/jordangunn/workspace/.venv/lib/python3.12/site-packages/scipy/stats/_resampling.py:141: RuntimeWarning: invalid value encountered in subtract\n  U_ji = [(n - 1) * (theta_hat_dot - theta_hat_i)\n\n\n\n\n\n\n\n\n\n\n\nCode\nobserved_crp = subject_back_rep_crp(data, trial_mask, min_lag, max_lag, size)\ncontrol_crp = subject_back_rep_crp(control_dataset, control_mask, min_lag, max_lag, size)\n\nresults = test_back_rep_crp_vs_control(observed_crp, control_crp, max_lag)\nfor label, result in results.items():\n    print(f\"\\n{'='*60}\")\n    print(f\"Statistical Tests: {label}\")\n    print(f\"{'='*60}\")\n    print(result)\n\nbias_result = test_first_second_bias(observed_crp, control_crp, max_lag)\nprint(f\"\\n{'='*70}\")\nprint(\"Test: First-Second Bias (Observed) vs First-Second Bias (Control)\")\nprint(f\"{'='*70}\")\nprint(bias_result)\n\n\n\n============================================================\nStatistical Tests: First Presentation\n============================================================\n  Lag |   t-stat    t p-val |   W-stat    W p-val |  Mean Diff\n------+----------------------+----------------------+------------\n   -5 |    1.459     0.1538 |    236.0     0.2012 |     0.0097\n   -4 |    2.398     0.0221 |    183.0     0.0300 |     0.0155\n   -3 |    1.339     0.1893 |    224.0     0.2089 |     0.0089\n   -2 |    2.337     0.0255 |    189.0     0.0387 |     0.0209\n   -1 |    4.700     0.0000 |     72.0     0.0000 |     0.0562\n    0 |      nan        nan |      nan        nan |        nan\n    1 |    5.312     0.0000 |     62.0     0.0000 |     0.0587\n    2 |    2.983     0.0053 |    181.0     0.0275 |     0.0286\n    3 |    3.766     0.0006 |    112.0     0.0015 |     0.0338\n    4 |    3.478     0.0014 |    133.0     0.0022 |     0.0270\n    5 |    1.697     0.0989 |    247.0     0.2726 |     0.0172\n\n============================================================\nStatistical Tests: Second Presentation\n============================================================\n  Lag |   t-stat    t p-val |   W-stat    W p-val |  Mean Diff\n------+----------------------+----------------------+------------\n   -5 |    3.316     0.0022 |    139.0     0.0032 |     0.0312\n   -4 |    3.948     0.0004 |    105.0     0.0003 |     0.0415\n   -3 |    3.517     0.0013 |    121.0     0.0010 |     0.0300\n   -2 |    2.541     0.0158 |    184.0     0.0313 |     0.0200\n   -1 |   -0.186     0.8534 |    296.0     0.9795 |    -0.0020\n    0 |      nan        nan |      nan        nan |        nan\n    1 |    2.078     0.0454 |    182.0     0.0287 |     0.0176\n    2 |    2.362     0.0240 |    181.0     0.0275 |     0.0166\n    3 |    1.163     0.2531 |    220.0     0.1227 |     0.0088\n    4 |    0.069     0.9455 |    310.0     0.9420 |     0.0004\n    5 |    2.271     0.0296 |    197.0     0.0535 |     0.0134\n\n======================================================================\nTest: First-Second Bias (Observed) vs First-Second Bias (Control)\n======================================================================\n  Lag |   t-stat    t p-val |   W-stat    W p-val |  Mean Diff\n------+----------------------+----------------------+------------\n   -5 |   -1.971     0.0569 |    179.0     0.0252 |    -0.0216\n   -4 |   -2.156     0.0383 |    195.0     0.0495 |    -0.0260\n   -3 |   -1.999     0.0537 |    210.0     0.0871 |    -0.0211\n   -2 |    0.073     0.9422 |    313.0     0.9806 |     0.0009\n   -1 |    3.511     0.0013 |    103.0     0.0003 |     0.0582\n    0 |      nan        nan |      nan        nan |        nan\n    1 |    3.438     0.0016 |    140.0     0.0034 |     0.0412\n    2 |    0.961     0.3433 |    273.0     0.5014 |     0.0121\n    3 |    2.417     0.0211 |    192.0     0.0438 |     0.0250\n    4 |    2.811     0.0081 |    161.0     0.0107 |     0.0265\n    5 |    0.305     0.7624 |    312.0     0.9678 |     0.0037\n\n\n/Users/jordangunn/workspace/jaxcmr/jaxcmr/analyses/cleanbackrepcrp.py:266: SmallSampleWarning: After omitting NaNs, one or more sample arguments is too small; all returned values will be NaN. See documentation for sample size requirements.\n  t_stat, t_pval = stats.ttest_rel(obs_col, ctrl_col, nan_policy=\"omit\")\n/Users/jordangunn/workspace/jaxcmr/jaxcmr/analyses/cleanbackrepcrp.py:277: RuntimeWarning: Mean of empty slice\n  mean_diffs[lag_idx] = np.nanmean(diff)\n/Users/jordangunn/workspace/jaxcmr/jaxcmr/analyses/cleanbackrepcrp.py:322: RuntimeWarning: invalid value encountered in subtract\n  control_diff = control_crp[:, 0, :] - control_crp[:, 1, :]\n/Users/jordangunn/workspace/jaxcmr/jaxcmr/analyses/cleanbackrepcrp.py:336: SmallSampleWarning: After omitting NaNs, one or more sample arguments is too small; all returned values will be NaN. See documentation for sample size requirements.\n  t_stat, t_pval = stats.ttest_rel(obs_d, ctrl_d, nan_policy=\"omit\")\n/Users/jordangunn/workspace/jaxcmr/jaxcmr/analyses/cleanbackrepcrp.py:347: RuntimeWarning: Mean of empty slice\n  mean_diffs[lag_idx] = np.nanmean(diff_of_diff)",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-CRP"
-    ]
-  },
-  {
-    "objectID": "templates/backrepcrp.html#interpretation",
-    "href": "templates/backrepcrp.html#interpretation",
-    "title": "Backward Repetition Lag-CRP",
-    "section": "Interpretation",
-    "text": "Interpretation\nTwo plots are produced: one for observed (mixed-list) data and one for the shuffled control. Each shows incoming transition curves by presentation index. Key patterns:\n\nIncoming contiguity: peaks near the repeated item’s study positions indicate that neighbors attract transitions toward the repetition.\nFirst vs. second presentation: differences between curves reveal whether one occurrence attracts more incoming transitions than the other.\nObserved vs. control: differences isolate repetition-specific incoming attraction beyond shuffled baselines.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-CRP"
-    ]
-  },
-  {
-    "objectID": "templates/backrepcrp.html#api-details",
-    "href": "templates/backrepcrp.html#api-details",
-    "title": "Backward Repetition Lag-CRP",
-    "section": "API Details",
-    "text": "API Details\n\nNotebook parameters\n\ndata_path — path to an HDF5 file containing a RecallDataset.\nfigure_dir — directory for saving figures.\nfigure_str — base filename for the saved figure. Leave empty to display without saving.\nylim — y-axis limits, or None for automatic scaling.\nmixed_trial_query — query selecting trials with repeated items.\ncontrol_trial_query — query selecting trials for the control.\ncontrol_shuffles — number of shuffle iterations for building the control dataset.\nmin_lag — minimum absolute lag included in the analysis.\nmax_lag — maximum absolute lag displayed.\nsize — maximum number of study positions a single item can occupy.\nconfidence_level — confidence level for subject-wise error bars.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-CRP"
-    ]
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "jaxcmr",
@@ -2324,54 +2276,6 @@
     "title": "jaxcmr",
     "section": "Key Capabilities- Behavioral analyses — SPC, CRP, PNR, and other standard measures- CMR model variants — Semantic, repetition, EEG extensions- Model fitting — Differential evolution with likelihood or MSE loss- JAX acceleration — JIT compilation, vmap batching, explicit random state## Why JAX?jaxcmr uses JAX for fast, reproducible simulations:- JIT compilation — Functions compile to optimized code on first call- vmap batching — Vectorize across trials without writing loops- Explicit random state — PRNGKey ensures reproducible results- PyTree models — Model state integrates with JAX transformationsSee Why JAX for details.## Explore::: {.grid}::: {.g-col-12 .g-col-md-4}### GuideCore abstractions and patterns.:::::: {.g-col-12 .g-col-md-4}### AnalysesBehavioral measures for recall data.:::::: {.g-col-12 .g-col-md-4}### ModelsCMR and memory search model variants.:::::: {.g-col-12 .g-col-md-4}### EvaluationFitting, simulation, and model comparison.:::::: {.g-col-12 .g-col-md-4}### WorkflowResearch practice and tooling.:::::: {.g-col-12 .g-col-md-4}### GitHubSource code and issue tracker.::::::",
     "text": "Key Capabilities- Behavioral analyses — SPC, CRP, PNR, and other standard measures- CMR model variants — Semantic, repetition, EEG extensions- Model fitting — Differential evolution with likelihood or MSE loss- JAX acceleration — JIT compilation, vmap batching, explicit random state## Why JAX?jaxcmr uses JAX for fast, reproducible simulations:- JIT compilation — Functions compile to optimized code on first call- vmap batching — Vectorize across trials without writing loops- Explicit random state — PRNGKey ensures reproducible results- PyTree models — Model state integrates with JAX transformationsSee Why JAX for details.## Explore::: {.grid}::: {.g-col-12 .g-col-md-4}### GuideCore abstractions and patterns.:::::: {.g-col-12 .g-col-md-4}### AnalysesBehavioral measures for recall data.:::::: {.g-col-12 .g-col-md-4}### ModelsCMR and memory search model variants.:::::: {.g-col-12 .g-col-md-4}### EvaluationFitting, simulation, and model comparison.:::::: {.g-col-12 .g-col-md-4}### WorkflowResearch practice and tooling.:::::: {.g-col-12 .g-col-md-4}### GitHubSource code and issue tracker.::::::"
-  },
-  {
-    "objectID": "templates/backreplagrank.html",
-    "href": "templates/backreplagrank.html",
-    "title": "Backward Repetition Lag-Rank",
-    "section": "",
-    "text": "Measure temporal organization of incoming transitions to repeated items.\nThe backward repetition lag-rank reverses each recall sequence before computing the standard repetition lag-rank. This measures temporal organization of transitions to a repeated item (rather than from it). A score of 0.5 indicates chance; scores above 0.5 reflect temporal contiguity of incoming transitions.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-Rank"
-    ]
-  },
-  {
-    "objectID": "templates/backreplagrank.html#workflow",
-    "href": "templates/backreplagrank.html#workflow",
-    "title": "Backward Repetition Lag-Rank",
-    "section": "Workflow",
-    "text": "Workflow\n\n\nCode\nimport os\nimport warnings\nfrom jaxcmr.analyses.backreplagrank import plot_back_rep_lagrank\nfrom jaxcmr.helpers import find_project_root, generate_trial_mask, load_data, save_figure\n\nwarnings.filterwarnings(\"ignore\")\n\n\n\n\nCode\ndata_path = \"data/LohnasKahana2014.h5\"\nfigure_dir = \"results/figures\"\nfigure_str = \"\"\ntrial_query = \"data['list_type'] &gt; 2\"\nmin_lag = 4\nsize = 2\n\n\n\n\nCode\nproject_root = find_project_root()\nfigure_dir = os.path.join(project_root, figure_dir)\ndata_path = os.path.join(project_root, data_path)\ndata = load_data(data_path)\ntrial_mask = generate_trial_mask(data, trial_query)\n\n\n\n\nCode\nplot_back_rep_lagrank(data, trial_mask, min_lag=min_lag, size=size)\nsave_figure(figure_dir, figure_str)",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-Rank"
-    ]
-  },
-  {
-    "objectID": "templates/backreplagrank.html#interpretation",
-    "href": "templates/backreplagrank.html#interpretation",
-    "title": "Backward Repetition Lag-Rank",
-    "section": "Interpretation",
-    "text": "Interpretation\nEach bar represents a temporal factor score for incoming transitions to a given presentation.\n\nScores above 0.5: repeated items attract transitions from temporally nearby items.\nHigher score for second presentation: the more recent occurrence is a stronger attractor.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-Rank"
-    ]
-  },
-  {
-    "objectID": "templates/backreplagrank.html#api-details",
-    "href": "templates/backreplagrank.html#api-details",
-    "title": "Backward Repetition Lag-Rank",
-    "section": "API Details",
-    "text": "API Details\n\nNotebook parameters\n\ndata_path — path to an HDF5 file containing a RecallDataset with repeated items.\nfigure_dir — directory for saving figures.\nfigure_str — base filename for the saved figure. Leave empty to display without saving.\ntrial_query — a Python expression evaluated against the dataset to select trials.\nmin_lag — minimum spacing between repeated presentations.\nsize — maximum number of study positions a single item can occupy.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Backward Repetition Lag-Rank"
-    ]
   },
   {
     "objectID": "templates/cat_lpp_spc.html",
@@ -2467,54 +2371,6 @@
       "Analyses",
       "Category Effects",
       "Category SPC"
-    ]
-  },
-  {
-    "objectID": "templates/cleanbackrepcrp.html",
-    "href": "templates/cleanbackrepcrp.html",
-    "title": "Incoming Repetition CRP (Clean Backward)",
-    "section": "",
-    "text": "Measure how strongly repeated items attract incoming transitions from temporal neighbors.\nThe incoming (“clean backward”) repetition CRP reverses each recall sequence before computing the standard repetition CRP. This measures the conditional probability of transitioning to a repeated item as a function of lag from each of its study positions. Comparing observed data against shuffled controls isolates repetition-specific attraction from baseline temporal contiguity.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Incoming Repetition CRP (Clean Backward)"
-    ]
-  },
-  {
-    "objectID": "templates/cleanbackrepcrp.html#workflow",
-    "href": "templates/cleanbackrepcrp.html#workflow",
-    "title": "Incoming Repetition CRP (Clean Backward)",
-    "section": "Workflow",
-    "text": "Workflow\n\n\nCode\nimport os\nimport matplotlib.pyplot as plt\nimport warnings\nfrom jaxcmr.analyses.cleanbackrepcrp import plot_back_rep_crp\nfrom jaxcmr.repetition import make_control_dataset\nfrom jaxcmr.helpers import find_project_root, generate_trial_mask, load_data, save_figure\n\nwarnings.filterwarnings(\"ignore\")\n\n\n\n\nCode\ndata_path = \"data/LohnasKahana2014.h5\"\nfigure_dir = \"results/figures\"\nfigure_str = \"\"\nylim = None\nmixed_trial_query = 'data[\"list_type\"] &gt; 2'\ncontrol_trial_query = 'data[\"list_type\"] == 1'\ncontrol_shuffles = 10\nmin_lag = 4\nmax_lag = 5\nsize = 2\n\n\n\n\nCode\nproject_root = find_project_root()\nfigure_dir = os.path.join(project_root, figure_dir)\ndata_path = os.path.join(project_root, data_path)\ndata = load_data(data_path)\nmixed_mask = generate_trial_mask(data, mixed_trial_query)\ncontrol_data = make_control_dataset(data, generate_trial_mask(data, control_trial_query), shuffles=control_shuffles)\ncontrol_mask = generate_trial_mask(control_data, \"data['subject'] &gt; 0\")\n\n\n\n\nCode\nplot_back_rep_crp(data, mixed_mask, max_lag=max_lag, min_lag=min_lag, size=size)\nif ylim is not None:\n    for ax in plt.gcf().axes:\n        ax.set_ylim(ylim)\nsave_figure(figure_dir, figure_str)",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Incoming Repetition CRP (Clean Backward)"
-    ]
-  },
-  {
-    "objectID": "templates/cleanbackrepcrp.html#interpretation",
-    "href": "templates/cleanbackrepcrp.html#interpretation",
-    "title": "Incoming Repetition CRP (Clean Backward)",
-    "section": "Interpretation",
-    "text": "Interpretation\nEach panel shows CRP curves for incoming transitions to a repeated item, indexed by which presentation (first or second) is the target.\n\nPeak near the target’s study position: the repeated item attracts transitions from temporal neighbors.\nObserved &gt; control: repetition-specific attraction beyond baseline contiguity.\nSecond presentation peak &gt; first: more recent occurrence is a stronger attractor.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Incoming Repetition CRP (Clean Backward)"
-    ]
-  },
-  {
-    "objectID": "templates/cleanbackrepcrp.html#api-details",
-    "href": "templates/cleanbackrepcrp.html#api-details",
-    "title": "Incoming Repetition CRP (Clean Backward)",
-    "section": "API Details",
-    "text": "API Details\n\nNotebook parameters\n\ndata_path — path to an HDF5 file containing a RecallDataset with repeated items.\nfigure_dir — directory for saving figures.\nfigure_str — base filename for the saved figure. Leave empty to display without saving.\nylim — y-axis limits as a tuple, or None for automatic scaling.\nmixed_trial_query — selects trials containing repeated items.\ncontrol_trial_query — selects pure (no-repeat) trials for the shuffled control.\ncontrol_shuffles — number of shuffled control blocks per subject.\nmin_lag — minimum spacing between repeated presentations.\nmax_lag — maximum lag to display on the x-axis.\nsize — maximum number of study positions a single item can occupy.",
-    "crumbs": [
-      "Analyses",
-      "Repetition",
-      "Incoming Repetition CRP (Clean Backward)"
     ]
   },
   {

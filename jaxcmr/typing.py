@@ -382,6 +382,12 @@ class FitResult(TypedDict):
     fitness: list[float]
     """List of one or more fitness values (e.g., for single-fit or per-subject fits)."""
 
+    nit: NotRequired[list[int]]
+    """Number of optimizer generations run for each fit."""
+
+    converged: NotRequired[list[bool]]
+    """Whether each fit met the optimizer convergence criterion."""
+
     fits: dict[str, list[float]]
     """Dictionary of parameter names -> optimized values (one or many)."""
 

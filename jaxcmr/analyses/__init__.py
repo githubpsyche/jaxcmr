@@ -1,10 +1,8 @@
 __all__ = [
-    "backreplagrank",
     "cat_lpp_by_recall",
     "cat_lpp_spc",
     "cat_recall_by_lpp",
     "cat_spc",
-    "cleanbackrepcrp",
     "compound_cueing_crp",
     "conditional_corec_by_cat",
     "conditional_corec_by_lag",

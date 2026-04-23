@@ -1,5 +1,5 @@
 from jaxcmr.cross_validation import cross_validate
-from jaxcmr.fitting import ScipyDE
+from jaxcmr.fitting import EvosaxDE, ScipyDE
 from jaxcmr.helpers import load_data, make_dataset
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
@@ -27,6 +27,7 @@ __all__ = [
     "MemorySearchModelFactory",
     "PRNGKeyArray",
     "RecallDataset",
+    "EvosaxDE",
     "ScipyDE",
     "cross_validate",
     "load_data",
