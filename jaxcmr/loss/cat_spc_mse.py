@@ -6,10 +6,9 @@ results with ``fixed_pres_cat_spc``.
 
 """
 
-from typing import Callable, Iterable, Mapping, Optional, Type
+from typing import Iterable, Mapping, Optional, Type
 
-import numpy as np
-from jax import jit, lax, random, vmap
+from jax import lax, random, vmap
 from jax import numpy as jnp
 
 from jaxcmr.analyses.cat_spc import category_recall_counts
@@ -29,8 +28,9 @@ from jaxcmr.typing import (
 __all__ = [
     "simulate_masked_free_recall",
     "fixed_pres_cat_spc",
-    "MemorySearchCatSpcMseFnGenerator",
+    "MemorySearchCatSpcMseLoss",
 ]
+
 
 def simulate_masked_free_recall(
     model: MemorySearch,
@@ -80,23 +80,23 @@ def fixed_pres_cat_spc(
     return numerator / safe_denominator
 
 
-class MemorySearchCatSpcMseFnGenerator:
-    """Generates category-filtered SPC-based MSE loss functions."""
+class MemorySearchCatSpcMseLoss:
+    """Category-filtered SPC-based MSE loss."""
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize with dataset, category metadata, and optional features.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
+          model_factory_cls: Class implementing `MemorySearchModelFactory`.
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
-        factory = model_factory(dataset, features)
+        factory = model_factory_cls(dataset, features)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self.list_length = self.present_lists.shape[1]
@@ -225,37 +225,19 @@ class MemorySearchCatSpcMseFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Returns a loss function specialized to trials and free parameters.
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        """Returns one loss per parameter vector."""
+        free_param_names = tuple(free_param_names)
 
-        Args:
-          trial_indices: Trials to evaluate.
-          base_params: Fixed parameters.
-          free_param_names: Names and order of free parameters.
-        """
-
-        def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns loss for the merged base and free parameters."""
+        def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
+            param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
             return self.present_and_predict_spc_mse(
-                trial_indices, {**base_params, **params}
+                trial_indices, {**base_params, **param_dict}
             )
 
-        @jit
-        def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-            """Returns loss for a single parameter vector."""
-            param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
-            return specialized_loss_fn(param_dict)
+        return vmap(loss_for_one_sample, in_axes=1)(x)
 
-        @jit
-        def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
-            """Returns one loss per parameter vector."""
 
-            def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return specialized_loss_fn(param_dict)
-
-            # vmap applies loss_for_one_sample across the leading dimension of x
-            return vmap(loss_for_one_sample, in_axes=1)(x)
-
-        # Return a function that checks the dimensionality of x at runtime
-        return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+# Compatibility aliases. Do not use in new code.
+MemorySearchCatSpcMseFnGenerator = MemorySearchCatSpcMseLoss

@@ -1,5 +1,6 @@
 import jax.numpy as jnp
 from jaxcmr.components.context import init as init_context
+from jaxcmr.components.context import TemporalContext
 from jaxcmr.components.linear_memory import LinearMemory, init_mfc, init_mcf
 
 
@@ -132,4 +133,24 @@ def test_initializes_mcf_with_shared_and_item_support_when_init_mcf():
         [shared_support, item_support],
         [shared_support, shared_support],
     ])
+    assert jnp.allclose(mem.state, expected)
+
+
+def test_initializes_mcf_with_extra_context_rows_when_init_mcf():
+    """Behavior: ``init_mcf`` leaves extra context rows at shared support."""
+    list_length = 3
+    item_support = 0.7
+    shared_support = 0.3
+    context = TemporalContext(3, 7)
+    params = {"item_support": item_support, "shared_support": shared_support}
+
+    mem = init_mcf(list_length, params, context)
+
+    expected = jnp.vstack(
+        (
+            jnp.zeros((1, list_length)),
+            jnp.full((context.size - 1, list_length), shared_support)
+            + jnp.eye(context.size - 1, list_length) * (item_support - shared_support),
+        )
+    )
     assert jnp.allclose(mem.state, expected)

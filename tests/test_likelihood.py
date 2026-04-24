@@ -4,7 +4,8 @@ import jax.numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodFnGenerator
+from jaxcmr.fitting.scipy import make_scipy_loss_fn
+from jaxcmr.loss.sequence_likelihood import MemorySearchLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 from jaxcmr.helpers import make_dataset
 
@@ -60,7 +61,7 @@ def test_preserves_recalls_when_item_ids_match_canonical_positions():
     )
 
     # Act / When
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchLikelihoodLoss(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     expected = jnp.array([[1, 3, 2]], dtype=jnp.int32)
@@ -89,7 +90,7 @@ def test_preserves_recalls_when_already_serial_positions():
     )
 
     # Act / When
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchLikelihoodLoss(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     expected = jnp.array([[2, 1, 3]], dtype=jnp.int32)
@@ -121,7 +122,7 @@ def test_predict_trial_returns_positive_probabilities_when_single_trial():
         pres_itemnos=jnp.array([[1, 2, 3]]),
         listLength=3,
     )
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchLikelihoodLoss(BaseCMRFactory, dataset, None)
     params = _params()
 
     # Act / When
@@ -149,7 +150,7 @@ def test_present_and_predict_loss_matches_manual_when_lists_identical():
     presents = jnp.array([[1, 2, 3], [1, 2, 3]])
     recalls = jnp.array([[1, 2, 0], [2, 3, 0]])
     dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchLikelihoodLoss(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
 
@@ -190,11 +191,11 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
     presents = jnp.array([[1, 2, 3], [1, 2, 3]])
     recalls = jnp.array([[1, 2, 0], [2, 3, 0]])
     dataset = make_dataset(recalls, pres_itemnos=presents, listLength=3)
-    gen = MemorySearchLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchLikelihoodLoss(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
     free = ["encoding_drift_rate", "recall_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_param_names=free)
+    f = make_scipy_loss_fn(gen, trial_idx, params, free)
 
     x_single = np.array([params["encoding_drift_rate"], params["recall_drift_rate"]])
     # SciPy's vectorized DE calls expect shape (n_params, n_samples)
@@ -203,6 +204,11 @@ def test_vectorized_and_scalar_loss_agree_when_batching_params():
     # Act / When
     scalar_val = float(f(x_single))
     batched_vals = np.array(f(x_batch))
+    loss_vals = np.array(gen(trial_idx, params, free, jnp.asarray(x_batch)))
+    loss_single = float(gen(trial_idx, params, free, jnp.asarray(x_single[:, None]))[0])
+
     # Assert / Then
     assert batched_vals.shape == (2,)
     assert np.allclose(batched_vals, scalar_val)
+    assert np.allclose(loss_vals, batched_vals)
+    assert np.allclose(loss_single, scalar_val)

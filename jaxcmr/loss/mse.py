@@ -7,11 +7,9 @@ observed and simulated trials using pluggable analysis functions.
 
 from typing import Callable, Iterable, Mapping, Optional, Type
 
-import numpy as np
-from jax import jit, lax, random, vmap
+from jax import lax, random, vmap
 from jax import numpy as jnp
 
-from jaxcmr.helpers import all_rows_identical
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
     Array,
@@ -28,8 +26,9 @@ RecallAnalysisFn = Callable
 
 __all__ = [
     "simulate_masked_free_recall",
-    "MemorySearchMseFnGenerator",
+    "MemorySearchMseLoss",
 ]
+
 
 def simulate_masked_free_recall(
     model: MemorySearch,
@@ -53,12 +52,12 @@ def simulate_masked_free_recall(
     return vmap(simulate_once)(keys)
 
 
-class MemorySearchMseFnGenerator:
-    """Generate mean-squared-error losses for recall analyses."""
+class MemorySearchMseLoss:
+    """Mean-squared-error loss for recall analyses."""
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
         analysis_fn: RecallAnalysisFn,
@@ -67,14 +66,14 @@ class MemorySearchMseFnGenerator:
         """Configure dataset-specific loss generation.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
+          model_factory_cls: Class implementing `MemorySearchModelFactory`.
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
           analysis_fn: Callable that summarizes recall data for comparison.
           simulation_count: Number of simulated recall chains per trial.
         """
         # Configure factories and analysis hooks.
-        factory = model_factory(dataset, features)
+        factory = model_factory_cls(dataset, features)
         self.create_model = factory.create_trial_model
         self.analysis_fn = analysis_fn
         self.simulation_count = simulation_count
@@ -212,42 +211,32 @@ class MemorySearchMseFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Returns a loss function specialized to trials and free parameters.
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        """Returns one loss per parameter vector."""
+        free_param_names = tuple(free_param_names)
+        use_base_loss = jnp.logical_and(
+            jnp.all(
+                self.present_lists[trial_indices]
+                == self.present_lists[trial_indices][0]
+            ),
+            not self.has_features,
+        )
 
-        Args:
-          trial_indices: Trials to evaluate.
-          base_params: Fixed parameters.
-          free_param_names: Names and order of free parameters.
-        """
+        def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
+            param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
+            parameters = {**base_params, **param_dict}
+            return lax.cond(
+                use_base_loss,
+                lambda _: self.base_analysis_mse(trial_indices, parameters),
+                lambda _: self.present_and_predict_analysis_mse(
+                    trial_indices, parameters
+                ),
+                operand=None,
+            )
 
-        if (
-            all_rows_identical(self.present_lists[trial_indices])
-            and not self.has_features
-        ):
-            base_loss_fn = self.base_analysis_mse
-        else:
-            base_loss_fn = self.present_and_predict_analysis_mse
+        return vmap(loss_for_one_sample, in_axes=1)(x)
 
-        def specialized_loss_fn(params: Mapping[str, Float_]) -> Float[Array, ""]:
-            """Returns loss for the merged base and free parameters."""
-            return base_loss_fn(trial_indices, {**base_params, **params})
 
-        @jit
-        def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-            """Returns loss for a single parameter vector."""
-            param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
-            return specialized_loss_fn(param_dict)
-
-        @jit
-        def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
-            """Returns one loss per parameter vector."""
-            def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return specialized_loss_fn(param_dict)
-
-            # vmap applies loss_for_one_sample across the leading dimension of x
-            return vmap(loss_for_one_sample, in_axes=1)(x)
-
-        # Return a function that checks the dimensionality of x at runtime
-        return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+# Compatibility aliases. Do not use in new code.
+MemorySearchMseFnGenerator = MemorySearchMseLoss

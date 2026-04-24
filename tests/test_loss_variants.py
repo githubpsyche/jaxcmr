@@ -13,6 +13,7 @@ import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.helpers import make_dataset
+from jaxcmr.fitting.scipy import make_scipy_loss_fn
 from jaxcmr.models.cmr import make_factory as base_make_factory
 
 # ── shared fixtures ─────────────────────────────────────────────────────────
@@ -47,6 +48,103 @@ def _dataset() -> Any:
     presents = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
     recalls = jnp.array([[1, 2, 0], [2, 3, 0]], dtype=jnp.int32)
     return make_dataset(recalls, pres_itemnos=presents, listLength=3)
+
+
+def test_old_loss_names_remain_import_aliases():
+    """Behavior: old loss names remain temporary aliases for compatibility."""
+    from jaxcmr import typing
+    from jaxcmr.loss import (
+        base_sequence_likelihood,
+        cat_spc_mse,
+        mse,
+        sequence_likelihood,
+        set_permutation_likelihood,
+        spc_mse,
+        transform_sequence_likelihood,
+    )
+
+    assert typing.LossFnGenerator is typing.LossFn
+    assert (
+        sequence_likelihood.MemorySearchLikelihoodFnGenerator
+        is sequence_likelihood.MemorySearchLikelihoodLoss
+    )
+    assert (
+        base_sequence_likelihood.MemorySearchLikelihoodFnGenerator
+        is base_sequence_likelihood.MemorySearchLikelihoodLoss
+    )
+    assert (
+        base_sequence_likelihood.ExcludeFirstRecallLikelihoodFnGenerator
+        is base_sequence_likelihood.ExcludeFirstRecallLikelihoodLoss
+    )
+    assert (
+        base_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator
+        is base_sequence_likelihood.ExcludeTerminationLikelihoodLoss
+    )
+    assert (
+        transform_sequence_likelihood.MemorySearchLikelihoodFnGenerator
+        is transform_sequence_likelihood.MemorySearchLikelihoodLoss
+    )
+    assert (
+        transform_sequence_likelihood.ExcludeFirstRecallLikelihoodFnGenerator
+        is transform_sequence_likelihood.ExcludeFirstRecallLikelihoodLoss
+    )
+    assert (
+        transform_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator
+        is transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss
+    )
+    assert (
+        transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodFnGenerator
+        is transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodLoss
+    )
+    assert (
+        transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodFnGenerator
+        is transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodLoss
+    )
+    assert (
+        set_permutation_likelihood.MemorySearchLikelihoodFnGenerator
+        is set_permutation_likelihood.MemorySearchLikelihoodLoss
+    )
+    assert (
+        set_permutation_likelihood.ExcludeTerminationLikelihoodFnGenerator
+        is set_permutation_likelihood.ExcludeTerminationLikelihoodLoss
+    )
+    assert (
+        set_permutation_likelihood.IncludeTerminationLikelihoodFnGenerator
+        is set_permutation_likelihood.IncludeTerminationLikelihoodLoss
+    )
+    assert mse.MemorySearchMseFnGenerator is mse.MemorySearchMseLoss
+    assert spc_mse.MemorySearchSpcMseFnGenerator is spc_mse.MemorySearchSpcMseLoss
+    assert (
+        cat_spc_mse.MemorySearchCatSpcMseFnGenerator
+        is cat_spc_mse.MemorySearchCatSpcMseLoss
+    )
+
+
+def test_old_loss_names_are_not_advertised_in_all():
+    """Behavior: compatibility aliases are not advertised as primary API."""
+    from jaxcmr import typing
+    from jaxcmr.loss import (
+        base_sequence_likelihood,
+        cat_spc_mse,
+        mse,
+        sequence_likelihood,
+        set_permutation_likelihood,
+        spc_mse,
+        transform_sequence_likelihood,
+    )
+
+    modules = [
+        typing,
+        sequence_likelihood,
+        base_sequence_likelihood,
+        transform_sequence_likelihood,
+        set_permutation_likelihood,
+        mse,
+        spc_mse,
+        cat_spc_mse,
+    ]
+    for module in modules:
+        assert not any(name.endswith("FnGenerator") for name in module.__all__)
 
 
 # ── base_sequence_likelihood ────────────────────────────────────────────────
@@ -120,12 +218,12 @@ def test_base_generator_returns_positive_finite_loss():
     """
     # Arrange / Given
     from jaxcmr.loss.base_sequence_likelihood import (
-        MemorySearchLikelihoodFnGenerator,
+        MemorySearchLikelihoodLoss,
         mask_trailing_terminations,
     )
 
     dataset = _dataset()
-    gen = MemorySearchLikelihoodFnGenerator(
+    gen = MemorySearchLikelihoodLoss(
         BaseCMRFactory, dataset, None, mask_trailing_terminations
     )
     params = _params()
@@ -157,12 +255,12 @@ def test_transform_generator_returns_positive_finite_loss():
     """
     # Arrange / Given
     from jaxcmr.loss.transform_sequence_likelihood import (
-        MemorySearchLikelihoodFnGenerator,
+        MemorySearchLikelihoodLoss,
         mask_trailing_terminations,
     )
 
     dataset = _dataset()
-    gen = MemorySearchLikelihoodFnGenerator(
+    gen = MemorySearchLikelihoodLoss(
         BaseCMRFactory, dataset, None, mask_trailing_terminations
     )
     params = _params()
@@ -193,12 +291,12 @@ def test_transform_predict_trial_valid_probabilities():
     """
     # Arrange / Given
     from jaxcmr.loss.transform_sequence_likelihood import (
-        MemorySearchLikelihoodFnGenerator,
+        MemorySearchLikelihoodLoss,
         mask_trailing_terminations,
     )
 
     dataset = _dataset()
-    gen = MemorySearchLikelihoodFnGenerator(
+    gen = MemorySearchLikelihoodLoss(
         BaseCMRFactory, dataset, None, mask_trailing_terminations
     )
     params = _params()
@@ -210,6 +308,69 @@ def test_transform_predict_trial_valid_probabilities():
     assert probs.shape == (3,)
     assert jnp.all(probs > 0).item()
     assert jnp.all(probs <= 1).item()
+
+
+def test_transform_accumulating_exclude_termination_matches_existing_loss():
+    """Behavior: accumulating exclude-termination loss matches current loss."""
+    from jaxcmr.loss.transform_sequence_likelihood import (
+        AccumulatingExcludeTerminationLikelihoodLoss,
+        ExcludeTerminationLikelihoodLoss,
+        SkippingAccumulatingExcludeTerminationLikelihoodLoss,
+    )
+
+    dataset = _dataset()
+    params = _params()
+    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
+    current = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
+    accumulating = AccumulatingExcludeTerminationLikelihoodLoss(
+        BaseCMRFactory, dataset, None
+    )
+    skipping = SkippingAccumulatingExcludeTerminationLikelihoodLoss(
+        BaseCMRFactory, dataset, None
+    )
+
+    current_loss = current._inner.present_and_predict_trials_loss(trial_idx, params)
+    accumulating_loss = accumulating._inner.present_and_predict_trials_loss(
+        trial_idx, params
+    )
+    skipping_loss = skipping._inner.present_and_predict_trials_loss(trial_idx, params)
+
+    np.testing.assert_allclose(accumulating_loss, current_loss, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(skipping_loss, current_loss, rtol=1e-6, atol=1e-6)
+
+
+def test_transform_accumulating_loss_matches_existing_loss_call():
+    """Behavior: accumulating loss matches current loss call."""
+    from jaxcmr.loss.transform_sequence_likelihood import (
+        AccumulatingExcludeTerminationLikelihoodLoss,
+        ExcludeTerminationLikelihoodLoss,
+        SkippingAccumulatingExcludeTerminationLikelihoodLoss,
+    )
+
+    dataset = _dataset()
+    params = _params()
+    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
+    free = ["encoding_drift_rate", "recall_drift_rate"]
+    x = jnp.array(
+        [
+            [params["encoding_drift_rate"], 0.7],
+            [params["recall_drift_rate"], 0.5],
+        ]
+    )
+    current = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
+    accumulating = AccumulatingExcludeTerminationLikelihoodLoss(
+        BaseCMRFactory, dataset, None
+    )
+    skipping = SkippingAccumulatingExcludeTerminationLikelihoodLoss(
+        BaseCMRFactory, dataset, None
+    )
+
+    current_loss = current(trial_idx, params, free, x)
+    accumulating_loss = accumulating(trial_idx, params, free, x)
+    skipping_loss = skipping(trial_idx, params, free, x)
+
+    np.testing.assert_allclose(accumulating_loss, current_loss, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(skipping_loss, current_loss, rtol=1e-6, atol=1e-6)
 
 
 # ── set_permutation_likelihood ──────────────────────────────────────────────
@@ -231,13 +392,13 @@ def test_set_permutation_generator_has_expected_structure():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        ExcludeTerminationLikelihoodFnGenerator,
+        ExcludeTerminationLikelihoodLoss,
     )
 
     dataset = _dataset()
 
     # Act / When
-    gen = ExcludeTerminationLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     assert gen._inner.trial_permutations.shape[0] == 2  # n_trials
@@ -264,11 +425,11 @@ def test_set_permutation_generator_returns_finite_loss():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        ExcludeTerminationLikelihoodFnGenerator,
+        ExcludeTerminationLikelihoodLoss,
     )
 
     dataset = _dataset()
-    gen = ExcludeTerminationLikelihoodFnGenerator(BaseCMRFactory, dataset, None)
+    gen = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
 
@@ -297,13 +458,13 @@ def test_stop_permutation_structure():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        IncludeTerminationLikelihoodFnGenerator,
+        IncludeTerminationLikelihoodLoss,
     )
 
     dataset = _dataset()
 
     # Act / When
-    gen = IncludeTerminationLikelihoodFnGenerator(
+    gen = IncludeTerminationLikelihoodLoss(
         BaseCMRFactory, dataset, None
     )
 
@@ -336,11 +497,11 @@ def test_stop_aware_loss_returns_finite_positive():
     """
     # Arrange / Given
     from jaxcmr.loss.set_permutation_likelihood import (
-        IncludeTerminationLikelihoodFnGenerator,
+        IncludeTerminationLikelihoodLoss,
     )
 
     dataset = _dataset()
-    gen = IncludeTerminationLikelihoodFnGenerator(
+    gen = IncludeTerminationLikelihoodLoss(
         BaseCMRFactory, dataset, None
     )
     params = _params()
@@ -370,7 +531,7 @@ def test_stop_aware_generator_rejects_full_recall():
     import pytest
 
     from jaxcmr.loss.set_permutation_likelihood import (
-        IncludeTerminationLikelihoodFnGenerator,
+        IncludeTerminationLikelihoodLoss,
     )
 
     presents = jnp.array([[1, 2, 3]], dtype=jnp.int32)
@@ -379,7 +540,7 @@ def test_stop_aware_generator_rejects_full_recall():
 
     # Act / When / Assert / Then
     with pytest.raises(ValueError, match="at least one padding slot"):
-        IncludeTerminationLikelihoodFnGenerator(
+        IncludeTerminationLikelihoodLoss(
             BaseCMRFactory, dataset, None
         )
 
@@ -393,7 +554,7 @@ def test_spc_mse_generator_has_expected_structure():
     Given:
       - A two-trial dataset with the base CMR factory.
     When:
-      - ``MemorySearchSpcMseFnGenerator`` is instantiated.
+      - ``MemorySearchSpcMseLoss`` is instantiated.
     Then:
       - list_length = 3, simulation_count = 20, trial_position_counts
         has shape (2, 3) with values in [0, 1] (normalized recall counts).
@@ -402,12 +563,12 @@ def test_spc_mse_generator_has_expected_structure():
         and that the per-position recall counts are valid proportions.
     """
     # Arrange / Given
-    from jaxcmr.loss.spc_mse import MemorySearchSpcMseFnGenerator
+    from jaxcmr.loss.spc_mse import MemorySearchSpcMseLoss
 
     dataset = _dataset()
 
     # Act / When
-    gen = MemorySearchSpcMseFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchSpcMseLoss(BaseCMRFactory, dataset, None)
 
     # Assert / Then
     assert gen.list_length == 3
@@ -431,14 +592,14 @@ def test_spc_mse_generator_returns_nonnegative_finite_loss():
         value would indicate a computation error.
     """
     # Arrange / Given
-    from jaxcmr.loss.spc_mse import MemorySearchSpcMseFnGenerator
+    from jaxcmr.loss.spc_mse import MemorySearchSpcMseLoss
 
     dataset = _dataset()
-    gen = MemorySearchSpcMseFnGenerator(BaseCMRFactory, dataset, None)
+    gen = MemorySearchSpcMseLoss(BaseCMRFactory, dataset, None)
     params = _params()
     trial_idx = jnp.array([0, 1], dtype=jnp.int32)
     free = ["encoding_drift_rate"]
-    f = gen(trial_idx, base_params=params, free_param_names=free)
+    f = make_scipy_loss_fn(gen, trial_idx, params, free)
 
     # Act / When
     loss = f(np.array([0.5]))
@@ -446,3 +607,151 @@ def test_spc_mse_generator_returns_nonnegative_finite_loss():
     # Assert / Then
     assert jnp.isfinite(loss).item()
     assert float(loss) >= 0
+
+
+# ── SciPy adapters ──────────────────────────────────────────────────────────
+
+
+def _assert_loss_matches_scipy_adapter(name, gen, params, trial_idx, free):
+    f = make_scipy_loss_fn(gen, trial_idx, params, free)
+    x_single = np.asarray([params[param] for param in free])
+    x_batch = np.stack([x_single, x_single], axis=0).T
+
+    call_single = np.asarray(f(x_single))
+    call_batch = np.asarray(f(x_batch))
+    loss_single = np.asarray(gen(trial_idx, params, free, jnp.asarray(x_single[:, None]))[0])
+    loss_batch = np.asarray(gen(trial_idx, params, free, jnp.asarray(x_batch)))
+
+    np.testing.assert_allclose(
+        loss_single,
+        call_single,
+        rtol=1e-6,
+        atol=1e-6,
+        err_msg=name,
+    )
+    np.testing.assert_allclose(
+        loss_batch,
+        call_batch,
+        rtol=1e-6,
+        atol=1e-6,
+        err_msg=name,
+    )
+
+
+def test_sequence_variant_losses_match_scipy_adapter():
+    """Behavior: built-in sequence variants share the SciPy adapter."""
+    from jaxcmr.loss import base_sequence_likelihood, transform_sequence_likelihood
+    from jaxcmr.loss import set_permutation_likelihood
+
+    dataset = _dataset()
+    params = _params()
+    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
+    free = ["encoding_drift_rate", "recall_drift_rate"]
+    cases = [
+        (
+            "base sequence",
+            base_sequence_likelihood.MemorySearchLikelihoodLoss(
+                BaseCMRFactory,
+                dataset,
+                None,
+                base_sequence_likelihood.mask_trailing_terminations,
+            ),
+        ),
+        (
+            "base exclude first",
+            base_sequence_likelihood.ExcludeFirstRecallLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "base exclude termination",
+            base_sequence_likelihood.ExcludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "transform sequence",
+            transform_sequence_likelihood.MemorySearchLikelihoodLoss(
+                BaseCMRFactory,
+                dataset,
+                None,
+                transform_sequence_likelihood.mask_trailing_terminations,
+            ),
+        ),
+        (
+            "transform exclude first",
+            transform_sequence_likelihood.ExcludeFirstRecallLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "transform exclude termination",
+            transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "transform accumulating exclude termination",
+            transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "transform skipping accumulating exclude termination",
+            transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "set permutation exclude termination",
+            set_permutation_likelihood.ExcludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+        (
+            "set permutation include termination",
+            set_permutation_likelihood.IncludeTerminationLikelihoodLoss(
+                BaseCMRFactory, dataset, None
+            ),
+        ),
+    ]
+
+    for name, gen in cases:
+        _assert_loss_matches_scipy_adapter(name, gen, params, trial_idx, free)
+
+
+def test_mse_losses_match_scipy_adapter():
+    """Behavior: built-in MSE variants share the SciPy adapter."""
+    from jaxcmr.loss.cat_spc_mse import MemorySearchCatSpcMseLoss
+    from jaxcmr.loss.mse import MemorySearchMseLoss
+    from jaxcmr.loss.spc_mse import MemorySearchSpcMseLoss
+
+    def analysis_fn(recalls, list_length, dataset, trial_indices):
+        return jnp.mean(recalls > 0, axis=(0, 1))
+
+    dataset = _dataset()
+    category_dataset = _dataset()
+    category_dataset["condition"] = jnp.array(
+        [[1, 2, 1], [1, 2, 1]], dtype=jnp.int32
+    )
+    params = _params()
+    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
+    free = ["encoding_drift_rate"]
+    cases = [
+        (
+            "mse",
+            MemorySearchMseLoss(
+                BaseCMRFactory, dataset, None, analysis_fn
+            ),
+        ),
+        ("spc mse", MemorySearchSpcMseLoss(BaseCMRFactory, dataset, None)),
+        (
+            "category spc mse",
+            MemorySearchCatSpcMseLoss(
+                BaseCMRFactory, category_dataset, None
+            ),
+        ),
+    ]
+
+    for name, gen in cases:
+        _assert_loss_matches_scipy_adapter(name, gen, params, trial_idx, free)

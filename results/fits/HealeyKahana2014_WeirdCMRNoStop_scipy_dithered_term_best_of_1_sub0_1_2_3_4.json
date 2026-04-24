@@ -1,0 +1,223 @@
+{
+    "fixed": {
+        "allow_repeated_recalls": 0.0,
+        "learn_after_context_update": 0.0
+    },
+    "free": {
+        "encoding_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "start_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "recall_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "shared_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "item_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "learning_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "primacy_scale": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "primacy_decay": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "choice_sensitivity": [
+            2.220446049250313e-16,
+            100.0
+        ]
+    },
+    "fitness": [
+        627.226318359375,
+        446.4822692871094,
+        412.82830810546875,
+        567.728759765625,
+        579.1538696289062
+    ],
+    "nit": [
+        181,
+        281,
+        177,
+        140,
+        233
+    ],
+    "converged": [
+        true,
+        true,
+        true,
+        true,
+        true
+    ],
+    "fits": {
+        "encoding_drift_rate": [
+            0.9415644719146918,
+            0.7017006132912421,
+            0.23556976596403922,
+            0.8351481723324368,
+            0.8305232817997703
+        ],
+        "start_drift_rate": [
+            0.32470040736238004,
+            7.115992665007731e-06,
+            0.27821007191888014,
+            0.43152987879939475,
+            2.1704354761453715e-05
+        ],
+        "recall_drift_rate": [
+            0.917622488757454,
+            0.9999999702329783,
+            0.950277086966752,
+            0.8916809931871066,
+            0.9014646353846021
+        ],
+        "shared_support": [
+            11.644072923608576,
+            0.17866709706742512,
+            2.9805199730373673,
+            21.74113197052032,
+            7.089018191174027
+        ],
+        "item_support": [
+            5.215525345549075,
+            4.123326405647276e-06,
+            99.99364292678203,
+            19.81136272040553,
+            18.647651679862097
+        ],
+        "learning_rate": [
+            0.9984847936683021,
+            0.7314299359930925,
+            0.010098578362944144,
+            0.5392005297230368,
+            0.40778178839175866
+        ],
+        "primacy_scale": [
+            29.324638168617916,
+            1.1745196103108952,
+            6.058821318289361,
+            22.529783985796243,
+            12.167632713904403
+        ],
+        "primacy_decay": [
+            2.7378667510902233e-06,
+            1.1977063811164754,
+            3.0287375122205873,
+            0.017991086301059056,
+            1.042771117454322e-06
+        ],
+        "choice_sensitivity": [
+            4.08825262374701,
+            5.2080404120159685,
+            99.98763849927712,
+            9.86572738863628,
+            5.143595308045079
+        ],
+        "allow_repeated_recalls": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        ],
+        "learn_after_context_update": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        ],
+        "subject": [
+            63,
+            64,
+            65,
+            66,
+            67
+        ]
+    },
+    "hyperparameters": {
+        "bounds": {
+            "encoding_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "start_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "recall_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "shared_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "item_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "learning_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "primacy_scale": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "primacy_decay": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "choice_sensitivity": [
+                2.220446049250313e-16,
+                100.0
+            ]
+        },
+        "num_steps": 1000,
+        "pop_size": 15,
+        "relative_tolerance": 1e-06,
+        "absolute_tolerance": 0.0,
+        "cross_over_rate": 0.9,
+        "diff_w": [
+            0.5,
+            1.0
+        ],
+        "best_of": 1,
+        "init": "latinhypercube",
+        "polish": false,
+        "seed": 0
+    },
+    "fit_time": 22.018410500000755,
+    "run_tag": "scipy_dithered_term_best_of_1",
+    "data_tag": "HealeyKahana2014",
+    "trial_query": "data['listtype'] == -1",
+    "model": "WeirdCMRNoStop",
+    "name": "HealeyKahana2014_WeirdCMRNoStop_scipy_dithered_term_best_of_1",
+    "components": {
+        "mfc_create_fn": "jaxcmr.components.linear_memory.init_mfc",
+        "mcf_create_fn": "jaxcmr.components.linear_memory.init_mcf",
+        "context_create_fn": "jaxcmr.components.context.init",
+        "termination_policy_create_fn": "jaxcmr.components.termination.NoStopTermination"
+    },
+    "fit_algorithm": "jaxcmr.fitting.ScipyDE",
+    "loss_function": "jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator",
+    "model_factory": "jaxcmr.models.cmr.make_factory",
+    "embedding_path": "",
+    "emotion_feature_path": "",
+    "feature_column": "6",
+    "concat_features": "False"
+}

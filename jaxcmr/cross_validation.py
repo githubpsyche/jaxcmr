@@ -13,7 +13,7 @@ import numpy as np
 from jax import numpy as jnp
 from tqdm import trange
 
-from jaxcmr.fitting import ScipyDE, make_subject_trial_masks
+from jaxcmr.fitting import ScipyDE
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -62,7 +62,7 @@ def generate_fold_masks(
 
 
 def evaluate_held_out(
-    loss_fn_generator: object,
+    loss_fn: object,
     test_trial_indices: Integer[Array, " test_trials"],
     parameters: Mapping[str, Float_],
 ) -> float:
@@ -70,8 +70,8 @@ def evaluate_held_out(
 
     Parameters
     ----------
-    loss_fn_generator : object
-        Initialized loss function generator with a
+    loss_fn : object
+        Initialized loss function with a
         ``present_and_predict_trials_loss`` method.
     test_trial_indices : Integer[Array, " test_trials"]
         Indices of held-out trials.
@@ -84,7 +84,7 @@ def evaluate_held_out(
         Negative log-likelihood on the held-out trials.
 
     """
-    nll = loss_fn_generator.present_and_predict_trials_loss(  # type: ignore[union-attr]
+    nll = loss_fn.present_and_predict_trials_loss(  # type: ignore[union-attr]
         test_trial_indices, parameters
     )
     return float(nll)
@@ -104,7 +104,7 @@ def cross_validate(
     Parameters
     ----------
     fitter : ScipyDE
-        Configured fitter (stores dataset, loss_fn_generator, params, bounds).
+        Configured fitter (stores dataset, loss_fn, params, bounds).
     trial_mask : Bool[Array, " trial_count"]
         Base trial mask applied before fold splitting.
     fold_field : str
@@ -178,9 +178,7 @@ def cross_validate(
                     fold_test_nll.append(0.0)
                     continue
 
-                nll = evaluate_held_out(
-                    fitter.loss_fn_generator, test_indices, params
-                )
+                nll = evaluate_held_out(fitter.loss_fn, test_indices, params)
                 fold_test_nll.append(nll)
 
                 # Accumulate into per-subject CV total

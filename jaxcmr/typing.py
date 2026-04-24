@@ -9,7 +9,6 @@ package.
 
 from typing import (
     Any,
-    Callable,
     Iterable,
     Mapping,
     NotRequired,
@@ -20,7 +19,6 @@ from typing import (
     runtime_checkable,
 )
 
-import numpy as np
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, PRNGKeyArray, Real, Shaped
 
 Float_ = Float[Array, ""] | float | int
@@ -45,7 +43,7 @@ __all__ = [
     "MemorySearchModelFactory",
     "Memory",
     "Context",
-    "LossFnGenerator",
+    "LossFn",
     "LikelihoodMaskFn",
     "FitResult",
     "CVResult",
@@ -349,24 +347,25 @@ class MemorySearchModelFactory(Protocol):
 
 
 @runtime_checkable
-class LossFnGenerator(Protocol):
-    """Generates loss function for model fitting."""
+class LossFn(Protocol):
+    """Loss function for model fitting."""
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
+        """Initialize with the specified trials and trial data."""
 
     def __call__(
         self,
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Return the loss value for the specified model parameters."""
+        x: Float[Array, " parameters n_samples"],
+    ) -> Float[Array, " n_samples"]:
+        """Return one loss per parameter vector."""
         ...
 
 
@@ -382,10 +381,10 @@ class FitResult(TypedDict):
     fitness: list[float]
     """List of one or more fitness values (e.g., for single-fit or per-subject fits)."""
 
-    nit: NotRequired[list[int]]
+    nit: list[int]
     """Number of optimizer generations run for each fit."""
 
-    converged: NotRequired[list[bool]]
+    converged: list[bool]
     """Whether each fit met the optimizer convergence criterion."""
 
     fits: dict[str, list[float]]
@@ -440,6 +439,8 @@ class FittingAlgorithm(Protocol):
         - 'fixed': dict of fixed parameters and their values
         - 'free': dict of free parameters and their parameter bounds
         - 'fitness': fitness value(s) of the optimized parameters
+        - 'nit': optimizer generations run for each fit
+        - 'converged': convergence status for each fit
         - 'fits': dictionary of free parameters and their optimized value(s)
     """
 
@@ -448,8 +449,8 @@ class FittingAlgorithm(Protocol):
         dataset: RecallDataset,
         features: Optional[Float[Array, "word_pool_items features_count"]],
         base_params: Mapping[str, Float_],
-        model_factory: Type[MemorySearchModelFactory],
-        loss_fn_generator: Type[LossFnGenerator],
+        model_factory_cls: Type[MemorySearchModelFactory],
+        loss_fn_cls: Type[LossFn],
         hyperparams: Optional[dict[str, Any]] = None,
     ):
         """
@@ -459,8 +460,8 @@ class FittingAlgorithm(Protocol):
             dataset: The dataset containing trial data (including 'subject').
             features: Optional feature matrix aligned to the vocabulary.
             base_params: A dictionary of parameters that are held fixed.
-            model_factory: Class implementing MemorySearchModelFactory.
-            loss_fn_generator: Class implementing LossFnGenerator.
+            model_factory_cls: Class implementing MemorySearchModelFactory.
+            loss_fn_cls: Class implementing LossFn.
             hyperparams: Optional dictionary of hyperparameters for the fitting routine.
                 May include 'bounds' (dict[str, list[float]]) and other keys
                 like 'num_steps', 'pop_size', etc.
@@ -508,3 +509,7 @@ class TrialSimulator(Protocol):
           rng: Random key.
         """
         ...
+
+
+# Compatibility aliases. Do not use in new code.
+LossFnGenerator = LossFn

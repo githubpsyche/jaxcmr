@@ -27,6 +27,7 @@ __all__ = [
     "find_project_root",
     "generate_trial_mask",
     "generate_recall_mask",
+    "make_subject_trial_masks",
     "load_data",
     "limit_to_first_subjects",
     "save_dict_to_hdf5",
@@ -135,6 +136,17 @@ def generate_recall_mask(
     if recall_query is None:
         return jnp.ones_like(data["recalls"], dtype=bool)
     return jnp.asarray(eval(recall_query), dtype=bool)
+
+
+def make_subject_trial_masks(
+    trial_mask: Bool[Array, " trials"], subject_vector: Integer[Array, " trials"]
+):
+    """Returns a list of subject-specific masks and the list of unique subjects."""
+    unique_subjects = np.unique(subject_vector)
+    subject_masks = [
+        (subject_vector == s) & trial_mask.astype(bool) for s in unique_subjects
+    ]
+    return subject_masks, unique_subjects
 
 
 def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:

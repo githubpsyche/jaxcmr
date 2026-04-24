@@ -1,0 +1,165 @@
+{
+    "fixed": {
+        "allow_repeated_recalls": 0.0,
+        "learn_after_context_update": 0.0
+    },
+    "free": {
+        "encoding_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "start_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "recall_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "shared_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "item_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "learning_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "primacy_scale": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "primacy_decay": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "choice_sensitivity": [
+            2.220446049250313e-16,
+            100.0
+        ]
+    },
+    "fitness": [
+        627.2630615234375
+    ],
+    "fits": {
+        "allow_repeated_recalls": [
+            0.0
+        ],
+        "learn_after_context_update": [
+            0.0
+        ],
+        "encoding_drift_rate": [
+            0.932208776473999
+        ],
+        "start_drift_rate": [
+            0.3391849994659424
+        ],
+        "recall_drift_rate": [
+            0.9145865440368652
+        ],
+        "shared_support": [
+            50.86037063598633
+        ],
+        "item_support": [
+            29.83419418334961
+        ],
+        "learning_rate": [
+            0.9913985729217529
+        ],
+        "primacy_scale": [
+            97.55469512939453
+        ],
+        "primacy_decay": [
+            8.999144483823329e-05
+        ],
+        "choice_sensitivity": [
+            5.017934799194336
+        ],
+        "subject": [
+            63
+        ]
+    },
+    "nit": [
+        154
+    ],
+    "converged": [
+        true
+    ],
+    "hyperparameters": {
+        "bounds": {
+            "encoding_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "start_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "recall_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "shared_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "item_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "learning_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "primacy_scale": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "primacy_decay": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "choice_sensitivity": [
+                2.220446049250313e-16,
+                100.0
+            ]
+        },
+        "num_steps": 1000,
+        "pop_size": 15,
+        "population_size": 135,
+        "relative_tolerance": 0.0001,
+        "absolute_tolerance": 0.0,
+        "cross_over_rate": 0.9,
+        "diff_w": [
+            0.5,
+            1.0
+        ],
+        "best_of": 1,
+        "init": "latinhypercube",
+        "boundary_handling": "resample",
+        "seed": 0,
+        "nonfinite_penalty": 1e+30
+    },
+    "fit_time": 5.229242624998733,
+    "run_tag": "evosax_dithered_rtol1e4_best_of_1",
+    "data_tag": "HealeyKahana2014",
+    "trial_query": "data['listtype'] == -1",
+    "model": "WeirdCMRNoStop",
+    "name": "HealeyKahana2014_WeirdCMRNoStop_evosax_dithered_rtol1e4_best_of_1",
+    "components": {
+        "mfc_create_fn": "jaxcmr.components.linear_memory.init_mfc",
+        "mcf_create_fn": "jaxcmr.components.linear_memory.init_mcf",
+        "context_create_fn": "jaxcmr.components.context.init",
+        "termination_policy_create_fn": "jaxcmr.components.termination.NoStopTermination"
+    },
+    "fit_algorithm": "jaxcmr.fitting.EvosaxDE",
+    "loss_function": "jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator",
+    "model_factory": "jaxcmr.models.cmr.make_factory",
+    "embedding_path": "",
+    "emotion_feature_path": "",
+    "feature_column": "6",
+    "concat_features": "False"
+}

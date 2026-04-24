@@ -6,10 +6,10 @@ contribute to the negative log-likelihood.
 
 """
 
-from typing import Callable, Iterable, Mapping, Optional, Type
+from typing import Iterable, Mapping, Optional, Type
 
 import numpy as np
-from jax import jit, lax, vmap
+from jax import lax, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import log_likelihood
@@ -18,16 +18,17 @@ from jaxcmr.typing import (
     Float,
     Float_,
     Integer,
-    RecallDataset,
     MemorySearchModelFactory,
+    RecallDataset,
 )
 
 
 __all__ = [
-    "MemorySearchLikelihoodFnGenerator",
+    "MemorySearchLikelihoodLoss",
 ]
 
-class MemorySearchLikelihoodFnGenerator:
+
+class MemorySearchLikelihoodLoss:
     """Unmasked sequential likelihood with per-trial study contexts.
 
     Re-presents the study list for each trial before scoring the recall
@@ -37,18 +38,18 @@ class MemorySearchLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
 
         Args:
-          model_factory: Class implementing `MemorySearchModelFactory`.
+          model_factory_cls: Class implementing `MemorySearchModelFactory`.
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
-        self.create_model = model_factory(dataset, features).create_trial_model
+        self.create_model = model_factory_cls(dataset, features).create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
 
         # Reindex the recalled items so they match the "present_lists" indexing
@@ -101,38 +102,19 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Returns a loss function specialized to trials and free parameters.
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        """Returns one loss per parameter vector."""
+        free_param_names = tuple(free_param_names)
 
-        The returned function accepts either one parameter vector or a matrix of
-        parameter vectors and returns corresponding negative log-likelihood values.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          base_params: Fixed parameters.
-          free_param_names: Names and order of free parameters.
-        """
-
-        @jit
-        def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-            """Returns loss for one parameter vector."""
-            param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
+        def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
+            param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
             return self.present_and_predict_trials_loss(
                 trial_indices, {**base_params, **param_dict}
             )
 
-        @jit
-        def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
-            """Returns one loss per parameter vector."""
+        return vmap(loss_for_one_sample, in_axes=1)(x)
 
-            def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return self.present_and_predict_trials_loss(
-                    trial_indices, {**base_params, **param_dict}
-                )
 
-            # vmap applies loss_for_one_sample across the leading dimension of x
-            return vmap(loss_for_one_sample, in_axes=1)(x)
-
-        # Return a function that checks the dimensionality of x at runtime
-        return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+# Compatibility aliases. Do not use in new code.
+MemorySearchLikelihoodFnGenerator = MemorySearchLikelihoodLoss

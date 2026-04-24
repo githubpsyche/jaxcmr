@@ -9,13 +9,16 @@ MCF (memory-to-feature/item) association matrices.
 
 from typing import Mapping
 
-from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from jaxcmr.typing import Array, Context, Float, Float_, Int_
 
-__all__ = ["LinearMemory"]
+__all__ = [
+    "LinearMemory",
+    "init_mfc",
+    "init_mcf",
+]
 
 
 class LinearMemory(Pytree):
@@ -118,8 +121,8 @@ def init_mcf(
     context_feature_count = context.size
 
     base_memory = jnp.full((context_feature_count - 1, item_count), shared_support)
-    base_memory = lax.fori_loop(
-        0, item_count, lambda i, m: m.at[i, i].set(item_support), base_memory
+    item_memory = jnp.eye(context_feature_count - 1, item_count) * (
+        item_support - shared_support
     )
     start_list = jnp.zeros((1, item_count))
-    return LinearMemory(jnp.vstack((start_list, base_memory)))
+    return LinearMemory(jnp.vstack((start_list, base_memory + item_memory)))

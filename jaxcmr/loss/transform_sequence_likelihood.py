@@ -7,10 +7,10 @@ contribute to the negative log-likelihood.
 
 """
 
-from typing import Callable, Iterable, Mapping, Optional, Type
+from typing import Iterable, Mapping, Optional, Type
 
 import numpy as np
-from jax import jit, lax, vmap
+from jax import lax, vmap
 from jax import numpy as jnp
 
 from jaxcmr.helpers import log_likelihood
@@ -28,9 +28,12 @@ from jaxcmr.typing import (
 __all__ = [
     "mask_trailing_terminations",
     "mask_first_recall",
-    "MemorySearchLikelihoodFnGenerator",
-    "ExcludeFirstRecallLikelihoodFnGenerator",
-    "ExcludeTerminationLikelihoodFnGenerator",
+    "MemorySearchLikelihoodLoss",
+    "AccumulatingMemorySearchLikelihoodLoss",
+    "ExcludeFirstRecallLikelihoodLoss",
+    "ExcludeTerminationLikelihoodLoss",
+    "AccumulatingExcludeTerminationLikelihoodLoss",
+    "SkippingAccumulatingExcludeTerminationLikelihoodLoss",
 ]
 
 
@@ -57,7 +60,7 @@ def mask_first_recall(
     return mask.at[0].set(False)
 
 
-class MemorySearchLikelihoodFnGenerator:
+class MemorySearchLikelihoodLoss:
     """Masked sequential likelihood with per-trial study contexts.
 
     Re-presents the study list for each trial before scoring the recall
@@ -68,7 +71,7 @@ class MemorySearchLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
         mask_likelihoods: LikelihoodMaskFn,
@@ -76,14 +79,14 @@ class MemorySearchLikelihoodFnGenerator:
         """Initializes the generator with dataset, factory, and mask.
 
         Args:
-            model_factory: Class implementing `MemorySearchModelFactory`.
+            model_factory_cls: Class implementing `MemorySearchModelFactory`.
             dataset: Recall dataset with presentations and recalls.
             features: Optional feature matrix for word-pool items.
             mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        self.create_model = model_factory(dataset, features).create_trial_model
+        self.create_model = model_factory_cls(dataset, features).create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
-        
+
         # Reindex the recalled items so they match the "present_lists" indexing
         trials = np.array(dataset["recalls"])
         for trial_index in range(trials.shape[0]):
@@ -141,44 +144,113 @@ class MemorySearchLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        """Returns a loss function specialized to trials and free parameters.
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        """Returns one loss per parameter vector."""
+        free_param_names = tuple(free_param_names)
 
-        The returned function accepts either one parameter vector or a matrix of
-        parameter vectors and returns corresponding negative log-likelihood values.
-
-        Args:
-          trial_indices: Trials to evaluate.
-          base_params: Fixed parameters.
-          free_param_names: Names and order of free parameters.
-        """
-
-        @jit
-        def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-            """Returns loss for one parameter vector."""
-            param_dict = {key: x[i] for i, key in enumerate(free_param_names)}
+        def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
+            param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
             return self.present_and_predict_trials_loss(
                 trial_indices, {**base_params, **param_dict}
             )
 
-        @jit
-        def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
-            """Returns one loss per parameter vector."""
+        return vmap(loss_for_one_sample, in_axes=1)(x)
 
-            def loss_for_one_sample(x_row: jnp.ndarray) -> Float[Array, ""]:
-                param_dict = {key: x_row[i] for i, key in enumerate(free_param_names)}
-                return self.present_and_predict_trials_loss(
-                    trial_indices, {**base_params, **param_dict}
+
+class AccumulatingMemorySearchLikelihoodLoss(MemorySearchLikelihoodLoss):
+    """Masked sequential likelihood that accumulates trial loss inside the scan."""
+
+    def predict_trial_loss(
+        self,
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> Float[Array, ""]:
+        """Returns the masked negative log likelihood for one trial."""
+        present = self.present_lists[trial_index]
+        model = self.create_model(trial_index, parameters)
+        model = lax.fori_loop(
+            0, present.size, lambda i, m: m.experience(present[i]), model
+        )
+        model = model.start_retrieving()
+
+        def step(carry, xs):
+            model, loss = carry
+            choice, keep = xs
+            probability = model.outcome_probability(choice)
+            loss += lax.cond(
+                keep,
+                lambda: -jnp.log(probability),
+                lambda: jnp.asarray(0.0, dtype=probability.dtype),
+            )
+            return (model.retrieve(choice), loss), None
+
+        (_, loss), _ = lax.scan(
+            step,
+            (model, jnp.asarray(0.0)),
+            (self.trials[trial_index], self.trial_masks[trial_index]),
+        )
+        return loss
+
+    def present_and_predict_trials_loss(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        parameters: Mapping[str, Float_],
+    ) -> Float[Array, ""]:
+        """Returns negative log-likelihood with per-trial models after masking."""
+        losses = vmap(self.predict_trial_loss, in_axes=(0, None))(
+            trial_indices, parameters
+        )
+        return jnp.sum(losses)
+
+
+class SkippingAccumulatingMemorySearchLikelihoodLoss(
+    AccumulatingMemorySearchLikelihoodLoss
+):
+    """Accumulating likelihood that skips trailing unscored recall events."""
+
+    def predict_trial_loss(
+        self,
+        trial_index: Integer[Array, ""],
+        parameters: Mapping[str, Float_],
+    ) -> Float[Array, ""]:
+        """Returns the masked negative log likelihood for one trial."""
+        present = self.present_lists[trial_index]
+        model = self.create_model(trial_index, parameters)
+        model = lax.fori_loop(
+            0, present.size, lambda i, m: m.experience(present[i]), model
+        )
+        model = model.start_retrieving()
+        trial_mask = self.trial_masks[trial_index]
+        active_mask = jnp.flip(jnp.cumsum(jnp.flip(trial_mask.astype(jnp.int32)))) > 0
+
+        def step(carry, xs):
+            def skip_step(carry):
+                return carry
+
+            def score_step(carry):
+                model, loss = carry
+                probability = model.outcome_probability(choice)
+                loss += lax.cond(
+                    keep,
+                    lambda: -jnp.log(probability),
+                    lambda: jnp.asarray(0.0, dtype=probability.dtype),
                 )
+                return model.retrieve(choice), loss
 
-            # vmap applies loss_for_one_sample across the leading dimension of x
-            return vmap(loss_for_one_sample, in_axes=1)(x)
+            choice, keep, active = xs
+            carry = lax.cond(active, score_step, skip_step, carry)
+            return carry, None
 
-        # Return a function that checks the dimensionality of x at runtime
-        return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+        (_, loss), _ = lax.scan(
+            step,
+            (model, jnp.asarray(0.0)),
+            (self.trials[trial_index], trial_mask, active_mask),
+        )
+        return loss
 
 
-class ExcludeFirstRecallLikelihoodFnGenerator:
+class ExcludeFirstRecallLikelihoodLoss:
     """Returns loss while ignoring the first recall event in each trial.
 
     Initializes a mask-enabled generator internally with a helper that
@@ -187,12 +259,12 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
-        self._inner = MemorySearchLikelihoodFnGenerator(
-            model_factory,
+        self._inner = MemorySearchLikelihoodLoss(
+            model_factory_cls,
             dataset,
             features,
             mask_likelihoods=mask_first_recall,
@@ -203,11 +275,12 @@ class ExcludeFirstRecallLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        return self._inner(trial_indices, base_params, free_param_names)
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        return self._inner(trial_indices, base_params, free_param_names, x)
 
 
-class ExcludeTerminationLikelihoodFnGenerator:
+class ExcludeTerminationLikelihoodLoss:
     """Returns loss while ignoring trailing termination events.
 
     Trailing zeros in the recall matrix denote explicit termination actions.
@@ -217,12 +290,12 @@ class ExcludeTerminationLikelihoodFnGenerator:
 
     def __init__(
         self,
-        model_factory: Type[MemorySearchModelFactory],
+        model_factory_cls: Type[MemorySearchModelFactory],
         dataset: RecallDataset,
         features: Optional[Float[Array, " word_pool_items features_count"]],
     ) -> None:
-        self._inner = MemorySearchLikelihoodFnGenerator(
-            model_factory,
+        self._inner = MemorySearchLikelihoodLoss(
+            model_factory_cls,
             dataset,
             features,
             mask_likelihoods=mask_trailing_terminations,
@@ -233,5 +306,74 @@ class ExcludeTerminationLikelihoodFnGenerator:
         trial_indices: Integer[Array, " trials"],
         base_params: Mapping[str, Float_],
         free_param_names: Iterable[str],
-    ) -> Callable[[np.ndarray], Float[Array, ""]]:
-        return self._inner(trial_indices, base_params, free_param_names)
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        return self._inner(trial_indices, base_params, free_param_names, x)
+
+
+class AccumulatingExcludeTerminationLikelihoodLoss:
+    """Returns excluded-termination loss by accumulating NLL inside scans."""
+
+    def __init__(
+        self,
+        model_factory_cls: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        self._inner = AccumulatingMemorySearchLikelihoodLoss(
+            model_factory_cls,
+            dataset,
+            features,
+            mask_likelihoods=mask_trailing_terminations,
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        return self._inner(trial_indices, base_params, free_param_names, x)
+
+
+class SkippingAccumulatingExcludeTerminationLikelihoodLoss:
+    """Returns excluded-termination loss while skipping trailing no-op events."""
+
+    def __init__(
+        self,
+        model_factory_cls: Type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Optional[Float[Array, " word_pool_items features_count"]],
+    ) -> None:
+        self._inner = SkippingAccumulatingMemorySearchLikelihoodLoss(
+            model_factory_cls,
+            dataset,
+            features,
+            mask_likelihoods=mask_trailing_terminations,
+        )
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        return self._inner(trial_indices, base_params, free_param_names, x)
+
+
+# Compatibility aliases. Do not use in new code.
+MemorySearchLikelihoodFnGenerator = MemorySearchLikelihoodLoss
+AccumulatingMemorySearchLikelihoodFnGenerator = AccumulatingMemorySearchLikelihoodLoss
+SkippingAccumulatingMemorySearchLikelihoodFnGenerator = (
+    SkippingAccumulatingMemorySearchLikelihoodLoss
+)
+ExcludeFirstRecallLikelihoodFnGenerator = ExcludeFirstRecallLikelihoodLoss
+ExcludeTerminationLikelihoodFnGenerator = ExcludeTerminationLikelihoodLoss
+AccumulatingExcludeTerminationLikelihoodFnGenerator = (
+    AccumulatingExcludeTerminationLikelihoodLoss
+)
+SkippingAccumulatingExcludeTerminationLikelihoodFnGenerator = (
+    SkippingAccumulatingExcludeTerminationLikelihoodLoss
+)
