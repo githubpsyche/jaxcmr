@@ -11,7 +11,7 @@ import numpy as np
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.termination import NoStopTermination, PositionalTermination
 from jaxcmr.helpers import make_dataset
 from jaxcmr.fitting.scipy import make_scipy_loss_fn
 from jaxcmr.models.cmr import make_factory as base_make_factory
@@ -23,6 +23,12 @@ BaseCMRFactory = base_make_factory(
     LinearMemory.init_mcf,
     TemporalContext.init,
     PositionalTermination,
+)
+NoStopCMRFactory = base_make_factory(
+    LinearMemory.init_mfc,
+    LinearMemory.init_mcf,
+    TemporalContext.init,
+    NoStopTermination,
 )
 
 
@@ -91,14 +97,6 @@ def test_old_loss_names_remain_import_aliases():
     assert (
         transform_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator
         is transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss
-    )
-    assert (
-        transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodFnGenerator
-        is transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodLoss
-    )
-    assert (
-        transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodFnGenerator
-        is transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodLoss
     )
     assert (
         set_permutation_likelihood.MemorySearchLikelihoodFnGenerator
@@ -308,69 +306,6 @@ def test_transform_predict_trial_valid_probabilities():
     assert probs.shape == (3,)
     assert jnp.all(probs > 0).item()
     assert jnp.all(probs <= 1).item()
-
-
-def test_transform_accumulating_exclude_termination_matches_existing_loss():
-    """Behavior: accumulating exclude-termination loss matches current loss."""
-    from jaxcmr.loss.transform_sequence_likelihood import (
-        AccumulatingExcludeTerminationLikelihoodLoss,
-        ExcludeTerminationLikelihoodLoss,
-        SkippingAccumulatingExcludeTerminationLikelihoodLoss,
-    )
-
-    dataset = _dataset()
-    params = _params()
-    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
-    current = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
-    accumulating = AccumulatingExcludeTerminationLikelihoodLoss(
-        BaseCMRFactory, dataset, None
-    )
-    skipping = SkippingAccumulatingExcludeTerminationLikelihoodLoss(
-        BaseCMRFactory, dataset, None
-    )
-
-    current_loss = current._inner.present_and_predict_trials_loss(trial_idx, params)
-    accumulating_loss = accumulating._inner.present_and_predict_trials_loss(
-        trial_idx, params
-    )
-    skipping_loss = skipping._inner.present_and_predict_trials_loss(trial_idx, params)
-
-    np.testing.assert_allclose(accumulating_loss, current_loss, rtol=1e-6, atol=1e-6)
-    np.testing.assert_allclose(skipping_loss, current_loss, rtol=1e-6, atol=1e-6)
-
-
-def test_transform_accumulating_loss_matches_existing_loss_call():
-    """Behavior: accumulating loss matches current loss call."""
-    from jaxcmr.loss.transform_sequence_likelihood import (
-        AccumulatingExcludeTerminationLikelihoodLoss,
-        ExcludeTerminationLikelihoodLoss,
-        SkippingAccumulatingExcludeTerminationLikelihoodLoss,
-    )
-
-    dataset = _dataset()
-    params = _params()
-    trial_idx = jnp.array([0, 1], dtype=jnp.int32)
-    free = ["encoding_drift_rate", "recall_drift_rate"]
-    x = jnp.array(
-        [
-            [params["encoding_drift_rate"], 0.7],
-            [params["recall_drift_rate"], 0.5],
-        ]
-    )
-    current = ExcludeTerminationLikelihoodLoss(BaseCMRFactory, dataset, None)
-    accumulating = AccumulatingExcludeTerminationLikelihoodLoss(
-        BaseCMRFactory, dataset, None
-    )
-    skipping = SkippingAccumulatingExcludeTerminationLikelihoodLoss(
-        BaseCMRFactory, dataset, None
-    )
-
-    current_loss = current(trial_idx, params, free, x)
-    accumulating_loss = accumulating(trial_idx, params, free, x)
-    skipping_loss = skipping(trial_idx, params, free, x)
-
-    np.testing.assert_allclose(accumulating_loss, current_loss, rtol=1e-6, atol=1e-6)
-    np.testing.assert_allclose(skipping_loss, current_loss, rtol=1e-6, atol=1e-6)
 
 
 # ── set_permutation_likelihood ──────────────────────────────────────────────
@@ -687,18 +622,6 @@ def test_sequence_variant_losses_match_scipy_adapter():
         (
             "transform exclude termination",
             transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss(
-                BaseCMRFactory, dataset, None
-            ),
-        ),
-        (
-            "transform accumulating exclude termination",
-            transform_sequence_likelihood.AccumulatingExcludeTerminationLikelihoodLoss(
-                BaseCMRFactory, dataset, None
-            ),
-        ),
-        (
-            "transform skipping accumulating exclude termination",
-            transform_sequence_likelihood.SkippingAccumulatingExcludeTerminationLikelihoodLoss(
                 BaseCMRFactory, dataset, None
             ),
         ),

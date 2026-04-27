@@ -8,10 +8,11 @@ temporal recency (last-studied item has highest activation).
 from typing import Any
 
 import jax.numpy as jnp
+import numpy as np
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jax import random
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.termination import NoStopTermination, PositionalTermination
 from jaxcmr.helpers import make_dataset
 from jaxcmr.simulation import simulate_study_free_recall_and_forced_stop
 
@@ -81,7 +82,6 @@ def _endpoint_parameters(blend_weight: float) -> dict[str, Any]:
         "mfc_sensitivity": 1.0,
         "blend_weight": blend_weight,
     }
-
 
 # ── positional CMR ──────────────────────────────────────────────────────────
 

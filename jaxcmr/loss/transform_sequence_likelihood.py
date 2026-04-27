@@ -29,11 +29,8 @@ __all__ = [
     "mask_trailing_terminations",
     "mask_first_recall",
     "MemorySearchLikelihoodLoss",
-    "AccumulatingMemorySearchLikelihoodLoss",
     "ExcludeFirstRecallLikelihoodLoss",
     "ExcludeTerminationLikelihoodLoss",
-    "AccumulatingExcludeTerminationLikelihoodLoss",
-    "SkippingAccumulatingExcludeTerminationLikelihoodLoss",
 ]
 
 
@@ -158,98 +155,6 @@ class MemorySearchLikelihoodLoss:
         return vmap(loss_for_one_sample, in_axes=1)(x)
 
 
-class AccumulatingMemorySearchLikelihoodLoss(MemorySearchLikelihoodLoss):
-    """Masked sequential likelihood that accumulates trial loss inside the scan."""
-
-    def predict_trial_loss(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Returns the masked negative log likelihood for one trial."""
-        present = self.present_lists[trial_index]
-        model = self.create_model(trial_index, parameters)
-        model = lax.fori_loop(
-            0, present.size, lambda i, m: m.experience(present[i]), model
-        )
-        model = model.start_retrieving()
-
-        def step(carry, xs):
-            model, loss = carry
-            choice, keep = xs
-            probability = model.outcome_probability(choice)
-            loss += lax.cond(
-                keep,
-                lambda: -jnp.log(probability),
-                lambda: jnp.asarray(0.0, dtype=probability.dtype),
-            )
-            return (model.retrieve(choice), loss), None
-
-        (_, loss), _ = lax.scan(
-            step,
-            (model, jnp.asarray(0.0)),
-            (self.trials[trial_index], self.trial_masks[trial_index]),
-        )
-        return loss
-
-    def present_and_predict_trials_loss(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Returns negative log-likelihood with per-trial models after masking."""
-        losses = vmap(self.predict_trial_loss, in_axes=(0, None))(
-            trial_indices, parameters
-        )
-        return jnp.sum(losses)
-
-
-class SkippingAccumulatingMemorySearchLikelihoodLoss(
-    AccumulatingMemorySearchLikelihoodLoss
-):
-    """Accumulating likelihood that skips trailing unscored recall events."""
-
-    def predict_trial_loss(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Returns the masked negative log likelihood for one trial."""
-        present = self.present_lists[trial_index]
-        model = self.create_model(trial_index, parameters)
-        model = lax.fori_loop(
-            0, present.size, lambda i, m: m.experience(present[i]), model
-        )
-        model = model.start_retrieving()
-        trial_mask = self.trial_masks[trial_index]
-        active_mask = jnp.flip(jnp.cumsum(jnp.flip(trial_mask.astype(jnp.int32)))) > 0
-
-        def step(carry, xs):
-            def skip_step(carry):
-                return carry
-
-            def score_step(carry):
-                model, loss = carry
-                probability = model.outcome_probability(choice)
-                loss += lax.cond(
-                    keep,
-                    lambda: -jnp.log(probability),
-                    lambda: jnp.asarray(0.0, dtype=probability.dtype),
-                )
-                return model.retrieve(choice), loss
-
-            choice, keep, active = xs
-            carry = lax.cond(active, score_step, skip_step, carry)
-            return carry, None
-
-        (_, loss), _ = lax.scan(
-            step,
-            (model, jnp.asarray(0.0)),
-            (self.trials[trial_index], trial_mask, active_mask),
-        )
-        return loss
-
-
 class ExcludeFirstRecallLikelihoodLoss:
     """Returns loss while ignoring the first recall event in each trial.
 
@@ -311,69 +216,7 @@ class ExcludeTerminationLikelihoodLoss:
         return self._inner(trial_indices, base_params, free_param_names, x)
 
 
-class AccumulatingExcludeTerminationLikelihoodLoss:
-    """Returns excluded-termination loss by accumulating NLL inside scans."""
-
-    def __init__(
-        self,
-        model_factory_cls: Type[MemorySearchModelFactory],
-        dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
-    ) -> None:
-        self._inner = AccumulatingMemorySearchLikelihoodLoss(
-            model_factory_cls,
-            dataset,
-            features,
-            mask_likelihoods=mask_trailing_terminations,
-        )
-
-    def __call__(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        base_params: Mapping[str, Float_],
-        free_param_names: Iterable[str],
-        x: jnp.ndarray,
-    ) -> Float[Array, " n_samples"]:
-        return self._inner(trial_indices, base_params, free_param_names, x)
-
-
-class SkippingAccumulatingExcludeTerminationLikelihoodLoss:
-    """Returns excluded-termination loss while skipping trailing no-op events."""
-
-    def __init__(
-        self,
-        model_factory_cls: Type[MemorySearchModelFactory],
-        dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
-    ) -> None:
-        self._inner = SkippingAccumulatingMemorySearchLikelihoodLoss(
-            model_factory_cls,
-            dataset,
-            features,
-            mask_likelihoods=mask_trailing_terminations,
-        )
-
-    def __call__(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        base_params: Mapping[str, Float_],
-        free_param_names: Iterable[str],
-        x: jnp.ndarray,
-    ) -> Float[Array, " n_samples"]:
-        return self._inner(trial_indices, base_params, free_param_names, x)
-
-
 # Compatibility aliases. Do not use in new code.
 MemorySearchLikelihoodFnGenerator = MemorySearchLikelihoodLoss
-AccumulatingMemorySearchLikelihoodFnGenerator = AccumulatingMemorySearchLikelihoodLoss
-SkippingAccumulatingMemorySearchLikelihoodFnGenerator = (
-    SkippingAccumulatingMemorySearchLikelihoodLoss
-)
 ExcludeFirstRecallLikelihoodFnGenerator = ExcludeFirstRecallLikelihoodLoss
 ExcludeTerminationLikelihoodFnGenerator = ExcludeTerminationLikelihoodLoss
-AccumulatingExcludeTerminationLikelihoodFnGenerator = (
-    AccumulatingExcludeTerminationLikelihoodLoss
-)
-SkippingAccumulatingExcludeTerminationLikelihoodFnGenerator = (
-    SkippingAccumulatingExcludeTerminationLikelihoodLoss
-)
