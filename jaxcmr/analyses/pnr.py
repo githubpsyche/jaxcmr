@@ -15,6 +15,7 @@ __all__ = [
     "available_recalls_with_repeats",
     "actual_recalls_with_repeats",
     "conditional_pnr_with_repeats",
+    "recall_position_label",
     "plot_pnr",
 ]
 
@@ -28,6 +29,19 @@ from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..repetition import all_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
+
+
+def recall_position_label(query_recall_position: int) -> str:
+    """Return a human-readable label for a 0-based recall position."""
+    recall_number = query_recall_position + 1
+    special = {1: "First", 2: "Second", 3: "Third"}
+    if recall_number in special:
+        return f"Probability of {special[recall_number]} Recall"
+    if 10 <= recall_number % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(recall_number % 10, "th")
+    return f"Probability of {recall_number}{suffix} Recall"
 
 
 def fixed_pres_pnr(
@@ -372,5 +386,10 @@ def plot_pnr(
             confidence_level=confidence_level,
         )
 
-    set_plot_labels(axis, "Study Position", "Probability of Nth Recall", contrast_name)
+    set_plot_labels(
+        axis,
+        "Study Position",
+        recall_position_label(query_recall_position),
+        contrast_name,
+    )
     return axis
