@@ -61,9 +61,10 @@ class TemporalContext(Pytree):
             drift_rate: Drift rate parameter.
         """
         context_input = normalize_magnitude(context_input)
+        overlap = jnp.dot(self.state, context_input)
         rho = jnp.sqrt(
-            1 + jnp.square(drift_rate) * (jnp.square(self.state * context_input) - 1)
-        ) - (drift_rate * (self.state * context_input))
+            1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
+        ) - (drift_rate * overlap)
         return self.replace(
             state=normalize_magnitude((rho * self.state) + (drift_rate * context_input))
         )
@@ -112,9 +113,10 @@ class TemporalContext(Pytree):
             (normalize_magnitude(inlist_input) * ratio)
             + (self.outlist_input * (1 - ratio))
         )
+        overlap = jnp.dot(self.state, context_input)
         rho = jnp.sqrt(
-            1 + jnp.square(drift_rate) * (jnp.square(self.state * context_input) - 1)
-        ) - (drift_rate * (self.state * context_input))
+            1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
+        ) - (drift_rate * overlap)
         return self.replace(
             state=normalize_magnitude(
                 (rho * self.state) + (drift_rate * context_input)

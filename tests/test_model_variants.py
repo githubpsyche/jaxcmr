@@ -40,6 +40,11 @@ _BASE_PARAMS: dict[str, Any] = {
     "allow_repeated_recalls": False,
 }
 
+_RECENCY_PARAMS: dict[str, Any] = {
+    **_BASE_PARAMS,
+    "primacy_scale": 0.0,
+}
+
 _REPETITION_LIST = [1, 2, 1, 3]
 
 
@@ -109,7 +114,7 @@ def test_positional_cmr_shows_recency():
         TemporalContext.init,
         PositionalTermination,
     )
-    params = {**_BASE_PARAMS, "mfc_sensitivity": 1.0}
+    params = {**_RECENCY_PARAMS, "mfc_sensitivity": 1.0}
 
     # Act / When
     activations = _run_study_recall_cycle(Factory, params)
@@ -150,7 +155,7 @@ def test_distinct_contexts_cmr_shows_recency():
     )
 
     # Act / When
-    activations = _run_study_recall_cycle(Factory, _BASE_PARAMS)
+    activations = _run_study_recall_cycle(Factory, _RECENCY_PARAMS)
 
     # Assert / Then
     assert jnp.all(jnp.isfinite(activations)).item()
@@ -184,7 +189,7 @@ def test_no_reinstate_cmr_shows_recency():
     )
 
     # Act / When
-    activations = _run_study_recall_cycle(Factory, _BASE_PARAMS)
+    activations = _run_study_recall_cycle(Factory, _RECENCY_PARAMS)
 
     # Assert / Then
     assert jnp.all(jnp.isfinite(activations)).item()
@@ -217,7 +222,7 @@ def test_blend_positional_cmr_shows_recency():
         TemporalContext.init,
         PositionalTermination,
     )
-    params = {**_BASE_PARAMS, "mfc_sensitivity": 1.0, "blend_weight": 0.5}
+    params = {**_RECENCY_PARAMS, "mfc_sensitivity": 1.0, "blend_weight": 0.5}
 
     # Act / When
     activations = _run_study_recall_cycle(Factory, params)
@@ -331,7 +336,7 @@ def test_drift_positional_cmr_shows_recency():
         TemporalContext.init,
         PositionalTermination,
     )
-    params = {**_BASE_PARAMS, "repetition_drift_rate": 0.3}
+    params = {**_RECENCY_PARAMS, "repetition_drift_rate": 0.3}
 
     # Act / When
     activations = _run_study_recall_cycle(Factory, params)
@@ -366,7 +371,7 @@ def test_reinf_positional_cmr_shows_recency():
         PositionalTermination,
     )
     params = {
-        **_BASE_PARAMS,
+        **_RECENCY_PARAMS,
         "mfc_sensitivity": 1.0,
         "first_pres_reinforcement": 0.5,
     }
@@ -607,7 +612,7 @@ def test_additive_semantic_cmr_shows_recency():
         [0.1, 0.1, 1.0, 0.1],
         [0.1, 0.1, 0.1, 1.0],
     ])
-    params = {**_BASE_PARAMS, "semantic_scale": 0.5}
+    params = {**_RECENCY_PARAMS, "semantic_scale": 0.5}
 
     # Act / When
     activations = _run_semantic_study_recall_cycle(Factory, params, dataset, features)
@@ -767,7 +772,7 @@ def test_multiplicative_semantic_cmr_shows_recency():
         [0.1, 0.1, 1.0, 0.1],
         [0.1, 0.1, 0.1, 1.0],
     ])
-    params = {**_BASE_PARAMS, "semantic_scale": 0.5}
+    params = {**_RECENCY_PARAMS, "semantic_scale": 0.5}
 
     # Act / When
     activations = _run_semantic_study_recall_cycle(Factory, params, dataset, features)
