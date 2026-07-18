@@ -270,6 +270,7 @@ def set_plot_labels(
     axis.tick_params(labelsize=14)
     for loc in ("top", "right"):
         axis.spines[loc].set_visible(False)
-    axis.yaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.3)
+    axis.set_axisbelow(True)
+    axis.yaxis.grid(True, color="#e8e8e8", linewidth=0.8)
 
     return axis

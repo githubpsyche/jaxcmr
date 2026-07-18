@@ -22,6 +22,19 @@ from jaxcmr.analyses.lagrank import LagRankTestResult
 from jaxcmr.helpers import make_dataset
 
 
+def _point_count(axis: Axes) -> int:
+    return sum(len(line.get_xdata()) for line in axis.lines if line.get_marker() == "o")
+
+
+def _horizontal_line_count(axis: Axes, y: float = 0.5) -> int:
+    count = 0
+    for line in axis.lines:
+        ydata = np.asarray(line.get_ydata(), dtype=float)
+        if ydata.size > 1 and np.allclose(ydata, y):
+            count += 1
+    return count
+
+
 # ---- Tabulation: no cue → skipped ----
 
 class TestNoCueSkipped:
@@ -167,6 +180,11 @@ class TestPlotCueCenteredLagrank:
             dataset, mask, should_tabulate=should_tab, size=1, labels=["Test"]
         )
         assert isinstance(ax, Axes)
+        assert _point_count(ax) == 1
+        assert len(ax.patches) == 0
+        assert _horizontal_line_count(ax) == 0
+        np.testing.assert_allclose(ax.get_xlim(), (-0.5, 0.5))
+        assert ax.get_ylabel() == "Organization Score"
 
 
 # ---- JIT compatibility ----

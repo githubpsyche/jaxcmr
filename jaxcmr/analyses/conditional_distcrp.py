@@ -27,7 +27,7 @@ from ..helpers import apply_by_subject
 from ..math import cosine_similarity_matrix
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
-from .distcrp import compute_distance_bins_min_count
+from .distcrp import _resolve_distance_bins
 
 
 class DistanceTabulation(Pytree):
@@ -209,7 +209,7 @@ def plot_dist_crp(
         Sequence[Bool[Array, " trial_count recall_events"]]
         | Bool[Array, " trial_count recall_events"]
     ),
-    features: Float[Array, "word_count features_count"],
+    features: Optional[Float[Array, "word_count features_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -217,8 +217,9 @@ def plot_dist_crp(
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
-    bin_edges: Optional[Float[Array, " edges"]] = None,
+    bin_edges: Float[Array, " edges"] | str | None = "percentile",
     bin_centers: Optional[Float[Array, " bins"]] = None,
+    distance_matrix: Optional[Float[Array, " item_count item_count"]] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot distance-binned CRP with conditional tabulation.
@@ -231,7 +232,7 @@ def plot_dist_crp(
         Boolean masks selecting trials per dataset.
     should_tabulate : Sequence | array
         Boolean masks aligned to recall events.
-    features : Float[Array, "word_count features_count"]
+    features : Float[Array, "word_count features_count"], optional
         Feature matrix aligned with vocabulary items.
     color_cycle : list[str], optional
         Colors for successive datasets.
@@ -247,10 +248,13 @@ def plot_dist_crp(
         Distance increment for expanding each bin.
     bin_source_index : int, optional
         Dataset index providing binning availability.
-    bin_edges : Float[Array, " edges"], optional
-        Interior bin edges; computed if ``None``.
+    bin_edges : {"percentile", "min_count"} or Float[Array, " edges"], optional
+        Named binning rule or explicit interior bin edges. ``None`` uses
+        ``"percentile"``.
     bin_centers : Float[Array, " bins"], optional
         Bin centers matching ``bin_edges``.
+    distance_matrix : Float[Array, " item_count item_count"], optional
+        Pairwise distance matrix indexed by item identifier.
     confidence_level : float, optional
         Confidence level for the bounds.
 
@@ -270,23 +274,24 @@ def plot_dist_crp(
     if not isinstance(should_tabulate, Sequence):
         should_tabulate = [jnp.array(should_tabulate)]
 
-    distances = 1 - cosine_similarity_matrix(features)
+    if (features is None) == (distance_matrix is None):
+        raise ValueError("Exactly one of features or distance_matrix must be provided.")
 
-    if bin_edges is None:
-        bin_edges, bin_centers = compute_distance_bins_min_count(
-            datasets[bin_source_index],
-            distances,
-            min_transitions_per_subject=min_transitions_per_subject,
-            step=bin_step,
-            trial_mask=trial_masks[bin_source_index],
-        )
-    elif bin_centers is None:
-        min_distance = jnp.min(distances)
-        max_distance = jnp.max(distances)
-        full_edges = jnp.concatenate(
-            (min_distance[None], bin_edges, max_distance[None])
-        )
-        bin_centers = 0.5 * (full_edges[:-1] + full_edges[1:])
+    if distance_matrix is None:
+        distances = 1 - cosine_similarity_matrix(features)
+    else:
+        distances = jnp.asarray(distance_matrix)
+
+    bin_edges, bin_centers = _resolve_distance_bins(
+        datasets,
+        trial_masks,
+        distances,
+        bin_edges,
+        bin_centers,
+        min_transitions_per_subject,
+        bin_step,
+        bin_source_index,
+    )
 
     for data_index, data in enumerate(datasets):
         data_with_mask = {

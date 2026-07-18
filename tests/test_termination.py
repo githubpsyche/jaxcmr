@@ -30,12 +30,18 @@ class _FakeModel:
         recall_total=0,
         item_count=3,
         studied=None,
+        activations=None,
     ):
         self.recallable = jnp.array(recallable, dtype=bool)
         self.is_active = jnp.array(is_active)
         self.recall_total = jnp.array(recall_total, dtype=int)
         self.item_count = item_count
         self.studied = studied if studied is not None else jnp.ones_like(self.recallable)
+        self._activations = (
+            jnp.zeros(item_count)
+            if activations is None
+            else jnp.array(activations, dtype=float)
+        )
         self.study_index = jnp.array(item_count, dtype=int)
         self.context = _FakeContext(item_count)
 
@@ -48,8 +54,11 @@ class _FakeModel:
     def retrieve(self, choice):  # noqa: D401
         return self
 
+    def candidate_activations(self, candidates):  # noqa: D401
+        return self._activations * candidates
+
     def activations(self):  # noqa: D401
-        return jnp.zeros(self.item_count)
+        return self.candidate_activations(self.recallable)
 
     def outcome_probability(self, choice):
         return jnp.array(0.1)
@@ -255,10 +264,40 @@ def test_support_ratio_returns_one_when_no_items_recallable():
     # Arrange / Given
     params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     policy = SupportRatioTermination(3, params)
-    model = _FakeModelWithMcf(recallable=[False, False, False])
+    model = _FakeModel(recallable=[False, False, False])
 
     # Act / When
     p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
 
     # Assert / Then
     assert jnp.isclose(p_stop, 1.0).item()
+
+
+def test_support_ratio_uses_candidate_activations_without_mcf():
+    """Behavior: ``SupportRatioTermination`` uses model candidate activations.
+
+    Given:
+      - A model with one recalled and two recallable studied items.
+      - Candidate activations but no ``mcf`` attribute.
+    When:
+      - ``stop_probability`` is called.
+    Then:
+      - The stop probability is computed from candidate activations.
+    Why this matters:
+      - Support-ratio stopping must reflect what the model treats as
+        retrieval support, not a specific internal memory matrix.
+    """
+    # Arrange / Given
+    params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
+    policy = SupportRatioTermination(3, params)
+    model = _FakeModel(
+        recallable=[False, True, True],
+        activations=[2.0, 4.0, 6.0],
+    )
+
+    # Act / When
+    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+
+    # Assert / Then
+    expected = 0.01 + jnp.exp(-0.5 * 5.0)
+    assert jnp.isclose(p_stop, expected).item()

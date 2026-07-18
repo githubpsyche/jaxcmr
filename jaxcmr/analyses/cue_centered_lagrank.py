@@ -328,7 +328,7 @@ def plot_cue_centered_lagrank(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot cue-centered lag-rank factors as a bar chart.
+    """Plot cue-centered lag-rank factors as points with error bars.
 
     Parameters
     ----------
@@ -341,7 +341,7 @@ def plot_cue_centered_lagrank(
     size : int
         Max study positions an item can occupy.
     color_cycle : list[str] or None
-        Colors for each bar.
+        Colors for each point.
     labels : Sequence[str] or None
         Labels for each dataset.
     contrast_name : str or None
@@ -354,7 +354,7 @@ def plot_cue_centered_lagrank(
     Returns
     -------
     Axes
-        Matplotlib Axes with the bar chart.
+        Matplotlib Axes with cue-centered lag-rank points and error bars.
 
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
@@ -367,7 +367,6 @@ def plot_cue_centered_lagrank(
         should_tabulate = [jnp.array(should_tabulate)]
 
     x = np.arange(len(datasets))
-    width = 0.5
 
     for d_idx, data in enumerate(datasets):
         data_with_mask = {**data, "_should_tabulate": should_tabulate[d_idx]}
@@ -386,13 +385,22 @@ def plot_cue_centered_lagrank(
         else:
             yerr = [[0], [0]]
 
-        axis.bar(x[d_idx], mean, width, color=color, label=labels[d_idx], alpha=0.7)
         axis.errorbar(
-            x[d_idx], mean, yerr=yerr, fmt="none", color="black", capsize=5
+            x[d_idx],
+            mean,
+            yerr=yerr,
+            fmt="o",
+            color=color,
+            ecolor="black",
+            capsize=5,
+            linestyle="none",
+            markersize=6,
+            label=labels[d_idx],
+            zorder=3,
         )
 
-    axis.axhline(y=0.5, color="gray", linestyle="--", alpha=0.5)
     axis.set_xticks(x)
     axis.set_xticklabels(labels, fontsize=14)
-    set_plot_labels(axis, "", "Temporal Factor", contrast_name)
+    axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    set_plot_labels(axis, "", "Organization Score", contrast_name)
     return axis

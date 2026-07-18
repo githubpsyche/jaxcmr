@@ -23,6 +23,7 @@ from jaxcmr.math import (
 )
 from jaxcmr.typing import (
     Array,
+    Bool,
     ContextCreateFn,
     Float,
     Float_,
@@ -224,6 +225,20 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
+    def candidate_activations(
+        self, candidates: Bool[Array, " item_count"]
+    ) -> Float[Array, " item_count"]:
+        """Compute retrieval activations for candidate items.
+
+        Returns
+        -------
+        Float[Array, " item_count"]
+            Relative retrieval support for each item.
+
+        """
+        _activations = self.mcf.probe(self.context.state) * candidates
+        return (power_scale(_activations, self.mcf_sensitivity) + lb) * candidates
+
     def activations(self) -> Float[Array, " item_count"]:
         """Compute retrieval activations for all items from context-to-item memory.
 
@@ -233,8 +248,7 @@ class CMR(Pytree):
             Relative retrieval support for each item.
 
         """
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+        return self.candidate_activations(self.recallable)
 
     def stop_probability(self) -> Float[Array, ""]:
         """Compute probability of terminating recall.

@@ -28,6 +28,19 @@ from jaxcmr.analyses.lagrank import test_lagrank_vs_comparison as run_test_compa
 from jaxcmr.helpers import make_dataset
 
 
+def _point_count(axis: Axes) -> int:
+    return sum(len(line.get_xdata()) for line in axis.lines if line.get_marker() == "o")
+
+
+def _horizontal_line_count(axis: Axes, y: float = 0.5) -> int:
+    count = 0
+    for line in axis.lines:
+        ydata = np.asarray(line.get_ydata(), dtype=float)
+        if ydata.size > 1 and np.allclose(ydata, y):
+            count += 1
+    return count
+
+
 # ---------------------------------------------------------------------------
 # 1. percentile_rank — core utility
 # ---------------------------------------------------------------------------
@@ -373,6 +386,11 @@ class TestPlotLagrank:
         mask = jnp.ones(2, dtype=bool)
         ax = plot_lagrank(ds, mask, size=1)
         assert isinstance(ax, Axes)
+        assert _point_count(ax) == 1
+        assert len(ax.patches) == 0
+        assert _horizontal_line_count(ax) == 0
+        np.testing.assert_allclose(ax.get_xlim(), (-0.5, 0.5))
+        assert ax.get_ylabel() == "Organization Score"
         plt.close("all")
 
     def test_multiple_conditions(self):
@@ -387,4 +405,9 @@ class TestPlotLagrank:
         masks = [jnp.ones(2, dtype=bool), jnp.ones(2, dtype=bool)]
         ax = plot_lagrank([ds1, ds2], masks, labels=["A", "B"], size=1)
         assert isinstance(ax, Axes)
+        assert _point_count(ax) == 2
+        assert len(ax.patches) == 0
+        assert _horizontal_line_count(ax) == 0
+        np.testing.assert_allclose(ax.get_xlim(), (-0.5, 1.5))
+        assert ax.get_ylabel() == "Organization Score"
         plt.close("all")

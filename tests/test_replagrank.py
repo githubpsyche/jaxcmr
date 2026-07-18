@@ -21,6 +21,19 @@ from jaxcmr.analyses.replagrank import (
 from jaxcmr.helpers import make_dataset
 
 
+def _point_count(axis: Axes) -> int:
+    return sum(len(line.get_xdata()) for line in axis.lines if line.get_marker() == "o")
+
+
+def _horizontal_line_count(axis: Axes, y: float = 0.5) -> int:
+    count = 0
+    for line in axis.lines:
+        ydata = np.asarray(line.get_ydata(), dtype=float)
+        if ydata.size > 1 and np.allclose(ydata, y):
+            count += 1
+    return count
+
+
 # ---- Tabulation: non-repeated items are skipped ----
 
 class TestTabulationSkipsNonRepeated:
@@ -166,6 +179,11 @@ class TestPlotRepLagrank:
         mask = jnp.ones(2, dtype=bool)
         ax = plot_rep_lagrank(dataset, mask, min_lag=2, size=2, labels=["1st", "2nd"])
         assert isinstance(ax, Axes)
+        assert _point_count(ax) == 2
+        assert len(ax.patches) == 0
+        assert _horizontal_line_count(ax) == 0
+        np.testing.assert_allclose(ax.get_xlim(), (-0.5, 1.5))
+        assert ax.get_ylabel() == "Organization Score"
 
 
 # ---- JIT compatibility ----

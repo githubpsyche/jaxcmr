@@ -618,6 +618,120 @@ def test_additive_semantic_cmr_shows_recency():
     assert activations[-1] > activations[0]  # recency
 
 
+def test_additive_semantic_matrix_cmr_zero_scale_matches_base_cmr():
+    """Behavior: matrix-semantic CMR nests base CMR when semantic scale is zero.
+
+    Given:
+      - A direct item-by-item similarity matrix.
+      - Base and matrix-semantic CMR factories.
+    When:
+      - The semantic scale is zero.
+    Then:
+      - Post-recall activations match the base CMR model.
+    Why this matters:
+      - Direct Dupertuys similarity matrices should be optional support, not
+        an unintended change to ordinary CMR.
+    """
+    # Arrange / Given
+    from jaxcmr.models.cmr import make_factory as make_base_factory
+    from jaxcmr.models.additive_semantic_matrix_cmr import make_factory
+
+    base_factory_cls = make_base_factory(
+        LinearMemory.init_mfc,
+        LinearMemory.init_mcf,
+        TemporalContext.init,
+        PositionalTermination,
+    )
+    semantic_factory_cls = make_factory(
+        LinearMemory.init_mfc,
+        LinearMemory.init_mcf,
+        TemporalContext.init,
+        PositionalTermination,
+    )
+    dataset: Any = {
+        **_DATASET,
+        "pres_itemids": jnp.array([[1, 2, 3, 4], [1, 2, 3, 4]], dtype=jnp.int32),
+    }
+    similarity_matrix = jnp.array([
+        [1.0, 0.9, 0.1, 0.1],
+        [0.9, 1.0, 0.1, 0.1],
+        [0.1, 0.1, 1.0, 0.2],
+        [0.1, 0.1, 0.2, 1.0],
+    ])
+    params = {**_BASE_PARAMS, "semantic_scale": 0.0}
+
+    # Act / When
+    base_model = _run_sequence(
+        base_factory_cls(dataset, None).create_model(params),
+        [1, 2, 3, 4],
+        [1],
+    )
+    semantic_model = _run_sequence(
+        semantic_factory_cls(dataset, similarity_matrix).create_trial_model(
+            jnp.int32(0),
+            params,
+        ),
+        [1, 2, 3, 4],
+        [1],
+    )
+
+    # Assert / Then
+    assert jnp.allclose(base_model.activations(), semantic_model.activations()).item()
+
+
+def test_additive_semantic_matrix_cmr_boosts_related_candidates():
+    """Behavior: direct similarity support favors related available targets.
+
+    Given:
+      - Item 2 is more similar to the just-recalled item 1 than item 4 is.
+    When:
+      - Semantic scale is positive.
+    Then:
+      - Item 2 receives a larger activation boost than item 4.
+    Why this matters:
+      - The matrix factory should index direct item IDs, not compute a second
+        cosine similarity over similarity rows.
+    """
+    # Arrange / Given
+    from jaxcmr.models.additive_semantic_matrix_cmr import make_factory
+
+    Factory = make_factory(
+        LinearMemory.init_mfc,
+        LinearMemory.init_mcf,
+        TemporalContext.init,
+        PositionalTermination,
+    )
+    dataset: Any = {
+        **_DATASET,
+        "pres_itemids": jnp.array([[1, 2, 3, 4], [1, 2, 3, 4]], dtype=jnp.int32),
+    }
+    similarity_matrix = jnp.array([
+        [1.0, 0.9, 0.1, 0.1],
+        [0.9, 1.0, 0.1, 0.1],
+        [0.1, 0.1, 1.0, 0.2],
+        [0.1, 0.1, 0.2, 1.0],
+    ])
+    zero_params = {**_BASE_PARAMS, "semantic_scale": 0.0}
+    semantic_params = {**_BASE_PARAMS, "semantic_scale": 1.0}
+    factory = Factory(dataset, similarity_matrix)
+
+    # Act / When
+    zero_model = _run_sequence(
+        factory.create_trial_model(jnp.int32(0), zero_params),
+        [1, 2, 3, 4],
+        [1],
+    )
+    semantic_model = _run_sequence(
+        factory.create_trial_model(jnp.int32(0), semantic_params),
+        [1, 2, 3, 4],
+        [1],
+    )
+    boosts = semantic_model.activations() - zero_model.activations()
+
+    # Assert / Then
+    assert boosts[1] > boosts[3]
+
+
 # ── multiplicative semantic CMR ─────────────────────────────────────────────
 
 def test_multiplicative_semantic_cmr_shows_recency():

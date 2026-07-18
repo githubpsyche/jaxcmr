@@ -544,7 +544,7 @@ def plot_lagrank(
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot subject-wise lag-rank factors as a bar chart.
+    """Plot subject-wise lag-rank factors as points with error bars.
 
     Parameters
     ----------
@@ -553,9 +553,9 @@ def plot_lagrank(
     trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
         Boolean mask(s) selecting trials.
     color_cycle : list[str] or None
-        Colors for each bar.
+        Colors for each point.
     labels : Sequence[str] or None
-        Labels for each bar.
+        Labels for each point.
     contrast_name : str or None
         Legend title.
     axis : Axes or None
@@ -568,7 +568,7 @@ def plot_lagrank(
     Returns
     -------
     Axes
-        Matplotlib Axes with the lag-rank bar chart.
+        Matplotlib Axes with lag-rank points and error bars.
 
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
@@ -592,13 +592,22 @@ def plot_lagrank(
         else:
             yerr = [[0], [0]]
 
-        axis.bar(x[i], mean, color=color, label=labels[i], alpha=0.7, width=0.6)
         axis.errorbar(
-            x[i], mean, yerr=yerr, fmt="none", color="black", capsize=5
+            x[i],
+            mean,
+            yerr=yerr,
+            fmt="o",
+            color=color,
+            ecolor="black",
+            capsize=5,
+            linestyle="none",
+            markersize=6,
+            label=labels[i],
+            zorder=3,
         )
 
-    axis.axhline(y=0.5, color="gray", linestyle="--", alpha=0.5)
     axis.set_xticks(x)
     axis.set_xticklabels(labels, fontsize=14)
-    set_plot_labels(axis, "", "Temporal Factor", contrast_name)
+    axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    set_plot_labels(axis, "", "Organization Score", contrast_name)
     return axis

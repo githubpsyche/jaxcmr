@@ -106,11 +106,12 @@ class SupportRatioTermination(Pytree):
 
         def compute_stop_probability() -> Float[Array, ""]:
             """Returns stop probability derived from support ratios."""
-            support = model.mcf.probe(model.context.state)
             recalled_mask = jnp.logical_and(model.studied, ~model.recallable)
             not_recalled_mask = jnp.logical_and(model.studied, model.recallable)
-            recalled_support = jnp.sum(support * recalled_mask)
-            not_recalled_support = jnp.sum(support * not_recalled_mask)
+            recalled_support = jnp.sum(model.candidate_activations(recalled_mask))
+            not_recalled_support = jnp.sum(
+                model.candidate_activations(not_recalled_mask)
+            )
             support_ratio = lax.cond(
                 recalled_support > 0.0,
                 lambda: not_recalled_support / recalled_support,

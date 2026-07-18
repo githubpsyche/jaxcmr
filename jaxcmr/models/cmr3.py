@@ -73,12 +73,26 @@ class CMR3(Pytree):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
-        self.emotion_drift_rate = parameters.get("emotion_drift_rate", 1.0)
+        if "emotion_drift_rate" in parameters:
+            self.emotion_encoding_drift_rate = parameters["emotion_drift_rate"]
+            self.emotion_recall_drift_rate = parameters["emotion_drift_rate"]
+        else:
+            self.emotion_encoding_drift_rate = parameters.get(
+                "emotion_encoding_drift_rate",
+                1.0,
+            )
+            self.emotion_recall_drift_rate = parameters.get(
+                "emotion_recall_drift_rate",
+                self.recall_drift_rate,
+            )
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
         self.phi_emot_modulates_temporal = parameters.get(
             "phi_emot_modulates_temporal", False
+        )
+        self.modulate_temporal_emotion_by_primacy = parameters.get(
+            "modulate_temporal_emotion_by_primacy", False
         )
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
@@ -98,10 +112,14 @@ class CMR3(Pytree):
         )
 
         # --- Phi_emot ---
-        # Scales L^CF_sw (emotional pathway); also temporal when
-        # phi_emot_modulates_temporal is True.
+        # emotion_scale controls L^CF_sw (emotional/source pathway).
+        # temporal_emotion_scale controls temporal MCF learning when
+        # phi_emot_modulates_temporal is True. Omitting it preserves the
+        # historical tied-scale behavior.
         emotion_scale = parameters["emotion_scale"]
+        temporal_emotion_scale = parameters.get("temporal_emotion_scale", emotion_scale)
         self.phi_emot = emotion_scale * self.is_emotional
+        self.temporal_phi_emot = temporal_emotion_scale * self.is_emotional
 
         # --- Temporal pathway ---
         self.context = context_create_fn(list_length)
@@ -149,7 +167,7 @@ class CMR3(Pytree):
         # --- Emotional pathway ---
         emot_context_input = self.emotion_mfc.probe(item)
         new_emotion_context = self.emotion_context.integrate(
-            emot_context_input, self.emotion_drift_rate
+            emot_context_input, self.emotion_encoding_drift_rate
         )
         emot_learning_state = lax.cond(
             self.learn_after_context_update,
@@ -158,18 +176,31 @@ class CMR3(Pytree):
         )
 
         phi_emot_i = jnp.maximum(0.0, self.phi_emot[self.study_index])
+        temporal_phi_emot_i = jnp.maximum(
+            0.0, self.temporal_phi_emot[self.study_index]
+        )
         p = self.primacy[self.study_index]
 
         def _multiplicative():
             return p * phi_emot_i
 
+        def _temporal_multiplicative():
+            return p * (1.0 + temporal_phi_emot_i)
+
         def _additive():
             return p + jnp.maximum(-p, phi_emot_i)
 
-        # Temporal MCF: primacy only, or primacy + phi_emot when broad
+        def _temporal_additive():
+            return p + jnp.maximum(-p, temporal_phi_emot_i)
+
+        # Temporal MCF: primacy only, or broad emotion modulation when enabled.
         temporal_mcf_lr = lax.cond(
             self.phi_emot_modulates_temporal,
-            _additive,
+            lambda: lax.cond(
+                self.modulate_temporal_emotion_by_primacy,
+                _temporal_multiplicative,
+                _temporal_additive,
+            ),
             lambda: p,
         )
 
@@ -225,7 +256,7 @@ class CMR3(Pytree):
         )
         # Emotional context reinstatement
         new_emotion_context = self.emotion_context.integrate(
-            self.emotion_mfc.probe(item), self.recall_drift_rate
+            self.emotion_mfc.probe(item), self.emotion_recall_drift_rate
         )
         return self.replace(
             context=new_context,

@@ -68,11 +68,22 @@ def compute_distance_bins_percentiles(
 
     """
 
-    upper_indices = jnp.triu_indices(distance_matrix.shape[0], k=1)
-    upper_values = distance_matrix[upper_indices]
-    interior = jnp.percentile(upper_values, percentiles)
+    matrix = np.asarray(distance_matrix)
+    upper_indices = np.triu_indices(matrix.shape[0], k=1)
+    upper_values = matrix[upper_indices]
+    upper_values = upper_values[np.isfinite(upper_values)]
+    if upper_values.size == 0:
+        raise ValueError("No finite distance values found.")
+    output_dtype = jnp.asarray(distance_matrix).dtype
+    interior = jnp.asarray(
+        np.percentile(upper_values, np.asarray(percentiles)), dtype=output_dtype
+    )
     full_edges = jnp.concatenate(
-        (upper_values.min()[None], interior, upper_values.max()[None])
+        (
+            jnp.asarray([upper_values.min()], dtype=output_dtype),
+            interior,
+            jnp.asarray([upper_values.max()], dtype=output_dtype),
+        )
     )
     centers = 0.5 * (full_edges[:-1] + full_edges[1:])
     return interior, centers
@@ -396,10 +407,58 @@ def dist_crp(
     return actual.sum(0) / possible.sum(0)
 
 
+def _resolve_distance_bins(
+    datasets: Sequence[RecallDataset],
+    trial_masks: Sequence[Bool[Array, " trial_count"]],
+    distances: Float[Array, " item_count item_count"],
+    bin_edges: Float[Array, " edges"] | str | None,
+    bin_centers: Optional[Float[Array, " bins"]],
+    min_transitions_per_subject: int,
+    bin_step: float,
+    bin_source_index: int,
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Resolve named or explicit bin edges for plot wrappers."""
+    if bin_edges is None:
+        bin_edges = "percentile"
+
+    if isinstance(bin_edges, str):
+        if bin_edges == "min_count":
+            return compute_distance_bins_min_count(
+                datasets[bin_source_index],
+                distances,
+                min_transitions_per_subject=min_transitions_per_subject,
+                step=bin_step,
+                trial_mask=trial_masks[bin_source_index],
+            )
+        if bin_edges == "percentile":
+            return compute_distance_bins_percentiles(
+                distances,
+                jnp.linspace(1, 99, 10),
+            )
+        raise ValueError("bin_edges must be 'min_count', 'percentile', or an array.")
+
+    bin_edges = jnp.asarray(bin_edges)
+    if bin_centers is None:
+        finite_distances = np.asarray(distances)
+        finite_distances = finite_distances[np.isfinite(finite_distances)]
+        if finite_distances.size == 0:
+            raise ValueError("No finite distance values found.")
+        output_dtype = jnp.asarray(distances).dtype
+        full_edges = jnp.concatenate(
+            (
+                jnp.asarray([finite_distances.min()], dtype=output_dtype),
+                bin_edges,
+                jnp.asarray([finite_distances.max()], dtype=output_dtype),
+            )
+        )
+        bin_centers = 0.5 * (full_edges[:-1] + full_edges[1:])
+    return bin_edges, jnp.asarray(bin_centers)
+
+
 def plot_dist_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    features: Float[Array, "word_count features_count"],
+    features: Optional[Float[Array, "word_count features_count"]] = None,
     color_cycle: Optional[list[str]] = None,
     labels: Optional[Sequence[str]] = None,
     contrast_name: Optional[str] = None,
@@ -407,8 +466,9 @@ def plot_dist_crp(
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
-    bin_edges: Optional[Float[Array, " edges"]] = None,
+    bin_edges: Float[Array, " edges"] | str | None = "percentile",
     bin_centers: Optional[Float[Array, " bins"]] = None,
+    distance_matrix: Optional[Float[Array, " item_count item_count"]] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot distance-binned CRP curves aggregated by subject.
@@ -419,7 +479,7 @@ def plot_dist_crp(
         Recall datasets to contrast.
     trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
         Boolean masks selecting trials per dataset.
-    features : Float[Array, "word_count features_count"]
+    features : Float[Array, "word_count features_count"], optional
         Feature matrix whose rows align with vocabulary items.
     color_cycle : list[str], optional
         Colors for successive datasets.
@@ -435,10 +495,13 @@ def plot_dist_crp(
         Distance increment for expanding each bin.
     bin_source_index : int
         Dataset index providing binning availability counts.
-    bin_edges : Float[Array, " edges"], optional
-        Interior bin edges; computed from data if ``None``.
+    bin_edges : {"percentile", "min_count"} or Float[Array, " edges"], optional
+        Named binning rule or explicit interior bin edges. ``None`` uses
+        ``"percentile"``.
     bin_centers : Float[Array, " bins"], optional
         Bin centers matching ``bin_edges``.
+    distance_matrix : Float[Array, " item_count item_count"], optional
+        Pairwise distance matrix indexed by item identifier.
     confidence_level : float
         Confidence level for error bounds.
 
@@ -456,23 +519,24 @@ def plot_dist_crp(
 
 
 
-    distances = 1 - cosine_similarity_matrix(features)
+    if (features is None) == (distance_matrix is None):
+        raise ValueError("Exactly one of features or distance_matrix must be provided.")
 
-    if bin_edges is None:
-        bin_edges, bin_centers = compute_distance_bins_min_count(
-            datasets[bin_source_index],
-            distances,
-            min_transitions_per_subject=min_transitions_per_subject,
-            step=bin_step,
-            trial_mask=trial_masks[bin_source_index],
-        )
-    elif bin_centers is None:
-        min_distance = jnp.min(distances)
-        max_distance = jnp.max(distances)
-        full_edges = jnp.concatenate(
-            (min_distance[None], bin_edges, max_distance[None])
-        )
-        bin_centers = 0.5 * (full_edges[:-1] + full_edges[1:])
+    if distance_matrix is None:
+        distances = 1 - cosine_similarity_matrix(features)
+    else:
+        distances = jnp.asarray(distance_matrix)
+
+    bin_edges, bin_centers = _resolve_distance_bins(
+        datasets,
+        trial_masks,
+        distances,
+        bin_edges,
+        bin_centers,
+        min_transitions_per_subject,
+        bin_step,
+        bin_source_index,
+    )
 
     for data_index, data in enumerate(datasets):
         subject_values = apply_by_subject(

@@ -1,8 +1,18 @@
 from typing import Any
 
-import jax.numpy as jnp
+import matplotlib
 
-from jaxcmr.analyses.conditional_distcrp import dist_crp as conditional_dist_crp
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import jax.numpy as jnp
+import pytest
+from matplotlib.axes import Axes
+
+from jaxcmr.analyses.conditional_distcrp import (
+    dist_crp as conditional_dist_crp,
+    plot_dist_crp as plot_conditional_dist_crp,
+)
 from jaxcmr.analyses.distcrp import dist_crp as unconditional_dist_crp
 from jaxcmr.helpers import make_dataset
 
@@ -111,3 +121,162 @@ def test_returns_all_nan_when_no_transitions_tabulated():
 
     # Assert / Then
     assert jnp.all(jnp.isnan(result))
+
+
+def test_plot_conditional_dist_crp_accepts_distance_matrix():
+    """Behavior: conditional plotting accepts a precomputed distance matrix.
+
+    Given:
+      - A small dataset with a transition mask.
+      - Explicit bin edges and centers.
+    When:
+      - ``plot_dist_crp`` is called with ``distance_matrix``.
+    Then:
+      - A Matplotlib Axes is returned.
+    Why this matters:
+      - Conditional Distance-CRP should support the same distance sources as
+        the standard Distance-CRP plotter.
+    """
+    # Arrange / Given
+    dm = jnp.array([[0., 1., 2.], [1., 0., 1.], [2., 1., 0.]])
+    recalls = jnp.array([[1, 2, 3], [1, 3, 2]], dtype=jnp.int32)
+    pres_ids = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
+    dataset: Any = {**make_dataset(recalls), "pres_itemids": pres_ids}
+    trial_mask = jnp.array([True, True])
+    should_tabulate = jnp.ones_like(recalls, dtype=bool)
+
+    # Act / When
+    axis = plot_conditional_dist_crp(
+        dataset,
+        trial_mask,
+        should_tabulate,
+        distance_matrix=dm,
+        bin_edges=jnp.array([1.5]),
+        bin_centers=jnp.array([1., 2.]),
+    )
+
+    # Assert / Then
+    assert isinstance(axis, Axes)
+    plt.close(axis.figure)
+
+
+def test_plot_conditional_dist_crp_defaults_to_percentile_bins():
+    """Behavior: conditional plotting defaults to percentile bins.
+
+    Given:
+      - A small dataset and all-True transition mask.
+    When:
+      - ``plot_dist_crp`` is called without specifying ``bin_edges``.
+    Then:
+      - A Matplotlib Axes is returned.
+    Why this matters:
+      - Conditional and standard Distance-CRP plotters should share the same
+        default binning rule.
+    """
+    # Arrange / Given
+    positions = jnp.arange(5, dtype=float)
+    dm = jnp.abs(positions[:, None] - positions[None, :])
+    recalls = jnp.array([[1, 2, 3, 4, 5], [5, 4, 3, 2, 1]], dtype=jnp.int32)
+    pres_ids = jnp.tile(jnp.arange(1, 6)[None, :], (2, 1))
+    dataset: Any = {
+        **make_dataset(recalls, subject=jnp.array([1, 2])),
+        "pres_itemids": pres_ids,
+    }
+    trial_mask = jnp.array([True, True])
+    should_tabulate = jnp.ones_like(recalls, dtype=bool)
+
+    # Act / When
+    axis = plot_conditional_dist_crp(
+        dataset,
+        trial_mask,
+        should_tabulate,
+        distance_matrix=dm,
+    )
+
+    # Assert / Then
+    assert isinstance(axis, Axes)
+    plt.close(axis.figure)
+
+
+def test_plot_conditional_dist_crp_accepts_min_count_bin_string():
+    """Behavior: conditional plotting accepts the min_count binning option.
+
+    Given:
+      - A small dataset and all-True transition mask.
+    When:
+      - ``plot_dist_crp`` is called with ``bin_edges="min_count"``.
+    Then:
+      - A Matplotlib Axes is returned.
+    Why this matters:
+      - The previous adaptive binning behavior remains selectable for the
+        conditional plotter.
+    """
+    # Arrange / Given
+    positions = jnp.arange(4, dtype=float)
+    dm = jnp.abs(positions[:, None] - positions[None, :])
+    recalls = jnp.array([[1, 2, 3, 4], [4, 3, 2, 1]], dtype=jnp.int32)
+    pres_ids = jnp.tile(jnp.arange(1, 5)[None, :], (2, 1))
+    dataset: Any = {
+        **make_dataset(recalls, subject=jnp.array([1, 2])),
+        "pres_itemids": pres_ids,
+    }
+    trial_mask = jnp.array([True, True])
+    should_tabulate = jnp.ones_like(recalls, dtype=bool)
+
+    # Act / When
+    axis = plot_conditional_dist_crp(
+        dataset,
+        trial_mask,
+        should_tabulate,
+        distance_matrix=dm,
+        bin_edges="min_count",
+        min_transitions_per_subject=1,
+    )
+
+    # Assert / Then
+    assert isinstance(axis, Axes)
+    plt.close(axis.figure)
+
+
+def test_plot_conditional_dist_crp_requires_one_distance_input():
+    """Behavior: conditional plotting requires exactly one distance source.
+
+    Given:
+      - A small dataset and transition mask.
+    When:
+      - Neither ``features`` nor ``distance_matrix`` is supplied.
+      - Both ``features`` and ``distance_matrix`` are supplied.
+    Then:
+      - Both calls raise ValueError.
+    Why this matters:
+      - The conditional plotter should reject ambiguous distance inputs.
+    """
+    # Arrange / Given
+    dm = jnp.array([[0., 1., 2.], [1., 0., 1.], [2., 1., 0.]])
+    recalls = jnp.array([[1, 2, 3], [1, 3, 2]], dtype=jnp.int32)
+    pres_ids = jnp.array([[1, 2, 3], [1, 2, 3]], dtype=jnp.int32)
+    dataset: Any = {**make_dataset(recalls), "pres_itemids": pres_ids}
+    trial_mask = jnp.array([True, True])
+    should_tabulate = jnp.ones_like(recalls, dtype=bool)
+
+    # Act / When / Assert / Then
+    with pytest.raises(ValueError, match="Exactly one"):
+        plot_conditional_dist_crp(
+            dataset,
+            trial_mask,
+            should_tabulate,
+            bin_edges=jnp.array([1.5]),
+            bin_centers=jnp.array([1., 2.]),
+        )
+
+    with pytest.raises(ValueError, match="Exactly one"):
+        plot_conditional_dist_crp(
+            dataset,
+            trial_mask,
+            should_tabulate,
+            features=jnp.eye(3),
+            distance_matrix=dm,
+            bin_edges=jnp.array([1.5]),
+            bin_centers=jnp.array([1., 2.]),
+        )
+    plt.close("all")

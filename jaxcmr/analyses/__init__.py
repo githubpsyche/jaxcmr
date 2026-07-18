@@ -2,6 +2,7 @@ __all__ = [
     "cat_lpp_by_recall",
     "cat_lpp_spc",
     "cat_recall_by_lpp",
+    "cat_recall_rate",
     "cat_spc",
     "compound_cueing_crp",
     "conditional_corec_by_cat",
@@ -12,6 +13,7 @@ __all__ = [
     "cue_centered_crp",
     "cue_centered_lagrank",
     "distcrp",
+    "distrank",
     "intrusion_error_rate",
     "joint_corec_by_lag",
     "lagrank",
@@ -33,5 +35,7 @@ __all__ = [
     "serialreplagrank",
     "spc",
     "srac",
+    "source_target_crp",
+    "target_enrichment_crp",
     "termination_probability",
 ]

@@ -24,6 +24,7 @@ from jaxcmr.math import (
 )
 from jaxcmr.typing import (
     Array,
+    Bool,
     ContextCreateFn,
     Float,
     Float_,
@@ -157,19 +158,25 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        _activations = self.mcf.probe(self.context.state) * self.recallable
+    def candidate_activations(
+        self, candidates: Bool[Array, " item_count"]
+    ) -> Float[Array, " item_count"]:
+        """Returns relative support for retrieval of candidate items given model state"""
+        _activations = self.mcf.probe(self.context.state) * candidates
         semantic_support = lax.cond(
             self.recall_total == 0,
-            lambda: jnp.zeros(self.item_count),
+            lambda: jnp.zeros_like(candidates, dtype=jnp.float32),
             lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
         )
         merged_support = power_scale(
             _activations + semantic_support,
             self.mcf_sensitivity,
         )
-        return (merged_support + lb) * self.recallable
+        return (merged_support + lb) * candidates
+
+    def activations(self) -> Float[Array, " item_count"]:
+        """Returns relative support for retrieval of each item given model state"""
+        return self.candidate_activations(self.recallable)
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""

@@ -427,7 +427,7 @@ def plot_rep_lagrank(
     axis: Optional[Axes] = None,
     confidence_level: float = 0.95,
 ) -> Axes:
-    """Plot per-presentation lag-rank factors as a grouped bar chart.
+    """Plot per-presentation lag-rank factors as points with error bars.
 
     Parameters
     ----------
@@ -440,9 +440,9 @@ def plot_rep_lagrank(
     size : int
         Maximum presentations per item.
     color_cycle : list[str] or None
-        Colors for each bar.
+        Colors for each point.
     labels : Sequence[str] or None
-        Labels for each presentation bar.
+        Labels for each presentation point.
     contrast_name : str or None
         Legend title.
     axis : Axes or None
@@ -453,7 +453,7 @@ def plot_rep_lagrank(
     Returns
     -------
     Axes
-        Matplotlib Axes with the grouped bar chart.
+        Matplotlib Axes with grouped lag-rank points and error bars.
 
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
@@ -484,17 +484,22 @@ def plot_rep_lagrank(
                 yerr = [[0], [0]]
 
             label = labels[k] if d_idx == 0 else None
-            axis.bar(
-                x[k] + offset, mean, width,
-                color=color, label=label, alpha=0.7,
-            )
             axis.errorbar(
-                x[k] + offset, mean, yerr=yerr,
-                fmt="none", color="black", capsize=5,
+                x[k] + offset,
+                mean,
+                yerr=yerr,
+                fmt="o",
+                color=color,
+                ecolor="black",
+                capsize=5,
+                linestyle="none",
+                markersize=6,
+                label=label,
+                zorder=3,
             )
 
-    axis.axhline(y=0.5, color="gray", linestyle="--", alpha=0.5)
     axis.set_xticks(x)
     axis.set_xticklabels(labels, fontsize=14)
-    set_plot_labels(axis, "", "Temporal Factor", contrast_name)
+    axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
+    set_plot_labels(axis, "", "Organization Score", contrast_name)
     return axis
