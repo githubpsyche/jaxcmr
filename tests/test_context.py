@@ -26,6 +26,61 @@ def test_preserves_unit_length_when_integrating_input():
     assert jnp.isclose(jnp.linalg.norm(updated.state), 1.0)
 
 
+def test_preserves_unit_length_across_long_list_of_small_inputs():
+    """Behavior: Analytic drift preserves temporal magnitude across a long list.
+
+    Given:
+      - A 40-item context model.
+      - Small, orthogonal nonzero inputs like those produced by high MFC learning.
+    When:
+      - All 40 inputs are integrated without output renormalization.
+    Then:
+      - Context remains unit length at every serial position.
+    Why this matters:
+      - Numerical error must not accumulate across long study lists.
+    """
+    # Arrange / Given
+    context = init(40)
+    norms = []
+
+    # Act / When
+    for item_index in range(40):
+        input_vec = jnp.zeros(41).at[item_index + 1].set(0.001)
+        context = context.integrate(input_vec, 0.999)
+        norms.append(jnp.linalg.norm(context.state))
+
+    # Assert / Then
+    assert jnp.allclose(jnp.array(norms), 1.0)
+
+
+def test_zero_input_contracts_context_without_renormalizing():
+    """Behavior: Zero input attenuates rather than renormalizes context.
+
+    Given:
+      - A unit-length context state.
+      - An exactly zero input and drift rate of ``0.6``.
+    When:
+      - ``integrate`` is invoked.
+    Then:
+      - Context contracts by ``sqrt(1 - drift_rate**2)``.
+    Why this matters:
+      - CMR3 represents neutral source input as zero and expects emotional
+        context to decay toward zero.
+    """
+    # Arrange / Given
+    context = init(1).replace(state=jnp.array([0.6, 0.8]))
+    input_vec = jnp.zeros(2)
+    drift_rate = 0.6
+
+    # Act / When
+    updated = context.integrate(input_vec, drift_rate)
+
+    # Assert / Then
+    expected = jnp.sqrt(1 - drift_rate**2) * context.state
+    assert jnp.allclose(updated.state, expected)
+    assert jnp.isclose(jnp.linalg.norm(updated.state), 0.8)
+
+
 def test_leaves_context_unchanged_when_integrating_itself():
     """Behavior: Treat the current context as a fixed point.
 
@@ -152,4 +207,3 @@ def test_outlist_integration_matches_scalar_overlap_update():
     # Assert / Then
     expected = jnp.array([0.4128904, 0.8833407, 0.0, 0.2218801, 0.0])
     assert jnp.allclose(updated.state, expected)
-

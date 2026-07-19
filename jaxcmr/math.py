@@ -64,8 +64,10 @@ def exponential_primacy_decay(
 def normalize_magnitude(
     vector: Float[Array, " features"],
 ) -> Float[Array, " features"]:
-    """Return the input vector normalized to unit length."""
-    return vector / jnp.sqrt(jnp.sum(vector**2) + lb)
+    """Return a nonzero vector at unit length, preserving an exact zero."""
+    magnitude = jnp.sqrt(jnp.sum(vector**2))
+    safe_magnitude = jnp.where(magnitude == 0, 1.0, magnitude)
+    return vector / safe_magnitude
 
 
 def cosine_similarity_matrix(

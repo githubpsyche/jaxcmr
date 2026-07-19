@@ -331,9 +331,7 @@ class EvosaxDE:
             "fit_time": time.perf_counter() - t0,
         }
 
-    def fit_subjects(
-        self, trial_mask: Bool[Array, " trials"]
-    ) -> FitResult:
+    def fit_subjects(self, trial_mask: Bool[Array, " trials"]) -> FitResult:
         """Fit each subject independently and accumulate results.
 
         Parameters
@@ -381,9 +379,7 @@ class EvosaxDE:
             if np.sum(subject_trial_masks[s]) == 0:
                 continue
 
-            fit_result = self.fit(
-                subject_trial_masks[s], int(unique_subjects[s])
-            )
+            fit_result = self.fit(subject_trial_masks[s], int(unique_subjects[s]))
             all_results["fitness"] += fit_result["fitness"]
             all_results["nit"] += fit_result["nit"]
             all_results["converged"] += fit_result["converged"]
@@ -454,9 +450,7 @@ class ScanEvosaxDE(EvosaxDE):
         )
         return outputs
 
-    def fit_subjects(
-        self, trial_mask: Bool[Array, " trials"]
-    ) -> FitResult:
+    def fit_subjects(self, trial_mask: Bool[Array, " trials"]) -> FitResult:
         """Fit each subject independently and accumulate results."""
         t0 = time.perf_counter()
 
@@ -482,7 +476,9 @@ class ScanEvosaxDE(EvosaxDE):
         }
 
         valid_subject_indices = [
-            s for s in range(len(unique_subjects)) if np.sum(subject_trial_masks[s]) != 0
+            s
+            for s in range(len(unique_subjects))
+            if np.sum(subject_trial_masks[s]) != 0
         ]
         if len(valid_subject_indices) == 0:
             all_results["fit_time"] = time.perf_counter() - t0
@@ -525,10 +521,8 @@ class ScanEvosaxDE(EvosaxDE):
             else range(1, self.all_hyperparams["best_of"])
         )
         for run_index in start_range:
-            run_fitness, run_params, run_nit, run_converged = (
-                self._compiled_run_batch(
-                    run_keys[:, run_index, :], subject_trial_indices
-                )
+            run_fitness, run_params, run_nit, run_converged = self._compiled_run_batch(
+                run_keys[:, run_index, :], subject_trial_indices
             )
             run_fitness = np.asarray(run_fitness, dtype=float)
             run_params = np.asarray(run_params, dtype=float)

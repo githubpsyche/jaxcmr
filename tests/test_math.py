@@ -52,6 +52,29 @@ def test_normalize_magnitude_handles_zero_vector():
 
     # Assert / Then
     assert not jnp.any(jnp.isnan(result)).item()
+    assert jnp.array_equal(result, vec).item()
+
+
+def test_normalize_magnitude_exactly_normalizes_small_nonzero_vector():
+    """Behavior: Small nonzero vectors are normalized without epsilon shrinkage.
+
+    Given:
+      - A vector whose magnitude is close to numerical epsilon.
+    When:
+      - ``normalize_magnitude`` is applied.
+    Then:
+      - The resulting vector has unit magnitude.
+    Why this matters:
+      - CMR's analytic context update assumes every nonzero input is unit length.
+    """
+    # Arrange / Given
+    vec = jnp.array([0.0, 0.001, 0.0])
+
+    # Act / When
+    result = normalize_magnitude(vec)
+
+    # Assert / Then
+    assert jnp.array_equal(result, jnp.array([0.0, 1.0, 0.0])).item()
 
 
 def test_exponential_primacy_decay_returns_scale_plus_one_at_zero():

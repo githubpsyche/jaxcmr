@@ -308,12 +308,8 @@ def test_scipyde_seed_is_deterministic():
 
     assert first_result["fitness"] == second_result["fitness"]
     assert first_result["nit"] == second_result["nit"]
-    np.testing.assert_allclose(
-        first_result["fits"]["x"], second_result["fits"]["x"]
-    )
-    np.testing.assert_allclose(
-        first_result["fits"]["y"], second_result["fits"]["y"]
-    )
+    np.testing.assert_allclose(first_result["fits"]["x"], second_result["fits"]["x"])
+    np.testing.assert_allclose(first_result["fits"]["y"], second_result["fits"]["y"])
 
 
 def test_reference_loss_matches_scipy_adapter():
@@ -544,9 +540,7 @@ def test_evosaxde_resamples_out_of_bounds_candidates_by_default():
     )
     population = jnp.asarray([[-1.0, 2.0], [0.25, 0.75]])
 
-    repaired = np.asarray(
-        fitter._ensure_bounds(jax.random.PRNGKey(0), population)
-    )
+    repaired = np.asarray(fitter._ensure_bounds(jax.random.PRNGKey(0), population))
 
     assert np.all(repaired >= 0.0)
     assert np.all(repaired <= 1.0)
@@ -573,9 +567,7 @@ def test_evosaxde_can_clip_out_of_bounds_candidates_for_compatibility():
     )
     population = jnp.asarray([[-1.0, 2.0], [0.25, 0.75]])
 
-    repaired = np.asarray(
-        fitter._ensure_bounds(jax.random.PRNGKey(0), population)
-    )
+    repaired = np.asarray(fitter._ensure_bounds(jax.random.PRNGKey(0), population))
 
     np.testing.assert_allclose(repaired[0], [0.0, 1.0])
     np.testing.assert_allclose(repaired[1], [0.25, 0.75])
@@ -667,12 +659,8 @@ def test_scanevosaxde_seed_is_deterministic():
     assert first_result["fitness"] == second_result["fitness"]
     assert first_result["nit"] == second_result["nit"]
     assert first_result["converged"] == second_result["converged"]
-    np.testing.assert_allclose(
-        first_result["fits"]["x"], second_result["fits"]["x"]
-    )
-    np.testing.assert_allclose(
-        first_result["fits"]["y"], second_result["fits"]["y"]
-    )
+    np.testing.assert_allclose(first_result["fits"]["x"], second_result["fits"]["x"])
+    np.testing.assert_allclose(first_result["fits"]["y"], second_result["fits"]["y"])
 
 
 def test_scanevosaxde_matches_sequential_evosaxde_on_equal_counts():
@@ -708,9 +696,7 @@ def test_scanevosaxde_matches_sequential_evosaxde_on_equal_counts():
     assert batched_result["fits"]["subject"] == sequential_result["fits"]["subject"]
     assert batched_result["nit"] == sequential_result["nit"]
     assert batched_result["converged"] == sequential_result["converged"]
-    np.testing.assert_allclose(
-        batched_result["fitness"], sequential_result["fitness"]
-    )
+    np.testing.assert_allclose(batched_result["fitness"], sequential_result["fitness"])
     np.testing.assert_allclose(
         batched_result["fits"]["x"], sequential_result["fits"]["x"]
     )
@@ -753,9 +739,7 @@ def test_mapevosaxde_matches_sequential_evosaxde_on_equal_counts():
     assert mapped_result["fits"]["subject"] == sequential_result["fits"]["subject"]
     assert mapped_result["nit"] == sequential_result["nit"]
     assert mapped_result["converged"] == sequential_result["converged"]
-    np.testing.assert_allclose(
-        mapped_result["fitness"], sequential_result["fitness"]
-    )
+    np.testing.assert_allclose(mapped_result["fitness"], sequential_result["fitness"])
     np.testing.assert_allclose(
         mapped_result["fits"]["x"], sequential_result["fits"]["x"]
     )

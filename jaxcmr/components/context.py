@@ -25,10 +25,11 @@ class TemporalContext(Pytree):
     """Drifting, unit-length context representation.
 
     The vector starts with a *start-of-list* unit (index ``0``) set to ``1`` and
-    one unit per study item initialised to ``0``. On every call to
-    :meth:`integrate`, the context drifts toward a normalised input vector while
-    remaining unit-length. This initial state is preserved to enable drift back
-    to the start-of-list context unit.
+    one unit per study item initialised to ``0``. For every nonzero input,
+    :meth:`integrate` drifts context toward the normalised input while preserving
+    unit length analytically. An exactly zero input instead contracts context
+    without renormalising it. The initial state is preserved to enable drift
+    back to the start-of-list context unit.
 
     An optional out-of-list context unit (index ``item_count + 1``) can be used
     to simulate post-study drift, but unless the drift rate is near ``1``, it
@@ -54,7 +55,12 @@ class TemporalContext(Pytree):
         context_input: Float[Array, " context_feature_units"],
         drift_rate: Float_,
     ) -> "TemporalContext":
-        """Returns context after integrating input while preserving unit length.
+        """Return context after analytically integrating a normalized input.
+
+        Nonzero input is normalized before integration. If the current state is
+        unit length, the CMR retention factor ``rho`` keeps the updated state
+        unit length without another normalization step. Exactly zero input is
+        left at zero, allowing the state magnitude to contract.
 
         Args:
             context_input: Input representation to integrate.
@@ -65,9 +71,7 @@ class TemporalContext(Pytree):
         rho = jnp.sqrt(
             1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
         ) - (drift_rate * overlap)
-        return self.replace(
-            state=normalize_magnitude((rho * self.state) + (drift_rate * context_input))
-        )
+        return self.replace(state=(rho * self.state) + (drift_rate * context_input))
 
     def _repr_markdown_(self) -> str:
         """Returns a markdown ``img`` tag of the current state."""
@@ -118,9 +122,7 @@ class TemporalContext(Pytree):
             1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
         ) - (drift_rate * overlap)
         return self.replace(
-            state=normalize_magnitude(
-                (rho * self.state) + (drift_rate * context_input)
-            ),
+            state=(rho * self.state) + (drift_rate * context_input),
             next_outlist_unit=self.next_outlist_unit + 1,
         )
 
