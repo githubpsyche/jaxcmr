@@ -366,6 +366,85 @@ def test_evosaxde_fit_returns_finite_bounded_result():
     assert 0.0 <= result["fits"]["y"][0] <= 1.0
 
 
+def test_evosaxde_explicit_restarts_reproduce_best_of_selection():
+    """Behavior: explicit-key restarts reproduce ``fit(best_of=n)``."""
+    hyperparams = {
+        "bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
+        "num_steps": 10,
+        "pop_size": 5,
+        "best_of": 3,
+        "progress_bar": False,
+        "seed": 123,
+    }
+    trial_mask = np.array([True, True, True])
+    combined_fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams=hyperparams,
+    )
+    restart_fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams=hyperparams,
+    )
+
+    combined = combined_fitter.fit(trial_mask, subject_id=1)  # type: ignore[arg-type]
+    fit_key = jax.random.fold_in(jax.random.PRNGKey(hyperparams["seed"]), 0)
+    restart_keys = jax.random.split(fit_key, hyperparams["best_of"])
+    restarts = [
+        restart_fitter.fit_once(trial_mask, key, subject_id=1)  # type: ignore[arg-type]
+        for key in restart_keys
+    ]
+    winner = min(
+        enumerate(restarts),
+        key=lambda indexed: (indexed[1]["fitness"][0], indexed[0]),
+    )[1]
+
+    assert all(result["hyperparameters"]["best_of"] == 1 for result in restarts)
+    assert combined["fitness"] == winner["fitness"]
+    assert combined["nit"] == winner["nit"]
+    assert combined["converged"] == winner["converged"]
+    assert combined["fits"]["subject"] == winner["fits"]["subject"]
+    np.testing.assert_allclose(combined["fits"]["x"], winner["fits"]["x"])
+    np.testing.assert_allclose(combined["fits"]["y"], winner["fits"]["y"])
+
+
+def test_evosaxde_fit_once_preserves_configured_key_sequence():
+    """Behavior: an explicit restart does not consume the next fit-call key."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
+            "num_steps": 2,
+            "pop_size": 5,
+            "best_of": 3,
+            "progress_bar": False,
+            "seed": 123,
+        },
+    )
+    key = jax.random.PRNGKey(987)
+
+    result = fitter.fit_once(  # type: ignore[arg-type]
+        np.array([True, True, True]),
+        key,
+        subject_id=1,
+    )
+
+    assert fitter._fit_counter == 0
+    assert fitter.all_hyperparams["best_of"] == 3
+    assert result["hyperparameters"]["best_of"] == 1
+
+
 def test_evosaxde_uses_canonical_loss_call():
     """Behavior: ``EvosaxDE`` uses canonical dynamic trial-index loss."""
     fitter = EvosaxDE(

@@ -21,6 +21,7 @@ from jaxcmr.typing import (
     Integer,
     LossFn,
     MemorySearchModelFactory,
+    PRNGKeyArray,
     RecallDataset,
 )
 
@@ -267,6 +268,59 @@ class EvosaxDE:
         best_fitness = float(best_fitness)
         best_params = np.asarray(best_params, dtype=float)
         return best_fitness, best_params, int(nit), bool(converged)
+
+    def fit_once(
+        self,
+        trial_mask: Bool[Array, " trials"],
+        key: PRNGKeyArray,
+        subject_id: int = -1,
+    ) -> FitResult:
+        """Fit one explicit-key differential-evolution restart.
+
+        Unlike :meth:`fit`, this method performs exactly one optimizer restart
+        and does not consume or advance the fitter's internal key sequence.
+        Supplying the key explicitly allows independent processes to execute
+        the restarts from one ``best_of`` fit and reduce them afterward without
+        changing the optimizer's random streams.
+
+        Parameters
+        ----------
+        trial_mask : Bool[Array, " trials"]
+            Boolean mask selecting which trials to include in the fit.
+        key : PRNGKeyArray
+            Explicit JAX PRNG key for this optimizer restart.
+        subject_id : int, optional
+            Label stored in the result dict. Defaults to -1.
+
+        Returns
+        -------
+        FitResult
+            One fitted parameter vector and its metadata.
+        """
+        t0 = time.perf_counter()
+        trial_indices = jnp.where(trial_mask)[0]
+        fitness, params, nit, converged = self._run_once(key, trial_indices)
+        hyperparameters = dict(self.all_hyperparams)
+        hyperparameters["best_of"] = 1
+        return {
+            "fixed": {k: float(v) for k, v in self.base_params.items()},
+            "free": {
+                k: self.free_parameter_bounds[k] for k in self.free_parameter_bounds
+            },
+            "fitness": [float(fitness)],
+            "fits": {
+                **{k: [float(v)] for k, v in self.base_params.items()},
+                **{
+                    param_name: [float(params[idx])]
+                    for idx, param_name in enumerate(self.free_parameter_bounds)
+                },
+                "subject": [subject_id],
+            },
+            "nit": [nit],
+            "converged": [converged],
+            "hyperparameters": hyperparameters,
+            "fit_time": time.perf_counter() - t0,
+        }
 
     def fit(
         self, trial_mask: Bool[Array, " trials"], subject_id: int = -1
