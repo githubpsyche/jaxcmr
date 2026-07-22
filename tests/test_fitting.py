@@ -45,6 +45,31 @@ class IndexedNonfiniteLoss:
         return values.at[0].set(jnp.nan)
 
 
+class ConstantLoss:
+    def __init__(self, model_factory_cls, dataset, features):
+        pass
+
+    def __call__(self, trial_indices, base_params, free_param_names, x):
+        return jnp.zeros(x.shape[1])
+
+
+class AllNonfiniteLoss:
+    def __init__(self, model_factory_cls, dataset, features):
+        pass
+
+    def __call__(self, trial_indices, base_params, free_param_names, x):
+        return jnp.full((x.shape[1],), jnp.nan)
+
+
+class MixedPenaltyConstantLoss:
+    def __init__(self, model_factory_cls, dataset, features):
+        pass
+
+    def __call__(self, trial_indices, base_params, free_param_names, x):
+        values = jnp.zeros(x.shape[1])
+        return values.at[0].set(jnp.nan)
+
+
 class DynamicQuadraticLoss:
     def __init__(self, model_factory_cls, dataset, features):
         self.target = jnp.asarray([0.25, 0.75])
@@ -1012,6 +1037,7 @@ def test_evosaxde_loose_tolerance_stops_scan_early():
 
     result = fitter.fit(np.array([True, True, True]), subject_id=1)  # type: ignore[arg-type]
 
+    assert fitter.all_hyperparams["stopping_rule"] == "population_spread"
     assert result["converged"] == [True]
     assert result["nit"][0] < 10
 
@@ -1039,6 +1065,243 @@ def test_evosaxde_strict_tolerance_runs_all_steps():
 
     assert result["converged"] == [False]
     assert result["nit"] == [5]
+
+
+def test_evosaxde_stagnation_rule_uses_absolute_windowed_improvement():
+    """Behavior: stagnation requires a full window and uses a strict threshold."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1]),
+        None,
+        {},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 1000,
+            "pop_size": 5,
+            "progress_bar": False,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 100,
+            "stagnation_tolerance": 1.0,
+        },
+    )
+
+    assert not bool(
+        fitter._has_stagnated(
+            jnp.asarray(10.0),
+            jnp.asarray(9.5),
+            jnp.asarray(99),
+            jnp.asarray([9.5]),
+        )
+    )
+    assert bool(
+        fitter._has_stagnated(
+            jnp.asarray(10.0),
+            jnp.asarray(9.5),
+            jnp.asarray(100),
+            jnp.asarray([9.5]),
+        )
+    )
+    assert not bool(
+        fitter._has_stagnated(
+            jnp.asarray(10.0),
+            jnp.asarray(9.0),
+            jnp.asarray(100),
+            jnp.asarray([9.0]),
+        )
+    )
+
+
+def test_evosaxde_stagnation_rule_stops_at_first_complete_flat_window():
+    """Behavior: a flat best NLL stops exactly after one complete window."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        ConstantLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 10,
+            "pop_size": 5,
+            "progress_bar": False,
+            "seed": 0,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 3,
+            "stagnation_tolerance": 0.01,
+        },
+    )
+
+    result = fitter.fit(np.array([True, True, True]), subject_id=1)  # type: ignore[arg-type]
+
+    assert result["converged"] == [True]
+    assert result["nit"] == [3]
+    assert result["hyperparameters"]["stopping_rule"] == "best_nll_stagnation"
+    assert result["hyperparameters"]["stagnation_window"] == 3
+    assert result["hyperparameters"]["stagnation_tolerance"] == 0.01
+
+
+def test_evosaxde_stagnation_history_uses_the_preceding_complete_window():
+    """Behavior: the circular history compares generation t with t-window."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1]),
+        None,
+        {},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 10,
+            "pop_size": 5,
+            "progress_bar": False,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 3,
+            "stagnation_tolerance": 1.0,
+        },
+    )
+    history = jnp.full((3,), 10.0)
+    stops = []
+
+    for generation, current_best in enumerate([9.0, 8.0, 7.0, 7.0, 7.0, 7.0], 1):
+        history, converged = fitter._update_stagnation_history(
+            history,
+            jnp.asarray(current_best),
+            jnp.asarray(generation),
+            jnp.asarray([current_best]),
+        )
+        stops.append(bool(converged))
+
+    assert stops == [False, False, False, False, False, True]
+
+
+def test_evosaxde_stagnation_rule_does_not_accept_penalty_plateau():
+    """Behavior: a wholly penalized population runs to the hard ceiling."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        AllNonfiniteLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 5,
+            "pop_size": 5,
+            "progress_bar": False,
+            "seed": 0,
+            "nonfinite_penalty": 12345.0,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 3,
+            "stagnation_tolerance": 0.01,
+        },
+    )
+
+    result = fitter.fit(np.array([True, True, True]), subject_id=1)  # type: ignore[arg-type]
+
+    assert result["converged"] == [False]
+    assert result["nit"] == [5]
+    assert result["fitness"] == [12345.0]
+
+
+def test_evosaxde_stagnation_rule_rejects_mixed_penalized_population():
+    """Behavior: one penalized population member prevents a stagnation stop."""
+    fitter = EvosaxDE(
+        make_minimal_dataset([1, 1, 1]),
+        None,
+        {},
+        DummyModelFactory,
+        MixedPenaltyConstantLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 5,
+            "pop_size": 5,
+            "progress_bar": False,
+            "seed": 0,
+            "nonfinite_penalty": 12345.0,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 3,
+            "stagnation_tolerance": 0.01,
+        },
+    )
+
+    result = fitter.fit(np.array([True, True, True]), subject_id=1)  # type: ignore[arg-type]
+
+    assert result["converged"] == [False]
+    assert result["nit"] == [5]
+    assert result["fitness"] == [0.0]
+
+
+@pytest.mark.parametrize("fitter_cls", [ScanEvosaxDE, MapEvosaxDE])
+def test_batched_evosax_variants_support_stagnation_rule(fitter_cls):
+    """Behavior: scanned and mapped subject fits use the selected stop rule."""
+    fitter = fitter_cls(
+        make_minimal_dataset([1, 1, 2, 2]),
+        None,
+        {},
+        DummyModelFactory,
+        ConstantLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 5,
+            "pop_size": 5,
+            "progress_bar": False,
+            "seed": 0,
+            "stopping_rule": "best_nll_stagnation",
+            "stagnation_window": 3,
+            "stagnation_tolerance": 0.01,
+            "map_batch_size": 2,
+        },
+    )
+
+    result = fitter.fit_subjects(np.array([True, True, True, True]))  # type: ignore[arg-type]
+
+    assert result["converged"] == [True, True]
+    assert result["nit"] == [3, 3]
+
+
+@pytest.mark.parametrize(
+    ("hyperparams", "message"),
+    [
+        ({"stopping_rule": "unknown"}, "stopping_rule"),
+        (
+            {
+                "stopping_rule": "best_nll_stagnation",
+                "stagnation_window": 0,
+            },
+            "stagnation_window",
+        ),
+        (
+            {
+                "stopping_rule": "best_nll_stagnation",
+                "stagnation_tolerance": -0.01,
+            },
+            "stagnation_tolerance",
+        ),
+        (
+            {
+                "stopping_rule": "best_nll_stagnation",
+                "stagnation_tolerance": float("nan"),
+            },
+            "stagnation_tolerance",
+        ),
+    ],
+)
+def test_evosaxde_rejects_invalid_stopping_configuration(hyperparams, message):
+    """Behavior: invalid stopping configurations fail before JIT compilation."""
+    with pytest.raises(ValueError, match=message):
+        EvosaxDE(
+            make_minimal_dataset([1]),
+            None,
+            {},
+            DummyModelFactory,
+            QuadraticLoss,
+            hyperparams={
+                "bounds": {"x": [0.0, 1.0]},
+                "num_steps": 1000,
+                "pop_size": 5,
+                "progress_bar": False,
+                **hyperparams,
+            },
+        )
 
 
 def test_single_subject_returns_one_mask():

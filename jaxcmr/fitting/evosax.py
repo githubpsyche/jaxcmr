@@ -78,17 +78,22 @@ class EvosaxDE:
         self.num_parameters = len(self.free_parameter_bounds)
 
         pop_size = hyperparams.get("pop_size", 15)
+        stopping_rule = hyperparams.get("stopping_rule", "population_spread")
+        if stopping_rule not in {"population_spread", "best_nll_stagnation"}:
+            raise ValueError(
+                "stopping_rule must be 'population_spread' or 'best_nll_stagnation'."
+            )
+        num_steps = int(hyperparams.get("num_steps", 1000))
         diff_w = hyperparams.get("diff_w", (0.5, 1.0))
         if not isinstance(diff_w, (tuple, list)):
             diff_w = (diff_w, diff_w)
         diff_w = tuple(diff_w)
         self.all_hyperparams = {
             "bounds": self.free_parameter_bounds,
-            "num_steps": hyperparams.get("num_steps", 1000),
+            "num_steps": num_steps,
             "pop_size": pop_size,
             "population_size": max(4, int(pop_size) * self.num_parameters),
-            "relative_tolerance": hyperparams.get("relative_tolerance", 0.001),
-            "absolute_tolerance": hyperparams.get("absolute_tolerance", 0.0),
+            "stopping_rule": stopping_rule,
             "cross_over_rate": hyperparams.get("cross_over_rate", 0.9),
             "diff_w": diff_w,
             "best_of": hyperparams.get("best_of", 1),
@@ -97,10 +102,32 @@ class EvosaxDE:
             "seed": int(hyperparams.get("seed", 0)),
             "nonfinite_penalty": float(hyperparams.get("nonfinite_penalty", 1e30)),
         }
-        self._restart_params = FitnessStdRestartParams(
-            tol=self.all_hyperparams["relative_tolerance"],
-            atol=self.all_hyperparams["absolute_tolerance"],
-        )
+        if stopping_rule == "population_spread":
+            self.all_hyperparams.update(
+                {
+                    "relative_tolerance": hyperparams.get("relative_tolerance", 0.001),
+                    "absolute_tolerance": hyperparams.get("absolute_tolerance", 0.0),
+                }
+            )
+            self._restart_params = FitnessStdRestartParams(
+                tol=self.all_hyperparams["relative_tolerance"],
+                atol=self.all_hyperparams["absolute_tolerance"],
+            )
+        else:
+            stagnation_window = int(hyperparams.get("stagnation_window", 100))
+            stagnation_tolerance = float(hyperparams.get("stagnation_tolerance", 0.01))
+            if stagnation_window < 1:
+                raise ValueError("stagnation_window must be at least 1.")
+            if stagnation_window > num_steps:
+                raise ValueError("stagnation_window cannot exceed num_steps.")
+            if not np.isfinite(stagnation_tolerance) or stagnation_tolerance < 0:
+                raise ValueError("stagnation_tolerance must be finite and nonnegative.")
+            self.all_hyperparams.update(
+                {
+                    "stagnation_window": stagnation_window,
+                    "stagnation_tolerance": stagnation_tolerance,
+                }
+            )
         self._base_key = jax.random.PRNGKey(self.all_hyperparams["seed"])
         self._fit_counter = 0
 
@@ -202,12 +229,67 @@ class EvosaxDE:
             fitness_std_cond(None, fitness, None, None, None, self._restart_params),
         )
 
+    def _has_stagnated(
+        self,
+        previous_best: jax.Array,
+        current_best: jax.Array,
+        generation: jax.Array,
+        current_fitness: jax.Array,
+    ) -> jax.Array:
+        """Return whether best NLL improved too little over one full window."""
+
+        window = int(self.all_hyperparams["stagnation_window"])
+        tolerance = jnp.asarray(
+            self.all_hyperparams["stagnation_tolerance"],
+            dtype=current_best.dtype,
+        )
+        penalty = jnp.asarray(
+            self.all_hyperparams["nonfinite_penalty"],
+            dtype=current_best.dtype,
+        )
+        valid = jnp.logical_and(
+            jnp.logical_and(jnp.isfinite(previous_best), jnp.isfinite(current_best)),
+            jnp.logical_and(previous_best != penalty, current_best != penalty),
+        )
+        population_valid = jnp.logical_and(
+            jnp.all(jnp.isfinite(current_fitness)),
+            jnp.all(current_fitness != penalty),
+        )
+        return jnp.logical_and(
+            generation >= window,
+            jnp.logical_and(
+                jnp.logical_and(valid, population_valid),
+                previous_best - current_best < tolerance,
+            ),
+        )
+
+    def _update_stagnation_history(
+        self,
+        history: jax.Array,
+        current_best: jax.Array,
+        generation: jax.Array,
+        current_fitness: jax.Array,
+    ) -> tuple[jax.Array, jax.Array]:
+        """Update the circular best-NLL history and return its stop decision."""
+
+        window = int(self.all_hyperparams["stagnation_window"])
+        history_index = jnp.mod(generation, window)
+        previous_best = history[history_index]
+        converged = self._has_stagnated(
+            previous_best,
+            current_best,
+            generation,
+            current_fitness,
+        )
+        return history.at[history_index].set(current_best), converged
+
     def _run_scan(
         self,
         key: jax.Array,
         trial_indices: jax.Array,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        """Run the compiled evosax DE scan."""
+        """Run DE with the statically selected stopping rule."""
+
         num_steps = int(self.all_hyperparams["num_steps"])
         init_key, tell_key, loop_key = jax.random.split(key, 3)
         population = self._sample_initial_population(init_key)
@@ -219,15 +301,35 @@ class EvosaxDE:
             tell_key, population, fitness, state, self._algorithm_params
         )
 
+        if self.all_hyperparams["stopping_rule"] == "best_nll_stagnation":
+            window = int(self.all_hyperparams["stagnation_window"])
+            stop_state = jnp.full(
+                (window,), state.best_fitness, dtype=state.best_fitness.dtype
+            )
+
+            def update_stop(state, generation, history):
+                history, converged = self._update_stagnation_history(
+                    history,
+                    state.best_fitness,
+                    generation,
+                    state.fitness,
+                )
+                return converged, history
+
+        else:
+            stop_state = ()
+
+            def update_stop(state, generation, stop_state):
+                del generation
+                return self._has_converged(state.fitness), stop_state
+
         def step(carry, _):
             def no_op_step(carry):
                 return carry
 
             def evolve_step(carry):
-                loop_key, state, _, nit = carry
-                loop_key, ask_key, bounds_key, tell_key = jax.random.split(
-                    loop_key, 4
-                )
+                loop_key, state, _, nit, stop_state = carry
+                loop_key, ask_key, bounds_key, tell_key = jax.random.split(loop_key, 4)
                 population, state = self._algorithm.ask(
                     ask_key, state, self._algorithm_params
                 )
@@ -236,16 +338,23 @@ class EvosaxDE:
                 state, _ = self._algorithm.tell(
                     tell_key, population, fitness, state, self._algorithm_params
                 )
-                converged = self._has_converged(state.fitness)
-                return (loop_key, state, converged, nit + 1)
+                generation = nit + 1
+                converged, stop_state = update_stop(state, generation, stop_state)
+                return (loop_key, state, converged, generation, stop_state)
 
-            _, _, converged, _ = carry
+            _, _, converged, _, _ = carry
             carry = jax.lax.cond(converged, no_op_step, evolve_step, carry)
             return carry, None
 
-        (_, state, converged, nit), _ = jax.lax.scan(
+        (_, state, converged, nit, _), _ = jax.lax.scan(
             step,
-            (loop_key, state, jnp.asarray(False), jnp.asarray(0)),
+            (
+                loop_key,
+                state,
+                jnp.asarray(False),
+                jnp.asarray(0),
+                stop_state,
+            ),
             xs=None,
             length=num_steps,
         )
