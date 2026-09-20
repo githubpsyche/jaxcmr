@@ -8,20 +8,20 @@ activation-dependent termination rules.
 
 from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 from jax import lax
 from jax import numpy as jnp
+from simple_pytree import Pytree
 
 from jaxcmr.math import lb
-from simple_pytree import Pytree
-from jaxcmr.typing import Array, Float, Float_, MemorySearch, TerminationPolicy
+from jaxcmr.typing import Array, Float, Float_, MemorySearch
 
 __all__ = [
     "NoStopTermination",
     "PositionalTermination",
-    "SupportRatioTermination",
     "RetrievalDependentTermination",
+    "SupportRatioTermination",
 ]
 
 

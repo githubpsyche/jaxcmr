@@ -1,7 +1,8 @@
 """SciPy differential-evolution fitting."""
 
 import time
-from typing import Any, Callable, Iterable, Mapping, Optional, Type
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any
 
 import numpy as np
 from jax import jit
@@ -21,7 +22,6 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     RecallDataset,
 )
-
 
 __all__ = [
     "ScipyDE",
@@ -57,11 +57,11 @@ class ScipyDE:
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, "word_pool_items features_count"]],
+        features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Mapping[str, Float_],
-        model_factory_cls: Type[MemorySearchModelFactory],
-        loss_fn_cls: Type[LossFn],
-        hyperparams: Optional[dict[str, Any]] = None,
+        model_factory_cls: type[MemorySearchModelFactory],
+        loss_fn_cls: type[LossFn],
+        hyperparams: dict[str, Any] | None = None,
     ):
         """
         Configure the fitting algorithm.

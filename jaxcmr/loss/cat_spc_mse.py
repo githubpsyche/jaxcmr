@@ -6,7 +6,7 @@ results with ``fixed_pres_cat_spc``.
 
 """
 
-from typing import Iterable, Mapping, Optional, Type
+from collections.abc import Iterable, Mapping
 
 from jax import lax, random, vmap
 from jax import numpy as jnp
@@ -24,11 +24,10 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-
 __all__ = [
-    "simulate_masked_free_recall",
-    "fixed_pres_cat_spc",
     "MemorySearchCatSpcMseLoss",
+    "fixed_pres_cat_spc",
+    "simulate_masked_free_recall",
 ]
 
 
@@ -85,9 +84,9 @@ class MemorySearchCatSpcMseLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize with dataset, category metadata, and optional features.
 
@@ -96,6 +95,11 @@ class MemorySearchCatSpcMseLoss:
           dataset: Trial-wise presentations and recalls.
           features: Optional feature matrix describing word-pool items.
         """
+        if "condition" not in dataset:
+            raise ValueError(
+                "This loss requires dataset['condition'] (item categories)."
+            )
+
         factory = model_factory_cls(dataset, features)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])

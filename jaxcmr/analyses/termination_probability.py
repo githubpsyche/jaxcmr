@@ -9,7 +9,7 @@ retrieval attempts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import jax.numpy as jnp
@@ -91,10 +91,10 @@ def plot_termination_probability(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     mode: str = "conditional",
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot termination probability curves.

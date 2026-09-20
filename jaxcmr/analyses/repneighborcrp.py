@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Literal, Optional, Sequence
+from typing import Literal, Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -315,10 +315,10 @@ def plot_rep_neighbor_crp(
     min_lag: int = 4,
     direction: str = "both",
     use_lag2: bool = True,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 
 ) -> Axes:
@@ -411,10 +411,10 @@ def plot_repneighborcrp_j2i(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for j-neighbor → i transitions."""
@@ -438,10 +438,10 @@ def plot_repneighborcrp_i2j(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for i-neighbor → j transitions."""
@@ -465,10 +465,10 @@ def plot_repneighborcrp_both(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for both j-neighbor → i and i-neighbor → j transitions."""

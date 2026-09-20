@@ -7,8 +7,9 @@ AIC/AICc/BIC model comparison statistics.
 """
 
 import ast
+import itertools
 import json
-from typing import Callable, Mapping, Optional
+from collections.abc import Callable, Mapping
 
 import numpy as np
 import pandas as pd
@@ -19,30 +20,31 @@ from scipy.stats import t, ttest_rel
 from jaxcmr.typing import Array, Float, MemorySearchCreateFn
 
 __all__ = [
-    "bound_params",
-    "load_opt_params",
-    "validate_params",
-    "calculate_ci",
     "add_summary_lines",
-    "summarize_parameters",
-    "generate_t_p_matrices",
-    "calculate_aic_weights",
-    "calculate_aic",
-    "calculate_bic_scores",
-    "pairwise_aic_differences",
-    "winner_comparison_matrix",
-    "raw_winner_comparison_matrix",
-    "pairwise_cv_differences",
-    "cv_winner_comparison_matrix",
-    "pairwise_median_aic_differences",
+    "aicc_winner_comparison_matrix",
     "bayesian_model_selection",
-    "floor_nested_fitness",
+    "bound_params",
+    "calculate_aic",
+    "calculate_aic_weights",
     "calculate_aicc",
     "calculate_aicc_weights",
+    "calculate_bic_scores",
+    "calculate_ci",
+    "cv_winner_comparison_matrix",
+    "floor_nested_fitness",
+    "generate_t_p_matrices",
+    "load_opt_params",
+    "pairwise_aic_differences",
     "pairwise_aicc_differences",
+    "pairwise_cv_differences",
+    "pairwise_median_aic_differences",
     "pairwise_median_aicc_differences",
-    "aicc_winner_comparison_matrix",
+    "raw_winner_comparison_matrix",
+    "summarize_parameters",
+    "validate_params",
+    "winner_comparison_matrix",
 ]
+
 
 def bound_params(
     params: Mapping[str, Float[Array, " popsize"]], bounds: Mapping[str, list[float]]
@@ -95,7 +97,7 @@ def calculate_ci(data: list[float], confidence=0.95) -> float:
     return stderr * t.ppf((1 + confidence) / 2.0, n - 1)
 
 
-def _normalize_variant(values: list[float]) -> Optional[np.ndarray]:
+def _normalize_variant(values: list[float]) -> np.ndarray | None:
     """Returns normalized variant values or None when no usable data is present.
 
     Args:
@@ -121,7 +123,7 @@ def _format_row(parameter_label: str, statistic_label: str, values: list[str]) -
 
 
 def _format_mean_cell(
-    array: Optional[np.ndarray], raw_values: list[float], include_ci: bool
+    array: np.ndarray | None, raw_values: list[float], include_ci: bool
 ) -> str:
     """Returns the formatted mean cell text, optionally with confidence intervals.
 
@@ -141,7 +143,7 @@ def _format_mean_cell(
 
 
 def _format_stat_cell(
-    array: Optional[np.ndarray], reducer: Callable[[np.ndarray], float]
+    array: np.ndarray | None, reducer: Callable[[np.ndarray], float]
 ) -> str:
     """Returns the formatted statistic cell using the provided reducer.
 
@@ -152,9 +154,7 @@ def _format_stat_cell(
     if array is None:
         return ""
     value = reducer(array)
-    if np.isnan(value):
-        return ""
-    return f"{value:.2f}"
+    return "" if np.isnan(value) else f"{value:.2f}"
 
 
 def add_summary_lines(
@@ -203,7 +203,7 @@ def add_summary_lines(
 
 def summarize_parameters(
     model_data: list[dict],
-    query_parameters: Optional[list[str]] = None,
+    query_parameters: list[str] | None = None,
     include_std=False,
     include_ci=False,
 ) -> str:
@@ -225,7 +225,7 @@ def summarize_parameters(
     if query_parameters is None:
         query_parameters = []
         for entry in model_data:
-            for param in entry["fixed"].keys():
+            for param in entry["fixed"]:
                 if param not in query_parameters:
                     query_parameters.append(param)
 
@@ -320,6 +320,7 @@ def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame({"Model": names, "AICw": aic_weights})
     return df.sort_values(by="AICw", ascending=False)
 
+
 def calculate_aic(results: list[dict]) -> pd.DataFrame:
     """
     Return a DataFrame of Akaike Information Criterion (AIC) scores
@@ -336,14 +337,15 @@ def calculate_aic(results: list[dict]) -> pd.DataFrame:
     aics, names = [], []
 
     for model in results:
-        k  = len(model["free"])          # number of free parameters
-        ll = np.sum(model["fitness"])    # total log-likelihood (positive)
-        aic = 2 * k - 2 * ll             # <-- note the minus sign
+        k = len(model["free"])  # number of free parameters
+        ll = np.sum(model["fitness"])  # total log-likelihood (positive)
+        aic = 2 * k - 2 * ll  # <-- note the minus sign
         aics.append(aic)
         names.append(model["name"])
 
     df = pd.DataFrame({"Model": names, "AIC": aics})
     return df.sort_values(by="AIC", ascending=True)  # best (lowest) first
+
 
 def calculate_bic_scores(
     results: list[dict],
@@ -400,27 +402,26 @@ def pairwise_aic_differences(
     ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
     equivalent = np.zeros((num_models, num_models), dtype=bool)
 
-    for i in range(num_models):
-        for j in range(num_models):
-            if i == j:
-                continue
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        if i == j:
+            continue
 
-            diff = aic_values[i] - aic_values[j]
-            valid = ~np.isnan(diff)
-            if np.count_nonzero(valid) <= 1:
-                continue
+        diff = aic_values[i] - aic_values[j]
+        valid = ~np.isnan(diff)
+        if np.count_nonzero(valid) <= 1:
+            continue
 
-            diff_valid = diff[valid]
-            mean_value = float(np.mean(diff_valid))
-            ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
+        diff_valid = diff[valid]
+        mean_value = float(np.mean(diff_valid))
+        ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
 
-            mean_delta[i, j] = mean_value
-            ci_halfwidth[i, j] = ci
+        mean_delta[i, j] = mean_value
+        ci_halfwidth[i, j] = ci
 
-            lower, upper = mean_value - ci, mean_value + ci
-            equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
-                lower <= 0.0 <= upper
-            )
+        lower, upper = mean_value - ci, mean_value + ci
+        equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
+            lower <= 0.0 <= upper
+        )
 
     df_mean = pd.DataFrame(mean_delta, index=model_names, columns=model_names)
     df_ci = pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names)
@@ -441,13 +442,10 @@ def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
     penalized = [_subjectwise_aic(model) for model in results]
 
     comparison_matrix = np.zeros((num_models, num_models))
-    for i in range(num_models):
-        for j in range(num_models):
-            if i != j:
-                comparison_matrix[i, j] = float(np.mean(penalized[i] < penalized[j]))
-            else:
-                comparison_matrix[i, j] = np.nan
-
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        comparison_matrix[i, j] = (
+            float(np.mean(penalized[i] < penalized[j])) if i != j else np.nan
+        )
     return pd.DataFrame(comparison_matrix, index=model_names, columns=model_names)
 
 
@@ -507,17 +505,16 @@ def pairwise_cv_differences(
     mean_delta = np.full((n, n), np.nan, dtype=float)
     ci_hw = np.full((n, n), np.nan, dtype=float)
 
-    for i in range(n):
-        for j in range(n):
-            if i == j:
-                continue
-            diff = cv_values[i] - cv_values[j]
-            valid = ~np.isnan(diff)
-            if np.count_nonzero(valid) <= 1:
-                continue
-            diff_valid = diff[valid]
-            mean_delta[i, j] = float(np.mean(diff_valid))
-            ci_hw[i, j] = calculate_ci(diff_valid.tolist(), confidence=confidence)
+    for i, j in itertools.product(range(n), range(n)):
+        if i == j:
+            continue
+        diff = cv_values[i] - cv_values[j]
+        valid = ~np.isnan(diff)
+        if np.count_nonzero(valid) <= 1:
+            continue
+        diff_valid = diff[valid]
+        mean_delta[i, j] = float(np.mean(diff_valid))
+        ci_hw[i, j] = calculate_ci(diff_valid.tolist(), confidence=confidence)
 
     return (
         pd.DataFrame(mean_delta, index=model_names, columns=model_names),
@@ -544,10 +541,9 @@ def cv_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
     cv_values = [np.asarray(m["cv_fitness"], dtype=float) for m in results]
 
     matrix = np.full((n, n), np.nan, dtype=float)
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                matrix[i, j] = float(np.mean(cv_values[i] < cv_values[j]))
+    for i, j in itertools.product(range(n), range(n)):
+        if i != j:
+            matrix[i, j] = float(np.mean(cv_values[i] < cv_values[j]))
 
     return pd.DataFrame(matrix, index=model_names, columns=model_names)
 
@@ -636,6 +632,7 @@ def floor_nested_fitness(
         Total number of subject-model entries that were floored.
 
     """
+
     def _normalize_pair(pair: object) -> tuple[str, str]:
         if isinstance(pair, str):
             try:
@@ -653,7 +650,7 @@ def floor_nested_fitness(
 
         parent_name, child_name = pair
         if not isinstance(parent_name, str) or not isinstance(child_name, str):
-            raise ValueError(
+            raise TypeError(
                 f"Invalid nesting pair {pair!r}; both entries must be strings."
             )
 
@@ -719,26 +716,27 @@ def pairwise_median_aic_differences(
     rng = np.random.default_rng(42)
     alpha = (1.0 - confidence) / 2.0
 
-    for i in range(num_models):
-        for j in range(num_models):
-            if i == j:
-                continue
-            diff = aic_values[i] - aic_values[j]
-            valid = ~np.isnan(diff)
-            if np.count_nonzero(valid) <= 1:
-                continue
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        if i == j:
+            continue
+        diff = aic_values[i] - aic_values[j]
+        valid = ~np.isnan(diff)
+        if np.count_nonzero(valid) <= 1:
+            continue
 
-            diff_valid = diff[valid]
-            med = float(np.median(diff_valid))
-            median_delta[i, j] = med
+        diff_valid = diff[valid]
+        med = float(np.median(diff_valid))
+        median_delta[i, j] = med
 
-            boot_medians = np.array([
+        boot_medians = np.array(
+            [
                 np.median(rng.choice(diff_valid, size=len(diff_valid), replace=True))
                 for _ in range(n_bootstrap)
-            ])
-            lo = float(np.percentile(boot_medians, 100 * alpha))
-            hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
-            ci_halfwidth[i, j] = (hi - lo) / 2.0
+            ]
+        )
+        lo = float(np.percentile(boot_medians, 100 * alpha))
+        hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
+        ci_halfwidth[i, j] = (hi - lo) / 2.0
 
     return (
         pd.DataFrame(median_delta, index=model_names, columns=model_names),
@@ -752,7 +750,7 @@ def bayesian_model_selection(
     max_iter: int = 1000,
     tol: float = 1e-8,
     n_samples: int = 100_000,
-    n_obs: Optional[np.ndarray] = None,
+    n_obs: np.ndarray | None = None,
 ) -> pd.DataFrame:
     """Random-effects Bayesian model selection.
 
@@ -849,20 +847,22 @@ def bayesian_model_selection(
         - gammaln(np.sum(alpha))
         + np.sum(gammaln(alpha))
     )
-    log_p_h0 = float(np.sum(
-        np.log(1.0 / K) + np.logaddexp.reduce(log_evidence, axis=1)
-    ))
+    log_p_h0 = float(
+        np.sum(np.log(1.0 / K) + np.logaddexp.reduce(log_evidence, axis=1))
+    )
     bor = float(np.exp(log_p_h0 - np.logaddexp(log_p_h0, free_energy)))
 
     pxp = bor * (1.0 / K) + (1.0 - bor) * xp
 
-    return pd.DataFrame({
-        "Model": model_names,
-        "Expected Frequency": expected_freq,
-        "Exceedance Probability": xp,
-        "Protected XP": pxp,
-        "Alpha": alpha,
-    })
+    return pd.DataFrame(
+        {
+            "Model": model_names,
+            "Expected Frequency": expected_freq,
+            "Exceedance Probability": xp,
+            "Protected XP": pxp,
+            "Alpha": alpha,
+        }
+    )
 
 
 def calculate_aicc(results: list[dict], n_obs: np.ndarray) -> pd.DataFrame:
@@ -962,27 +962,26 @@ def pairwise_aicc_differences(
     ci_hw = np.full((num_models, num_models), np.nan, dtype=float)
     equivalent = np.zeros((num_models, num_models), dtype=bool)
 
-    for i in range(num_models):
-        for j in range(num_models):
-            if i == j:
-                continue
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        if i == j:
+            continue
 
-            diff = aicc_values[i] - aicc_values[j]
-            valid = ~np.isnan(diff)
-            if np.count_nonzero(valid) <= 1:
-                continue
+        diff = aicc_values[i] - aicc_values[j]
+        valid = ~np.isnan(diff)
+        if np.count_nonzero(valid) <= 1:
+            continue
 
-            diff_valid = diff[valid]
-            mean_value = float(np.mean(diff_valid))
-            ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
+        diff_valid = diff[valid]
+        mean_value = float(np.mean(diff_valid))
+        ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
 
-            mean_delta[i, j] = mean_value
-            ci_hw[i, j] = ci
+        mean_delta[i, j] = mean_value
+        ci_hw[i, j] = ci
 
-            lower, upper = mean_value - ci, mean_value + ci
-            equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
-                lower <= 0.0 <= upper
-            )
+        lower, upper = mean_value - ci, mean_value + ci
+        equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
+            lower <= 0.0 <= upper
+        )
 
     return (
         pd.DataFrame(mean_delta, index=model_names, columns=model_names),
@@ -1026,26 +1025,27 @@ def pairwise_median_aicc_differences(
     rng = np.random.default_rng(42)
     alpha = (1.0 - confidence) / 2.0
 
-    for i in range(num_models):
-        for j in range(num_models):
-            if i == j:
-                continue
-            diff = aicc_values[i] - aicc_values[j]
-            valid = ~np.isnan(diff)
-            if np.count_nonzero(valid) <= 1:
-                continue
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        if i == j:
+            continue
+        diff = aicc_values[i] - aicc_values[j]
+        valid = ~np.isnan(diff)
+        if np.count_nonzero(valid) <= 1:
+            continue
 
-            diff_valid = diff[valid]
-            med = float(np.median(diff_valid))
-            median_delta[i, j] = med
+        diff_valid = diff[valid]
+        med = float(np.median(diff_valid))
+        median_delta[i, j] = med
 
-            boot_medians = np.array([
+        boot_medians = np.array(
+            [
                 np.median(rng.choice(diff_valid, size=len(diff_valid), replace=True))
                 for _ in range(n_bootstrap)
-            ])
-            lo = float(np.percentile(boot_medians, 100 * alpha))
-            hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
-            ci_halfwidth[i, j] = (hi - lo) / 2.0
+            ]
+        )
+        lo = float(np.percentile(boot_medians, 100 * alpha))
+        hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
+        ci_halfwidth[i, j] = (hi - lo) / 2.0
 
     return (
         pd.DataFrame(median_delta, index=model_names, columns=model_names),
@@ -1076,9 +1076,8 @@ def aicc_winner_comparison_matrix(
     penalized = [_subjectwise_aicc(model, n_obs) for model in results]
 
     matrix = np.full((num_models, num_models), np.nan, dtype=float)
-    for i in range(num_models):
-        for j in range(num_models):
-            if i != j:
-                matrix[i, j] = float(np.mean(penalized[i] < penalized[j]))
+    for i, j in itertools.product(range(num_models), range(num_models)):
+        if i != j:
+            matrix[i, j] = float(np.mean(penalized[i] < penalized[j]))
 
     return pd.DataFrame(matrix, index=model_names, columns=model_names)

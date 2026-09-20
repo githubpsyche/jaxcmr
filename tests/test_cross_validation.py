@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from jax import numpy as jnp
 
-from jaxcmr.cross_validation import generate_fold_masks
+from jaxcmr.experimental.cross_validation import generate_fold_masks
 
 
 @pytest.mark.parametrize("held_out", [1, 2, 3])

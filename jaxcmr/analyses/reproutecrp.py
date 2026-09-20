@@ -44,7 +44,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Literal, Optional, Sequence
+from typing import Literal, Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -389,10 +389,10 @@ def plot_rep_route_crp(
     min_lag: int = 4,
     direction: Direction = "same",
     use_lag2: bool = True,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot route-conditioned repetition lag-CRP with CIs."""
@@ -470,10 +470,10 @@ def plot_reproutecrp_i2i(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for i predecessor-side neighbor -> repeater -> i."""
@@ -497,10 +497,10 @@ def plot_reproutecrp_i2j(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for i predecessor-side neighbor -> repeater -> j."""
@@ -524,10 +524,10 @@ def plot_reproutecrp_j2i(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for j predecessor-side neighbor -> repeater -> i."""
@@ -551,10 +551,10 @@ def plot_reproutecrp_j2j(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for j predecessor-side neighbor -> repeater -> j."""
@@ -578,10 +578,10 @@ def plot_reproutecrp_same(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for same-route transitions."""
@@ -605,10 +605,10 @@ def plot_reproutecrp_switch(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for switch-route transitions."""
@@ -632,10 +632,10 @@ def plot_reproutecrp_both(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 3,
     min_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Return plot configured for all route-conditioned transitions."""

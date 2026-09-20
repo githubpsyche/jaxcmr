@@ -11,7 +11,7 @@ episode/position-mediated route.
 
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -24,6 +24,7 @@ from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.math import exponential_primacy_decay, lb, power_scale
 from jaxcmr.typing import (
     Array,
+    Bool,
     ContextCreateFn,
     Float,
     Float_,
@@ -35,7 +36,6 @@ from jaxcmr.typing import (
     RecallDataset,
     TerminationPolicyCreateFn,
 )
-
 
 __all__ = [
     "CMR",
@@ -119,7 +119,7 @@ class CMR(Pytree):
         return self._mcf_learning_rate[self.study_index]
 
     @property
-    def recallable(self) -> Float[Array, " list_length"]:
+    def recallable(self) -> Bool[Array, " list_length"]:
         """Compatibility alias used by some tooling."""
         return self.position_recallable
 
@@ -127,14 +127,14 @@ class CMR(Pytree):
         total = jnp.sum(values)
         return values / lax.select(total == 0, 1.0, total)
 
-    def _item_mask(self, item_index: Int_) -> Float[Array, " list_length"]:
+    def _item_mask(self, item_index: Int_) -> Bool[Array, " list_length"]:
         return self.studied == (item_index + 1)
 
     def _route_stop_probability(
         self,
-        recallable: Float[Array, " list_length"],
+        recallable: Bool[Array, " list_length"],
         mcf,
-        studied: Float[Array, " list_length"],
+        studied: Bool[Array, " list_length"],
     ) -> Float[Array, ""]:
         proxy = _TerminationProxy(
             recallable=recallable,
@@ -352,12 +352,12 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
             self.max_list_length = np.max(dataset["listLength"]).item()
 

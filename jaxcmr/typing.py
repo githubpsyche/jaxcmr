@@ -7,19 +7,16 @@ package.
 
 """
 
+from collections.abc import Iterable, Mapping
 from typing import (
     Any,
-    Iterable,
-    Mapping,
     NotRequired,
-    Optional,
     Protocol,
-    Type,
-    TypedDict,
     runtime_checkable,
 )
 
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, PRNGKeyArray, Real, Shaped
+from typing_extensions import TypedDict
 
 Float_ = Float[Array, ""] | float | int
 Int_ = Integer[Array, ""] | int
@@ -30,51 +27,45 @@ __all__ = [
     "ArrayLike",
     "Bool",
     "Bool_",
+    "CVResult",
+    "Context",
+    "ContextCreateFn",
+    "FitResult",
+    "FittingAlgorithm",
     "Float",
     "Float_",
     "Int_",
     "Integer",
-    "Real",
-    "Shaped",
-    "PRNGKeyArray",
-    "RecallDataset",
+    "LikelihoodMaskFn",
+    "LossFn",
+    "Memory",
+    "MemoryCreateFn",
     "MemorySearch",
     "MemorySearchCreateFn",
     "MemorySearchModelFactory",
-    "Memory",
-    "Context",
-    "LossFn",
-    "LikelihoodMaskFn",
-    "FitResult",
-    "CVResult",
-    "FittingAlgorithm",
-    "TrialSimulator",
+    "PRNGKeyArray",
+    "Real",
+    "RecallDataset",
+    "Shaped",
     "TerminationPolicy",
-    "ContextCreateFn",
-    "MemoryCreateFn",
     "TerminationPolicyCreateFn",
+    "TrialSimulator",
 ]
 
 
-class RecallDataset(TypedDict):
-    """
-    A typed dictionary representing a dataset for free or serial recall experiments.
-    Each key maps to a 2D integer array of shape (n_trials, ?).
-    Rows correspond to trials; columns vary by field.
-    Zeros are used to indicate unused or padding entries, with values starting from 1.
+class RecallDataset(TypedDict, extra_items=Array):
+    """Trial-indexed arrays for free or serial recall experiments.
 
-    Required fields:
+    The required fields are ``subject``, ``listLength``, ``pres_itemnos``,
+    and ``recalls``. Their annotated shapes and integer dtypes appear below;
+    zeros pad item and recall sequences.
 
-    - subject:       Subject IDs (one per trial).
-    - listLength:    The length of the list presented in each trial.
-    - pres_itemids:  Cross-list item IDs presented in each trial
-                        (points to a global word pool).
-    - pres_itemnos:  Within-list item numbers (1-based indices; 0 indicates padding).
-    - rec_itemids:   Cross-list item IDs corresponding to items recalled.
-    - recalls:       Within-list item numbers for recalled items
-                        (1-based indices; 0 indicates padding).
-
-    You can add as many as needed, with `NotRequired[...]`.
+    ``pres_itemids`` identifies items across lists and is required by semantic
+    models and analyses, but not by every recall dataset. Other named fields
+    are optional. Additional fields may contain arrays of any dtype or shape,
+    such as valence or LPP measurements. A consumer that needs an optional or
+    additional field must check that the dataset contains it. Every field must
+    have a leading trial dimension; non-trial metadata belongs outside this dict.
     """
 
     # REQUIRED FIELDS
@@ -93,11 +84,12 @@ class RecallDataset(TypedDict):
     """Within-list item numbers for recalled items (shape: [n_trials, num_recalled]).
     1-based indices with 0 for unused/padding entries."""
 
-    # OPTIONAL FIELDS, REQUIRED FOR SEMANTIC ANALYSIS
-    pres_itemids: Integer[Array, "n_trials num_presented"]
+    # OPTIONAL FIELD REQUIRED BY SEMANTIC ANALYSES
+    pres_itemids: NotRequired[Integer[Array, "n_trials num_presented"]]
     """Per-trial cross-list item IDs (shape: [n_trials, num_presented]). 
     These IDs reference a global word pool and may repeat across trials."""
 
+    # OPTIONAL FIELDS
     rec_itemids: NotRequired[Integer[Array, "n_trials num_recalled"]]
     """Cross-list item IDs for recalled items (shape: [n_trials, num_recalled])."""
 
@@ -185,6 +177,23 @@ class Context(Protocol):
         """
         ...
 
+    def integrate_with_outlist(
+        self,
+        inlist_input: Float[Array, " context_feature_units"],
+        ratio: Float_,
+        drift_rate: Float_,
+    ) -> "Context":
+        """Return context after mixing in-list input with fresh out-of-list input.
+
+        Requires sufficient out-of-list capacity for this update.
+
+        Args:
+            inlist_input: Input representation, normalized before mixing.
+            ratio: Weight on the in-list input; out-of-list input receives 1 - ratio.
+            drift_rate: Drift rate for integrating the mixed input.
+        """
+        ...
+
 
 @runtime_checkable
 class TerminationPolicy(Protocol):
@@ -216,9 +225,13 @@ class MemorySearch(Protocol):
     item_count: int
     is_active: Bool[Array, ""]
     studied: Bool[Array, " item_count"]
-    recallable: Bool[Array, " item_count"]
     recall_total: Integer[Array, ""]
     study_index: Integer[Array, ""]
+
+    @property
+    def recallable(self) -> Bool[Array, " item_count"]:
+        """Indicate which candidates can currently be recalled."""
+        ...
 
     def experience(self, choice: Int_) -> "MemorySearch":
         """Returns model after experiencing the specified study item.
@@ -299,7 +312,7 @@ class MemorySearchCreateFn(Protocol):
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-        connections: Optional[Float[Array, " study_events study_events"]],
+        connections: Float[Array, " study_events study_events"] | None,
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters."""
         ...
@@ -325,7 +338,7 @@ class MemorySearchModelFactory(Protocol):
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         ...
@@ -352,9 +365,9 @@ class LossFn(Protocol):
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize with the specified trials and trial data."""
 
@@ -447,11 +460,11 @@ class FittingAlgorithm(Protocol):
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, "word_pool_items features_count"]],
+        features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Mapping[str, Float_],
-        model_factory_cls: Type[MemorySearchModelFactory],
-        loss_fn_cls: Type[LossFn],
-        hyperparams: Optional[dict[str, Any]] = None,
+        model_factory_cls: type[MemorySearchModelFactory],
+        loss_fn_cls: type[LossFn],
+        hyperparams: dict[str, Any] | None = None,
     ):
         """
         Configure the fitting algorithm.

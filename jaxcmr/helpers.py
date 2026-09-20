@@ -8,15 +8,15 @@ used across the package.
 
 import importlib
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Sequence
+from typing import Callable, Iterable, List, Mapping, Sequence
 
 import h5py
 import jax.numpy as jnp
 import numpy as np  # preserved here in order to evaluate some trial queries
-from jax import vmap
+from jax import lax, vmap
 
+from jaxcmr.dataset import _transform_trial_rows
 from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
-
 
 __all__ = [
     "have_common_nonzero",
@@ -35,6 +35,8 @@ __all__ = [
     "apply_by_subject",
     "has_repeats_per_row",
     "make_dataset",
+    "require_pres_itemids",
+    "require_valence",
     "save_figure",
 ]
 
@@ -109,7 +111,7 @@ def find_project_root(marker: str = ".git") -> str:
 
 
 def generate_trial_mask(
-    data: RecallDataset, trial_query: Optional[str]
+    data: RecallDataset, trial_query:str | None
 ) -> Bool[Array, " trial_count"]:
     """Returns a boolean mask for selecting trials based on a specified query condition.
 
@@ -124,7 +126,7 @@ def generate_trial_mask(
 
 
 def generate_recall_mask(
-    data: RecallDataset, recall_query: Optional[str]
+    data: RecallDataset, recall_query:str | None
 ) -> Bool[Array, " trial_count recall_events"]:
     """Returns a boolean mask for selecting recall events based on a query condition.
 
@@ -149,7 +151,7 @@ def make_subject_trial_masks(
     return subject_masks, unique_subjects
 
 
-def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:
+def load_data(data_path: str, max_subjects: int = 0) -> dict[str, Array]:
     """
     Loads and processes an HDF5 dataset from the specified file.
 
@@ -162,21 +164,22 @@ def load_data(data_path: str, max_subjects: int = 0) -> RecallDataset:
 
     Returns:
         A dictionary where each key corresponds to a dataset name and each value is
-        a jax.numpy array containing the transposed data.
+        a jax.numpy array containing the transposed data. This storage-level helper
+        does not assume a particular experimental dataset schema.
     """
     with h5py.File(data_path, "r") as f:
-        result = {key: jnp.array(f["/data"][key][()].T) for key in f["/data"].keys()}  # type: ignore
+        result = {key: jnp.array(f["/data"][key][()].T) for key in f["/data"].keys()}
 
     if max_subjects == 0:
-        return result  # type: ignore
+        return result
     else:
-        return limit_to_first_subjects(result, max_subjects)  # type: ignore
+        return limit_to_first_subjects(result, max_subjects)
 
 
 def limit_to_first_subjects(
-    data: RecallDataset,
+    data: Mapping[str, Array],
     max_subjects: int,
-) -> RecallDataset:
+) -> dict[str, Array]:
     """Returns dataset restricted to the first `max_subjects` unique subjects.
 
     Args:
@@ -188,7 +191,7 @@ def limit_to_first_subjects(
     cutoff_index = min(max_subjects, unique_subjects.size) - 1
     subject_cutoff = unique_subjects[cutoff_index]
     include_mask = subject_ids <= subject_cutoff
-    return {key: value[include_mask] for key, value in data.items()}  # type: ignore
+    return {key: value[include_mask] for key, value in data.items()}
 
 
 def save_dict_to_hdf5(data: dict, path: str):
@@ -218,6 +221,24 @@ def find_max_list_length(
     )
 
 
+def require_pres_itemids(
+    data: RecallDataset,
+) -> Integer[Array, "n_trials num_presented"]:
+    """Return cross-list presentation IDs required by semantic analyses."""
+    if "pres_itemids" not in data:
+        raise ValueError(
+            "This operation requires dataset['pres_itemids'] (word-pool item IDs)."
+        )
+    return data["pres_itemids"]
+
+
+def require_valence(data: RecallDataset) -> Array:
+    """Return per-item valence required by emotional model factories."""
+    if "valence" not in data:
+        raise ValueError("This operation requires dataset['valence'] (per-item valence).")
+    return data["valence"]
+
+
 def apply_by_subject(
     data: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
@@ -243,10 +264,9 @@ def apply_by_subject(
         subject_mask = jnp.logical_and(subject_indices == subject, trial_mask)
         if jnp.sum(subject_mask) == 0:
             continue
-        subject_dataset: RecallDataset = {
-            key: value[subject_mask]  # type: ignore
-            for key, value in data.items()
-        }
+        subject_dataset = _transform_trial_rows(
+            data, lambda value: value[subject_mask]
+        )
         results.append(func(subject_dataset, *args, **kwargs))
 
     return results
@@ -263,7 +283,8 @@ def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
     def check_row(row):
         # Only consider nonzero values
         mask = row > 0
-        values: Integer[Array, " values"] = jnp.where(mask, row, -1)  # type: ignore # fill non-recalled with -1 (guaranteed not to repeat)
+        # Fill non-recalled slots with -1 so they cannot count as repeats.
+        values = lax.select(mask, row, jnp.full_like(row, -1))
 
         # Sort and compare adjacent values
         sorted_vals = jnp.sort(values)
@@ -389,13 +410,13 @@ def make_dataset(
         "pres_itemnos": pres_arr,
         "listLength": ll_arr,
         "subject": subj_arr,
-    }  # type: ignore
+    }
 
 
 def save_figure(
     figure_dir: str,
     figure_str: str,
-    suffix: Optional[str] = None,
+    suffix:str | None = None,
     dpi: int = 600,
 ) -> None:
     """Save the current matplotlib figure to disk, or just show it.

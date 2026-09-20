@@ -11,13 +11,13 @@ from jax import lax
 from jaxcmr.typing import Array, Float, Float_, Int_
 
 __all__ = [
+    "cosine_similarity_matrix",
+    "exponential_primacy_decay",
     "lb",
+    "normalize_magnitude",
     "power_scale",
     "power_scale_absolute",
     "simple_power_scale",
-    "exponential_primacy_decay",
-    "normalize_magnitude",
-    "cosine_similarity_matrix",
 ]
 
 lb = jnp.finfo(jnp.float32).eps

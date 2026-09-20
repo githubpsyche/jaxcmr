@@ -6,7 +6,7 @@ contribute to the negative log-likelihood.
 
 """
 
-from typing import Iterable, Mapping, Optional, Type
+from collections.abc import Iterable, Mapping
 
 import numpy as np
 from jax import lax, vmap
@@ -21,7 +21,6 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     RecallDataset,
 )
-
 
 __all__ = [
     "MemorySearchLikelihoodLoss",
@@ -38,9 +37,9 @@ class MemorySearchLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
 

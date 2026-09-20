@@ -5,7 +5,7 @@ observed and simulated trials using pluggable analysis functions.
 
 """
 
-from typing import Callable, Iterable, Mapping, Optional, Type
+from collections.abc import Callable, Iterable, Mapping
 
 from jax import lax, random, vmap
 from jax import numpy as jnp
@@ -25,8 +25,8 @@ from jaxcmr.typing import (
 RecallAnalysisFn = Callable
 
 __all__ = [
-    "simulate_masked_free_recall",
     "MemorySearchMseLoss",
+    "simulate_masked_free_recall",
 ]
 
 
@@ -57,9 +57,9 @@ class MemorySearchMseLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
         analysis_fn: RecallAnalysisFn,
         simulation_count: int = 20,
     ) -> None:

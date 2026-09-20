@@ -16,7 +16,7 @@ __all__ = [
     "plot_target_enrichment_crp",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -246,8 +246,8 @@ def target_enrichment_crp(
     target_value: int,
     target_values: Sequence[int] | Integer[Array, " target_values"],
     size: int = 3,
-    source_field: Optional[str] = None,
-    source_values: Optional[Sequence[int] | Integer[Array, " source_conditions"]] = None,
+    source_field:str | None = None,
+    source_values: Sequence[int] | Integer[Array, " source_conditions"] | None = None,
 ) -> Float[Array, " ... lags"]:
     """Compute lag-specific target enrichment relative to availability.
 
@@ -302,13 +302,13 @@ def plot_target_enrichment_crp(
     target_value: int,
     target_values: Sequence[int],
     max_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
-    source_field: Optional[str] = None,
-    source_values: Optional[Sequence[int]] = None,
+    source_field:str | None = None,
+    source_values: Sequence[int] | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot subject-wise lag-specific target enrichment."""

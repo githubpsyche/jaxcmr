@@ -17,7 +17,7 @@ Notes
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -351,6 +351,15 @@ def cue_centered_crp(
         CRP of length 2*L - 1; NaN where denominator is zero.
 
     """
+    if "cue_clips" not in dataset:
+        raise ValueError(
+            "Cue-centered CRP requires dataset['cue_clips'] (recall cues)."
+        )
+    if "_should_tabulate" not in dataset:
+        raise ValueError(
+            "Cue-centered CRP requires dataset['_should_tabulate'] (transition mask)."
+        )
+
     should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)  # type: ignore
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, 0, None))(
         dataset["recalls"],
@@ -371,10 +380,10 @@ def plot_cue_centered_crp(
     ),
     max_lag: int = 5,
     exclude_zero_lag: bool = False,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:

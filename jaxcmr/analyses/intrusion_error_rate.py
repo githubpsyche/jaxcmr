@@ -12,7 +12,7 @@ __all__ = [
     "plot_intrusion_error_rate",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -78,10 +78,10 @@ def intrusion_error_rate(dataset: RecallDataset) -> Float[Array, " study_positio
 def plot_intrusion_error_rate(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot intrusion error rate curves with confidence intervals.

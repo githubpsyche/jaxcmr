@@ -1,14 +1,11 @@
 """CMR with additive semantic associations from a similarity matrix."""
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
-from jax import numpy as jnp
 
-import jaxcmr.components.context as TemporalContext
-import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.factory import build_trial_connections_from_similarity
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.helpers import require_pres_itemids
 from jaxcmr.models.additive_semantic_cmr import CMR
 from jaxcmr.typing import (
     Array,
@@ -23,7 +20,6 @@ from jaxcmr.typing import (
     TerminationPolicyCreateFn,
 )
 
-
 __all__ = [
     "CMR",
     "make_factory",
@@ -35,14 +31,14 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items word_pool_items"]],
+            features: Float[Array, " word_pool_items word_pool_items"] | None,
         ):
-            self.present_lists = np.array(dataset["pres_itemids"])
+            self.present_lists = np.array(require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
             self.trial_connections = build_trial_connections_from_similarity(
                 self.present_lists,

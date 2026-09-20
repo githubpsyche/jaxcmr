@@ -52,6 +52,7 @@ do not.
 """
 
 import math
+from collections.abc import Collection
 from functools import partial
 
 import jax
@@ -59,16 +60,16 @@ import numpy as np
 from jax import lax, random
 from jax import numpy as jnp
 
+from .dataset import _invalidated_recall_fields, _validate_trial_fields
 from .helpers import generate_trial_mask
 from .typing import Array, Int_, Integer, RecallDataset
 
-
 __all__ = [
-    "item_to_study_positions",
     "all_study_positions",
     "filter_repeated_recalls",
-    "relabel_trial_to_firstpos",
+    "item_to_study_positions",
     "make_control_dataset",
+    "relabel_trial_to_firstpos",
 ]
 
 def item_to_study_positions(
@@ -197,6 +198,7 @@ def make_control_dataset(
     n_shuffles: int,
     remove_repeats: bool = True,
     seed: int = 0,
+    recall_dependent_fields: Collection[str] = (),
 ) -> RecallDataset:
     """Build a shuffled-control dataset aligned to mixed-list presentations.
 
@@ -216,6 +218,9 @@ def make_control_dataset(
         expanded to cover mixed rows (``ceil(n_mixed / n_pure)``).
       remove_repeats: If True, drop repeated recalls within trials in the result (keeps first mention).
       seed: RNG seed for shuffling reproducibility.
+      recall_dependent_fields: Additional fields tied to the original recall
+        events. These and ``rec_itemids``, ``irt``, ``cue_clips``, and
+        ``_should_tabulate`` are omitted; other fields come from mixed trials.
 
     Returns:
       RecallDataset with rows ``(#mixed_trials_per_subject * n_shuffles)`` per included subject.
@@ -223,6 +228,8 @@ def make_control_dataset(
     """
 
     # 1) find which subjects actually have mixed trials
+    _validate_trial_fields(data)
+    invalidated_fields = _invalidated_recall_fields(recall_dependent_fields)
     all_subject_ids = jnp.array(data["subject"]).flatten()
     mixed_mask = generate_trial_mask(data, mixed_query)
     pure_mask = generate_trial_mask(data, control_query)
@@ -232,8 +239,12 @@ def make_control_dataset(
     recalls_blocks = []
     pres_blocks = []
     subject_id_blocks = []
+    list_length_blocks = []
     other_fields_acc = {
-        key: [] for key in data if key not in ("recalls", "pres_itemnos", "subject")
+        key: []
+        for key in data
+        if key not in ("recalls", "pres_itemnos", "subject", "listLength")
+        and key not in invalidated_fields
     }
 
     for i, subj in enumerate(subjects):
@@ -263,8 +274,19 @@ def make_control_dataset(
         recalls_blocks.append(new_recalls)
         pres_blocks.append(new_pres)
         subject_id_blocks.append(jnp.full((new_recalls.shape[0], 1), subj, dtype=int))
+        # Legacy callers may omit listLength; infer it from nonpadding positions.
+        mixed_lengths = (
+            jnp.asarray(data["listLength"]).reshape(-1, 1)[sel_mixed]
+            if "listLength" in data
+            else jnp.count_nonzero(mixed_pres, axis=1, keepdims=True)
+        )
+        list_length_blocks.append(
+            jnp.repeat(mixed_lengths, repeats=n_permutations, axis=0)[
+                : new_recalls.shape[0]
+            ]
+        )
 
-        # carry along all other fields, repeated to match new_recalls
+        # Carry study/trial fields from the mixed rows, but not old recall metadata.
         for field, acc in other_fields_acc.items():
             arr = jnp.array(data[field])[sel_mixed]
             acc.append(
@@ -273,9 +295,13 @@ def make_control_dataset(
             assert acc[-1].shape[0] == new_recalls.shape[0]
             assert acc[-1].shape[0] == new_pres.shape[0]
 
-    return {
+    control_dataset: RecallDataset = {
         "subject": jnp.vstack(subject_id_blocks),
+        "listLength": jnp.vstack(list_length_blocks),
         "recalls": jnp.vstack(recalls_blocks),
         "pres_itemnos": jnp.vstack(pres_blocks),
-        **{f: jnp.vstack(lst) for f, lst in other_fields_acc.items()},
-    }  # type: ignore
+    }
+    for field, blocks in other_fields_acc.items():
+        control_dataset[field] = jnp.vstack(blocks)
+    _validate_trial_fields(control_dataset)
+    return control_dataset

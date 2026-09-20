@@ -12,14 +12,14 @@ The ``Tabulation`` class shares its state layout and update logic with
 """
 
 __all__ = [
-    "set_false_at_index",
     "Tabulation",
-    "tabulate_trial",
     "crp",
     "plot_crp",
+    "set_false_at_index",
+    "tabulate_trial",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -512,10 +512,10 @@ def base_tabulation_mask(dataset: RecallDataset) -> Bool[Array, " trials recall_
 def crp(
     dataset: RecallDataset,
     size: int = 3,
-    source_field: Optional[str] = None,
-    source_values: Optional[Sequence[int] | Integer[Array, " source_conditions"]] = None,
-    target_field: Optional[str] = None,
-    target_values: Optional[Sequence[int] | Integer[Array, " target_conditions"]] = None,
+    source_field:str | None = None,
+    source_values: Sequence[int] | Integer[Array, " source_conditions"] | None = None,
+    target_field:str | None = None,
+    target_values: Sequence[int] | Integer[Array, " target_conditions"] | None = None,
 ) -> Float[Array, " ... lags"]:
     """Compute conditional Lag-CRP with repeated items.
 
@@ -593,15 +593,15 @@ def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 4,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
-    source_field: Optional[str] = None,
-    source_values: Optional[Sequence[int]] = None,
-    target_field: Optional[str] = None,
-    target_values: Optional[Sequence[int]] = None,
+    source_field:str | None = None,
+    source_values: Sequence[int] | None = None,
+    target_field:str | None = None,
+    target_values: Sequence[int] | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot subject-wise conditional Lag-CRP with error bounds.

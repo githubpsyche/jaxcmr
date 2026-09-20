@@ -8,7 +8,7 @@ Produces a co-recall curve as a function of absolute lag.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -97,11 +97,11 @@ def corec_by_lag(dataset: RecallDataset) -> Float[Array, " lags"]:
 def plot_corec_by_lag(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    max_lag: Optional[int] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    max_lag: int | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot co-recall curves with confidence intervals.

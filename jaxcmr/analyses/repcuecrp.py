@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -676,7 +676,7 @@ def subject_rep_cue_crp(
     trial_mask: Bool[Array, " trial_count"],
     min_lag: int = 4,
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     size: int = 2,
 ) -> np.ndarray:
     """Compute subject-level prior-conditioned repetition cue CRP.
@@ -738,7 +738,7 @@ def _subject_rep_cue_crp_full(
     trial_mask: Bool[Array, " trial_count"],
     min_lag: int = 4,
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     size: int = 2,
 ) -> np.ndarray:
     """Compute subject-level cue CRP by slicing the full tabulation."""
@@ -861,14 +861,14 @@ def plot_rep_cue_crp(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     cue_offset: int = 1,
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
-    repetition_index: Optional[int] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    repetition_index: int | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot transition-lag CRP for one prior cue offset.
@@ -959,14 +959,14 @@ def plot_rep_cue_access_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
-    repetition_index: Optional[int] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    repetition_index: int | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot the access-to-repeater diagonal across cue offsets."""
@@ -1023,13 +1023,13 @@ def plot_first_rep_cue_access_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Convenience function to plot first-presentation cue access CRP."""
@@ -1053,13 +1053,13 @@ def plot_second_rep_cue_access_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Convenience function to plot second-presentation cue access CRP."""
@@ -1083,11 +1083,11 @@ def plot_rep_cue_crp_surface(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
     repetition_index: int = 0,
-    axis: Optional[Axes] = None,
+    axis: Axes | None = None,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     mark_access: bool = True,
@@ -1141,11 +1141,11 @@ def plot_rep_cue_offset_surface(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     max_lag: int = 5,
-    max_offset: Optional[int] = None,
+    max_offset: int | None = None,
     min_lag: int = 4,
     size: int = 2,
     repetition_index: int = 0,
-    axis: Optional[Axes] = None,
+    axis: Axes | None = None,
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     mark_repeater: bool = True,

@@ -6,7 +6,7 @@ storing separate traces per encoding event for retrieval.
 
 """
 
-from typing import Mapping, Optional
+from collections.abc import Mapping, Optional
 
 import numpy as np
 from jax import lax, vmap
@@ -300,7 +300,7 @@ class InstanceCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()
@@ -318,7 +318,7 @@ class MixedCMRFactory:
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize the factory with the specified trials and trial data."""
         self.max_list_length = np.max(dataset["listLength"]).item()

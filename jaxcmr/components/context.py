@@ -12,12 +12,10 @@ __all__ = ["TemporalContext"]
 import base64
 import io
 
-import matplotlib.pyplot as plt
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from ..math import normalize_magnitude
-from ..state_analysis import matrix_heatmap
 from ..typing import Array, Float, Float_
 
 
@@ -68,13 +66,17 @@ class TemporalContext(Pytree):
         """
         context_input = normalize_magnitude(context_input)
         overlap = jnp.dot(self.state, context_input)
-        rho = jnp.sqrt(
-            1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
-        ) - (drift_rate * overlap)
+        rho = jnp.sqrt(1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)) - (
+            drift_rate * overlap
+        )
         return self.replace(state=(rho * self.state) + (drift_rate * context_input))
 
     def _repr_markdown_(self) -> str:
         """Returns a markdown ``img`` tag of the current state."""
+        import matplotlib.pyplot as plt
+
+        from ..state_analysis import matrix_heatmap
+
         fig, ax = matrix_heatmap(self.state, figsize=(6, 0.6))
 
         ax.set_xlabel("")
@@ -110,7 +112,7 @@ class TemporalContext(Pytree):
 
         Args:
             inlist_input: Input representation to integrate.
-            ratio: Ratio of out-of-list to in-list context.
+            ratio: Weight on the in-list input; out-of-list input receives 1 - ratio.
             drift_rate: Drift rate parameter.
         """
         context_input = normalize_magnitude(
@@ -118,9 +120,9 @@ class TemporalContext(Pytree):
             + (self.outlist_input * (1 - ratio))
         )
         overlap = jnp.dot(self.state, context_input)
-        rho = jnp.sqrt(
-            1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)
-        ) - (drift_rate * overlap)
+        rho = jnp.sqrt(1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)) - (
+            drift_rate * overlap
+        )
         return self.replace(
             state=(rho * self.state) + (drift_rate * context_input),
             next_outlist_unit=self.next_outlist_unit + 1,

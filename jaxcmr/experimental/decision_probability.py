@@ -16,20 +16,20 @@ from simple_pytree import Pytree
 from jaxcmr.math import lb
 
 __all__ = [
+    "Bool_",
     "Float_",
     "Int_",
-    "Bool_",
+    "RaceDiffusionModel",
+    "compute_runner_probabilities",
+    "compute_runner_probability",
+    "dt",
+    "n_steps",
+    "race_diffusion_precompute",
+    "t_vals",
     "theta",
     "tmax",
-    "n_steps",
-    "t_vals",
-    "dt",
-    "wald_pdf",
     "wald_cdf_closed_form",
-    "race_diffusion_precompute",
-    "compute_runner_probability",
-    "compute_runner_probabilities",
-    "RaceDiffusionModel",
+    "wald_pdf",
 ]
 
 Float_ = Float[Array, ""] | float | int

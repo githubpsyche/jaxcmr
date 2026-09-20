@@ -7,7 +7,7 @@ models.
 
 """
 
-from typing import Mapping
+from collections.abc import Mapping
 
 from jax import numpy as jnp
 from simple_pytree import Pytree
@@ -15,12 +15,12 @@ from simple_pytree import Pytree
 from jaxcmr.math import power_scale
 from jaxcmr.typing import Array, Context, Float, Float_, Int_
 
-
 __all__ = [
     "InstanceMemory",
-    "init_mfc",
     "init_mcf",
+    "init_mfc",
 ]
+
 
 class InstanceMemory(Pytree):
     """Instance-based memory model for CMR.
@@ -105,17 +105,6 @@ class InstanceMemory(Pytree):
         """
         t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
         return jnp.dot(t, self.state)[in_pattern.size :]
-
-    def zero_out(
-        self,
-        index: Int_,
-    ) -> "InstanceMemory":
-        """Return the updated memory after zeroing out associations for a given input index.
-
-        Args:
-            index: the index to zero out.
-        """
-        ...
 
 
 def init_mfc(

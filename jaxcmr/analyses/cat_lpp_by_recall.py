@@ -8,7 +8,7 @@ curves for recalled vs non-recalled items.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit
@@ -19,7 +19,7 @@ from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Integer, RecallDataset
 from .cat_lpp_spc import cat_lpp_spc
 
-__all__ = ["plot_cat_lpp_by_recall", "expand_categories_by_recall"]
+__all__ = ["expand_categories_by_recall", "plot_cat_lpp_by_recall"]
 
 
 def expand_categories_by_recall(
@@ -61,10 +61,10 @@ def plot_cat_lpp_by_recall(
     category_value: int | Sequence[int],
     lpp_field: str = "LateLPP",
     exclude_ci=False,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name: str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot recall-split LPP curves for a category.

@@ -7,7 +7,7 @@ negative log-likelihood.
 
 """
 
-from typing import Iterable, Mapping, Optional, Type
+from collections.abc import Iterable, Mapping
 
 import numpy as np
 from jax import lax, nn, random, vmap
@@ -25,12 +25,11 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-
 __all__ = [
-    "mask_trailing_terminations",
-    "MemorySearchLikelihoodLoss",
     "ExcludeTerminationLikelihoodLoss",
     "IncludeTerminationLikelihoodLoss",
+    "MemorySearchLikelihoodLoss",
+    "mask_trailing_terminations",
 ]
 
 
@@ -98,9 +97,9 @@ class MemorySearchLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
         mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
@@ -212,9 +211,9 @@ class ExcludeTerminationLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         self._inner = MemorySearchLikelihoodLoss(
             model_factory_cls,
@@ -244,9 +243,9 @@ class IncludeTerminationLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         # Validate: every trial needs at least one padding slot for stop
         recalled_counts = np.sum(np.array(dataset["recalls"]) > 0, axis=1)

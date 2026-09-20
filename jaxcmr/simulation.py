@@ -7,13 +7,14 @@ dataset-level simulation with optional study-phase replay.
 
 """
 
-from typing import Mapping, Optional, Sequence, Type
+from collections.abc import Collection, Mapping, Sequence
 
 import jax.numpy as jnp
 import numpy as np
 from jax import lax, random, vmap
 from jax.tree_util import tree_map
 
+from jaxcmr.dataset import _replace_recalls, _transform_trial_rows
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -28,19 +29,19 @@ from jaxcmr.typing import (
     TrialSimulator,
 )
 
-
 __all__ = [
+    "MemorySearchSimulator",
     "item_to_study_positions",
+    "parameter_shifted_simulate_h5_from_h5",
+    "preallocate_for_h5_dataset",
     "simulate_free_recall",
     "simulate_free_recall_count",
+    "simulate_h5_from_h5",
     "simulate_study_and_free_recall",
     "simulate_study_first_recall_and_free_recall",
     "simulate_study_free_recall_and_forced_stop",
-    "MemorySearchSimulator",
-    "preallocate_for_h5_dataset",
-    "simulate_h5_from_h5",
-    "parameter_shifted_simulate_h5_from_h5",
 ]
+
 
 def item_to_study_positions(
     item: Int_,
@@ -301,16 +302,16 @@ class MemorySearchSimulator:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
         simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
     ) -> None:
         """Initialize simulator from a dataset and model factory.
 
         Parameters
         ----------
-        model_factory_cls : Type[MemorySearchModelFactory]
+        model_factory_cls : type[MemorySearchModelFactory]
             Factory class for memory search models.
         dataset : RecallDataset
             Dataset with presentation and recall sequences.
@@ -428,28 +429,29 @@ def preallocate_for_h5_dataset(
         Dataset with selected trials replicated.
 
     """
-    return tree_map(
-        lambda x: jnp.repeat(x[trial_mask], experiment_count, axis=0),
+    return _transform_trial_rows(
         data,
+        lambda value: jnp.repeat(value[trial_mask], experiment_count, axis=0),
     )
 
 
 def simulate_h5_from_h5(
-    model_factory_cls: Type[MemorySearchModelFactory],
+    model_factory_cls: type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    features: Optional[Float[Array, " word_pool_items features_count"]],
+    features: Float[Array, " word_pool_items features_count"] | None,
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
     rng: PRNGKeyArray,
     size: int = 3,
     simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
+    recall_dependent_fields: Collection[str] = (),
 ) -> RecallDataset:
     """Simulate a dataset using per-subject parameters.
 
     Parameters
     ----------
-    model_factory_cls : Type[MemorySearchModelFactory]
+    model_factory_cls : type[MemorySearchModelFactory]
         Factory class for memory search models.
     dataset : RecallDataset
         Original dataset containing trial data.
@@ -467,6 +469,10 @@ def simulate_h5_from_h5(
         Max study positions per item when reindexing.
     simulate_trial_fn : TrialSimulator
         Trial-level simulation function.
+    recall_dependent_fields : Collection[str]
+        Additional fields tied to the original recall events, omitted from output.
+        The known fields ``rec_itemids``, ``irt``, ``cue_clips``, and
+        ``_should_tabulate`` are always omitted when recalls are regenerated.
 
     Returns
     -------
@@ -493,14 +499,14 @@ def simulate_h5_from_h5(
     )
 
     # Reindex study positions
-    sim_h5["recalls"] = _reindex_recalls(recalls, sim_h5["pres_itemnos"], size)
-    return sim_h5
+    simulated_recalls = _reindex_recalls(recalls, sim_h5["pres_itemnos"], size)
+    return _replace_recalls(sim_h5, simulated_recalls, recall_dependent_fields)
 
 
 def parameter_shifted_simulate_h5_from_h5(
-    model_factory_cls: Type[MemorySearchModelFactory],
+    model_factory_cls: type[MemorySearchModelFactory],
     dataset: RecallDataset,
-    features: Optional[Float[Array, " word_pool_items features_count"]],
+    features: Float[Array, " word_pool_items features_count"] | None,
     parameters: dict[str, Float[Array, " subject_count"]],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
@@ -509,12 +515,13 @@ def parameter_shifted_simulate_h5_from_h5(
     rng: PRNGKeyArray,
     size: int = 3,
     simulate_trial_fn: TrialSimulator = simulate_study_and_free_recall,
+    recall_dependent_fields: Collection[str] = (),
 ) -> Sequence[RecallDataset]:
     """Simulate multiple datasets by sweeping a single parameter.
 
     Parameters
     ----------
-    model_factory_cls : Type[MemorySearchModelFactory]
+    model_factory_cls : type[MemorySearchModelFactory]
         Factory class for memory search models.
     dataset : RecallDataset
         Original dataset containing trial data.
@@ -536,6 +543,10 @@ def parameter_shifted_simulate_h5_from_h5(
         Max study positions per item when reindexing.
     simulate_trial_fn : TrialSimulator
         Trial-level simulation function.
+    recall_dependent_fields : Collection[str]
+        Additional fields tied to the original recall events, omitted from output.
+        The known fields ``rec_itemids``, ``irt``, ``cue_clips``, and
+        ``_should_tabulate`` are always omitted when recalls are regenerated.
 
     Returns
     -------
@@ -551,10 +562,6 @@ def parameter_shifted_simulate_h5_from_h5(
     total_trials = template["subject"].size
     trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
     subject_ids = template["subject"].flatten()
-    template_without_recalls = {
-        key: value for key, value in template.items() if key != "recalls"
-    }
-
     def run_for_parameters(
         param_map: Mapping[str, Float_], sweep_rng: PRNGKeyArray
     ) -> RecallDataset:
@@ -563,9 +570,8 @@ def parameter_shifted_simulate_h5_from_h5(
         recalls = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
             trial_indices, parameter_indices, param_map, rngs
         )
-        return template_without_recalls | {
-            "recalls": _reindex_recalls(recalls, template["pres_itemnos"], size)
-        }  # type: ignore
+        simulated_recalls = _reindex_recalls(recalls, template["pres_itemnos"], size)
+        return _replace_recalls(template, simulated_recalls, recall_dependent_fields)
 
     results: list[RecallDataset] = []
     for value in parameter_values:

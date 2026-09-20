@@ -1,15 +1,16 @@
 import jax.numpy as jnp
+import pytest
 
 from jaxcmr.helpers import (
-    have_common_nonzero,
     all_rows_identical,
-    log_likelihood,
-    format_floats,
-    find_max_list_length,
     apply_by_subject,
+    find_max_list_length,
+    format_floats,
     has_repeats_per_row,
-    make_dataset,
+    have_common_nonzero,
     limit_to_first_subjects,
+    log_likelihood,
+    make_dataset,
 )
 
 
@@ -368,3 +369,19 @@ def test_limit_to_first_subjects_restricts_output():
     # Assert / Then
     assert limited["recalls"].shape[0] == 2
     assert jnp.max(limited["subject"]).item() <= 2
+
+
+def test_apply_by_subject_preserves_trial_fields_and_rejects_misaligned_data():
+    data = make_dataset(
+        recalls=jnp.array([[1, 0], [2, 0]]),
+        subject=jnp.array([[1], [2]]),
+    )
+    data["condition"] = jnp.array([[10], [20]])
+    selected = apply_by_subject(
+        data, jnp.array([True, True]), lambda subject: subject["condition"]
+    )
+    assert [int(values[0, 0]) for values in selected] == [10, 20]
+
+    data["word_pool"] = jnp.array([1, 2, 3])
+    with pytest.raises(ValueError, match="word_pool.*2 trial rows"):
+        apply_by_subject(data, jnp.array([True, True]), lambda subject: subject["recalls"])

@@ -1,15 +1,15 @@
 """Evosax differential-evolution fitting."""
 
 import time
-from typing import Any, Mapping, Optional, Type
+from collections.abc import Mapping
+from typing import Any
 
 import jax
 import numpy as np
-from jax import numpy as jnp
-from tqdm import trange
-
 from evosax.algorithms import DifferentialEvolution
 from evosax.core.restart import FitnessStdRestartParams, fitness_std_cond
+from jax import numpy as jnp
+from tqdm import trange
 
 from jaxcmr.helpers import make_subject_trial_masks
 from jaxcmr.typing import (
@@ -25,7 +25,6 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-
 __all__ = [
     "BatchEvosaxDE",
     "EvosaxDE",
@@ -40,11 +39,11 @@ class EvosaxDE:
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, "word_pool_items features_count"]],
+        features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Mapping[str, Float_],
-        model_factory_cls: Type[MemorySearchModelFactory],
-        loss_fn_cls: Type[LossFn],
-        hyperparams: Optional[dict[str, Any]] = None,
+        model_factory_cls: type[MemorySearchModelFactory],
+        loss_fn_cls: type[LossFn],
+        hyperparams: dict[str, Any] | None = None,
     ):
         """
         Configure the fitting algorithm.
@@ -470,11 +469,11 @@ class ScanEvosaxDE(EvosaxDE):
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, "word_pool_items features_count"]],
+        features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Mapping[str, Float_],
-        model_factory_cls: Type[MemorySearchModelFactory],
-        loss_fn_cls: Type[LossFn],
-        hyperparams: Optional[dict[str, Any]] = None,
+        model_factory_cls: type[MemorySearchModelFactory],
+        loss_fn_cls: type[LossFn],
+        hyperparams: dict[str, Any] | None = None,
     ):
         super().__init__(
             dataset,
@@ -534,7 +533,7 @@ class ScanEvosaxDE(EvosaxDE):
             for s in range(len(unique_subjects))
             if np.sum(subject_trial_masks[s]) != 0
         ]
-        if len(valid_subject_indices) == 0:
+        if not valid_subject_indices:
             all_results["fit_time"] = time.perf_counter() - t0
             return all_results
 
@@ -622,15 +621,15 @@ class MapEvosaxDE(ScanEvosaxDE):
     def __init__(
         self,
         dataset: RecallDataset,
-        features: Optional[Float[Array, "word_pool_items features_count"]],
+        features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Mapping[str, Float_],
-        model_factory_cls: Type[MemorySearchModelFactory],
-        loss_fn_cls: Type[LossFn],
-        hyperparams: Optional[dict[str, Any]] = None,
+        model_factory_cls: type[MemorySearchModelFactory],
+        loss_fn_cls: type[LossFn],
+        hyperparams: dict[str, Any] | None = None,
     ):
         if hyperparams is None:
             hyperparams = {}
-        self.map_batch_size = hyperparams.get("map_batch_size", None)
+        self.map_batch_size = hyperparams.get("map_batch_size")
         if self.map_batch_size is not None:
             self.map_batch_size = int(self.map_batch_size)
         if self.map_batch_size is not None and self.map_batch_size < 0:

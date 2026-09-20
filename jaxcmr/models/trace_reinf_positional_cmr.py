@@ -1,13 +1,20 @@
-"""Positional CMR with trace reinforcement.
+"""Positional CMR with trace reinforcement and repetition learning allocation.
 
 Items are encoded using positional representations rather than item
 representations. This allows repeated items to have distinct
 contextual associations for each presentation. Recallability is
 tracked at the position level (not item level).
 
+Reinforcement uses the saved context of the first occurrence, independently
+of ongoing encoding context. MCF and MFC gains can be separate or shared.
+Repetition encoding costs reduce only the new occurrence's learned links.
+``repetition_allocation`` redirects a fraction of each current learning
+increment to the earlier trace, including MCF's actual primacy weighting.
+All additions default to zero, preserving the original MCF-only model.
+
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -36,7 +43,6 @@ from jaxcmr.typing import (
     TerminationPolicyCreateFn,
 )
 
-
 __all__ = [
     "CMR",
     "make_factory",
@@ -63,10 +69,21 @@ class CMR(Pytree):
         self.mfc_learning_rate = parameters["learning_rate"]
         self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.mfc_sensitivity = parameters["mfc_sensitivity"]
-        #! first_presentation_reinforcement parameter for reinforcing first presentation
-        self.mcf_first_pres_reinforcement = parameters.get(
+        shared = parameters.get("first_pres_reinforcement", 0.0)
+        self.mcf_first_pres_reinforcement = shared + parameters.get(
             "mcf_first_pres_reinforcement", 0.0
         )
+        self.mfc_first_pres_reinforcement = shared + parameters.get(
+            "mfc_first_pres_reinforcement", 0.0
+        )
+        encoding_cost = parameters.get("repetition_encoding_cost", 0.0)
+        self.mcf_repetition_encoding_cost = encoding_cost + parameters.get(
+            "mcf_repetition_encoding_cost", 0.0
+        )
+        self.mfc_repetition_encoding_cost = encoding_cost + parameters.get(
+            "mfc_repetition_encoding_cost", 0.0
+        )
+        self.repetition_allocation = parameters.get("repetition_allocation", 0.0)
         self.trace_reinforcement_after_context_update = parameters.get(
             "trace_reinforcement_after_context_update", False
         )
@@ -123,24 +140,45 @@ class CMR(Pytree):
         already_studied = jnp.any(item_studied)
         first_item_studied = self.item_ids == jnp.argmax(item_studied)
         associated_context = jnp.dot(first_item_studied, self.trace_contexts)
+        new_mfc = lax.cond(
+            already_studied,
+            lambda: self.mfc.associate(
+                first_item_studied,
+                associated_context,
+                self.mfc_first_pres_reinforcement
+                + self.repetition_allocation * self.mfc_learning_rate,
+            ),
+            lambda: self.mfc,
+        )
         new_mcf = lax.cond(
             already_studied,
             lambda: self.mcf.associate(
                 associated_context,
                 first_item_studied,
-                self.mcf_first_pres_reinforcement,
+                self.mcf_first_pres_reinforcement
+                + self.repetition_allocation * self.mcf_learning_rate,
             ),
             lambda: self.mcf,
+        )
+        mfc_learning_scale = jnp.where(
+            already_studied,
+            (1 - self.mfc_repetition_encoding_cost) * (1 - self.repetition_allocation),
+            1.0,
+        )
+        mcf_learning_scale = jnp.where(
+            already_studied,
+            (1 - self.mcf_repetition_encoding_cost) * (1 - self.repetition_allocation),
+            1.0,
         )
 
         #! We associate with current context state instead of new_context in this implementation
         return self.replace(
             context=new_context,
-            mfc=self.mfc.associate(
-                mfc_cue, learning_state, self.mfc_learning_rate
+            mfc=new_mfc.associate(
+                mfc_cue, learning_state, self.mfc_learning_rate * mfc_learning_scale
             ),  #! updated
             mcf=new_mcf.associate(
-                learning_state, mfc_cue, self.mcf_learning_rate
+                learning_state, mfc_cue, self.mcf_learning_rate * mcf_learning_scale
             ),  #! updated
             trace_contexts=self.trace_contexts.at[self.study_index].set(trace_state),
             #! update recallable at the study position instead of item_index
@@ -285,12 +323,12 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
             self.max_list_length = np.max(dataset["listLength"]).item()
 

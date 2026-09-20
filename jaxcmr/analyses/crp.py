@@ -55,16 +55,16 @@ repetition; compute it once outside JIT if needed.
 
 __all__ = [
     "SimpleTabulation",
-    "simple_tabulate_trial",
-    "simple_crp",
-    "set_false_at_index",
     "Tabulation",
-    "tabulate_trial",
     "crp",
     "plot_crp",
+    "set_false_at_index",
+    "simple_crp",
+    "simple_tabulate_trial",
+    "tabulate_trial",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -341,10 +341,10 @@ def plot_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     max_lag: int = 5,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:

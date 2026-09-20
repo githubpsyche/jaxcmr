@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -39,7 +39,7 @@ from scipy import stats
 from scipy.stats import bootstrap
 from simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
+from ..helpers import apply_by_subject, require_pres_itemids
 from ..math import cosine_similarity_matrix
 from ..plotting import prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
@@ -178,7 +178,7 @@ def distrank(
 
     """
     return vmap(tabulate_trial, in_axes=(0, 0, None))(
-        dataset["recalls"], dataset["pres_itemids"], distance_matrix
+        dataset["recalls"], require_pres_itemids(dataset), distance_matrix
     )
 
 
@@ -350,12 +350,12 @@ def test_distrank_vs_comparison(
 def plot_distrank(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    features: Optional[Float[Array, "word_count features_count"]] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
-    distance_matrix: Optional[Float[Array, " item_count item_count"]] = None,
+    features: Float[Array, "word_count features_count"] | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
+    distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot subject-wise distance-rank factors as points with error bars.

@@ -7,7 +7,7 @@ contribute to the negative log-likelihood.
 
 """
 
-from typing import Iterable, Mapping, Optional, Type
+from collections.abc import Iterable, Mapping
 
 import numpy as np
 from jax import lax, vmap
@@ -26,11 +26,11 @@ from jaxcmr.typing import (
 )
 
 __all__ = [
-    "mask_trailing_terminations",
-    "mask_first_recall",
-    "MemorySearchLikelihoodLoss",
     "ExcludeFirstRecallLikelihoodLoss",
     "ExcludeTerminationLikelihoodLoss",
+    "MemorySearchLikelihoodLoss",
+    "mask_first_recall",
+    "mask_trailing_terminations",
 ]
 
 
@@ -68,9 +68,9 @@ class MemorySearchLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
         mask_likelihoods: LikelihoodMaskFn,
     ) -> None:
         """Initializes the generator with dataset, factory, and mask.
@@ -164,9 +164,9 @@ class ExcludeFirstRecallLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         self._inner = MemorySearchLikelihoodLoss(
             model_factory_cls,
@@ -195,9 +195,9 @@ class ExcludeTerminationLikelihoodLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         self._inner = MemorySearchLikelihoodLoss(
             model_factory_cls,

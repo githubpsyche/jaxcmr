@@ -7,7 +7,7 @@ MCF (memory-to-feature/item) association matrices.
 
 """
 
-from typing import Mapping
+from collections.abc import Mapping
 
 from jax import numpy as jnp
 from simple_pytree import Pytree
@@ -16,8 +16,8 @@ from jaxcmr.typing import Array, Context, Float, Float_, Int_
 
 __all__ = [
     "LinearMemory",
-    "init_mfc",
     "init_mcf",
+    "init_mfc",
 ]
 
 

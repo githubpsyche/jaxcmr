@@ -6,7 +6,7 @@ retrieval via context-cued competition with a Luce choice rule.
 
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -334,7 +334,7 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     """Create a CMR model factory with specified component functions.
 
     Parameters
@@ -350,7 +350,7 @@ def make_factory(
 
     Returns
     -------
-    Type[MemorySearchModelFactory]
+    type[MemorySearchModelFactory]
         A factory class that creates CMR model instances.
 
     """
@@ -370,7 +370,7 @@ def make_factory(
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
             self.max_list_length = np.max(dataset["listLength"]).item()
 

@@ -1,17 +1,14 @@
-"""Leave-one-fold-out cross-validation for memory-search models.
+"""Experimental leave-one-fold-out cross-validation utilities.
 
-Fits per-subject parameters on training folds and evaluates
-held-out negative log-likelihood on the left-out fold, rotating
-across all folds.
-
+The current driver fits pooled parameters, then attempts per-subject scoring.
+Its held-out scores can be incorrect; do not use them for analysis yet.
 """
 
 import time
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import numpy as np
 from jax import numpy as jnp
-from tqdm import trange
 
 from jaxcmr.fitting import ScipyDE
 from jaxcmr.typing import (
@@ -22,11 +19,10 @@ from jaxcmr.typing import (
     Integer,
 )
 
-
 __all__ = [
-    "generate_fold_masks",
-    "evaluate_held_out",
     "cross_validate",
+    "evaluate_held_out",
+    "generate_fold_masks",
 ]
 
 
@@ -94,12 +90,13 @@ def cross_validate(
     fitter: ScipyDE,
     trial_mask: Bool[Array, " trial_count"],
     fold_field: str = "list",
-    best_of: Optional[int] = None,
+    best_of: int | None = None,
 ) -> CVResult:
-    """Run leave-one-fold-out cross-validation.
+    """Run the experimental leave-one-fold-out driver.
 
-    For each unique value in ``data[fold_field]``, fits per-subject on
-    the remaining folds and evaluates held-out NLL on the left-out fold.
+    The current implementation calls ``fitter.fit`` for each fold, producing
+    a pooled fit. The subsequent per-subject scoring assumes subject-specific
+    fits and can silently return zero held-out loss.
 
     Parameters
     ----------
@@ -144,8 +141,10 @@ def cross_validate(
 
     try:
         for fold_idx, fold_val in enumerate(fold_values):
-            print(f"\n--- Fold {fold_idx + 1}/{len(fold_values)} "
-                  f"(held-out {fold_field}={fold_val}) ---")
+            print(
+                f"\n--- Fold {fold_idx + 1}/{len(fold_values)} "
+                f"(held-out {fold_field}={fold_val}) ---"
+            )
 
             train_mask, test_mask = generate_fold_masks(
                 data, fold_field, fold_val, trial_mask
@@ -163,14 +162,13 @@ def cross_validate(
             for j, subj_id in enumerate(fitted_subjects):
                 # Reconstruct complete parameter dict for this subject
                 params: dict[str, float] = {}
-                params.update(fit_result["fixed"])
+                params |= fit_result["fixed"]
                 for p in free_param_names:
                     params[p] = fit_result["fits"][p][j]
 
                 # Get test trial indices for this subject
-                subj_test_mask = (
-                    jnp.asarray(test_mask).astype(bool)
-                    & (jnp.array(subject_vector) == subj_id)
+                subj_test_mask = jnp.asarray(test_mask).astype(bool) & (
+                    jnp.array(subject_vector) == subj_id
                 )
                 test_indices = jnp.where(subj_test_mask)[0]
 

@@ -5,16 +5,10 @@ vectors for models that use pre-experimental associations.
 
 """
 
-from typing import Optional
-
 import jax.numpy as jnp
-import numpy as np
 
 from jaxcmr.math import cosine_similarity_matrix, lb
-from jaxcmr.typing import (
-    Array,
-    Float,
-)
+from jaxcmr.typing import Array, ArrayLike, Float, Integer
 
 __all__ = [
     "build_trial_connections",
@@ -23,8 +17,8 @@ __all__ = [
 
 
 def build_trial_connections(
-    present_lists: np.ndarray,
-    features: Optional[Float[Array, " word_pool_items features_count"]],
+    present_lists: Integer[ArrayLike, "trials study_events"],
+    features: Float[Array, " word_pool_items features_count"] | None,
 ) -> Float[Array, " trials study_events study_events"]:
     """Returns per-trial connection matrices aligned to study lists.
 
@@ -32,6 +26,8 @@ def build_trial_connections(
       present_lists: Study lists indexed by trial, containing 1-indexed item ids.
       features: Wordpool-wide feature matrix or ``None`` to disable semantics.
     """
+
+    present_lists = jnp.asarray(present_lists)
 
     # If no connections are provided, return zero matrices
     if features is None:
@@ -59,8 +55,8 @@ def build_trial_connections(
 
 
 def build_trial_connections_from_similarity(
-    present_lists: np.ndarray,
-    similarity_matrix: Optional[Float[Array, " word_pool_items word_pool_items"]],
+    present_lists: Integer[ArrayLike, "trials study_events"],
+    similarity_matrix: Float[Array, " word_pool_items word_pool_items"] | None,
 ) -> Float[Array, " trials study_events study_events"]:
     """Returns per-trial connection matrices from a precomputed similarity matrix.
 
@@ -69,6 +65,8 @@ def build_trial_connections_from_similarity(
       similarity_matrix: Wordpool-wide similarity matrix or ``None`` to disable
         semantics.
     """
+
+    present_lists = jnp.asarray(present_lists)
 
     if similarity_matrix is None:
         list_length = present_lists.shape[1]

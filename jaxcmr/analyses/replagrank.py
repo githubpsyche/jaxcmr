@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -421,10 +421,10 @@ def plot_rep_lagrank(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     min_lag: int = 4,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot per-presentation lag-rank factors as points with error bars.

@@ -5,28 +5,30 @@ other array utilities used by experimental analysis code.
 
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
-from jax import numpy as jnp, vmap, lax
-
-from jaxcmr.typing import Array, Float, Real, Integer
+from jax import lax, vmap
+from jax import numpy as jnp
 from numba import types
 from numba.typed import Dict
+
+from jaxcmr.typing import Array, Float, Integer, Real
 
 # from numba import njit
 
 __all__ = [
-    "repmat",
+    "compute_similarity_matrix",
+    "cos_sim",
+    "filter_repeated_recalls",
+    "njit_apply_along_axis",
+    "np_connectivity_by_index",
     "np_segment_array_by_index",
+    "repmat",
     "segment_by_index",
     "sub_connectivity",
     "subset_connectivity_matrix",
-    "np_connectivity_by_index",
-    "cos_sim",
-    "compute_similarity_matrix",
-    "njit_apply_along_axis",
-    "filter_repeated_recalls",
 ]
 
 def to_numba_typed_dict(py_dict: dict[str, np.ndarray]) -> dict[str, np.ndarray]:

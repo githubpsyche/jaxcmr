@@ -9,7 +9,7 @@ subsequent memory as a function of category.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -21,9 +21,9 @@ from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = [
-    "category_recall_counts",
-    "category_lpp_recall_histogram",
     "cat_recall_by_lpp",
+    "category_lpp_recall_histogram",
+    "category_recall_counts",
     "plot_cat_recall_by_lpp",
 ]
 
@@ -92,7 +92,7 @@ def cat_recall_by_lpp(
     category_field: str,
     category_value: int,
     lpp_field: str = "LateLPP",
-    bin_edges: Optional[Float[Array, " bin_count_plus_one"]] = None,
+    bin_edges: Float[Array, " bin_count_plus_one"] | None = None,
     bin_count: int = 10,
 ) -> Float[Array, " bin_count"]:
     """Category-filtered recall rate by LPP bins.
@@ -139,12 +139,12 @@ def plot_cat_recall_by_lpp(
     category_field: str,
     category_values: Sequence[int],
     lpp_field: str = "LateLPP",
-    bin_edges: Optional[Float[Array, " bin_count_plus_one"]] = None,
+    bin_edges: Float[Array, " bin_count_plus_one"] | None = None,
     bin_count: int = 10,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot category-filtered recall rate by LPP bins.
@@ -191,16 +191,9 @@ def plot_cat_recall_by_lpp(
         labels = [""] * size
 
     if bin_edges is None:
-        minima = []
-        maxima = []
-        for data_index, data in enumerate(datasets):
-            masked_lpp = data[lpp_field][trial_masks[data_index]]
-            minima.append(jnp.min(masked_lpp))
-            maxima.append(jnp.max(masked_lpp))
-        global_min = jnp.min(jnp.stack(minima))
-        global_max = jnp.max(jnp.stack(maxima))
-        bin_edges = jnp.linspace(global_min, global_max, bin_count + 1)
-
+        bin_edges = _extracted_from_plot_cat_recall_by_lpp_59(
+            datasets, lpp_field, trial_masks, bin_count
+        )
     bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
     color_index = 0
     for data_index, data in enumerate(datasets):
@@ -239,3 +232,16 @@ def plot_cat_recall_by_lpp(
 
     set_plot_labels(axis, f"{lpp_field} (uV)", "Recall Rate", contrast_name)
     return axis
+
+
+# TODO Rename this here and in `plot_cat_recall_by_lpp`
+def _extracted_from_plot_cat_recall_by_lpp_59(datasets, lpp_field, trial_masks, bin_count):
+    minima = []
+    maxima = []
+    for data_index, data in enumerate(datasets):
+        masked_lpp = data[lpp_field][trial_masks[data_index]]
+        minima.append(jnp.min(masked_lpp))
+        maxima.append(jnp.max(masked_lpp))
+    global_min = jnp.min(jnp.stack(minima))
+    global_max = jnp.max(jnp.stack(maxima))
+    return jnp.linspace(global_min, global_max, bin_count + 1)

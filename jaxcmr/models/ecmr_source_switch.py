@@ -6,7 +6,7 @@ between neutral and emotional study items, the model can drift temporal context
 toward a fresh out-of-list unit before encoding the next item.
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -15,6 +15,7 @@ from jax import numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.helpers import require_pres_itemids, require_valence
 from jaxcmr.models.ecmr import eCMR
 from jaxcmr.typing import (
     Array,
@@ -108,7 +109,7 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = _init_expanded_context,
     termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     """Build an eCMR source-switch factory."""
 
     class eCMRSourceSwitchModelFactory:
@@ -117,11 +118,11 @@ def make_factory(
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(dataset["pres_itemids"])
+            self.present_lists = jnp.array(require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
-            self.trial_emotions = jnp.array(dataset["valence"] != 0, dtype=bool)
+            self.trial_emotions = jnp.array(require_valence(dataset) != 0, dtype=bool)
 
             def model_create_fn(
                 list_length: int,

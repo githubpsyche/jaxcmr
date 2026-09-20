@@ -7,7 +7,7 @@ drift rate (``repetition_drift_rate``) for re-presented items.
 
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -36,7 +36,6 @@ from jaxcmr.typing import (
     RecallDataset,
     TerminationPolicyCreateFn,
 )
-
 
 __all__ = [
     "CMR",
@@ -261,12 +260,12 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
             self.max_list_length = np.max(dataset["listLength"]).item()
 

@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -277,11 +277,11 @@ def plot_rep_access_crp(
     max_lag: int = 5,
     min_lag: int = 4,
     size: int = 2,
-    repetition_index: Optional[int] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    repetition_index: int | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot forward repetition access lag-CRP with CIs.

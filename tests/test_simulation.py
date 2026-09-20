@@ -193,6 +193,12 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
         "pres_itemnos": jnp.array([[10, 20, 20]]),
         "recalls": jnp.array([[1, 0, 0]]),  # unused by custom trial fn
         "listLength": jnp.array([[3]]),
+        "condition": jnp.array([[1, 2, 2]]),
+        "rec_itemids": jnp.array([[10, 0, 0]]),
+        "irt": jnp.array([[100, 0, 0]]),
+        "cue_clips": jnp.array([[10, 0, 0]]),
+        "_should_tabulate": jnp.array([[True, False, False]]),
+        "custom_recall_field": jnp.array([[1, 0, 0]]),
     }
 
     # Custom trial function that echoes a single recalled item-number (20)
@@ -214,6 +220,7 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
         rng=rng,
         size=3,
         simulate_trial_fn=echo_trial_fn,
+        recall_dependent_fields={"custom_recall_field"},
     )
 
     # Assert / Then
@@ -222,6 +229,10 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
     # First study position of item-number 20 in [10, 20, 20] is 2
     assert out["recalls"].shape == (2, 3)
     assert int(out["recalls"][0, 0]) == 2
+    assert "condition" in out
+    assert set(out).isdisjoint(
+        {"rec_itemids", "irt", "cue_clips", "_should_tabulate", "custom_recall_field"}
+    )
 
 
 def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
@@ -287,6 +298,7 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
         "pres_itemnos": jnp.array([[30, 31]], dtype=jnp.int32),
         "recalls": jnp.zeros((1, 2), dtype=jnp.int32),
         "listLength": jnp.array([[2]], dtype=jnp.int32),
+        "rec_itemids": jnp.array([[30, 0]], dtype=jnp.int32),
     }
     params = {
         "alpha": jnp.array([0], dtype=jnp.int32),
@@ -314,6 +326,7 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
     assert len(sims) == 2
     assert int(sims[0]["recalls"][0, 0]) == 1
     assert int(sims[1]["recalls"][0, 0]) == 2
+    assert all("rec_itemids" not in sim for sim in sims)
 
 
 def test_replicates_selected_trials_when_preallocating_dataset():
@@ -334,6 +347,8 @@ def test_replicates_selected_trials_when_preallocating_dataset():
         "pres_itemnos": jnp.array([[1, 2, 3], [4, 5, 6]]),
         "recalls": jnp.array([[1, 0, 0], [2, 0, 0]]),
         "listLength": jnp.array([[3], [3]]),
+        "rec_itemids": jnp.array([[1, 0, 0], [2, 0, 0]]),
+        "condition": jnp.array([[1, 1, 1], [2, 2, 2]]),
     }
     mask = jnp.array([True, False])
 
@@ -348,3 +363,5 @@ def test_replicates_selected_trials_when_preallocating_dataset():
     assert out["subject"].shape[0] == 2
     assert jnp.all(out["pres_itemnos"] == jnp.array([[1, 2, 3], [1, 2, 3]]))
     assert jnp.all(out["recalls"] == jnp.array([[1, 0, 0], [1, 0, 0]]))
+    assert jnp.all(out["rec_itemids"] == jnp.array([[1, 0, 0], [1, 0, 0]]))
+    assert jnp.all(out["condition"] == jnp.array([[1, 1, 1], [1, 1, 1]]))

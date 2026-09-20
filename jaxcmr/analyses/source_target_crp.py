@@ -15,7 +15,7 @@ __all__ = [
     "plot_source_target_crp",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -328,12 +328,12 @@ def plot_source_target_crp(
     source_values: Sequence[int],
     target_field: str,
     target_values: Sequence[int],
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
-    source_labels: Optional[Sequence[str]] = None,
+    source_labels: Sequence[str] | None = None,
     xlabel: str = "Source Item",
     ylabel: str = "Avail.-Adjusted Transition Prob.",
     confidence_level: float = 0.95,

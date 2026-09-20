@@ -19,12 +19,12 @@ Notes
 
 __all__ = [
     "CompoundCueingTabulation",
-    "tabulate_trial",
     "compound_cueing_crp",
     "plot_compound_cueing",
+    "tabulate_trial",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -296,10 +296,10 @@ def plot_compound_cueing(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     min_spacing: int = 6,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
 ) -> Axes:
     """Plot compound cueing as a grouped bar chart.
 
@@ -365,7 +365,7 @@ def plot_compound_cueing(
             means,
             width,
             yerr=sems,
-            label=labels[data_index] if labels[data_index] else None,
+            label=labels[data_index] or None,
             color=color,
             capsize=3,
         )

@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -257,11 +257,11 @@ def plot_rep_crp(
     max_lag: int = 3,
     min_lag: int = 2,
     size: int = 2,
-    repetition_index: Optional[int] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    repetition_index: int | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot serial repetition lag-CRP with CIs.
@@ -355,10 +355,10 @@ def plot_difference_rep_crp(
     max_lag: int = 3,
     min_lag: int = 4,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot first-minus-second serial repetition CRP.
@@ -441,10 +441,10 @@ def plot_first_rep_crp(
     max_lag: int = 3,
     min_lag: int = 2,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     "Convenience function to plot first repetition CRP."
@@ -469,10 +469,10 @@ def plot_second_rep_crp(
     max_lag: int = 3,
     min_lag: int = 2,
     size: int = 2,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     "Convenience function to plot first repetition CRP."

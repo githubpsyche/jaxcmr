@@ -14,8 +14,8 @@ The remaining functions (``init_plot``, ``plot_data``, etc.) duplicate
 
 """
 
-from collections.abc import Sequence
-from typing import Callable, Optional, TypeVar, cast
+from collections.abc import Callable, Sequence
+from typing import TypeVar, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,14 +29,14 @@ from jaxcmr.typing import Array, Bool, Integer, Real, RecallDataset
 
 __all__ = [
     "DEFAULT_BOOTSTRAP_RESAMPLES",
+    "calculate_errors",
     "compute_ratio_ci",
     "init_plot",
-    "prepare_plot_inputs",
     "plot_data",
     "plot_ratio_data",
-    "calculate_errors",
     "plot_with_error_bars",
     "plot_without_error_bars",
+    "prepare_plot_inputs",
     "set_plot_labels",
 ]
 
@@ -46,7 +46,7 @@ DEFAULT_CI_TRANSFORM: str = "arcsin_sqrt"
 T = TypeVar("T")
 
 
-def _normalize_to_list(value: Sequence[T] | T) -> list[T]:
+def _normalize_to_list[T](value: Sequence[T] | T) -> list[T]:
     """Returns value as a list.
 
     Args:
@@ -62,8 +62,8 @@ def _normalize_to_list(value: Sequence[T] | T) -> list[T]:
 def prepare_plot_inputs(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    color_cycle: Optional[list[str]],
-    axis: Optional[Axes],
+    color_cycle: list[str] | None,
+    axis: Axes | None,
 ) -> tuple[
     Axes,
     list[RecallDataset],
@@ -109,7 +109,7 @@ def segment_by_nan(vector: jnp.ndarray) -> list[tuple[int, int]]:
     return segments
 
 
-def init_plot(axis: Optional[Axes] = None) -> Axes:
+def init_plot(axis: Axes | None = None) -> Axes:
     """Return an initialized plotting axis.
 
     Args:
@@ -521,7 +521,7 @@ def compute_ratio_ci(
     confidence_level: float = 0.95,
     rng: np.random.Generator | None = None,
     transform: Callable[[np.ndarray], np.ndarray] | None = None,
-) -> tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+) -> tuple[np.ndarray, np.ndarray | None, np.ndarray | None]:
     """Compute mean ratio curve and bootstrap confidence bounds.
 
     Args:
@@ -565,11 +565,19 @@ def compute_ratio_ci(
         rng = np.random.default_rng()
 
     subject_count = subject_ratio_curves.shape[0]
-    effective_mode = ci_mode
-    if ci_mode != "omit" and subject_count <= 1:
-        effective_mode = "trialwise"
-
-    if effective_mode == "subjectwise":
+    effective_mode = "trialwise" if subject_count <= 1 else ci_mode
+    if effective_mode == "hierarchical":
+        ci_low, ci_high = _bootstrap_hierarchical_ratio(
+            num,
+            denom,
+            subject_ids_np,
+            n_resamples,
+            confidence_level,
+            rng=rng,
+            ci_transform=ci_transform,
+            transform=transform,
+        )
+    elif effective_mode == "subjectwise":
         ci_low, ci_high = _bootstrap_subjectwise_ratio(
             subject_ratio_curves=subject_ratio_curves,
             n_resamples=n_resamples,
@@ -581,17 +589,6 @@ def compute_ratio_ci(
         ci_low, ci_high = _bootstrap_trialwise_ratio(
             num,
             denom,
-            n_resamples,
-            confidence_level,
-            rng=rng,
-            ci_transform=ci_transform,
-            transform=transform,
-        )
-    elif effective_mode == "hierarchical":
-        ci_low, ci_high = _bootstrap_hierarchical_ratio(
-            num,
-            denom,
-            subject_ids_np,
             n_resamples,
             confidence_level,
             rng=rng,
@@ -685,7 +682,7 @@ def plot_ratio_data(
 
 
 def set_plot_labels(
-    axis: Axes, xlabel: str, ylabel: str, contrast_name: Optional[str] = None
+    axis: Axes, xlabel: str, ylabel: str, contrast_name:str | None = None
 ) -> Axes:
     """Returns an axis with modified labels and optional legend settings for a plot.
 

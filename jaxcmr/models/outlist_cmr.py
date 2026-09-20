@@ -8,7 +8,7 @@ a special integration process that scales the context input by
 
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -37,11 +37,11 @@ from jaxcmr.typing import (
     TerminationPolicyCreateFn,
 )
 
-
 __all__ = [
     "CMR",
     "make_factory",
 ]
+
 
 class CMR(Pytree):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
@@ -53,7 +53,7 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         #! uses init_expanded for expanded context representation
-        context_create_fn: ContextCreateFn = TemporalContext.init_expanded,
+        context_create_fn: ContextCreateFn = TemporalContext.TemporalContext.init_expanded,
         termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
@@ -226,12 +226,12 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
             self.max_list_length = np.max(dataset["listLength"]).item()
 

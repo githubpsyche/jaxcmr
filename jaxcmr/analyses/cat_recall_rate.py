@@ -9,8 +9,8 @@ being tied to any particular experimental contrast.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 import numpy as np
 from jax import jit, vmap
@@ -24,11 +24,11 @@ from ..plotting import prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = [
-    "category_recall_hits",
-    "cat_recall_rate",
-    "subject_cat_recall_rate",
-    "plot_cat_recall_rate",
     "CatRecallRatePairTestResult",
+    "cat_recall_rate",
+    "category_recall_hits",
+    "plot_cat_recall_rate",
+    "subject_cat_recall_rate",
     "test_cat_recall_rate_pair",
 ]
 
@@ -50,7 +50,7 @@ def cat_recall_rate(
     dataset: RecallDataset,
     category_field: str,
     category_value: int,
-    valid_field: Optional[str] = None,
+    valid_field:str | None = None,
 ) -> Float:
     """Category-filtered scalar recall rate.
 
@@ -99,7 +99,7 @@ def subject_cat_recall_rate(
     trial_mask: Bool[Array, " trial_count"],
     category_field: str,
     category_values: Sequence[int],
-    valid_field: Optional[str] = None,
+    valid_field:str | None = None,
 ) -> np.ndarray:
     """Return subject-level category recall rates.
 
@@ -137,9 +137,7 @@ def subject_cat_recall_rate(
         )
         columns.append(np.asarray(subject_values, dtype=float))
 
-    if not columns:
-        return np.empty((0, 0), dtype=float)
-    return np.stack(columns, axis=1)
+    return np.stack(columns, axis=1) if columns else np.empty((0, 0), dtype=float)
 
 
 def plot_cat_recall_rate(
@@ -147,12 +145,12 @@ def plot_cat_recall_rate(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     category_field: str,
     category_values: Sequence[int],
-    valid_field: Optional[str] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    category_labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    valid_field:str | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    category_labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot category-filtered recall rates as points with error bars.
@@ -324,7 +322,7 @@ def test_cat_recall_rate_pair(
     return CatRecallRatePairTestResult(
         left_label=left_label,
         right_label=right_label,
-        n=int(len(diff)),
+        n=len(diff),
         t_stat=float(t_stat),
         t_pval=float(t_pval),
         w_stat=float(w_stat),

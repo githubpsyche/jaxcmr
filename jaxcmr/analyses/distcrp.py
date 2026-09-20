@@ -33,7 +33,7 @@ __all__ = [
     "plot_cat_crp",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
@@ -41,7 +41,7 @@ import numpy as np
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
+from ..helpers import apply_by_subject, require_pres_itemids
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 from ..math import cosine_similarity_matrix
@@ -349,7 +349,7 @@ def compute_distance_bins_min_count(
     ) -> tuple[jnp.ndarray, jnp.ndarray]:
         distances, masks = vmap(raw_candidate_transitions, in_axes=(0, 0, None))(
             subject_dataset["recalls"],
-            subject_dataset["pres_itemids"],
+            require_pres_itemids(subject_dataset),
             matrix,
         )
         distances = distances.reshape(-1)
@@ -400,7 +400,7 @@ def dist_crp(
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
         dataset["recalls"],
-        dataset["pres_itemids"],
+        require_pres_itemids(dataset),
         distance_matrix,
         bin_edges,
     )
@@ -412,7 +412,7 @@ def _resolve_distance_bins(
     trial_masks: Sequence[Bool[Array, " trial_count"]],
     distances: Float[Array, " item_count item_count"],
     bin_edges: Float[Array, " edges"] | str | None,
-    bin_centers: Optional[Float[Array, " bins"]],
+    bin_centers: Float[Array, " bins"] | None,
     min_transitions_per_subject: int,
     bin_step: float,
     bin_source_index: int,
@@ -458,17 +458,17 @@ def _resolve_distance_bins(
 def plot_dist_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    features: Optional[Float[Array, "word_count features_count"]] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    features: Float[Array, "word_count features_count"] | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
     bin_edges: Float[Array, " edges"] | str | None = "percentile",
-    bin_centers: Optional[Float[Array, " bins"]] = None,
-    distance_matrix: Optional[Float[Array, " item_count item_count"]] = None,
+    bin_centers: Float[Array, " bins"] | None = None,
+    distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot distance-binned CRP curves aggregated by subject.
@@ -570,10 +570,10 @@ def plot_cat_crp(
     features: Float[Array, "word_count features_count"],
     feature_column: int = 0,
     feature_label: str = "Category",
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot category-binned CRP curves from a single feature column.

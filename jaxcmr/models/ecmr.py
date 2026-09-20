@@ -23,7 +23,7 @@ This 2-unit localist representation is critical for the
 list-composition effect.
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -33,6 +33,7 @@ from simple_pytree import Pytree
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.helpers import require_pres_itemids, require_valence
 from jaxcmr.math import exponential_primacy_decay, lb, power_scale
 from jaxcmr.typing import (
     Array,
@@ -423,7 +424,7 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
     termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     """Build an eCMR factory for the CK2022 fitting pipeline.
 
     Parameters
@@ -439,7 +440,7 @@ def make_factory(
 
     Returns
     -------
-    Type[MemorySearchModelFactory]
+    type[MemorySearchModelFactory]
 
     """
 
@@ -449,13 +450,13 @@ def make_factory(
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(dataset["pres_itemids"])
+            self.present_lists = jnp.array(require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             # 0 for neutral study events, 1 for emotional study events
-            self.trial_emotions = jnp.array(dataset["valence"] != 0, dtype=bool)
+            self.trial_emotions = jnp.array(require_valence(dataset) != 0, dtype=bool)
 
             def model_create_fn(
                 list_length: int,

@@ -19,7 +19,7 @@ __all__ = [
     "plot_pnr",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, lax, vmap
@@ -318,10 +318,10 @@ def plot_pnr(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     query_recall_position: int = 0,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
 ) -> Axes:

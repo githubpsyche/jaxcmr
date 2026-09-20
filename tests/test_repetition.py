@@ -1,15 +1,14 @@
 import jax.numpy as jnp
 import pytest
 
+from jaxcmr.helpers import has_repeats_per_row
 from jaxcmr.repetition import (
-    item_to_study_positions,
     all_study_positions,
     filter_repeated_recalls,
-    relabel_trial_to_firstpos,
+    item_to_study_positions,
     make_control_dataset,
+    relabel_trial_to_firstpos,
 )
-from jaxcmr.helpers import has_repeats_per_row
-
 
 # -----------------------------------------------------------------------------
 # item_to_study_positions
@@ -253,3 +252,42 @@ def test_toggles_repeated_recalls_removal(remove: bool):
     # Assert / Then
     has_repeats = has_repeats_per_row(ctrl["recalls"]).any().item()
     assert has_repeats is (not remove)
+
+
+def test_control_preserves_study_fields_but_drops_old_recall_metadata():
+    data = _toy_dataset_for_controls()
+    data["layout_id"] = jnp.arange(4)[:, None]
+    data["rec_itemids"] = jnp.ones_like(data["recalls"])
+    data["irt"] = jnp.ones_like(data["recalls"])
+    data["cue_clips"] = jnp.ones_like(data["recalls"])
+    data["_should_tabulate"] = jnp.ones_like(data["recalls"], dtype=bool)
+    data["custom_recall_field"] = jnp.ones_like(data["recalls"])
+
+    control = make_control_dataset(
+        data,
+        mixed_query="data['list_type'].flatten() == 1",
+        control_query="data['list_type'].flatten() == 0",
+        n_shuffles=1,
+        recall_dependent_fields={"custom_recall_field"},
+    )
+
+    assert "listLength" in control
+    assert "layout_id" in control
+    assert set(control).isdisjoint(
+        {"rec_itemids", "irt", "cue_clips", "_should_tabulate", "custom_recall_field"}
+    )
+    assert jnp.array_equal(control["layout_id"].flatten(), jnp.array([1, 3]))
+
+
+def test_control_infers_list_length_for_legacy_dataset():
+    data = _toy_dataset_for_controls()
+    data.pop("listLength")
+
+    control = make_control_dataset(
+        data,
+        mixed_query="data['list_type'].flatten() == 1",
+        control_query="data['list_type'].flatten() == 0",
+        n_shuffles=1,
+    )
+
+    assert jnp.array_equal(control["listLength"], jnp.array([[4], [4]]))

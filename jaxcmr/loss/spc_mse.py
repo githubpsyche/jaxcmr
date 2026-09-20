@@ -6,7 +6,7 @@ curves by simulating recall chains per trial and aggregating the results with
 
 """
 
-from typing import Iterable, Mapping, Optional, Type
+from collections.abc import Iterable, Mapping
 
 from jax import lax, random, vmap
 from jax import numpy as jnp
@@ -24,10 +24,9 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-
 __all__ = [
-    "simulate_masked_free_recall",
     "MemorySearchSpcMseLoss",
+    "simulate_masked_free_recall",
 ]
 
 
@@ -58,9 +57,9 @@ class MemorySearchSpcMseLoss:
 
     def __init__(
         self,
-        model_factory_cls: Type[MemorySearchModelFactory],
+        model_factory_cls: type[MemorySearchModelFactory],
         dataset: RecallDataset,
-        features: Optional[Float[Array, " word_pool_items features_count"]],
+        features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
         """Initialize with dataset and optional feature embeddings.
 

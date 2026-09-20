@@ -9,7 +9,7 @@ category.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit
@@ -19,7 +19,7 @@ from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["category_lpp_values", "cat_lpp_spc", "plot_cat_lpp_spc"]
+__all__ = ["cat_lpp_spc", "category_lpp_values", "plot_cat_lpp_spc"]
 
 
 def category_lpp_values(
@@ -70,10 +70,10 @@ def plot_cat_lpp_spc(
     category_field: str,
     category_values: Sequence[int],
     lpp_field: str = "LateLPP",
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot category-filtered LPP curves by study position.

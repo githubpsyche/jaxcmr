@@ -9,7 +9,7 @@ between-category pairs.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -130,10 +130,10 @@ def plot_conditional_corec_by_cat(
     category_field: str,
     category_value: int,
     relation_labels: Sequence[str] = ("Same", "Different"),
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot conditional co-recall by category with confidence intervals.

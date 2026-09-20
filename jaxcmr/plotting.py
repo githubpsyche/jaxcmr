@@ -7,7 +7,7 @@ by all analysis plot functions.
 """
 
 from collections.abc import Sequence
-from typing import Optional, TypeVar, cast
+from typing import TypeVar, cast
 
 import matplotlib.pyplot as plt
 from jax import numpy as jnp
@@ -19,12 +19,12 @@ from scipy.stats import bootstrap
 from jaxcmr.typing import Array, Bool, Real, RecallDataset
 
 __all__ = [
-    "init_plot",
-    "prepare_plot_inputs",
-    "plot_data",
     "calculate_errors",
+    "init_plot",
+    "plot_data",
     "plot_with_error_bars",
     "plot_without_error_bars",
+    "prepare_plot_inputs",
     "set_plot_labels",
 ]
 
@@ -32,7 +32,7 @@ __all__ = [
 T = TypeVar("T")
 
 
-def _normalize_to_list(value: Sequence[T] | T) -> list[T]:
+def _normalize_to_list[T](value: Sequence[T] | T) -> list[T]:
     """Returns value as a list.
 
     Args:
@@ -48,8 +48,8 @@ def _normalize_to_list(value: Sequence[T] | T) -> list[T]:
 def prepare_plot_inputs(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    color_cycle: Optional[list[str]],
-    axis: Optional[Axes],
+    color_cycle: list[str] | None,
+    axis: Axes | None,
 ) -> tuple[
     Axes,
     list[RecallDataset],
@@ -61,7 +61,7 @@ def prepare_plot_inputs(
     Args:
         datasets: Datasets to plot.
         trial_masks: Masks selecting trials for each dataset.
-        color_cycle: Colors for plotting each dataset.
+        color_cycle: Colors for plotting each dataset, or None for defaults.
         axis: Existing axis to plot on.
 
     Returns:
@@ -95,7 +95,7 @@ def segment_by_nan(vector: jnp.ndarray) -> list[tuple[int, int]]:
     return segments
 
 
-def init_plot(axis: Optional[Axes] = None) -> Axes:
+def init_plot(axis: Axes | None = None) -> Axes:
     """Return an initialized plotting axis.
 
     Args:
@@ -250,8 +250,9 @@ def plot_data(
 
     return axis
 
+
 def set_plot_labels(
-    axis: Axes, xlabel: str, ylabel: str, contrast_name: Optional[str] = None
+    axis: Axes, xlabel: str, ylabel: str, contrast_name: str | None = None
 ) -> Axes:
     """Returns an axis with modified labels and optional legend settings for a plot.
 

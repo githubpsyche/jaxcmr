@@ -8,7 +8,7 @@ curves.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -18,7 +18,7 @@ from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["category_recall_counts", "cat_spc", "plot_cat_spc"]
+__all__ = ["cat_spc", "category_recall_counts", "plot_cat_spc"]
 
 
 def category_recall_counts(
@@ -102,10 +102,10 @@ def plot_cat_spc(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     category_field: str,
     category_values: Sequence[int],
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot category-filtered SPC curves.

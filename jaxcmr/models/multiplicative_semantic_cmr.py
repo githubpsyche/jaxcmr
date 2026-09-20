@@ -6,7 +6,7 @@ competition, amplifying recall of semantically related items.
 
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -15,8 +15,9 @@ from simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.components.factory import build_trial_connections
+from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.helpers import require_pres_itemids
 from jaxcmr.math import (
     exponential_primacy_decay,
     lb,
@@ -35,7 +36,6 @@ from jaxcmr.typing import (
     RecallDataset,
     TerminationPolicyCreateFn,
 )
-
 
 __all__ = [
     "CMR",
@@ -227,14 +227,14 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ):
-            self.present_lists = np.array(dataset["pres_itemids"])
+            self.present_lists = np.array(require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
             self.trial_connections = build_trial_connections(
                 self.present_lists, features

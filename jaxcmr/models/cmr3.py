@@ -22,7 +22,7 @@ feature and therefore do not inject new valence input into the
 emotional context pathway.
 """
 
-from typing import Mapping, Optional, Type
+from collections.abc import Mapping
 
 import numpy as np
 from jax import lax
@@ -32,6 +32,7 @@ from simple_pytree import Pytree
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.helpers import require_pres_itemids, require_valence
 from jaxcmr.math import exponential_primacy_decay, lb, power_scale
 from jaxcmr.typing import (
     Array,
@@ -324,7 +325,7 @@ def make_factory(
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
     termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
-) -> Type[MemorySearchModelFactory]:
+) -> type[MemorySearchModelFactory]:
     """Build a CMR3 factory for the CK2022 fitting pipeline."""
 
     class CMR3ModelFactory:
@@ -333,12 +334,12 @@ def make_factory(
         def __init__(
             self,
             dataset: RecallDataset,
-            features: Optional[Float[Array, " word_pool_items features_count"]],
+            features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(dataset["pres_itemids"])
+            self.present_lists = jnp.array(require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
 
-            valence = jnp.array(dataset["valence"])
+            valence = jnp.array(require_valence(dataset))
             self.trial_negative = jnp.array(valence < 0, dtype=bool)
             self.trial_positive = jnp.array(valence > 0, dtype=bool)
 

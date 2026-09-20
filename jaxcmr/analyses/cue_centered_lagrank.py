@@ -26,7 +26,7 @@ __all__ = [
     "plot_cue_centered_lagrank",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from jax import jit, lax, vmap
@@ -254,6 +254,16 @@ def cue_centered_lagrank(
         Temporal factor per trial; NaN where no transitions qualify.
 
     """
+    if "cue_clips" not in dataset:
+        raise ValueError(
+            "Cue-centered lag rank requires dataset['cue_clips'] (recall cues)."
+        )
+    if "_should_tabulate" not in dataset:
+        raise ValueError(
+            "Cue-centered lag rank requires "
+            "dataset['_should_tabulate'] (transition mask)."
+        )
+
     should_tab = jnp.asarray(dataset["_should_tabulate"], dtype=bool)
     rank_sums, counts = vmap(tabulate_trial, in_axes=(0, 0, 0, 0, None))(
         dataset["recalls"],
@@ -322,10 +332,10 @@ def plot_cue_centered_lagrank(
         | Bool[Array, " trial_count recall_events"]
     ),
     size: int = 3,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot cue-centered lag-rank factors as points with error bars.

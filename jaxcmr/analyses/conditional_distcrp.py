@@ -11,19 +11,19 @@ from __future__ import annotations
 
 __all__ = [
     "DistanceTabulation",
-    "tabulate_trial",
     "dist_crp",
     "plot_dist_crp",
+    "tabulate_trial",
 ]
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
 from simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
+from ..helpers import apply_by_subject, require_pres_itemids
 from ..math import cosine_similarity_matrix
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
@@ -79,7 +79,7 @@ class DistanceTabulation(Pytree):
         new_avail = self.avail_transitions + bin_flags
         return new_actual, new_avail
 
-    def tabulate(self, choice: Int_, should_tabulate: Bool_) -> "DistanceTabulation":
+    def tabulate(self, choice: Int_, should_tabulate: Bool_) -> DistanceTabulation:
         """Update state and optionally count the transition.
 
         Parameters
@@ -96,11 +96,11 @@ class DistanceTabulation(Pytree):
 
         """
 
-        def _update_state() -> "DistanceTabulation":
+        def _update_state() -> DistanceTabulation:
             new_previous_item = choice
             new_avail_items = self.avail_items.at[choice - 1].set(False)
 
-            def _with_counts() -> "DistanceTabulation":
+            def _with_counts() -> DistanceTabulation:
                 new_actual, new_avail = self._compute_transition_counts(choice)
                 return self.replace(
                     previous_item=new_previous_item,
@@ -109,7 +109,7 @@ class DistanceTabulation(Pytree):
                     avail_transitions=new_avail,
                 )
 
-            def _without_counts() -> "DistanceTabulation":
+            def _without_counts() -> DistanceTabulation:
                 return self.replace(
                     previous_item=new_previous_item,
                     avail_items=new_avail_items,
@@ -190,11 +190,17 @@ def dist_crp(
         Conditional response probability per distance bin.
 
     """
+    if "_should_tabulate" not in dataset:
+        raise ValueError(
+            "Conditional distance CRP requires "
+            "dataset['_should_tabulate'] (transition mask)."
+        )
+
     should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)
 
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, None, None))(
         dataset["recalls"],
-        dataset["pres_itemids"],
+        require_pres_itemids(dataset),
         should_tabulate,
         distance_matrix,
         bin_edges,
@@ -209,17 +215,17 @@ def plot_dist_crp(
         Sequence[Bool[Array, " trial_count recall_events"]]
         | Bool[Array, " trial_count recall_events"]
     ),
-    features: Optional[Float[Array, "word_count features_count"]] = None,
-    color_cycle: Optional[list[str]] = None,
-    labels: Optional[Sequence[str]] = None,
-    contrast_name: Optional[str] = None,
-    axis: Optional[Axes] = None,
+    features: Float[Array, "word_count features_count"] | None = None,
+    color_cycle: list[str] | None = None,
+    labels: Sequence[str] | None = None,
+    contrast_name:str | None = None,
+    axis: Axes | None = None,
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
     bin_edges: Float[Array, " edges"] | str | None = "percentile",
-    bin_centers: Optional[Float[Array, " bins"]] = None,
-    distance_matrix: Optional[Float[Array, " item_count item_count"]] = None,
+    bin_centers: Float[Array, " bins"] | None = None,
+    distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot distance-binned CRP with conditional tabulation.
