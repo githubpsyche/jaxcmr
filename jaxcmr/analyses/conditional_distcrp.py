@@ -280,10 +280,9 @@ def plot_dist_crp(
     if not isinstance(should_tabulate, Sequence):
         should_tabulate = [jnp.array(should_tabulate)]
 
-    if (features is None) == (distance_matrix is None):
+    if features is None and distance_matrix is None:
         raise ValueError("Exactly one of features or distance_matrix must be provided.")
-
-    if distance_matrix is None:
+    elif features is not None:
         distances = 1 - cosine_similarity_matrix(features)
     else:
         distances = jnp.asarray(distance_matrix)
