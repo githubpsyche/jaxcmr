@@ -1,23 +1,19 @@
-"""Category-filtered LPP serial position curves.
+"""LPP convenience wrappers for category-filtered numeric factor means.
 
-Computes mean LPP (late positive potential) amplitude at each study
-position, separately for each stimulus category. The resulting curves
-show how neural encoding strength varies across serial position and
-category.
-
+Use ``cat_factor_spc`` for other study measurements. These entry points retain
+the historical LPP field defaults, units, and plot-label convention.
 """
-
-from __future__ import annotations
 
 from collections.abc import Sequence
 
-import jax.numpy as jnp
-from jax import jit
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
 from ..typing import Array, Bool, Float, Integer, RecallDataset
+from .cat_factor_spc import (
+    cat_factor_spc,
+    category_factor_values,
+    plot_cat_factor_spc,
+)
 
 __all__ = ["cat_lpp_spc", "category_lpp_values", "plot_cat_lpp_spc"]
 
@@ -27,11 +23,8 @@ def category_lpp_values(
     categories: Integer[Array, " trial_count study_positions"],
     category_value: int,
 ) -> Float[Array, " study_positions"]:
-    """Returns mean LPP per position restricted to a category."""
-    matches = categories == category_value
-    numerator = jnp.where(matches, lpp, 0.0).sum(axis=0)
-    denominator = matches.sum(axis=0)
-    return numerator / denominator
+    """Return finite mean LPP per position within a category; empty cells are NaN."""
+    return category_factor_values(lpp, categories, category_value)
 
 
 def cat_lpp_spc(
@@ -39,29 +32,18 @@ def cat_lpp_spc(
     category_field: str,
     category_value: int,
     lpp_field: str = "EarlyLPP",
+    *,
+    valid_field: str | None = None,
 ) -> Float[Array, " study_positions"]:
-    """Category-filtered mean LPP by study position.
+    """Return pooled LPP means by study position for a category.
 
-    Parameters
-    ----------
-    dataset : RecallDataset
-        Recall dataset with per-item LPP metadata.
-    category_field : str
-        Key providing item categories per study position.
-    category_value : int
-        Category to filter on.
-    lpp_field : str
-        Key providing LPP values per study position.
-
-    Returns
-    -------
-    Float[Array, " study_positions"]
-        Mean LPP at each position for the category.
-
+    Missing measurements, padding, and positions beyond listLength are excluded
+    from both sums and counts. ``valid_field`` optionally supplies finite,
+    positive inclusion flags. Field names must be static under JIT.
     """
-    lpp = dataset[lpp_field]
-    categories = dataset[category_field]
-    return category_lpp_values(lpp, categories, category_value)
+    return cat_factor_spc(
+        dataset, category_field, category_value, lpp_field, valid_field=valid_field
+    )
 
 
 def plot_cat_lpp_spc(
@@ -72,80 +54,25 @@ def plot_cat_lpp_spc(
     lpp_field: str = "LateLPP",
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    valid_field: str | None = None,
+    draw_ci: bool = True,
 ) -> Axes:
-    """Plot category-filtered LPP curves by study position.
+    """Plot equal-subject-weighted LPP means in microvolts.
 
-    Parameters
-    ----------
-    datasets : Sequence[RecallDataset] | RecallDataset
-        One or more datasets to plot.
-    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
-        Boolean mask(s) selecting trials.
-    category_field : str
-        Key providing item categories per study position.
-    category_values : Sequence[int]
-        Categories to plot.
-    lpp_field : str
-        Key providing LPP values per study position.
-    color_cycle : list[str], optional
-        Colors for each curve.
-    labels : Sequence[str], optional
-        Legend labels.
-    contrast_name : str, optional
-        Legend title.
-    axis : Axes, optional
-        Existing Axes to plot on.
-    confidence_level : float
-        Confidence level for error bounds.
-
-    Returns
-    -------
-    Axes
-        Axes with the category LPP plot.
-
+    As in the original interface, ``labels`` names categories when several
+    categories are supplied, otherwise datasets. The generic plot offers
+    separate dataset/category labels. ``draw_ci`` only controls display.
     """
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
-        datasets, trial_masks, color_cycle, axis
+    return plot_cat_factor_spc(
+        datasets, trial_masks, category_field, category_values, lpp_field,
+        color_cycle=color_cycle,
+        labels=labels if len(category_values) <= 1 else None,
+        contrast_name=contrast_name, axis=axis, confidence_level=confidence_level,
+        valid_field=valid_field,
+        category_labels=labels if len(category_values) > 1 else None,
+        factor_label=f"{lpp_field} (uV)", draw_ci=draw_ci,
     )
-
-    if labels is None:
-        size = len(category_values) if len(category_values) > 1 else len(datasets)
-        labels = [""] * size
-
-    max_list_length = find_max_list_length(datasets, trial_masks)
-    for data_index, data in enumerate(datasets):
-        for label_index, category_value in enumerate(category_values):
-            subject_values = jnp.vstack(
-                apply_by_subject(
-                    data,
-                    trial_masks[data_index],
-                    jit(
-                        cat_lpp_spc,
-                        static_argnames=(
-                            "category_field",
-                            "category_value",
-                            "lpp_field",
-                        ),
-                    ),
-                    category_field=category_field,
-                    category_value=category_value,
-                    lpp_field=lpp_field,
-                )
-            )
-
-            color_idx = data_index * len(category_values) + label_index
-            color = color_cycle[color_idx % len(color_cycle)]
-            plot_data(
-                axis,
-                jnp.arange(max_list_length, dtype=int) + 1,
-                subject_values,
-                labels[label_index] if len(category_values) > 1 else labels[data_index],
-                color,
-                confidence_level=confidence_level,
-            )
-
-    set_plot_labels(axis, "Study Position", f"{lpp_field} (uV)", contrast_name)
-    return axis
