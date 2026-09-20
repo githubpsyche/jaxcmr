@@ -51,7 +51,9 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            "CMR"
+        ] = PositionalTermination,
     ):
         """Context Maintenance and Retrieval model of memory search.
 
@@ -68,8 +70,8 @@ class CMR(Pytree):
             Factory function for context-to-item memory (M_CF).
         context_create_fn : ContextCreateFn, optional
             Factory function for temporal context representation.
-        termination_policy_create_fn : TerminationPolicyCreateFn, optional
-            Factory function for recall termination policy.
+        termination_policy_create_fn : TerminationPolicyCreateFn[CMR], optional
+            Factory for a compatible stopping rule; defaults to PositionalTermination.
 
         """
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
@@ -333,7 +335,7 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn,
+    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
     """Create a CMR model factory with specified component functions.
 

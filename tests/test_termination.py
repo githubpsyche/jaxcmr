@@ -1,3 +1,7 @@
+"""Termination policies accept only the capabilities they actually use."""
+
+from collections.abc import Sequence
+
 import jax.numpy as jnp
 
 from jaxcmr.components.termination import (
@@ -6,81 +10,66 @@ from jaxcmr.components.termination import (
     RetrievalDependentTermination,
     SupportRatioTermination,
 )
+from jaxcmr.typing import Array, Bool, Float, Int_
 
 
-class _FakeContext:
-    """Minimal context satisfying the Context protocol."""
+class _RecallState:
+    """Availability-only input, with no memory-search methods."""
 
-    def __init__(self, size: int = 3):
-        self.size = size
-        self.state = jnp.zeros(size)
-        self.initial_state = jnp.zeros(size)
-
-    def integrate(self, context_input, drift_rate):  # noqa: D401
-        return self
+    def __init__(self, recallable: Sequence[bool], is_active: bool = True):
+        self.recallable = jnp.array(recallable, dtype=bool)
+        self.is_active = jnp.array(is_active)
 
 
-class _FakeModel:
-    """Minimal model satisfying the MemorySearch protocol."""
+class _PositionalState(_RecallState):
+    """Availability and recall count, with no support calculation."""
 
     def __init__(
         self,
-        recallable,
-        is_active=True,
-        recall_total=0,
-        item_count=3,
-        studied=None,
-        activations=None,
+        recallable: Sequence[bool],
+        is_active: bool = True,
+        recall_total: int = 0,
     ):
-        self.recallable = jnp.array(recallable, dtype=bool)
-        self.is_active = jnp.array(is_active)
+        super().__init__(recallable, is_active)
         self.recall_total = jnp.array(recall_total, dtype=int)
-        self.item_count = item_count
-        self.studied = studied if studied is not None else jnp.ones_like(self.recallable)
+
+
+class _StopState(_RecallState):
+    """Explicit STOP probability independent of the termination policy."""
+
+    def __init__(self, recallable: Sequence[bool]):
+        super().__init__(recallable)
+        self.item_count = len(recallable)
+
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        return jnp.where(choice == self.item_count, 0.1, 0.0)
+
+
+class _SupportState(_RecallState):
+    """Candidate supports, with no context or memory matrices."""
+
+    def __init__(
+        self,
+        recallable: Sequence[bool],
+        studied: Sequence[bool] | None = None,
+        activations: Sequence[float] | None = None,
+    ):
+        super().__init__(recallable)
+        self.studied = (
+            jnp.ones_like(self.recallable)
+            if studied is None
+            else jnp.array(studied, dtype=bool)
+        )
         self._activations = (
-            jnp.zeros(item_count)
+            jnp.zeros(len(recallable))
             if activations is None
             else jnp.array(activations, dtype=float)
         )
-        self.study_index = jnp.array(item_count, dtype=int)
-        self.context = _FakeContext(item_count)
 
-    def experience(self, choice):  # noqa: D401
-        return self
-
-    def start_retrieving(self):  # noqa: D401
-        return self
-
-    def retrieve(self, choice):  # noqa: D401
-        return self
-
-    def candidate_activations(self, candidates):  # noqa: D401
+    def candidate_activations(
+        self, candidates: Bool[Array, " candidates"]
+    ) -> Float[Array, " candidates"]:
         return self._activations * candidates
-
-    def activations(self):  # noqa: D401
-        return self.candidate_activations(self.recallable)
-
-    def outcome_probability(self, choice):
-        return jnp.array(0.1)
-
-    def outcome_probabilities(self):  # noqa: D401
-        return jnp.ones(self.item_count + 1) / (self.item_count + 1)
-
-
-class _FakeModelWithMcf(_FakeModel):
-    """Fake model with an mcf.probe interface for SupportRatioTermination."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.mcf = self
-        self.context = self
-
-    @property
-    def state(self):
-        return jnp.ones(self.item_count)
-
-    def probe(self, context_state):
-        return jnp.ones(self.item_count) * 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -102,10 +91,10 @@ def test_no_stop_returns_zero_when_items_available():
     """
     # Arrange / Given
     policy = NoStopTermination(3, {})
-    model = _FakeModel(recallable=[True, True, False])
+    model = _RecallState(recallable=[True, True, False])
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert jnp.isclose(p_stop, 0.0).item()
@@ -125,10 +114,10 @@ def test_no_stop_returns_one_when_no_items_available():
     """
     # Arrange / Given
     policy = NoStopTermination(3, {})
-    model = _FakeModel(recallable=[False, False, False])
+    model = _RecallState(recallable=[False, False, False])
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert jnp.isclose(p_stop, 1.0).item()
@@ -154,10 +143,10 @@ def test_positional_returns_small_probability_at_start():
     # Arrange / Given
     params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     policy = PositionalTermination(5, params)
-    model = _FakeModel(recallable=[True] * 5, recall_total=0)
+    model = _PositionalState(recallable=[True] * 5, recall_total=0)
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert float(p_stop) < 0.1
@@ -182,10 +171,10 @@ def test_positional_increases_with_recall_position():
 
     # Act / When
     p_early = policy.stop_probability(
-        _FakeModel(recallable=[True] * 5, recall_total=0)  # type: ignore[arg-type]
+        _PositionalState(recallable=[True] * 5, recall_total=0)
     )
     p_late = policy.stop_probability(
-        _FakeModel(recallable=[True] * 5, recall_total=4)  # type: ignore[arg-type]
+        _PositionalState(recallable=[True] * 5, recall_total=4)
     )
 
     # Assert / Then
@@ -207,10 +196,10 @@ def test_positional_returns_one_when_inactive():
     # Arrange / Given
     params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     policy = PositionalTermination(3, params)
-    model = _FakeModel(recallable=[True, True, True], is_active=False)
+    model = _PositionalState(recallable=[True, True, True], is_active=False)
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert jnp.isclose(p_stop, 1.0).item()
@@ -235,10 +224,10 @@ def test_retrieval_dependent_uses_model_outcome_probability():
     """
     # Arrange / Given
     policy = RetrievalDependentTermination(3, {})
-    model = _FakeModel(recallable=[True, True, True])
+    model = _StopState(recallable=[True, True, True])
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert jnp.isclose(p_stop, 0.1).item()
@@ -264,10 +253,10 @@ def test_support_ratio_returns_one_when_no_items_recallable():
     # Arrange / Given
     params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     policy = SupportRatioTermination(3, params)
-    model = _FakeModel(recallable=[False, False, False])
+    model = _SupportState(recallable=[False, False, False])
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     assert jnp.isclose(p_stop, 1.0).item()
@@ -290,13 +279,13 @@ def test_support_ratio_uses_candidate_activations_without_mcf():
     # Arrange / Given
     params = {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     policy = SupportRatioTermination(3, params)
-    model = _FakeModel(
+    model = _SupportState(
         recallable=[False, True, True],
         activations=[2.0, 4.0, 6.0],
     )
 
     # Act / When
-    p_stop = policy.stop_probability(model)  # type: ignore[arg-type]
+    p_stop = policy.stop_probability(model)
 
     # Assert / Then
     expected = 0.01 + jnp.exp(-0.5 * 5.0)

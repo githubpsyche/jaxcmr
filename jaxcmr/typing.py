@@ -196,15 +196,16 @@ class Context(Protocol):
 
 
 @runtime_checkable
-class TerminationPolicy(Protocol):
-    """Define termination policies for memory search models."""
+class TerminationPolicy[ModelT](Protocol):
+    """A stopping rule accepting the model or view described by ``ModelT``.
 
-    def stop_probability(self, model: "MemorySearch") -> Float[Array, ""]:
-        """Returns stop probability for the provided model.
+    Concrete policies declare their own structural input requirements. A policy
+    need not accept every ``MemorySearch`` model, and its input need not be a
+    complete memory-search model.
+    """
 
-        Args:
-          model: Memory search model under evaluation.
-        """
+    def stop_probability(self, model: ModelT) -> Float[Array, ""]:
+        """Return stop probability for an object satisfying this rule's needs."""
         ...
 
 
@@ -292,15 +293,22 @@ class MemoryCreateFn(Protocol):
         ...
 
 
-class TerminationPolicyCreateFn(Protocol):
-    """Callable that returns a termination policy instance."""
+class TerminationPolicyCreateFn[ModelT](Protocol):
+    """Create a stopping rule compatible with the supplied model type.
+
+    Constructors and factories name the concrete model type their policy must
+    accept. Variants forwarding a policy to a base constructor retain that base
+    model's contract. Models passing a view to their policy use the view's type.
+    These annotations check structural compatibility without changing model
+    behavior or performing runtime validation.
+    """
 
     def __call__(
         self,
         list_length: int,
         parameters: Mapping[str, Float_],
-    ) -> TerminationPolicy:
-        """Return a termination policy instance."""
+    ) -> TerminationPolicy[ModelT]:
+        """Return a termination policy that can accept ``ModelT``."""
         ...
 
 

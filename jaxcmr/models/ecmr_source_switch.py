@@ -59,7 +59,9 @@ class eCMRSourceSwitch(eCMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = _init_expanded_context,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            eCMR
+        ] = PositionalTermination,
     ) -> None:
         """Initialize eCMR with expanded temporal context for switch events."""
         super().__init__(
@@ -108,7 +110,9 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = _init_expanded_context,
-    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    termination_policy_create_fn: TerminationPolicyCreateFn[
+        eCMR
+    ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
     """Build an eCMR source-switch factory."""
 

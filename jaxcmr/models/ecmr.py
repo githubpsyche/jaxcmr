@@ -67,7 +67,9 @@ class eCMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            "eCMR"
+        ] = PositionalTermination,
     ) -> None:
         """Initialize full eCMR with dual context and category modulation.
 
@@ -85,8 +87,8 @@ class eCMR(Pytree):
             Factory for context-to-item memory.
         context_create_fn : ContextCreateFn, optional
             Factory for temporal context.
-        termination_policy_create_fn : TerminationPolicyCreateFn, optional
-            Factory for recall termination policy.
+        termination_policy_create_fn : TerminationPolicyCreateFn[eCMR], optional
+            Factory for a compatible stopping rule; defaults to PositionalTermination.
 
         """
         # --- Parameters ---
@@ -423,7 +425,9 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    termination_policy_create_fn: TerminationPolicyCreateFn[
+        eCMR
+    ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
     """Build an eCMR factory for the CK2022 fitting pipeline.
 

@@ -9,20 +9,96 @@ activation-dependent termination rules.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import Protocol
 
 from jax import lax
 from jax import numpy as jnp
 from simple_pytree import Pytree
 
 from jaxcmr.math import lb
-from jaxcmr.typing import Array, Float, Float_, MemorySearch
+from jaxcmr.typing import Array, Bool, Float, Float_, Int_, Integer
 
 __all__ = [
     "NoStopTermination",
     "PositionalTermination",
     "RetrievalDependentTermination",
     "SupportRatioTermination",
+    "SupportsNoStop",
+    "SupportsPositional",
+    "SupportsRetrievalDependent",
+    "SupportsSupportRatio",
 ]
+
+
+class SupportsNoStop(Protocol):
+    """Availability information needed to stop when retrieval is exhausted.
+
+    Models and lightweight views satisfy these read-only requirements
+    structurally; they do not need to inherit from this protocol.
+    """
+
+    @property
+    def recallable(self) -> Bool[Array, " candidates"]:
+        """Indicate which candidates are currently available."""
+        ...
+
+    @property
+    def is_active(self) -> Bool[Array, ""]:
+        """Indicate whether retrieval is still active."""
+        ...
+
+
+class SupportsPositional(SupportsNoStop, Protocol):
+    """Availability and recall count needed for positional stopping."""
+
+    @property
+    def recall_total(self) -> Integer[Array, ""]:
+        """Return the number of recall events so far."""
+        ...
+
+
+class SupportsRetrievalDependent(SupportsNoStop, Protocol):
+    """Input requirements of the legacy STOP-item policy.
+
+    ``item_count`` must identify an explicit STOP candidate, and evaluating its
+    outcome probability must not call this termination policy again. Structural
+    typing cannot establish either condition. Ordinary CMR models use
+    ``item_count`` for their final item and do not meet these semantic conditions.
+    """
+
+    @property
+    def item_count(self) -> int:
+        """Return the index this policy interprets as its STOP candidate."""
+        ...
+
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Evaluate the requested outcome independently of this stopping rule."""
+        ...
+
+
+class SupportsSupportRatio(SupportsNoStop, Protocol):
+    """Candidate information needed by the existing support-ratio rule.
+
+    ``studied``, ``recallable``, and candidate activations must refer to the same
+    candidate space. The rule treats studied, unavailable candidates as already
+    recalled; models using another availability convention need a different
+    interpretation before this rule can be used with them.
+    """
+
+    @property
+    def studied(self) -> Bool[Array, " candidates"]:
+        """Indicate which candidates were studied."""
+        ...
+
+    def candidate_activations(
+        self, candidates: Bool[Array, " candidates"]
+    ) -> Float[Array, " candidates"]:
+        """Return support for the selected candidates, including unavailable ones.
+
+        Apply the model's retrieval-support calculation to this mask without
+        additionally suppressing candidates using ``recallable``.
+        """
+        ...
 
 
 class NoStopTermination(Pytree):
@@ -35,7 +111,7 @@ class NoStopTermination(Pytree):
     ) -> None:
         pass
 
-    def stop_probability(self, model: MemorySearch) -> Float[Array, ""]:
+    def stop_probability(self, model: SupportsNoStop) -> Float[Array, ""]:
         total_recallable = jnp.sum(model.recallable)
         return lax.cond(
             jnp.logical_or(total_recallable == 0, ~model.is_active),
@@ -56,7 +132,7 @@ class PositionalTermination(Pytree):
         growth = parameters["stop_probability_growth"]
         self._stop_probability = scale * jnp.exp(jnp.arange(list_length) * growth)
 
-    def stop_probability(self, model: MemorySearch) -> Float[Array, ""]:
+    def stop_probability(self, model: SupportsPositional) -> Float[Array, ""]:
         total_recallable = jnp.sum(model.recallable)
         return lax.cond(
             jnp.logical_or(total_recallable == 0, ~model.is_active),
@@ -69,7 +145,11 @@ class PositionalTermination(Pytree):
 
 
 class RetrievalDependentTermination(Pytree):
-    """Termination probability is the probability of retrieving a STOP item."""
+    """Legacy STOP-item rule; requires ``SupportsRetrievalDependent`` semantics.
+
+    Ordinary CMR outcome probabilities depend on termination, so attaching this
+    rule to ordinary CMR creates recursion even though the method names match.
+    """
 
     def __init__(
         self,
@@ -78,7 +158,7 @@ class RetrievalDependentTermination(Pytree):
     ) -> None:
         pass
 
-    def stop_probability(self, model: MemorySearch) -> Float[Array, ""]:
+    def stop_probability(self, model: SupportsRetrievalDependent) -> Float[Array, ""]:
         total_recallable = jnp.sum(model.recallable)
         return lax.cond(
             jnp.logical_or(total_recallable == 0, ~model.is_active),
@@ -101,7 +181,7 @@ class SupportRatioTermination(Pytree):
         self.scale = parameters["stop_probability_scale"]
         self.growth = parameters["stop_probability_growth"]
 
-    def stop_probability(self, model: MemorySearch) -> Float[Array, ""]:
+    def stop_probability(self, model: SupportsSupportRatio) -> Float[Array, ""]:
         total_recallable = jnp.sum(model.recallable)
 
         def compute_stop_probability() -> Float[Array, ""]:

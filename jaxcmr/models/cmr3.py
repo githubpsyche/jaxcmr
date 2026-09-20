@@ -67,7 +67,9 @@ class CMR3(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            "CMR3"
+        ] = PositionalTermination,
     ) -> None:
         """Initialize full CMR3 with dual context and valence coding."""
         # --- Parameters ---
@@ -324,7 +326,9 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    termination_policy_create_fn: TerminationPolicyCreateFn[
+        CMR3
+    ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
     """Build a CMR3 factory for the CK2022 fitting pipeline."""
 

@@ -50,7 +50,9 @@ class AdditiveSemanticECMR(eCMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            eCMR
+        ] = PositionalTermination,
     ) -> None:
         """Initialize additive semantic eCMR."""
         super().__init__(
@@ -88,7 +90,9 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    termination_policy_create_fn: TerminationPolicyCreateFn[
+        eCMR
+    ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
     """Build an additive semantic eCMR factory."""
 

@@ -25,11 +25,13 @@ from jaxcmr.math import exponential_primacy_decay, lb, power_scale
 from jaxcmr.typing import (
     Array,
     Bool,
+    Context,
     ContextCreateFn,
     Float,
     Float_,
     Int_,
     Integer,
+    Memory,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
@@ -46,7 +48,15 @@ __all__ = [
 class _TerminationProxy(Pytree):
     """Minimal model-like object for route-specific termination queries."""
 
-    def __init__(self, recallable, recall_total, is_active, context, mcf, studied):
+    def __init__(
+        self,
+        recallable: Bool[Array, " candidates"],
+        recall_total: Integer[Array, ""],
+        is_active: Bool[Array, ""],
+        context: Context,
+        mcf: Memory,
+        studied: Bool[Array, " candidates"],
+    ) -> None:
         self.recallable = recallable
         self.recall_total = recall_total
         self.is_active = is_active
@@ -65,7 +75,9 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            _TerminationProxy
+        ] = PositionalTermination,
     ):
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -133,7 +145,7 @@ class CMR(Pytree):
     def _route_stop_probability(
         self,
         recallable: Bool[Array, " list_length"],
-        mcf,
+        mcf: Memory,
         studied: Bool[Array, " list_length"],
     ) -> Float[Array, ""]:
         proxy = _TerminationProxy(
@@ -351,7 +363,7 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn,
+    termination_policy_create_fn: TerminationPolicyCreateFn[_TerminationProxy],
 ) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(

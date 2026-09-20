@@ -11,6 +11,7 @@ from jaxcmr.components.factory import build_trial_connections_from_similarity
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.helpers import require_pres_itemids, require_valence
 from jaxcmr.models.additive_semantic_ecmr import AdditiveSemanticECMR
+from jaxcmr.models.ecmr import eCMR
 from jaxcmr.typing import (
     Array,
     Bool,
@@ -43,7 +44,9 @@ class AdditiveSemanticRetrievalBiasECMR(AdditiveSemanticECMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+        termination_policy_create_fn: TerminationPolicyCreateFn[
+            eCMR
+        ] = PositionalTermination,
     ) -> None:
         """Initialize semantic eCMR with retrieval-stage target bias."""
         super().__init__(
@@ -75,7 +78,9 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn = PositionalTermination,
+    termination_policy_create_fn: TerminationPolicyCreateFn[
+        eCMR
+    ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
     """Build an emotional-target-bias semantic eCMR factory."""
 

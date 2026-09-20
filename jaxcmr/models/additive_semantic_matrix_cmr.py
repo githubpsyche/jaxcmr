@@ -30,7 +30,7 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn,
+    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
