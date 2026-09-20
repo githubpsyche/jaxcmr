@@ -1,6 +1,7 @@
 __all__ = [
     "cat_lpp_by_recall",
     "cat_lpp_spc",
+    "cat_recall_by_factor",
     "cat_recall_by_lpp",
     "cat_recall_rate",
     "cat_spc",
