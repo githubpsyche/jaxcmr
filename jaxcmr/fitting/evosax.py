@@ -7,7 +7,6 @@ from typing import Any
 import jax
 import numpy as np
 from evosax.algorithms import DifferentialEvolution
-from evosax.core.restart import FitnessStdRestartParams, fitness_std_cond
 from jax import numpy as jnp
 from tqdm import trange
 
@@ -96,10 +95,6 @@ class EvosaxDE:
             "seed": int(hyperparams.get("seed", 0)),
             "nonfinite_penalty": float(hyperparams.get("nonfinite_penalty", 1e30)),
         }
-        self._restart_params = FitnessStdRestartParams(
-            tol=self.all_hyperparams["relative_tolerance"],
-            atol=self.all_hyperparams["absolute_tolerance"],
-        )
         self._base_key = jax.random.PRNGKey(self.all_hyperparams["seed"])
         self._fit_counter = 0
 
@@ -195,10 +190,14 @@ class EvosaxDE:
         penalty = jnp.asarray(
             self.all_hyperparams["nonfinite_penalty"], dtype=fitness.dtype
         )
-        not_penalized = jnp.all(fitness != penalty)
-        return jnp.logical_and(
-            not_penalized,
-            fitness_std_cond(None, fitness, None, None, None, self._restart_params),
+        threshold = (
+            self.all_hyperparams["absolute_tolerance"]
+            + self.all_hyperparams["relative_tolerance"] * jnp.abs(jnp.mean(fitness))
+        )
+        return (
+            jnp.all(fitness != penalty)
+            & jnp.all(jnp.isfinite(fitness))
+            & (jnp.std(fitness) <= threshold)
         )
 
     def _run_scan(
