@@ -45,6 +45,7 @@ __all__ = [
     "MemorySearchModelFactory",
     "PRNGKeyArray",
     "Real",
+    "RecallAnalysisFn",
     "RecallDataset",
     "Shaped",
     "TerminationPolicy",
@@ -105,6 +106,28 @@ class RecallDataset(TypedDict, extra_items=Array):
 
     list_type: NotRequired[Integer[Array, "n_trials 1"]]
     """List type for each trial (shape: [n_trials, 1])."""
+
+
+class RecallAnalysisFn(Protocol):
+    """Summarize observed or simulated recalls for selected trials.
+
+    ``recalls`` already contains only the selected trials. Observations have
+    one simulation per trial; model predictions can have many. ``dataset`` is
+    the full dataset, so align any trial metadata with ``trial_indices``.
+    Implementations aggregate the simulation dimension and return matching,
+    fixed-shape arrays for observations and predictions. They must support
+    JAX tracing; aggregation and recall-code interpretation are their explicit
+    responsibility. Nonfinite observed bins can mark unavailable targets.
+    """
+
+    def __call__(
+        self,
+        recalls: Integer[Array, " trials simulations recall_positions"],
+        *,
+        list_length: int,
+        dataset: Mapping[str, Array],
+        trial_indices: Integer[Array, " trials"],
+    ) -> Array: ...
 
 
 @runtime_checkable

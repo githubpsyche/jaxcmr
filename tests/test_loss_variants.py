@@ -678,3 +678,43 @@ def test_mse_losses_match_scipy_adapter():
 
     for name, gen in cases:
         _assert_loss_matches_scipy_adapter(name, gen, params, trial_idx, free)
+
+
+def test_joint_mse_factory_runs_through_both_fitters():
+    """Configured behavioral losses support real CMR fits in both engines."""
+    from jaxcmr.analyses.spc import fixed_pres_spc
+    from jaxcmr.fitting import EvosaxDE, ScipyDE
+    from jaxcmr.loss.mse import make_factory
+    from jaxcmr.typing import LossFn
+
+    def spc_summary(recalls, *, list_length, dataset, trial_indices):
+        # This fixture uses unique items numbered by study position.
+        return fixed_pres_spc(recalls.reshape(-1, recalls.shape[-1]), list_length)
+
+    def pfr_summary(recalls, *, list_length, dataset, trial_indices):
+        first = recalls[..., 0].reshape(-1)
+        return jnp.bincount(first, length=list_length + 1)[1:] / first.size
+
+    BehavioralLoss = make_factory(
+        {"spc": spc_summary, "pfr": pfr_summary}, simulation_count=3,
+    )
+    # Also check the class assignment statically, without casts or ignores.
+    loss_cls: type[LossFn] = BehavioralLoss
+    for fitter_cls in (ScipyDE, EvosaxDE):
+        fitter = fitter_cls(
+            dataset=_dataset(),
+            features=None,
+            base_params=_params(),
+            model_factory_cls=BaseCMRFactory,
+            loss_fn_cls=loss_cls,
+            hyperparams={
+                "bounds": {"encoding_drift_rate": [0.1, 0.9]},
+                "num_steps": 1,
+                "pop_size": 5,
+                "polish": False,
+                "progress_bar": False,
+            },
+        )
+        result = fitter.fit(jnp.array([True, True]))
+        assert np.isfinite(result["fitness"][0])
+        assert 0.1 <= result["fits"]["encoding_drift_rate"][0] <= 0.9
