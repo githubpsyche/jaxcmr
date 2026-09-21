@@ -17,6 +17,7 @@ __all__ = [
     "normalize_magnitude",
     "power_scale",
     "power_scale_absolute",
+    "relative_power_scale",
     "simple_power_scale",
 ]
 
@@ -24,14 +25,35 @@ lb = jnp.finfo(jnp.float32).eps
 
 
 def power_scale(value: Float_, scale: Float_) -> Float:
-    """Returns a log-stabilized power that preserves ordering, not magnitude."""
-    log_activation = jnp.log(value)
+    """Legacy power transform, preserving the identity shortcut at scale one.
+
+    Use ``relative_power_scale`` when differentiating with respect to scale:
+    this historical shortcut changes normalization at exactly one.
+    """
     return lax.cond(
-        jnp.logical_and(jnp.any(value != 0), scale != 1),
-        lambda _: jnp.exp(scale * (log_activation - jnp.max(log_activation))),
-        lambda _: value,
-        None,
+        scale == 1,
+        lambda: value,
+        lambda: relative_power_scale(value, scale),
     )
+
+
+def relative_power_scale(
+    value: Float[Array, "..."] | float, scale: Float_
+) -> Float[Array, "..."]:
+    """Raise nonnegative support to a positive power relative to its maximum.
+
+    Positive entries equal ``(value / max(value)) ** scale`` at every scale,
+    including one. Zero support stays zero; all-zero input returns zeros.
+    Guard log/exp inputs before masking so structural zeros have finite
+    derivatives. Negative support remains invalid rather than being clipped.
+    """
+    nonzero = value != 0
+    logs = jnp.log(jnp.where(nonzero, value, 1.0))
+    maximum = jnp.max(jnp.where(nonzero, logs, -jnp.inf))
+    maximum = jnp.where(jnp.any(nonzero), maximum, 0.0)
+    shift = jnp.where(nonzero, logs - maximum, 0.0)
+    return jnp.where(nonzero, jnp.exp(scale * shift), 0.0)
+
 
 def power_scale_absolute(x, exponent, eps=lb):
     """Returns a magnitude-preserving, log-stable power transform."""
@@ -64,10 +86,17 @@ def exponential_primacy_decay(
 def normalize_magnitude(
     vector: Float[Array, " features"],
 ) -> Float[Array, " features"]:
-    """Return a nonzero vector at unit length, preserving an exact zero."""
-    magnitude = jnp.sqrt(jnp.sum(vector**2))
-    safe_magnitude = jnp.where(magnitude == 0, 1.0, magnitude)
-    return vector / safe_magnitude
+    """Normalize nonzero vectors; the exact-zero branch has value and tangent zero.
+
+    Guard the square root itself, so reverse differentiation of an inactive
+    zero-input branch cannot introduce NaNs into a batched model calculation.
+    Normalization is mathematically undefined at zero; the zero tangent is an
+    explicit convention for that branch, not a limiting derivative.
+    """
+    squared = jnp.sum(vector**2)
+    is_zero = squared == 0
+    safe_magnitude = jnp.sqrt(jnp.where(is_zero, 1.0, squared))
+    return jnp.where(is_zero, jnp.zeros_like(vector), vector / safe_magnitude)
 
 
 def cosine_similarity_matrix(

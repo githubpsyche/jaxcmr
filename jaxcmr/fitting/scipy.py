@@ -1,15 +1,21 @@
-"""SciPy differential-evolution fitting."""
+"""SciPy differential evolution with JAX population loss evaluation.
+
+SciPy owns search and optional polishing on the host. The loss adapter handles
+preparation and coordinate conversion; reported fits always use model units.
+"""
 
 import time
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from jax import jit
 from jax import numpy as jnp
-from scipy.optimize import differential_evolution
+from scipy.optimize import OptimizeResult, differential_evolution
 from tqdm import trange
 
+from jaxcmr.fitting._preparation import LossPreparation
+from jaxcmr.fitting.parameters import ParameterSpace
 from jaxcmr.helpers import make_subject_trial_masks
 from jaxcmr.typing import (
     Array,
@@ -23,36 +29,72 @@ from jaxcmr.typing import (
     RecallDataset,
 )
 
-__all__ = [
-    "ScipyDE",
-    "make_scipy_loss_fn",
-]
+__all__ = ["ScipyDE", "make_scipy_loss_fn"]
+
+type _ScipyLossFn = Callable[[np.ndarray], Array]
 
 
 def make_scipy_loss_fn(
-    loss_fn,
+    loss_fn: LossFn,
     trial_indices: Integer[Array, " trials"],
     base_params: Mapping[str, Float_],
     free_param_names: Iterable[str],
-) -> Callable[[np.ndarray], Float[Array, ""]]:
-    """Return a SciPy-style callable backed by a fitting loss."""
-    free_param_names = tuple(free_param_names)
+    parameter_space: ParameterSpace | None = None,
+) -> _ScipyLossFn:
+    """Adapt a population loss to SciPy's scalar and vectorized interfaces.
+
+    Args:
+        loss_fn: Ordinary loss, optionally supporting observation preparation.
+        trial_indices: Concrete dataset rows to prepare once for this objective.
+        base_params: Fixed parameters and defaults overridden by free values.
+        free_param_names: Distinct names in the order of the input parameter axis.
+        parameter_space: Optional conversion from unit coordinates to physical
+            model values. Its names must exactly match free_param_names in order.
+            When omitted, the objective accepts physical values directly.
+
+    Returns:
+        A compiled objective accepting shape (parameters,) for one scalar loss
+        or (parameters, samples) for one loss per column. SciPy uses the former
+        for polishing and the latter for population evaluation. The supplied
+        loss always receives physical values shaped (parameters, samples).
+
+    Raises:
+        ValueError: Names are duplicated or disagree with parameter_space.
+            Calling the returned objective with the wrong shape also raises.
+    """
+    names = tuple(free_param_names)
+    if len(set(names)) != len(names):
+        raise ValueError("free_param_names must contain distinct parameter names.")
+    if parameter_space is not None and parameter_space.names != names:
+        raise ValueError("parameter_space.names must match free_param_names in order.")
+    prepared = LossPreparation(loss_fn).select(trial_indices)
 
     @jit
-    def single_param_loss(x: jnp.ndarray) -> Float[Array, ""]:
-        """Returns loss for one parameter vector."""
-        return loss_fn(trial_indices, base_params, free_param_names, x[:, None])[0]
+    def evaluate(parameters: Array) -> Array:
+        # Rank and shape are static under JIT; no traced value chooses a branch.
+        if parameters.ndim not in (1, 2) or parameters.shape[0] != len(names):
+            raise ValueError(
+                f"Expected ({len(names)},) or ({len(names)}, samples) parameters; "
+                f"got shape {parameters.shape}."
+            )
+        population = parameters[:, None] if parameters.ndim == 1 else parameters
+        if parameter_space is not None:
+            # ParameterSpace uses the final axis, whereas losses use rows.
+            population = parameter_space.to_physical(population.T).T
+        values = prepared(base_params, names, population)
+        return values[0] if parameters.ndim == 1 else values
 
-    @jit
-    def multi_param_loss(x: jnp.ndarray) -> Float[Array, " n_samples"]:
-        """Returns one loss per parameter vector."""
-        return loss_fn(trial_indices, base_params, free_param_names, x)
-
-    return lambda x: multi_param_loss(x) if x.ndim > 1 else single_param_loss(x)
+    return evaluate
 
 
 class ScipyDE:
-    """A fitting class that uses SciPy's Differential Evolution algorithm."""
+    """Fit bounded parameters with SciPy differential evolution and restarts.
+
+    Bounds, explicit initial populations and returned fits use physical model
+    units. Providing ``transforms`` searches in unit coordinates defined by
+    ParameterSpace; omitting it preserves the physical-coordinate search.
+    Random streams depend on the seed, fit-call index and restart index.
+    """
 
     def __init__(
         self,
@@ -62,213 +104,225 @@ class ScipyDE:
         model_factory_cls: type[MemorySearchModelFactory],
         loss_fn_cls: type[LossFn],
         hyperparams: dict[str, Any] | None = None,
-    ):
-        """
-        Configure the fitting algorithm.
+    ) -> None:
+        """Construct the loss and configure search in physical or unit coordinates.
 
         Args:
-            dataset: The dataset containing trial data (including 'subject').
+            dataset: Recall observations, including subject labels.
             features: Optional feature matrix aligned to the vocabulary.
-            base_params: A dictionary of parameters that are held fixed.
-            model_factory_cls: Class implementing MemorySearchModelFactory.
-            loss_fn_cls: Class implementing LossFn.
-            hyperparams: Optional dictionary of hyperparameters for the fitting routine.
-                May include 'bounds' (dict[str, list[float]]) and other keys
-                like 'num_steps', 'pop_size', etc.
+            base_params: Fixed parameters and defaults overridden by fitted values.
+            model_factory_cls: Factory passed to the selected loss constructor.
+            loss_fn_cls: Loss class accepting the factory, dataset and features.
+            hyperparams: Requires a ``bounds`` name-to-[lower, upper] mapping.
+                Optional controls: ``num_steps`` (1000), ``pop_size`` (15, SciPy's
+                population multiplier), ``best_of`` (1), ``seed`` (0),
+                ``relative_tolerance`` (0.001), ``absolute_tolerance`` (0),
+                ``cross_over_rate`` (0.9), ``diff_w`` ((0.5, 1.0)),
+                ``init`` ("latinhypercube"), ``polish`` (True),
+                ``transforms`` ({}), ``progress_bar`` (True), and
+                ``display_iterations`` (False). An explicit init array has one
+                physical parameter vector per row, ordered like bounds.
         """
-        # Store essential data
+        options = hyperparams or {}
         self.dataset = dataset
         self.base_params = base_params
         self.subjects = dataset["subject"].flatten()
-
-        # configure convenience features
-        if hyperparams is None:
-            hyperparams = {}
-        self.progress_bar = hyperparams.get("progress_bar", True)
-        self.display_iterations = hyperparams.get("display_iterations", False)
-
-        # Extract bounds for free params; store all hyperparams for convenience
-        self.free_parameter_bounds = hyperparams.get("bounds", {})
+        self.progress_bar = options.get("progress_bar", True)
+        self.display_iterations = options.get("display_iterations", False)
+        self.all_hyperparams = _search_options(options)
+        self.free_parameter_bounds = self.all_hyperparams["bounds"]
         self.bounds = np.array(list(self.free_parameter_bounds.values()))
-        diff_w = hyperparams.get("diff_w", (0.5, 1.0))
-        if not isinstance(diff_w, (tuple, list)):
-            diff_w = (diff_w, diff_w)
-        diff_w = tuple(diff_w)
-
-        self.all_hyperparams = {
-            "bounds": self.free_parameter_bounds,
-            "num_steps": hyperparams.get("num_steps", 1000),
-            "pop_size": hyperparams.get("pop_size", 15),
-            "relative_tolerance": hyperparams.get("relative_tolerance", 0.001),
-            "absolute_tolerance": hyperparams.get("absolute_tolerance", 0.0),
-            "cross_over_rate": hyperparams.get("cross_over_rate", 0.9),
-            "diff_w": diff_w,
-            "best_of": hyperparams.get("best_of", 1),
-            "init": hyperparams.get("init", "latinhypercube"),
-            "polish": hyperparams.get("polish", True),
-            "seed": int(hyperparams.get("seed", 0)),
-        }
+        self.parameter_space = (
+            ParameterSpace(self.free_parameter_bounds, options["transforms"])
+            if options.get("transforms")
+            else None
+        )
         self._fit_counter = 0
-
         self.loss_fn = loss_fn_cls(model_factory_cls, dataset, features)
 
     def fit(
         self, trial_mask: Bool[Array, " trials"], subject_id: int = -1
     ) -> FitResult:
-        """Fit one parameter set to the trials selected by the mask.
+        """Fit one parameter set, retaining the best independent restart.
 
-        Parameters
-        ----------
-        trial_mask : Bool[Array, " trials"]
-            Boolean mask selecting which trials to include in the fit.
-        subject_id : int, optional
-            Label stored in the result dict. Defaults to -1.
+        Args:
+            trial_mask: Boolean mask selecting dataset rows to score.
+            subject_id: Label stored with the result; defaults to -1.
 
-        Returns
-        -------
-        FitResult
-            Fitted parameters, fitness value, and metadata.
+        Returns:
+            Fitted physical parameters, fitness, convergence and iteration
+            metadata. Elapsed time includes preparation and JAX compilation.
         """
-        t0 = time.perf_counter()
-
-        # Convert the mask to an array of trial indices
-        trial_indices = jnp.where(trial_mask)[0]
-
-        # Build a scalar loss function based on these trial indices
-        scipy_loss_fn = make_scipy_loss_fn(
+        started = time.perf_counter()
+        objective = make_scipy_loss_fn(
             self.loss_fn,
-            trial_indices, self.base_params, self.free_parameter_bounds
+            jnp.where(trial_mask)[0],
+            self.base_params,
+            self.free_parameter_bounds,
+            self.parameter_space,
         )
+        bounds, initial = self._optimization_domain()
+        best = self._best_restart(objective, bounds, initial)
+        return self._format_result(best, subject_id, started)
 
-        # Run differential evolution
-        best_fitness = np.inf
-        best_fit_result = None
+    def fit_subjects(self, trial_mask: Bool[Array, " trials"]) -> FitResult:
+        """Fit each selected subject independently and combine the results.
+
+        Args:
+            trial_mask: Boolean mask selecting dataset rows to include.
+
+        Returns:
+            The usual FitResult with one entry per selected subject and total
+            elapsed time. Each subject retains its own best restart.
+        """
+        started = time.perf_counter()
+        masks, subjects = make_subject_trial_masks(trial_mask, self.subjects)
+        combined = self._empty_result()
+        with trange(len(subjects), disable=not self.progress_bar) as progress:
+            for index in progress:
+                if np.sum(masks[index]) == 0:
+                    continue
+                result = self.fit(masks[index], int(subjects[index]))
+                if not np.isfinite(result["fitness"][0]):
+                    raise ValueError(
+                        f"Non-finite fitness for subject {subjects[index]}", result
+                    )
+                combined["fitness"] += result["fitness"]
+                combined["nit"] += result["nit"]
+                combined["converged"] += result["converged"]
+                for name, values in result["fits"].items():
+                    combined["fits"][name] += values
+                progress.set_description(
+                    f"Subject={subjects[index]}, Fitness={result['fitness'][0]}"
+                )
+        combined["fit_time"] = time.perf_counter() - started
+        return combined
+
+    def _optimization_domain(self) -> tuple[np.ndarray, str | np.ndarray]:
+        """Choose search bounds and convert explicit physical starts if needed."""
+        initial = self.all_hyperparams["init"]
+        if self.parameter_space is None:
+            return self.bounds, initial
+        bounds = np.tile([0.0, 1.0], (len(self.free_parameter_bounds), 1))
+        if not isinstance(initial, str):
+            initial = self._initial_population(initial)
+        return bounds, initial
+
+    def _initial_population(self, initial: np.ndarray) -> np.ndarray:
+        """Validate physical rows before converting them to unit coordinates."""
+        assert self.parameter_space is not None
+        values = np.asarray(initial, dtype=float)
+        if (
+            values.ndim != 2
+            or values.shape[1] != len(self.free_parameter_bounds)
+            or not np.all(np.isfinite(values))
+            or np.any(values < self.bounds[:, 0])
+            or np.any(values > self.bounds[:, 1])
+        ):
+            raise ValueError(
+                "init must contain finite physical parameter rows within bounds."
+            )
+        return np.asarray(self.parameter_space.to_unit(jnp.asarray(values)))
+
+    def _best_restart(
+        self, objective: _ScipyLossFn, bounds: np.ndarray, initial: str | np.ndarray
+    ) -> OptimizeResult:
+        """Run independent random streams and retain the strict best result."""
         fit_counter = self._fit_counter
         self._fit_counter += 1
-        for run_index in range(self.all_hyperparams["best_of"]):
-            fit_result = differential_evolution(
-                scipy_loss_fn,
-                self.bounds,
-                maxiter=self.all_hyperparams["num_steps"],
-                popsize=self.all_hyperparams["pop_size"],
-                vectorized=True,
-                disp=self.display_iterations,
-                tol=self.all_hyperparams["relative_tolerance"],
-                atol=self.all_hyperparams["absolute_tolerance"],
-                mutation=self.all_hyperparams["diff_w"],
-                recombination=self.all_hyperparams["cross_over_rate"],
-                init=self.all_hyperparams["init"],
-                polish=self.all_hyperparams["polish"],
-                rng=np.random.default_rng(
-                    [self.all_hyperparams["seed"], fit_counter, run_index]
-                ),
+        best = None
+        best_fitness = np.inf
+        for index in range(self.all_hyperparams["best_of"]):
+            rng = np.random.default_rng(
+                [self.all_hyperparams["seed"], fit_counter, index]
             )
-            if fit_result.fun < best_fitness:
-                best_fitness = fit_result.fun
-                best_fit_result = fit_result
+            result = self._run_restart(objective, bounds, initial, rng)
+            if result.fun < best_fitness:
+                best, best_fitness = result, result.fun
+        assert best is not None, "No fit result found"
+        return best
 
-        assert best_fit_result is not None, "No fit result found"
-        return {
-            "fixed": {k: float(v) for k, v in self.base_params.items()},
-            "free": {
-                k: self.free_parameter_bounds[k] for k in self.free_parameter_bounds
-            },
-            "fitness": [float(best_fitness)],
-            "nit": [int(best_fit_result.nit)],
-            "converged": [bool(best_fit_result.success)],
-            "fits": {
-                # For each base param, we just repeat its original value
-                **{k: [float(v)] for k, v in self.base_params.items()},
-                # For each free param, we store the optimizer's best value
-                **{
-                    # Map each free param name to the best-fit value
-                    param_name: [float(best_fit_result.x[idx])]
-                    for idx, param_name in enumerate(self.free_parameter_bounds)
-                },
-                "subject": [subject_id],
-            },
-            "hyperparameters": self.all_hyperparams,
-            "fit_time": time.perf_counter() - t0,
-        }
-
-    def fit_subjects(
-        self, trial_mask: Bool[Array, " trials"]
-    ) -> FitResult:
-        """Fit each subject independently and accumulate results.
-
-        Parameters
-        ----------
-        trial_mask : Bool[Array, " trials"]
-            Boolean mask selecting which trials to include.
-
-        Returns
-        -------
-        FitResult
-            Combined results with per-subject fitted parameters.
-        """
-        t0 = time.perf_counter()
-
-        subject_trial_masks, unique_subjects = make_subject_trial_masks(
-            trial_mask, self.subjects
+    def _run_restart(
+        self,
+        objective: _ScipyLossFn,
+        bounds: np.ndarray,
+        initial: str | np.ndarray,
+        rng: np.random.Generator,
+    ) -> OptimizeResult:
+        """Translate library hyperparameters to one vectorized SciPy DE call."""
+        options = self.all_hyperparams
+        return differential_evolution(
+            objective,
+            bounds,
+            maxiter=options["num_steps"],
+            popsize=options["pop_size"],
+            vectorized=True,
+            disp=self.display_iterations,
+            tol=options["relative_tolerance"],
+            atol=options["absolute_tolerance"],
+            mutation=options["diff_w"],
+            recombination=options["cross_over_rate"],
+            # SciPy accepts arrays here, despite its narrower bundled annotation.
+            init=cast(Any, initial),
+            polish=options["polish"],
+            rng=rng,
         )
 
-        # Prepare a global result structure
-        all_results: FitResult = {
-            "fixed": {k: float(v) for k, v in self.base_params.items()},
-            "free": {
-                k: self.free_parameter_bounds[k] for k in self.free_parameter_bounds
-            },
+    def _empty_result(self) -> FitResult:
+        """Create shared metadata with empty, aligned per-subject columns."""
+        return {
+            "fixed": {name: float(value) for name, value in self.base_params.items()},
+            "free": dict(self.free_parameter_bounds),
             "fitness": [],
             "nit": [],
             "converged": [],
             "fits": {
-                **{k: [] for k in self.free_parameter_bounds},
-                **{k: [] for k in self.base_params},
+                **{name: [] for name in self.base_params},
+                **{name: [] for name in self.free_parameter_bounds},
                 "subject": [],
             },
             "hyperparameters": self.all_hyperparams,
             "fit_time": 0.0,
         }
 
-        # Optionally show progress bar
-        subject_range = (
-            trange(len(unique_subjects))
-            if self.progress_bar
-            else range(len(unique_subjects))
-        )
-        for s in subject_range:
-            # If no trials for this subject, skip
-            if np.sum(subject_trial_masks[s]) == 0:
-                continue
-
-            fit_result = self.fit(
-                subject_trial_masks[s], int(unique_subjects[s])
+    def _format_result(
+        self, best: OptimizeResult, subject_id: int, started: float
+    ) -> FitResult:
+        """Report one restart in physical units, with fitted values overriding defaults."""
+        physical = best.x
+        if self.parameter_space is not None:
+            physical = np.asarray(
+                self.parameter_space.to_physical(jnp.asarray(physical))
             )
-            all_results["fitness"] += fit_result["fitness"]
-            all_results["nit"] += fit_result["nit"]
-            all_results["converged"] += fit_result["converged"]
+        parameters = dict(self.base_params) | dict(
+            zip(self.free_parameter_bounds, physical, strict=True)
+        )
+        result = self._empty_result()
+        result["fitness"] = [float(best.fun)]
+        result["nit"] = [int(best.nit)]
+        result["converged"] = [bool(best.success)]
+        result["fits"] = {name: [float(value)] for name, value in parameters.items()}
+        result["fits"]["subject"] = [subject_id]
+        result["fit_time"] = time.perf_counter() - started
+        return result
 
-            # Show in tqdm progress bar
-            if self.progress_bar:
-                subject_range.set_description(  # type: ignore
-                    f"Subject={unique_subjects[s]}, Fitness={fit_result['fitness'][0]}"
-                )
 
-            # Accumulate fitted parameters
-            all_results["fits"]["subject"].append(int(unique_subjects[s]))
-
-            # Append param values
-            for param_name, values_list in fit_result["fits"].items():
-                # Skip 'subject' to avoid double-appending
-                if param_name == "subject":
-                    continue
-                all_results["fits"][param_name] += values_list
-
-            # Bail out if we got a non-finite fitness
-            if not jnp.isfinite(fit_result["fitness"][0]):
-                raise ValueError(
-                    f"Non-finite fitness for subject {unique_subjects[s]}", fit_result
-                )
-
-        all_results["fit_time"] = time.perf_counter() - t0
-        return all_results
+def _search_options(options: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize DE defaults and scalar mutation settings without changing search units."""
+    diff_w = options.get("diff_w", (0.5, 1.0))
+    if not isinstance(diff_w, (tuple, list)):
+        diff_w = (diff_w, diff_w)
+    return {
+        "bounds": options.get("bounds", {}),
+        "num_steps": options.get("num_steps", 1000),
+        "pop_size": options.get("pop_size", 15),
+        "relative_tolerance": options.get("relative_tolerance", 0.001),
+        "absolute_tolerance": options.get("absolute_tolerance", 0.0),
+        "cross_over_rate": options.get("cross_over_rate", 0.9),
+        "diff_w": tuple(diff_w),
+        "best_of": options.get("best_of", 1),
+        "init": options.get("init", "latinhypercube"),
+        "polish": options.get("polish", True),
+        "seed": int(options.get("seed", 0)),
+        "transforms": dict(options.get("transforms", {})),
+    }

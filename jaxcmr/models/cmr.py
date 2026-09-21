@@ -19,7 +19,7 @@ from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.math import (
     exponential_primacy_decay,
     lb,
-    power_scale,
+    relative_power_scale,
 )
 from jaxcmr.typing import (
     Array,
@@ -239,7 +239,7 @@ class CMR(Pytree):
 
         """
         _activations = self.mcf.probe(self.context.state) * candidates
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * candidates
+        return (relative_power_scale(_activations, self.mcf_sensitivity) + lb) * candidates
 
     def activations(self) -> Float[Array, " item_count"]:
         """Compute retrieval activations for all items from context-to-item memory.

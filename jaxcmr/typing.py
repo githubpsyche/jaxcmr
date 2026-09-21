@@ -7,8 +7,9 @@ package.
 
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import (
+    TYPE_CHECKING,
     Any,
     NotRequired,
     Protocol,
@@ -18,6 +19,9 @@ from typing import (
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, PRNGKeyArray, Real, Shaped
 from typing_extensions import TypedDict
 
+if TYPE_CHECKING:
+    from jaxcmr.models.sequence import PreparedPrediction
+
 Float_ = Float[Array, ""] | float | int
 Int_ = Integer[Array, ""] | int
 Bool_ = Bool[Array, ""] | bool
@@ -25,6 +29,8 @@ Bool_ = Bool[Array, ""] | bool
 __all__ = [
     "Array",
     "ArrayLike",
+    "BatchPreparableLossFn",
+    "BatchSequencePredictionFactory",
     "Bool",
     "Bool_",
     "CVResult",
@@ -44,9 +50,12 @@ __all__ = [
     "MemorySearchCreateFn",
     "MemorySearchModelFactory",
     "PRNGKeyArray",
+    "PreparableLossFn",
+    "PreparedLossFn",
     "Real",
     "RecallAnalysisFn",
     "RecallDataset",
+    "SequencePredictionFactory",
     "Shaped",
     "TerminationPolicy",
     "TerminationPolicyCreateFn",
@@ -391,6 +400,39 @@ class MemorySearchModelFactory(Protocol):
 
 
 @runtime_checkable
+class SequencePredictionFactory(MemorySearchModelFactory, Protocol):
+    """Optional model-owned prediction of complete observed sequences.
+
+    Masks specify which outputs the caller needs, not which events to process.
+    Every real preceding event must still condition later predictions. A model
+    may group/reorder blocks, but must preserve the requested observations and
+    multiplicity, returning aligned masks in its PreparedPrediction. No loss
+    reduction, parameter search, or assumptions about another model belong here.
+    """
+
+    def prepare_predictions(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        mask: Bool[Array, "trials recall_events"],
+    ) -> "PreparedPrediction[Any]":
+        """Prepare immutable observations before JIT; return model computation."""
+        ...
+
+
+@runtime_checkable
+class BatchSequencePredictionFactory(SequencePredictionFactory, Protocol):
+    """Optional model-owned layout planning across trial selections."""
+
+    def prepare_prediction_selections(
+        self,
+        trial_indices: Iterable[Integer[Array, " trials"]],
+        masks: Iterable[Bool[Array, "trials recall_events"]],
+    ) -> Sequence["PreparedPrediction[Any]"]:
+        """Return one independent prediction plan per requested selection."""
+        ...
+
+
+@runtime_checkable
 class LossFn(Protocol):
     """Loss function for model fitting."""
 
@@ -413,6 +455,50 @@ class LossFn(Protocol):
         ...
 
 
+type PreparedLossFn = Callable[
+    [Mapping[str, Float_], Iterable[str], Float[Array, "parameters n_samples"]],
+    Float[Array, " n_samples"],
+]
+
+
+@runtime_checkable
+class PreparableLossFn(LossFn, Protocol):
+    """Optional loss capability for preprocessing a fixed trial selection.
+
+    Preparation runs on the host before JIT compilation. The returned callable
+    scores exactly the supplied trials (including their order/multiplicity) and
+    accepts base parameters, free parameter names and a parameter matrix.
+    It must retain its own selection rather than mutate another prepared loss.
+    Ordinary LossFn implementations need not implement this capability.
+    """
+
+    def prepare_trials(
+        self, trial_indices: Integer[Array, " trials"]
+    ) -> PreparedLossFn:
+        """Bind concrete trial indices and return a JAX-compatible loss."""
+        ...
+
+
+@runtime_checkable
+class BatchPreparableLossFn(PreparableLossFn, Protocol):
+    """Optional preparation of compatible layouts for multiple trial selections.
+
+    Return one independent callable per selection, in the supplied order.
+    Each must preserve that selection's trial multiplicity and scoring rules.
+    Implementations may share layout metadata to permit compilation reuse;
+    they must not change an already returned callable. A fitter can pass a
+    jaxcmr.loss.prepared.PreparedLoss as dynamic data to JIT. Other returned
+    callables retain the ordinary prepared-loss path.
+    """
+
+    def prepare_selections(
+        self,
+        trial_indices: Iterable[Integer[Array, " trials"]],
+    ) -> Sequence[PreparedLossFn]:
+        """Prepare explicit selections without compiling or fitting them."""
+        ...
+
+
 class FitResult(TypedDict):
     """Typed dict describing the results of a fitting procedure."""
 
@@ -426,7 +512,7 @@ class FitResult(TypedDict):
     """List of one or more fitness values (e.g., for single-fit or per-subject fits)."""
 
     nit: list[int]
-    """Number of optimizer generations run for each fit."""
+    """Number of optimizer iterations or generations run for each selected fit."""
 
     converged: list[bool]
     """Whether each fit met the optimizer convergence criterion."""
@@ -439,6 +525,9 @@ class FitResult(TypedDict):
 
     fit_time: float
     """Total time (in seconds) taken to perform the fitting."""
+
+    diagnostics: NotRequired[dict[str, Any]]
+    """Optional optimizer diagnostics, such as per-restart evaluations and status."""
 
 
 class CVResult(TypedDict):

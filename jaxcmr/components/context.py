@@ -7,7 +7,7 @@ and outlist integration for repeated items.
 
 """
 
-__all__ = ["TemporalContext"]
+__all__ = ["TemporalContext", "integrate_normalized"]
 
 import base64
 import io
@@ -17,6 +17,32 @@ from simple_pytree import Pytree
 
 from ..math import normalize_magnitude
 from ..typing import Array, Float, Float_
+
+
+def integrate_normalized(
+    state: Float[Array, " units"],
+    context_input: Float[Array, " units"],
+    drift_rate: Float_,
+) -> Float[Array, " units"]:
+    """Integrate an already normalized input, including the exact-zero input.
+
+    Shared by the event model and prepared sequence computations. Normalizing
+    inputs can happen outside a scan when they do not depend on its state.
+
+    Args:
+        state: Current context vector. Unit length is required for the usual
+            unit-length preservation guarantee with nonzero input.
+        context_input: Unit-length input, or an exactly zero vector, with the
+            same shape as state. This helper does not normalize its arguments.
+        drift_rate: Integration weight in [0, 1].
+
+    Returns:
+        Updated context. An exactly zero input multiplies state by
+        sqrt(1 - drift_rate**2), allowing contraction rather than renormalizing.
+    """
+    overlap = jnp.dot(state, context_input)
+    rho = jnp.sqrt(1 + drift_rate**2 * (overlap**2 - 1)) - drift_rate * overlap
+    return rho * state + drift_rate * context_input
 
 
 class TemporalContext(Pytree):
@@ -65,11 +91,9 @@ class TemporalContext(Pytree):
             drift_rate: Drift rate parameter.
         """
         context_input = normalize_magnitude(context_input)
-        overlap = jnp.dot(self.state, context_input)
-        rho = jnp.sqrt(1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)) - (
-            drift_rate * overlap
+        return self.replace(
+            state=integrate_normalized(self.state, context_input, drift_rate)
         )
-        return self.replace(state=(rho * self.state) + (drift_rate * context_input))
 
     def _repr_markdown_(self) -> str:
         """Returns a markdown ``img`` tag of the current state."""

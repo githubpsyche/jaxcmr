@@ -14,6 +14,7 @@ __all__ = [
     "ecmr_source_switch",
     "multiplicative_semantic_cmr",
     "no_reinstate_cmr",
+    "optimized_cmr",
     "outlist_cmr",
     "positional_cmr",
     "probe_reinf_positional_cmr",

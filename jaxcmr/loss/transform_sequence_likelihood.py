@@ -12,10 +12,14 @@ from collections.abc import Iterable, Mapping
 import numpy as np
 from jax import lax, vmap
 from jax import numpy as jnp
+from jax.core import Tracer
 
 from jaxcmr.helpers import log_likelihood
+from jaxcmr.loss.prepared import PreparedLoss, prediction_likelihood
+from jaxcmr.models.sequence import PreparedPrediction, make_sequential_evaluator
 from jaxcmr.typing import (
     Array,
+    BatchSequencePredictionFactory,
     Bool,
     Float,
     Float_,
@@ -23,6 +27,7 @@ from jaxcmr.typing import (
     LikelihoodMaskFn,
     MemorySearchModelFactory,
     RecallDataset,
+    SequencePredictionFactory,
 )
 
 __all__ = [
@@ -81,7 +86,9 @@ class MemorySearchLikelihoodLoss:
             features: Optional feature matrix for word-pool items.
             mask_likelihoods: Function returning a boolean keep-mask for a recall vector.
         """
-        self.create_model = model_factory_cls(dataset, features).create_trial_model
+        self.factory = model_factory_cls(dataset, features)
+        self.create_model = self.factory.create_trial_model
+        self._sequence_evaluator = make_sequential_evaluator(self.factory)
         self.present_lists = jnp.array(dataset["pres_itemnos"])
 
         # Reindex the recalled items so they match the "present_lists" indexing
@@ -96,6 +103,80 @@ class MemorySearchLikelihoodLoss:
 
         self.trials = jnp.array(trials)
         self.trial_masks = vmap(mask_likelihoods)(self.trials)
+
+    def _indices(self, trial_indices: Array) -> Array:
+        """Validate concrete dataset rows for preparation outside JIT."""
+        if isinstance(trial_indices, Tracer):
+            raise TypeError(
+                "Prepare predictions before JIT with concrete trial indices."
+            )
+        indices = np.asarray(trial_indices)
+        if (
+            indices.ndim != 1
+            or not np.issubdtype(indices.dtype, np.integer)
+            or np.any((indices < 0) | (indices >= len(self.trials)))
+        ):
+            raise ValueError(
+                "trial_indices must be a one-dimensional array of valid trial indices."
+            )
+        return jnp.asarray(indices, dtype=jnp.int32)
+
+    def prepare_trials(self, trial_indices: Array) -> PreparedLoss:
+        """Ask the selected model for predictions; otherwise use its event methods.
+
+        The model owns any bulk computation. This adapter only supplies scoring
+        requests and reduces its returned probabilities. The direct __call__
+        path remains the generic event calculation for dynamic trial indices.
+
+        Args:
+            trial_indices: Concrete one-dimensional integer array of dataset
+                rows. Order and repeated indices are preserved.
+
+        Returns:
+            A callable accepting base parameters, free parameter names and a
+            parameter-by-sample matrix, returning one loss per sample. Its
+            observation arrays can be passed dynamically through JIT.
+        """
+        indices = self._indices(trial_indices)
+        mask = self.trial_masks[indices]
+        if isinstance(self.factory, SequencePredictionFactory):
+            prediction = self.factory.prepare_predictions(indices, mask)
+        else:
+            # Selected arrays remain dynamic data; evaluator identity stays
+            # fixed across selections, including separately prepared calls.
+            prediction = PreparedPrediction(
+                (indices, self.present_lists[indices], self.trials[indices]),
+                (mask,),
+                self._sequence_evaluator,
+            )
+        return PreparedLoss(prediction, prediction_likelihood)
+
+    def prepare_selections(
+        self, trial_indices: Iterable[Array]
+    ) -> tuple[PreparedLoss, ...]:
+        """Prepare selections, delegating common array layouts to the factory.
+
+        Args:
+            trial_indices: One concrete trial-index array per selection, such
+                as one array per participant.
+
+        Returns:
+            One prepared loss per selection in input order. When the factory
+            supports it, compatible selections share shapes and compiled code.
+            The ordinary fallback also shares compiled code whenever selected
+            arrays already have matching shapes and dtypes.
+        """
+        selections = tuple(self._indices(indices) for indices in trial_indices)
+        if isinstance(self.factory, BatchSequencePredictionFactory):
+            masks = tuple(self.trial_masks[indices] for indices in selections)
+            predictions = self.factory.prepare_prediction_selections(selections, masks)
+            if len(predictions) != len(selections):
+                raise ValueError("The model must return one prediction per selection.")
+            return tuple(
+                PreparedLoss(prediction, prediction_likelihood)
+                for prediction in predictions
+            )
+        return tuple(self.prepare_trials(indices) for indices in selections)
 
     def predict_trial(
         self,
@@ -175,6 +256,30 @@ class ExcludeFirstRecallLikelihoodLoss:
             mask_likelihoods=mask_first_recall,
         )
 
+    def prepare_trials(self, trial_indices: Array) -> PreparedLoss:
+        """Prepare selected rows, conditioning on the unscored first recall.
+
+        Args:
+            trial_indices: Concrete one-dimensional array of dataset rows.
+
+        Returns:
+            Prepared loss using the same first-recall mask as direct evaluation.
+        """
+        return self._inner.prepare_trials(trial_indices)
+
+    def prepare_selections(
+        self, trial_indices: Iterable[Array]
+    ) -> tuple[PreparedLoss, ...]:
+        """Prepare trial-index selections in order, sharing layouts when supported.
+
+        Args:
+            trial_indices: One concrete dataset-row array per selection.
+
+        Returns:
+            One prepared loss per selection, excluding first-recall scores.
+        """
+        return self._inner.prepare_selections(trial_indices)
+
     def __call__(
         self,
         trial_indices: Integer[Array, " trials"],
@@ -205,6 +310,30 @@ class ExcludeTerminationLikelihoodLoss:
             features,
             mask_likelihoods=mask_trailing_terminations,
         )
+
+    def prepare_trials(self, trial_indices: Array) -> PreparedLoss:
+        """Prepare selected rows with zero-coded termination events unscored.
+
+        Args:
+            trial_indices: Concrete one-dimensional array of dataset rows.
+
+        Returns:
+            Prepared loss using the same termination mask as direct evaluation.
+        """
+        return self._inner.prepare_trials(trial_indices)
+
+    def prepare_selections(
+        self, trial_indices: Iterable[Array]
+    ) -> tuple[PreparedLoss, ...]:
+        """Prepare trial-index selections in order, sharing layouts when supported.
+
+        Args:
+            trial_indices: One concrete dataset-row array per selection.
+
+        Returns:
+            One prepared loss per selection, excluding termination scores.
+        """
+        return self._inner.prepare_selections(trial_indices)
 
     def __call__(
         self,

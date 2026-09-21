@@ -7,20 +7,21 @@ import pytest
 from jax import numpy as jnp
 
 import jaxcmr.fitting.scipy as scipy_fitting
-import jaxcmr.fitting as fitting
+from jaxcmr import fitting
 from jaxcmr.fitting import (
     BatchEvosaxDE,
     EvosaxDE,
     MapEvosaxDE,
-    ScipyDE,
     ScanEvosaxDE,
+    ScipyDE,
 )
+from jaxcmr.fitting.parameters import ParameterSpace
 from jaxcmr.fitting.scipy import make_scipy_loss_fn
 from jaxcmr.helpers import make_subject_trial_masks
 from jaxcmr.loss.transform_sequence_likelihood import (
     ExcludeTerminationLikelihoodLoss,
 )
-from jaxcmr.typing import FittingAlgorithm, FitResult
+from jaxcmr.typing import FitResult, FittingAlgorithm
 
 
 class DummyModelFactory:
@@ -336,6 +337,38 @@ def test_reference_loss_matches_scipy_adapter():
 
     np.testing.assert_allclose(actual, expected)
     np.testing.assert_allclose(single_actual, single_expected)
+
+
+@pytest.mark.parametrize("names", [("b", "a"), ("a",), ("a", "a")])
+def test_scipy_adapter_rejects_parameter_space_name_mismatch(names):
+    """Reject mismatched or duplicate names before evaluating a model."""
+    loss = QuadraticLoss(None, None, None)
+    space = ParameterSpace({"a": [0.0, 10.0], "b": [100.0, 200.0]})
+    with pytest.raises(ValueError, match="names"):
+        make_scipy_loss_fn(loss, jnp.array([0]), {}, names, space)
+
+
+def test_scipy_adapter_transforms_scalar_and_population_in_declared_order():
+    """Scalar polishing and vectorized search must score the same physical points."""
+    loss = QuadraticLoss(None, None, None)
+    space = ParameterSpace({"a": [0.0, 10.0], "b": [100.0, 200.0]})
+    indices = jnp.array([0])
+    objective = make_scipy_loss_fn(loss, indices, {}, space.names, space)
+    population = jnp.array([[0.2, 0.5, 0.8], [0.7, 0.3, 0.1]])
+    physical = jnp.array([[2.0, 5.0, 8.0], [170.0, 130.0, 110.0]])
+    expected = loss(indices, {}, space.names, physical)
+    np.testing.assert_allclose(objective(population), expected)
+    for index in range(population.shape[1]):
+        np.testing.assert_allclose(objective(population[:, index]), expected[index])
+
+
+@pytest.mark.parametrize("shape", [(), (1,), (3,), (1, 2), (3, 2), (2, 2, 2)])
+def test_scipy_adapter_rejects_incorrect_parameter_axis(shape):
+    """Even an ordinary loss receives only the parameter layout promised by SciPy."""
+    loss = QuadraticLoss(None, None, None)
+    objective = make_scipy_loss_fn(loss, jnp.array([0]), {}, ("a", "b"))
+    with pytest.raises(ValueError, match="Expected"):
+        objective(jnp.ones(shape))
 
 
 def test_evosaxde_fit_returns_finite_bounded_result():
@@ -679,6 +712,33 @@ def test_evosaxde_fit_subjects_returns_one_result_per_subject():
     assert all(np.isfinite(value) for value in result["fitness"])
 
 
+@pytest.mark.parametrize("fitter_cls", [EvosaxDE, ScanEvosaxDE, MapEvosaxDE])
+def test_evosax_subject_results_override_free_parameter_defaults(fitter_cls):
+    """Free defaults must not append extra base values to fitted subject columns."""
+    fitter = fitter_cls(
+        make_minimal_dataset([1, 1, 2, 2]),
+        None,
+        {"x": 0.5, "fixed_value": 2.0},
+        DummyModelFactory,
+        QuadraticLoss,
+        hyperparams={
+            "bounds": {"x": [0.0, 1.0]},
+            "num_steps": 2,
+            "pop_size": 4,
+            "progress_bar": False,
+        },
+    )
+
+    result = fitter.fit_subjects(jnp.ones(4, dtype=bool))
+
+    assert result["fits"]["subject"] == [1, 2]
+    assert result["fits"]["fixed_value"] == [2.0, 2.0]
+    assert len(result["fits"]["x"]) == 2
+    np.testing.assert_allclose(
+        result["fitness"], (np.asarray(result["fits"]["x"]) - 0.25) ** 2
+    )
+
+
 def test_scanevosaxde_fit_subjects_returns_one_result_per_subject():
     """Behavior: ``ScanEvosaxDE.fit_subjects`` scans equal-length subject fits."""
     fitter = ScanEvosaxDE(
@@ -917,7 +977,7 @@ def test_evosaxde_replaces_nonfinite_population_fitness():
     population = jnp.ones((fitter.all_hyperparams["population_size"], 1))
 
     fitness = np.asarray(
-        fitter._evaluate_trial_population(jnp.asarray([0]), population)
+        fitter._evaluate_population(fitter._losses.select(jnp.asarray([0])), population)
     )
 
     assert fitness[0] == 12345.0
@@ -1113,7 +1173,7 @@ def test_false_trials_excluded_from_all_masks():
     subject_vector = np.array([1, 1, 2, 2])
 
     # Act / When
-    masks, unique_subjects = make_subject_trial_masks(trial_mask, subject_vector)  # type: ignore[arg-type]
+    masks, _unique_subjects = make_subject_trial_masks(trial_mask, subject_vector)  # type: ignore[arg-type]
 
     # Assert / Then
     assert len(masks) == 2
