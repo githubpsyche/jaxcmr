@@ -128,7 +128,9 @@ class NeighborCRPTabulation(Pytree):
         use_i2j = direction in ("i2j", "both")
 
         self.ijplus_12_to_ji = (
-            jnp.zeros((self.list_length, 4), dtype=int)
+            # This table is addressed by 1-based study positions. Row zero is
+            # unused, and the final position needs its own row.
+            jnp.zeros((self.list_length + 1, 4), dtype=int)
             # mapping from second-presentation neighbors j+1, j+2 to i
             .at[second_positions + 1, 0]
             .set(first_mapped * use_j2i)
@@ -144,15 +146,22 @@ class NeighborCRPTabulation(Pytree):
         self.actual_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
         self.avail_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
 
-        self.previous_positions = self.item_study_positions[first_recall - 1]
+        # A leading zero is an empty response, not a lookup of the last item.
+        self.previous_positions = all_study_positions(first_recall, presentation, size)
         self.avail_recalls = jnp.ones(self.list_length, dtype=bool)
         self.avail_recalls = self.available_recalls_after(first_recall)
 
     # for updating avail_recalls: study positions still available for retrieval
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
         "Update the study positions available to retrieve after a transition."
-        study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return lax.cond(
+            (recall > 0) & (recall <= self.list_length),
+            lambda: lax.scan(
+                set_false_at_index, self.avail_recalls,
+                self.item_study_positions[recall - 1],
+            )[0],
+            lambda: self.avail_recalls,
+        )
 
     # for updating actual_lags: lag-from-i-transitions actually made from the previous j+1/2 item
     # and/or lag-from-j-transitions actually made from the previous i+1/2 item
@@ -226,11 +235,17 @@ class NeighborCRPTabulation(Pytree):
         )
 
     def is_valid_recall(self, recall: Int_) -> Bool:
-        """Return ``True`` when recall positions have not been retrieved yet."""
-        recall_study_positions = self.item_study_positions[recall - 1]
-        is_valid_study_position = recall_study_positions != 0
-        is_available_study_position = self.avail_recalls[recall_study_positions - 1]
-        return jnp.any(is_valid_study_position & is_available_study_position)
+        """Accept an unrecalled item; zero responses never change the state."""
+        def available_item():
+            positions = self.item_study_positions[recall - 1]
+            available = self.avail_recalls[jnp.maximum(positions - 1, 0)]
+            return jnp.any((positions > 0) & available)
+
+        return lax.cond(
+            (recall > 0) & (recall <= self.list_length),
+            available_item,
+            lambda: jnp.asarray(False),
+        )
 
     def tabulate(self, recall: Int_) -> "NeighborCRPTabulation":
         """Tabulate actual and available serial lags from the previous item."""
