@@ -742,6 +742,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+colab = [
+    { name = "pooch" },
+]
 test = [
     { name = "build" },
     { name = "ipykernel" },
@@ -774,6 +777,7 @@ requires-dist = [
     { name = "nbclient", marker = "extra == 'test'", specifier = ">=0.10" },
     { name = "numba", specifier = ">=0.61.0" },
     { name = "numpy", specifier = ">=1.0" },
+    { name = "pooch", marker = "extra == 'colab'", specifier = ">=1.8,<2" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.5" },
     { name = "scipy", specifier = ">=1.15.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
@@ -781,7 +785,7 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typing-extensions", specifier = ">=4.13" },
 ]
-provides-extras = ["test"]
+provides-extras = ["colab", "test"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1745,6 +1749,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f4/46/ab3928e864b0a88a8ae6987b3da3b7ae32fe0a610264f33272139275dab5/plum_dispatch-2.5.7.tar.gz", hash = "sha256:a7908ad5563b93f387e3817eb0412ad40cfbad04bc61d869cf7a76cd58a3895d", size = 35452, upload-time = "2025-01-17T20:07:31.026Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2b/31/21609a9be48e877bc33b089a7f495c853215def5aeb9564a31c210d9d769/plum_dispatch-2.5.7-py3-none-any.whl", hash = "sha256:06471782eea0b3798c1e79dca2af2165bafcfa5eb595540b514ddd81053b1ede", size = 42612, upload-time = "2025-01-17T20:07:26.461Z" },
+]
+
+[[package]]
+name = "pooch"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "platformdirs" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/83/43/85ef45e8b36c6a48546af7b266592dc32d7f67837a6514d111bced6d7d75/pooch-1.9.0.tar.gz", hash = "sha256:de46729579b9857ffd3e741987a2f6d5e0e03219892c167c6578c0091fb511ed", size = 61788, upload-time = "2026-01-30T19:15:09.649Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/2d/d4bf65e47cea8ff2c794a600c4fd1273a7902f268757c531e0ee9f18aa58/pooch-1.9.0-py3-none-any.whl", hash = "sha256:f265597baa9f760d25ceb29d0beb8186c243d6607b0f60b83ecf14078dbc703b", size = 67175, upload-time = "2026-01-30T19:15:08.36Z" },
 ]
 
 [[package]]
