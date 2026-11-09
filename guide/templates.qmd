@@ -1,0 +1,186 @@
+# Templates {.unnumbered}
+
+These fourteen notebooks follow data from the **war-photo-recall experiment**
+through behavioral analysis and modeling. Choose a task below, download its notebook and inputs, and run it
+in the working folder created during [setup](getting-started.qmd). The saved
+figures and tables show the examples produced while preparing these chapters.
+
+## The experiment
+
+In this experiment, Dupertuys and colleagues asked whether emotion changes both
+**which pictures people remember** and **the order in which they remember them**. Participants studied
+photographs relating to the war in Ukraine, then recalled them from memory.
+The final sample comprised 123 English-speaking adults selected for their
+reported concern about the war.
+
+Each participant completed four rounds, each with two phases:
+
+1. **Study the photographs.** A list contained twelve target photographs, plus
+   an extra “buffer” photograph at each end. Each image appeared for six seconds,
+   followed by a three-second blank screen.
+2. **Recall the photographs.** Immediately after the list, participants typed
+   short descriptions of as many photographs as they could remember, in any
+   order. They then continued to the next study-and-recall round.
+
+Researchers later scored the typed responses by matching descriptions to
+photograph identities, retaining the order in which the pictures were recalled.
+
+The lists differed in their emotional composition. **Emotional** photographs
+were rated as more negative and more arousing; **neutral** photographs were the
+less negative, less arousing comparison images from the same war-related set.
+Every participant encountered all three conditions:
+
+| List condition | Target photographs in each list | Lists per participant |
+|---|---|---:|
+| Mixed | 6 emotional and 6 neutral | 2 |
+| Pure emotional | 12 emotional | 1 |
+| Pure neutral | 12 neutral | 1 |
+
+List order was counterbalanced across participants, and target-picture order
+was randomized within each list. Targets were not repeated across a
+participant's four lists.
+
+Mixed lists let us compare emotional and neutral recall within the same list.
+Pure lists let us ask how that difference changes when the two types of picture
+are studied separately. Recording recall order also lets us examine memory
+search: for example, whether one recalled picture tends to be followed by a
+picture studied nearby in time, or by a picture with similar meaning.
+
+## The data used in the templates
+
+The supplied file contains **492 list records**: 246 mixed, 123 pure-emotional
+and 123 pure-neutral. Photographs are represented by item identifiers, and
+recall responses by scored sequences. Buffer photographs are excluded, so the
+study positions used in these templates refer to the twelve target photographs.
+One pure-emotional record contains eleven valid target items and a padded slot;
+the fixed-length analyses identify and exclude that record.
+
+| Field | Meaning in these procedures |
+|---|---|
+| `subject` | Participant identifier, retained when simulating. |
+| `list_type` | Whole-list condition: 1 = mixed, 2 = pure emotional, 3 = pure neutral. |
+| `pres_itemnos` | Studied item codes within a trial; zero is a padded slot. |
+| `pres_itemids` | Global picture identifiers used to align the distance matrix and categories. |
+| `recalls` | One-based **study positions** of recalled items; zero is an unused response slot. |
+| `valence` | Category at each study position: −1 = emotional, 0 = neutral. Check valid study items before counting categories. |
+
+Study positions and item identities are different: a recall code of 3 points to
+the third study slot, whose global picture identifier is found in `pres_itemids`.
+The supplied distance matrix is indexed by global identifier minus one. Its
+missing entries are outside the within-list comparisons used here; every
+within-list pair required by the semantic examples has a finite distance.
+
+Selections are made in notebook cells and leave the source file unchanged:
+
+- **Fitting and pooled model comparison:** all 492 lists and all conditions.
+- **SPC, PNR, stopping and temporal organization:** the 491 complete twelve-item
+  lists. Each notebook explicitly reports the one excluded padded list.
+- **Semantic organization:** the 246 mixed lists and the supplied distance matrix.
+- **Category recall rate:** all conditions, with valid-item denominators.
+- **Category SPC and category-CRP:** mixed lists by default.
+
+Plots summarize each participant's selected lists before averaging across
+participants. Error bars describe bootstrap intervals for those participant
+summaries. Some bins have no variation or no defined values, so the current
+plotters can report that a bootstrap interval is undefined; this does not turn
+an unavailable category or transition into a zero-valued observation.
+
+## Download the shared inputs
+
+Create a `data` folder in your working folder, and a `fits` folder inside it.
+Save each file with the name shown below. Use **Save Link As** if your browser
+opens a JSON file instead of downloading it. No repository checkout is required.
+
+| Input | Save inside your working folder as |
+|---|---|
+| [Observations](templates/data/Dupertuys2026.h5) | `data/Dupertuys2026.h5` |
+| [Semantic distances](templates/data/Dupertuys2026_semantic_distances.npy) | `data/Dupertuys2026_semantic_distances.npy` |
+| [CMR demonstration fit](templates/data/fits/Dupertuys2026_CMR_demo.json) | `data/fits/Dupertuys2026_CMR_demo.json` |
+| [Source-only eCMR fit](templates/data/fits/Dupertuys2026_eCMR_source_only.json) | `data/fits/Dupertuys2026_eCMR_source_only.json` |
+| [Broader eCMR fit](templates/data/fits/Dupertuys2026_eCMR_broad.json) | `data/fits/Dupertuys2026_eCMR_broad.json` |
+
+The observation file and distance matrix are the existing JAXCMR inputs, with no
+extracts or recoding. The observation file also matches the ECMR3 project's copy.
+The two eCMR JSON files retain the original fit records and metadata; the CMR
+record comes from the fitting procedure below. [Fit provenance](templates/data/fits/README.md)
+records their sources and assumptions.
+
+Save downloaded notebooks directly in the working folder, beside `data/`.
+Open the folder in VS Code, select its `.venv` kernel, and run cells from top to
+bottom. Each notebook has a settings cell and writes to its named `results/`
+folder. To keep different runs, change the output folder before running again.
+
+Each chapter has **Download notebook** and **Open in Colab** links beside its
+contents list. Code starts collapsed; expand a labeled block to see the calculation,
+or use the **Code** menu to show all code at once. Figures and tables remain visible.
+
+::: {.callout-note}
+## Colab and this preview
+
+**Open in Colab** loads the notebook published on GitHub. The revised notebooks
+and example fit files in this local preview have not been published there yet,
+so those links currently open older versions. The published-package setup also
+awaits JAXCMR 0.2.0. For now, download the prepared notebook from this preview to
+inspect the version shown here.
+:::
+
+## Modeling procedures
+
+The first three procedures use ordinary CMR with shared parameters across
+participants. The fit estimates encoding and recall drift; the other parameters
+are explicit baseline settings. Its no-stop objective scores recall order
+conditional on observed response counts. Simulations use ten repetitions per
+list and reproduce those counts by construction, so recall length is not a
+prediction being tested here.
+
+The supplied demonstration fit lets simulation and parameter exploration run
+without another optimization. Model comparison uses the two separate historical
+eCMR fits, each with ten fitted parameters, and compares their pooled likelihood
+and AIC. These procedures illustrate modeling work; the short demonstration fit
+is not a claim of parameter recovery or a finished scientific account.
+
+| Procedure | Notebook | Required inputs |
+|---|---|---|
+| [Fitting a model](templates/fitting_scipyde.ipynb) | [Download](downloads/fitting_scipyde.ipynb) | Observations; produces a new CMR fit. |
+| [Simulating from a saved fit](templates/simulation.ipynb) | [Download](downloads/simulation.ipynb) | Observations + CMR fit. |
+| [Exploring parameter effects](templates/parameter_shifting.ipynb) | [Download](downloads/parameter_shifting.ipynb) | Observations + CMR fit. |
+| [Comparing pooled model fits](templates/model_comparison.ipynb) | [Download](downloads/model_comparison.ipynb) | The two eCMR fit records. |
+
+## Recall performance
+
+| Procedure | Notebook | Required inputs |
+|---|---|---|
+| [Serial position curves](templates/spc.ipynb) | [Download](downloads/spc.ipynb) | Observations. |
+| [Probability of first and later recall](templates/pnr.ipynb) | [Download](downloads/pnr.ipynb) | Observations. |
+| [When recall ends](templates/termination_probability.ipynb) | [Download](downloads/termination_probability.ipynb) | Observations. |
+
+## Temporal and semantic organization
+
+| Procedure | Notebook | Required inputs |
+|---|---|---|
+| [Lag-conditional response probability](templates/crp.ipynb) | [Download](downloads/crp.ipynb) | Observations. |
+| [Temporal organization scores](templates/lagrank.ipynb) | [Download](downloads/lagrank.ipynb) | Observations. |
+| [Semantic distance-CRP](templates/distcrp.ipynb) | [Download](downloads/distcrp.ipynb) | Observations + distances. |
+| [Semantic organization scores](templates/distrank.ipynb) | [Download](downloads/distrank.ipynb) | Observations + distances. |
+
+## Category analyses
+
+Category information is already present in the observation file. The category-CRP
+notebook builds its lookup from those fields; no separate feature file is needed.
+
+| Procedure | Notebook | Required inputs |
+|---|---|---|
+| [Recall rates by category](templates/cat_recall_rate.ipynb) | [Download](downloads/cat_recall_rate.ipynb) | Observations. |
+| [Serial position curves by category](templates/cat_spc.ipynb) | [Download](downloads/cat_spc.ipynb) | Observations. |
+| [Transitions within and between categories](templates/catcrp.ipynb) | [Download](downloads/catcrp.ipynb) | Observations. |
+
+## Adapting a procedure
+
+Start by changing the settings cell: input paths, trial selection, parameters
+and output folder. Check the meanings of item codes, participant identifiers,
+categories and response padding before interpreting results. Retain the same
+selection for comparisons that are intended to address the same observations.
+
+The [remaining repository templates](https://github.com/githubpsyche/jaxcmr/tree/main/templates)
+are research examples with varying dependencies and maintenance status. They
+remain at their original paths and are outside this prepared set.

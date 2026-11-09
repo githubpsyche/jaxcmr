@@ -1,0 +1,51 @@
+---
+title: "JAXCMR"
+description: "Specify memory-search models, generate recall predictions, and compare them with behavior."
+---
+
+## What the library does
+
+JAXCMR is a Python library for computational models of memory search, including
+Context Maintenance and Retrieval (CMR) models. It lets researchers specify study
+events, generate recall predictions, analyse observed and simulated behavior,
+and estimate model parameters. It uses JAX for numerical calculations.
+
+A modeling project brings together a theoretical account, an experiment and a
+way to compare predictions with observations. JAXCMR supplies tools for each of
+these activities. The researcher chooses the model assumptions, the behavior to
+explain and the comparisons that address the research question.
+
+## How the activities connect
+
+An experiment supplies sequences of presented items and recorded recall
+responses. Behavioral analyses describe those responses: for example, how
+recall varies with an item's position in the study list, or how people move
+between items during recall. These summaries identify patterns a model might
+need to explain.
+
+A model processes study events using a set of parameters. It can assign
+probabilities to possible responses and generate simulated recall sequences.
+Applying the same behavioral analyses to simulated and observed responses makes
+their patterns comparable.
+
+Likelihood evaluates the observed response sequences under a model and its
+parameters. Fitting searches for parameter values that improve a chosen
+objective, such as likelihood or agreement between behavioral summaries. The
+fitted parameters can then be used to generate and examine predictions. The
+choice of fitting objective determines what agreement the fitting procedure
+seeks.
+
+## Where to start
+
+**[Set up JAXCMR in VS Code](getting-started.qmd)** on an Apple Silicon Mac.
+The setup page assumes no previous Python experience and ends with a working
+notebook environment. It is prepared for the planned 0.2.0 release; installation
+from PyPI still needs to be confirmed before the instructions are ready to use.
+
+Continue with the **[Templates](templates.qmd)** for fourteen complete procedures
+using data from the war-photo-recall experiment: behavioral analyses, fitting,
+simulation, parameter exploration and model comparison. Each chapter includes its notebook and required inputs.
+
+The **[repository](https://github.com/githubpsyche/jaxcmr)** contains the library,
+tests and research material. Other templates remain research examples with
+varying dependencies and maintenance status, outside this prepared set.

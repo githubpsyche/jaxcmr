@@ -1,0 +1,49 @@
+# Earlier Quarto releases break code-tools when code-copy is enabled.
+quarto-required: ">=1.10.20"
+
+project:
+  type: book
+  output-dir: ../_site/guide
+  resources:
+    - templates/data/**
+    - downloads/**
+
+book:
+  title: "JAXCMR"
+  description: "Computational models of memory search"
+  site-url: https://githubpsyche.github.io/jaxcmr/guide/
+  repo-url: https://github.com/githubpsyche/jaxcmr
+  chapters:
+    - index.qmd
+    - getting-started.qmd
+    - part: templates.qmd
+      chapters:
+        - templates/fitting_scipyde.ipynb
+        - templates/simulation.ipynb
+        - templates/parameter_shifting.ipynb
+        - templates/model_comparison.ipynb
+        - templates/spc.ipynb
+        - templates/pnr.ipynb
+        - templates/termination_probability.ipynb
+        - templates/crp.ipynb
+        - templates/lagrank.ipynb
+        - templates/distcrp.ipynb
+        - templates/distrank.ipynb
+        - templates/cat_recall_rate.ipynb
+        - templates/cat_spc.ipynb
+        - templates/catcrp.ipynb
+  search: true
+  sidebar:
+    collapse-level: 1
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-copy: true
+    code-fold: true
+    code-summary: "Show code"
+    code-overflow: wrap
+
+execute:
+  enabled: false

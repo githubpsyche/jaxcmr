@@ -1,30 +1,30 @@
-#!/bin/bash
-# Build script for jaxcmr documentation
-#
-# Usage:
-#   ./build-docs.sh        # Full build
-#   ./build-docs.sh quick  # Main site only (faster)
-#
-# For incremental development:
-#   quarto preview                           # Live preview main site
+#!/usr/bin/env bash
+# Stage the book's selected notebooks and inputs, then render saved outputs.
+set -euo pipefail
+cd "$(dirname "$0")"
 
-echo "Building jaxcmr documentation..."
-echo ""
-
-# Render main site
-echo "1. Rendering main site..."
-echo ""
-if quarto render --no-clean; then
-    echo ""
-    echo "   Main site: OK"
-else
-    echo ""
-    echo "   Main site: FAILED"
+# These directories contain generated copies only; authoritative notebooks stay
+# in templates/. Keep chapter paths as plain '- templates/name.ipynb' entries.
+rm -rf -- guide/templates guide/downloads _site/guide
+mkdir -p guide/templates/data/fits guide/downloads
+notebooks=()
+while IFS= read -r notebook; do
+    notebooks+=("$notebook")
+    cp "${notebook}" "guide/${notebook}"
+    cp "$notebook" "guide/downloads/${notebook##*/}"
+done < <(sed -nE 's/^[[:space:]]*-[[:space:]]+(templates\/[A-Za-z0-9_]+\.ipynb)[[:space:]]*$/\1/p' guide/_quarto.yml)
+if [ "${#notebooks[@]}" -eq 0 ]; then
+    printf 'No notebook chapters found in guide/_quarto.yml\n' >&2
     exit 1
 fi
 
-echo ""
-echo "=========================================="
-echo "Build complete!"
-echo "Main site:  docs/index.html"
-echo "=========================================="
+# One observation source and its existing matrix, shared by all chapters.
+for asset in Dupertuys2026.h5 Dupertuys2026_semantic_distances.npy \
+    fits/Dupertuys2026_CMR_demo.json fits/Dupertuys2026_eCMR_source_only.json \
+    fits/Dupertuys2026_eCMR_broad.json fits/README.md; do
+    cp "data/$asset" "guide/templates/data/$asset"
+done
+
+quarto render guide --no-execute
+
+printf 'Documentation rendered to _site/guide/index.html\n'

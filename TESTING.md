@@ -57,3 +57,35 @@ regression because a private file is absent.
 for the 743-case collection. It is historical evidence, not a manifest to update
 for every future test. The fault checks temporarily replace behavior in child
 processes; they never modify library files.
+
+## Editing the guide
+
+The independent Quarto book in `guide/` contains the introduction, setup page,
+Templates index and fourteen prepared notebook chapters. Use [Quarto](https://quarto.org/docs/download/)
+1.10.20 or newer; earlier versions have an [upstream bug](https://github.com/quarto-dev/quarto-cli/issues/13583)
+that breaks Show All Code / Hide All Code when copy buttons are enabled. The current
+preview was rendered with 1.11.9. To build the guide:
+
+```sh
+bash build-docs.sh
+```
+
+Open `_site/guide/index.html` for the preview. This command refreshes the generated
+`guide/templates/` and `guide/downloads/` staging directories and `_site/guide/` output, so retired chapters
+do not remain in the site. It does not execute notebook cells.
+
+The `book.chapters` list is the publication list. Keep notebook entries as plain
+`- templates/name.ipynb` lines so the build can stage exactly those files. Edit the
+authoritative notebooks in `templates/`, never the generated copies in `guide/`.
+Run a changed notebook in a working folder with the documented `data/` inputs,
+retain useful outputs, and review its rendered chapter and download. This is
+example preparation; no automated documentation suite is added.
+
+The other templates, their outputs, scientific tests and research directories stay
+in place. The old CMR notebook's existing test checks execution, not teaching quality.
+The source-package rules exclude generated guide inputs.
+
+The setup page targets the planned 0.2.0 release. Until its exact PyPI command
+and notebook cell succeed in a fresh environment after publication, keep the
+release-status note visible. Building the site or installing a local candidate
+does not establish that the published-package instructions are ready.
