@@ -84,15 +84,20 @@ class RecallDataset(TypedDict, extra_items=Array):
     """Subject ID for each trial (shape: [n_trials, 1])."""
 
     listLength: Integer[Array, "n_trials 1"]
-    """List length for each trial (shape: [n_trials, 1])."""
+    """Number of valid study events per trial, including repeated presentations
+    (shape: [n_trials, 1])."""
 
     pres_itemnos: Integer[Array, "n_trials num_presented"]
-    """Per-trial within-list item numbers (shape: [n_trials, num_presented]).
-    1-based indices with 0 for unused/padding entries."""
+    """Per-trial within-list item codes (shape: [n_trials, num_presented]).
+    Positive item codes repeat when an item is presented again; 0 pads unused
+    study slots. These codes are distinct from study positions and global IDs."""
 
     recalls: Integer[Array, "n_trials num_recalled"]
-    """Within-list item numbers for recalled items (shape: [n_trials, num_recalled]).
-    1-based indices with 0 for unused/padding entries."""
+    """Study-position codes for recalled items (shape: [n_trials, num_recalled]).
+    A positive code p identifies the item at pres_itemnos[trial, p - 1];
+    0 marks an unused response slot. Model adapters translate positions to
+    within-list item codes, and dataset simulation returns first-occurrence
+    study positions when an item was presented repeatedly."""
 
     # OPTIONAL FIELD REQUIRED BY SEMANTIC ANALYSES
     pres_itemids: NotRequired[Integer[Array, "n_trials num_presented"]]
@@ -162,8 +167,7 @@ class Memory(Protocol):
         """Return the updated memory after associating input and output patterns.
 
         Args:
-            memory: the current memory model.
-            input_pattern: a feature pattern for an input.
+            in_pattern: a feature pattern for an input.
             out_pattern: a feature pattern for an output.
             learning_rate: the learning rate parameter.
         """
@@ -176,9 +180,7 @@ class Memory(Protocol):
         """Return the output pattern associated with the input pattern in memory.
 
         Args:
-            memory: the current memory state.
             in_pattern: the input feature pattern.
-            activation_scale: the activation scaling factor.
         """
         ...
 
@@ -252,7 +254,6 @@ class MemorySearch(Protocol):
         recallable: indicates whether each item can currently be recalled.
         recall_total: the number of recalled items so far.
         study_index: the number of items studied so far.
-        context: the current context state.
     """
 
     item_count: int
@@ -509,7 +510,8 @@ class FitResult(TypedDict):
     """Dictionary of free parameters and their [lower_bound, upper_bound] or similar spec."""
 
     fitness: list[float]
-    """List of one or more fitness values (e.g., for single-fit or per-subject fits)."""
+    """Objective values, one per fit row. Their meaning is determined by the
+    selected loss; likelihood examples store negative log likelihood."""
 
     nit: list[int]
     """Number of optimizer iterations or generations run for each selected fit."""
@@ -518,7 +520,8 @@ class FitResult(TypedDict):
     """Whether each fit met the optimizer convergence criterion."""
 
     fits: dict[str, list[float]]
-    """Dictionary of parameter names -> optimized values (one or many)."""
+    """Dictionary of parameter names -> fitted/fixed values, aligned by fit row.
+    The subject entry identifies each row; pooled fits conventionally use -1."""
 
     hyperparameters: dict[str, Any]
     """Dictionary of hyperparameter names and their values used during fitting."""

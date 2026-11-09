@@ -59,10 +59,10 @@ def mask_first_recall(
 
 
 class MemorySearchLikelihoodLoss:
-    """Masked sequential likelihood using a shared study context.
+    """Masked sequential likelihood using per-trial study contexts.
 
-    Presents items once (from trial 0) and evaluates all trials against
-    that single model state.  The mask controls which recall events
+    Presents each trial's study sequence to a fresh trial-specific model
+    before evaluating its recall sequence.  The mask controls which recall events
     contribute to the negative log-likelihood.
     """
 

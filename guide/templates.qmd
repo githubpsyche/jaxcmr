@@ -1,9 +1,23 @@
 # Templates {.unnumbered}
 
-These fourteen notebooks follow data from the **war-photo-recall experiment**
-through behavioral analysis and modeling. Choose a task below, download its notebook and inputs, and run it
-in the working folder created during [setup](getting-started.qmd). The saved
-figures and tables show the examples produced while preparing these chapters.
+A template is a maintained notebook for a complete procedure: selecting
+observations, performing a calculation and saving interpretable results. Its
+**parameters** cell specifies one run. Changing those settings lets you reuse
+the procedure for another selection, model or experiment, or prepare many
+independent jobs without maintaining a separate procedure for each one.
+
+These fourteen templates cover behavioral analysis, fitting, simulation,
+parameter exploration and pooled model comparison. Their defaults use the
+**war-photo-recall experiment** as a shared worked example. The saved figures
+and tables show that example; they are replaced when you execute a new run.
+Choose a task below, then download its notebook and required inputs.
+
+**Start with [Fitting a model](templates/fitting_scipyde.ipynb).** It brings
+together parameter estimation, simulation and behavioral analyses in one
+complete procedure. Follow its saved results, then configure a run through
+the parameters cell. The [local execution instructions](#from-a-template-to-a-run)
+and [Colab instructions](#run-in-colab) explain how to run the notebook and
+keep its outputs.
 
 ## The experiment
 
@@ -101,14 +115,9 @@ opens a JSON file instead of downloading it. No repository checkout is required.
 
 The observation file and distance matrix are the existing JAXCMR inputs, with no
 extracts or recoding. The observation file also matches the ECMR3 project's copy.
-The two eCMR JSON files retain the original fit records and metadata; the CMR
-record comes from the fitting procedure below. [Fit provenance](templates/data/fits/README.md)
+All three fit records were prepared with the current library using the fitting
+procedure below, including an independent recalculation of their objectives. [Fit provenance](templates/data/fits/README.md)
 records their sources and assumptions.
-
-Save downloaded notebooks directly in the working folder, beside `data/`.
-Open the folder in VS Code, select its `.venv` kernel, and run cells from top to
-bottom. Each notebook has a settings cell and writes to its named `results/`
-folder. To keep different runs, change the output folder before running again.
 
 Each chapter has **Download notebook** and **Open in Colab** links beside its
 contents list. Code starts collapsed; expand a labeled block to see the calculation,
@@ -140,20 +149,127 @@ to retain an executed notebook, or **Copy to Drive** if you want a saved working
 copy. The [VS Code setup](getting-started.qmd) remains the local route and still
 awaits the planned PyPI release.
 
+The replacement fit records in this preview are newly prepared. The modeling
+notebooks' Colab setup still pins earlier published inputs; publishing these
+fits and updating that pin is needed before Colab reproduces the refreshed
+results shown here. Download this preview's notebooks and fit files for the
+current local examples.
+
+## From a template to a run
+
+Save downloaded notebooks in the working folder created during
+[setup](getting-started.qmd), beside `data/`. Open the folder in VS Code, choose
+its `.venv` kernel, edit the **parameters** cell and run the notebook from top
+to bottom. Paths are relative to the working folder. Give independent runs
+distinct output folders or run names so their results do not overwrite one another.
+
+Settings are ordinary values: paths, numbers, lists, dictionaries and import
+names. Imports, trial masks and model construction happen afterward, using the
+effective values. The fitting template can select a model and its components,
+objective, fitted parameters, participant subset and displayed analyses.
+Analysis templates expose their trial selections and measure-specific settings.
+
+You can also supply settings externally. [Quarto](https://quarto.org/docs/computations/parameters.html)
+and [Papermill](https://papermill.readthedocs.io/en/latest/usage-parameterize.html)
+use the same tagged cell. An override replaces a whole top-level value: to
+change one entry of `parameters`, for example, supply the complete fixed/free
+dictionary for that run.
+
+### Execute a report with Quarto
+
+With [Quarto installed](https://quarto.org/docs/get-started/), you can execute a
+notebook with overrides and render its results to HTML. For Python parameter
+injection, Quarto also uses the Papermill package. Install it in the notebook
+environment from the VS Code terminal:
+
+```bash
+.venv/bin/python -m pip install papermill
+```
+
+For example, run the PNR procedure for the third response and save a separate report:
+
+```bash
+QUARTO_PYTHON="$PWD/.venv/bin/python" quarto render pnr.ipynb --execute \
+  -P query_recall_position:2 -P output_dir:results/pnr-third \
+  --output pnr-third.html
+```
+
+Output positions are zero-based, so `2` means the third response. Use
+`--execute-params settings.yml` for dictionaries or longer selections.
+The explicit `--execute` runs the notebook; rendering an `.ipynb` without it
+normally displays its stored results. The book itself displays stored examples.
+
+### Prepare independent jobs with Papermill
+
+For a cluster batch, it can be useful to inspect the complete set of jobs
+before executing any of them. Papermill's `prepare_only=True` creates a
+configured notebook for each job. The following Python cell prepares two
+fitting runs that differ only in optimization seed and output folder:
+
+```{python}
+#| eval: false
+#| code-summary: "Prepare two fitting jobs without running them"
+
+from pathlib import Path
+import nbformat
+import papermill as pm
+
+jobs = Path("analyses/rendered")
+jobs.mkdir(parents=True, exist_ok=True)
+for seed in [0, 1]:
+    path = jobs / f"fitting_seed_{seed}.ipynb"
+    prepared = pm.execute_notebook(
+        "fitting_scipyde.ipynb", str(path),
+        parameters={"seed": seed, "output_dir": f"results/fitting-seed-{seed}"},
+        prepare_only=True,
+    )
+    # Stored example results are not results from this new job.
+    for cell in prepared.cells:
+        if cell.cell_type == "code":
+            cell.outputs = []
+            cell.execution_count = None
+    nbformat.write(prepared, path)
+```
+
+Inspect the injected settings in each notebook. Execute one from the working
+folder with:
+
+```bash
+.venv/bin/python -m papermill \
+  analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb \
+  --cwd .
+```
+
+The same prepared notebooks can be transferred with their inputs and run as
+separate Slurm jobs, using the project folder as the working directory. This
+matches the [remote-cluster workflow](https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd):
+maintain a procedure, prepare concrete work units, then schedule their execution.
+Preparing jobs does not fit a model; rendering HTML is a separate presentation step.
+
+For participant jobs, the fitting template uses `pooled=False` and
+`subject_indices=[i]`, where `i` indexes the sorted participant IDs. Simulation
+and parameter exploration can instead vary seeds or parameter values. Choose
+the work unit around the scientific question and keep its inputs and outputs
+explicit. A fit-only job sets both `redo_sims` and `redo_figures` to `False`;
+later simulation can use its saved result.
+
 ## Modeling procedures
 
-The first three procedures use ordinary CMR with shared parameters across
-participants. The fit estimates encoding and recall drift; the other parameters
-are explicit baseline settings. Its no-stop objective scores recall order
+The first three procedures default to ordinary CMR with shared parameters across
+participants. The fit estimates all nine continuous CMR parameters; learning
+before context updating and the exclusion of repeated recalls are explicit
+fixed mechanism choices. Its no-stop objective scores recall order
 conditional on observed response counts. Simulations use ten repetitions per
 list and reproduce those counts by construction, so recall length is not a
 prediction being tested here.
 
 The supplied demonstration fit lets simulation and parameter exploration run
-without another optimization. Model comparison uses the two separate historical
-eCMR fits, each with ten fitted parameters, and compares their pooled likelihood
-and AIC. These procedures illustrate modeling work; the short demonstration fit
-is not a claim of parameter recovery or a finished scientific account.
+without another optimization. Model comparison uses two eCMR fits prepared under
+the same current equations, each with ten fitted parameters, and compares their
+pooled likelihood and AIC. Their records include the two preparation searches,
+source fingerprint and numerical precision. Behavioral discrepancies and search
+variation remain part of evaluating the results; fitting does not establish
+parameter recovery or a finished scientific account.
 
 | Procedure | Notebook | Required inputs |
 |---|---|---|

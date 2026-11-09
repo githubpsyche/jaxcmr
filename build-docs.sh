@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # These directories contain generated copies only; authoritative notebooks stay
-# in templates/. Keep chapter paths as plain '- templates/name.ipynb' entries.
+# in templates/ and guide/overview/. Keep chapter paths as plain list entries.
 rm -rf -- guide/templates guide/downloads _site/guide
 mkdir -p guide/templates/data/fits guide/downloads
 notebooks=()
@@ -17,6 +17,12 @@ if [ "${#notebooks[@]}" -eq 0 ]; then
     printf 'No notebook chapters found in guide/_quarto.yml\n' >&2
     exit 1
 fi
+
+# Library Guide sources live in the guide; only their downloadable copies are staged.
+mkdir -p guide/downloads/overview
+while IFS= read -r notebook; do
+    cp "guide/$notebook" "guide/downloads/$notebook"
+done < <(sed -nE 's/^[[:space:]]*-[[:space:]]+(overview\/[A-Za-z0-9_]+\.ipynb)[[:space:]]*$/\1/p' guide/_quarto.yml)
 
 # One observation source and its existing matrix, shared by all chapters.
 for asset in Dupertuys2026.h5 Dupertuys2026_semantic_distances.npy \

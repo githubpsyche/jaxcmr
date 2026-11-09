@@ -1,0 +1,101 @@
+---
+title: "Library Guide"
+---
+
+This guide explains JAXCMR's data structures, interfaces and conventions:
+what each part receives, what it returns and where another part uses it.
+It also identifies entry points for supplying compatible functions or
+implementations. The [Templates](../templates.qmd) assemble these parts into
+complete research procedures.
+
+## How the interfaces connect
+
+```{mermaid}
+flowchart TB
+    D["RecallDataset"] --> F["MemorySearchModelFactory"]
+    F --> M["MemorySearch"]
+    C["Context · Memory · TerminationPolicy"] --> M
+    D --> L["LossFn"]
+    M -->|event probabilities| L
+    M --> S["TrialSimulator"]
+    S --> SD["Simulated RecallDataset"]
+    D --> A["Recall analyses"]
+    SD --> A
+    A -. "RecallAnalysisFn callback" .-> L
+    L --> O["FittingAlgorithm"]
+    O --> R["FitResult"]
+    R -->|assigned parameters| S
+    R --> E["Evaluation helpers"]
+    A --> E
+```
+
+A model factory creates a model for an experiment and parameter values.
+Likelihood calculations follow recorded responses through that model;
+simulation samples new responses. Both observed and simulated datasets
+can enter recall analyses. A compatible analysis callback can also supply
+the summary used by a behavioral objective. Fitters search parameter values
+using a loss and return records for subsequent simulation and evaluation.
+
+Simulation can use hand-chosen parameters without a fit. Analysis can
+describe observations without a model. These are connected interfaces,
+not a mandatory sequence of steps.
+
+## The structures and entry points
+
+| Page | Structure or convention | Where it connects |
+|---|---|---|
+| [Data](data.ipynb) | `RecallDataset`, coding, alignment and storage | Dataset analyses, factories, losses, fitters and simulation. |
+| [Recall Analyses](analyses.ipynb) | Array/dataset functions, aggregation, plotting and `RecallAnalysisFn` | Descriptive results and callbacks supplied to summary-based losses. |
+| [Memory Search Models](models.ipynb) | `MemorySearch` and `MemorySearchModelFactory` | Event calculations through `model_factory_cls` in losses and simulation. |
+| [Model Components](components.ipynb) | `Context`, `Memory`, termination policies and creators | Component arguments accepted by model factories. |
+| [Loss Functions](losses.ipynb) | `LossFn`, event masks and optional preparation | The objective supplied through a fitter's `loss_fn_cls`. |
+| [Fitting Procedures](fitting.ipynb) | `FittingAlgorithm`, parameter roles and `FitResult` | Optimization and records used by later procedures. |
+| [Data Simulation](simulation.ipynb) | `TrialSimulator`, participant assignment and replications | A `simulate_trial_fn` callback inside dataset simulation. |
+| [Model Evaluation](evaluation.ipynb) | Comparable datasets, fit records and objective conventions | Behavioral and likelihood-based comparison helpers. |
+
+## What a protocol provides
+
+A Python **Protocol** describes the attributes and methods a consumer
+expects. A compatible implementation need not inherit from that protocol.
+For a callable protocol such as `RecallAnalysisFn`, an ordinary function
+with the specified arguments and behavior can be passed directly to its
+consumer. The [analysis callback example](analyses.ipynb#recallanalysisfn)
+shows this connection using an existing SPC calculation.
+
+Signatures alone are not enough: array dimensions, item coding, parameter
+order and JAX-compatible operations also determine whether implementations
+work together. Each topic explains these responsibilities alongside the
+relevant declaration. Examples illustrate one connection at a time.
+
+`RecallDataset` and `FitResult` are dictionary types, not protocols. They
+describe fields and alignment, without being comprehensive runtime
+validators. Other conventions, such as template-added provenance or
+objective signs expected by comparison helpers, are established by the
+procedures that produce and consume the records.
+
+## Configuring a reusable procedure
+
+Template notebooks separate literal settings from the Python objects
+constructed from them:
+
+1. A tagged **parameters** cell holds paths, selections, parameter values,
+   import names and output locations. Parameterized execution can replace
+   these literals for another run.
+2. **Setup** imports implementations and constructs factories, masks and
+   other derived objects from those settings.
+3. The **procedure** produces outputs and retains the effective settings.
+
+Independent executions need separate output locations. Changes to fit
+parameters or simulation settings require corresponding new simulation
+outputs. The [Templates](../templates.qmd) explain parameterized execution
+and provide complete procedures; this guide describes the structures they
+connect.
+
+## Using the illustrations
+
+The topic notebooks retain small executed examples using the existing
+war-photo-recall observations and supplied fits. Their protocol declarations
+are visible; expand a labeled code block to inspect an executable example.
+To rerun one, use **Download notebook** and place it beside the shared
+`data/` folder from the [Templates downloads](../templates.qmd#download-the-shared-inputs).
+The [setup page](../getting-started.qmd) describes the notebook environment.

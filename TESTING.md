@@ -60,8 +60,9 @@ processes; they never modify library files.
 
 ## Editing the guide
 
-The independent Quarto book in `guide/` contains the introduction, setup page,
-Templates index and fourteen prepared notebook chapters. Use [Quarto](https://quarto.org/docs/download/)
+The independent Quarto book in `guide/` contains 26 content pages: the introduction,
+setup page, Library Guide introduction and eight topic notebooks, Templates index and
+fourteen prepared template notebooks. Use [Quarto](https://quarto.org/docs/download/)
 1.10.20 or newer; earlier versions have an [upstream bug](https://github.com/quarto-dev/quarto-cli/issues/13583)
 that breaks Show All Code / Hide All Code when copy buttons are enabled. The current
 preview was rendered with 1.11.9. To build the guide:
@@ -75,8 +76,10 @@ Open `_site/guide/index.html` for the preview. This command refreshes the genera
 do not remain in the site. It does not execute notebook cells.
 
 The `book.chapters` list is the publication list. Keep notebook entries as plain
-`- templates/name.ipynb` lines so the build can stage exactly those files. Edit the
-authoritative notebooks in `templates/`, never the generated copies in `guide/`.
+`- templates/name.ipynb` or `- overview/name.ipynb` lines. Authoritative template
+notebooks live in `templates/`; their copies in `guide/templates/` are generated.
+Authoritative Library Guide pages live in `guide/overview/`. The build stages notebook
+downloads for both sections under `guide/downloads/`; do not edit those copies.
 Run a changed notebook in a working folder with the documented `data/` inputs,
 retain useful outputs, and review its rendered chapter and download. This is
 example preparation; no automated documentation suite is added.

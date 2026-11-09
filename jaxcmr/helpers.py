@@ -61,7 +61,7 @@ def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
 
 
 def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array, ""]:
-    """Return the summed log likelihood over specified likelihoods."""
+    """Return negative summed log likelihood over the supplied probabilities."""
     return -jnp.sum(jnp.log(likelihoods))
 
 
@@ -310,7 +310,7 @@ def make_dataset(
     Parameters
     ----------
     recalls
-        Within-list recall events (1-indexed, 0 = padding). A 1-D vector is
+        Study-position recall codes (1-indexed, 0 = padding). A 1-D vector is
         treated as a single trial.
     pres_itemnos
         Within-list presentation items. When omitted, generated as
