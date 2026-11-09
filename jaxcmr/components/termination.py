@@ -13,7 +13,7 @@ from typing import Protocol
 
 from jax import lax
 from jax import numpy as jnp
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from jaxcmr.math import lb
 from jaxcmr.typing import Array, Bool, Float, Float_, Int_, Integer

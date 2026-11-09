@@ -40,7 +40,7 @@ from jax import numpy as jnp
 from matplotlib.axes import Axes
 from scipy import stats
 from scipy.stats import bootstrap
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
 from ..plotting import init_plot, prepare_plot_inputs, set_plot_labels

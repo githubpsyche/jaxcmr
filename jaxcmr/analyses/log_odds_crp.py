@@ -30,7 +30,7 @@ from collections.abc import Sequence
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
 from ..repetition import all_study_positions

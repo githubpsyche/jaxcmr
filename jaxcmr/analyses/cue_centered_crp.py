@@ -22,7 +22,7 @@ from collections.abc import Sequence
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels

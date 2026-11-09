@@ -19,7 +19,7 @@ from collections.abc import Mapping
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory

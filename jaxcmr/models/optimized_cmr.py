@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import lax
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from jaxcmr.components import context
 from jaxcmr.components.context import integrate_normalized

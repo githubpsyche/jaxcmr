@@ -11,7 +11,7 @@ import numpy as np
 from jax import lax, vmap
 from jax.scipy.special import ndtr
 from jaxtyping import Array, Bool, Float, Integer
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from jaxcmr.math import lb
 

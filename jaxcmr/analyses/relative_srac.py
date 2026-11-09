@@ -13,7 +13,7 @@ from collections.abc import Sequence
 import jax.numpy as jnp
 from jax import jit, lax, vmap
 from matplotlib.axes import Axes
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject, find_max_list_length
 from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs

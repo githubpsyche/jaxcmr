@@ -10,7 +10,7 @@ models.
 from collections.abc import Mapping
 
 from jax import numpy as jnp
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from jaxcmr.math import power_scale
 from jaxcmr.typing import Array, Context, Float, Float_, Int_

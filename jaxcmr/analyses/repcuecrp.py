@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 from scipy import stats
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels

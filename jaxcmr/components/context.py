@@ -13,7 +13,7 @@ import base64
 import io
 
 from jax import numpy as jnp
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..math import normalize_magnitude
 from ..typing import Array, Float, Float_

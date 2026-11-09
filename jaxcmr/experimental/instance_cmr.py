@@ -11,7 +11,7 @@ from collections.abc import Mapping, Optional
 import numpy as np
 from jax import lax, vmap
 from jax import numpy as jnp
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from jaxcmr.components.context import TemporalContext
 from jaxcmr.components.instance_memory import InstanceMemory

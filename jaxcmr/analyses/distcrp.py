@@ -39,7 +39,7 @@ from jax import jit, lax, vmap
 from jax import numpy as jnp
 import numpy as np
 from matplotlib.axes import Axes
-from simple_pytree import Pytree
+from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject, require_pres_itemids
 from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
