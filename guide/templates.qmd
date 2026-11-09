@@ -114,15 +114,31 @@ Each chapter has **Download notebook** and **Open in Colab** links beside its
 contents list. Code starts collapsed; expand a labeled block to see the calculation,
 or use the **Code** menu to show all code at once. Figures and tables remain visible.
 
-::: {.callout-note}
-## Colab and this preview
+## Run in Colab
 
-**Open in Colab** loads the notebook published on GitHub. The revised notebooks
-and example fit files in this local preview have not been published there yet,
-so those links currently open older versions. The published-package setup also
-awaits JAXCMR 0.2.0. For now, download the prepared notebook from this preview to
-inspect the version shown here.
-:::
+Choose **Open in Colab** beside a chapter's contents list. Sign in to Google,
+then choose **Runtime → Run all**. For the notebook opened from this repository,
+Colab may ask you to confirm **Run anyway**. A standard CPU runtime is enough.
+
+The setup cell installs JAXCMR from a pinned GitHub revision and downloads only
+that notebook's supplied inputs, checking their hashes. This route works before
+the PyPI release. Matching files are reused when setup runs again; a conflicting
+file is preserved and reported. If you change a path to your own input, upload
+that file through Colab's **Files** pane and keep the path consistent with the
+parameters cell.
+
+The SPC pilot completed on the default Python 3.13 CPU runtime without a restart.
+If Colab requests one after installation, choose **Runtime → Restart session**,
+then **Run all** again. The first raw cell contains Quarto page metadata; Colab
+labels it “Unsupported Cell Type”, but skips it when running the code cells.
+
+Results are written under the notebook's `output_dir` (for SPC,
+`results/spc/spc.png`). In the **Files** pane, open that folder and use the file's
+menu to **Download** the results. Download anything you want to keep before
+Colab deletes the temporary runtime. Use **File → Download → Download .ipynb**
+to retain an executed notebook, or **Copy to Drive** if you want a saved working
+copy. The [VS Code setup](getting-started.qmd) remains the local route and still
+awaits the planned PyPI release.
 
 ## Modeling procedures
 
