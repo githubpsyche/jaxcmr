@@ -1,0 +1,188 @@
+{
+    "fixed": {
+        "allow_repeated_recalls": 0.0,
+        "learn_after_context_update": 0.0,
+        "modulate_emotion_by_primacy": 1.0,
+        "phi_emot_modulates_temporal": 0.0,
+        "emotion_drift_rate": 1.0
+    },
+    "free": {
+        "encoding_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "start_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "recall_drift_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "shared_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "item_support": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "learning_rate": [
+            2.220446049250313e-16,
+            0.9999999999999998
+        ],
+        "primacy_scale": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "primacy_decay": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "choice_sensitivity": [
+            2.220446049250313e-16,
+            100.0
+        ],
+        "emotion_scale": [
+            2.220446049250313e-16,
+            10.0
+        ]
+    },
+    "fitness": [
+        7174.99267578125
+    ],
+    "fits": {
+        "allow_repeated_recalls": [
+            0.0
+        ],
+        "learn_after_context_update": [
+            0.0
+        ],
+        "modulate_emotion_by_primacy": [
+            1.0
+        ],
+        "phi_emot_modulates_temporal": [
+            0.0
+        ],
+        "emotion_drift_rate": [
+            1.0
+        ],
+        "encoding_drift_rate": [
+            0.6981775760650635
+        ],
+        "start_drift_rate": [
+            0.756666898727417
+        ],
+        "recall_drift_rate": [
+            0.6973112225532532
+        ],
+        "shared_support": [
+            12.622601509094238
+        ],
+        "item_support": [
+            12.418377876281738
+        ],
+        "learning_rate": [
+            0.6504051685333252
+        ],
+        "primacy_scale": [
+            0.12636534869670868
+        ],
+        "primacy_decay": [
+            43.647727966308594
+        ],
+        "choice_sensitivity": [
+            69.36526489257812
+        ],
+        "emotion_scale": [
+            0.25238144397735596
+        ],
+        "subject": [
+            -1
+        ]
+    },
+    "nit": [
+        148
+    ],
+    "converged": [
+        true
+    ],
+    "hyperparameters": {
+        "bounds": {
+            "encoding_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "start_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "recall_drift_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "shared_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "item_support": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "learning_rate": [
+                2.220446049250313e-16,
+                0.9999999999999998
+            ],
+            "primacy_scale": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "primacy_decay": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "choice_sensitivity": [
+                2.220446049250313e-16,
+                100.0
+            ],
+            "emotion_scale": [
+                2.220446049250313e-16,
+                10.0
+            ]
+        },
+        "num_steps": 1000,
+        "pop_size": 15,
+        "population_size": 150,
+        "relative_tolerance": 0.001,
+        "absolute_tolerance": 0.0,
+        "cross_over_rate": 0.9,
+        "diff_w": [
+            0.85,
+            0.85
+        ],
+        "best_of": 1,
+        "init": "latinhypercube",
+        "boundary_handling": "resample",
+        "seed": 0,
+        "nonfinite_penalty": 1e+30
+    },
+    "fit_time": 54.49283754097996,
+    "run_tag": "primacy_pooled_evosax_fixed_term_best_of_1",
+    "data_tag": "Dupertuys2026",
+    "trial_query": "data['list_type'] >= 1",
+    "model": "eCMR_source_only_phi",
+    "name": "Dupertuys2026_eCMR_source_only_phi_primacy_pooled_evosax_fixed_term_best_of_1",
+    "components": {
+        "mfc_create_fn": "jaxcmr.components.linear_memory.init_mfc",
+        "mcf_create_fn": "jaxcmr.components.linear_memory.init_mcf",
+        "context_create_fn": "jaxcmr.components.context.init",
+        "termination_policy_create_fn": "jaxcmr.components.termination.NoStopTermination"
+    },
+    "fit_algorithm": "jaxcmr.fitting.EvosaxDE",
+    "loss_function": "jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikelihoodFnGenerator",
+    "model_factory": "jaxcmr.models.ecmr.make_factory",
+    "embedding_path": "",
+    "emotion_feature_path": "",
+    "feature_column": "6",
+    "concat_features": "False"
+}
