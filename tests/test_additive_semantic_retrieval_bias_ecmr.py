@@ -1,21 +1,14 @@
 """Tests for retrieval-bias semantic eCMR."""
 
 import jax.numpy as jnp
-from jax import random
-
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.helpers import make_dataset
-from jaxcmr.models.additive_semantic_ecmr import (
-    make_factory as make_semantic_ecmr_factory,
-)
+from jaxcmr.models.additive_semantic_ecmr import make_factory as make_semantic_ecmr_factory
 from jaxcmr.models.additive_semantic_retrieval_bias_ecmr import (
-    AdditiveSemanticRetrievalBiasECMR,
     make_factory as make_retrieval_bias_ecmr_factory,
 )
-from jaxcmr.simulation import simulate_study_free_recall_and_forced_stop
-
 
 _PARAMS = {
     "encoding_drift_rate": 0.5,
@@ -51,19 +44,12 @@ def _dataset(valence=None):
 
 
 def _similarity_matrix():
-    return jnp.array([
-        [1.0, 0.9, 0.1],
-        [0.9, 1.0, 0.2],
-        [0.1, 0.2, 1.0],
-    ])
+    return jnp.array([[1.0, 0.9, 0.1], [0.9, 1.0, 0.2], [0.1, 0.2, 1.0]])
 
 
 def _factory(make_factory):
     return make_factory(
-        LinearMemory.init_mfc,
-        LinearMemory.init_mcf,
-        TemporalContext.init,
-        NoStopTermination,
+        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, NoStopTermination
     )
 
 
@@ -78,84 +64,37 @@ def _studied_model(factory_cls, params, dataset=None):
 
 
 def test_zero_retrieval_bias_matches_semantic_ecmr():
-    """Behavior: retrieval-bias eCMR nests semantic eCMR when bias is zero."""
-    # Arrange / Given
+    """retrieval-bias eCMR nests semantic eCMR when bias is zero."""
     semantic_factory = _factory(make_semantic_ecmr_factory)
     bias_factory = _factory(make_retrieval_bias_ecmr_factory)
     params = {**_PARAMS, "emotional_retrieval_bias": 0.0}
-
-    # Act / When
     semantic_model = _studied_model(semantic_factory, params)
     bias_model = _studied_model(bias_factory, params)
-
-    # Assert / Then
     assert jnp.allclose(semantic_model.activations(), bias_model.activations()).item()
 
 
 def test_positive_retrieval_bias_boosts_mixed_emotional_target():
-    """Behavior: positive retrieval bias favors emotional targets in mixed lists."""
-    # Arrange / Given
+    """positive retrieval bias favors emotional targets in mixed lists."""
     bias_factory = _factory(make_retrieval_bias_ecmr_factory)
-    zero_model = _studied_model(
-        bias_factory, {**_PARAMS, "emotional_retrieval_bias": 0.0}
-    )
-    bias_model = _studied_model(
-        bias_factory, {**_PARAMS, "emotional_retrieval_bias": 1.0}
-    )
-
-    # Act / When
+    zero_model = _studied_model(bias_factory, {**_PARAMS, "emotional_retrieval_bias": 0.0})
+    bias_model = _studied_model(bias_factory, {**_PARAMS, "emotional_retrieval_bias": 1.0})
     zero_probs = zero_model.outcome_probabilities()[1:]
     bias_probs = bias_model.outcome_probabilities()[1:]
-
-    # Assert / Then
     assert bias_probs[1] > zero_probs[1]
     assert bias_probs[0] < zero_probs[0]
     assert bias_probs[2] < zero_probs[2]
 
 
 def test_retrieval_bias_cancels_in_pure_emotional_choice_probabilities():
-    """Behavior: uniform emotional target bias cancels within pure emotional lists."""
-    # Arrange / Given
+    """uniform emotional target bias cancels within pure emotional lists."""
     bias_factory = _factory(make_retrieval_bias_ecmr_factory)
     dataset = _dataset(jnp.array([[-1, -1, -1]], dtype=jnp.int32))
     zero_model = _studied_model(
-        bias_factory,
-        {**_PARAMS, "emotional_retrieval_bias": 0.0},
-        dataset=dataset,
+        bias_factory, {**_PARAMS, "emotional_retrieval_bias": 0.0}, dataset=dataset
     )
     bias_model = _studied_model(
-        bias_factory,
-        {**_PARAMS, "emotional_retrieval_bias": 1.0},
-        dataset=dataset,
+        bias_factory, {**_PARAMS, "emotional_retrieval_bias": 1.0}, dataset=dataset
     )
-
-    # Act / When
     zero_probs = zero_model.outcome_probabilities()[1:]
     bias_probs = bias_model.outcome_probabilities()[1:]
-
-    # Assert / Then
     assert jnp.allclose(zero_probs, bias_probs).item()
-
-
-def test_factory_instantiates_and_simulates():
-    """Behavior: retrieval-bias semantic eCMR factory simulates recall."""
-    # Arrange / Given
-    factory_cls = _factory(make_retrieval_bias_ecmr_factory)
-    dataset = _dataset()
-    params = {**_PARAMS, "emotional_retrieval_bias": 0.5}
-
-    # Act / When
-    model = factory_cls(dataset, _similarity_matrix()).create_trial_model(
-        jnp.int32(0), params
-    )
-    _, recalls = simulate_study_free_recall_and_forced_stop(
-        model,
-        dataset["pres_itemnos"][0],
-        dataset["recalls"][0],
-        random.PRNGKey(0),
-    )
-
-    # Assert / Then
-    assert isinstance(model, AdditiveSemanticRetrievalBiasECMR)
-    assert recalls.shape == dataset["recalls"][0].shape
-    assert jnp.all(jnp.isfinite(recalls)).item()

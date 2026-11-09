@@ -1,18 +1,17 @@
-"""Data-switching, compilation reuse and loss compatibility for explicit plans."""
+from support import CMR_PARAMS
+from support import recall_fixture
 
+"Data-switching, compilation reuse and loss compatibility for explicit plans."
 import logging
 from functools import partial
-
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-
 from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.fitting import EvosaxDE, ScipyTrustConstr
 from jaxcmr.fitting._preparation import LossPreparation
-from jaxcmr.helpers import make_dataset
 from jaxcmr.loss.cmr_likelihood import FastCMRLikelihoodLoss
 from jaxcmr.loss.prepared import PreparedLoss
 from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
@@ -22,20 +21,8 @@ from jaxcmr.models.optimized_cmr import ModelFactory as OptimizedFactory
 FACTORY = make_factory(
     linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
 )
-PARAMS = {
-    "encoding_drift_rate": 0.5,
-    "start_drift_rate": 0.4,
-    "recall_drift_rate": 0.6,
-    "shared_support": 1.0,
-    "item_support": 1.5,
-    "learning_rate": 0.3,
-    "primacy_scale": 1.0,
-    "primacy_decay": 0.1,
-    "choice_sensitivity": 2.0,
-    "learn_after_context_update": False,
-    "allow_repeated_recalls": False,
-}
-NAMES = tuple(name for name, value in PARAMS.items() if not isinstance(value, bool))
+PARAMS = dict(CMR_PARAMS)
+NAMES = tuple((name for name, value in PARAMS.items() if not isinstance(value, bool)))
 
 
 @pytest.fixture(autouse=True)
@@ -45,20 +32,7 @@ def precision():
 
 
 def observations():
-    # First row is actual LK14 row 82. Other rows deliberately change recall
-    # order/length, remove recalls, or change item geometry for regression tests.
-    present = np.tile(np.repeat(np.arange(1, 21), 2), (4, 1))
-    present[-1] = np.arange(1, 41)
-    recalls = np.zeros((4, 40), dtype=np.int32)
-    recalls[0, :2] = [31, 29]
-    recalls[1, :3] = [29, 31, 27]
-    recalls[3, :2] = [31, 29]
-    return make_dataset(
-        jnp.asarray(recalls),
-        pres_itemnos=jnp.asarray(present),
-        listLength=40,
-        subject=jnp.arange(1, 5)[:, None],
-    )
+    return recall_fixture()
 
 
 def quadratic(data, base, names, parameters):
@@ -87,16 +61,14 @@ def test_prepared_container_shares_a_trace_without_cmr():
 
 
 @pytest.mark.parametrize("batch_preparation", [False, True])
-def test_ordinary_cmr_selections_share_compilation_and_preserve_gradients(
-    batch_preparation,
-):
+def test_ordinary_cmr_selections_share_compilation_and_preserve_gradients(batch_preparation):
     """Fallback A/B/A selections reuse code without specializing away observations."""
     loss = ExcludeTerminationLikelihoodLoss(FACTORY, observations(), None)
     selections = [jnp.array([0]), jnp.array([1]), jnp.array([0])]
     plans = (
         loss.prepare_selections(selections)
         if batch_preparation
-        else tuple(loss.prepare_trials(indices) for indices in selections)
+        else tuple((loss.prepare_trials(indices) for indices in selections))
     )
     traces = []
     names = ("choice_sensitivity", "encoding_drift_rate")
@@ -109,9 +81,7 @@ def test_ordinary_cmr_selections_share_compilation_and_preserve_gradients(
     evaluate = jax.jit(jax.value_and_grad(prepared_score))
     reference = jax.jit(
         jax.value_and_grad(
-            lambda parameters, indices: loss(
-                indices, PARAMS, names, parameters[:, None]
-            )[0]
+            lambda parameters, indices: loss(indices, PARAMS, names, parameters[:, None])[0]
         )
     )
     values = []
@@ -119,16 +89,14 @@ def test_ordinary_cmr_selections_share_compilation_and_preserve_gradients(
         actual = evaluate(point, plan)
         expected = reference(point, indices)
         np.testing.assert_allclose(actual[0], expected[0], rtol=1e-11, atol=1e-10)
-        np.testing.assert_allclose(actual[1], expected[1], rtol=1e-8, atol=1e-9)
+        np.testing.assert_allclose(actual[1], expected[1], rtol=1e-08, atol=1e-09)
         values.append(float(actual[0]))
     assert values[0] != values[1]
     assert values[0] == values[2]
     assert len(traces) == 1
 
 
-@pytest.mark.parametrize(
-    "names", [NAMES, NAMES[::-1], ("choice_sensitivity", "primacy_decay")]
-)
+@pytest.mark.parametrize("names", [NAMES, NAMES[::-1], ("choice_sensitivity", "primacy_decay")])
 def test_planned_cmr_preserves_values_gradients_multiplicity_and_empty_data(names):
     data = observations()
     fast = FastCMRLikelihoodLoss(OptimizedFactory, data, None)
@@ -145,19 +113,14 @@ def test_planned_cmr_preserves_values_gradients_multiplicity_and_empty_data(name
     point = jnp.asarray([PARAMS[name] for name in names])
     for index in (0, 1, 2, 0):
         expected = jax.jit(
-            jax.value_and_grad(
-                lambda p, selected: original(selected, PARAMS, names, p[:, None])[0]
-            )
+            jax.value_and_grad(lambda p, selected: original(selected, PARAMS, names, p[:, None])[0])
         )(point, selections[index])
         actual = evaluate(point, plans[index])
         np.testing.assert_allclose(actual[0], expected[0], rtol=1e-11, atol=1e-10)
-        np.testing.assert_allclose(actual[1], expected[1], rtol=1e-8, atol=1e-9)
-    # Empty data must remain constant even at singular context-drift endpoints.
+        np.testing.assert_allclose(actual[1], expected[1], rtol=1e-08, atol=1e-09)
     actual = evaluate(jnp.ones_like(point), plans[2])
     np.testing.assert_array_equal(actual[0], 0.0)
     np.testing.assert_array_equal(actual[1], jnp.zeros_like(point))
-    # Nonempty A/B/A data share a trace; wholly empty groups specialize to the
-    # constant zero function, without evaluating a singular unused trajectory.
     assert len(traces) == 2
 
 
@@ -165,12 +128,7 @@ def test_mixed_geometries_empty_selections_and_source_mutation():
     data = {key: np.asarray(value).copy() for key, value in observations().items()}
     fast = FastCMRLikelihoodLoss(OptimizedFactory, data, None)
     original = ExcludeTerminationLikelihoodLoss(FACTORY, data, None)
-    selections = [
-        jnp.array([0]),
-        jnp.array([3]),
-        jnp.array([], dtype=jnp.int32),
-        jnp.array([1, 0]),
-    ]
+    selections = [jnp.array([0]), jnp.array([3]), jnp.array([], dtype=jnp.int32), jnp.array([1, 0])]
     plans = fast.prepare_selections(selections)
     point = jnp.array([[2.0]])
     expected = [
@@ -180,9 +138,7 @@ def test_mixed_geometries_empty_selections_and_source_mutation():
     data["recalls"][:] = 0
     for plan, value in zip(plans, expected, strict=True):
         np.testing.assert_allclose(
-            jax.jit(lambda x, bound: bound(PARAMS, ("choice_sensitivity",), x))(
-                point, plan
-            ),
+            jax.jit(lambda x, bound: bound(PARAMS, ("choice_sensitivity",), x))(point, plan),
             value,
             atol=1e-10,
         )
@@ -192,25 +148,16 @@ def test_mixed_geometries_empty_selections_and_source_mutation():
 @pytest.mark.parametrize("kind", ["gradient", "evosax"])
 def test_fitters_reuse_planned_data_across_different_selection_sizes(kind, caplog):
     data = observations()
-    options = {
-        "bounds": {"choice_sensitivity": [0.1, 5.0]},
-        "num_steps": 2,
-        "best_of": 1,
-    }
+    options = {"bounds": {"choice_sensitivity": [0.1, 5.0]}, "num_steps": 2, "best_of": 1}
     cls = ScipyTrustConstr if kind == "gradient" else EvosaxDE
     if kind == "gradient":
         options.update(
-            screening_size=4,
-            screening_batch_size=4,
-            initial_params={"choice_sensitivity": 2.0},
+            screening_size=4, screening_batch_size=4, initial_params={"choice_sensitivity": 2.0}
         )
     else:
         options.update(pop_size=4, progress_bar=False)
     fitter = cls(data, None, PARAMS, OptimizedFactory, FastCMRLikelihoodLoss, options)
-    masks = [
-        jnp.array([True, False, False, False]),
-        jnp.array([False, True, True, False]),
-    ]
+    masks = [jnp.array([True, False, False, False]), jnp.array([False, True, True, False])]
     assert fitter.prepare_selections(masks) >= 0
     original = ExcludeTerminationLikelihoodLoss(FACTORY, data, None)
 
@@ -233,17 +180,11 @@ def test_fitters_reuse_planned_data_across_different_selection_sizes(kind, caplo
             original(jnp.flatnonzero(mask), PARAMS, ("choice_sensitivity",), point),
             atol=1e-10,
         )
-    # Primitive index-selection operations can specialize on the count; the
-    # expensive loss/DE calculation must not compile a new participant closure.
-    names = (
-        ("scalar_loss", "screen_values")
-        if kind == "gradient"
-        else ("_run_generations",)
-    )
+    names = ("scalar_loss", "screen_values") if kind == "gradient" else ("_run_generations",)
     assert not [
         r.message
         for r in caplog.records
-        if any(r.message.startswith(f"Compiling jit({name})") for name in names)
+        if any((r.message.startswith(f"Compiling jit({name})") for name in names))
     ]
     if kind == "gradient":
         unit = fitter.parameter_space.to_unit(jnp.array([2.0]))
@@ -257,7 +198,6 @@ def test_fitters_reuse_planned_data_across_different_selection_sizes(kind, caplo
         retained = old(jax.random.PRNGKey(31))
         np.testing.assert_allclose(retained[0], first["fitness"][0], atol=1e-10)
     fitter.prepare_selections([])
-    # An unplanned selection uses the original preparation path correctly.
     mask = jnp.array([False, False, False, True])
     result = fit(mask)
     point = jnp.array([[result["fits"]["choice_sensitivity"][0]]])
@@ -279,12 +219,10 @@ class OrdinaryLoss:
 class CallablePlanLoss(OrdinaryLoss):
     def prepare_trials(self, indices):
         target = float(np.asarray(indices).mean())
-        return lambda base, names, parameters: jnp.sum(
-            (parameters - target) ** 2, axis=0
-        )
+        return lambda base, names, parameters: jnp.sum((parameters - target) ** 2, axis=0)
 
     def prepare_selections(self, indices):
-        return tuple(self.prepare_trials(selected) for selected in indices)
+        return tuple((self.prepare_trials(selected) for selected in indices))
 
 
 @pytest.mark.parametrize("fitter_cls", [ScipyTrustConstr, EvosaxDE])
@@ -301,22 +239,17 @@ def test_ordinary_prepared_callables_and_unsupported_planning_are_explicit(fitte
     generic = fitter_cls(data, None, {}, object, OrdinaryLoss, options)
     with pytest.raises(TypeError, match="does not support"):
         generic.prepare_selections([jnp.array([True, False, False, False])])
-    assert np.isfinite(
-        generic.fit(jnp.array([True, False, False, False]))["fitness"][0]
-    )
+    assert np.isfinite(generic.fit(jnp.array([True, False, False, False]))["fitness"][0])
     planned = fitter_cls(data, None, {}, object, CallablePlanLoss, options)
     masks = [jnp.arange(4) == index for index in (0, 1)]
     planned.prepare_selections(masks)
     for index, mask in enumerate(masks):
         result = planned.fit(mask)
-        np.testing.assert_allclose(
-            result["fitness"][0], (result["fits"]["x"][0] - index) ** 2
-        )
+        np.testing.assert_allclose(result["fitness"][0], (result["fits"]["x"][0] - index) ** 2)
     old_loss = planned._losses.select(jnp.array([0]))
     with pytest.raises(ValueError, match="Boolean"):
         planned.prepare_selections([jnp.array([1, 0, 0, 0])])
     assert planned._losses.select(jnp.array([0])) is old_loss
-    # Force another selection so this also checks the plan, not just the cache.
     planned._losses.select(jnp.array([1]))
     assert planned._losses.select(jnp.array([0])) is old_loss
 
@@ -359,8 +292,6 @@ def test_unified_loss_preserves_dynamic_selection_and_retained_observations(loss
         value, gradient = value_and_gradient(jnp.array([1.0]), prepared)
         np.testing.assert_allclose(value, (1.0 - target) ** 2)
         np.testing.assert_allclose(gradient, [2 * (1.0 - target)])
-    # Ordinary indices and explicit arrays share a trace. Independent opaque
-    # closures retain separate static evaluators; the earlier one stays valid.
     assert len(traces) == (2 if loss_cls is CallableIndexLoss else 1)
 
 

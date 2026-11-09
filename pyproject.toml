@@ -1,6 +1,6 @@
 [project]
 name = "jaxcmr"
-version = "0.1.1"
+version = "0.2.0rc1"
 description = "modeling memory search with jax"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -28,6 +28,9 @@ dependencies = [
     "typing-extensions>=4.13",
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=8.3.5", "build>=1.2", "nbclient>=0.10", "ipykernel>=6.29.5"]
+
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
@@ -42,6 +45,10 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
     packages = ["jaxcmr"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/guide/templates/**", "/guide/downloads/**", "/guide/.quarto/**"]
+include = ["/jaxcmr", "/tests", "/templates/models/cmr.ipynb", "/templates/guide/getting-started.qmd", "/guide", "/README.md", "/LICENSE", "/pyproject.toml", "/uv.lock", "/TESTING.md", "/testing-audit.json"]
 
 [tool.hatch.metadata]
 allow-direct-references = true

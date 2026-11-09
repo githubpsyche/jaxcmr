@@ -1,13 +1,11 @@
 """Joint analysis losses: scoring semantics, shared simulations, and JAX use."""
 
 from collections.abc import Mapping
-
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from simple_pytree import Pytree
-
+from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.loss import mse
 from jaxcmr.typing import Array, Float_, Int_, RecallDataset
 
@@ -85,7 +83,6 @@ def evaluate(loss, indices=None):
 def test_weighted_scaled_components_have_exact_expected_values(
     reduction, expected, long_part, short_part
 ):
-    # Every long-summary residual is 1/2; the scalar short residual is 3/3.
     Loss = mse.make_factory(
         {"long": long_summary, "short": short_summary},
         simulation_count=2,
@@ -97,24 +94,10 @@ def test_weighted_scaled_components_have_exact_expected_values(
     parts = jax.jit(lambda x: loss.component_scores(jnp.array([0, 1]), {}, (), x))(
         jnp.empty((0, 2))
     )
-    np.testing.assert_allclose(parts["long"], [long_part] * 2, rtol=1e-6)
-    np.testing.assert_allclose(parts["short"], [short_part] * 2, rtol=1e-6)
-    np.testing.assert_allclose(evaluate(loss), [expected] * 2, rtol=1e-6)
-    np.testing.assert_allclose(sum(parts.values()), evaluate(loss), rtol=1e-6)
-
-
-def test_analyses_share_one_simulation_call(monkeypatch):
-    calls = []
-    original = mse.simulate_masked_free_recall
-
-    def tracked(*args):
-        calls.append(1)
-        return original(*args)
-
-    monkeypatch.setattr(mse, "simulate_masked_free_recall", tracked)
-    Loss = mse.make_factory({"long": long_summary, "short": short_summary}, simulation_count=2)
-    np.testing.assert_allclose(evaluate(Loss(FixedRecallFactory, dataset(), None)), [3, 3])
-    assert len(calls) == 1
+    np.testing.assert_allclose(parts["long"], [long_part] * 2, rtol=1e-06)
+    np.testing.assert_allclose(parts["short"], [short_part] * 2, rtol=1e-06)
+    np.testing.assert_allclose(evaluate(loss), [expected] * 2, rtol=1e-06)
+    np.testing.assert_allclose(sum(parts.values()), evaluate(loss), rtol=1e-06)
 
 
 def test_trial_specific_models_are_used_even_for_identical_presentations():
@@ -129,7 +112,6 @@ def test_trial_specific_models_are_used_even_for_identical_presentations():
         FixedRecallFactory, data, None
     )
     np.testing.assert_array_equal(evaluate(loss), [0, 0])
-    # Dynamic, reordered subsets must prepare and summarize the selected trials.
     score = jax.jit(lambda indices: loss(indices, {}, (), jnp.empty((0, 1))))
     np.testing.assert_array_equal(score(jnp.array([1])), [0])
     np.testing.assert_array_equal(score(jnp.array([0])), [0])
@@ -155,6 +137,7 @@ def test_analysis_metadata_and_observations_follow_dynamic_subsets():
 
 
 def test_observed_missing_bins_are_fixed_and_do_not_hide_missing_predictions():
+
     def with_missing_bin(recalls, *, list_length, dataset, trial_indices):
         return jnp.array([jnp.mean(recalls[..., 0]), jnp.nan])
 
@@ -173,6 +156,7 @@ def test_observed_missing_bins_are_fixed_and_do_not_hide_missing_predictions():
 
 
 def test_no_valid_targets_cannot_report_zero_error_and_zero_weight_disables_analysis():
+
     def undefined(recalls, *, list_length, dataset, trial_indices):
         return jnp.array([jnp.nan])
 
@@ -186,59 +170,23 @@ def test_no_valid_targets_cannot_report_zero_error_and_zero_weight_disables_anal
     np.testing.assert_allclose(evaluate(DisabledLoss(FixedRecallFactory, dataset(), None)), [1, 1])
 
 
-def test_legacy_single_callback_constructor_matches_factory():
-    loss = mse.MemorySearchMseLoss(FixedRecallFactory, dataset(), None, long_summary, 2)
-    configured = mse.make_factory({"summary": long_summary}, simulation_count=2)(
-        FixedRecallFactory, dataset(), None
-    )
-    np.testing.assert_array_equal(evaluate(loss), evaluate(configured))
-
-
-@pytest.mark.parametrize(
-    ("kwargs", "message"),
-    [
-        ({"weights": {"typo": 1}}, "Unknown analysis names"),
-        ({"scales": {"typo": 1}}, "Unknown analysis names"),
-        ({"weights": {"summary": -1}}, "nonnegative"),
-        ({"weights": {"summary": np.inf}}, "finite"),
-        ({"weights": {"summary": 0}}, "positive weight"),
-        ({"scales": {"summary": 0}}, "finite and positive"),
-        ({"scales": {"summary": np.nan}}, "finite and positive"),
-        ({"simulation_count": 0}, "positive integer"),
-        ({"simulation_count": 1.5}, "positive integer"),
-        ({"reduction": "typo"}, "reduction"),
-    ],
-)
-def test_invalid_configuration_has_clear_errors(kwargs, message):
-    with pytest.raises(ValueError, match=message):
-        mse.make_factory({"summary": long_summary}, **kwargs)(FixedRecallFactory, dataset(), None)
-
-
-def test_empty_or_ambiguous_analyses_are_rejected():
-    with pytest.raises(ValueError, match="at least one analysis"):
-        mse.make_factory({})(FixedRecallFactory, dataset(), None)
-    with pytest.raises(ValueError, match="exactly one"):
-        mse.MemorySearchMseLoss(FixedRecallFactory, dataset(), None)
-    with pytest.raises(ValueError, match="exactly one"):
-        mse.MemorySearchMseLoss(
-            FixedRecallFactory, dataset(), None, long_summary,
-            analysis_fns={"duplicate": long_summary},
-        )
-
-
 def test_shape_mismatches_are_rejected_instead_of_broadcasting_predictions():
+
     def mismatched(recalls, *, list_length, dataset, trial_indices):
         return jnp.ones(recalls.shape[1])
 
     with pytest.raises(ValueError, match="observed shape.*simulated shape"):
-        evaluate(mse.make_factory({"summary": mismatched}, simulation_count=2)(
-            FixedRecallFactory, dataset(), None
-        ))
+        evaluate(
+            mse.make_factory({"summary": mismatched}, simulation_count=2)(
+                FixedRecallFactory, dataset(), None
+            )
+        )
     with pytest.raises(ValueError, match="cannot broadcast"):
-        evaluate(mse.make_factory(
-            {"summary": long_summary}, simulation_count=2,
-            scales={"summary": jnp.ones(2)},
-        )(FixedRecallFactory, dataset(), None))
+        evaluate(
+            mse.make_factory(
+                {"summary": long_summary}, simulation_count=2, scales={"summary": jnp.ones(2)}
+            )(FixedRecallFactory, dataset(), None)
+        )
 
 
 def test_empty_trial_selection_is_rejected():

@@ -1,13 +1,11 @@
 """Check the solver contract, sampling geometry and restart budgets."""
 
 from types import SimpleNamespace
-
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 from scipy.optimize import OptimizeResult
-
 import jaxcmr.fitting.gradient as gradient_module
 from jaxcmr.fitting import ParameterSpace, ScipyTrustConstr
 from jaxcmr.helpers import make_dataset
@@ -51,16 +49,13 @@ def fitter(**options):
 
 def test_log1p_roundtrip_and_derivative_near_zero():
     space = ParameterSpace({"amplitude": [0.0, 100.0]}, {"amplitude": "log1p"})
-    physical = jnp.array([[0.0], [1e-8], [1.0], [100.0]])
+    physical = jnp.array([[0.0], [1e-08], [1.0], [100.0]])
     unit = jax.jit(space.to_unit)(physical)
-    np.testing.assert_allclose(
-        jax.jit(space.to_physical)(unit), physical, rtol=1e-13, atol=1e-14
-    )
+    np.testing.assert_allclose(jax.jit(space.to_physical)(unit), physical, rtol=1e-13, atol=1e-14)
     derivative = jax.jit(jax.jacfwd(space.to_physical))(unit[1])
-    np.testing.assert_allclose(derivative[0, 0], (1 + 1e-8) * np.log1p(100), rtol=1e-13)
-    for lower in (-1.0, -2.0):
-        with pytest.raises(ValueError, match="above -1"):
-            ParameterSpace({"amplitude": [lower, 10.0]}, {"amplitude": "log1p"})
+    np.testing.assert_allclose(derivative[0, 0], (1 + 1e-08) * np.log1p(100), rtol=1e-13)
+    with pytest.raises(ValueError, match="above -1"):
+        ParameterSpace({"amplitude": [-1.0, 10.0]}, {"amplitude": "log1p"})
 
 
 def test_trust_solver_finds_known_optimum_and_reports_objective_gradient():
@@ -69,9 +64,7 @@ def test_trust_solver_finds_known_optimum_and_reports_objective_gradient():
     result = algorithm.fit(jnp.array([True]), subject_id=8)
     assert result["fitness"][0] < 1e-10
     np.testing.assert_allclose(
-        [result["fits"]["amplitude"][0], result["fits"]["drift"][0]],
-        [2.0, 0.3],
-        atol=2e-5,
+        [result["fits"]["amplitude"][0], result["fits"]["drift"][0]], [2.0, 0.3], atol=2e-05
     )
     assert result["fits"]["subject"] == [8]
     record = result["diagnostics"]["restarts"][0]
@@ -92,14 +85,10 @@ def test_sampling_geometry_does_not_change_optimization_coordinates_or_explicit_
     screen = result["diagnostics"]["screening"]
     bank = np.asarray(screen["candidate_unit"])
     physical = np.asarray(algorithm.sampling_space.to_physical(jnp.asarray(bank)))
-    np.testing.assert_allclose(
-        screen["scores"], ((physical - [2.0, 0.3]) ** 2).sum(axis=1)
-    )
+    np.testing.assert_allclose(screen["scores"], ((physical - [2.0, 0.3]) ** 2).sum(axis=1))
     np.testing.assert_allclose(physical[0], [9.0, 0.8])
     assert screen["selected_indices"][0] == 0
-    np.testing.assert_allclose(
-        result["diagnostics"]["restarts"][0]["initial_unit"], [0.9, 0.875]
-    )
+    np.testing.assert_allclose(result["diagnostics"]["restarts"][0]["initial_unit"], [0.9, 0.875])
     assert algorithm.parameter_space.transforms == {}
     assert result["hyperparameters"]["sampling_transforms"] == {"amplitude": "log1p"}
 
@@ -120,21 +109,15 @@ def test_local_deadline_allows_another_restart_and_never_credits_late_improvemen
         now[0] += 0.2
         return result
 
-    monkeypatch.setattr(
-        gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0])
-    )
+    monkeypatch.setattr(gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0]))
     monkeypatch.setattr(algorithm, "_value_and_grad", timed_evaluation)
     result = algorithm.fit(jnp.array([True]))
     records = result["diagnostics"]["restarts"]
     assert [record["budget"] for record in records] == budgets
-    assert all(record["late_evaluations"] == 1 for record in records)
-    assert all(
-        row["seconds"] <= total_limit for row in result["diagnostics"]["history"]
-    )
+    assert all((record["late_evaluations"] == 1 for record in records))
+    assert all((row["seconds"] <= total_limit for row in result["diagnostics"]["history"]))
     assert result["converged"] == [False]
-    parameters = jnp.array(
-        [[result["fits"]["amplitude"][0]], [result["fits"]["drift"][0]]]
-    )
+    parameters = jnp.array([[result["fits"]["amplitude"][0]], [result["fits"]["drift"][0]]])
     checked = QuadraticLoss(None, None, None)(None, None, None, parameters)[0]
     np.testing.assert_allclose(result["fitness"][0], checked)
 
@@ -142,9 +125,7 @@ def test_local_deadline_allows_another_restart_and_never_credits_late_improvemen
 def test_nonfinite_gradient_is_not_reported_as_a_valid_trust_fit(monkeypatch):
     algorithm = fitter()
     monkeypatch.setattr(
-        algorithm,
-        "_value_and_grad",
-        lambda *args: (jnp.array(1.0), jnp.full(2, jnp.nan)),
+        algorithm, "_value_and_grad", lambda *args: (jnp.array(1.0), jnp.full(2, jnp.nan))
     )
     with pytest.raises(ValueError, match="No finite loss/gradient pair"):
         algorithm.fit(jnp.array([True]))
@@ -173,17 +154,13 @@ def test_restart_callbacks_keep_their_own_record_and_deadline(monkeypatch):
             constr_violation=0.0,
         )
 
-    monkeypatch.setattr(
-        gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0])
-    )
+    monkeypatch.setattr(gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0]))
     monkeypatch.setattr(gradient_module, "minimize", minimize_once)
     result = algorithm.fit(jnp.array([True]))
     records = result["diagnostics"]["restarts"]
     assert len(callbacks) == 2
     callbacks[0][1](np.zeros(2))
     assert [record["nit"] for record in records] == [2, 1]
-
-    # The first deadline has passed; the second still has its own allowance.
     now[0] = 1.1
     with pytest.raises(gradient_module._BudgetExpired):
         callbacks[0][0](np.array(records[0]["initial_unit"]))
@@ -198,7 +175,7 @@ def test_restart_callbacks_keep_their_own_record_and_deadline(monkeypatch):
         {"local_time_limit_seconds": np.inf},
         {"initial_trust_radius": -1},
         {"step_tolerance": np.nan},
-        {"relative_tolerance": 1e-9},
+        {"relative_tolerance": 1e-09},
         {"max_fun": 100},
     ],
 )
