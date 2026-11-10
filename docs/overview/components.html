@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Computational models of memory search">
+
+<title>6&nbsp; Model Components – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../overview/losses.html" rel="next">
+<link href="../overview/models.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-081d0a153d3b6a80785afef37b346e8f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../overview/index.html">Library Guide</a></li><li class="breadcrumb-item"><a href="../overview/components.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">JAXCMR</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/githubpsyche/jaxcmr" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">JAXCMR</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../getting-started.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Run JAXCMR in VS Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../overview/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Library Guide</span></a>
+            <button type="button" class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section: Library Guide">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Data</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Recall Analyses</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/components.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Loss Functions</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Fitting Procedures</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Data Simulation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../templates.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Templates</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false" aria-label="Toggle section: Templates">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/model_comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Comparing pooled model fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Serial position curves</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Recall by output position</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">When recall ends</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Lag-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Temporal organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Distance-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Distance-based organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Recall rates by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Serial position curves by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/catcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Transitions within and between categories</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#context-memory-and-termination-interfaces" id="toc-context-memory-and-termination-interfaces" class="nav-link active" data-scroll-target="#context-memory-and-termination-interfaces"><span class="header-section-number">6.1</span> Context, memory and termination interfaces</a></li>
+  <li><a href="#creators-supply-components-to-a-model" id="toc-creators-supply-components-to-a-model" class="nav-link" data-scroll-target="#creators-supply-components-to-a-model"><span class="header-section-number">6.2</span> Creators supply components to a model</a></li>
+  <li><a href="#what-the-model-does-with-them" id="toc-what-the-model-does-with-them" class="nav-link" data-scroll-target="#what-the-model-does-with-them"><span class="header-section-number">6.3</span> What the model does with them</a></li>
+  </ul>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/components.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../overview/index.html">Library Guide</a></li><li class="breadcrumb-item"><a href="../overview/components.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Components provide the state representations and operations that a model combines. In CMR, item-to-context memory cues a context representation, context-to-item memory supports retrieval, and a termination policy supplies a stopping probability. The model determines when and how to use them.</p>
+<section id="context-memory-and-termination-interfaces" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="context-memory-and-termination-interfaces"><span class="header-section-number">6.1</span> Context, memory and termination interfaces</h2>
+<p><code>Context</code> stores the current and initial context and returns updated context after integration. Its full interface also includes integration with new out-of-list input.</p>
+<p>Selected declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="kw">class</span> Context(Protocol):</span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    state: Float[Array, <span class="st">" context_feature_units"</span>]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>    initial_state: Float[Array, <span class="st">" context_feature_units"</span>]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>    size: <span class="bu">int</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    <span class="kw">def</span> integrate(</span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>        <span class="va">self</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>        context_input: Float[Array, <span class="st">" context_feature_units"</span>],</span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>        drift_rate: Float_,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    ) <span class="op">-&gt;</span> <span class="st">"Context"</span>: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>Memory</code> maps input patterns to output patterns through <code>probe()</code>, and returns updated associative state through <code>associate()</code>. Its full interface also exposes input and output sizes.</p>
+<p>Selected declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="kw">class</span> Memory(Protocol):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>    state: Float[Array, <span class="st">" input_size output_size"</span>]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="kw">def</span> associate(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a>        <span class="va">self</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>        in_pattern: Float[Array, <span class="st">" input_size"</span>],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>        out_pattern: Float[Array, <span class="st">" output_size"</span>],</span>
+<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        learning_rate: Float_,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>    ) <span class="op">-&gt;</span> <span class="st">"Memory"</span>: ...</span>
+<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a>    <span class="kw">def</span> probe(</span>
+<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>        <span class="va">self</span>, in_pattern: Float[Array, <span class="st">" input_size"</span>]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>    ) <span class="op">-&gt;</span> Float[Array, <span class="st">" output_size"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A termination policy consumes a compatible model or model view and returns a scalar stopping probability. <code>ModelT</code> records the kind of object that a particular policy needs; policies need not accept every memory-search model.</p>
+<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="kw">class</span> TerminationPolicy[ModelT](Protocol):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a>    <span class="kw">def</span> stop_probability(<span class="va">self</span>, model: ModelT) <span class="op">-&gt;</span> Float[Array, <span class="st">""</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>These protocols describe extension points for compatible implementations. They do not prescribe a context equation, association rule or stopping rule, and do not require inheritance from a common implementation class.</p>
+</section>
+<section id="creators-supply-components-to-a-model" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="creators-supply-components-to-a-model"><span class="header-section-number">6.2</span> Creators supply components to a model</h2>
+<p>Models need fresh components with compatible dimensions and parameters. Creator functions provide these objects when a model is constructed.</p>
+<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="kw">class</span> ContextCreateFn(Protocol):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, item_count: <span class="bu">int</span>) <span class="op">-&gt;</span> Context: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="kw">class</span> MemoryCreateFn(Protocol):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>        <span class="va">self</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>        list_length: <span class="bu">int</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>        parameters: Mapping[<span class="bu">str</span>, Float_],</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>        context: Context,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>    ) <span class="op">-&gt;</span> Memory: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="kw">class</span> TerminationPolicyCreateFn[ModelT](Protocol):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>        <span class="va">self</span>, list_length: <span class="bu">int</span>, parameters: Mapping[<span class="bu">str</span>, Float_]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> TerminationPolicy[ModelT]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Ordinary CMR’s <code>make_factory()</code> accepts four such callables:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Factory argument</th>
+<th>Existing implementation used here</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>context_create_fn</code></td>
+<td><code>context.init</code></td>
+<td>Construct temporal context.</td>
+</tr>
+<tr class="even">
+<td><code>mfc_create_fn</code></td>
+<td><code>linear_memory.init_mfc</code></td>
+<td>Construct item-to-context memory.</td>
+</tr>
+<tr class="odd">
+<td><code>mcf_create_fn</code></td>
+<td><code>linear_memory.init_mcf</code></td>
+<td>Construct context-to-item memory.</td>
+</tr>
+<tr class="even">
+<td><code>termination_policy_create_fn</code></td>
+<td><code>NoStopTermination</code></td>
+<td>Construct the stopping policy.</td>
+</tr>
+</tbody>
+</table>
+<p>A compatible function or callable class can occupy one of these arguments. Each memory creator returns one memory with the appropriate direction and dimensions. Changing a creator changes that component’s implementation; the model still owns its event ordering, parameter interpretation and composition rules. Other models may expose different configuration choices.</p>
+<div id="6be67b2d" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Connect the component creators and inspect the resulting objects</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a><span class="im">import</span> jax</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>data <span class="op">=</span> load_data(<span class="st">"data/Dupertuys2026.h5"</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>).read_text())</span>
+<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-label="24"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>factory <span class="op">=</span> CMRFactory(data, features<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-label="27"></a>trial_index <span class="op">=</span> <span class="bu">int</span>(jnp.flatnonzero(mixed)[<span class="dv">0</span>])</span>
+<span id="cb7-28"><a href="#cb7-28" aria-label="28"></a>initial <span class="op">=</span> factory.create_trial_model(trial_index, parameters)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a><span class="bu">print</span>(<span class="st">"Context:"</span>, <span class="bu">type</span>(initial.context).<span class="va">__name__</span>, initial.context.state.shape)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Item-to-context memory:"</span>, <span class="bu">type</span>(initial.mfc).<span class="va">__name__</span>, initial.mfc.state.shape)</span>
+<span id="cb7-31"><a href="#cb7-31" aria-label="31"></a><span class="bu">print</span>(<span class="st">"Context-to-item memory:"</span>, <span class="bu">type</span>(initial.mcf).<span class="va">__name__</span>, initial.mcf.state.shape)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-label="32"></a><span class="bu">print</span>(<span class="st">"Termination:"</span>, <span class="bu">type</span>(initial.termination_policy).<span class="va">__name__</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Context: TemporalContext (13,)
+Item-to-context memory: LinearMemory (12, 13)
+Context-to-item memory: LinearMemory (13, 12)
+Termination: NoStopTermination</code></pre>
+</div>
+</div>
+</section>
+<section id="what-the-model-does-with-them" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="what-the-model-does-with-them"><span class="header-section-number">6.3</span> What the model does with them</h2>
+<p>For a CMR study event, item-to-context memory is probed with the item pattern. Context integrates that input using encoding drift. The model then updates both associative memories; <code>learn_after_context_update</code> determines which context state is used for learning. During retrieval, context-to-item memory supplies item activations and the termination policy supplies stopping support. Those steps belong to CMR’s composition, not to <code>Context</code> or <code>Memory</code> on their own.</p>
+<div id="e7e9bfca" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Display the context after CMR processes one study event</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a>updated <span class="op">=</span> initial.experience(data[<span class="st">"pres_itemnos"</span>][trial_index, <span class="dv">0</span>])</span>
+<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a><span class="bu">print</span>(<span class="st">"Original study count:"</span>, <span class="bu">int</span>(initial.study_index))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a><span class="bu">print</span>(<span class="st">"Updated study count:"</span>, <span class="bu">int</span>(updated.study_index))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a><span class="bu">print</span>(<span class="st">"Context changed:"</span>, <span class="kw">not</span> <span class="bu">bool</span>(jnp.allclose(</span>
+<span id="cb9-7"><a href="#cb9-7" aria-label="7"></a>    initial.context.state, updated.context.state</span>
+<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a>)))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-label="9"></a>display(updated.context)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Original study count: 0
+Updated study count: 1
+Context changed: True</code></pre>
+</div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p><img src="data:image/png;base64,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"></p>
+</div>
+</div>
+<p>The figure uses the context object’s built-in notebook display. It shows the representation after one update; the original model retains its earlier state. A compatible replacement must satisfy the required dimensions, functional update behavior and JAX operations, as well as the protocol’s named methods. A termination policy additionally needs the attributes of the model or view passed to it.</p>
+<p>See <a href="../overview/models.html">Memory Search Models</a> for the enclosing lifecycle and the <a href="../templates/parameter_shifting.html">parameter exploration template</a> for changing parameters within a fixed model configuration.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../overview/models.html" class="pagination-link" aria-label="Memory Search Models">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../overview/losses.html" class="pagination-link" aria-label="Loss Functions">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Loss Functions</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

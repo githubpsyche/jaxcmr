@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 
 # These directories contain generated copies only; authoritative notebooks stay
 # in templates/ and guide/overview/. Keep chapter paths as plain list entries.
-rm -rf -- guide/templates guide/downloads _site/guide
+rm -rf -- guide/templates guide/downloads docs
 mkdir -p guide/templates/data/fits guide/templates/data/simulations guide/downloads
 notebooks=()
 while IFS= read -r notebook; do
@@ -38,4 +38,6 @@ done
 
 quarto render guide --no-execute
 
-printf 'Documentation rendered to _site/guide/index.html\n'
+touch docs/.nojekyll
+
+printf 'Documentation rendered to docs/index.html\n'

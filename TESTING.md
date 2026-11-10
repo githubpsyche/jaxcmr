@@ -60,9 +60,10 @@ processes; they never modify library files.
 
 ## Editing the guide
 
-The `Publish guide` workflow renders and publishes the guide to GitHub Pages after
-changes to its sources on `main`. It uses the same build command without executing
-notebooks. Only the guide is published; the site root redirects to `/jaxcmr/guide/`.
+The rendered book is committed in `docs/`. GitHub Pages publishes that folder
+from `main` at https://githubpsyche.github.io/jaxcmr/. After changing the guide,
+run the build command below, then commit and push the source changes and `docs/`.
+Notebook cells are not executed during rendering.
 
 The independent Quarto book in `guide/` contains 26 content pages: the introduction,
 setup page, Library Guide introduction and eight topic notebooks, Templates index and
@@ -75,8 +76,8 @@ preview was rendered with 1.11.9. To build the guide:
 bash build-docs.sh
 ```
 
-Open `_site/guide/index.html` for the preview. This command refreshes the generated
-`guide/templates/` and `guide/downloads/` staging directories and `_site/guide/` output, so retired chapters
+Open `docs/index.html` for the preview. This command refreshes the generated
+`guide/templates/` and `guide/downloads/` staging directories and `docs/` output, so retired chapters
 do not remain in the site. It does not execute notebook cells.
 
 The `book.chapters` list is the publication list. Keep notebook entries as plain

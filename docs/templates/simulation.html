@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Computational models of memory search">
+
+<title>12&nbsp; Simulating from saved fits – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../templates/parameter_shifting.html" rel="next">
+<link href="../templates/fitting.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-081d0a153d3b6a80785afef37b346e8f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../templates.html">Templates</a></li><li class="breadcrumb-item"><a href="../templates/simulation.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">JAXCMR</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/githubpsyche/jaxcmr" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">JAXCMR</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../getting-started.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Run JAXCMR in VS Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../overview/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Library Guide</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="false" aria-label="Toggle section: Library Guide">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Data</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Recall Analyses</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/components.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Loss Functions</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Fitting Procedures</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Data Simulation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../templates.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Templates</span></a>
+            <button type="button" class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section: Templates">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/simulation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/model_comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Comparing pooled model fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Serial position curves</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Recall by output position</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">When recall ends</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Lag-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Temporal organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Distance-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Distance-based organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Recall rates by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Serial position curves by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/catcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Transitions within and between categories</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#parameters-and-setup" id="toc-parameters-and-setup" class="nav-link active" data-scroll-target="#parameters-and-setup"><span class="header-section-number">12.1</span> Parameters and setup</a></li>
+  <li><a href="#reconstruct-the-saved-specifications" id="toc-reconstruct-the-saved-specifications" class="nav-link" data-scroll-target="#reconstruct-the-saved-specifications"><span class="header-section-number">12.2</span> Reconstruct the saved specifications</a></li>
+  <li><a href="#save-simulated-responses" id="toc-save-simulated-responses" class="nav-link" data-scroll-target="#save-simulated-responses"><span class="header-section-number">12.3</span> Save simulated responses</a></li>
+  <li><a href="#inspect-the-configured-summaries" id="toc-inspect-the-configured-summaries" class="nav-link" data-scroll-target="#inspect-the-configured-summaries"><span class="header-section-number">12.4</span> Inspect the configured summaries</a></li>
+  <li><a href="#continue-with-analysis" id="toc-continue-with-analysis" class="nav-link" data-scroll-target="#continue-with-analysis"><span class="header-section-number">12.5</span> Continue with analysis</a></li>
+  </ul>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/simulation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/simulation.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../templates.html">Templates</a></li><li class="breadcrumb-item"><a href="../templates/simulation.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Generate and save responses for a named collection of fitted models. Reconstruct each model from its fit record, preserve the observation and participant assignments, and optionally inspect configured behavioral summaries. This procedure performs no optimization.</p>
+<section id="parameters-and-setup" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="parameters-and-setup"><span class="header-section-number">12.1</span> Parameters and setup</h2>
+<p><code>fit_paths</code> names the saved results. A one-entry mapping runs one model. <code>trial_query=None</code> uses the exact recorded rows; an explicit query specifies a new simulation selection. Saved records supply the factories, components, fixed settings and feature paths. Use distinct output folders for independent work units.</p>
+<p>Each <code>fit_paths</code> entry may also name a directory of participant-fit JSON files from separate jobs. The notebook combines matching specifications, orders parameter rows by participant ID and retains each participant’s recorded observations. Duplicate IDs and incompatible specifications are rejected. A directory produces <code>&lt;entry name&gt;.h5</code>; individual files retain their recorded output names. Upload custom fit directories yourself when running in Colab. Older fit files may omit the simulator: specify <code>sim_alg_path</code> in that case. A supplied value overrides the recorded simulator.</p>
+<div id="0926af39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.174168Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.173863Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:17.183327Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:17.182547Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
+<details class="code-fold">
+<summary>1 — Configure the saved fits and simulation work unit</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Observations and work-unit selection</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>data_path <span class="op">=</span> <span class="st">"data/Dupertuys2026.h5"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a><span class="co"># Saved model fits</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>fit_paths <span class="op">=</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    <span class="st">"CMR"</span>: <span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_source_only.json"</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_broad.json"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>}</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>model_labels <span class="op">=</span> {</span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>    <span class="st">"CMR"</span>: <span class="st">"CMR"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"Source-only eCMR"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"Broader eCMR"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>}</span>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a><span class="co"># Output locations and regeneration</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>output_dir <span class="op">=</span> <span class="st">"results/simulation"</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>simulation_dir <span class="op">=</span> <span class="st">"results/simulations"</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>trial_query <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>max_subjects <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>subject_indices <span class="op">=</span> []</span>
+<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a><span class="co"># Simulation settings</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>experiment_count <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a>simulation_seed <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a>sim_alg_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># Override the recorded simulator, or supply it for older fits.</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a>redo_sims <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a>redo_figures <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a><span class="co"># Behavioral comparisons and figure settings</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>comparison_analysis_configs <span class="op">=</span> [</span>
+<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a>    {<span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.spc.plot_spc"</span>, <span class="st">"title"</span>: <span class="st">"Recall by study position"</span>},</span>
+<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>    {</span>
+<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.pnr.plot_pnr"</span>,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>        <span class="st">"title"</span>: <span class="st">"First recall"</span>,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-label="37"></a>        <span class="st">"kwargs"</span>: {<span class="st">"query_recall_position"</span>: <span class="dv">0</span>},</span>
+<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a>    },</span>
+<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a>    {</span>
+<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.crp.plot_crp"</span>,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a>        <span class="st">"title"</span>: <span class="st">"Temporal transitions"</span>,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-label="42"></a>        <span class="st">"kwargs"</span>: {<span class="st">"max_lag"</span>: <span class="dv">5</span>},</span>
+<span id="cb1-43"><a href="#cb1-43" aria-label="43"></a>    },</span>
+<span id="cb1-44"><a href="#cb1-44" aria-label="44"></a>    {</span>
+<span id="cb1-45"><a href="#cb1-45" aria-label="45"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate"</span>,</span>
+<span id="cb1-46"><a href="#cb1-46" aria-label="46"></a>        <span class="st">"title"</span>: <span class="st">"Category recall within mixed lists"</span>,</span>
+<span id="cb1-47"><a href="#cb1-47" aria-label="47"></a>        <span class="st">"contrast_name"</span>: <span class="st">"Item category"</span>,</span>
+<span id="cb1-48"><a href="#cb1-48" aria-label="48"></a>        <span class="st">"trial_query"</span>: <span class="st">"data['list_type'] == 1"</span>,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-label="49"></a>        <span class="st">"kwargs"</span>: {</span>
+<span id="cb1-50"><a href="#cb1-50" aria-label="50"></a>            <span class="st">"category_field"</span>: <span class="st">"valence"</span>,</span>
+<span id="cb1-51"><a href="#cb1-51" aria-label="51"></a>            <span class="st">"category_values"</span>: [<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb1-52"><a href="#cb1-52" aria-label="52"></a>            <span class="st">"category_labels"</span>: [<span class="st">"Emotional"</span>, <span class="st">"Neutral"</span>],</span>
+<span id="cb1-53"><a href="#cb1-53" aria-label="53"></a>            <span class="st">"valid_field"</span>: <span class="st">"pres_itemnos"</span>,</span>
+<span id="cb1-54"><a href="#cb1-54" aria-label="54"></a>        },</span>
+<span id="cb1-55"><a href="#cb1-55" aria-label="55"></a>    },</span>
+<span id="cb1-56"><a href="#cb1-56" aria-label="56"></a>]</span>
+<span id="cb1-57"><a href="#cb1-57" aria-label="57"></a>single_analysis_configs <span class="op">=</span> []</span>
+<span id="cb1-58"><a href="#cb1-58" aria-label="58"></a>analysis_trial_query <span class="op">=</span> <span class="st">"jnp.all(data['pres_itemnos'] &gt; 0, 1)"</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-label="59"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-label="60"></a>plot_seed <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-label="61"></a>filter_repeated_recalls <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-label="62"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-label="63"></a>figure_size <span class="op">=</span> (<span class="dv">10</span>, <span class="fl">4.8</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-label="64"></a>figure_str <span class="op">=</span> <span class="st">"model_and_data"</span>  <span class="co"># Empty displays figures without saving.</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-label="65"></a></span>
+<span id="cb1-66"><a href="#cb1-66" aria-label="66"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-label="67"></a><span class="co"># Numerical precision</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-label="68"></a>enable_x64 <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="887bbd15" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.192126Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.191411Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:17.196943Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:17.194746Z&quot;}}" data-execution_count="2">
+<details class="code-fold">
+<summary>2 — Prepare the Colab environment</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
+<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    revision <span class="op">=</span> <span class="st">"d919f1ad6aeacc7a36c40b96e365316219a7f40a"</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    subprocess.check_call(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        [</span>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>            sys.executable,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>            <span class="st">"-m"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a>            <span class="st">"pip"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>            <span class="st">"install"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>            <span class="ss">f"jaxcmr[colab] @ git+https://github.com/githubpsyche/jaxcmr.git@</span><span class="sc">{</span>revision<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>        ]</span>
+<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>    )</span>
+<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>    <span class="im">from</span> jaxcmr.colab <span class="im">import</span> fetch_inputs</span>
+<span id="cb2-17"><a href="#cb2-17" aria-label="17"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-label="18"></a>    fetch_inputs([data_path, <span class="op">*</span>fit_paths.values()], revision<span class="op">=</span>revision)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="24dbaeaa" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.199548Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.199370Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.779066Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.778536Z&quot;}}" data-execution_count="3">
+<details class="code-fold">
+<summary>3 — Import packages</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> hashlib</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> jax</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">import</span> jaxcmr</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> (</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>    generate_trial_mask,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>    import_from_string,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>    load_data,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    save_dict_to_hdf5,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    save_figure,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_h5_from_h5</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="6da92b14" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.780457Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.780336Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.782805Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.782450Z&quot;}}" data-execution_count="4">
+<details class="code-fold">
+<summary>4 — Define feature loading and model construction</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="kw">def</span> load_features(spec):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    semantic <span class="op">=</span> np.load(spec[<span class="st">"embedding_path"</span>]) <span class="cf">if</span> spec.get(<span class="st">"embedding_path"</span>) <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>    categorical <span class="op">=</span> (</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>        np.load(spec[<span class="st">"emotion_feature_path"</span>])[</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>            :,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>            <span class="bu">int</span>(spec.get(<span class="st">"feature_column"</span>, <span class="dv">6</span>)) : <span class="bu">int</span>(spec.get(<span class="st">"feature_column"</span>, <span class="dv">6</span>)) <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>        ]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>        <span class="cf">if</span> spec.get(<span class="st">"emotion_feature_path"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>        <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>    )</span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>    <span class="cf">if</span> (</span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>        spec.get(<span class="st">"concat_features"</span>, <span class="va">False</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>        <span class="kw">and</span> categorical <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>        <span class="kw">and</span> semantic <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a>    ):</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>        <span class="cf">return</span> np.concatenate([categorical, semantic], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>    <span class="cf">return</span> categorical <span class="cf">if</span> categorical <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> semantic</span>
+<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a><span class="kw">def</span> construct_model(spec):</span>
+<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    <span class="cf">return</span> import_from_string(spec[<span class="st">"model_factory"</span>])(</span>
+<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>        <span class="op">**</span>{name: import_from_string(path) <span class="cf">for</span> name, path <span class="kw">in</span> spec[<span class="st">"components"</span>].items()}</span>
+<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="cb10c096" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.783922Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.783860Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.813992Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.813496Z&quot;}}" data-execution_count="5">
+<details class="code-fold">
+<summary>5 — Load observations and establish runtime settings</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, enable_x64)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>np.random.seed(plot_seed)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>data_path <span class="op">=</span> Path(data_path)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>output_dir <span class="op">=</span> Path(output_dir)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(data_path))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>data_sha256 <span class="op">=</span> hashlib.sha256(data_path.read_bytes()).hexdigest()</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="bdedcfcb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.815316Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.815238Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.817731Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.817381Z&quot;}}" data-execution_count="6">
+<details class="code-fold">
+<summary>6 — Define participant-fit compatibility checks</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="kw">def</span> check_participant_fit(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>    participant_record,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    reference_record,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    previous_subjects,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>    specification_keys,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>    model_name,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>    <span class="co">"""Reject incompatible specifications, duplicate IDs and misaligned columns."""</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>    <span class="cf">if</span> <span class="bu">any</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>        participant_record.get(key) <span class="op">!=</span> reference_record.get(key)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>        <span class="cf">for</span> key <span class="kw">in</span> specification_keys</span>
+<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>    ):</span>
+<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a>            <span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: participant fits have incompatible model or input specifications."</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-label="15"></a>        )</span>
+<span id="cb6-16"><a href="#cb6-16" aria-label="16"></a>    participant_ids <span class="op">=</span> participant_record[<span class="st">"fits"</span>][<span class="st">"subject"</span>]</span>
+<span id="cb6-17"><a href="#cb6-17" aria-label="17"></a>    <span class="cf">if</span> participant_record.get(<span class="st">"pooled"</span>, <span class="va">False</span>) <span class="kw">or</span> <span class="op">-</span><span class="dv">1</span> <span class="kw">in</span> participant_ids:</span>
+<span id="cb6-18"><a href="#cb6-18" aria-label="18"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb6-19"><a href="#cb6-19" aria-label="19"></a>            <span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: directories must contain participant fits, not pooled fits."</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-label="20"></a>        )</span>
+<span id="cb6-21"><a href="#cb6-21" aria-label="21"></a>    <span class="cf">if</span> <span class="bu">len</span>(<span class="bu">set</span>(participant_ids)) <span class="op">!=</span> <span class="bu">len</span>(participant_ids) <span class="kw">or</span> <span class="bu">set</span>(participant_ids) <span class="op">&amp;</span> <span class="bu">set</span>(</span>
+<span id="cb6-22"><a href="#cb6-22" aria-label="22"></a>        previous_subjects</span>
+<span id="cb6-23"><a href="#cb6-23" aria-label="23"></a>    ):</span>
+<span id="cb6-24"><a href="#cb6-24" aria-label="24"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: duplicate participant IDs in fit directory."</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-label="25"></a>    <span class="cf">if</span> <span class="bu">set</span>(participant_record[<span class="st">"fits"</span>]) <span class="op">!=</span> <span class="bu">set</span>(reference_record[<span class="st">"fits"</span>]) <span class="kw">or</span> <span class="bu">any</span>(</span>
+<span id="cb6-26"><a href="#cb6-26" aria-label="26"></a>        <span class="bu">len</span>(v) <span class="op">!=</span> <span class="bu">len</span>(participant_ids) <span class="cf">for</span> v <span class="kw">in</span> participant_record[<span class="st">"fits"</span>].values()</span>
+<span id="cb6-27"><a href="#cb6-27" aria-label="27"></a>    ):</span>
+<span id="cb6-28"><a href="#cb6-28" aria-label="28"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb6-29"><a href="#cb6-29" aria-label="29"></a>            <span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: fit columns must match and contain one value per participant."</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-label="30"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="a6f0a8c5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.818823Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.818768Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.822168Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.821755Z&quot;}}" data-execution_count="7">
+<details class="code-fold">
+<summary>7 — Define participant-file combination</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="kw">def</span> combine_participant_fits(participant_records, data, model_name):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>    <span class="co">"""Combine compatible participant estimates without losing their identities."""</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>    subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    specification_keys <span class="op">=</span> (</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>        <span class="st">"model_factory"</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>        <span class="st">"components"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>        <span class="st">"simulation_function"</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>        <span class="st">"loss_function"</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>        <span class="st">"data_sha256"</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>        <span class="st">"fixed"</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>        <span class="st">"free"</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>        <span class="st">"embedding_path"</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>        <span class="st">"emotion_feature_path"</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>        <span class="st">"feature_column"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>        <span class="st">"concat_features"</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>    )</span>
+<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>    reference_record <span class="op">=</span> participant_records[<span class="dv">0</span>]</span>
+<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>    combined_parameters <span class="op">=</span> {key: [] <span class="cf">for</span> key <span class="kw">in</span> reference_record[<span class="st">"fits"</span>]}</span>
+<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    selected_rows <span class="op">=</span> <span class="bu">set</span>()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    <span class="cf">for</span> participant_record <span class="kw">in</span> participant_records:</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>        check_participant_fit(</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>            participant_record,</span>
+<span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>            reference_record,</span>
+<span id="cb7-24"><a href="#cb7-24" aria-label="24"></a>            combined_parameters[<span class="st">"subject"</span>],</span>
+<span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>            specification_keys,</span>
+<span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>            model_name,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-label="27"></a>        )</span>
+<span id="cb7-28"><a href="#cb7-28" aria-label="28"></a>        participant_ids <span class="op">=</span> participant_record[<span class="st">"fits"</span>][<span class="st">"subject"</span>]</span>
+<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a>        <span class="cf">for</span> key <span class="kw">in</span> combined_parameters:</span>
+<span id="cb7-30"><a href="#cb7-30" aria-label="30"></a>            combined_parameters[key].extend(participant_record[<span class="st">"fits"</span>][key])</span>
+<span id="cb7-31"><a href="#cb7-31" aria-label="31"></a>        <span class="cf">if</span> <span class="st">"selected_trial_indices"</span> <span class="kw">in</span> participant_record:</span>
+<span id="cb7-32"><a href="#cb7-32" aria-label="32"></a>            rows <span class="op">=</span> participant_record[<span class="st">"selected_trial_indices"</span>]</span>
+<span id="cb7-33"><a href="#cb7-33" aria-label="33"></a>            <span class="cf">if</span> <span class="kw">not</span> np.isin(subjects[rows], participant_ids).<span class="bu">all</span>():</span>
+<span id="cb7-34"><a href="#cb7-34" aria-label="34"></a>                <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb7-35"><a href="#cb7-35" aria-label="35"></a>                    <span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: recorded observation rows belong to another participant."</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-label="36"></a>                )</span>
+<span id="cb7-37"><a href="#cb7-37" aria-label="37"></a>        <span class="cf">else</span>:</span>
+<span id="cb7-38"><a href="#cb7-38" aria-label="38"></a>            mask <span class="op">=</span> generate_trial_mask(</span>
+<span id="cb7-39"><a href="#cb7-39" aria-label="39"></a>                data,</span>
+<span id="cb7-40"><a href="#cb7-40" aria-label="40"></a>                participant_record.get(</span>
+<span id="cb7-41"><a href="#cb7-41" aria-label="41"></a>                    <span class="st">"trial_query"</span>, participant_record.get(<span class="st">"data_query"</span>)</span>
+<span id="cb7-42"><a href="#cb7-42" aria-label="42"></a>                ),</span>
+<span id="cb7-43"><a href="#cb7-43" aria-label="43"></a>            )</span>
+<span id="cb7-44"><a href="#cb7-44" aria-label="44"></a>            rows <span class="op">=</span> np.flatnonzero(</span>
+<span id="cb7-45"><a href="#cb7-45" aria-label="45"></a>                np.asarray(mask) <span class="op">&amp;</span> np.isin(subjects, participant_ids)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-label="46"></a>            ).tolist()</span>
+<span id="cb7-47"><a href="#cb7-47" aria-label="47"></a>        selected_rows.update(rows)</span>
+<span id="cb7-48"><a href="#cb7-48" aria-label="48"></a>    order <span class="op">=</span> np.argsort(combined_parameters[<span class="st">"subject"</span>])</span>
+<span id="cb7-49"><a href="#cb7-49" aria-label="49"></a>    combined_record <span class="op">=</span> {</span>
+<span id="cb7-50"><a href="#cb7-50" aria-label="50"></a>        key: reference_record[key]</span>
+<span id="cb7-51"><a href="#cb7-51" aria-label="51"></a>        <span class="cf">for</span> key <span class="kw">in</span> specification_keys</span>
+<span id="cb7-52"><a href="#cb7-52" aria-label="52"></a>        <span class="cf">if</span> key <span class="kw">in</span> reference_record</span>
+<span id="cb7-53"><a href="#cb7-53" aria-label="53"></a>    }</span>
+<span id="cb7-54"><a href="#cb7-54" aria-label="54"></a>    combined_record.update(</span>
+<span id="cb7-55"><a href="#cb7-55" aria-label="55"></a>        name<span class="op">=</span>model_name,</span>
+<span id="cb7-56"><a href="#cb7-56" aria-label="56"></a>        label<span class="op">=</span>reference_record.get(<span class="st">"label"</span>, model_name),</span>
+<span id="cb7-57"><a href="#cb7-57" aria-label="57"></a>        pooled<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb7-58"><a href="#cb7-58" aria-label="58"></a>        fits<span class="op">=</span>{</span>
+<span id="cb7-59"><a href="#cb7-59" aria-label="59"></a>            key: np.asarray(values)[order].tolist()</span>
+<span id="cb7-60"><a href="#cb7-60" aria-label="60"></a>            <span class="cf">for</span> key, values <span class="kw">in</span> combined_parameters.items()</span>
+<span id="cb7-61"><a href="#cb7-61" aria-label="61"></a>        },</span>
+<span id="cb7-62"><a href="#cb7-62" aria-label="62"></a>        selected_trial_indices<span class="op">=</span><span class="bu">sorted</span>(selected_rows),</span>
+<span id="cb7-63"><a href="#cb7-63" aria-label="63"></a>    )</span>
+<span id="cb7-64"><a href="#cb7-64" aria-label="64"></a>    <span class="co"># Preserve boolean settings as recorded before the fitter's numeric conversion.</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-label="65"></a>    combined_record[<span class="st">"fixed"</span>] <span class="op">=</span> (</span>
+<span id="cb7-66"><a href="#cb7-66" aria-label="66"></a>        reference_record.get(<span class="st">"fit_configuration"</span>, {})</span>
+<span id="cb7-67"><a href="#cb7-67" aria-label="67"></a>        .get(<span class="st">"parameters"</span>, {})</span>
+<span id="cb7-68"><a href="#cb7-68" aria-label="68"></a>        .get(<span class="st">"fixed"</span>, reference_record[<span class="st">"fixed"</span>])</span>
+<span id="cb7-69"><a href="#cb7-69" aria-label="69"></a>    )</span>
+<span id="cb7-70"><a href="#cb7-70" aria-label="70"></a>    <span class="cf">return</span> combined_record</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="e7bb2466" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.823283Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.823226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.825258Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.824790Z&quot;}}" data-execution_count="8">
+<details class="code-fold">
+<summary>8 — Define simulation-cache comparison</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="kw">def</span> simulation_matches(saved_metadata, expected_configuration):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>    <span class="co">"""Compare the scientific settings, accepting the older provenance layout."""</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>    saved_metadata <span class="op">=</span> <span class="bu">dict</span>(saved_metadata)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    implementation <span class="op">=</span> saved_metadata.get(<span class="st">"implementation"</span>, {})</span>
+<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>    <span class="cf">for</span> key <span class="kw">in</span> (<span class="st">"jaxcmr_version"</span>, <span class="st">"jax_enable_x64"</span>):</span>
+<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a>        saved_metadata.setdefault(key, implementation.get(key))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-label="7"></a>    <span class="cf">return</span> <span class="bu">all</span>(</span>
+<span id="cb8-8"><a href="#cb8-8" aria-label="8"></a>        saved_metadata.get(key) <span class="op">==</span> value</span>
+<span id="cb8-9"><a href="#cb8-9" aria-label="9"></a>        <span class="cf">for</span> key, value <span class="kw">in</span> expected_configuration.items()</span>
+<span id="cb8-10"><a href="#cb8-10" aria-label="10"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="reconstruct-the-saved-specifications" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="reconstruct-the-saved-specifications"><span class="header-section-number">12.2</span> Reconstruct the saved specifications</h2>
+<div id="cbba5d92" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.826276Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.826220Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.829646Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.829278Z&quot;}}" data-execution_count="9">
+<details class="code-fold">
+<summary>9 — Read named fit files or participant-fit directories</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>fit_paths <span class="op">=</span> {model_name: Path(path) <span class="cf">for</span> model_name, path <span class="kw">in</span> fit_paths.items()}</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>records <span class="op">=</span> {}</span>
+<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a><span class="cf">for</span> model_name, path <span class="kw">in</span> fit_paths.items():</span>
+<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a>    <span class="cf">if</span> <span class="kw">not</span> path.is_dir():</span>
+<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a>        records[model_name] <span class="op">=</span> json.loads(path.read_text())</span>
+<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a>        <span class="cf">continue</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-label="7"></a>    participant_records <span class="op">=</span> [</span>
+<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a>        json.loads(<span class="bu">file</span>.read_text()) <span class="cf">for</span> <span class="bu">file</span> <span class="kw">in</span> <span class="bu">sorted</span>(path.glob(<span class="st">"*.json"</span>))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-label="9"></a>    ]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-label="10"></a>    <span class="cf">if</span> <span class="kw">not</span> participant_records:</span>
+<span id="cb9-11"><a href="#cb9-11" aria-label="11"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>model_name<span class="sc">}</span><span class="ss">: no participant-fit JSON files in </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">."</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-label="12"></a>    <span class="cf">if</span> sim_alg_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb9-13"><a href="#cb9-13" aria-label="13"></a>        <span class="cf">for</span> participant_record <span class="kw">in</span> participant_records:</span>
+<span id="cb9-14"><a href="#cb9-14" aria-label="14"></a>            participant_record[<span class="st">"simulation_function"</span>] <span class="op">=</span> sim_alg_path</span>
+<span id="cb9-15"><a href="#cb9-15" aria-label="15"></a>    records[model_name] <span class="op">=</span> combine_participant_fits(</span>
+<span id="cb9-16"><a href="#cb9-16" aria-label="16"></a>        participant_records, data, model_name</span>
+<span id="cb9-17"><a href="#cb9-17" aria-label="17"></a>    )</span>
+<span id="cb9-18"><a href="#cb9-18" aria-label="18"></a>    <span class="bu">print</span>(</span>
+<span id="cb9-19"><a href="#cb9-19" aria-label="19"></a>        model_name,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-label="20"></a>        <span class="st">"— combined"</span>,</span>
+<span id="cb9-21"><a href="#cb9-21" aria-label="21"></a>        <span class="bu">len</span>(participant_records),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-label="22"></a>        <span class="st">"files for"</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-label="23"></a>        <span class="bu">len</span>(records[model_name][<span class="st">"fits"</span>][<span class="st">"subject"</span>]),</span>
+<span id="cb9-24"><a href="#cb9-24" aria-label="24"></a>        <span class="st">"participants"</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-label="25"></a>    )</span>
+<span id="cb9-26"><a href="#cb9-26" aria-label="26"></a><span class="cf">if</span> <span class="kw">not</span> records:</span>
+<span id="cb9-27"><a href="#cb9-27" aria-label="27"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply at least one saved fit."</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-label="28"></a>display_labels <span class="op">=</span> {</span>
+<span id="cb9-29"><a href="#cb9-29" aria-label="29"></a>    model_name: model_labels.get(model_name, record.get(<span class="st">"label"</span>, model_name))</span>
+<span id="cb9-30"><a href="#cb9-30" aria-label="30"></a>    <span class="cf">for</span> model_name, record <span class="kw">in</span> records.items()</span>
+<span id="cb9-31"><a href="#cb9-31" aria-label="31"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="2e95fe36" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.831262Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.831181Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:19.121358Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:19.120876Z&quot;}}" data-execution_count="10">
+<details class="code-fold">
+<summary>10 — Select matching observations for each fit</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>selections <span class="op">=</span> {}</span>
+<span id="cb10-2"><a href="#cb10-2" aria-label="2"></a><span class="cf">for</span> name, record <span class="kw">in</span> records.items():</span>
+<span id="cb10-3"><a href="#cb10-3" aria-label="3"></a>    <span class="cf">if</span> sim_alg_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb10-4"><a href="#cb10-4" aria-label="4"></a>        record[<span class="st">"simulation_function"</span>] <span class="op">=</span> sim_alg_path</span>
+<span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>    <span class="cf">if</span> <span class="st">"simulation_function"</span> <span class="kw">not</span> <span class="kw">in</span> record:</span>
+<span id="cb10-6"><a href="#cb10-6" aria-label="6"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb10-7"><a href="#cb10-7" aria-label="7"></a>            <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: supply sim_alg_path for a fit without a recorded simulator."</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-label="8"></a>        )</span>
+<span id="cb10-9"><a href="#cb10-9" aria-label="9"></a>    <span class="cf">if</span> record.get(<span class="st">"data_sha256"</span>, data_sha256) <span class="op">!=</span> data_sha256:</span>
+<span id="cb10-10"><a href="#cb10-10" aria-label="10"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: the fit refers to a different observation file."</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-label="11"></a>    <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> <span class="st">"selected_trial_indices"</span> <span class="kw">in</span> record:</span>
+<span id="cb10-12"><a href="#cb10-12" aria-label="12"></a>        mask <span class="op">=</span> (</span>
+<span id="cb10-13"><a href="#cb10-13" aria-label="13"></a>            jnp.zeros(<span class="bu">len</span>(subjects), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-label="14"></a>            .at[jnp.asarray(record[<span class="st">"selected_trial_indices"</span>], dtype<span class="op">=</span><span class="bu">int</span>)]</span>
+<span id="cb10-15"><a href="#cb10-15" aria-label="15"></a>            .<span class="bu">set</span>(<span class="va">True</span>)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-label="16"></a>        )</span>
+<span id="cb10-17"><a href="#cb10-17" aria-label="17"></a>    <span class="cf">else</span>:</span>
+<span id="cb10-18"><a href="#cb10-18" aria-label="18"></a>        mask <span class="op">=</span> generate_trial_mask(</span>
+<span id="cb10-19"><a href="#cb10-19" aria-label="19"></a>            data,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-label="20"></a>            trial_query</span>
+<span id="cb10-21"><a href="#cb10-21" aria-label="21"></a>            <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-label="22"></a>            <span class="cf">else</span> record.get(<span class="st">"trial_query"</span>, record.get(<span class="st">"data_query"</span>)),</span>
+<span id="cb10-23"><a href="#cb10-23" aria-label="23"></a>        )</span>
+<span id="cb10-24"><a href="#cb10-24" aria-label="24"></a>    subject_ids <span class="op">=</span> np.unique(subjects)</span>
+<span id="cb10-25"><a href="#cb10-25" aria-label="25"></a>    <span class="cf">if</span> max_subjects:</span>
+<span id="cb10-26"><a href="#cb10-26" aria-label="26"></a>        subject_ids <span class="op">=</span> subject_ids[:max_subjects]</span>
+<span id="cb10-27"><a href="#cb10-27" aria-label="27"></a>    <span class="cf">if</span> subject_indices:</span>
+<span id="cb10-28"><a href="#cb10-28" aria-label="28"></a>        subject_ids <span class="op">=</span> subject_ids[np.asarray(subject_indices, dtype<span class="op">=</span><span class="bu">int</span>)]</span>
+<span id="cb10-29"><a href="#cb10-29" aria-label="29"></a>    mask <span class="op">&amp;=</span> jnp.isin(data[<span class="st">"subject"</span>].ravel(), subject_ids)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-label="30"></a>    <span class="cf">if</span> <span class="kw">not</span> record.get(<span class="st">"pooled"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>]):</span>
+<span id="cb10-31"><a href="#cb10-31" aria-label="31"></a>        mask <span class="op">&amp;=</span> jnp.isin(</span>
+<span id="cb10-32"><a href="#cb10-32" aria-label="32"></a>            data[<span class="st">"subject"</span>].ravel(), jnp.asarray(record[<span class="st">"fits"</span>][<span class="st">"subject"</span>])</span>
+<span id="cb10-33"><a href="#cb10-33" aria-label="33"></a>        )</span>
+<span id="cb10-34"><a href="#cb10-34" aria-label="34"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">bool</span>(mask.<span class="bu">any</span>()):</span>
+<span id="cb10-35"><a href="#cb10-35" aria-label="35"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: no observations match the selected work unit."</span>)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-label="36"></a>    selections[name] <span class="op">=</span> mask</span>
+<span id="cb10-37"><a href="#cb10-37" aria-label="37"></a>    <span class="bu">print</span>(display_labels[name], <span class="st">"—"</span>, <span class="bu">int</span>(mask.<span class="bu">sum</span>()), <span class="st">"lists; fit:"</span>, fit_paths[name])</span>
+<span id="cb10-38"><a href="#cb10-38" aria-label="38"></a>comparison_mask <span class="op">=</span> jnp.logical_or.<span class="bu">reduce</span>(jnp.stack(<span class="bu">list</span>(selections.values())), axis<span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>CMR — 492 lists; fit: data/fits/Dupertuys2026_CMR_demo.json
+Source-only eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_source_only.json
+Broader eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_broad.json</code></pre>
+</div>
+</div>
+<div id="af9fc92e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:19.122616Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:19.122539Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:19.124704Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:19.124315Z&quot;}}" data-execution_count="11">
+<details class="code-fold">
+<summary>11 — Prepare response and figure paths</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>simulation_dir <span class="op">=</span> Path(simulation_dir) <span class="cf">if</span> simulation_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
+<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a>figure_dir <span class="op">=</span> Path(figure_dir) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
+<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>figure_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>simulation_paths <span class="op">=</span> {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-label="5"></a>    name: simulation_dir <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>record[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">.h5"</span> <span class="cf">for</span> name, record <span class="kw">in</span> records.items()</span>
+<span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>}</span>
+<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a><span class="cf">if</span> <span class="bu">len</span>(<span class="bu">set</span>(simulation_paths.values())) <span class="op">!=</span> <span class="bu">len</span>(simulation_paths):</span>
+<span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Fit records need distinct names for saved response files."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="save-simulated-responses" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="save-simulated-responses"><span class="header-section-number">12.3</span> Save simulated responses</h2>
+<p>Each response file has a sidecar recording the actual fitted parameters, observation rows, model and simulator, random seed, repetition count, package version and precision. Matching files may be reused when <code>redo_sims=False</code>. Pooled values are assigned to the original participant IDs. The default simulator forces observed recall counts; it does not predict stopping.</p>
+<p>After editing the model implementation locally, set <code>redo_sims=True</code> to regenerate responses. Cache matching uses the recorded inputs and package version, not a scan of source files.</p>
+<div id="ee9422cd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:19.125797Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:19.125736Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:19.311045Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:19.310537Z&quot;}}" data-execution_count="12">
+<details class="code-fold">
+<summary>12 — Prepare participant parameters and response provenance</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>simulation_inputs <span class="op">=</span> {}</span>
+<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a><span class="cf">for</span> model_name, fit_record <span class="kw">in</span> records.items():</span>
+<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a>    model_factory <span class="op">=</span> construct_model(fit_record)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>    features <span class="op">=</span> load_features(fit_record)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>    selected_trials <span class="op">=</span> selections[model_name]</span>
+<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>    is_pooled <span class="op">=</span> fit_record.get(<span class="st">"pooled"</span>, fit_record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>    participant_ids <span class="op">=</span> jnp.unique(data[<span class="st">"subject"</span>].ravel()[selected_trials])</span>
+<span id="cb13-8"><a href="#cb13-8" aria-label="8"></a>    subject_parameters <span class="op">=</span> {</span>
+<span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>        key: jnp.asarray(values) <span class="cf">for</span> key, values <span class="kw">in</span> fit_record[<span class="st">"fits"</span>].items()</span>
+<span id="cb13-10"><a href="#cb13-10" aria-label="10"></a>    }</span>
+<span id="cb13-11"><a href="#cb13-11" aria-label="11"></a>    <span class="cf">if</span> is_pooled:</span>
+<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>        subject_parameters <span class="op">=</span> {</span>
+<span id="cb13-13"><a href="#cb13-13" aria-label="13"></a>            key: jnp.repeat(values, <span class="bu">len</span>(participant_ids))</span>
+<span id="cb13-14"><a href="#cb13-14" aria-label="14"></a>            <span class="cf">for</span> key, values <span class="kw">in</span> subject_parameters.items()</span>
+<span id="cb13-15"><a href="#cb13-15" aria-label="15"></a>            <span class="cf">if</span> key <span class="op">!=</span> <span class="st">"subject"</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-label="16"></a>        }</span>
+<span id="cb13-17"><a href="#cb13-17" aria-label="17"></a>        subject_parameters[<span class="st">"subject"</span>] <span class="op">=</span> participant_ids</span>
+<span id="cb13-18"><a href="#cb13-18" aria-label="18"></a>    fixed <span class="op">=</span> (</span>
+<span id="cb13-19"><a href="#cb13-19" aria-label="19"></a>        fit_record.get(<span class="st">"fit_configuration"</span>, {})</span>
+<span id="cb13-20"><a href="#cb13-20" aria-label="20"></a>        .get(<span class="st">"parameters"</span>, {})</span>
+<span id="cb13-21"><a href="#cb13-21" aria-label="21"></a>        .get(<span class="st">"fixed"</span>, fit_record[<span class="st">"fixed"</span>])</span>
+<span id="cb13-22"><a href="#cb13-22" aria-label="22"></a>    )</span>
+<span id="cb13-23"><a href="#cb13-23" aria-label="23"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> fixed.items():</span>
+<span id="cb13-24"><a href="#cb13-24" aria-label="24"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">bool</span>):</span>
+<span id="cb13-25"><a href="#cb13-25" aria-label="25"></a>            subject_parameters[key] <span class="op">=</span> subject_parameters[key].astype(<span class="bu">bool</span>)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-label="26"></a>    configuration <span class="op">=</span> {</span>
+<span id="cb13-27"><a href="#cb13-27" aria-label="27"></a>        <span class="st">"fits"</span>: fit_record[<span class="st">"fits"</span>],</span>
+<span id="cb13-28"><a href="#cb13-28" aria-label="28"></a>        <span class="st">"pooled"</span>: is_pooled,</span>
+<span id="cb13-29"><a href="#cb13-29" aria-label="29"></a>        <span class="st">"jax_enable_x64"</span>: enable_x64,</span>
+<span id="cb13-30"><a href="#cb13-30" aria-label="30"></a>        <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__,</span>
+<span id="cb13-31"><a href="#cb13-31" aria-label="31"></a>        <span class="st">"model_factory"</span>: fit_record[<span class="st">"model_factory"</span>],</span>
+<span id="cb13-32"><a href="#cb13-32" aria-label="32"></a>        <span class="st">"components"</span>: fit_record[<span class="st">"components"</span>],</span>
+<span id="cb13-33"><a href="#cb13-33" aria-label="33"></a>        <span class="st">"simulation_function"</span>: fit_record[<span class="st">"simulation_function"</span>],</span>
+<span id="cb13-34"><a href="#cb13-34" aria-label="34"></a>        <span class="st">"data_sha256"</span>: data_sha256,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-label="35"></a>        <span class="st">"selected_trial_indices"</span>: np.flatnonzero(np.asarray(selected_trials)).tolist(),</span>
+<span id="cb13-36"><a href="#cb13-36" aria-label="36"></a>        <span class="st">"feature_sha256"</span>: hashlib.sha256(features.tobytes()).hexdigest()</span>
+<span id="cb13-37"><a href="#cb13-37" aria-label="37"></a>        <span class="cf">if</span> features <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-label="38"></a>        <span class="cf">else</span> <span class="va">None</span>,</span>
+<span id="cb13-39"><a href="#cb13-39" aria-label="39"></a>        <span class="st">"seed"</span>: simulation_seed,</span>
+<span id="cb13-40"><a href="#cb13-40" aria-label="40"></a>        <span class="st">"experiment_count"</span>: experiment_count,</span>
+<span id="cb13-41"><a href="#cb13-41" aria-label="41"></a>    }</span>
+<span id="cb13-42"><a href="#cb13-42" aria-label="42"></a>    simulation_inputs[model_name] <span class="op">=</span> {</span>
+<span id="cb13-43"><a href="#cb13-43" aria-label="43"></a>        <span class="st">"model_factory"</span>: model_factory,</span>
+<span id="cb13-44"><a href="#cb13-44" aria-label="44"></a>        <span class="st">"features"</span>: features,</span>
+<span id="cb13-45"><a href="#cb13-45" aria-label="45"></a>        <span class="st">"parameters"</span>: subject_parameters,</span>
+<span id="cb13-46"><a href="#cb13-46" aria-label="46"></a>        <span class="st">"trial_mask"</span>: selected_trials,</span>
+<span id="cb13-47"><a href="#cb13-47" aria-label="47"></a>        <span class="st">"configuration"</span>: configuration,</span>
+<span id="cb13-48"><a href="#cb13-48" aria-label="48"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="c48d5c11" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:19.312387Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:19.312303Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:27.097664Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:27.097281Z&quot;}}" data-execution_count="13">
+<details class="code-fold">
+<summary>13 — Generate or reuse matching responses and save them</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-label="1"></a>simulations <span class="op">=</span> {}</span>
+<span id="cb14-2"><a href="#cb14-2" aria-label="2"></a><span class="cf">for</span> model_name, prepared <span class="kw">in</span> simulation_inputs.items():</span>
+<span id="cb14-3"><a href="#cb14-3" aria-label="3"></a>    model_factory <span class="op">=</span> prepared[<span class="st">"model_factory"</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-label="4"></a>    features <span class="op">=</span> prepared[<span class="st">"features"</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-label="5"></a>    subject_parameters <span class="op">=</span> prepared[<span class="st">"parameters"</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-label="6"></a>    selected_trials <span class="op">=</span> prepared[<span class="st">"trial_mask"</span>]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-label="7"></a>    configuration <span class="op">=</span> prepared[<span class="st">"configuration"</span>]</span>
+<span id="cb14-8"><a href="#cb14-8" aria-label="8"></a>    simulation_path <span class="op">=</span> simulation_paths[model_name]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-label="9"></a>    metadata_path <span class="op">=</span> simulation_path.with_suffix(<span class="st">".json"</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-label="10"></a>    saved_metadata <span class="op">=</span> (</span>
+<span id="cb14-11"><a href="#cb14-11" aria-label="11"></a>        json.loads(metadata_path.read_text()) <span class="cf">if</span> metadata_path.exists() <span class="cf">else</span> {}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-label="12"></a>    )</span>
+<span id="cb14-13"><a href="#cb14-13" aria-label="13"></a>    reuse_responses <span class="op">=</span> (</span>
+<span id="cb14-14"><a href="#cb14-14" aria-label="14"></a>        <span class="kw">not</span> redo_sims</span>
+<span id="cb14-15"><a href="#cb14-15" aria-label="15"></a>        <span class="kw">and</span> simulation_path.exists()</span>
+<span id="cb14-16"><a href="#cb14-16" aria-label="16"></a>        <span class="kw">and</span> metadata_path.exists()</span>
+<span id="cb14-17"><a href="#cb14-17" aria-label="17"></a>        <span class="kw">and</span> simulation_matches(saved_metadata, configuration)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-label="18"></a>    )</span>
+<span id="cb14-19"><a href="#cb14-19" aria-label="19"></a>    <span class="cf">if</span> reuse_responses:</span>
+<span id="cb14-20"><a href="#cb14-20" aria-label="20"></a>        simulated <span class="op">=</span> load_data(<span class="bu">str</span>(simulation_path))</span>
+<span id="cb14-21"><a href="#cb14-21" aria-label="21"></a>        <span class="bu">print</span>(<span class="st">"Loaded matching responses:"</span>, simulation_path)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-label="22"></a>    <span class="cf">else</span>:</span>
+<span id="cb14-23"><a href="#cb14-23" aria-label="23"></a>        simulated <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb14-24"><a href="#cb14-24" aria-label="24"></a>            model_factory,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-label="25"></a>            data,</span>
+<span id="cb14-26"><a href="#cb14-26" aria-label="26"></a>            features,</span>
+<span id="cb14-27"><a href="#cb14-27" aria-label="27"></a>            subject_parameters,</span>
+<span id="cb14-28"><a href="#cb14-28" aria-label="28"></a>            selected_trials,</span>
+<span id="cb14-29"><a href="#cb14-29" aria-label="29"></a>            experiment_count<span class="op">=</span>experiment_count,</span>
+<span id="cb14-30"><a href="#cb14-30" aria-label="30"></a>            rng<span class="op">=</span>jax.random.PRNGKey(simulation_seed),</span>
+<span id="cb14-31"><a href="#cb14-31" aria-label="31"></a>            simulate_trial_fn<span class="op">=</span>import_from_string(configuration[<span class="st">"simulation_function"</span>]),</span>
+<span id="cb14-32"><a href="#cb14-32" aria-label="32"></a>        )</span>
+<span id="cb14-33"><a href="#cb14-33" aria-label="33"></a>        simulation_path.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-34"><a href="#cb14-34" aria-label="34"></a>        save_dict_to_hdf5(simulated, <span class="bu">str</span>(simulation_path))</span>
+<span id="cb14-35"><a href="#cb14-35" aria-label="35"></a>        metadata_path.write_text(</span>
+<span id="cb14-36"><a href="#cb14-36" aria-label="36"></a>            json.dumps(</span>
+<span id="cb14-37"><a href="#cb14-37" aria-label="37"></a>                {</span>
+<span id="cb14-38"><a href="#cb14-38" aria-label="38"></a>                    <span class="op">**</span>configuration,</span>
+<span id="cb14-39"><a href="#cb14-39" aria-label="39"></a>                    <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-label="40"></a>                    <span class="st">"jax_version"</span>: jax.__version__,</span>
+<span id="cb14-41"><a href="#cb14-41" aria-label="41"></a>                },</span>
+<span id="cb14-42"><a href="#cb14-42" aria-label="42"></a>                indent<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-43"><a href="#cb14-43" aria-label="43"></a>            )</span>
+<span id="cb14-44"><a href="#cb14-44" aria-label="44"></a>            <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-label="45"></a>        )</span>
+<span id="cb14-46"><a href="#cb14-46" aria-label="46"></a>        <span class="bu">print</span>(<span class="st">"Saved responses:"</span>, simulation_path)</span>
+<span id="cb14-47"><a href="#cb14-47" aria-label="47"></a>    <span class="cf">if</span> filter_repeated_recalls:</span>
+<span id="cb14-48"><a href="#cb14-48" aria-label="48"></a>        simulated <span class="op">=</span> <span class="bu">dict</span>(simulated)</span>
+<span id="cb14-49"><a href="#cb14-49" aria-label="49"></a>        simulated[<span class="st">"recalls"</span>] <span class="op">=</span> repetition.filter_repeated_recalls(simulated[<span class="st">"recalls"</span>])</span>
+<span id="cb14-50"><a href="#cb14-50" aria-label="50"></a>    simulations[model_name] <span class="op">=</span> simulated</span>
+<span id="cb14-51"><a href="#cb14-51" aria-label="51"></a><span class="bu">print</span>(</span>
+<span id="cb14-52"><a href="#cb14-52" aria-label="52"></a>    <span class="st">"simulation_paths ="</span>,</span>
+<span id="cb14-53"><a href="#cb14-53" aria-label="53"></a>    {model_name: <span class="bu">str</span>(path) <span class="cf">for</span> model_name, path <span class="kw">in</span> simulation_paths.items()},</span>
+<span id="cb14-54"><a href="#cb14-54" aria-label="54"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Saved responses: results/simulations/Dupertuys2026_CMR_demo_best_of_3.h5
+Saved responses: results/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5
+Saved responses: results/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5
+simulation_paths = {'CMR': 'results/simulations/Dupertuys2026_CMR_demo_best_of_3.h5', 'eCMR_source_only': 'results/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5', 'eCMR_broad': 'results/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5'}</code></pre>
+</div>
+</div>
+</section>
+<section id="inspect-the-configured-summaries" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="inspect-the-configured-summaries"><span class="header-section-number">12.4</span> Inspect the configured summaries</h2>
+<div id="bab5745e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:27.099240Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:27.099150Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:27.101839Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:27.101458Z&quot;}}" data-execution_count="14">
+<details class="code-fold">
+<summary>14 — Prepare configured model and observation comparisons</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-label="1"></a>comparison_groups <span class="op">=</span> []</span>
+<span id="cb16-2"><a href="#cb16-2" aria-label="2"></a><span class="cf">if</span> (</span>
+<span id="cb16-3"><a href="#cb16-3" aria-label="3"></a>    redo_figures</span>
+<span id="cb16-4"><a href="#cb16-4" aria-label="4"></a>    <span class="kw">and</span> comparison_analysis_configs</span>
+<span id="cb16-5"><a href="#cb16-5" aria-label="5"></a>    <span class="kw">and</span> <span class="bu">any</span>(<span class="kw">not</span> np.array_equal(mask, comparison_mask) <span class="cf">for</span> mask <span class="kw">in</span> selections.values())</span>
+<span id="cb16-6"><a href="#cb16-6" aria-label="6"></a>):</span>
+<span id="cb16-7"><a href="#cb16-7" aria-label="7"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb16-8"><a href="#cb16-8" aria-label="8"></a>        <span class="st">"Shared comparison figures need matching selections; use separate jobs or disable comparison_analysis_configs."</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-label="9"></a>    )</span>
+<span id="cb16-10"><a href="#cb16-10" aria-label="10"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-label="11"></a><span class="cf">if</span> redo_figures <span class="kw">and</span> simulations:</span>
+<span id="cb16-12"><a href="#cb16-12" aria-label="12"></a>    observed <span class="op">=</span> <span class="bu">dict</span>(data)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-label="13"></a>    <span class="cf">if</span> filter_repeated_recalls:</span>
+<span id="cb16-14"><a href="#cb16-14" aria-label="14"></a>        observed[<span class="st">"recalls"</span>] <span class="op">=</span> repetition.filter_repeated_recalls(observed[<span class="st">"recalls"</span>])</span>
+<span id="cb16-15"><a href="#cb16-15" aria-label="15"></a>    datasets <span class="op">=</span> [observed, <span class="op">*</span>simulations.values()]</span>
+<span id="cb16-16"><a href="#cb16-16" aria-label="16"></a>    names <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="op">*</span>[display_labels[name] <span class="cf">for</span> name <span class="kw">in</span> simulations]]</span>
+<span id="cb16-17"><a href="#cb16-17" aria-label="17"></a>    comparison_groups.append(</span>
+<span id="cb16-18"><a href="#cb16-18" aria-label="18"></a>        {</span>
+<span id="cb16-19"><a href="#cb16-19" aria-label="19"></a>            <span class="st">"analyses"</span>: comparison_analysis_configs,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-label="20"></a>            <span class="st">"datasets"</span>: datasets,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-label="21"></a>            <span class="st">"labels"</span>: names,</span>
+<span id="cb16-22"><a href="#cb16-22" aria-label="22"></a>            <span class="st">"suffix"</span>: <span class="st">""</span>,</span>
+<span id="cb16-23"><a href="#cb16-23" aria-label="23"></a>        }</span>
+<span id="cb16-24"><a href="#cb16-24" aria-label="24"></a>    )</span>
+<span id="cb16-25"><a href="#cb16-25" aria-label="25"></a>    <span class="cf">for</span> dataset_index, (dataset, label) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">zip</span>(datasets, names)):</span>
+<span id="cb16-26"><a href="#cb16-26" aria-label="26"></a>        comparison_groups.append(</span>
+<span id="cb16-27"><a href="#cb16-27" aria-label="27"></a>            {</span>
+<span id="cb16-28"><a href="#cb16-28" aria-label="28"></a>                <span class="st">"analyses"</span>: single_analysis_configs,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-label="29"></a>                <span class="st">"datasets"</span>: [dataset],</span>
+<span id="cb16-30"><a href="#cb16-30" aria-label="30"></a>                <span class="st">"labels"</span>: [label],</span>
+<span id="cb16-31"><a href="#cb16-31" aria-label="31"></a>                <span class="st">"suffix"</span>: <span class="ss">f"_single_</span><span class="sc">{</span>dataset_index<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb16-32"><a href="#cb16-32" aria-label="32"></a>            }</span>
+<span id="cb16-33"><a href="#cb16-33" aria-label="33"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="d31b08b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:27.103022Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:27.102946Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:36.769421Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:36.768993Z&quot;}}" data-execution_count="15">
+<details class="code-fold">
+<summary>15 — Plot and save the configured benchmarks</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-label="1"></a><span class="cf">for</span> group <span class="kw">in</span> comparison_groups:</span>
+<span id="cb17-2"><a href="#cb17-2" aria-label="2"></a>    analysis_configs <span class="op">=</span> group[<span class="st">"analyses"</span>]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-label="3"></a>    panel_data <span class="op">=</span> group[<span class="st">"datasets"</span>]</span>
+<span id="cb17-4"><a href="#cb17-4" aria-label="4"></a>    curve_labels <span class="op">=</span> group[<span class="st">"labels"</span>]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-label="5"></a>    figure_suffix <span class="op">=</span> group[<span class="st">"suffix"</span>]</span>
+<span id="cb17-6"><a href="#cb17-6" aria-label="6"></a>    <span class="cf">for</span> analysis_index, analysis_config <span class="kw">in</span> <span class="bu">enumerate</span>(analysis_configs):</span>
+<span id="cb17-7"><a href="#cb17-7" aria-label="7"></a>        plotter <span class="op">=</span> import_from_string(analysis_config[<span class="st">"target"</span>])</span>
+<span id="cb17-8"><a href="#cb17-8" aria-label="8"></a>        masks <span class="op">=</span> [</span>
+<span id="cb17-9"><a href="#cb17-9" aria-label="9"></a>            generate_trial_mask(</span>
+<span id="cb17-10"><a href="#cb17-10" aria-label="10"></a>                dataset, analysis_config.get(<span class="st">"trial_query"</span>, analysis_trial_query)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-label="11"></a>            )</span>
+<span id="cb17-12"><a href="#cb17-12" aria-label="12"></a>            <span class="cf">for</span> dataset <span class="kw">in</span> panel_data</span>
+<span id="cb17-13"><a href="#cb17-13" aria-label="13"></a>        ]</span>
+<span id="cb17-14"><a href="#cb17-14" aria-label="14"></a>        masks <span class="op">=</span> [</span>
+<span id="cb17-15"><a href="#cb17-15" aria-label="15"></a>            trial_mask <span class="op">&amp;</span> comparison_mask <span class="cf">if</span> dataset <span class="kw">is</span> observed <span class="cf">else</span> trial_mask</span>
+<span id="cb17-16"><a href="#cb17-16" aria-label="16"></a>            <span class="cf">for</span> dataset, trial_mask <span class="kw">in</span> <span class="bu">zip</span>(panel_data, masks)</span>
+<span id="cb17-17"><a href="#cb17-17" aria-label="17"></a>        ]</span>
+<span id="cb17-18"><a href="#cb17-18" aria-label="18"></a>        fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>analysis_config.get(<span class="st">"figsize"</span>, figure_size))</span>
+<span id="cb17-19"><a href="#cb17-19" aria-label="19"></a>        plot_options <span class="op">=</span> {</span>
+<span id="cb17-20"><a href="#cb17-20" aria-label="20"></a>            <span class="st">"labels"</span>: analysis_config.get(<span class="st">"labels"</span>, curve_labels),</span>
+<span id="cb17-21"><a href="#cb17-21" aria-label="21"></a>            <span class="st">"contrast_name"</span>: analysis_config.get(<span class="st">"contrast_name"</span>, <span class="st">"Responses"</span>),</span>
+<span id="cb17-22"><a href="#cb17-22" aria-label="22"></a>            <span class="st">"confidence_level"</span>: confidence_level,</span>
+<span id="cb17-23"><a href="#cb17-23" aria-label="23"></a>            <span class="st">"axis"</span>: ax,</span>
+<span id="cb17-24"><a href="#cb17-24" aria-label="24"></a>            <span class="op">**</span>analysis_config.get(<span class="st">"kwargs"</span>, {}),</span>
+<span id="cb17-25"><a href="#cb17-25" aria-label="25"></a>        }</span>
+<span id="cb17-26"><a href="#cb17-26" aria-label="26"></a>        <span class="cf">if</span> analysis_config.get(<span class="st">"color_cycle"</span>) <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb17-27"><a href="#cb17-27" aria-label="27"></a>            plot_options[<span class="st">"color_cycle"</span>] <span class="op">=</span> analysis_config[<span class="st">"color_cycle"</span>]</span>
+<span id="cb17-28"><a href="#cb17-28" aria-label="28"></a>        plotter(panel_data, masks, <span class="op">**</span>plot_options)</span>
+<span id="cb17-29"><a href="#cb17-29" aria-label="29"></a>        ax.set_title(analysis_config.get(<span class="st">"title"</span>, plotter.<span class="va">__name__</span>))</span>
+<span id="cb17-30"><a href="#cb17-30" aria-label="30"></a>        <span class="cf">if</span> analysis_config.get(<span class="st">"ylim"</span>) <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb17-31"><a href="#cb17-31" aria-label="31"></a>            ax.set_ylim(analysis_config[<span class="st">"ylim"</span>])</span>
+<span id="cb17-32"><a href="#cb17-32" aria-label="32"></a>        suffix <span class="op">=</span> (</span>
+<span id="cb17-33"><a href="#cb17-33" aria-label="33"></a>            analysis_config.get(<span class="st">"figure_suffix"</span>, plotter.<span class="va">__name__</span>.removeprefix(<span class="st">"plot_"</span>))</span>
+<span id="cb17-34"><a href="#cb17-34" aria-label="34"></a>            <span class="op">+</span> figure_suffix</span>
+<span id="cb17-35"><a href="#cb17-35" aria-label="35"></a>        )</span>
+<span id="cb17-36"><a href="#cb17-36" aria-label="36"></a>        <span class="cf">if</span> (</span>
+<span id="cb17-37"><a href="#cb17-37" aria-label="37"></a>            <span class="bu">sum</span>(</span>
+<span id="cb17-38"><a href="#cb17-38" aria-label="38"></a>                other[<span class="st">"target"</span>] <span class="op">==</span> analysis_config[<span class="st">"target"</span>]</span>
+<span id="cb17-39"><a href="#cb17-39" aria-label="39"></a>                <span class="cf">for</span> other <span class="kw">in</span> analysis_configs</span>
+<span id="cb17-40"><a href="#cb17-40" aria-label="40"></a>            )</span>
+<span id="cb17-41"><a href="#cb17-41" aria-label="41"></a>            <span class="op">&gt;</span> <span class="dv">1</span></span>
+<span id="cb17-42"><a href="#cb17-42" aria-label="42"></a>            <span class="kw">and</span> <span class="st">"figure_suffix"</span> <span class="kw">not</span> <span class="kw">in</span> analysis_config</span>
+<span id="cb17-43"><a href="#cb17-43" aria-label="43"></a>        ):</span>
+<span id="cb17-44"><a href="#cb17-44" aria-label="44"></a>            suffix <span class="op">+=</span> <span class="ss">f"_</span><span class="sc">{</span>analysis_index <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb17-45"><a href="#cb17-45" aria-label="45"></a>        save_figure(<span class="bu">str</span>(figure_dir), figure_str, suffix<span class="op">=</span>suffix)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="simulation_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="simulation_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="simulation_files/figure-html/cell-16-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="simulation_files/figure-html/cell-16-output-2.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="simulation_files/figure-html/cell-16-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="simulation_files/figure-html/cell-16-output-3.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="simulation_files/figure-html/cell-16-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="simulation_files/figure-html/cell-16-output-4.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="continue-with-analysis" class="level2" data-number="12.5">
+<h2 data-number="12.5" class="anchored" data-anchor-id="continue-with-analysis"><span class="header-section-number">12.5</span> Continue with analysis</h2>
+<p>Pass the printed response paths to the behavioral analysis templates. Those procedures read saved responses and can compare them with observations or other simulations. Model comparison uses both the fit records and these responses. Custom datasets and model specifications enter through your saved fit records and parameters; the notebook body is shared.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../templates/fitting.html" class="pagination-link" aria-label="Fitting models">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting models</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../templates/parameter_shifting.html" class="pagination-link" aria-label="Exploring parameter effects">
+        <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

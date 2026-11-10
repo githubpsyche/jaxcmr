@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Computational models of memory search">
+
+<title>Templates – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./templates/fitting.html" rel="next">
+<link href="./overview/evaluation.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-081d0a153d3b6a80785afef37b346e8f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./templates.html">Templates</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">JAXCMR</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/githubpsyche/jaxcmr" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">JAXCMR</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./getting-started.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Run JAXCMR in VS Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./overview/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Library Guide</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="false" aria-label="Toggle section: Library Guide">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Data</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Recall Analyses</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/components.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Model Components</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Loss Functions</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Fitting Procedures</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Data Simulation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./overview/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./templates.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Templates</span></a>
+            <button type="button" class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true" aria-label="Toggle section: Templates">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/model_comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Comparing pooled model fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Serial position curves</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Recall by output position</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">When recall ends</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Lag-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Temporal organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Distance-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Distance-based organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Recall rates by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Serial position curves by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./templates/catcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Transitions within and between categories</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-experiment" id="toc-the-experiment" class="nav-link active" data-scroll-target="#the-experiment">The experiment</a></li>
+  <li><a href="#the-data-used-in-the-templates" id="toc-the-data-used-in-the-templates" class="nav-link" data-scroll-target="#the-data-used-in-the-templates">The data used in the templates</a></li>
+  <li><a href="#download-the-shared-inputs" id="toc-download-the-shared-inputs" class="nav-link" data-scroll-target="#download-the-shared-inputs">Download the shared inputs</a></li>
+  <li><a href="#run-in-colab" id="toc-run-in-colab" class="nav-link" data-scroll-target="#run-in-colab">Run in Colab</a></li>
+  <li><a href="#from-a-template-to-a-run" id="toc-from-a-template-to-a-run" class="nav-link" data-scroll-target="#from-a-template-to-a-run">From a template to a run</a>
+  <ul class="collapse">
+  <li><a href="#execute-a-report-with-quarto" id="toc-execute-a-report-with-quarto" class="nav-link" data-scroll-target="#execute-a-report-with-quarto">Execute a report with Quarto</a></li>
+  <li><a href="#prepare-independent-jobs-with-papermill" id="toc-prepare-independent-jobs-with-papermill" class="nav-link" data-scroll-target="#prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</a></li>
+  </ul></li>
+  <li><a href="#modeling-procedures" id="toc-modeling-procedures" class="nav-link" data-scroll-target="#modeling-procedures">Modeling procedures</a></li>
+  <li><a href="#recall-performance" id="toc-recall-performance" class="nav-link" data-scroll-target="#recall-performance">Recall performance</a></li>
+  <li><a href="#temporal-and-semantic-organization" id="toc-temporal-and-semantic-organization" class="nav-link" data-scroll-target="#temporal-and-semantic-organization">Temporal and semantic organization</a></li>
+  <li><a href="#category-analyses" id="toc-category-analyses" class="nav-link" data-scroll-target="#category-analyses">Category analyses</a></li>
+  <li><a href="#adapting-a-procedure" id="toc-adapting-a-procedure" class="nav-link" data-scroll-target="#adapting-a-procedure">Adapting a procedure</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Templates</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>A template is a maintained notebook for a complete procedure: selecting observations, performing a calculation and saving interpretable results. Its <strong>parameters</strong> cell specifies one run. Changing those settings lets you reuse the procedure for another selection, model or experiment, or prepare many independent jobs without maintaining a separate procedure for each one.</p>
+<p>These fourteen templates cover behavioral analysis, fitting, simulation, parameter exploration and pooled model comparison. Their defaults use the <strong>war-photo-recall experiment</strong> as a shared worked example. The saved figures and tables show that example; they are replaced when you execute a new run. Choose a task below, then download its notebook and required inputs.</p>
+<p>The procedures connect through saved products:</p>
+<ol type="1">
+<li><strong>Describe responses.</strong> Analysis templates read observed or simulated response files, establish a pattern and expose discrepancies.</li>
+<li><strong>Check a mechanism.</strong> Parameter shifting starts from saved baseline parameters and examines controlled interventions without refitting.</li>
+<li><strong>Fit configured models.</strong> The single <a href="./templates/fitting.html">fitting template</a> estimates parameters, saves fit records, optionally simulates, and compares configured benchmarks.</li>
+<li><strong>Generate predictions.</strong> <a href="./templates/simulation.html">Simulation</a> produces saved responses from any configured collection of fits.</li>
+<li><strong>Compare results.</strong> <a href="./templates/model_comparison.html">Model comparison</a> reads the saved fits and responses, relating likelihood, AIC, search variation and behavioral predictions.</li>
+</ol>
+<p>The shared example compares ordinary CMR, source-only eCMR and broader eCMR. To inspect completed runs, use the supplied fits and responses. To change the scientific specification, configure the fitting or intervention procedure and pass its saved outputs to the analyses. The <a href="#from-a-template-to-a-run">local instructions</a> explain preparation and execution.</p>
+<section id="the-experiment" class="level2">
+<h2 class="anchored" data-anchor-id="the-experiment">The experiment</h2>
+<p>In this experiment, Dupertuys and colleagues asked whether emotion changes both <strong>which pictures people remember</strong> and <strong>the order in which they remember them</strong>. Participants studied photographs relating to the war in Ukraine, then recalled them from memory. The final sample comprised 123 English-speaking adults selected for their reported concern about the war.</p>
+<p>Each participant completed four rounds, each with two phases:</p>
+<ol type="1">
+<li><strong>Study the photographs.</strong> A list contained twelve target photographs, plus an extra “buffer” photograph at each end. Each image appeared for six seconds, followed by a three-second blank screen.</li>
+<li><strong>Recall the photographs.</strong> Immediately after the list, participants typed short descriptions of as many photographs as they could remember, in any order. They then continued to the next study-and-recall round.</li>
+</ol>
+<p>Researchers later scored the typed responses by matching descriptions to photograph identities, retaining the order in which the pictures were recalled.</p>
+<p>The lists differed in their emotional composition. <strong>Emotional</strong> photographs were rated as more negative and more arousing; <strong>neutral</strong> photographs were the less negative, less arousing comparison images from the same war-related set. Every participant encountered all three conditions:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 30%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>List condition</th>
+<th>Target photographs in each list</th>
+<th style="text-align: right;">Lists per participant</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Mixed</td>
+<td>6 emotional and 6 neutral</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td>Pure emotional</td>
+<td>12 emotional</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td>Pure neutral</td>
+<td>12 neutral</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>List order was counterbalanced across participants, and target-picture order was randomized within each list. Targets were not repeated across a participant’s four lists.</p>
+<p>Mixed lists let us compare emotional and neutral recall within the same list. Pure lists let us ask how that difference changes when the two types of picture are studied separately. Recording recall order also lets us examine memory search: for example, whether one recalled picture tends to be followed by a picture studied nearby in time, or by a picture with similar meaning.</p>
+</section>
+<section id="the-data-used-in-the-templates" class="level2">
+<h2 class="anchored" data-anchor-id="the-data-used-in-the-templates">The data used in the templates</h2>
+<p>The supplied file contains <strong>492 list records</strong>: 246 mixed, 123 pure-emotional and 123 pure-neutral. Photographs are represented by item identifiers, and recall responses by scored sequences. Buffer photographs are excluded, so the study positions used in these templates refer to the twelve target photographs. One pure-emotional record contains eleven valid target items and a padded slot; the fixed-length analyses identify and exclude that record.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Meaning in these procedures</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>subject</code></td>
+<td>Participant identifier, retained when simulating.</td>
+</tr>
+<tr class="even">
+<td><code>list_type</code></td>
+<td>Whole-list condition: 1 = mixed, 2 = pure emotional, 3 = pure neutral.</td>
+</tr>
+<tr class="odd">
+<td><code>pres_itemnos</code></td>
+<td>Studied item codes within a trial; zero is a padded slot.</td>
+</tr>
+<tr class="even">
+<td><code>pres_itemids</code></td>
+<td>Global picture identifiers used to align the distance matrix and categories.</td>
+</tr>
+<tr class="odd">
+<td><code>recalls</code></td>
+<td>One-based <strong>study positions</strong> of recalled items; zero is an unused response slot.</td>
+</tr>
+<tr class="even">
+<td><code>valence</code></td>
+<td>Category at each study position: −1 = emotional, 0 = neutral. Check valid study items before counting categories.</td>
+</tr>
+</tbody>
+</table>
+<p>Study positions and item identities are different: a recall code of 3 points to the third study slot, whose global picture identifier is found in <code>pres_itemids</code>. The supplied distance matrix is indexed by global identifier minus one. Its missing entries are outside the within-list comparisons used here; every within-list pair required by the semantic examples has a finite distance.</p>
+<p>Selections are made in notebook cells and leave the source file unchanged:</p>
+<ul>
+<li><strong>Fitting and pooled model comparison:</strong> all 492 lists and all conditions.</li>
+<li><strong>SPC, PNR, stopping and temporal organization:</strong> the 491 complete twelve-item lists. Each notebook explicitly reports the one excluded padded list.</li>
+<li><strong>Semantic organization:</strong> the 246 mixed lists and the supplied distance matrix.</li>
+<li><strong>Category recall rate:</strong> all conditions, with valid-item denominators.</li>
+<li><strong>Category SPC and category-CRP:</strong> mixed lists by default.</li>
+</ul>
+<p>Plots summarize each participant’s selected lists before averaging across participants. Error bars describe bootstrap intervals for those participant summaries. Some bins have no variation or no defined values, so the current plotters can report that a bootstrap interval is undefined; this does not turn an unavailable category or transition into a zero-valued observation.</p>
+</section>
+<section id="download-the-shared-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="download-the-shared-inputs">Download the shared inputs</h2>
+<p>Create a <code>data</code> folder in your working folder, with <code>fits</code> and <code>simulations</code> folders inside it. Save each file with the name shown below. Use <strong>Save Link As</strong> if your browser opens a JSON file instead of downloading it. No repository checkout is required.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Input</th>
+<th>Save inside your working folder as</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="templates/data/Dupertuys2026.h5">Observations</a></td>
+<td><code>data/Dupertuys2026.h5</code></td>
+</tr>
+<tr class="even">
+<td><a href="templates/data/Dupertuys2026_semantic_distances.npy">Semantic distances</a></td>
+<td><code>data/Dupertuys2026_semantic_distances.npy</code></td>
+</tr>
+<tr class="odd">
+<td><a href="templates/data/fits/Dupertuys2026_CMR_demo.json">CMR demonstration fit</a></td>
+<td><code>data/fits/Dupertuys2026_CMR_demo.json</code></td>
+</tr>
+<tr class="even">
+<td><a href="templates/data/fits/Dupertuys2026_eCMR_source_only.json">Source-only eCMR fit</a></td>
+<td><code>data/fits/Dupertuys2026_eCMR_source_only.json</code></td>
+</tr>
+<tr class="odd">
+<td><a href="templates/data/fits/Dupertuys2026_eCMR_broad.json">Broader eCMR fit</a></td>
+<td><code>data/fits/Dupertuys2026_eCMR_broad.json</code></td>
+</tr>
+<tr class="even">
+<td><a href="templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5">CMR responses</a></td>
+<td><code>data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5</code></td>
+</tr>
+<tr class="odd">
+<td><a href="templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json">CMR response provenance</a></td>
+<td><code>data/simulations/Dupertuys2026_CMR_demo_best_of_3.json</code></td>
+</tr>
+<tr class="even">
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5">Broader eCMR responses</a></td>
+<td><code>data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5</code></td>
+</tr>
+<tr class="odd">
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json">Broader eCMR response provenance</a></td>
+<td><code>data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json</code></td>
+</tr>
+<tr class="even">
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5">Source-only eCMR responses</a></td>
+<td><code>data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5</code></td>
+</tr>
+<tr class="odd">
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json">Source-only eCMR response provenance</a></td>
+<td><code>data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json</code></td>
+</tr>
+</tbody>
+</table>
+<p>The observation file and distance matrix are the existing JAXCMR inputs, with no extracts or recoding. The observation file also matches the ECMR3 project’s copy. All three fit records were prepared with the current library using the fitting procedure below, including an independent recalculation of their objectives. <a href="templates/data/fits/README.md">Fit provenance</a> records their sources and assumptions. The response examples were produced by the simulation template with ten repetitions per selected list and seed 1. Their JSON sidecars record the parameters, selections and simulation settings. They are saved inputs to analysis; analysis notebooks do not invoke fitting or simulation when an input is missing.</p>
+<p>Each chapter has <strong>Download notebook</strong> and <strong>Open in Colab</strong> links beside its contents list. Code starts collapsed; expand a labeled block to see the calculation, or use the <strong>Code</strong> menu to show all code at once. Figures and tables remain visible.</p>
+</section>
+<section id="run-in-colab" class="level2">
+<h2 class="anchored" data-anchor-id="run-in-colab">Run in Colab</h2>
+<p>Choose <strong>Open in Colab</strong> beside a chapter’s contents list. Sign in to Google, then choose <strong>Runtime → Run all</strong>. For the notebook opened from this repository, Colab may ask you to confirm <strong>Run anyway</strong>. A standard CPU runtime is enough.</p>
+<p>The setup cell installs JAXCMR from a pinned GitHub revision and downloads only that notebook’s supplied inputs, checking their hashes. This route works before the PyPI release. Matching files are reused when setup runs again; a conflicting file is preserved and reported. If you change a path to your own input, upload that file through Colab’s <strong>Files</strong> pane and keep the path consistent with the parameters cell.</p>
+<p>The SPC pilot completed on the default Python 3.13 CPU runtime without a restart. If Colab requests one after installation, choose <strong>Runtime → Restart session</strong>, then <strong>Run all</strong> again. The first raw cell contains Quarto page metadata; Colab labels it “Unsupported Cell Type”, but skips it when running the code cells.</p>
+<p>Results are written under the notebook’s <code>output_dir</code> (for SPC, <code>results/spc/spc.png</code>). In the <strong>Files</strong> pane, open that folder and use the file’s menu to <strong>Download</strong> the results. Download anything you want to keep before Colab deletes the temporary runtime. Use <strong>File → Download → Download .ipynb</strong> to retain an executed notebook, or <strong>Copy to Drive</strong> if you want a saved working copy. The <a href="./getting-started.html">VS Code setup</a> remains the local route and still awaits the planned PyPI release.</p>
+<p>The Colab links use the <code>workshop-colab-2026-11-10</code> notebook revision. The setup cells install JAXCMR and fetch the supplied inputs from commit <code>d919f1ad6aeacc7a36c40b96e365316219a7f40a</code>. Analysis notebooks download the saved model responses; they do not run fitting or simulation.</p>
+</section>
+<section id="from-a-template-to-a-run" class="level2">
+<h2 class="anchored" data-anchor-id="from-a-template-to-a-run">From a template to a run</h2>
+<p>Save downloaded notebooks in the working folder created during <a href="./getting-started.html">setup</a>, beside <code>data/</code>. Open the folder in VS Code, choose its <code>.venv</code> kernel, edit the <strong>parameters</strong> cell and run the notebook from top to bottom. Paths are relative to the working folder. Give independent runs distinct output folders or run names so their results do not overwrite one another.</p>
+<p>Settings are ordinary values: paths, numbers, lists, dictionaries and import names. Imports, trial masks and model construction happen afterward, using the effective values. The fitting template can select a model and its components, objective, fitted parameters, participant subset and displayed analyses. Analysis templates expose their trial selections and measure-specific settings. Their inputs are saved response files; preparing or running an analysis does not generate missing simulations.</p>
+<p>Ordinary imports occupy their own cell after the optional Colab bootstrap. Derived paths, loading and calculations follow the injected parameters. <code>figure_str=""</code> displays figures without saving them; a nonempty name saves under <code>figure_dir</code>. The defaults provide explicit names for the worked examples. Subject-level CSV summaries use <code>output_dir</code>.</p>
+<p>The analysis controls include repeated-item capacity (<code>size</code>), stopping <code>mode</code>, condition queries, category fields and labels, and plot limits. Category recall also accepts configured paired contrasts and contrasts of contrasts. Select these for the question being asked; the defaults leave the optional tests empty.</p>
+<p>You can also supply settings externally. <a href="https://quarto.org/docs/computations/parameters.html">Quarto</a> and <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">Papermill</a> use the same tagged cell. An override replaces a whole top-level value: to change one model, supply the complete <code>model_configs</code> dictionary for that work unit. Use <code>fit_alg_path</code> and <code>fit_hyperparams</code> to select and configure the optimizer. Analysis templates use <code>data_paths</code> and <code>data_labels</code> for a collection; an explicit <code>data_path</code> retains single-dataset use. Their condition queries are applied to each input.</p>
+<section id="execute-a-report-with-quarto" class="level3">
+<h3 class="anchored" data-anchor-id="execute-a-report-with-quarto">Execute a report with Quarto</h3>
+<p>With <a href="https://quarto.org/docs/get-started/">Quarto installed</a>, you can execute a notebook with overrides and render its results to HTML. For Python parameter injection, Quarto also uses the Papermill package. Install it in the notebook environment from the VS Code terminal:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> pip install papermill</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For example, run the PNR procedure for the third response and save a separate report:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="va">QUARTO_PYTHON</span><span class="op">=</span><span class="st">"</span><span class="va">$PWD</span><span class="st">/.venv/bin/python"</span> <span class="ex">quarto</span> render pnr.ipynb <span class="at">--execute</span> <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>  <span class="at">-P</span> query_recall_position:2 <span class="at">-P</span> output_dir:results/pnr-third <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a>  <span class="at">--output</span> pnr-third.html</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Output positions are zero-based, so <code>2</code> means the third response. Use <code>--execute-params settings.yml</code> for dictionaries or longer selections. The explicit <code>--execute</code> runs the notebook; rendering an <code>.ipynb</code> without it normally displays its stored results. The book itself displays stored examples.</p>
+</section>
+<section id="prepare-independent-jobs-with-papermill" class="level3">
+<h3 class="anchored" data-anchor-id="prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</h3>
+<p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. The following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
+<div id="d4d8b0d1" class="cell">
+<details class="code-fold">
+<summary>Prepare two fitting jobs without running them</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> nbformat</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> papermill <span class="im">as</span> pm</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>source <span class="op">=</span> nbformat.read(<span class="st">"fitting.ipynb"</span>, as_version<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a>defaults <span class="op">=</span> {}</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>parameter_cell <span class="op">=</span> <span class="bu">next</span>(cell <span class="cf">for</span> cell <span class="kw">in</span> source.cells</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a>                      <span class="cf">if</span> <span class="st">"parameters"</span> <span class="kw">in</span> cell.metadata.get(<span class="st">"tags"</span>, []))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="co"># Evaluate only the parameter assignments, not the fitting procedure.</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="bu">exec</span>(parameter_cell.source, defaults)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>jobs <span class="op">=</span> Path(<span class="st">"analyses/rendered"</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>jobs.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="cf">for</span> seed <span class="kw">in</span> [<span class="dv">0</span>, <span class="dv">1</span>]:</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    configs <span class="op">=</span> deepcopy(defaults[<span class="st">"model_configs"</span>])</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    <span class="cf">for</span> config <span class="kw">in</span> configs.values():</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>        config[<span class="st">"seed"</span>] <span class="op">=</span> seed</span>
+<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    path <span class="op">=</span> jobs <span class="op">/</span> <span class="ss">f"fitting_seed_</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">.ipynb"</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    prepared <span class="op">=</span> pm.execute_notebook(</span>
+<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>        <span class="st">"fitting.ipynb"</span>, <span class="bu">str</span>(path),</span>
+<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>        parameters<span class="op">=</span>{<span class="st">"model_configs"</span>: configs, <span class="st">"output_dir"</span>: <span class="ss">f"results/fitting-seed-</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">"</span>},</span>
+<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>        prepare_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a>    )</span>
+<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a>    <span class="co"># Stored example results are not results from this new job.</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a>    <span class="cf">for</span> cell <span class="kw">in</span> prepared.cells:</span>
+<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a>        <span class="cf">if</span> cell.cell_type <span class="op">==</span> <span class="st">"code"</span>:</span>
+<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>            cell.outputs <span class="op">=</span> []</span>
+<span id="cb3-29"><a href="#cb3-29" aria-label="29"></a>            cell.execution_count <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-label="30"></a>    nbformat.write(prepared, path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>To prepare one model per job, pass a one-entry <code>model_configs</code> dictionary. Preserve the project’s chosen job boundaries: a model collection does not require running every model in each scheduled job. Inspect the injected settings in each notebook. Execute one from the working folder with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> papermill <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>  analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>  <span class="at">--cwd</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same prepared notebooks can be transferred with their inputs and run as separate Slurm jobs, using the project folder as the working directory. This matches the <a href="https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd">remote-cluster workflow</a>: maintain a procedure, prepare concrete work units, then schedule their execution. Preparing jobs does not fit a model; rendering HTML is a separate presentation step.</p>
+<p>For participant jobs, the fitting template uses <code>pooled=False</code> and <code>subject_indices=[i]</code>, where <code>i</code> indexes the sorted participant IDs. Simulation and parameter exploration can instead vary seeds or parameter values. Choose the work unit around the scientific question and keep its inputs and outputs explicit. A fit-only job sets both <code>redo_sims</code> and <code>redo_figures</code> to <code>False</code>; later simulation can use its saved result.</p>
+</section>
+</section>
+<section id="modeling-procedures" class="level2">
+<h2 class="anchored" data-anchor-id="modeling-procedures">Modeling procedures</h2>
+<p>The example collection estimates nine continuous CMR parameters and ten for each eCMR variant, using the same observations and termination-excluded likelihood. The two eCMR specifications differ in whether emotional modulation also affects temporal association learning. The default simulator conditions on observed recall counts. Recall length, stopping distributions and pure-list category totals therefore are imposed; mixed-list category allocation and recall organization can vary.</p>
+<p>Simulation and parameter shifting start from the supplied fits without optimization. The latter includes encoding-drift sweeps and a separate controlled temporal-emotional-modulation switch. Model comparison consumes the saved fits and responses. Its results describe pooled solutions, not independent participant estimates. Each procedure remains configurable for other inputs, models and scientific questions.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Procedure</th>
+<th>Notebook</th>
+<th>Required inputs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="./templates/fitting.html">Fitting models</a></td>
+<td><a href="downloads/fitting.ipynb">Download</a></td>
+<td>Observations; produces configured fits and optional responses.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/simulation.html">Simulating from saved fits</a></td>
+<td><a href="downloads/simulation.ipynb">Download</a></td>
+<td>Observations + named fit records.</td>
+</tr>
+<tr class="odd">
+<td><a href="./templates/parameter_shifting.html">Exploring parameter effects</a></td>
+<td><a href="downloads/parameter_shifting.ipynb">Download</a></td>
+<td>Observations + baseline fit records.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/model_comparison.html">Comparing pooled model fits</a></td>
+<td><a href="downloads/model_comparison.ipynb">Download</a></td>
+<td>Observations + fit records + saved responses and provenance.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="recall-performance" class="level2">
+<h2 class="anchored" data-anchor-id="recall-performance">Recall performance</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Procedure</th>
+<th>Notebook</th>
+<th>Required inputs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="./templates/spc.html">Serial position curves</a></td>
+<td><a href="downloads/spc.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/pnr.html">Probability of first and later recall</a></td>
+<td><a href="downloads/pnr.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="odd">
+<td><a href="./templates/termination_probability.html">When recall ends</a></td>
+<td><a href="downloads/termination_probability.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="temporal-and-semantic-organization" class="level2">
+<h2 class="anchored" data-anchor-id="temporal-and-semantic-organization">Temporal and semantic organization</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Procedure</th>
+<th>Notebook</th>
+<th>Required inputs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="./templates/crp.html">Lag-conditional response probability</a></td>
+<td><a href="downloads/crp.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/lagrank.html">Temporal organization scores</a></td>
+<td><a href="downloads/lagrank.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="odd">
+<td><a href="./templates/distcrp.html">Semantic distance-CRP</a></td>
+<td><a href="downloads/distcrp.ipynb">Download</a></td>
+<td>Saved responses + distances.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/distrank.html">Semantic organization scores</a></td>
+<td><a href="downloads/distrank.ipynb">Download</a></td>
+<td>Saved responses + distances.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="category-analyses" class="level2">
+<h2 class="anchored" data-anchor-id="category-analyses">Category analyses</h2>
+<p>Category information is already present in the observation file. The category-CRP notebook builds its lookup from those fields; no separate feature file is needed.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Procedure</th>
+<th>Notebook</th>
+<th>Required inputs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="./templates/cat_recall_rate.html">Recall rates by category</a></td>
+<td><a href="downloads/cat_recall_rate.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="even">
+<td><a href="./templates/cat_spc.html">Serial position curves by category</a></td>
+<td><a href="downloads/cat_spc.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+<tr class="odd">
+<td><a href="./templates/catcrp.html">Transitions within and between categories</a></td>
+<td><a href="downloads/catcrp.ipynb">Download</a></td>
+<td>Saved observed/simulated responses.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="adapting-a-procedure" class="level2">
+<h2 class="anchored" data-anchor-id="adapting-a-procedure">Adapting a procedure</h2>
+<p>Start by changing the settings cell: input paths, trial selection, parameters and output folder. Check the meanings of item codes, participant identifiers, categories and response padding before interpreting results. Retain the same selection for comparisons that are intended to address the same observations.</p>
+<p>The <a href="https://github.com/githubpsyche/jaxcmr/tree/main/templates">remaining repository templates</a> are research examples with varying dependencies and maintenance status. They remain at their original paths and are outside this prepared set.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="./overview/evaluation.html" class="pagination-link" aria-label="Model Evaluation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./templates/fitting.html" class="pagination-link" aria-label="Fitting models">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Fitting models</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
