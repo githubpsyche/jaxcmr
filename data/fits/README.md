@@ -76,13 +76,17 @@ that a fitted parameter is pinned to its boundary or is well identified.
 
 ## Reproduction and historical records
 
-`templates/fitting_scipyde.ipynb` is the procedure used for all three models.
-For an eCMR run, take `parameters` from the record's `fit_configuration`, set
-`model_name` to its `model`, and use its `model_factory`, `components`,
-`loss_function`, `fit_algorithm` and `simulation_function` for the corresponding
-import-path settings. Set `seed` to the recorded selected seed and use the
-matching example filename. All other search defaults match the notebook.
-The `fits` columns contain the fitted values; they are not the input bounds.
+`templates/fitting.ipynb` is the procedure used for all three models.
+Its `model_configs` parameter includes all three complete specifications with their selected
+seeds. Supply one entry for a single-model work unit. `fit_alg_path` and `fit_hyperparams`
+select the optimizer and its controls. The fitting notebook recalculates objectives and prints
+the paths of its fit records and response files.
+
+The simulation notebook accepts the three supplied fit paths and produces ten responses per
+selected list using seed 1. The shared response examples in `data/simulations/` were generated
+through that procedure; their JSON sidecars preserve the actual parameters, selected rows,
+model/simulator and implementation identity. Behavioral analysis notebooks read these files.
+Parameter shifting produces separate intervention responses and leaves these baselines intact.
 
 All three records identify JAXCMR 0.2.0rc1 and source SHA-256
 `b4ecd25b7eedf5a9cbd38c70df4191338444b0b2d27c73702d6d908454b74d81`. This fingerprint hashes sorted package-relative

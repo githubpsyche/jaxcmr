@@ -10,9 +10,15 @@ import re
 _INPUT_HASHES = {
     "data/Dupertuys2026.h5": "93ac35ad7f17c907ad369438c0899be45d4f6728250eccfe7ae3757d2fe2468a",
     "data/Dupertuys2026_semantic_distances.npy": "124f0b00c947f00318be0b6799c8ad0d9c8d2747a05c92119745fc4b2565c703",
-    "data/fits/Dupertuys2026_CMR_demo.json": "ff06d186b78765e66c261091678497a3f4a7c310331461c960a3bb050e570d78",
-    "data/fits/Dupertuys2026_eCMR_source_only.json": "865a2781bafeb9b153c60803ed9fc09efbf58d4e6e14894625be33a7d279f7ed",
-    "data/fits/Dupertuys2026_eCMR_broad.json": "4806c8a5e020dac17a716e2b36d8d8791c30baeca8eef5ceaf8f57c708faa50c",
+    "data/fits/Dupertuys2026_CMR_demo.json": "c785ecaa8042b8a62af817f5356e244f3b648f3078d824d5db471f3f9d029cc9",
+    "data/fits/Dupertuys2026_eCMR_source_only.json": "7b40bc4938317c74552049452feea7e083230f66440d1b0d359addc351ff9aa8",
+    "data/fits/Dupertuys2026_eCMR_broad.json": "b21c44c875f2f0d7309ae4408df9397d1d02a649b3b198b3b7cc815e2dc92f53",
+    'data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5': '33f1a329973cf2aa668c4440fa46701e1d2b9ddb232859eb86640bcb2302641d',
+    'data/simulations/Dupertuys2026_CMR_demo_best_of_3.json': '0338a6c050fbd6d9a3d3adfcc9e7a00cd507273b8844f77b861f588524f89265',
+    'data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5': 'acba329d06fb8683d941e8b65e39e8c9ce24c230139e8715dd558f64c84f199b',
+    'data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json': 'ad48c900ba936a8eac83716f500065d823bd86b7fe30786966a99c5c2ab0b328',
+    'data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5': '4ef28c5c2d856c366ca7fbd8467cd56ee816e489dc1133d4fec7c109ce54bf48',
+    'data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json': 'b89e3fcdcee8a95febbc449e43599e4d7b648da1211b17422863da4299732280',
 }
 
 
