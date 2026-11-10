@@ -3,46 +3,29 @@ title: "JAXCMR"
 description: "Analyze recall, fit memory-search models, and compare simulated and observed behavior."
 ---
 
-JAXCMR is a Python library for studying memory search with computational models,
-including Context Maintenance and Retrieval (CMR). It brings together recall
-analyses, model specification, parameter estimation and simulation, so researchers
-can develop an account of memory and compare its predictions with observed behavior.
+JAXCMR is a Python library for studying memory search with computational models, including Context Maintenance and Retrieval (CMR).
+It brings together recall analyses, model specification, parameter estimation and simulation, so researchers can develop an account of memory and compare its predictions with observed behavior.
 
-Its CMR implementations combine components for context, associative memory and
-recall termination. Shared interfaces connect models to fitting and simulation,
-making it possible to investigate alternative mechanisms within an existing
-workflow. [JAX](https://docs.jax.dev/en/latest/jit-compilation.html) compiles
-numerical calculations for repeated execution; the documented workflows use
-CPU computation.
+Its CMR implementations combine components for context, associative memory and recall termination.
+Shared interfaces connect models to fitting and simulation, making it possible to investigate alternative mechanisms within an existing workflow.
+[JAX](https://docs.jax.dev/en/latest/jit-compilation.html) compiles numerical calculations for repeated execution; the documented workflows use CPU computation.
 
 ## Start with fitting
 
-**[Fitting a model](templates/fitting_scipyde.ipynb)** brings the main activities
-together in one notebook: load observed recalls, estimate model parameters,
-simulate recall from the fitted model, and apply the same behavioral analyses
-to the observations and simulations. It saves the fit, simulated responses and
-comparison figures for subsequent work.
+[**Fitting models**](templates/fitting.ipynb) brings the main activities together in one notebook: load observed recalls, estimate model parameters, simulate recall from the fitted model, and apply the same behavioral analyses to the observations and simulations.
+It saves the fit, simulated responses and comparison figures for subsequent work.
 
-The worked example uses the **war-photo-recall experiment**. Read its saved
-results to follow the procedure, then use the notebook's **parameters** cell
-to configure your own run. The [Templates introduction](templates.qmd#from-a-template-to-a-run)
-explains input files, settings, execution and saved outputs.
+The worked example uses the **war-photo-recall experiment**.
+Read its saved results to follow the procedure, then use the notebook's **parameters** cell to configure your own run.
+The [Templates introduction](templates.qmd#from-a-template-to-a-run) explains input files, settings, execution and saved outputs.
 
 ## Choose where to run it
 
-- **[VS Code on your Mac](getting-started.qmd):** install Python and create a
-  notebook environment. The instructions assume an Apple Silicon Mac and no
-  previous Python experience. This route awaits the planned 0.2.0 PyPI release.
-- **[Colab in your browser](templates.qmd#run-in-colab):** use a template's
-  **Open in Colab** link. Its setup cell installs the library and fetches the
-  example inputs; the instructions explain saving your work and the current
-  status of the supplied examples.
+-   [**VS Code on your Mac**](getting-started.qmd)**:** install Python and create a notebook environment. The instructions assume an Apple Silicon Mac and no previous Python experience. This route awaits the planned 0.2.0 PyPI release.
+-   [**Colab in your browser**](templates.qmd#run-in-colab)**:** use a template's **Open in Colab** link. Its setup cell installs the library and fetches the example inputs; the instructions explain saving your work and the current status of the supplied examples.
 
 ## Explore the library
 
-- **[Library Guide](overview/index.qmd):** data structures, interfaces and
-  extension points for understanding and adapting workflows.
-- **[Templates](templates.qmd):** fourteen complete procedures, including
-  individual recall analyses, simulation, parameter exploration and model comparison.
-- **[Repository](https://github.com/githubpsyche/jaxcmr):** source code, tests
-  and research material, including additional notebooks with varying maintenance status.
+-   [**Library Guide**](overview/index.qmd)**:** data structures, interfaces and extension points for understanding and adapting workflows.
+-   [**Templates**](templates.qmd)**:** fourteen complete procedures, including individual recall analyses, simulation, parameter exploration and model comparison.
+-   [**Repository**](https://github.com/githubpsyche/jaxcmr)**:** source code, tests and research material, including additional notebooks with varying maintenance status.

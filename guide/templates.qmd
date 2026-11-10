@@ -12,12 +12,23 @@ parameter exploration and pooled model comparison. Their defaults use the
 and tables show that example; they are replaced when you execute a new run.
 Choose a task below, then download its notebook and required inputs.
 
-**Start with [Fitting a model](templates/fitting_scipyde.ipynb).** It brings
-together parameter estimation, simulation and behavioral analyses in one
-complete procedure. Follow its saved results, then configure a run through
-the parameters cell. The [local execution instructions](#from-a-template-to-a-run)
-and [Colab instructions](#run-in-colab) explain how to run the notebook and
-keep its outputs.
+The procedures connect through saved products:
+
+1. **Describe responses.** Analysis templates read observed or simulated response files,
+   establish a pattern and expose discrepancies.
+2. **Check a mechanism.** Parameter shifting starts from saved baseline parameters and
+   examines controlled interventions without refitting.
+3. **Fit configured models.** The single [fitting template](templates/fitting.ipynb)
+   estimates parameters, saves fit records, optionally simulates, and compares configured benchmarks.
+4. **Generate predictions.** [Simulation](templates/simulation.ipynb) produces saved
+   responses from any configured collection of fits.
+5. **Compare results.** [Model comparison](templates/model_comparison.ipynb) reads the
+   saved fits and responses, relating likelihood, AIC, search variation and behavioral predictions.
+
+The shared example compares ordinary CMR, source-only eCMR and broader eCMR. To inspect
+completed runs, use the supplied fits and responses. To change the scientific specification,
+configure the fitting or intervention procedure and pass its saved outputs to the analyses.
+The [local instructions](#from-a-template-to-a-run) explain preparation and execution.
 
 ## The experiment
 
@@ -101,7 +112,7 @@ an unavailable category or transition into a zero-valued observation.
 
 ## Download the shared inputs
 
-Create a `data` folder in your working folder, and a `fits` folder inside it.
+Create a `data` folder in your working folder, with `fits` and `simulations` folders inside it.
 Save each file with the name shown below. Use **Save Link As** if your browser
 opens a JSON file instead of downloading it. No repository checkout is required.
 
@@ -112,12 +123,21 @@ opens a JSON file instead of downloading it. No repository checkout is required.
 | [CMR demonstration fit](templates/data/fits/Dupertuys2026_CMR_demo.json) | `data/fits/Dupertuys2026_CMR_demo.json` |
 | [Source-only eCMR fit](templates/data/fits/Dupertuys2026_eCMR_source_only.json) | `data/fits/Dupertuys2026_eCMR_source_only.json` |
 | [Broader eCMR fit](templates/data/fits/Dupertuys2026_eCMR_broad.json) | `data/fits/Dupertuys2026_eCMR_broad.json` |
+| [CMR responses](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5` |
+| [CMR response provenance](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.json` |
+| [Broader eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5` |
+| [Broader eCMR response provenance](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json` |
+| [Source-only eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5` |
+| [Source-only eCMR response provenance](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json` |
 
 The observation file and distance matrix are the existing JAXCMR inputs, with no
 extracts or recoding. The observation file also matches the ECMR3 project's copy.
 All three fit records were prepared with the current library using the fitting
 procedure below, including an independent recalculation of their objectives. [Fit provenance](templates/data/fits/README.md)
-records their sources and assumptions.
+records their sources and assumptions. The response examples were produced by the simulation
+template with ten repetitions per selected list and seed 1. Their JSON sidecars record the
+parameters, selections and simulation settings. They are saved inputs to analysis; analysis
+notebooks do not invoke fitting or simulation when an input is missing.
 
 Each chapter has **Download notebook** and **Open in Colab** links beside its
 contents list. Code starts collapsed; expand a labeled block to see the calculation,
@@ -149,11 +169,9 @@ to retain an executed notebook, or **Copy to Drive** if you want a saved working
 copy. The [VS Code setup](getting-started.qmd) remains the local route and still
 awaits the planned PyPI release.
 
-The replacement fit records in this preview are newly prepared. The modeling
-notebooks' Colab setup still pins earlier published inputs; publishing these
-fits and updating that pin is needed before Colab reproduces the refreshed
-results shown here. Download this preview's notebooks and fit files for the
-current local examples.
+The Colab links use the `workshop-colab-2026-11-10` notebook revision. The setup cells install
+JAXCMR and fetch the supplied inputs from commit `d919f1ad6aeacc7a36c40b96e365316219a7f40a`.
+Analysis notebooks download the saved model responses; they do not run fitting or simulation.
 
 ## From a template to a run
 
@@ -167,13 +185,26 @@ Settings are ordinary values: paths, numbers, lists, dictionaries and import
 names. Imports, trial masks and model construction happen afterward, using the
 effective values. The fitting template can select a model and its components,
 objective, fitted parameters, participant subset and displayed analyses.
-Analysis templates expose their trial selections and measure-specific settings.
+Analysis templates expose their trial selections and measure-specific settings. Their inputs are saved response files;
+preparing or running an analysis does not generate missing simulations.
+
+Ordinary imports occupy their own cell after the optional Colab bootstrap. Derived paths,
+loading and calculations follow the injected parameters. `figure_str=""` displays figures
+without saving them; a nonempty name saves under `figure_dir`. The defaults provide explicit
+names for the worked examples. Subject-level CSV summaries use `output_dir`.
+
+The analysis controls include repeated-item capacity (`size`), stopping `mode`, condition queries,
+category fields and labels, and plot limits. Category recall also accepts configured paired
+contrasts and contrasts of contrasts. Select these for the question being asked; the defaults
+leave the optional tests empty.
 
 You can also supply settings externally. [Quarto](https://quarto.org/docs/computations/parameters.html)
 and [Papermill](https://papermill.readthedocs.io/en/latest/usage-parameterize.html)
 use the same tagged cell. An override replaces a whole top-level value: to
-change one entry of `parameters`, for example, supply the complete fixed/free
-dictionary for that run.
+change one model, supply the complete `model_configs` dictionary for that work unit.
+Use `fit_alg_path` and `fit_hyperparams` to select and configure the optimizer. Analysis
+templates use `data_paths` and `data_labels` for a collection; an explicit `data_path`
+retains single-dataset use. Their condition queries are applied to each input.
 
 ### Execute a report with Quarto
 
@@ -211,16 +242,27 @@ fitting runs that differ only in optimization seed and output folder:
 #| code-summary: "Prepare two fitting jobs without running them"
 
 from pathlib import Path
+from copy import deepcopy
 import nbformat
 import papermill as pm
+
+source = nbformat.read("fitting.ipynb", as_version=4)
+defaults = {}
+parameter_cell = next(cell for cell in source.cells
+                      if "parameters" in cell.metadata.get("tags", []))
+# Evaluate only the parameter assignments, not the fitting procedure.
+exec(parameter_cell.source, defaults)
 
 jobs = Path("analyses/rendered")
 jobs.mkdir(parents=True, exist_ok=True)
 for seed in [0, 1]:
+    configs = deepcopy(defaults["model_configs"])
+    for config in configs.values():
+        config["seed"] = seed
     path = jobs / f"fitting_seed_{seed}.ipynb"
     prepared = pm.execute_notebook(
-        "fitting_scipyde.ipynb", str(path),
-        parameters={"seed": seed, "output_dir": f"results/fitting-seed-{seed}"},
+        "fitting.ipynb", str(path),
+        parameters={"model_configs": configs, "output_dir": f"results/fitting-seed-{seed}"},
         prepare_only=True,
     )
     # Stored example results are not results from this new job.
@@ -231,7 +273,9 @@ for seed in [0, 1]:
     nbformat.write(prepared, path)
 ```
 
-Inspect the injected settings in each notebook. Execute one from the working
+To prepare one model per job, pass a one-entry `model_configs` dictionary. Preserve the
+project's chosen job boundaries: a model collection does not require running every model in
+each scheduled job. Inspect the injected settings in each notebook. Execute one from the working
 folder with:
 
 ```bash
@@ -255,45 +299,42 @@ later simulation can use its saved result.
 
 ## Modeling procedures
 
-The first three procedures default to ordinary CMR with shared parameters across
-participants. The fit estimates all nine continuous CMR parameters; learning
-before context updating and the exclusion of repeated recalls are explicit
-fixed mechanism choices. Its no-stop objective scores recall order
-conditional on observed response counts. Simulations use ten repetitions per
-list and reproduce those counts by construction, so recall length is not a
-prediction being tested here.
+The example collection estimates nine continuous CMR parameters and ten for each eCMR
+variant, using the same observations and termination-excluded likelihood. The two eCMR
+specifications differ in whether emotional modulation also affects temporal association learning.
+The default simulator conditions on observed recall counts. Recall length, stopping distributions
+and pure-list category totals therefore are imposed; mixed-list category allocation and recall
+organization can vary.
 
-The supplied demonstration fit lets simulation and parameter exploration run
-without another optimization. Model comparison uses two eCMR fits prepared under
-the same current equations, each with ten fitted parameters, and compares their
-pooled likelihood and AIC. Their records include the two preparation searches,
-source fingerprint and numerical precision. Behavioral discrepancies and search
-variation remain part of evaluating the results; fitting does not establish
-parameter recovery or a finished scientific account.
+Simulation and parameter shifting start from the supplied fits without optimization. The latter
+includes encoding-drift sweeps and a separate controlled temporal-emotional-modulation switch.
+Model comparison consumes the saved fits and responses. Its results describe pooled solutions,
+not independent participant estimates. Each procedure remains configurable for other inputs,
+models and scientific questions.
 
 | Procedure | Notebook | Required inputs |
 |---|---|---|
-| [Fitting a model](templates/fitting_scipyde.ipynb) | [Download](downloads/fitting_scipyde.ipynb) | Observations; produces a new CMR fit. |
-| [Simulating from a saved fit](templates/simulation.ipynb) | [Download](downloads/simulation.ipynb) | Observations + CMR fit. |
-| [Exploring parameter effects](templates/parameter_shifting.ipynb) | [Download](downloads/parameter_shifting.ipynb) | Observations + CMR fit. |
-| [Comparing pooled model fits](templates/model_comparison.ipynb) | [Download](downloads/model_comparison.ipynb) | The two eCMR fit records. |
+| [Fitting models](templates/fitting.ipynb) | [Download](downloads/fitting.ipynb) | Observations; produces configured fits and optional responses. |
+| [Simulating from saved fits](templates/simulation.ipynb) | [Download](downloads/simulation.ipynb) | Observations + named fit records. |
+| [Exploring parameter effects](templates/parameter_shifting.ipynb) | [Download](downloads/parameter_shifting.ipynb) | Observations + baseline fit records. |
+| [Comparing pooled model fits](templates/model_comparison.ipynb) | [Download](downloads/model_comparison.ipynb) | Observations + fit records + saved responses and provenance. |
 
 ## Recall performance
 
 | Procedure | Notebook | Required inputs |
 |---|---|---|
-| [Serial position curves](templates/spc.ipynb) | [Download](downloads/spc.ipynb) | Observations. |
-| [Probability of first and later recall](templates/pnr.ipynb) | [Download](downloads/pnr.ipynb) | Observations. |
-| [When recall ends](templates/termination_probability.ipynb) | [Download](downloads/termination_probability.ipynb) | Observations. |
+| [Serial position curves](templates/spc.ipynb) | [Download](downloads/spc.ipynb) | Saved observed/simulated responses. |
+| [Probability of first and later recall](templates/pnr.ipynb) | [Download](downloads/pnr.ipynb) | Saved observed/simulated responses. |
+| [When recall ends](templates/termination_probability.ipynb) | [Download](downloads/termination_probability.ipynb) | Saved observed/simulated responses. |
 
 ## Temporal and semantic organization
 
 | Procedure | Notebook | Required inputs |
 |---|---|---|
-| [Lag-conditional response probability](templates/crp.ipynb) | [Download](downloads/crp.ipynb) | Observations. |
-| [Temporal organization scores](templates/lagrank.ipynb) | [Download](downloads/lagrank.ipynb) | Observations. |
-| [Semantic distance-CRP](templates/distcrp.ipynb) | [Download](downloads/distcrp.ipynb) | Observations + distances. |
-| [Semantic organization scores](templates/distrank.ipynb) | [Download](downloads/distrank.ipynb) | Observations + distances. |
+| [Lag-conditional response probability](templates/crp.ipynb) | [Download](downloads/crp.ipynb) | Saved observed/simulated responses. |
+| [Temporal organization scores](templates/lagrank.ipynb) | [Download](downloads/lagrank.ipynb) | Saved observed/simulated responses. |
+| [Semantic distance-CRP](templates/distcrp.ipynb) | [Download](downloads/distcrp.ipynb) | Saved responses + distances. |
+| [Semantic organization scores](templates/distrank.ipynb) | [Download](downloads/distrank.ipynb) | Saved responses + distances. |
 
 ## Category analyses
 
@@ -302,9 +343,9 @@ notebook builds its lookup from those fields; no separate feature file is needed
 
 | Procedure | Notebook | Required inputs |
 |---|---|---|
-| [Recall rates by category](templates/cat_recall_rate.ipynb) | [Download](downloads/cat_recall_rate.ipynb) | Observations. |
-| [Serial position curves by category](templates/cat_spc.ipynb) | [Download](downloads/cat_spc.ipynb) | Observations. |
-| [Transitions within and between categories](templates/catcrp.ipynb) | [Download](downloads/catcrp.ipynb) | Observations. |
+| [Recall rates by category](templates/cat_recall_rate.ipynb) | [Download](downloads/cat_recall_rate.ipynb) | Saved observed/simulated responses. |
+| [Serial position curves by category](templates/cat_spc.ipynb) | [Download](downloads/cat_spc.ipynb) | Saved observed/simulated responses. |
+| [Transitions within and between categories](templates/catcrp.ipynb) | [Download](downloads/catcrp.ipynb) | Saved observed/simulated responses. |
 
 ## Adapting a procedure
 

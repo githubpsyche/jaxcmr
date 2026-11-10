@@ -31,8 +31,12 @@ links fourteen complete procedures using data from the war-photo-recall
 experiment, with downloadable notebooks and shared inputs. They cover behavioral
 analysis, fitting, simulation, parameter exploration and pooled model comparison.
 
+The templates connect a [single configurable fitting procedure](templates/fitting.ipynb)
+to saved simulations, interventions and comparisons. Analysis notebooks read the supplied
+response files or your own saved inputs.
+
 Use **Open in Colab** in a prepared chapter to install the pinned GitHub version
-and fetch its inputs automatically; no PyPI release is required for this route.
+and fetch its example inputs automatically; no PyPI release is required for this route.
 See [the Colab instructions](guide/templates.qmd#run-in-colab).
 
 The authoritative notebooks remain in [templates/](templates/). Other notebooks
