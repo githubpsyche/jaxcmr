@@ -92,8 +92,3 @@ example preparation; no automated documentation suite is added.
 The other templates, their outputs, scientific tests and research directories stay
 in place. The old CMR notebook's existing test checks execution, not teaching quality.
 The source-package rules exclude generated guide inputs.
-
-The setup page targets the planned 0.2.0 release. Until its exact PyPI command
-and notebook cell succeed in a fresh environment after publication, keep the
-release-status note visible. Building the site or installing a local candidate
-does not establish that the published-package instructions are ready.
