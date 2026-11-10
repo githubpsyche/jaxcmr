@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # These directories contain generated copies only; authoritative notebooks stay
-# in templates/ and guide/overview/. Keep chapter paths as plain list entries.
+# in templates/ and guide/. Keep chapter paths as plain list entries.
 rm -rf -- guide/templates guide/downloads docs
 mkdir -p guide/templates/data/fits guide/templates/data/simulations guide/downloads
 notebooks=()
@@ -17,6 +17,8 @@ if [ "${#notebooks[@]}" -eq 0 ]; then
     printf 'No notebook chapters found in guide/_quarto.yml\n' >&2
     exit 1
 fi
+
+cp guide/developer-setup.ipynb guide/downloads/developer-setup.ipynb
 
 # Library Guide sources live in the guide; only their downloadable copies are staged.
 mkdir -p guide/downloads/overview
