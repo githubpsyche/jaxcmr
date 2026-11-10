@@ -335,7 +335,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings"><span class="header-section-number">17.1</span> Settings</a></li>
   <li><a href="#select-the-observations" id="toc-select-the-observations" class="nav-link" data-scroll-target="#select-the-observations"><span class="header-section-number">17.2</span> Select the observations</a></li>
   <li><a href="#identify-the-recording-boundary" id="toc-identify-the-recording-boundary" class="nav-link" data-scroll-target="#identify-the-recording-boundary"><span class="header-section-number">17.3</span> Identify the recording boundary</a></li>
-  <li><a href="#interpret-and-adapt" id="toc-interpret-and-adapt" class="nav-link" data-scroll-target="#interpret-and-adapt"><span class="header-section-number">17.4</span> Interpret and adapt</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/termination_probability.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/termination_probability.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -364,7 +363,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Calculate where recorded recall sequences end. Compare stopping distributions with conditional stopping probabilities, mark the recording boundary and save the figure.</p>
 <section id="settings" class="level2" data-number="17.1">
 <h2 data-number="17.1" class="anchored" data-anchor-id="settings"><span class="header-section-number">17.1</span> Settings</h2>
-<p><code>data_paths</code> and <code>data_labels</code> select saved responses to compare. An explicit <code>data_path</code> uses the existing single-input mode. Set the condition queries and analysis controls below. See the <a href="../templates.html#from-a-template-to-a-run">overview</a> for input files, parameter injection and independent jobs.</p>
 <div id="16e93925" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:28.183473Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:28.183390Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:28.186821Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:28.186436Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
@@ -455,8 +453,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="select-the-observations" class="level2" data-number="17.2">
 <h2 data-number="17.2" class="anchored" data-anchor-id="select-the-observations"><span class="header-section-number">17.2</span> Select the observations</h2>
-<p><code>recalls</code> contains one-based study-position codes; zero marks unused response slots. <code>pres_itemnos</code> gives within-list item codes; zero marks a padded study slot. The arrays must retain those meanings when you substitute another dataset. SPC, PNR and lag-CRP also use <code>listLength</code> to label their positions.</p>
-<p>The queries choose the observations. <code>complete_lists_only</code> additionally excludes lists with padded study slots. The printed counts report the resulting selections. Each curve first summarizes a participant’s selected lists; participants then receive equal weight.</p>
 <div id="be701e1b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:29.195383Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:29.195269Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:29.197546Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:29.197110Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
@@ -521,8 +517,6 @@ Broader eCMR / Pure neutral: 1230 lists, 123 participants</code></pre>
 </section>
 <section id="identify-the-recording-boundary" class="level2" data-number="17.3">
 <h2 data-number="17.3" class="anchored" data-anchor-id="identify-the-recording-boundary"><span class="header-section-number">17.3</span> Identify the recording boundary</h2>
-<p>Zeros after the last response are padding, not recalled items. In simple mode, a stopping-bin count is divided by all selected trials; in conditional mode, by trials that reached that bin.</p>
-<p>The final bin combines stopping one response short of the recording capacity with records filling every response slot. The code derives this capacity from <code>recalls</code>, labels that bin with a plus sign and shades it. It is not an exact stopping count or an independently observed stopping hazard. Zero-response trials belong in the first bin.</p>
 <div id="6cf1ecde" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:29.408468Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:29.408401Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:29.410680Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:29.410256Z&quot;}}" data-execution_count="7">
 <details class="code-fold">
 <summary>7 — Prepare the condition and dataset comparison panels</summary>
@@ -606,11 +600,6 @@ Broader eCMR / Pure neutral: 1230 lists, 123 participants</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="interpret-and-adapt" class="level2" data-number="17.4">
-<h2 data-number="17.4" class="anchored" data-anchor-id="interpret-and-adapt"><span class="header-section-number">17.4</span> Interpret and adapt</h2>
-<p>Interpret the unshaded bins as stopping summaries. A rising conditional curve describes increasing stopping frequency among records still at risk; it does not establish why retrieval ends. The shaded terminal bin also contains records that reached the recording boundary.</p>
-<p>The supplied simulations force the observed recall counts. Their agreement in these distributions is imposed by that procedure, rather than evidence that the fitted models predict stopping. With another simulator, interpret this distinction from its stopping rule.</p>
 
 
 </section>

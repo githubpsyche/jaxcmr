@@ -335,7 +335,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings"><span class="header-section-number">23.1</span> Settings</a></li>
   <li><a href="#select-valid-category-observations" id="toc-select-valid-category-observations" class="nav-link" data-scroll-target="#select-valid-category-observations"><span class="header-section-number">23.2</span> Select valid category observations</a></li>
   <li><a href="#calculate-and-plot" id="toc-calculate-and-plot" class="nav-link" data-scroll-target="#calculate-and-plot"><span class="header-section-number">23.3</span> Calculate and plot</a></li>
-  <li><a href="#interpret-and-adapt" id="toc-interpret-and-adapt" class="nav-link" data-scroll-target="#interpret-and-adapt"><span class="header-section-number">23.4</span> Interpret and adapt</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/cat_spc.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/cat_spc.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -364,7 +363,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Calculate recall by study position separately for the chosen item categories. Select observations, exclude padded study slots from category denominators and save the curves.</p>
 <section id="settings" class="level2" data-number="23.1">
 <h2 data-number="23.1" class="anchored" data-anchor-id="settings"><span class="header-section-number">23.1</span> Settings</h2>
-<p><code>data_paths</code> and <code>data_labels</code> select saved responses to compare. An explicit <code>data_path</code> uses the existing single-input mode. Set the condition queries and analysis controls below. See the <a href="../templates.html#from-a-template-to-a-run">overview</a> for input files, parameter injection and independent jobs.</p>
 <div id="dad44073" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:49.697681Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:49.697617Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:49.701632Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:49.701298Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
@@ -454,7 +452,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="select-valid-category-observations" class="level2" data-number="23.2">
 <h2 data-number="23.2" class="anchored" data-anchor-id="select-valid-category-observations"><span class="header-section-number">23.2</span> Select valid category observations</h2>
-<p>The numerator counts recalled items from a category at a position. The denominator counts occasions on which a valid item from that category was studied at that position. It is not the total number of selected lists. The temporary category field below marks padded positions with a value outside the requested categories; it does not alter the input file.</p>
 <div id="015e8ad1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:50.734743Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:50.734624Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:50.736883Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:50.736507Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
@@ -597,10 +594,6 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="interpret-and-adapt" class="level2" data-number="23.4">
-<h2 data-number="23.4" class="anchored" data-anchor-id="interpret-and-adapt"><span class="header-section-number">23.4</span> Interpret and adapt</h2>
-<p>Compare category curves only where both denominators are defined. Read them alongside the overall SPC. A separation describes category-dependent recall in the selected observations; it does not locate an effect uniquely in encoding or retrieval.</p>
 
 
 </section>

@@ -334,7 +334,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings"><span class="header-section-number">24.1</span> Settings</a></li>
   <li><a href="#build-the-lookup-from-the-selected-observations" id="toc-build-the-lookup-from-the-selected-observations" class="nav-link" data-scroll-target="#build-the-lookup-from-the-selected-observations"><span class="header-section-number">24.2</span> Build the lookup from the selected observations</a></li>
   <li><a href="#calculate-and-plot" id="toc-calculate-and-plot" class="nav-link" data-scroll-target="#calculate-and-plot"><span class="header-section-number">24.3</span> Calculate and plot</a></li>
-  <li><a href="#interpret-and-adapt" id="toc-interpret-and-adapt" class="nav-link" data-scroll-target="#interpret-and-adapt"><span class="header-section-number">24.4</span> Interpret and adapt</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/catcrp.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/catcrp.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -363,7 +362,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Calculate transitions within and between item categories. Build a category lookup for the selected materials, count observed transitions relative to available opportunities and save the figure.</p>
 <section id="settings" class="level2" data-number="24.1">
 <h2 data-number="24.1" class="anchored" data-anchor-id="settings"><span class="header-section-number">24.1</span> Settings</h2>
-<p><code>data_paths</code> and <code>data_labels</code> select saved responses to compare. An explicit <code>data_path</code> uses the existing single-input mode. Set the condition queries and analysis controls below. See the <a href="../templates.html#from-a-template-to-a-run">overview</a> for input files, parameter injection and independent jobs.</p>
 <div id="a390cf39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:55.186016Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:55.185924Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:55.190248Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:55.189780Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
@@ -457,9 +455,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="build-the-lookup-from-the-selected-observations" class="level2" data-number="24.2">
 <h2 data-number="24.2" class="anchored" data-anchor-id="build-the-lookup-from-the-selected-observations"><span class="header-section-number">24.2</span> Build the lookup from the selected observations</h2>
-<p><code>category_field</code> supplies a category at each study position. The plotter needs one category per global item identifier, so each item must have a consistent assignment within the selected observations. Selecting another condition can use a different assignment.</p>
-<p>The code maps distinct category values to consecutive integer codes. This preserves category identity regardless of the numerical spacing of the original values. Lookup entry <code>i - 1</code> belongs to item ID <code>i</code>; unused vocabulary entries remain missing. The source file is unchanged.</p>
-<p>Set <code>category_features_path</code> to use an external item-category lookup instead of <code>category_field</code>. It may be a vector or an item-by-feature matrix; <code>feature_column</code> selects the column in a matrix. Row <code>i - 1</code> belongs to item ID <code>i</code>. Category values are converted to the same integer codes used by the default route. Supply custom feature files yourself, including in Colab.</p>
 <div id="81d6ee68" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.226003Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.225885Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.228147Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.227808Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
@@ -574,7 +569,6 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </section>
 <section id="calculate-and-plot" class="level2" data-number="24.3">
 <h2 data-number="24.3" class="anchored" data-anchor-id="calculate-and-plot"><span class="header-section-number">24.3</span> Calculate and plot</h2>
-<p>At each transition, a category bin is available if it contains an eligible next item. Observed choices are divided by those opportunities, separately for same and different categories. These two values need not sum to one. Selections containing only one category provide no opportunities for a different-category transition.</p>
 <div id="0a0f7074" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.367537Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.367471Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.369459Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.369088Z&quot;}}" data-execution_count="10">
 <details class="code-fold">
 <summary>10 — Prepare the condition and dataset comparison panels</summary>
@@ -638,10 +632,6 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="interpret-and-adapt" class="level2" data-number="24.4">
-<h2 data-number="24.4" class="anchored" data-anchor-id="interpret-and-adapt"><span class="header-section-number">24.4</span> Interpret and adapt</h2>
-<p>Compare same- and different-category probabilities after accounting for their opportunities. A pure-category selection has no different-category opportunities. Other properties of the materials can covary with category, so this contrast alone does not identify a mechanism.</p>
 
 
 </section>

@@ -337,7 +337,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#fit-and-recalculate-the-objectives" id="toc-fit-and-recalculate-the-objectives" class="nav-link" data-scroll-target="#fit-and-recalculate-the-objectives"><span class="header-section-number">11.3</span> Fit and recalculate the objectives</a></li>
   <li><a href="#generate-responses" id="toc-generate-responses" class="nav-link" data-scroll-target="#generate-responses"><span class="header-section-number">11.4</span> Generate responses</a></li>
   <li><a href="#compare-behavior" id="toc-compare-behavior" class="nav-link" data-scroll-target="#compare-behavior"><span class="header-section-number">11.5</span> Compare behavior</a></li>
-  <li><a href="#use-the-saved-results" id="toc-use-the-saved-results" class="nav-link" data-scroll-target="#use-the-saved-results"><span class="header-section-number">11.6</span> Use the saved results</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/fitting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/fitting.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -366,8 +365,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Estimate parameters for a configured collection of models, save the fit records, optionally simulate responses, and compare those responses with the observations. A one-entry collection is a single-model work unit.</p>
 <section id="parameters-and-setup" class="level2" data-number="11.1">
 <h2 data-number="11.1" class="anchored" data-anchor-id="parameters-and-setup"><span class="header-section-number">11.1</span> Parameters and setup</h2>
-<p>The tagged cell defines this work unit. Each <code>model_configs</code> entry specifies a model, its fixed/free parameters and its seed. <code>fit_alg_path</code> selects a compatible fitter; <code>fit_hyperparams</code> supplies its options. Bounds come from each model’s free parameters. SciPy DE is the example default. Evosax, scan/map subject fitting, L-BFGS-B and trust-constr use the same fitting interface but have different options. For example, <code>map_batch_size</code> belongs to MapEvosaxDE; gradient fitters require a differentiable objective. Replace the optimizer options when changing algorithms; options are not translated between methods.</p>
-<p><code>pooled=False</code> fits participants separately. <code>subject_indices</code> indexes sorted participant IDs. Paths are relative to the working folder. Independent jobs need distinct run names or output locations. Quarto/Papermill can supply the whole collection or one entry without body edits.</p>
 <div id="835bf0f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.173460Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.173256Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:17.193314Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:17.192147Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure the models and work unit</summary>
@@ -722,7 +719,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="select-observations-and-output-locations" class="level2" data-number="11.2">
 <h2 data-number="11.2" class="anchored" data-anchor-id="select-observations-and-output-locations"><span class="header-section-number">11.2</span> Select observations and output locations</h2>
-<p>Every model in this work unit uses the same selected observations. Pooling estimates a shared parameter set; it is a modeling assumption. The example has four lists per participant. The product folders and optional per-model <code>output_stem</code> determine saved filenames.</p>
 <div id="87c664bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.854205Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.854134Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.975729Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.975149Z&quot;}}" data-execution_count="9">
 <details class="code-fold">
 <summary>8 — Select the participant work unit and observation trials</summary>
@@ -837,7 +833,6 @@ Broader eCMR                     10       0</code></pre>
 </section>
 <section id="fit-and-recalculate-the-objectives" class="level2" data-number="11.3">
 <h2 data-number="11.3" class="anchored" data-anchor-id="fit-and-recalculate-the-objectives"><span class="header-section-number">11.3</span> Fit and recalculate the objectives</h2>
-<p>For each model, construct its factory and objective, run the chosen optimizer, and evaluate the returned parameter values again. Existing results are reused only with matching settings. A convergence flag describes the optimizer’s stopping criterion, not parameter recovery or a global optimum. The full settings, selected rows and package version and precision are saved.</p>
 <div id="14cfe716" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.989447Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.989389Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.991952Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.991504Z&quot;}}" data-execution_count="13">
 <details class="code-fold">
 <summary>12 — Prepare metadata for newly fitted records</summary>
@@ -1009,7 +1004,6 @@ fit_paths = {'CMR': 'results/fits/Dupertuys2026_CMR_demo_best_of_3.json', 'eCMR_
 </section>
 <section id="generate-responses" class="level2" data-number="11.4">
 <h2 data-number="11.4" class="anchored" data-anchor-id="generate-responses"><span class="header-section-number">11.4</span> Generate responses</h2>
-<p>Apply pooled parameters to the original participant IDs, or retain individual fitted assignments. The selected simulator determines the stopping assumptions. The default forced-count simulator conditions on observed recall lengths; matching those lengths is imposed. <code>redo_sims=False</code> reuses matching responses. A new fit regenerates responses. Set both <code>redo_sims</code> and <code>redo_figures</code> to false for a fit-only job.</p>
 <div id="cab2a0e5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:20.986476Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:20.986403Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:21.151454Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:21.150916Z&quot;}}" data-execution_count="16">
 <details class="code-fold">
 <summary>15 — Prepare participant parameters and response provenance</summary>
@@ -1134,7 +1128,6 @@ simulation_paths = {'CMR': 'results/simulations/Dupertuys2026_CMR_demo_best_of_3
 </section>
 <section id="compare-behavior" class="level2" data-number="11.5">
 <h2 data-number="11.5" class="anchored" data-anchor-id="compare-behavior"><span class="header-section-number">11.5</span> Compare behavior</h2>
-<p>The configured plotters analyze observed and simulated responses on matched selections. Replications retain participant IDs, so intervals summarize participants rather than treating every simulated list as a new person. These intervals do not represent parameter uncertainty. Each analysis can supply its own selection, arguments, labels, colors and figure suffix.</p>
 <div id="8adf1770" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:29.005823Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:29.005716Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:29.008257Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:29.007838Z&quot;}}" data-execution_count="18">
 <details class="code-fold">
 <summary>17 — Prepare configured model and observation comparisons</summary>
@@ -1242,10 +1235,6 @@ simulation_paths = {'CMR': 'results/simulations/Dupertuys2026_CMR_demo_best_of_3
 </div>
 </div>
 </div>
-</section>
-<section id="use-the-saved-results" class="level2" data-number="11.6">
-<h2 data-number="11.6" class="anchored" data-anchor-id="use-the-saved-results"><span class="header-section-number">11.6</span> Use the saved results</h2>
-<p>Supply the printed <code>fit_paths</code> to simulation or model comparison. Analysis templates consume the saved response paths, alongside any observed dataset. Use parameter shifting to examine controlled changes without refitting. Change the parameter cell to configure another model, dataset, optimizer or work unit; execute dependent cells to replace the stored example outputs.</p>
 
 
 </section>

@@ -335,7 +335,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings"><span class="header-section-number">16.1</span> Settings</a></li>
   <li><a href="#select-the-observations" id="toc-select-the-observations" class="nav-link" data-scroll-target="#select-the-observations"><span class="header-section-number">16.2</span> Select the observations</a></li>
   <li><a href="#compare-output-positions" id="toc-compare-output-positions" class="nav-link" data-scroll-target="#compare-output-positions"><span class="header-section-number">16.3</span> Compare output positions</a></li>
-  <li><a href="#interpret-and-adapt" id="toc-interpret-and-adapt" class="nav-link" data-scroll-target="#interpret-and-adapt"><span class="header-section-number">16.4</span> Interpret and adapt</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/pnr.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/pnr.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -364,7 +363,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Calculate which study positions supply a specified response. Compare the output positions and observation selections chosen in the parameters cell, then save the figure.</p>
 <section id="settings" class="level2" data-number="16.1">
 <h2 data-number="16.1" class="anchored" data-anchor-id="settings"><span class="header-section-number">16.1</span> Settings</h2>
-<p><code>data_paths</code> and <code>data_labels</code> select saved responses to compare. An explicit <code>data_path</code> uses the existing single-input mode. Set the condition queries and analysis controls below. See the <a href="../templates.html#from-a-template-to-a-run">overview</a> for input files, parameter injection and independent jobs.</p>
 <div id="2f3e77df" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:20.183457Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:20.183388Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:20.187578Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:20.187127Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
@@ -458,8 +456,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="select-the-observations" class="level2" data-number="16.2">
 <h2 data-number="16.2" class="anchored" data-anchor-id="select-the-observations"><span class="header-section-number">16.2</span> Select the observations</h2>
-<p><code>recalls</code> contains one-based study-position codes; zero marks unused response slots. <code>pres_itemnos</code> gives within-list item codes; zero marks a padded study slot. The arrays must retain those meanings when you substitute another dataset. SPC, PNR and lag-CRP also use <code>listLength</code> to label their positions.</p>
-<p>The queries choose the observations. <code>complete_lists_only</code> additionally excludes lists with padded study slots. The printed counts report the resulting selections. Each curve first summarizes a participant’s selected lists; participants then receive equal weight.</p>
 <div id="b732277a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:21.458430Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:21.458315Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:21.460695Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:21.460249Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
@@ -524,7 +520,6 @@ Broader eCMR / Pure neutral: 1230 lists, 123 participants</code></pre>
 </section>
 <section id="compare-output-positions" class="level2" data-number="16.3">
 <h2 data-number="16.3" class="anchored" data-anchor-id="compare-output-positions"><span class="header-section-number">16.3</span> Compare output positions</h2>
-<p>The horizontal axis is <strong>study position</strong>. <code>query_recall_position</code> selects an <strong>output position</strong>. For example, <code>2</code> means the third response. A trial ending before that response contributes no recalled item, but remains in the trial denominator. Consequently, later-output curves need not sum to one.</p>
 <div id="ba2460b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:21.682666Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:21.682596Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:21.684944Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:21.684602Z&quot;}}" data-execution_count="7">
 <details class="code-fold">
 <summary>7 — Prepare the condition and dataset comparison panels</summary>
@@ -599,10 +594,6 @@ Broader eCMR / Pure neutral: 1230 lists, 123 participants</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="interpret-and-adapt" class="level2" data-number="16.4">
-<h2 data-number="16.4" class="anchored" data-anchor-id="interpret-and-adapt"><span class="header-section-number">16.4</span> Interpret and adapt</h2>
-<p>Compare where each response originates and how much total probability remains at later outputs. A later-output curve can sum to less than one because trials ending earlier remain in its denominator. This differs from the probability that an item is recalled at any time.</p>
 
 
 </section>

@@ -336,7 +336,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#reconstruct-the-saved-specifications" id="toc-reconstruct-the-saved-specifications" class="nav-link" data-scroll-target="#reconstruct-the-saved-specifications"><span class="header-section-number">12.2</span> Reconstruct the saved specifications</a></li>
   <li><a href="#save-simulated-responses" id="toc-save-simulated-responses" class="nav-link" data-scroll-target="#save-simulated-responses"><span class="header-section-number">12.3</span> Save simulated responses</a></li>
   <li><a href="#inspect-the-configured-summaries" id="toc-inspect-the-configured-summaries" class="nav-link" data-scroll-target="#inspect-the-configured-summaries"><span class="header-section-number">12.4</span> Inspect the configured summaries</a></li>
-  <li><a href="#continue-with-analysis" id="toc-continue-with-analysis" class="nav-link" data-scroll-target="#continue-with-analysis"><span class="header-section-number">12.5</span> Continue with analysis</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/simulation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/simulation.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -365,8 +364,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Generate and save responses for a named collection of fitted models. Reconstruct each model from its fit record, preserve the observation and participant assignments, and optionally inspect configured behavioral summaries. This procedure performs no optimization.</p>
 <section id="parameters-and-setup" class="level2" data-number="12.1">
 <h2 data-number="12.1" class="anchored" data-anchor-id="parameters-and-setup"><span class="header-section-number">12.1</span> Parameters and setup</h2>
-<p><code>fit_paths</code> names the saved results. A one-entry mapping runs one model. <code>trial_query=None</code> uses the exact recorded rows; an explicit query specifies a new simulation selection. Saved records supply the factories, components, fixed settings and feature paths. Use distinct output folders for independent work units.</p>
-<p>Each <code>fit_paths</code> entry may also name a directory of participant-fit JSON files from separate jobs. The notebook combines matching specifications, orders parameter rows by participant ID and retains each participant’s recorded observations. Duplicate IDs and incompatible specifications are rejected. A directory produces <code>&lt;entry name&gt;.h5</code>; individual files retain their recorded output names. Upload custom fit directories yourself when running in Colab. Older fit files may omit the simulator: specify <code>sim_alg_path</code> in that case. A supplied value overrides the recorded simulator.</p>
 <div id="0926af39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.174168Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.173863Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:17.183327Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:17.182547Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure the saved fits and simulation work unit</summary>
@@ -756,8 +753,6 @@ Broader eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_broad.json</code><
 </section>
 <section id="save-simulated-responses" class="level2" data-number="12.3">
 <h2 data-number="12.3" class="anchored" data-anchor-id="save-simulated-responses"><span class="header-section-number">12.3</span> Save simulated responses</h2>
-<p>Each response file has a sidecar recording the actual fitted parameters, observation rows, model and simulator, random seed, repetition count, package version and precision. Matching files may be reused when <code>redo_sims=False</code>. Pooled values are assigned to the original participant IDs. The default simulator forces observed recall counts; it does not predict stopping.</p>
-<p>After editing the model implementation locally, set <code>redo_sims=True</code> to regenerate responses. Cache matching uses the recorded inputs and package version, not a scan of source files.</p>
 <div id="ee9422cd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:19.125797Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:19.125736Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:19.311045Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:19.310537Z&quot;}}" data-execution_count="12">
 <details class="code-fold">
 <summary>12 — Prepare participant parameters and response provenance</summary>
@@ -995,10 +990,6 @@ simulation_paths = {'CMR': 'results/simulations/Dupertuys2026_CMR_demo_best_of_3
 </div>
 </div>
 </div>
-</section>
-<section id="continue-with-analysis" class="level2" data-number="12.5">
-<h2 data-number="12.5" class="anchored" data-anchor-id="continue-with-analysis"><span class="header-section-number">12.5</span> Continue with analysis</h2>
-<p>Pass the printed response paths to the behavioral analysis templates. Those procedures read saved responses and can compare them with observations or other simulations. Model comparison uses both the fit records and these responses. Custom datasets and model specifications enter through your saved fit records and parameters; the notebook body is shared.</p>
 
 
 </section>

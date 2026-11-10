@@ -335,7 +335,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#parameters-and-setup" id="toc-parameters-and-setup" class="nav-link active" data-scroll-target="#parameters-and-setup"><span class="header-section-number">13.1</span> Parameters and setup</a></li>
   <li><a href="#load-the-baseline-fits" id="toc-load-the-baseline-fits" class="nav-link" data-scroll-target="#load-the-baseline-fits"><span class="header-section-number">13.2</span> Load the baseline fits</a></li>
   <li><a href="#simulate-controlled-changes" id="toc-simulate-controlled-changes" class="nav-link" data-scroll-target="#simulate-controlled-changes"><span class="header-section-number">13.3</span> Simulate controlled changes</a></li>
-  <li><a href="#continue-the-investigation" id="toc-continue-the-investigation" class="nav-link" data-scroll-target="#continue-the-investigation"><span class="header-section-number">13.4</span> Continue the investigation</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/parameter_shifting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/parameter_shifting.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -364,8 +363,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Start from saved fits and examine explicit changes to model parameters. Each sweep holds the remaining values fixed, simulates the same study lists, and saves responses and comparisons. This is a mechanism check; it performs no refitting.</p>
 <section id="parameters-and-setup" class="level2" data-number="13.1">
 <h2 data-number="13.1" class="anchored" data-anchor-id="parameters-and-setup"><span class="header-section-number">13.1</span> Parameters and setup</h2>
-<p><code>fit_paths</code> names the baselines. Each <code>parameter_sweeps</code> entry names its fit, parameter and values. Supply one entry for an independent work unit. The example includes encoding-drift sweeps and a separate switch of temporal emotional modulation. For another model, replace these entries with parameters that model uses. Boolean switches retain their boolean type.</p>
-<p>Paths are relative to the working folder. Model construction comes from the saved fit. Use distinct output folders for independent jobs; the sweep name separates products within a job.</p>
 <div id="4b959e7c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.755346Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.755268Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:37.760089Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:37.759732Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure baselines and parameter interventions</summary>
@@ -600,8 +597,6 @@ Broader eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_broad.json</code><
 </section>
 <section id="simulate-controlled-changes" class="level2" data-number="13.3">
 <h2 data-number="13.3" class="anchored" data-anchor-id="simulate-controlled-changes"><span class="header-section-number">13.3</span> Simulate controlled changes</h2>
-<p>Each sweep includes its fitted baseline. Use common random draws and the same observations and repetition count across values. Remaining fitted parameters stay unchanged. Responses preserve original participant IDs. The default forced-count simulator conditions on observed recall lengths.</p>
-<p>A switch such as <code>phi_emot_modulates_temporal</code> changes a mechanism at the baseline’s parameter values. Comparing separately optimized models also allows the other estimates to change; those are different scientific comparisons. Each saved response file records its baseline and intervention.</p>
 <div id="234747c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:39.149644Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:39.149563Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:39.369579Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:39.369131Z&quot;}}" data-execution_count="7">
 <details class="code-fold">
 <summary>7 — Prepare and describe the configured parameter sweeps</summary>
@@ -984,10 +979,6 @@ eCMR_broad_encoding {'Fitted baseline': 'results/parameter_shifting/eCMR_broad_e
 temporal_emotional_modulation {'Fitted baseline': 'results/parameter_shifting/temporal_emotional_modulation/baseline.h5', 'False': 'results/parameter_shifting/temporal_emotional_modulation/phi_emot_modulates_temporal_False.h5', 'True': 'results/parameter_shifting/temporal_emotional_modulation/phi_emot_modulates_temporal_True.h5'}</code></pre>
 </div>
 </div>
-</section>
-<section id="continue-the-investigation" class="level2" data-number="13.4">
-<h2 data-number="13.4" class="anchored" data-anchor-id="continue-the-investigation"><span class="header-section-number">13.4</span> Continue the investigation</h2>
-<p>Use the saved response paths in any analysis template to examine additional consequences. A promising intervention can motivate a new configuration in the fitting template. Its fitted performance then enters model comparison. Interpret the executed plots at the values displayed; a sensitivity curve alone does not establish identifiability or parameter recovery.</p>
 
 
 </section>

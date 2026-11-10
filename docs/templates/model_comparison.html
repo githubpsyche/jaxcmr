@@ -337,7 +337,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#recalculate-the-recorded-likelihoods" id="toc-recalculate-the-recorded-likelihoods" class="nav-link" data-scroll-target="#recalculate-the-recorded-likelihoods"><span class="header-section-number">14.3</span> Recalculate the recorded likelihoods</a></li>
   <li><a href="#compare-scores-and-searches" id="toc-compare-scores-and-searches" class="nav-link" data-scroll-target="#compare-scores-and-searches"><span class="header-section-number">14.4</span> Compare scores and searches</a></li>
   <li><a href="#compare-behavioral-predictions" id="toc-compare-behavioral-predictions" class="nav-link" data-scroll-target="#compare-behavioral-predictions"><span class="header-section-number">14.5</span> Compare behavioral predictions</a></li>
-  <li><a href="#interpret-the-results" id="toc-interpret-the-results" class="nav-link" data-scroll-target="#interpret-the-results"><span class="header-section-number">14.6</span> Interpret the results</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/model_comparison.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/model_comparison.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -366,7 +365,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Compare saved pooled model fits and their saved behavioral predictions. Establish which observations and assumptions they share, compare likelihood and AIC, and inspect behavioral agreement. Fitting and simulation are separate procedures that supply this notebook’s inputs.</p>
 <section id="parameters-and-setup" class="level2" data-number="14.1">
 <h2 data-number="14.1" class="anchored" data-anchor-id="parameters-and-setup"><span class="header-section-number">14.1</span> Parameters and setup</h2>
-<p><code>fit_paths</code> and <code>simulation_paths</code> use the same model names. Supply at least two pooled fits and matching response files. <code>model_labels</code> controls display names. The selected analyses and their settings determine the behavioral comparisons. Change paths to use your own completed runs. Missing responses must be produced with fitting or simulation before running this procedure.</p>
 <div id="220f2a50" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:40.864256Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:40.864170Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:40.868628Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:40.868242Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure the saved fits and response files</summary>
@@ -534,8 +532,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="establish-the-comparison" class="level2" data-number="14.2">
 <h2 data-number="14.2" class="anchored" data-anchor-id="establish-the-comparison"><span class="header-section-number">14.2</span> Establish the comparison</h2>
-<p>Compare factories, components, fixed assumptions and estimated parameters. The fits must identify the same observation file and selected rows, compatible unscaled likelihoods and stopping rules. The tables below describe the actual inputs.</p>
-<p>In eCMR, <code>phi_emot_modulates_temporal</code> determines whether emotional modulation also changes temporal association learning. Its fitted predictions also depend on all other estimated values. A comparison of fitted variants is distinct from the fixed-parameter intervention in parameter shifting.</p>
 <div id="610d3e90" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:41.913433Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:41.913365Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:41.915646Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:41.915298Z&quot;}}" data-execution_count="6">
 <details class="code-fold">
 <summary>6 — Load the named pooled fits</summary>
@@ -664,7 +660,6 @@ Broader eCMR      emotion_scale                         Estimated   0.16479   [2
 </section>
 <section id="recalculate-the-recorded-likelihoods" class="level2" data-number="14.3">
 <h2 data-number="14.3" class="anchored" data-anchor-id="recalculate-the-recorded-likelihoods"><span class="header-section-number">14.3</span> Recalculate the recorded likelihoods</h2>
-<p>Evaluate each saved physical parameter vector under the installed implementation. Historical fit records require their original semantics; loading parameter values alone cannot establish replication.</p>
 <div id="d367b707" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:42.017649Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:42.017562Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:43.641239Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:43.640763Z&quot;}}" data-execution_count="9">
 <details class="code-fold">
 <summary>9 — Check saved likelihoods against the current inputs</summary>
@@ -717,7 +712,6 @@ Broader eCMR      7164.357873         7164.357873</code></pre>
 </section>
 <section id="compare-scores-and-searches" class="level2" data-number="14.4">
 <h2 data-number="14.4" class="anchored" data-anchor-id="compare-scores-and-searches"><span class="header-section-number">14.4</span> Compare scores and searches</h2>
-<p>AIC = 2 × estimated parameter count + 2 × negative log likelihood. Supply unscaled NLL objectives; an arbitrary optimization score is not suitable for AIC. Lower values are preferred. Each row is one pooled fit. Recorded search histories show optimization variation.</p>
 <div id="d886c2d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:43.642719Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:43.642643Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:43.645584Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:43.645261Z&quot;}}" data-execution_count="10">
 <details class="code-fold">
 <summary>10 — Calculate and save pooled AIC comparisons</summary>
@@ -778,7 +772,6 @@ Broader eCMR           1  7164.407215</code></pre>
 </section>
 <section id="compare-behavioral-predictions" class="level2" data-number="14.5">
 <h2 data-number="14.5" class="anchored" data-anchor-id="compare-behavioral-predictions"><span class="header-section-number">14.5</span> Compare behavioral predictions</h2>
-<p>Read the saved responses and check their provenance against the selected fits. The same analyses describe observations and simulations. Consider where a lower-scoring model improves predictions and where substantial discrepancies remain. Under forced-count simulation, recall counts are inputs; pure-list recall totals and stopping distributions cannot demonstrate predicted differences.</p>
 <div id="a8dc9616" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:43.650052Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:43.649961Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:43.674664Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:43.674174Z&quot;}}" data-execution_count="12">
 <details class="code-fold">
 <summary>12 — Load the responses produced by the fitting or simulation procedure</summary>
@@ -928,10 +921,6 @@ Broader eCMR — data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5 —
 </div>
 </div>
 </div>
-</section>
-<section id="interpret-the-results" class="level2" data-number="14.6">
-<h2 data-number="14.6" class="anchored" data-anchor-id="interpret-the-results"><span class="header-section-number">14.6</span> Interpret the results</h2>
-<p>Consider model differences, AIC, search variation and behavioral discrepancies together. A lower AIC does not establish a global optimum, parameter recovery or a unique theoretical explanation. Pooled fit records are not independent participant estimates and do not justify participant-level winner tests. Use the analysis templates for additional comparisons of these same saved responses. The printed paths identify this run’s saved tables and figures.</p>
 
 
 </section>
