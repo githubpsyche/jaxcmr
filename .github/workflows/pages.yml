@@ -1,0 +1,50 @@
+name: Publish guide
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'guide/**'
+      - 'templates/**'
+      - 'data/**'
+      - 'build-docs.sh'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: '1.11.9'
+      - uses: actions/configure-pages@v5
+      - name: Render the guide without executing notebooks
+        run: |
+          bash build-docs.sh
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en"><meta charset="utf-8"><title>JAXCMR</title>
+          <meta http-equiv="refresh" content="0; url=guide/">
+          <link rel="canonical" href="https://githubpsyche.github.io/jaxcmr/guide/">
+          <a href="guide/">Open the JAXCMR guide</a></html>
+          HTML
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

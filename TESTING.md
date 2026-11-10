@@ -60,6 +60,10 @@ processes; they never modify library files.
 
 ## Editing the guide
 
+The `Publish guide` workflow renders and publishes the guide to GitHub Pages after
+changes to its sources on `main`. It uses the same build command without executing
+notebooks. Only the guide is published; the site root redirects to `/jaxcmr/guide/`.
+
 The independent Quarto book in `guide/` contains 26 content pages: the introduction,
 setup page, Library Guide introduction and eight topic notebooks, Templates index and
 fourteen prepared template notebooks. Use [Quarto](https://quarto.org/docs/download/)
