@@ -11,8 +11,6 @@ from typing import Any
 import numpy as np
 from jax import lax, vmap
 from jax import numpy as jnp
-from numba import types
-from numba.typed import Dict
 
 from jaxcmr.typing import Array, Float, Integer, Real
 
@@ -43,6 +41,15 @@ def to_numba_typed_dict(py_dict: dict[str, np.ndarray]) -> dict[str, np.ndarray]
     -------
         dict[str, np.ndarray]: A Numba-typed dictionary containing 2D int32 arrays.
     """
+    try:
+        from numba import types
+        from numba.typed import Dict
+    except ImportError as error:
+        raise ImportError(
+            "to_numba_typed_dict requires the experimental extra: "
+            "install jaxcmr[experimental] or run uv sync --extra experimental."
+        ) from error
+
     # Define the key and value types for the Numba typed dict
     key_type = types.unicode_type
     value_type = types.Array(types.int32, 2, "C")  # 2D int64 array

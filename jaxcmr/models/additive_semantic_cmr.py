@@ -167,7 +167,7 @@ class CMR(Pytree):
         _activations = self.mcf.probe(self.context.state) * candidates
         semantic_support = lax.cond(
             self.recall_total == 0,
-            lambda: jnp.zeros_like(candidates, dtype=jnp.float32),
+            lambda: jnp.zeros_like(self.msem[0]),
             lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
         )
         merged_support = power_scale(

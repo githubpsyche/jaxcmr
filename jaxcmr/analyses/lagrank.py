@@ -18,8 +18,12 @@ item equals ``(n - rank_position) / (n - 1)`` where ``rank_position``
 uses midpoint tie-breaking. Transitions with only one available item
 (no choice) are excluded from the mean.
 
-**SimpleTabulation** (no repeats): single ``previous_item`` position,
-boolean ``avail_items`` mask, item-level ranking.
+**Explicit item ranks**: ``rank_method="item_midrank"`` retains tied item
+counts and calls ``percentile_rank``. The default remains the historical
+lag-bin implementation for compatibility.
+
+**SimpleTabulation** (historical lag-bin path): single ``previous_item`` position,
+boolean ``avail_items`` mask, distinct-lag-bin ranking.
 
 **Tabulation** (with repeats): multi-position ``previous_positions``
 and boolean lag-bin ranking, mirroring the CRP repeat-item convention.
@@ -33,6 +37,7 @@ JIT-safe. Use ``jit(lagrank, static_argnames=("size",))``.
 
 __all__ = [
     "percentile_rank",
+    "item_midrank_trial",
     "SimpleTabulation",
     "simple_tabulate_trial",
     "simple_lagrank",
@@ -55,7 +60,7 @@ from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
 from scipy import stats
-from scipy.stats import bootstrap
+from .uncertainty import mean_interval
 from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject
@@ -345,11 +350,48 @@ def tabulate_trial(
     return tab.rank_sum / tab.transition_count
 
 
+def item_midrank_trial(trial, presentation):
+    """Rank available study items with midpoint ties on a unique-item list.
+
+    Recall codes are one-indexed study positions; zeros are padding. Invalid or
+    repeated recall events break adjacency. Repeated study identities are not
+    supported by this explicitly item-based definition and return NaN.
+    """
+    positions = jnp.arange(1, presentation.size + 1)
+    present = presentation > 0
+    duplicate_study = jnp.any(
+        (presentation[:, None] == presentation[None, :])
+        & present[:, None] & present[None, :]
+        & ~jnp.eye(presentation.size, dtype=bool)
+    )
+
+    def step(state, choice):
+        available, previous, total, count = state
+        index = jnp.clip(choice - 1, 0, presentation.size - 1)
+        valid = (choice > 0) & (choice <= presentation.size) & available[index]
+        pool = jnp.where(available, jnp.abs(positions - previous), -1)
+        eligible = valid & (previous > 0) & (jnp.sum(available) > 1)
+        rank = percentile_rank(jnp.abs(choice - previous), pool)
+        available = available.at[index].set(available[index] & ~valid)
+        return (
+            available, jnp.where(valid, choice, 0),
+            total + jnp.where(eligible, rank, 0.0), count + eligible,
+        ), None
+
+    initial = (present, jnp.array(0), jnp.array(0.0), jnp.array(0))
+    (_, _, total, count), _ = lax.scan(step, initial, trial)
+    return jnp.where((count > 0) & ~duplicate_study, total / count, jnp.nan)
+
+
 def lagrank(
     dataset: RecallDataset,
     size: int = 3,
+    rank_method: str = "lag_bins",
 ) -> Float[Array, " trials"]:
-    """Compute per-trial lag-rank factors with support for repeated items.
+    """Compute per-trial factors using lag bins (default) or item midpoint ranks.
+
+    ``rank_method="item_midrank"`` requires unique study identities. When using
+    JIT, mark both ``size`` and ``rank_method`` as static arguments.
 
     Parameters
     ----------
@@ -364,6 +406,10 @@ def lagrank(
         Per-trial temporal factor scores.
 
     """
+    if rank_method == "item_midrank":
+        return vmap(item_midrank_trial)(dataset["recalls"], dataset["pres_itemnos"])
+    if rank_method != "lag_bins":
+        raise ValueError("rank_method must be 'lag_bins' or 'item_midrank'")
     return vmap(tabulate_trial, in_axes=(0, 0, None))(
         dataset["recalls"], dataset["pres_itemnos"], size
     )
@@ -378,6 +424,7 @@ def subject_lagrank(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     size: int = 3,
+    rank_method: str = "lag_bins",
 ) -> np.ndarray:
     """Compute per-subject mean lag-rank factor.
 
@@ -397,7 +444,8 @@ def subject_lagrank(
 
     """
     subject_values = apply_by_subject(
-        dataset, trial_mask, jit(lagrank, static_argnames=("size",)), size=size
+        dataset, trial_mask, jit(lagrank, static_argnames=("size", "rank_method")),
+        size=size, rank_method=rank_method
     )
     return np.array([float(jnp.nanmean(v)) for v in subject_values])
 
@@ -543,6 +591,10 @@ def plot_lagrank(
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    rank_method: str = "lag_bins",
+    bootstrap_method: str = "BCa",
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot subject-wise lag-rank factors as points with error bars.
 
@@ -579,16 +631,18 @@ def plot_lagrank(
 
     x = np.arange(len(datasets))
     for i, data in enumerate(datasets):
-        factors = subject_lagrank(data, trial_masks[i], size=size)
+        factors = subject_lagrank(data, trial_masks[i], size=size, rank_method=rank_method)
         valid = factors[np.isfinite(factors)]
         mean = float(np.nanmean(factors))
         color = color_cycle[i % len(color_cycle)]
 
         if len(valid) > 1:
-            ci = bootstrap(
-                (valid,), np.nanmean, confidence_level=confidence_level
-            ).confidence_interval
-            yerr = [[mean - ci.low], [ci.high - mean]]
+            interval = mean_interval(
+                valid, confidence_level=confidence_level, method=bootstrap_method,
+                n_resamples=n_resamples,
+                seed=None if bootstrap_seed is None else bootstrap_seed + i,
+            )
+            yerr = [[mean - interval["low"]], [interval["high"] - mean]]
         else:
             yerr = [[0], [0]]
 

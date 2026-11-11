@@ -36,7 +36,7 @@ from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
 from scipy import stats
-from scipy.stats import bootstrap
+from .uncertainty import mean_interval
 from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..helpers import apply_by_subject, require_pres_itemids
@@ -357,6 +357,9 @@ def plot_distrank(
     axis: Axes | None = None,
     distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
+    bootstrap_method: str = "BCa",
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot subject-wise distance-rank factors as points with error bars.
 
@@ -409,10 +412,12 @@ def plot_distrank(
         color = color_cycle[i % len(color_cycle)]
 
         if len(valid) > 1:
-            ci = bootstrap(
-                (valid,), np.nanmean, confidence_level=confidence_level
-            ).confidence_interval
-            yerr = [[mean - ci.low], [ci.high - mean]]
+            interval = mean_interval(
+                valid, confidence_level=confidence_level, method=bootstrap_method,
+                n_resamples=n_resamples,
+                seed=None if bootstrap_seed is None else bootstrap_seed + i,
+            )
+            yerr = [[mean - interval["low"]], [interval["high"] - mean]]
         else:
             yerr = [[0], [0]]
 

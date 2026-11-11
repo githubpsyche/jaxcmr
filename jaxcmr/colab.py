@@ -4,6 +4,8 @@ import hashlib
 from pathlib import Path
 import re
 
+from jaxcmr.helpers import resolve_project_path
+
 
 # Files live in the repository, not the installed package. Update a hash only
 # when deliberately replacing that example input and its recorded provenance.
@@ -22,8 +24,8 @@ _INPUT_HASHES = {
 }
 
 
-def fetch_inputs(paths, *, revision):
-    """Fetch recognized example paths into the current working folder.
+def fetch_inputs(paths, *, revision, base_dir=None):
+    """Fetch registered relative example names into ``base_dir`` (default: cwd).
 
     ``revision`` is the full Git commit hash used to install JAXCMR. Pooch
     verifies each download. Matching local files are reused; conflicting files
@@ -34,9 +36,12 @@ def fetch_inputs(paths, *, revision):
     """
     if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
         raise ValueError("revision must be a full Git commit hash (40 hexadecimal characters).")
+    base = resolve_project_path(base_dir, Path.cwd()) if base_dir is not None else Path.cwd()
     for requested in paths:
-        path = Path(requested)
-        expected = _INPUT_HASHES.get(path.as_posix())
+        requested = Path(requested)
+        key = requested.as_posix()
+        expected = _INPUT_HASHES.get(key)
+        path = resolve_project_path(requested, base) if base_dir is not None else requested
         if expected is None:
             print(f"Custom input is user-managed: {path}")
             continue
@@ -54,7 +59,7 @@ def fetch_inputs(paths, *, revision):
         import pooch
 
         pooch.retrieve(
-            url=f"https://raw.githubusercontent.com/githubpsyche/jaxcmr/{revision}/{path.as_posix()}",
+            url=f"https://raw.githubusercontent.com/githubpsyche/jaxcmr/{revision}/{key}",
             known_hash=f"sha256:{expected}",
             fname=path.name,
             path=path.parent,

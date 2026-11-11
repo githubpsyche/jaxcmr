@@ -732,7 +732,6 @@ dependencies = [
     { name = "jax" },
     { name = "jaxtyping" },
     { name = "matplotlib" },
-    { name = "numba" },
     { name = "numpy" },
     { name = "scipy" },
     { name = "seaborn" },
@@ -744,6 +743,9 @@ dependencies = [
 [package.optional-dependencies]
 colab = [
     { name = "pooch" },
+]
+experimental = [
+    { name = "numba" },
 ]
 test = [
     { name = "build" },
@@ -757,11 +759,15 @@ dev = [
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "jupytext" },
-    { name = "line-profiler" },
     { name = "nbdev" },
     { name = "papermill" },
     { name = "pytest" },
+]
+embeddings = [
     { name = "sentence-transformers" },
+]
+profiling = [
+    { name = "line-profiler" },
 ]
 
 [package.metadata]
@@ -775,7 +781,7 @@ requires-dist = [
     { name = "jaxtyping", specifier = ">=0.2.36" },
     { name = "matplotlib", specifier = ">=3.5" },
     { name = "nbclient", marker = "extra == 'test'", specifier = ">=0.10" },
-    { name = "numba", specifier = ">=0.61.0" },
+    { name = "numba", marker = "extra == 'experimental'", specifier = ">=0.61.0" },
     { name = "numpy", specifier = ">=1.0" },
     { name = "pooch", marker = "extra == 'colab'", specifier = ">=1.8,<2" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.5" },
@@ -785,19 +791,19 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typing-extensions", specifier = ">=4.13" },
 ]
-provides-extras = ["colab", "test"]
+provides-extras = ["colab", "experimental", "test"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "ipython", specifier = ">=8.31.0" },
     { name = "jupytext", specifier = ">=1.16.7" },
-    { name = "line-profiler", specifier = ">=4.2.0" },
     { name = "nbdev", specifier = ">=2.3.37" },
     { name = "papermill", specifier = ">=2.6.0" },
     { name = "pytest", specifier = ">=8.3.5" },
-    { name = "sentence-transformers", specifier = ">=5.1.0" },
 ]
+embeddings = [{ name = "sentence-transformers", specifier = ">=5.1.0" }]
+profiling = [{ name = "line-profiler", specifier = ">=4.2.0" }]
 
 [[package]]
 name = "jaxlib"

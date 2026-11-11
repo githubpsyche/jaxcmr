@@ -190,6 +190,7 @@ class ScipyDE:
                 combined["fitness"] += result["fitness"]
                 combined["nit"] += result["nit"]
                 combined["converged"] += result["converged"]
+                combined.setdefault("diagnostics", {})[str(int(subjects[index]))] = result.get("diagnostics", {})
                 for name, values in result["fits"].items():
                     combined["fits"][name] += values
                 progress.set_description(
@@ -232,14 +233,25 @@ class ScipyDE:
         self._fit_counter += 1
         best = None
         best_fitness = np.inf
+        restart_history = []
         for index in range(self.all_hyperparams["best_of"]):
             rng = np.random.default_rng(
                 [self.all_hyperparams["seed"], fit_counter, index]
             )
             result = self._run_restart(objective, bounds, initial, rng)
+            physical = result.x if self.parameter_space is None else np.asarray(
+                self.parameter_space.to_physical(jnp.asarray(result.x))
+            )
+            restart_history.append({
+                "restart": index, "seed_components": [self.all_hyperparams["seed"], fit_counter, index],
+                "nll": float(result.fun), "nit": int(result.nit),
+                "converged": bool(result.success), "message": str(getattr(result, "message", "")),
+                "parameters": dict(zip(self.free_parameter_bounds, map(float, physical), strict=True)),
+            })
             if result.fun < best_fitness:
                 best, best_fitness = result, result.fun
         assert best is not None, "No fit result found"
+        best.restart_history = restart_history
         return best
 
     def _run_restart(
@@ -304,6 +316,7 @@ class ScipyDE:
         result["fits"] = {name: [float(value)] for name, value in parameters.items()}
         result["fits"]["subject"] = [subject_id]
         result["fit_time"] = time.perf_counter() - started
+        result["diagnostics"] = {"restarts": getattr(best, "restart_history", [])}
         return result
 
 

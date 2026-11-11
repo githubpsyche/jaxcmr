@@ -35,14 +35,17 @@ maintenance status; they are outside the prepared book chapters.
 
 ## Development and testing
 
-From the repository root, using its Python environment:
+From the repository root:
 
 ```sh
-python -m pip install -e ".[test]"
+uv sync
 ```
 
-See [TESTING.md](TESTING.md) for the existing test commands and instructions for
-building the guide. The `test` extra includes the notebook kernel and test tools.
+The repository selects Python 3.12 and installs the default notebook and development
+tools. Follow [Developer Setup](guide/developer-setup.ipynb) for VS Code and kernel
+selection. Use `uv sync --extra test` for packaging checks; see [TESTING.md](TESTING.md)
+for the existing test commands and local guide preview. Embeddings, profiling and
+Numba tooling are opt-in dependency groups or extras described in the setup page.
 
 ## Quick Start
 

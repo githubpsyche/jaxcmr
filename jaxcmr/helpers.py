@@ -7,7 +7,8 @@ used across the package.
 """
 
 import importlib
-from pathlib import Path
+import os
+from pathlib import Path, PureWindowsPath
 from typing import Callable, Iterable, List, Mapping, Sequence
 
 import h5py
@@ -25,6 +26,7 @@ __all__ = [
     "import_from_string",
     "format_floats",
     "find_project_root",
+    "resolve_project_path",
     "generate_trial_mask",
     "generate_recall_mask",
     "make_subject_trial_masks",
@@ -100,7 +102,7 @@ def format_floats(iterable: Iterable[float], precision: int = 2) -> List[str]:
 
 def find_project_root(marker: str = ".git") -> str:
     """
-    Finds the project root by traversing upwards from `start` directory
+    Finds the project root by traversing upwards from the working directory
     until a directory containing `marker` is found.
     """
     start = Path.cwd()
@@ -108,6 +110,30 @@ def find_project_root(marker: str = ".git") -> str:
         if (path / marker).exists():
             return str(path)
     raise FileNotFoundError(f"Could not find project root containing {marker}.")
+
+
+def resolve_project_path(path: str | Path, base_dir: str | Path) -> Path:
+    """Resolve a native path against an explicit base, preserving absolute paths.
+
+    Reject Windows drive-relative paths and paths for another operating system
+    instead of silently interpreting them as relative filenames.
+    """
+    path = Path(path).expanduser()
+    windows_path = PureWindowsPath(path)
+    if windows_path.drive and not windows_path.is_absolute():
+        raise ValueError(f"Use a fully absolute or relative path, not {str(path)!r}.")
+    if os.name != "nt" and windows_path.drive:
+        raise ValueError(f"Windows path {str(path)!r} must be replaced for this computer.")
+    if os.name == "nt":
+        if path.root and not path.drive:
+            raise ValueError(f"Include the drive in absolute Windows path {str(path)!r}.")
+        for part in path.parts[bool(path.anchor):]:
+            if part in (".", ".."):
+                continue
+            if (PureWindowsPath(part).is_reserved() or part.endswith((" ", "."))
+                    or any(character in '<>:"|?*' or ord(character) < 32 for character in part)):
+                raise ValueError(f"Invalid Windows filename component: {part!r}.")
+    return (path if path.is_absolute() else Path(base_dir).expanduser() / path).resolve()
 
 
 def generate_trial_mask(
@@ -418,6 +444,7 @@ def save_figure(
     figure_str: str,
     suffix:str | None = None,
     dpi: int = 600,
+    formats: Sequence[str] = ("png",),
 ) -> None:
     """Save the current matplotlib figure to disk, or just show it.
 
@@ -443,6 +470,9 @@ def save_figure(
         return
     os.makedirs(figure_dir, exist_ok=True)
     suffix_str = f"_{suffix}" if suffix else ""
-    figure_path = os.path.join(figure_dir, f"{figure_str}{suffix_str}.png")
-    plt.savefig(figure_path, bbox_inches="tight", dpi=dpi)
+    if not formats or any(fmt not in {"png", "svg", "pdf"} for fmt in formats):
+        raise ValueError("formats must contain png, svg, or pdf")
+    for fmt in dict.fromkeys(formats):
+        figure_path = os.path.join(figure_dir, f"{figure_str}{suffix_str}.{fmt}")
+        plt.savefig(figure_path, bbox_inches="tight", dpi=dpi)
     plt.show()

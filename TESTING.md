@@ -62,7 +62,7 @@ processes; they never modify library files.
 
 The rendered book is committed in `docs/`. GitHub Pages publishes that folder
 from `main` at https://githubpsyche.github.io/jaxcmr/. After changing the guide,
-run the build command below, then commit and push the source changes and `docs/`.
+prepare and review a local preview before committing and publishing the source and `docs/`.
 Notebook cells are not executed during rendering.
 
 The independent Quarto book in `guide/` contains 26 content pages: the introduction,
@@ -79,6 +79,31 @@ bash build-docs.sh
 Open `docs/index.html` for the preview. This command refreshes the generated
 `guide/templates/` and `guide/downloads/` staging directories and `docs/` output, so retired chapters
 do not remain in the site. It does not execute notebook cells.
+
+### Prepare matching Colab revisions
+
+The default build permits uncommitted local work and omits Colab links when a matching
+committed notebook/package pair is unavailable. It never commits or pushes changes.
+
+After review, commit the package, dependency and registered input changes first. Then:
+
+```sh
+uv run python prepare-guide.py pin
+```
+
+This reads the current commit and updates the fourteen conditional Colab setup pins.
+Review and commit those notebooks. Prepare the publishable book with:
+
+```sh
+bash build-docs.sh --publish
+```
+
+The build derives immutable Colab URLs from the last notebook commit, stages its exact
+notebooks as downloads, and rejects inconsistent pins, uncommitted notebook/package/input
+changes, or incorrect input hashes. Generated presentation links are added only to the
+staged chapters. Commit `docs/` after review and publish the source commits with it;
+there is no manually maintained Colab tag. A local preview's unpublished Colab setup
+cell reports that preparation is required before installing anything.
 
 The `book.chapters` list is the publication list. Keep notebook entries as plain
 `- templates/name.ipynb` or `- overview/name.ipynb` lines. Authoritative template
