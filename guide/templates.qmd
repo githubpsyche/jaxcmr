@@ -139,9 +139,9 @@ template with ten repetitions per selected list and seed 1. Their JSON sidecars 
 parameters, selections and simulation settings. They are saved inputs to analysis; analysis
 notebooks do not invoke fitting or simulation when an input is missing.
 
-Each chapter has a **Download notebook** link beside its contents list. Published
-chapters also have an **Open in Colab** link to the same committed notebook. Local
-previews omit that link until matching package and notebook revisions are prepared. Code starts collapsed; expand a labeled block to see the calculation,
+Each chapter has **Download notebook** and **Open in Colab** links beside its
+contents list. Colab opens the current notebook on GitHub’s `main` branch.
+Code starts collapsed; expand a labeled block to see the calculation,
 or use the **Code** menu to show all code at once. Figures and tables remain visible.
 
 ## Run in Colab
@@ -150,7 +150,7 @@ Choose **Open in Colab** beside a chapter's contents list. Sign in to Google,
 then choose **Runtime → Run all**. For the notebook opened from this repository,
 Colab may ask you to confirm **Run anyway**. A standard CPU runtime is enough.
 
-The setup cell installs JAXCMR from a pinned GitHub revision and downloads only
+The setup cell installs JAXCMR from GitHub’s `main` branch and downloads only
 that notebook's supplied inputs, checking their hashes. This route works before
 the PyPI release. Matching files are reused when setup runs again; a conflicting
 file is preserved and reported. If you change a path to your own input, upload
@@ -168,9 +168,9 @@ Colab deletes the temporary runtime. Use **File → Download → Download .ipynb
 to retain an executed notebook, or **Copy to Drive** if you want a saved working
 copy. For local installation, use the [homepage command](index.ipynb#installation).
 
-The book build generates Colab links from the committed notebook sources and checks
-their package/input revision. The download and Colab launch therefore use the same
-notebook. Analysis notebooks fetch saved model responses; they do not fit or simulate.
+Colab links and setup follow `main` as it changes. The rendered chapter and download
+are refreshed when the book is rebuilt. Analysis notebooks fetch saved model
+responses; they do not fit or simulate.
 
 ## From a template to a run
 

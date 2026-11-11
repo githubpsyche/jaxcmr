@@ -12,7 +12,8 @@ from jaxcmr import colab
 REVISION = "a" * 40
 
 
-def test_missing_input_is_pinned_verified_and_reused(tmp_path, monkeypatch):
+@pytest.mark.parametrize("revision", [REVISION, "main"])
+def test_missing_input_is_verified_and_reused(tmp_path, monkeypatch, revision):
     monkeypatch.chdir(tmp_path)
     path = Path("data/example.txt")
     content = b"example input\n"
@@ -26,10 +27,10 @@ def test_missing_input_is_pinned_verified_and_reused(tmp_path, monkeypatch):
         path.write_bytes(content)
 
     monkeypatch.setitem(sys.modules, "pooch", SimpleNamespace(retrieve=retrieve))
-    colab.fetch_inputs([str(path)], revision=REVISION)
-    colab.fetch_inputs([path], revision=REVISION)
+    colab.fetch_inputs([str(path)], revision=revision)
+    colab.fetch_inputs([path], revision=revision)
     assert calls == [{
-        "url": f"https://raw.githubusercontent.com/githubpsyche/jaxcmr/{REVISION}/data/example.txt",
+        "url": f"https://raw.githubusercontent.com/githubpsyche/jaxcmr/{revision}/data/example.txt",
         "known_hash": f"sha256:{digest}", "fname": "example.txt", "path": Path("data"),
     }]
     assert path.read_bytes() == content

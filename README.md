@@ -25,7 +25,7 @@ The templates connect a [single configurable fitting procedure](templates/fittin
 to saved simulations, interventions and comparisons. Analysis notebooks read the supplied
 response files or your own saved inputs.
 
-Use **Open in Colab** in a prepared chapter to install the pinned GitHub version
+Use **Open in Colab** in a prepared chapter to install JAXCMR from GitHub’s `main` branch
 and fetch its example inputs automatically; no PyPI release is required for this route.
 See [the Colab instructions](guide/templates.qmd#run-in-colab).
 

@@ -27,15 +27,15 @@ _INPUT_HASHES = {
 def fetch_inputs(paths, *, revision, base_dir=None):
     """Fetch registered relative example names into ``base_dir`` (default: cwd).
 
-    ``revision`` is the full Git commit hash used to install JAXCMR. Pooch
-    verifies each download. Matching local files are reused; conflicting files
+    ``revision`` is ``"main"`` or a full Git commit hash. Pooch verifies
+    each download. Matching local files are reused; conflicting files
     raise ``ValueError`` and are never replaced. Paths outside the registry are
     left alone, so changing a notebook parameter to a custom input does not
     download an example over it. Requires the optional ``jaxcmr[colab]`` extra
     only when a download is needed. This function does not install packages.
     """
-    if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
-        raise ValueError("revision must be a full Git commit hash (40 hexadecimal characters).")
+    if revision != "main" and not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
+        raise ValueError("revision must be main or a full Git commit hash (40 hexadecimal characters).")
     base = resolve_project_path(base_dir, Path.cwd()) if base_dir is not None else Path.cwd()
     for requested in paths:
         requested = Path(requested)
