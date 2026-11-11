@@ -336,7 +336,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#load-the-baseline-fits" id="toc-load-the-baseline-fits" class="nav-link" data-scroll-target="#load-the-baseline-fits"><span class="header-section-number">13.2</span> Load the baseline fits</a></li>
   <li><a href="#simulate-controlled-changes" id="toc-simulate-controlled-changes" class="nav-link" data-scroll-target="#simulate-controlled-changes"><span class="header-section-number">13.3</span> Simulate controlled changes</a></li>
   </ul>
-<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/parameter_shifting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/workshop-colab-2026-11-10/templates/parameter_shifting.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/parameter_shifting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/templates/parameter_shifting.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -366,98 +366,112 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="4b959e7c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.755346Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.755268Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:37.760089Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:37.759732Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure baselines and parameter interventions</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Observations and work-unit selection</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>data_path <span class="op">=</span> <span class="st">"data/Dupertuys2026.h5"</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Working directory (None discovers the enclosing Git project).</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>project_root <span class="op">=</span> <span class="va">None</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-label="3"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a><span class="co"># Saved model fits</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>fit_paths <span class="op">=</span> {</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    <span class="st">"CMR"</span>: <span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_source_only.json"</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_broad.json"</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>}</span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>model_labels <span class="op">=</span> {</span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>    <span class="st">"CMR"</span>: <span class="st">"CMR"</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"Source-only eCMR"</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"Broader eCMR"</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>}</span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a><span class="co"># Controlled interventions</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>parameter_sweeps <span class="op">=</span> {</span>
-<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>    <span class="st">"CMR_encoding"</span>: {</span>
-<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>        <span class="st">"fit"</span>: <span class="st">"CMR"</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
-<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a>    },</span>
-<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>    <span class="st">"eCMR_source_only_encoding"</span>: {</span>
-<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_source_only"</span>,</span>
-<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
-<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a>    },</span>
-<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a>    <span class="st">"eCMR_broad_encoding"</span>: {</span>
-<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_broad"</span>,</span>
-<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
-<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>    },</span>
-<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a>    <span class="st">"temporal_emotional_modulation"</span>: {</span>
-<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_broad"</span>,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>        <span class="st">"parameter"</span>: <span class="st">"phi_emot_modulates_temporal"</span>,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>        <span class="st">"values"</span>: [<span class="va">False</span>, <span class="va">True</span>],</span>
-<span id="cb1-37"><a href="#cb1-37" aria-label="37"></a>    },</span>
-<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a>}</span>
-<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a>trial_query <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a>max_subjects <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a>subject_indices <span class="op">=</span> []</span>
-<span id="cb1-42"><a href="#cb1-42" aria-label="42"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-label="43"></a><span class="co"># Output locations and regeneration</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-label="44"></a>output_dir <span class="op">=</span> <span class="st">"results/parameter_shifting"</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-label="45"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-label="46"></a><span class="co"># Simulation settings</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-label="47"></a>experiment_count <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-label="48"></a>simulation_seed <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a><span class="co"># Observations and work-unit selection</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>data_path <span class="op">=</span> <span class="st">"data/Dupertuys2026.h5"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a><span class="co"># Saved model fits</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>fit_paths <span class="op">=</span> {</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    <span class="st">"CMR"</span>: <span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_source_only.json"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"data/fits/Dupertuys2026_eCMR_broad.json"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>}</span>
+<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>model_labels <span class="op">=</span> {</span>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>    <span class="st">"CMR"</span>: <span class="st">"CMR"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"Source-only eCMR"</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"Broader eCMR"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>}</span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a><span class="co"># Controlled interventions</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>parameter_sweeps <span class="op">=</span> {</span>
+<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a>    <span class="st">"CMR_encoding"</span>: {</span>
+<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>        <span class="st">"fit"</span>: <span class="st">"CMR"</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
+<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a>    },</span>
+<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a>    <span class="st">"eCMR_source_only_encoding"</span>: {</span>
+<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_source_only"</span>,</span>
+<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
+<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
+<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>    },</span>
+<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>    <span class="st">"eCMR_broad_encoding"</span>: {</span>
+<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_broad"</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>        <span class="st">"parameter"</span>: <span class="st">"encoding_drift_rate"</span>,</span>
+<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>        <span class="st">"values"</span>: [<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.8</span>],</span>
+<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>    },</span>
+<span id="cb1-37"><a href="#cb1-37" aria-label="37"></a>    <span class="st">"temporal_emotional_modulation"</span>: {</span>
+<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a>        <span class="st">"fit"</span>: <span class="st">"eCMR_broad"</span>,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a>        <span class="st">"parameter"</span>: <span class="st">"phi_emot_modulates_temporal"</span>,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a>        <span class="st">"values"</span>: [<span class="va">False</span>, <span class="va">True</span>],</span>
+<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a>    },</span>
+<span id="cb1-42"><a href="#cb1-42" aria-label="42"></a>}</span>
+<span id="cb1-43"><a href="#cb1-43" aria-label="43"></a>trial_query <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-label="44"></a>max_subjects <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-label="45"></a>subject_indices <span class="op">=</span> []</span>
+<span id="cb1-46"><a href="#cb1-46" aria-label="46"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-label="47"></a><span class="co"># Output locations and regeneration</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-label="48"></a>output_dir <span class="op">=</span> <span class="st">"results/parameter_shifting"</span></span>
 <span id="cb1-49"><a href="#cb1-49" aria-label="49"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-label="50"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-label="51"></a><span class="co"># Behavioral comparisons and figure settings</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-label="52"></a>comparison_analysis_configs <span class="op">=</span> [</span>
-<span id="cb1-53"><a href="#cb1-53" aria-label="53"></a>    {<span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.spc.plot_spc"</span>, <span class="st">"title"</span>: <span class="st">"Recall by study position"</span>},</span>
-<span id="cb1-54"><a href="#cb1-54" aria-label="54"></a>    {</span>
-<span id="cb1-55"><a href="#cb1-55" aria-label="55"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.pnr.plot_pnr"</span>,</span>
-<span id="cb1-56"><a href="#cb1-56" aria-label="56"></a>        <span class="st">"title"</span>: <span class="st">"First recall"</span>,</span>
-<span id="cb1-57"><a href="#cb1-57" aria-label="57"></a>        <span class="st">"kwargs"</span>: {<span class="st">"query_recall_position"</span>: <span class="dv">0</span>},</span>
-<span id="cb1-58"><a href="#cb1-58" aria-label="58"></a>    },</span>
-<span id="cb1-59"><a href="#cb1-59" aria-label="59"></a>    {</span>
-<span id="cb1-60"><a href="#cb1-60" aria-label="60"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.crp.plot_crp"</span>,</span>
-<span id="cb1-61"><a href="#cb1-61" aria-label="61"></a>        <span class="st">"title"</span>: <span class="st">"Temporal transitions"</span>,</span>
-<span id="cb1-62"><a href="#cb1-62" aria-label="62"></a>        <span class="st">"kwargs"</span>: {<span class="st">"max_lag"</span>: <span class="dv">5</span>},</span>
-<span id="cb1-63"><a href="#cb1-63" aria-label="63"></a>    },</span>
-<span id="cb1-64"><a href="#cb1-64" aria-label="64"></a>    {</span>
-<span id="cb1-65"><a href="#cb1-65" aria-label="65"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate"</span>,</span>
-<span id="cb1-66"><a href="#cb1-66" aria-label="66"></a>        <span class="st">"title"</span>: <span class="st">"Category recall within mixed lists"</span>,</span>
-<span id="cb1-67"><a href="#cb1-67" aria-label="67"></a>        <span class="st">"contrast_name"</span>: <span class="st">"Item category"</span>,</span>
-<span id="cb1-68"><a href="#cb1-68" aria-label="68"></a>        <span class="st">"trial_query"</span>: <span class="st">"data['list_type'] == 1"</span>,</span>
-<span id="cb1-69"><a href="#cb1-69" aria-label="69"></a>        <span class="st">"kwargs"</span>: {</span>
-<span id="cb1-70"><a href="#cb1-70" aria-label="70"></a>            <span class="st">"category_field"</span>: <span class="st">"valence"</span>,</span>
-<span id="cb1-71"><a href="#cb1-71" aria-label="71"></a>            <span class="st">"category_values"</span>: [<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>],</span>
-<span id="cb1-72"><a href="#cb1-72" aria-label="72"></a>            <span class="st">"category_labels"</span>: [<span class="st">"Emotional"</span>, <span class="st">"Neutral"</span>],</span>
-<span id="cb1-73"><a href="#cb1-73" aria-label="73"></a>            <span class="st">"valid_field"</span>: <span class="st">"pres_itemnos"</span>,</span>
-<span id="cb1-74"><a href="#cb1-74" aria-label="74"></a>        },</span>
-<span id="cb1-75"><a href="#cb1-75" aria-label="75"></a>    },</span>
-<span id="cb1-76"><a href="#cb1-76" aria-label="76"></a>]</span>
-<span id="cb1-77"><a href="#cb1-77" aria-label="77"></a>single_analysis_configs <span class="op">=</span> []</span>
-<span id="cb1-78"><a href="#cb1-78" aria-label="78"></a>analysis_trial_query <span class="op">=</span> <span class="st">"jnp.all(data['pres_itemnos'] &gt; 0, 1)"</span></span>
-<span id="cb1-79"><a href="#cb1-79" aria-label="79"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
-<span id="cb1-80"><a href="#cb1-80" aria-label="80"></a>plot_seed <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-81"><a href="#cb1-81" aria-label="81"></a>filter_repeated_recalls <span class="op">=</span> <span class="va">False</span></span>
-<span id="cb1-82"><a href="#cb1-82" aria-label="82"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-83"><a href="#cb1-83" aria-label="83"></a>figure_size <span class="op">=</span> (<span class="dv">10</span>, <span class="fl">4.8</span>)</span>
-<span id="cb1-84"><a href="#cb1-84" aria-label="84"></a>figure_str <span class="op">=</span> <span class="st">"model_and_data"</span>  <span class="co"># Empty displays figures without saving.</span></span>
-<span id="cb1-85"><a href="#cb1-85" aria-label="85"></a></span>
-<span id="cb1-86"><a href="#cb1-86" aria-label="86"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-label="87"></a><span class="co"># Numerical precision</span></span>
-<span id="cb1-88"><a href="#cb1-88" aria-label="88"></a>enable_x64 <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb1-89"><a href="#cb1-89" aria-label="89"></a>redo_figures <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-50"><a href="#cb1-50" aria-label="50"></a><span class="co"># Simulation settings</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-label="51"></a>experiment_count <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-label="52"></a>simulation_seed <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-label="53"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-label="54"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-label="55"></a><span class="co"># Behavioral comparisons and figure settings</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-label="56"></a>comparison_analysis_configs <span class="op">=</span> [</span>
+<span id="cb1-57"><a href="#cb1-57" aria-label="57"></a>    {<span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.spc.plot_spc"</span>, <span class="st">"title"</span>: <span class="st">"Recall by study position"</span>},</span>
+<span id="cb1-58"><a href="#cb1-58" aria-label="58"></a>    {</span>
+<span id="cb1-59"><a href="#cb1-59" aria-label="59"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.pnr.plot_pnr"</span>,</span>
+<span id="cb1-60"><a href="#cb1-60" aria-label="60"></a>        <span class="st">"title"</span>: <span class="st">"First recall"</span>,</span>
+<span id="cb1-61"><a href="#cb1-61" aria-label="61"></a>        <span class="st">"kwargs"</span>: {<span class="st">"query_recall_position"</span>: <span class="dv">0</span>},</span>
+<span id="cb1-62"><a href="#cb1-62" aria-label="62"></a>    },</span>
+<span id="cb1-63"><a href="#cb1-63" aria-label="63"></a>    {</span>
+<span id="cb1-64"><a href="#cb1-64" aria-label="64"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.crp.plot_crp"</span>,</span>
+<span id="cb1-65"><a href="#cb1-65" aria-label="65"></a>        <span class="st">"title"</span>: <span class="st">"Temporal transitions"</span>,</span>
+<span id="cb1-66"><a href="#cb1-66" aria-label="66"></a>        <span class="st">"kwargs"</span>: {<span class="st">"max_lag"</span>: <span class="dv">5</span>},</span>
+<span id="cb1-67"><a href="#cb1-67" aria-label="67"></a>    },</span>
+<span id="cb1-68"><a href="#cb1-68" aria-label="68"></a>    {</span>
+<span id="cb1-69"><a href="#cb1-69" aria-label="69"></a>        <span class="st">"target"</span>: <span class="st">"jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate"</span>,</span>
+<span id="cb1-70"><a href="#cb1-70" aria-label="70"></a>        <span class="st">"title"</span>: <span class="st">"Category recall within mixed lists"</span>,</span>
+<span id="cb1-71"><a href="#cb1-71" aria-label="71"></a>        <span class="st">"contrast_name"</span>: <span class="st">"Item category"</span>,</span>
+<span id="cb1-72"><a href="#cb1-72" aria-label="72"></a>        <span class="st">"trial_query"</span>: <span class="st">"data['list_type'] == 1"</span>,</span>
+<span id="cb1-73"><a href="#cb1-73" aria-label="73"></a>        <span class="st">"kwargs"</span>: {</span>
+<span id="cb1-74"><a href="#cb1-74" aria-label="74"></a>            <span class="st">"category_field"</span>: <span class="st">"valence"</span>,</span>
+<span id="cb1-75"><a href="#cb1-75" aria-label="75"></a>            <span class="st">"category_values"</span>: [<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb1-76"><a href="#cb1-76" aria-label="76"></a>            <span class="st">"category_labels"</span>: [<span class="st">"Emotional"</span>, <span class="st">"Neutral"</span>],</span>
+<span id="cb1-77"><a href="#cb1-77" aria-label="77"></a>            <span class="st">"valid_field"</span>: <span class="st">"pres_itemnos"</span>,</span>
+<span id="cb1-78"><a href="#cb1-78" aria-label="78"></a>        },</span>
+<span id="cb1-79"><a href="#cb1-79" aria-label="79"></a>    },</span>
+<span id="cb1-80"><a href="#cb1-80" aria-label="80"></a>]</span>
+<span id="cb1-81"><a href="#cb1-81" aria-label="81"></a>single_analysis_configs <span class="op">=</span> []</span>
+<span id="cb1-82"><a href="#cb1-82" aria-label="82"></a>analysis_trial_query <span class="op">=</span> <span class="st">"jnp.all(data['pres_itemnos'] &gt; 0, 1)"</span></span>
+<span id="cb1-83"><a href="#cb1-83" aria-label="83"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
+<span id="cb1-84"><a href="#cb1-84" aria-label="84"></a>plot_seed <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-85"><a href="#cb1-85" aria-label="85"></a>filter_repeated_recalls <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-label="86"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-label="87"></a>figure_size <span class="op">=</span> (<span class="dv">10</span>, <span class="fl">4.8</span>)</span>
+<span id="cb1-88"><a href="#cb1-88" aria-label="88"></a>figure_str <span class="op">=</span> <span class="st">"model_and_data"</span>  <span class="co"># Empty displays figures without saving.</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-label="89"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-label="90"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-label="91"></a><span class="co"># Numerical precision</span></span>
+<span id="cb1-92"><a href="#cb1-92" aria-label="92"></a>enable_x64 <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-93"><a href="#cb1-93" aria-label="93"></a>redo_figures <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-94"><a href="#cb1-94" aria-label="94"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-label="95"></a><span class="co"># Artifact formats and exact local provenance</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-label="96"></a>figure_formats <span class="op">=</span> [<span class="st">"png"</span>]</span>
+<span id="cb1-97"><a href="#cb1-97" aria-label="97"></a>provenance_dir <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-98"><a href="#cb1-98" aria-label="98"></a>provenance_source_paths <span class="op">=</span> []</span>
+<span id="cb1-99"><a href="#cb1-99" aria-label="99"></a>notebook_source <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb1-100"><a href="#cb1-100" aria-label="100"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-label="101"></a><span class="co"># Named simultaneous overrides; existing one-parameter sweeps remain supported.</span></span>
+<span id="cb1-102"><a href="#cb1-102" aria-label="102"></a><span class="co"># Example: {"semantic_off": {"fit": "CMR", "overrides": {"semantic_scale": 0.0</span><span class="re">}}}</span></span>
+<span id="cb1-103"><a href="#cb1-103" aria-label="103"></a>parameter_interventions <span class="op">=</span> {}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="1ff8716c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.761444Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.761372Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:37.763322Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:37.762930Z&quot;}}" data-execution_count="2">
+<div id="1ff8716c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.761444Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.761372Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:37.763322Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:37.762930Z&quot;}}" data-execution_count="3">
 <details class="code-fold">
 <summary>2 — Prepare the Colab environment</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
@@ -465,53 +479,59 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    revision <span class="op">=</span> <span class="st">"d919f1ad6aeacc7a36c40b96e365316219a7f40a"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    revision <span class="op">=</span> <span class="st">"main"</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    subprocess.check_call(</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        [</span>
 <span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>            sys.executable,</span>
 <span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>            <span class="st">"-m"</span>,</span>
 <span id="cb2-11"><a href="#cb2-11" aria-label="11"></a>            <span class="st">"pip"</span>,</span>
 <span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>            <span class="st">"install"</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>            <span class="ss">f"jaxcmr[colab] @ git+https://github.com/githubpsyche/jaxcmr.git@</span><span class="sc">{</span>revision<span class="sc">}</span><span class="ss">"</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>        ]</span>
-<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>    )</span>
-<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>    <span class="im">from</span> jaxcmr.colab <span class="im">import</span> fetch_inputs</span>
-<span id="cb2-17"><a href="#cb2-17" aria-label="17"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-label="18"></a>    fetch_inputs([data_path, <span class="op">*</span>fit_paths.values()], revision<span class="op">=</span>revision)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>            <span class="st">"--upgrade"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>            <span class="ss">f"jaxcmr[colab] @ git+https://github.com/githubpsyche/jaxcmr.git@</span><span class="sc">{</span>revision<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>        ]</span>
+<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>    )</span>
+<span id="cb2-17"><a href="#cb2-17" aria-label="17"></a>    <span class="im">from</span> jaxcmr.colab <span class="im">import</span> fetch_inputs</span>
+<span id="cb2-18"><a href="#cb2-18" aria-label="18"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-label="19"></a>    fetch_inputs([data_path, <span class="op">*</span>fit_paths.values()], revision<span class="op">=</span>revision, base_dir<span class="op">=</span>project_root)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="28080c07" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.764511Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.764447Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.919276Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.918726Z&quot;}}" data-execution_count="3">
+<div id="28080c07" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:37.764511Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:37.764447Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.919276Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.918726Z&quot;}}" data-execution_count="4">
 <details class="code-fold">
 <summary>3 — Import packages</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> hashlib</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> jax</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">import</span> jaxcmr</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> (</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>    generate_trial_mask,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>    import_from_string,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    load_data,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    save_dict_to_hdf5,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>    save_figure,</span>
-<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> parameter_shifted_simulate_h5_from_h5, simulate_h5_from_h5</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> sys</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> jax</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">import</span> jaxcmr</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> (</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>    find_project_root,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    resolve_project_path,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    generate_trial_mask,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>    import_from_string,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    load_data,</span>
+<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    save_dict_to_hdf5,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>    save_figure,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> parameter_shifted_simulate_h5_from_h5, simulate_h5_from_h5</span>
+<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a><span class="im">from</span> jaxcmr.provenance <span class="im">import</span> capture_notebook</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="a8a4427d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.921057Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.920889Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.924112Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.923627Z&quot;}}" data-execution_count="4">
+<div id="a8a4427d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.921057Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.920889Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.924112Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.923627Z&quot;}}" data-execution_count="5">
 <details class="code-fold">
 <summary>4 — Define feature loading and model construction</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="kw">def</span> load_features(spec):</span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    semantic <span class="op">=</span> np.load(spec[<span class="st">"embedding_path"</span>]) <span class="cf">if</span> spec.get(<span class="st">"embedding_path"</span>) <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    semantic <span class="op">=</span> np.load(resolve_project_path(spec[<span class="st">"embedding_path"</span>], root_path)) <span class="cf">if</span> spec.get(<span class="st">"embedding_path"</span>) <span class="cf">else</span> <span class="va">None</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>    categorical <span class="op">=</span> (</span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>        np.load(spec[<span class="st">"emotion_feature_path"</span>])[</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>        np.load(resolve_project_path(spec[<span class="st">"emotion_feature_path"</span>], root_path))[</span>
 <span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>            :,</span>
 <span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>            <span class="bu">int</span>(spec.get(<span class="st">"feature_column"</span>, <span class="dv">6</span>)) : <span class="bu">int</span>(spec.get(<span class="st">"feature_column"</span>, <span class="dv">6</span>)) <span class="op">+</span> <span class="dv">1</span>,</span>
 <span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>        ]</span>
@@ -529,234 +549,190 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="9436509c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.925277Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.925195Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.945257Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.944837Z&quot;}}" data-execution_count="5">
+<div id="9436509c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.925277Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.925195Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.945257Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.944837Z&quot;}}" data-execution_count="6">
 <details class="code-fold">
 <summary>5 — Load observations and establish runtime settings</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, enable_x64)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>np.random.seed(plot_seed)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>data_path <span class="op">=</span> Path(data_path)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>output_dir <span class="op">=</span> Path(output_dir)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(data_path))</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>data_sha256 <span class="op">=</span> hashlib.sha256(data_path.read_bytes()).hexdigest()</span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a><span class="cf">elif</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    root_path <span class="op">=</span> Path.cwd()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a><span class="cf">else</span>:</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    <span class="cf">try</span>:</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>        root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>    <span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>        root_path <span class="op">=</span> Path.cwd()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, enable_x64)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>np.random.seed(plot_seed)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>data_path <span class="op">=</span> resolve_project_path(data_path, root_path)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(data_path))</span>
+<span id="cb5-18"><a href="#cb5-18" aria-label="18"></a>data_sha256 <span class="op">=</span> hashlib.sha256(data_path.read_bytes()).hexdigest()</span>
+<span id="cb5-19"><a href="#cb5-19" aria-label="19"></a>subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="70680913" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>5a — Capture parameters, inputs and exact local source</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>provenance <span class="op">=</span> capture_notebook(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>    {name: <span class="bu">globals</span>()[name] <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">'project_root'</span>, <span class="st">'analysis_trial_query'</span>, <span class="st">'comparison_analysis_configs'</span>, <span class="st">'confidence_level'</span>, <span class="st">'data_path'</span>, <span class="st">'enable_x64'</span>, <span class="st">'experiment_count'</span>, <span class="st">'figure_dir'</span>, <span class="st">'figure_formats'</span>, <span class="st">'figure_size'</span>, <span class="st">'figure_str'</span>, <span class="st">'filter_repeated_recalls'</span>, <span class="st">'fit_paths'</span>, <span class="st">'max_subjects'</span>, <span class="st">'model_labels'</span>, <span class="st">'notebook_source'</span>, <span class="st">'output_dir'</span>, <span class="st">'parameter_interventions'</span>, <span class="st">'parameter_sweeps'</span>, <span class="st">'plot_seed'</span>, <span class="st">'provenance_dir'</span>, <span class="st">'provenance_source_paths'</span>, <span class="st">'redo_figures'</span>, <span class="st">'simulation_seed'</span>, <span class="st">'single_analysis_configs'</span>, <span class="st">'subject_indices'</span>, <span class="st">'trial_query'</span>]},</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    resolve_project_path(provenance_dir, root_path) <span class="cf">if</span> provenance_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> resolve_project_path(output_dir, root_path) <span class="op">/</span> <span class="st">"provenance"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    [Path(jaxcmr.<span class="va">__file__</span>).parent, <span class="op">*</span><span class="bu">map</span>(Path, provenance_source_paths)],</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>    notebook_source<span class="op">=</span>notebook_source,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>    base_dir<span class="op">=</span>root_path,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a><span class="bu">print</span>(<span class="st">"Provenance:"</span>, provenance[<span class="st">"path"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
 <section id="load-the-baseline-fits" class="level2" data-number="13.2">
 <h2 data-number="13.2" class="anchored" data-anchor-id="load-the-baseline-fits"><span class="header-section-number">13.2</span> Load the baseline fits</h2>
-<div id="b7b98569" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.946676Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.946594Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:39.148196Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:39.147782Z&quot;}}" data-execution_count="6">
+<div id="b7b98569" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.946676Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.946594Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:39.148196Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:39.147782Z&quot;}}" data-execution_count="8">
 <details class="code-fold">
 <summary>6 — Load baseline fits and select their observations</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>fit_paths <span class="op">=</span> {name: Path(path) <span class="cf">for</span> name, path <span class="kw">in</span> fit_paths.items()}</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>records <span class="op">=</span> {name: json.loads(path.read_text()) <span class="cf">for</span> name, path <span class="kw">in</span> fit_paths.items()}</span>
-<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a><span class="cf">if</span> <span class="kw">not</span> records:</span>
-<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply at least one saved fit."</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>display_labels <span class="op">=</span> {</span>
-<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>    name: model_labels.get(name, record.get(<span class="st">"label"</span>, name))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>    <span class="cf">for</span> name, record <span class="kw">in</span> records.items()</span>
-<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>}</span>
-<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>selections <span class="op">=</span> {}</span>
-<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a><span class="cf">for</span> name, record <span class="kw">in</span> records.items():</span>
-<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>    <span class="cf">if</span> record.get(<span class="st">"data_sha256"</span>, data_sha256) <span class="op">!=</span> data_sha256:</span>
-<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: the fit refers to a different observation file."</span>)</span>
-<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>    <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> <span class="st">"selected_trial_indices"</span> <span class="kw">in</span> record:</span>
-<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a>        mask <span class="op">=</span> (</span>
-<span id="cb6-15"><a href="#cb6-15" aria-label="15"></a>            jnp.zeros(<span class="bu">len</span>(subjects), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-label="16"></a>            .at[jnp.asarray(record[<span class="st">"selected_trial_indices"</span>], dtype<span class="op">=</span><span class="bu">int</span>)]</span>
-<span id="cb6-17"><a href="#cb6-17" aria-label="17"></a>            .<span class="bu">set</span>(<span class="va">True</span>)</span>
-<span id="cb6-18"><a href="#cb6-18" aria-label="18"></a>        )</span>
-<span id="cb6-19"><a href="#cb6-19" aria-label="19"></a>    <span class="cf">else</span>:</span>
-<span id="cb6-20"><a href="#cb6-20" aria-label="20"></a>        mask <span class="op">=</span> generate_trial_mask(</span>
-<span id="cb6-21"><a href="#cb6-21" aria-label="21"></a>            data,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-label="22"></a>            trial_query</span>
-<span id="cb6-23"><a href="#cb6-23" aria-label="23"></a>            <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-label="24"></a>            <span class="cf">else</span> record.get(<span class="st">"trial_query"</span>, record.get(<span class="st">"data_query"</span>)),</span>
-<span id="cb6-25"><a href="#cb6-25" aria-label="25"></a>        )</span>
-<span id="cb6-26"><a href="#cb6-26" aria-label="26"></a>    subject_ids <span class="op">=</span> np.unique(subjects)</span>
-<span id="cb6-27"><a href="#cb6-27" aria-label="27"></a>    <span class="cf">if</span> max_subjects:</span>
-<span id="cb6-28"><a href="#cb6-28" aria-label="28"></a>        subject_ids <span class="op">=</span> subject_ids[:max_subjects]</span>
-<span id="cb6-29"><a href="#cb6-29" aria-label="29"></a>    <span class="cf">if</span> subject_indices:</span>
-<span id="cb6-30"><a href="#cb6-30" aria-label="30"></a>        subject_ids <span class="op">=</span> subject_ids[np.asarray(subject_indices, dtype<span class="op">=</span><span class="bu">int</span>)]</span>
-<span id="cb6-31"><a href="#cb6-31" aria-label="31"></a>    mask <span class="op">&amp;=</span> jnp.isin(data[<span class="st">"subject"</span>].ravel(), subject_ids)</span>
-<span id="cb6-32"><a href="#cb6-32" aria-label="32"></a>    <span class="cf">if</span> <span class="kw">not</span> record.get(<span class="st">"pooled"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>]):</span>
-<span id="cb6-33"><a href="#cb6-33" aria-label="33"></a>        mask <span class="op">&amp;=</span> jnp.isin(</span>
-<span id="cb6-34"><a href="#cb6-34" aria-label="34"></a>            data[<span class="st">"subject"</span>].ravel(), jnp.asarray(record[<span class="st">"fits"</span>][<span class="st">"subject"</span>])</span>
-<span id="cb6-35"><a href="#cb6-35" aria-label="35"></a>        )</span>
-<span id="cb6-36"><a href="#cb6-36" aria-label="36"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">bool</span>(mask.<span class="bu">any</span>()):</span>
-<span id="cb6-37"><a href="#cb6-37" aria-label="37"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: no observations match the selected work unit."</span>)</span>
-<span id="cb6-38"><a href="#cb6-38" aria-label="38"></a>    selections[name] <span class="op">=</span> mask</span>
-<span id="cb6-39"><a href="#cb6-39" aria-label="39"></a>    <span class="bu">print</span>(display_labels[name], <span class="st">"—"</span>, <span class="bu">int</span>(mask.<span class="bu">sum</span>()), <span class="st">"lists; fit:"</span>, fit_paths[name])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>fit_paths <span class="op">=</span> {name: resolve_project_path(path, root_path) <span class="cf">for</span> name, path <span class="kw">in</span> fit_paths.items()}</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>records <span class="op">=</span> {name: json.loads(path.read_text()) <span class="cf">for</span> name, path <span class="kw">in</span> fit_paths.items()}</span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a><span class="cf">if</span> <span class="kw">not</span> records:</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply at least one saved fit."</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>display_labels <span class="op">=</span> {</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>    name: model_labels.get(name, record.get(<span class="st">"label"</span>, name))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>    <span class="cf">for</span> name, record <span class="kw">in</span> records.items()</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>}</span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>selections <span class="op">=</span> {}</span>
+<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a><span class="cf">for</span> name, record <span class="kw">in</span> records.items():</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>    <span class="cf">if</span> record.get(<span class="st">"data_sha256"</span>, data_sha256) <span class="op">!=</span> data_sha256:</span>
+<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: the fit refers to a different observation file."</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>    <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> <span class="st">"selected_trial_indices"</span> <span class="kw">in</span> record:</span>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>        mask <span class="op">=</span> (</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>            jnp.zeros(<span class="bu">len</span>(subjects), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>            .at[jnp.asarray(record[<span class="st">"selected_trial_indices"</span>], dtype<span class="op">=</span><span class="bu">int</span>)]</span>
+<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>            .<span class="bu">set</span>(<span class="va">True</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>        )</span>
+<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    <span class="cf">else</span>:</span>
+<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>        mask <span class="op">=</span> generate_trial_mask(</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>            data,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>            trial_query</span>
+<span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>            <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-label="24"></a>            <span class="cf">else</span> record.get(<span class="st">"trial_query"</span>, record.get(<span class="st">"data_query"</span>)),</span>
+<span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>        )</span>
+<span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>    subject_ids <span class="op">=</span> np.unique(subjects)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-label="27"></a>    <span class="cf">if</span> max_subjects:</span>
+<span id="cb7-28"><a href="#cb7-28" aria-label="28"></a>        subject_ids <span class="op">=</span> subject_ids[:max_subjects]</span>
+<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a>    <span class="cf">if</span> subject_indices:</span>
+<span id="cb7-30"><a href="#cb7-30" aria-label="30"></a>        subject_ids <span class="op">=</span> subject_ids[np.asarray(subject_indices, dtype<span class="op">=</span><span class="bu">int</span>)]</span>
+<span id="cb7-31"><a href="#cb7-31" aria-label="31"></a>    mask <span class="op">&amp;=</span> jnp.isin(data[<span class="st">"subject"</span>].ravel(), subject_ids)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-label="32"></a>    <span class="cf">if</span> <span class="kw">not</span> record.get(<span class="st">"pooled"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>]):</span>
+<span id="cb7-33"><a href="#cb7-33" aria-label="33"></a>        mask <span class="op">&amp;=</span> jnp.isin(</span>
+<span id="cb7-34"><a href="#cb7-34" aria-label="34"></a>            data[<span class="st">"subject"</span>].ravel(), jnp.asarray(record[<span class="st">"fits"</span>][<span class="st">"subject"</span>])</span>
+<span id="cb7-35"><a href="#cb7-35" aria-label="35"></a>        )</span>
+<span id="cb7-36"><a href="#cb7-36" aria-label="36"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">bool</span>(mask.<span class="bu">any</span>()):</span>
+<span id="cb7-37"><a href="#cb7-37" aria-label="37"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: no observations match the selected work unit."</span>)</span>
+<span id="cb7-38"><a href="#cb7-38" aria-label="38"></a>    selections[name] <span class="op">=</span> mask</span>
+<span id="cb7-39"><a href="#cb7-39" aria-label="39"></a>    <span class="bu">print</span>(display_labels[name], <span class="st">"—"</span>, <span class="bu">int</span>(mask.<span class="bu">sum</span>()), <span class="st">"lists; fit:"</span>, fit_paths[name])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>CMR — 492 lists; fit: data/fits/Dupertuys2026_CMR_demo.json
-Source-only eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_source_only.json
-Broader eCMR — 492 lists; fit: data/fits/Dupertuys2026_eCMR_broad.json</code></pre>
-</div>
 </div>
 </section>
 <section id="simulate-controlled-changes" class="level2" data-number="13.3">
 <h2 data-number="13.3" class="anchored" data-anchor-id="simulate-controlled-changes"><span class="header-section-number">13.3</span> Simulate controlled changes</h2>
-<div id="234747c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:39.149644Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:39.149563Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:39.369579Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:39.369131Z&quot;}}" data-execution_count="7">
+<div id="234747c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:39.149644Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:39.149563Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:39.369579Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:39.369131Z&quot;}}" data-execution_count="9">
 <details class="code-fold">
-<summary>7 — Prepare and describe the configured parameter sweeps</summary>
+<summary>7 — Prepare sweeps and simultaneous interventions</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>sweep_inputs <span class="op">=</span> {}</span>
-<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>base_figure_dir <span class="op">=</span> Path(figure_dir) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
-<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="cf">for</span> sweep_name, sweep <span class="kw">in</span> parameter_sweeps.items():</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    model_name <span class="op">=</span> sweep[<span class="st">"fit"</span>]</span>
-<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>    fit_record <span class="op">=</span> records[model_name]</span>
-<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a>    parameter <span class="op">=</span> sweep[<span class="st">"parameter"</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>base_figure_dir <span class="op">=</span> resolve_project_path(figure_dir, root_path) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="cf">if</span> <span class="bu">set</span>(parameter_sweeps) <span class="op">&amp;</span> <span class="bu">set</span>(parameter_interventions):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Sweep and intervention names must be distinct"</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>specifications <span class="op">=</span> {}</span>
+<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a><span class="cf">for</span> name, sweep <span class="kw">in</span> parameter_sweeps.items():</span>
 <span id="cb8-7"><a href="#cb8-7" aria-label="7"></a>    values <span class="op">=</span> sweep[<span class="st">"values"</span>]</span>
 <span id="cb8-8"><a href="#cb8-8" aria-label="8"></a>    <span class="cf">if</span> <span class="kw">not</span> values <span class="kw">or</span> <span class="bu">len</span>(<span class="bu">set</span>(values)) <span class="op">!=</span> <span class="bu">len</span>(values):</span>
-<span id="cb8-9"><a href="#cb8-9" aria-label="9"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>sweep_name<span class="sc">}</span><span class="ss">: supply distinct parameter values."</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-label="10"></a>    selected_trials <span class="op">=</span> selections[model_name]</span>
-<span id="cb8-11"><a href="#cb8-11" aria-label="11"></a>    is_pooled <span class="op">=</span> fit_record.get(<span class="st">"pooled"</span>, fit_record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>])</span>
-<span id="cb8-12"><a href="#cb8-12" aria-label="12"></a>    subject_parameters <span class="op">=</span> {</span>
-<span id="cb8-13"><a href="#cb8-13" aria-label="13"></a>        key: jnp.asarray(val) <span class="cf">for</span> key, val <span class="kw">in</span> fit_record[<span class="st">"fits"</span>].items()</span>
+<span id="cb8-9"><a href="#cb8-9" aria-label="9"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: supply distinct parameter values"</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-label="10"></a>    specifications[name] <span class="op">=</span> {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-label="11"></a>        <span class="st">"fit"</span>: sweep[<span class="st">"fit"</span>],</span>
+<span id="cb8-12"><a href="#cb8-12" aria-label="12"></a>        <span class="st">"cases"</span>: [{<span class="st">"label"</span>: <span class="bu">str</span>(value), <span class="st">"stem"</span>: <span class="ss">f"</span><span class="sc">{</span>sweep[<span class="st">'parameter'</span>]<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-label="13"></a>                   <span class="st">"overrides"</span>: {sweep[<span class="st">"parameter"</span>]: value}} <span class="cf">for</span> value <span class="kw">in</span> values],</span>
 <span id="cb8-14"><a href="#cb8-14" aria-label="14"></a>    }</span>
-<span id="cb8-15"><a href="#cb8-15" aria-label="15"></a>    <span class="cf">if</span> is_pooled:</span>
-<span id="cb8-16"><a href="#cb8-16" aria-label="16"></a>        ids <span class="op">=</span> jnp.unique(data[<span class="st">"subject"</span>].ravel()[selected_trials])</span>
-<span id="cb8-17"><a href="#cb8-17" aria-label="17"></a>        subject_parameters <span class="op">=</span> {</span>
-<span id="cb8-18"><a href="#cb8-18" aria-label="18"></a>            key: jnp.repeat(val, <span class="bu">len</span>(ids))</span>
-<span id="cb8-19"><a href="#cb8-19" aria-label="19"></a>            <span class="cf">for</span> key, val <span class="kw">in</span> subject_parameters.items()</span>
-<span id="cb8-20"><a href="#cb8-20" aria-label="20"></a>            <span class="cf">if</span> key <span class="op">!=</span> <span class="st">"subject"</span></span>
-<span id="cb8-21"><a href="#cb8-21" aria-label="21"></a>        }</span>
-<span id="cb8-22"><a href="#cb8-22" aria-label="22"></a>        subject_parameters[<span class="st">"subject"</span>] <span class="op">=</span> ids</span>
-<span id="cb8-23"><a href="#cb8-23" aria-label="23"></a>    fixed <span class="op">=</span> (</span>
-<span id="cb8-24"><a href="#cb8-24" aria-label="24"></a>        fit_record.get(<span class="st">"fit_configuration"</span>, {})</span>
-<span id="cb8-25"><a href="#cb8-25" aria-label="25"></a>        .get(<span class="st">"parameters"</span>, {})</span>
-<span id="cb8-26"><a href="#cb8-26" aria-label="26"></a>        .get(<span class="st">"fixed"</span>, fit_record[<span class="st">"fixed"</span>])</span>
-<span id="cb8-27"><a href="#cb8-27" aria-label="27"></a>    )</span>
-<span id="cb8-28"><a href="#cb8-28" aria-label="28"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> fixed.items():</span>
-<span id="cb8-29"><a href="#cb8-29" aria-label="29"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">bool</span>):</span>
-<span id="cb8-30"><a href="#cb8-30" aria-label="30"></a>            subject_parameters[key] <span class="op">=</span> subject_parameters[key].astype(<span class="bu">bool</span>)</span>
-<span id="cb8-31"><a href="#cb8-31" aria-label="31"></a>    <span class="cf">if</span> parameter <span class="kw">not</span> <span class="kw">in</span> subject_parameters:</span>
-<span id="cb8-32"><a href="#cb8-32" aria-label="32"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
-<span id="cb8-33"><a href="#cb8-33" aria-label="33"></a>            <span class="ss">f"</span><span class="sc">{</span>sweep_name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>parameter<span class="sc">}</span><span class="ss"> is absent from the baseline parameters."</span></span>
-<span id="cb8-34"><a href="#cb8-34" aria-label="34"></a>        )</span>
-<span id="cb8-35"><a href="#cb8-35" aria-label="35"></a>    <span class="bu">print</span>(</span>
-<span id="cb8-36"><a href="#cb8-36" aria-label="36"></a>        sweep_name,</span>
-<span id="cb8-37"><a href="#cb8-37" aria-label="37"></a>        <span class="st">"— baseline:"</span>,</span>
-<span id="cb8-38"><a href="#cb8-38" aria-label="38"></a>        model_labels.get(model_name, model_name),</span>
-<span id="cb8-39"><a href="#cb8-39" aria-label="39"></a>        <span class="st">"— varied parameter:"</span>,</span>
-<span id="cb8-40"><a href="#cb8-40" aria-label="40"></a>        parameter,</span>
-<span id="cb8-41"><a href="#cb8-41" aria-label="41"></a>    )</span>
-<span id="cb8-42"><a href="#cb8-42" aria-label="42"></a>    <span class="cf">if</span> is_pooled:</span>
-<span id="cb8-43"><a href="#cb8-43" aria-label="43"></a>        <span class="bu">print</span>(<span class="ss">f"Shared baseline </span><span class="sc">{</span>parameter<span class="sc">}</span><span class="ss">:"</span>, subject_parameters[parameter][<span class="dv">0</span>].item())</span>
-<span id="cb8-44"><a href="#cb8-44" aria-label="44"></a>    <span class="cf">else</span>:</span>
-<span id="cb8-45"><a href="#cb8-45" aria-label="45"></a>        <span class="bu">print</span>(</span>
-<span id="cb8-46"><a href="#cb8-46" aria-label="46"></a>            tabulate(</span>
-<span id="cb8-47"><a href="#cb8-47" aria-label="47"></a>                <span class="bu">zip</span>(</span>
-<span id="cb8-48"><a href="#cb8-48" aria-label="48"></a>                    np.asarray(subject_parameters[<span class="st">"subject"</span>]),</span>
-<span id="cb8-49"><a href="#cb8-49" aria-label="49"></a>                    np.asarray(subject_parameters[parameter]),</span>
-<span id="cb8-50"><a href="#cb8-50" aria-label="50"></a>                ),</span>
-<span id="cb8-51"><a href="#cb8-51" aria-label="51"></a>                headers<span class="op">=</span>[<span class="st">"Subject"</span>, <span class="st">"Baseline value"</span>],</span>
-<span id="cb8-52"><a href="#cb8-52" aria-label="52"></a>            )</span>
-<span id="cb8-53"><a href="#cb8-53" aria-label="53"></a>        )</span>
-<span id="cb8-54"><a href="#cb8-54" aria-label="54"></a>    sweep_inputs[sweep_name] <span class="op">=</span> {</span>
-<span id="cb8-55"><a href="#cb8-55" aria-label="55"></a>        <span class="st">"fit_name"</span>: model_name,</span>
-<span id="cb8-56"><a href="#cb8-56" aria-label="56"></a>        <span class="st">"parameter"</span>: parameter,</span>
-<span id="cb8-57"><a href="#cb8-57" aria-label="57"></a>        <span class="st">"values"</span>: values,</span>
-<span id="cb8-58"><a href="#cb8-58" aria-label="58"></a>        <span class="st">"parameters"</span>: subject_parameters,</span>
-<span id="cb8-59"><a href="#cb8-59" aria-label="59"></a>        <span class="st">"trial_mask"</span>: selected_trials,</span>
-<span id="cb8-60"><a href="#cb8-60" aria-label="60"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-15"><a href="#cb8-15" aria-label="15"></a><span class="cf">for</span> name, intervention <span class="kw">in</span> parameter_interventions.items():</span>
+<span id="cb8-16"><a href="#cb8-16" aria-label="16"></a>    <span class="cf">if</span> <span class="kw">not</span> intervention[<span class="st">"overrides"</span>]:</span>
+<span id="cb8-17"><a href="#cb8-17" aria-label="17"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: supply at least one parameter override"</span>)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-label="18"></a>    specifications[name] <span class="op">=</span> {</span>
+<span id="cb8-19"><a href="#cb8-19" aria-label="19"></a>        <span class="st">"fit"</span>: intervention[<span class="st">"fit"</span>],</span>
+<span id="cb8-20"><a href="#cb8-20" aria-label="20"></a>        <span class="st">"cases"</span>: [{<span class="st">"label"</span>: intervention.get(<span class="st">"label"</span>, name), <span class="st">"stem"</span>: <span class="st">"intervention"</span>,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-label="21"></a>                   <span class="st">"overrides"</span>: intervention[<span class="st">"overrides"</span>]}],</span>
+<span id="cb8-22"><a href="#cb8-22" aria-label="22"></a>    }</span>
+<span id="cb8-23"><a href="#cb8-23" aria-label="23"></a><span class="cf">for</span> name, specification <span class="kw">in</span> specifications.items():</span>
+<span id="cb8-24"><a href="#cb8-24" aria-label="24"></a>    record <span class="op">=</span> records[specification[<span class="st">"fit"</span>]]</span>
+<span id="cb8-25"><a href="#cb8-25" aria-label="25"></a>    selection <span class="op">=</span> selections[specification[<span class="st">"fit"</span>]]</span>
+<span id="cb8-26"><a href="#cb8-26" aria-label="26"></a>    params <span class="op">=</span> {key: jnp.asarray(values) <span class="cf">for</span> key, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()}</span>
+<span id="cb8-27"><a href="#cb8-27" aria-label="27"></a>    <span class="cf">if</span> record.get(<span class="st">"pooled"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>] <span class="op">==</span> [<span class="op">-</span><span class="dv">1</span>]):</span>
+<span id="cb8-28"><a href="#cb8-28" aria-label="28"></a>        ids <span class="op">=</span> jnp.unique(data[<span class="st">"subject"</span>].ravel()[selection])</span>
+<span id="cb8-29"><a href="#cb8-29" aria-label="29"></a>        params <span class="op">=</span> {key: jnp.repeat(value, <span class="bu">len</span>(ids)) <span class="cf">for</span> key, value <span class="kw">in</span> params.items() <span class="cf">if</span> key <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb8-30"><a href="#cb8-30" aria-label="30"></a>        params[<span class="st">"subject"</span>] <span class="op">=</span> ids</span>
+<span id="cb8-31"><a href="#cb8-31" aria-label="31"></a>    fixed <span class="op">=</span> record.get(<span class="st">"fit_configuration"</span>, {}).get(<span class="st">"parameters"</span>, {}).get(<span class="st">"fixed"</span>, record[<span class="st">"fixed"</span>])</span>
+<span id="cb8-32"><a href="#cb8-32" aria-label="32"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> fixed.items():</span>
+<span id="cb8-33"><a href="#cb8-33" aria-label="33"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">bool</span>):</span>
+<span id="cb8-34"><a href="#cb8-34" aria-label="34"></a>            params[key] <span class="op">=</span> params[key].astype(<span class="bu">bool</span>)</span>
+<span id="cb8-35"><a href="#cb8-35" aria-label="35"></a>    <span class="cf">for</span> case <span class="kw">in</span> specification[<span class="st">"cases"</span>]:</span>
+<span id="cb8-36"><a href="#cb8-36" aria-label="36"></a>        <span class="cf">for</span> key <span class="kw">in</span> case[<span class="st">"overrides"</span>]:</span>
+<span id="cb8-37"><a href="#cb8-37" aria-label="37"></a>            <span class="cf">if</span> key <span class="kw">not</span> <span class="kw">in</span> params <span class="kw">or</span> key <span class="op">==</span> <span class="st">"subject"</span>:</span>
+<span id="cb8-38"><a href="#cb8-38" aria-label="38"></a>                <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: unknown or invalid parameter </span><span class="sc">{</span>key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-label="39"></a>    sweep_inputs[name] <span class="op">=</span> <span class="bu">dict</span>(fit_name<span class="op">=</span>specification[<span class="st">"fit"</span>], parameters<span class="op">=</span>params,</span>
+<span id="cb8-40"><a href="#cb8-40" aria-label="40"></a>                             trial_mask<span class="op">=</span>selection, cases<span class="op">=</span>specification[<span class="st">"cases"</span>])</span>
+<span id="cb8-41"><a href="#cb8-41" aria-label="41"></a>    <span class="bu">print</span>(name, <span class="st">"baseline:"</span>, specification[<span class="st">"fit"</span>], <span class="st">"interventions:"</span>, specification[<span class="st">"cases"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>CMR_encoding — baseline: CMR — varied parameter: encoding_drift_rate
-Shared baseline encoding_drift_rate: 0.6812013948529274
-eCMR_source_only_encoding — baseline: Source-only eCMR — varied parameter: encoding_drift_rate
-Shared baseline encoding_drift_rate: 0.6785235060258634
-eCMR_broad_encoding — baseline: Broader eCMR — varied parameter: encoding_drift_rate
-Shared baseline encoding_drift_rate: 0.6581157240934907
-temporal_emotional_modulation — baseline: Broader eCMR — varied parameter: phi_emot_modulates_temporal
-Shared baseline phi_emot_modulates_temporal: True</code></pre>
+<pre><code>CMR_encoding baseline: CMR interventions: [{'label': '0.2', 'stem': 'encoding_drift_rate_0.2', 'overrides': {'encoding_drift_rate': 0.2}}, {'label': '0.5', 'stem': 'encoding_drift_rate_0.5', 'overrides': {'encoding_drift_rate': 0.5}}, {'label': '0.8', 'stem': 'encoding_drift_rate_0.8', 'overrides': {'encoding_drift_rate': 0.8}}]
+eCMR_source_only_encoding baseline: eCMR_source_only interventions: [{'label': '0.2', 'stem': 'encoding_drift_rate_0.2', 'overrides': {'encoding_drift_rate': 0.2}}, {'label': '0.5', 'stem': 'encoding_drift_rate_0.5', 'overrides': {'encoding_drift_rate': 0.5}}, {'label': '0.8', 'stem': 'encoding_drift_rate_0.8', 'overrides': {'encoding_drift_rate': 0.8}}]
+eCMR_broad_encoding baseline: eCMR_broad interventions: [{'label': '0.2', 'stem': 'encoding_drift_rate_0.2', 'overrides': {'encoding_drift_rate': 0.2}}, {'label': '0.5', 'stem': 'encoding_drift_rate_0.5', 'overrides': {'encoding_drift_rate': 0.5}}, {'label': '0.8', 'stem': 'encoding_drift_rate_0.8', 'overrides': {'encoding_drift_rate': 0.8}}]
+temporal_emotional_modulation baseline: eCMR_broad interventions: [{'label': 'False', 'stem': 'phi_emot_modulates_temporal_False', 'overrides': {'phi_emot_modulates_temporal': False}}, {'label': 'True', 'stem': 'phi_emot_modulates_temporal_True', 'overrides': {'phi_emot_modulates_temporal': True}}]</code></pre>
 </div>
 </div>
-<div id="97354e3a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:39.371564Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:39.371466Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:07.166870Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:07.166211Z&quot;}}" data-execution_count="8">
+<div id="97354e3a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:39.371564Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:39.371466Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:07.166870Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:07.166211Z&quot;}}" data-execution_count="10">
 <details class="code-fold">
 <summary>8 — Simulate and save each baseline and intervention</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>all_shifted_paths <span class="op">=</span> {}</span>
 <span id="cb10-2"><a href="#cb10-2" aria-label="2"></a><span class="cf">for</span> sweep_name, prepared <span class="kw">in</span> sweep_inputs.items():</span>
 <span id="cb10-3"><a href="#cb10-3" aria-label="3"></a>    model_name <span class="op">=</span> prepared[<span class="st">"fit_name"</span>]</span>
 <span id="cb10-4"><a href="#cb10-4" aria-label="4"></a>    fit_record <span class="op">=</span> records[model_name]</span>
-<span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>    parameter <span class="op">=</span> prepared[<span class="st">"parameter"</span>]</span>
-<span id="cb10-6"><a href="#cb10-6" aria-label="6"></a>    values <span class="op">=</span> prepared[<span class="st">"values"</span>]</span>
-<span id="cb10-7"><a href="#cb10-7" aria-label="7"></a>    subject_parameters <span class="op">=</span> prepared[<span class="st">"parameters"</span>]</span>
-<span id="cb10-8"><a href="#cb10-8" aria-label="8"></a>    selected_trials <span class="op">=</span> prepared[<span class="st">"trial_mask"</span>]</span>
-<span id="cb10-9"><a href="#cb10-9" aria-label="9"></a>    model_factory <span class="op">=</span> construct_model(fit_record)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-label="10"></a>    features <span class="op">=</span> load_features(fit_record)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-label="11"></a>    paths <span class="op">=</span> {}</span>
-<span id="cb10-12"><a href="#cb10-12" aria-label="12"></a></span>
-<span id="cb10-13"><a href="#cb10-13" aria-label="13"></a>    cases <span class="op">=</span> [{<span class="st">"label"</span>: <span class="st">"Fitted baseline"</span>, <span class="st">"value"</span>: <span class="va">None</span>}]</span>
-<span id="cb10-14"><a href="#cb10-14" aria-label="14"></a>    <span class="cf">for</span> value <span class="kw">in</span> values:</span>
-<span id="cb10-15"><a href="#cb10-15" aria-label="15"></a>        cases.append({<span class="st">"label"</span>: <span class="bu">str</span>(value), <span class="st">"value"</span>: value})</span>
-<span id="cb10-16"><a href="#cb10-16" aria-label="16"></a>    <span class="cf">for</span> case <span class="kw">in</span> cases:</span>
-<span id="cb10-17"><a href="#cb10-17" aria-label="17"></a>        label, value <span class="op">=</span> case[<span class="st">"label"</span>], case[<span class="st">"value"</span>]</span>
-<span id="cb10-18"><a href="#cb10-18" aria-label="18"></a>        <span class="cf">if</span> value <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb10-19"><a href="#cb10-19" aria-label="19"></a>            simulated <span class="op">=</span> simulate_h5_from_h5(</span>
-<span id="cb10-20"><a href="#cb10-20" aria-label="20"></a>                model_factory,</span>
-<span id="cb10-21"><a href="#cb10-21" aria-label="21"></a>                data,</span>
-<span id="cb10-22"><a href="#cb10-22" aria-label="22"></a>                features,</span>
-<span id="cb10-23"><a href="#cb10-23" aria-label="23"></a>                subject_parameters,</span>
-<span id="cb10-24"><a href="#cb10-24" aria-label="24"></a>                selected_trials,</span>
-<span id="cb10-25"><a href="#cb10-25" aria-label="25"></a>                experiment_count<span class="op">=</span>experiment_count,</span>
-<span id="cb10-26"><a href="#cb10-26" aria-label="26"></a>                rng<span class="op">=</span>jax.random.split(jax.random.PRNGKey(simulation_seed))[<span class="dv">1</span>],</span>
-<span id="cb10-27"><a href="#cb10-27" aria-label="27"></a>                simulate_trial_fn<span class="op">=</span>import_from_string(fit_record[<span class="st">"simulation_function"</span>]),</span>
-<span id="cb10-28"><a href="#cb10-28" aria-label="28"></a>            )</span>
-<span id="cb10-29"><a href="#cb10-29" aria-label="29"></a>        <span class="cf">else</span>:</span>
-<span id="cb10-30"><a href="#cb10-30" aria-label="30"></a>            simulated <span class="op">=</span> parameter_shifted_simulate_h5_from_h5(</span>
-<span id="cb10-31"><a href="#cb10-31" aria-label="31"></a>                model_factory,</span>
-<span id="cb10-32"><a href="#cb10-32" aria-label="32"></a>                data,</span>
-<span id="cb10-33"><a href="#cb10-33" aria-label="33"></a>                features,</span>
-<span id="cb10-34"><a href="#cb10-34" aria-label="34"></a>                subject_parameters,</span>
-<span id="cb10-35"><a href="#cb10-35" aria-label="35"></a>                selected_trials,</span>
-<span id="cb10-36"><a href="#cb10-36" aria-label="36"></a>                experiment_count<span class="op">=</span>experiment_count,</span>
-<span id="cb10-37"><a href="#cb10-37" aria-label="37"></a>                varied_parameter<span class="op">=</span>parameter,</span>
-<span id="cb10-38"><a href="#cb10-38" aria-label="38"></a>                parameter_values<span class="op">=</span>[value],</span>
-<span id="cb10-39"><a href="#cb10-39" aria-label="39"></a>                rng<span class="op">=</span>jax.random.PRNGKey(simulation_seed),</span>
-<span id="cb10-40"><a href="#cb10-40" aria-label="40"></a>                simulate_trial_fn<span class="op">=</span>import_from_string(fit_record[<span class="st">"simulation_function"</span>]),</span>
-<span id="cb10-41"><a href="#cb10-41" aria-label="41"></a>            )[<span class="dv">0</span>]</span>
-<span id="cb10-42"><a href="#cb10-42" aria-label="42"></a>        path <span class="op">=</span> (</span>
-<span id="cb10-43"><a href="#cb10-43" aria-label="43"></a>            output_dir</span>
-<span id="cb10-44"><a href="#cb10-44" aria-label="44"></a>            <span class="op">/</span> sweep_name</span>
-<span id="cb10-45"><a href="#cb10-45" aria-label="45"></a>            <span class="op">/</span> (<span class="st">"baseline.h5"</span> <span class="cf">if</span> value <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>parameter<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">.h5"</span>)</span>
-<span id="cb10-46"><a href="#cb10-46" aria-label="46"></a>        )</span>
-<span id="cb10-47"><a href="#cb10-47" aria-label="47"></a>        path.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb10-48"><a href="#cb10-48" aria-label="48"></a>        save_dict_to_hdf5(simulated, <span class="bu">str</span>(path))</span>
-<span id="cb10-49"><a href="#cb10-49" aria-label="49"></a>        path.with_suffix(<span class="st">".json"</span>).write_text(</span>
-<span id="cb10-50"><a href="#cb10-50" aria-label="50"></a>            json.dumps(</span>
-<span id="cb10-51"><a href="#cb10-51" aria-label="51"></a>                {</span>
-<span id="cb10-52"><a href="#cb10-52" aria-label="52"></a>                    <span class="st">"baseline_fit_sha256"</span>: hashlib.sha256(</span>
-<span id="cb10-53"><a href="#cb10-53" aria-label="53"></a>                        fit_paths[model_name].read_bytes()</span>
-<span id="cb10-54"><a href="#cb10-54" aria-label="54"></a>                    ).hexdigest(),</span>
-<span id="cb10-55"><a href="#cb10-55" aria-label="55"></a>                    <span class="st">"baseline_fits"</span>: fit_record[<span class="st">"fits"</span>],</span>
-<span id="cb10-56"><a href="#cb10-56" aria-label="56"></a>                    <span class="st">"data_sha256"</span>: data_sha256,</span>
-<span id="cb10-57"><a href="#cb10-57" aria-label="57"></a>                    <span class="st">"selected_trial_indices"</span>: np.flatnonzero(</span>
-<span id="cb10-58"><a href="#cb10-58" aria-label="58"></a>                        np.asarray(selected_trials)</span>
-<span id="cb10-59"><a href="#cb10-59" aria-label="59"></a>                    ).tolist(),</span>
-<span id="cb10-60"><a href="#cb10-60" aria-label="60"></a>                    <span class="st">"model_factory"</span>: fit_record[<span class="st">"model_factory"</span>],</span>
-<span id="cb10-61"><a href="#cb10-61" aria-label="61"></a>                    <span class="st">"components"</span>: fit_record[<span class="st">"components"</span>],</span>
-<span id="cb10-62"><a href="#cb10-62" aria-label="62"></a>                    <span class="st">"simulation_function"</span>: fit_record[<span class="st">"simulation_function"</span>],</span>
-<span id="cb10-63"><a href="#cb10-63" aria-label="63"></a>                    <span class="st">"feature_sha256"</span>: hashlib.sha256(features.tobytes()).hexdigest()</span>
-<span id="cb10-64"><a href="#cb10-64" aria-label="64"></a>                    <span class="cf">if</span> features <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb10-65"><a href="#cb10-65" aria-label="65"></a>                    <span class="cf">else</span> <span class="va">None</span>,</span>
-<span id="cb10-66"><a href="#cb10-66" aria-label="66"></a>                    <span class="st">"parameter"</span>: parameter,</span>
-<span id="cb10-67"><a href="#cb10-67" aria-label="67"></a>                    <span class="st">"value"</span>: value,</span>
-<span id="cb10-68"><a href="#cb10-68" aria-label="68"></a>                    <span class="st">"seed"</span>: simulation_seed,</span>
-<span id="cb10-69"><a href="#cb10-69" aria-label="69"></a>                    <span class="st">"experiment_count"</span>: experiment_count,</span>
-<span id="cb10-70"><a href="#cb10-70" aria-label="70"></a>                    <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__,</span>
-<span id="cb10-71"><a href="#cb10-71" aria-label="71"></a>                    <span class="st">"jax_version"</span>: jax.__version__,</span>
-<span id="cb10-72"><a href="#cb10-72" aria-label="72"></a>                    <span class="st">"jax_enable_x64"</span>: enable_x64,</span>
-<span id="cb10-73"><a href="#cb10-73" aria-label="73"></a>                },</span>
-<span id="cb10-74"><a href="#cb10-74" aria-label="74"></a>                indent<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb10-75"><a href="#cb10-75" aria-label="75"></a>            )</span>
-<span id="cb10-76"><a href="#cb10-76" aria-label="76"></a>            <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span></span>
-<span id="cb10-77"><a href="#cb10-77" aria-label="77"></a>        )</span>
-<span id="cb10-78"><a href="#cb10-78" aria-label="78"></a>        paths[label] <span class="op">=</span> <span class="bu">str</span>(path)</span>
-<span id="cb10-79"><a href="#cb10-79" aria-label="79"></a>    all_shifted_paths[sweep_name] <span class="op">=</span> paths</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>    model_factory <span class="op">=</span> construct_model(fit_record)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-label="6"></a>    features <span class="op">=</span> load_features(fit_record)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-label="7"></a>    selected_trials <span class="op">=</span> prepared[<span class="st">"trial_mask"</span>]</span>
+<span id="cb10-8"><a href="#cb10-8" aria-label="8"></a>    paths <span class="op">=</span> {}</span>
+<span id="cb10-9"><a href="#cb10-9" aria-label="9"></a>    cases <span class="op">=</span> [{<span class="st">"label"</span>: <span class="st">"Fitted baseline"</span>, <span class="st">"stem"</span>: <span class="st">"baseline"</span>, <span class="st">"overrides"</span>: {}}] <span class="op">+</span> prepared[<span class="st">"cases"</span>]</span>
+<span id="cb10-10"><a href="#cb10-10" aria-label="10"></a>    <span class="cf">for</span> case <span class="kw">in</span> cases:</span>
+<span id="cb10-11"><a href="#cb10-11" aria-label="11"></a>        params <span class="op">=</span> <span class="bu">dict</span>(prepared[<span class="st">"parameters"</span>])</span>
+<span id="cb10-12"><a href="#cb10-12" aria-label="12"></a>        <span class="cf">for</span> key, value <span class="kw">in</span> case[<span class="st">"overrides"</span>].items():</span>
+<span id="cb10-13"><a href="#cb10-13" aria-label="13"></a>            params[key] <span class="op">=</span> jnp.full_like(params[key], value)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-label="14"></a>        simulated <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb10-15"><a href="#cb10-15" aria-label="15"></a>            model_factory, data, features, params, selected_trials,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-label="16"></a>            experiment_count<span class="op">=</span>experiment_count,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-label="17"></a>            rng<span class="op">=</span>jax.random.PRNGKey(simulation_seed),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-label="18"></a>            simulate_trial_fn<span class="op">=</span>import_from_string(fit_record[<span class="st">"simulation_function"</span>]),</span>
+<span id="cb10-19"><a href="#cb10-19" aria-label="19"></a>        )</span>
+<span id="cb10-20"><a href="#cb10-20" aria-label="20"></a>        path <span class="op">=</span> output_dir <span class="op">/</span> sweep_name <span class="op">/</span> (case[<span class="st">"stem"</span>] <span class="op">+</span> <span class="st">".h5"</span>)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-label="21"></a>        path.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-label="22"></a>        save_dict_to_hdf5(simulated, <span class="bu">str</span>(path))</span>
+<span id="cb10-23"><a href="#cb10-23" aria-label="23"></a>        metadata <span class="op">=</span> {</span>
+<span id="cb10-24"><a href="#cb10-24" aria-label="24"></a>            <span class="st">"baseline_fit_sha256"</span>: hashlib.sha256(fit_paths[model_name].read_bytes()).hexdigest(),</span>
+<span id="cb10-25"><a href="#cb10-25" aria-label="25"></a>            <span class="st">"baseline_fits"</span>: fit_record[<span class="st">"fits"</span>],</span>
+<span id="cb10-26"><a href="#cb10-26" aria-label="26"></a>            <span class="st">"applied_parameters"</span>: {key: np.asarray(value).tolist() <span class="cf">for</span> key, value <span class="kw">in</span> params.items()},</span>
+<span id="cb10-27"><a href="#cb10-27" aria-label="27"></a>            <span class="st">"parameter_overrides"</span>: case[<span class="st">"overrides"</span>],</span>
+<span id="cb10-28"><a href="#cb10-28" aria-label="28"></a>            <span class="st">"data_sha256"</span>: data_sha256,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-label="29"></a>            <span class="st">"selected_trial_indices"</span>: np.flatnonzero(np.asarray(selected_trials)).tolist(),</span>
+<span id="cb10-30"><a href="#cb10-30" aria-label="30"></a>            <span class="st">"model_factory"</span>: fit_record[<span class="st">"model_factory"</span>], <span class="st">"components"</span>: fit_record[<span class="st">"components"</span>],</span>
+<span id="cb10-31"><a href="#cb10-31" aria-label="31"></a>            <span class="st">"simulation_function"</span>: fit_record[<span class="st">"simulation_function"</span>],</span>
+<span id="cb10-32"><a href="#cb10-32" aria-label="32"></a>            <span class="st">"feature_sha256"</span>: hashlib.sha256(features.tobytes()).hexdigest() <span class="cf">if</span> features <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> <span class="va">None</span>,</span>
+<span id="cb10-33"><a href="#cb10-33" aria-label="33"></a>            <span class="st">"seed"</span>: simulation_seed, <span class="st">"experiment_count"</span>: experiment_count,</span>
+<span id="cb10-34"><a href="#cb10-34" aria-label="34"></a>            <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__, <span class="st">"jax_version"</span>: jax.__version__,</span>
+<span id="cb10-35"><a href="#cb10-35" aria-label="35"></a>            <span class="st">"jax_enable_x64"</span>: enable_x64, <span class="st">"provenance"</span>: provenance,</span>
+<span id="cb10-36"><a href="#cb10-36" aria-label="36"></a>        }</span>
+<span id="cb10-37"><a href="#cb10-37" aria-label="37"></a>        path.with_suffix(<span class="st">".json"</span>).write_text(json.dumps(metadata, indent<span class="op">=</span><span class="dv">2</span>) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-label="38"></a>        paths[case[<span class="st">"label"</span>]] <span class="op">=</span> <span class="bu">str</span>(path)</span>
+<span id="cb10-39"><a href="#cb10-39" aria-label="39"></a>    all_shifted_paths[sweep_name] <span class="op">=</span> paths</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="ed17d15a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:07.168336Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:07.168253Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:07.170969Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:07.170613Z&quot;}}" data-execution_count="9">
+<div id="ed17d15a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:07.168336Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:07.168253Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:07.170969Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:07.170613Z&quot;}}" data-execution_count="11">
 <details class="code-fold">
 <summary>9 — Prepare comparisons of saved sweep results</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-label="1"></a>comparison_groups <span class="op">=</span> []</span>
@@ -795,7 +771,7 @@ Shared baseline phi_emot_modulates_temporal: True</code></pre>
 <span id="cb11-34"><a href="#cb11-34" aria-label="34"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="172997dd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:07.172304Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:07.172218Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:38.983693Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:38.983247Z&quot;}}" data-execution_count="10">
+<div id="172997dd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:07.172304Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:07.172218Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:38.983693Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:38.983247Z&quot;}}" data-execution_count="12">
 <details class="code-fold">
 <summary>10 — Load one comparison at a time and plot its benchmarks</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a><span class="cf">for</span> group <span class="kw">in</span> comparison_groups:</span>
@@ -851,133 +827,127 @@ Shared baseline phi_emot_modulates_temporal: True</code></pre>
 <span id="cb12-51"><a href="#cb12-51" aria-label="51"></a>            <span class="kw">and</span> <span class="st">"figure_suffix"</span> <span class="kw">not</span> <span class="kw">in</span> analysis_config</span>
 <span id="cb12-52"><a href="#cb12-52" aria-label="52"></a>        ):</span>
 <span id="cb12-53"><a href="#cb12-53" aria-label="53"></a>            suffix <span class="op">+=</span> <span class="ss">f"_</span><span class="sc">{</span>analysis_index <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb12-54"><a href="#cb12-54" aria-label="54"></a>        save_figure(<span class="bu">str</span>(figure_dir), figure_str, suffix<span class="op">=</span>suffix)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-54"><a href="#cb12-54" aria-label="54"></a>        save_figure(<span class="bu">str</span>(figure_dir), figure_str, suffix<span class="op">=</span>suffix, formats<span class="op">=</span>figure_formats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="parameter_shifting_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="parameter_shifting_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="parameter_shifting_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="parameter_shifting_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="parameter_shifting_files/figure-html/cell-11-output-3.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="parameter_shifting_files/figure-html/cell-12-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="parameter_shifting_files/figure-html/cell-11-output-4.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="parameter_shifting_files/figure-html/cell-12-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="parameter_shifting_files/figure-html/cell-11-output-5.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="parameter_shifting_files/figure-html/cell-12-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="parameter_shifting_files/figure-html/cell-11-output-6.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="parameter_shifting_files/figure-html/cell-12-output-6.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="parameter_shifting_files/figure-html/cell-11-output-7.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="parameter_shifting_files/figure-html/cell-12-output-7.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="parameter_shifting_files/figure-html/cell-11-output-8.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="parameter_shifting_files/figure-html/cell-12-output-8.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="parameter_shifting_files/figure-html/cell-11-output-9.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="parameter_shifting_files/figure-html/cell-12-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-10.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="parameter_shifting_files/figure-html/cell-11-output-10.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-10.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="parameter_shifting_files/figure-html/cell-12-output-10.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-11.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="parameter_shifting_files/figure-html/cell-11-output-11.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-11.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="parameter_shifting_files/figure-html/cell-12-output-11.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-12.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="parameter_shifting_files/figure-html/cell-11-output-12.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-12.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="parameter_shifting_files/figure-html/cell-12-output-12.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-13.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="parameter_shifting_files/figure-html/cell-11-output-13.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-13.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="parameter_shifting_files/figure-html/cell-12-output-13.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-14.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="parameter_shifting_files/figure-html/cell-11-output-14.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-14.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="parameter_shifting_files/figure-html/cell-12-output-14.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-15.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="parameter_shifting_files/figure-html/cell-11-output-15.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-15.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="parameter_shifting_files/figure-html/cell-12-output-15.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="parameter_shifting_files/figure-html/cell-11-output-16.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="parameter_shifting_files/figure-html/cell-11-output-16.png" class="img-fluid figure-img"></a></p>
+<p><a href="parameter_shifting_files/figure-html/cell-12-output-16.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="parameter_shifting_files/figure-html/cell-12-output-16.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="80426072" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:38.985342Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:38.985255Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:38.987196Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:38.986801Z&quot;}}" data-execution_count="11">
+<div id="80426072" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:48:38.985342Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:48:38.985255Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:48:38.987196Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:48:38.986801Z&quot;}}" data-execution_count="13">
 <details class="code-fold">
 <summary>11 — Locate saved intervention responses</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a><span class="cf">for</span> sweep_name, paths <span class="kw">in</span> all_shifted_paths.items():</span>
 <span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    <span class="bu">print</span>(sweep_name, paths)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>CMR_encoding {'Fitted baseline': 'results/parameter_shifting/CMR_encoding/baseline.h5', '0.2': 'results/parameter_shifting/CMR_encoding/encoding_drift_rate_0.2.h5', '0.5': 'results/parameter_shifting/CMR_encoding/encoding_drift_rate_0.5.h5', '0.8': 'results/parameter_shifting/CMR_encoding/encoding_drift_rate_0.8.h5'}
-eCMR_source_only_encoding {'Fitted baseline': 'results/parameter_shifting/eCMR_source_only_encoding/baseline.h5', '0.2': 'results/parameter_shifting/eCMR_source_only_encoding/encoding_drift_rate_0.2.h5', '0.5': 'results/parameter_shifting/eCMR_source_only_encoding/encoding_drift_rate_0.5.h5', '0.8': 'results/parameter_shifting/eCMR_source_only_encoding/encoding_drift_rate_0.8.h5'}
-eCMR_broad_encoding {'Fitted baseline': 'results/parameter_shifting/eCMR_broad_encoding/baseline.h5', '0.2': 'results/parameter_shifting/eCMR_broad_encoding/encoding_drift_rate_0.2.h5', '0.5': 'results/parameter_shifting/eCMR_broad_encoding/encoding_drift_rate_0.5.h5', '0.8': 'results/parameter_shifting/eCMR_broad_encoding/encoding_drift_rate_0.8.h5'}
-temporal_emotional_modulation {'Fitted baseline': 'results/parameter_shifting/temporal_emotional_modulation/baseline.h5', 'False': 'results/parameter_shifting/temporal_emotional_modulation/phi_emot_modulates_temporal_False.h5', 'True': 'results/parameter_shifting/temporal_emotional_modulation/phi_emot_modulates_temporal_True.h5'}</code></pre>
-</div>
 </div>
 
 

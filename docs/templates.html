@@ -335,6 +335,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#run-in-colab" id="toc-run-in-colab" class="nav-link" data-scroll-target="#run-in-colab">Run in Colab</a></li>
   <li><a href="#from-a-template-to-a-run" id="toc-from-a-template-to-a-run" class="nav-link" data-scroll-target="#from-a-template-to-a-run">From a template to a run</a>
   <ul class="collapse">
+  <li><a href="#paths-and-working-directories" id="toc-paths-and-working-directories" class="nav-link" data-scroll-target="#paths-and-working-directories">Paths and working directories</a></li>
+  <li><a href="#saved-products-and-regeneration" id="toc-saved-products-and-regeneration" class="nav-link" data-scroll-target="#saved-products-and-regeneration">Saved products and regeneration</a></li>
   <li><a href="#execute-a-report-with-quarto" id="toc-execute-a-report-with-quarto" class="nav-link" data-scroll-target="#execute-a-report-with-quarto">Execute a report with Quarto</a></li>
   <li><a href="#prepare-independent-jobs-with-papermill" id="toc-prepare-independent-jobs-with-papermill" class="nav-link" data-scroll-target="#prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</a></li>
   </ul></li>
@@ -533,76 +535,153 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p>The observation file and distance matrix are the existing JAXCMR inputs, with no extracts or recoding. The observation file also matches the ECMR3 project’s copy. All three fit records were prepared with the current library using the fitting procedure below, including an independent recalculation of their objectives. <a href="templates/data/fits/README.md">Fit provenance</a> records their sources and assumptions. The response examples were produced by the simulation template with ten repetitions per selected list and seed 1. Their JSON sidecars record the parameters, selections and simulation settings. They are saved inputs to analysis; analysis notebooks do not invoke fitting or simulation when an input is missing.</p>
-<p>Each chapter has <strong>Download notebook</strong> and <strong>Open in Colab</strong> links beside its contents list. Code starts collapsed; expand a labeled block to see the calculation, or use the <strong>Code</strong> menu to show all code at once. Figures and tables remain visible.</p>
+<p>Each chapter has <strong>Download notebook</strong> and <strong>Open in Colab</strong> links beside its contents list. Colab opens the current notebook on GitHub’s <code>main</code> branch. Code starts collapsed; expand a labeled block to see the calculation, or use the <strong>Code</strong> menu to show all code at once. Figures and tables remain visible.</p>
 </section>
 <section id="run-in-colab" class="level2">
 <h2 class="anchored" data-anchor-id="run-in-colab">Run in Colab</h2>
 <p>Choose <strong>Open in Colab</strong> beside a chapter’s contents list. Sign in to Google, then choose <strong>Runtime → Run all</strong>. For the notebook opened from this repository, Colab may ask you to confirm <strong>Run anyway</strong>. A standard CPU runtime is enough.</p>
-<p>The setup cell installs JAXCMR from a pinned GitHub revision and downloads only that notebook’s supplied inputs, checking their hashes. This route works before the PyPI release. Matching files are reused when setup runs again; a conflicting file is preserved and reported. If you change a path to your own input, upload that file through Colab’s <strong>Files</strong> pane and keep the path consistent with the parameters cell.</p>
-<p>The SPC pilot completed on the default Python 3.13 CPU runtime without a restart. If Colab requests one after installation, choose <strong>Runtime → Restart session</strong>, then <strong>Run all</strong> again. The first raw cell contains Quarto page metadata; Colab labels it “Unsupported Cell Type”, but skips it when running the code cells.</p>
+<p>The setup cell installs JAXCMR from GitHub’s <code>main</code> branch and downloads only that notebook’s supplied inputs, checking their hashes. This route works before the PyPI release. Matching files are reused when setup runs again; a conflicting file is preserved and reported. If you change a path to your own input, upload that file through Colab’s <strong>Files</strong> pane and keep the path consistent with the parameters cell.</p>
+<p>If Colab requests a restart after installation, choose <strong>Runtime → Restart session</strong>, then <strong>Run all</strong> again. The first raw cell contains Quarto page metadata; Colab labels it “Unsupported Cell Type”, but skips it when running the code cells.</p>
 <p>Results are written under the notebook’s <code>output_dir</code> (for SPC, <code>results/spc/spc.png</code>). In the <strong>Files</strong> pane, open that folder and use the file’s menu to <strong>Download</strong> the results. Download anything you want to keep before Colab deletes the temporary runtime. Use <strong>File → Download → Download .ipynb</strong> to retain an executed notebook, or <strong>Copy to Drive</strong> if you want a saved working copy. For local installation, use the <a href="./index.html#installation">homepage command</a>.</p>
-<p>The Colab links use the <code>workshop-colab-2026-11-10</code> notebook revision. The setup cells install JAXCMR and fetch the supplied inputs from commit <code>d919f1ad6aeacc7a36c40b96e365316219a7f40a</code>. Analysis notebooks download the saved model responses; they do not run fitting or simulation.</p>
+<p>Colab links and setup follow <code>main</code> as it changes. The rendered chapter and download are refreshed when the book is rebuilt. Analysis notebooks fetch saved model responses; they do not fit or simulate.</p>
 </section>
 <section id="from-a-template-to-a-run" class="level2">
 <h2 class="anchored" data-anchor-id="from-a-template-to-a-run">From a template to a run</h2>
-<p>Save downloaded notebooks in your working folder, beside <code>data/</code>. Open the folder in your notebook editor, select its Python environment, edit the <strong>parameters</strong> cell and run the notebook from top to bottom. Paths are relative to the working folder. Give independent runs distinct output folders or run names so their results do not overwrite one another.</p>
+<p>Save downloaded notebooks in your working folder, beside <code>data/</code>. Open the folder in your notebook editor, select its Python environment, edit the <strong>parameters</strong> cell and run the notebook from top to bottom. Relative paths follow the project-directory rules below. Give independent runs distinct output folders or run names so their results do not overwrite one another.</p>
+<section id="paths-and-working-directories" class="level3">
+<h3 class="anchored" data-anchor-id="paths-and-working-directories">Paths and working directories</h3>
+<p>The <code>project_root</code> parameter selects the base for <strong>all</strong> relative input and output paths:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Setting or execution context</th>
+<th>Base directory</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>An explicit <code>project_root</code></td>
+<td>That directory; a relative value uses the kernel’s starting directory.</td>
+</tr>
+<tr class="even">
+<td>Local checkout, <code>project_root=None</code></td>
+<td>The enclosing Git root, found by the existing <code>find_project_root()</code> helper.</td>
+</tr>
+<tr class="odd">
+<td>Standalone folder, <code>project_root=None</code></td>
+<td>The kernel’s working directory.</td>
+</tr>
+<tr class="even">
+<td>Colab, <code>project_root=None</code></td>
+<td>The runtime’s working directory.</td>
+</tr>
+</tbody>
+</table>
+<p>The notebook reports the chosen directory. Running from <code>templates/</code> or a nested prepared-job directory inside a checkout uses the same project inputs and outputs. When the kernel starts outside the project, supply <code>project_root</code> explicitly. The root belongs to your research project; it is not the installed JAXCMR package directory.</p>
+<p>Absolute paths remain absolute, and <code>~</code> expands to your home directory. On Windows, <code>"C:/Users/Alex/my-study"</code> or <code>r"C:\Users\Alex\my-study"</code> works; avoid a partially specified drive path such as <code>"C:my-study"</code>. UNC paths are supported on Windows. Relative defaults such as <code>"data/Dupertuys2026.h5"</code> work on both platforms. An absolute path from another computer must be updated there.</p>
+<p>Colab downloads recognized relative example names into this same base. Custom files remain your responsibility; selecting an absolute custom path does not download an example over it. Path resolution happens after parameter injection and does not change the process’s working directory.</p>
+</section>
+<section id="saved-products-and-regeneration" class="level3">
+<h3 class="anchored" data-anchor-id="saved-products-and-regeneration">Saved products and regeneration</h3>
+<p>Copy the <code>fit_paths</code> printed by fitting into simulation, then supply the printed <code>simulation_paths</code> to model comparison or their values as analysis <code>data_paths</code>. The defaults continue to use the supplied examples until you replace them. For example, a one-model simulation job can use:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>fit_paths <span class="op">=</span> {<span class="st">"CMR"</span>: <span class="st">"results/fits/Dupertuys2026_CMR_demo_best_of_3.json"</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>output_dir</code> supplies default locations, but explicit directory settings take precedence:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Procedure</th>
+<th>Directory precedence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Fitting</td>
+<td><code>target_directory</code> or <code>output_dir</code> supplies the product root; explicit <code>fit_dir</code>, <code>simulation_dir</code> and <code>figure_dir</code> override their defaults.</td>
+</tr>
+<tr class="even">
+<td>Simulation</td>
+<td>Explicit <code>simulation_dir</code> and <code>figure_dir</code> override <code>output_dir</code>. The example sets <code>simulation_dir="results/simulations"</code>.</td>
+</tr>
+<tr class="odd">
+<td>Parameter shifting, model comparison and analyses</td>
+<td>Explicit <code>figure_dir</code> overrides its default; summary tables use <code>output_dir</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Give independent jobs distinct names or directories for every product they write. <code>redo_fits=False</code> reuses a matching existing fit; a missing fit is still computed and an incompatible record is reported. <code>redo_sims=False</code> permits matching response reuse; when predictions are requested, missing or stale responses are regenerated. Fitting is fit-only when both <code>redo_sims</code> and <code>redo_figures</code> are false. <code>figure_str=""</code> disables figure saving, but does not disable summary CSVs or provenance capture.</p>
 <p>Settings are ordinary values: paths, numbers, lists, dictionaries and import names. Imports, trial masks and model construction happen afterward, using the effective values. The fitting template can select a model and its components, objective, fitted parameters, participant subset and displayed analyses. Analysis templates expose their trial selections and measure-specific settings. Their inputs are saved response files; preparing or running an analysis does not generate missing simulations.</p>
 <p>Ordinary imports occupy their own cell after the optional Colab bootstrap. Derived paths, loading and calculations follow the injected parameters. <code>figure_str=""</code> displays figures without saving them; a nonempty name saves under <code>figure_dir</code>. The defaults provide explicit names for the worked examples. Subject-level CSV summaries use <code>output_dir</code>.</p>
 <p>The analysis controls include repeated-item capacity (<code>size</code>), stopping <code>mode</code>, condition queries, category fields and labels, and plot limits. Category recall also accepts configured paired contrasts and contrasts of contrasts. Select these for the question being asked; the defaults leave the optional tests empty.</p>
 <p>You can also supply settings externally. <a href="https://quarto.org/docs/computations/parameters.html">Quarto</a> and <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">Papermill</a> use the same tagged cell. An override replaces a whole top-level value: to change one model, supply the complete <code>model_configs</code> dictionary for that work unit. Use <code>fit_alg_path</code> and <code>fit_hyperparams</code> to select and configure the optimizer. Analysis templates use <code>data_paths</code> and <code>data_labels</code> for a collection; an explicit <code>data_path</code> retains single-dataset use. Their condition queries are applied to each input.</p>
+</section>
 <section id="execute-a-report-with-quarto" class="level3">
 <h3 class="anchored" data-anchor-id="execute-a-report-with-quarto">Execute a report with Quarto</h3>
-<p>With <a href="https://quarto.org/docs/get-started/">Quarto installed</a>, you can execute a notebook with overrides and render its results to HTML. For Python parameter injection, Quarto also uses the Papermill package. Install it in the notebook environment from the VS Code terminal:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> pip install papermill</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>For example, run the PNR procedure for the third response and save a separate report:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="va">QUARTO_PYTHON</span><span class="op">=</span><span class="st">"</span><span class="va">$PWD</span><span class="st">/.venv/bin/python"</span> <span class="ex">quarto</span> render pnr.ipynb <span class="at">--execute</span> <span class="dt">\</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>  <span class="at">-P</span> query_recall_position:2 <span class="at">-P</span> output_dir:results/pnr-third <span class="dt">\</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a>  <span class="at">--output</span> pnr-third.html</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With <a href="https://quarto.org/docs/get-started/">Quarto installed</a>, you can execute a notebook with overrides and render its results to HTML. Python parameter injection uses Papermill, which the repository’s default <code>uv sync</code> already installs. For this example, run from the repository root and select the environment for Quarto using the command for your shell:</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">macOS / Linux</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Windows PowerShell</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="bu">export</span> <span class="va">QUARTO_PYTHON</span><span class="op">=</span><span class="st">"</span><span class="va">$(</span><span class="ex">uv</span> run python <span class="at">-c</span> <span class="st">'import sys; print(sys.executable)'</span><span class="va">)</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource powershell number-lines code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="va">$env</span><span class="op">:</span><span class="va">QUARTO_PYTHON</span> <span class="op">=</span> <span class="op">(</span>uv run python <span class="op">-</span>c <span class="st">"import sys; print(sys.executable)"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<p>Then run the same command on either platform:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>quarto render templates/pnr.ipynb --execute -P query_recall_position:2 -P output_dir:results/pnr-third --output pnr-third.html</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Quarto normally executes from the notebook’s directory; the template’s root lookup handles that. An injected <code>project_root</code> also works for notebooks prepared outside the project. The book build itself does not execute notebooks.</p>
 <p>Output positions are zero-based, so <code>2</code> means the third response. Use <code>--execute-params settings.yml</code> for dictionaries or longer selections. The explicit <code>--execute</code> runs the notebook; rendering an <code>.ipynb</code> without it normally displays its stored results. The book itself displays stored examples.</p>
 </section>
 <section id="prepare-independent-jobs-with-papermill" class="level3">
 <h3 class="anchored" data-anchor-id="prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</h3>
-<p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. The following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
-<div id="9c1eb0e1" class="cell">
+<p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. From the repository root, the following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
+<div id="30733c9e" class="cell">
 <details class="code-fold">
 <summary>Prepare two fitting jobs without running them</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> nbformat</span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> papermill <span class="im">as</span> pm</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>source <span class="op">=</span> nbformat.read(<span class="st">"fitting.ipynb"</span>, as_version<span class="op">=</span><span class="dv">4</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a>defaults <span class="op">=</span> {}</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>parameter_cell <span class="op">=</span> <span class="bu">next</span>(cell <span class="cf">for</span> cell <span class="kw">in</span> source.cells</span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a>                      <span class="cf">if</span> <span class="st">"parameters"</span> <span class="kw">in</span> cell.metadata.get(<span class="st">"tags"</span>, []))</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="co"># Evaluate only the parameter assignments, not the fitting procedure.</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="bu">exec</span>(parameter_cell.source, defaults)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>jobs <span class="op">=</span> Path(<span class="st">"analyses/rendered"</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>jobs.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="cf">for</span> seed <span class="kw">in</span> [<span class="dv">0</span>, <span class="dv">1</span>]:</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    configs <span class="op">=</span> deepcopy(defaults[<span class="st">"model_configs"</span>])</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    <span class="cf">for</span> config <span class="kw">in</span> configs.values():</span>
-<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>        config[<span class="st">"seed"</span>] <span class="op">=</span> seed</span>
-<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    path <span class="op">=</span> jobs <span class="op">/</span> <span class="ss">f"fitting_seed_</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">.ipynb"</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    prepared <span class="op">=</span> pm.execute_notebook(</span>
-<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>        <span class="st">"fitting.ipynb"</span>, <span class="bu">str</span>(path),</span>
-<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>        parameters<span class="op">=</span>{<span class="st">"model_configs"</span>: configs, <span class="st">"output_dir"</span>: <span class="ss">f"results/fitting-seed-</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">"</span>},</span>
-<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>        prepare_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a>    )</span>
-<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a>    <span class="co"># Stored example results are not results from this new job.</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a>    <span class="cf">for</span> cell <span class="kw">in</span> prepared.cells:</span>
-<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a>        <span class="cf">if</span> cell.cell_type <span class="op">==</span> <span class="st">"code"</span>:</span>
-<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>            cell.outputs <span class="op">=</span> []</span>
-<span id="cb3-29"><a href="#cb3-29" aria-label="29"></a>            cell.execution_count <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-label="30"></a>    nbformat.write(prepared, path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a><span class="im">import</span> nbformat</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a><span class="im">import</span> papermill <span class="im">as</span> pm</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>source <span class="op">=</span> nbformat.read(<span class="st">"templates/fitting.ipynb"</span>, as_version<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>defaults <span class="op">=</span> {}</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>parameter_cell <span class="op">=</span> <span class="bu">next</span>(cell <span class="cf">for</span> cell <span class="kw">in</span> source.cells</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>                      <span class="cf">if</span> <span class="st">"parameters"</span> <span class="kw">in</span> cell.metadata.get(<span class="st">"tags"</span>, []))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a><span class="co"># Evaluate only the parameter assignments, not the fitting procedure.</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a><span class="bu">exec</span>(parameter_cell.source, defaults)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>jobs <span class="op">=</span> Path(<span class="st">"analyses/rendered"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>jobs.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a><span class="cf">for</span> seed <span class="kw">in</span> [<span class="dv">0</span>, <span class="dv">1</span>]:</span>
+<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a>    configs <span class="op">=</span> deepcopy(defaults[<span class="st">"model_configs"</span>])</span>
+<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a>    <span class="cf">for</span> config <span class="kw">in</span> configs.values():</span>
+<span id="cb5-18"><a href="#cb5-18" aria-label="18"></a>        config[<span class="st">"seed"</span>] <span class="op">=</span> seed</span>
+<span id="cb5-19"><a href="#cb5-19" aria-label="19"></a>    path <span class="op">=</span> jobs <span class="op">/</span> <span class="ss">f"fitting_seed_</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">.ipynb"</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-label="20"></a>    prepared <span class="op">=</span> pm.execute_notebook(</span>
+<span id="cb5-21"><a href="#cb5-21" aria-label="21"></a>        <span class="st">"templates/fitting.ipynb"</span>, <span class="bu">str</span>(path),</span>
+<span id="cb5-22"><a href="#cb5-22" aria-label="22"></a>        parameters<span class="op">=</span>{<span class="st">"model_configs"</span>: configs, <span class="st">"output_dir"</span>: <span class="ss">f"results/fitting-seed-</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">"</span>},</span>
+<span id="cb5-23"><a href="#cb5-23" aria-label="23"></a>        prepare_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-label="24"></a>    )</span>
+<span id="cb5-25"><a href="#cb5-25" aria-label="25"></a>    <span class="co"># Stored example results are not results from this new job.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-label="26"></a>    <span class="cf">for</span> cell <span class="kw">in</span> prepared.cells:</span>
+<span id="cb5-27"><a href="#cb5-27" aria-label="27"></a>        <span class="cf">if</span> cell.cell_type <span class="op">==</span> <span class="st">"code"</span>:</span>
+<span id="cb5-28"><a href="#cb5-28" aria-label="28"></a>            cell.outputs <span class="op">=</span> []</span>
+<span id="cb5-29"><a href="#cb5-29" aria-label="29"></a>            cell.execution_count <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-label="30"></a>    nbformat.write(prepared, path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>To prepare one model per job, pass a one-entry <code>model_configs</code> dictionary. Preserve the project’s chosen job boundaries: a model collection does not require running every model in each scheduled job. Inspect the injected settings in each notebook. Execute one from the working folder with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> papermill <span class="dt">\</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>  analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb <span class="dt">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>  <span class="at">--cwd</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The same prepared notebooks can be transferred with their inputs and run as separate Slurm jobs, using the project folder as the working directory. This matches the <a href="https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd">remote-cluster workflow</a>: maintain a procedure, prepare concrete work units, then schedule their execution. Preparing jobs does not fit a model; rendering HTML is a separate presentation step.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>uv run papermill analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb --cwd .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same prepared notebooks can be transferred with their inputs and run as separate Slurm jobs, using the project folder as the working directory. This keeps the prepared paths portable: set <code>--cwd</code> to the destination project folder, or inject its <code>project_root</code> when executing. Do not inject a local machine’s absolute root into jobs intended for a different machine. This matches the <a href="https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd">remote-cluster workflow</a>: maintain a procedure, prepare concrete work units, then schedule their execution. Preparing jobs does not fit a model; rendering HTML is a separate presentation step.</p>
 <p>For participant jobs, the fitting template uses <code>pooled=False</code> and <code>subject_indices=[i]</code>, where <code>i</code> indexes the sorted participant IDs. Simulation and parameter exploration can instead vary seeds or parameter values. Choose the work unit around the scientific question and keep its inputs and outputs explicit. A fit-only job sets both <code>redo_sims</code> and <code>redo_figures</code> to <code>False</code>; later simulation can use its saved result.</p>
 </section>
 </section>

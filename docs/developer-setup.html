@@ -333,7 +333,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#clone-and-open-the-repository" id="toc-clone-and-open-the-repository" class="nav-link" data-scroll-target="#clone-and-open-the-repository"><span class="header-section-number">2.2</span> Clone and open the repository</a></li>
   <li><a href="#install-python-and-dependencies" id="toc-install-python-and-dependencies" class="nav-link" data-scroll-target="#install-python-and-dependencies"><span class="header-section-number">2.3</span> Install Python and dependencies</a></li>
   <li><a href="#open-the-notebook-and-choose-its-kernel" id="toc-open-the-notebook-and-choose-its-kernel" class="nav-link" data-scroll-target="#open-the-notebook-and-choose-its-kernel"><span class="header-section-number">2.4</span> Open the notebook and choose its kernel</a></li>
-  <li><a href="#quick-start" id="toc-quick-start" class="nav-link" data-scroll-target="#quick-start"><span class="header-section-number">2.5</span> Quick start</a></li>
+  <li><a href="#working-with-template-paths" id="toc-working-with-template-paths" class="nav-link" data-scroll-target="#working-with-template-paths"><span class="header-section-number">2.5</span> Working with template paths</a></li>
+  <li><a href="#quick-start" id="toc-quick-start" class="nav-link" data-scroll-target="#quick-start"><span class="header-section-number">2.6</span> Quick start</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="downloads/developer-setup.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -402,8 +403,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Close and reopen VS Code so it can find uv. Reopen the repository folder and a new terminal, then run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--python</span> 3.12 <span class="at">--managed-python</span> <span class="at">--extra</span> test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This downloads Python 3.12, creates <code>.venv</code> inside the repository, and installs the locked packages, development tools and test dependencies. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The repository’s <code>.python-version</code> selects Python 3.12; uv downloads it if needed, creates <code>.venv</code>, and installs JAXCMR and the default development tools from <code>uv.lock</code>. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.</p>
+<p>Specialized tools are optional: use <code>uv sync --group embeddings</code> for sentence-transformers, <code>uv sync --group profiling</code> for line-profiler, or <code>uv sync --extra experimental</code> for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use <code>uv sync --extra test</code>; see <a href="https://github.com/githubpsyche/jaxcmr/blob/main/TESTING.md">Testing</a>.</p>
 </section>
 <section id="open-the-notebook-and-choose-its-kernel" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="open-the-notebook-and-choose-its-kernel"><span class="header-section-number">2.4</span> Open the notebook and choose its kernel</h2>
@@ -431,8 +433,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>An import error usually means the wrong kernel is selected or installation did not finish. On Windows, a JAX DLL error may require the <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist">Microsoft Visual C++ Redistributable for x64</a>; restart the kernel after installing it. See <a href="https://docs.jax.dev/en/latest/installation.html#pip-installation-cpu">JAX’s CPU installation instructions</a>.</p>
 <p>To return later, reopen the same folder and notebook, select the same kernel, and use <strong>Restart Kernel</strong>, then <strong>Run All</strong>. After updating the checkout, rerun the <code>uv sync</code> command first. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-notebooks">VS Code’s notebook instructions</a> for the editor controls.</p>
 </section>
-<section id="quick-start" class="level2" data-number="2.5">
-<h2 data-number="2.5" class="anchored" data-anchor-id="quick-start"><span class="header-section-number">2.5</span> Quick start</h2>
+<section id="working-with-template-paths" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="working-with-template-paths"><span class="header-section-number">2.5</span> Working with template paths</h2>
+<p>Templates find the enclosing Git project even when the kernel starts inside <code>templates/</code> or a nested job folder. Their relative inputs and outputs use that project root. You do not need a particular VS Code or Jupyter working-directory setting.</p>
+<p>Set the template’s <code>project_root</code> parameter when the kernel starts outside your project. For a downloaded notebook without a Git checkout, the default is the kernel’s working folder. Absolute input and output paths remain absolute. On Windows, use forward slashes, for example <code>project_root = "C:/Users/Alex/Documents/my-study"</code>, or a Python raw string such as <code>r"C:\Users\Alex\Documents\my-study"</code>. See the <a href="./templates.html#paths-and-working-directories">template path rules</a>.</p>
+</section>
+<section id="quick-start" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="quick-start"><span class="header-section-number">2.6</span> Quick start</h2>
 <p>This is the <a href="https://github.com/githubpsyche/jaxcmr/blob/ae04fe1d/index.qmd">earlier quickstart</a>, updated for the current API. Run the following Python cells in order with <strong>Shift+Enter</strong>. No dataset or fitted model is required.</p>
 <div id="51725a98" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:26.656762Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:26.656464Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:39.733912Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:39.733644Z&quot;}}" data-execution_count="1">
 <details class="code-fold">

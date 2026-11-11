@@ -420,50 +420,63 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> Bool[Array, <span class="st">" recall_events"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>In <code>jaxcmr.loss.transform_sequence_likelihood</code>, <code>MemorySearchLikelihoodLoss</code> accepts this callback as <code>mask_likelihoods</code>. It translates recorded study positions to within-list item codes before calling the mask. The existing <code>mask_trailing_terminations()</code> returns <code>recalls != 0</code>.</p>
 <p>The convenient <code>ExcludeTerminationLikelihoodLoss</code> binds that mask and provides the standard three-argument <code>LossFn</code> constructor used by fitters. With the no-stop model used here, the objective scores the recorded item sequence without scoring its length. Zero-coded slots do not contribute. An excluded event does not erase the preceding history that conditions later predictions. A first-recall mask, for example, removes that event’s score while later events still follow it.</p>
+<div id="locate-project-inputs" class="cell">
+<details class="code-fold">
+<summary>0 — Locate the project inputs</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="cf">try</span>:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
 <div id="07b50152" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Evaluate two parameter columns through the loss interface</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> jax</span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a>data <span class="op">=</span> load_data(<span class="st">"data/Dupertuys2026.h5"</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>).read_text())</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
-<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
-<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> ExcludeTerminationLikelihoodLoss</span>
-<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
-<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)[:<span class="dv">1</span>]</span>
-<span id="cb3-29"><a href="#cb3-29" aria-label="29"></a>free_names <span class="op">=</span> (<span class="st">"encoding_drift_rate"</span>, <span class="st">"recall_drift_rate"</span>)</span>
-<span id="cb3-30"><a href="#cb3-30" aria-label="30"></a>base_params <span class="op">=</span> {name: value <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items() <span class="cf">if</span> name <span class="kw">not</span> <span class="kw">in</span> free_names}</span>
-<span id="cb3-31"><a href="#cb3-31" aria-label="31"></a>candidates <span class="op">=</span> jnp.array([</span>
-<span id="cb3-32"><a href="#cb3-32" aria-label="32"></a>    [parameters[<span class="st">"encoding_drift_rate"</span>], <span class="fl">0.2</span>],</span>
-<span id="cb3-33"><a href="#cb3-33" aria-label="33"></a>    [parameters[<span class="st">"recall_drift_rate"</span>], parameters[<span class="st">"recall_drift_rate"</span>]],</span>
-<span id="cb3-34"><a href="#cb3-34" aria-label="34"></a>])</span>
-<span id="cb3-35"><a href="#cb3-35" aria-label="35"></a></span>
-<span id="cb3-36"><a href="#cb3-36" aria-label="36"></a>loss <span class="op">=</span> ExcludeTerminationLikelihoodLoss(CMRFactory, data, features<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb3-37"><a href="#cb3-37" aria-label="37"></a>values <span class="op">=</span> loss(trial_indices, base_params, free_names, candidates)</span>
-<span id="cb3-38"><a href="#cb3-38" aria-label="38"></a><span class="bu">print</span>(<span class="st">"Parameter order:"</span>, free_names)</span>
-<span id="cb3-39"><a href="#cb3-39" aria-label="39"></a><span class="bu">print</span>(<span class="st">"Candidate matrix shape:"</span>, candidates.shape)</span>
-<span id="cb3-40"><a href="#cb3-40" aria-label="40"></a><span class="bu">print</span>(<span class="st">"Objective shape:"</span>, values.shape)</span>
-<span id="cb3-41"><a href="#cb3-41" aria-label="41"></a><span class="bu">print</span>(<span class="st">"Negative log likelihoods:"</span>, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">import</span> jax</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-label="24"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-label="25"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> ExcludeTerminationLikelihoodLoss</span>
+<span id="cb4-26"><a href="#cb4-26" aria-label="26"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-label="27"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-label="28"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)[:<span class="dv">1</span>]</span>
+<span id="cb4-29"><a href="#cb4-29" aria-label="29"></a>free_names <span class="op">=</span> (<span class="st">"encoding_drift_rate"</span>, <span class="st">"recall_drift_rate"</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-label="30"></a>base_params <span class="op">=</span> {name: value <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items() <span class="cf">if</span> name <span class="kw">not</span> <span class="kw">in</span> free_names}</span>
+<span id="cb4-31"><a href="#cb4-31" aria-label="31"></a>candidates <span class="op">=</span> jnp.array([</span>
+<span id="cb4-32"><a href="#cb4-32" aria-label="32"></a>    [parameters[<span class="st">"encoding_drift_rate"</span>], <span class="fl">0.2</span>],</span>
+<span id="cb4-33"><a href="#cb4-33" aria-label="33"></a>    [parameters[<span class="st">"recall_drift_rate"</span>], parameters[<span class="st">"recall_drift_rate"</span>]],</span>
+<span id="cb4-34"><a href="#cb4-34" aria-label="34"></a>])</span>
+<span id="cb4-35"><a href="#cb4-35" aria-label="35"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-label="36"></a>loss <span class="op">=</span> ExcludeTerminationLikelihoodLoss(CMRFactory, data, features<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-label="37"></a>values <span class="op">=</span> loss(trial_indices, base_params, free_names, candidates)</span>
+<span id="cb4-38"><a href="#cb4-38" aria-label="38"></a><span class="bu">print</span>(<span class="st">"Parameter order:"</span>, free_names)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-label="39"></a><span class="bu">print</span>(<span class="st">"Candidate matrix shape:"</span>, candidates.shape)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-label="40"></a><span class="bu">print</span>(<span class="st">"Objective shape:"</span>, values.shape)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-label="41"></a><span class="bu">print</span>(<span class="st">"Negative log likelihoods:"</span>, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Parameter order: ('encoding_drift_rate', 'recall_drift_rate')
@@ -477,23 +490,23 @@ Negative log likelihoods: [13.62458774 13.05021919]</code></pre>
 <div id="14b25d68" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Connect the event probabilities and mask to the returned NLL</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> log_likelihood</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> (</span>
-<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>    MemorySearchLikelihoodLoss, mask_trailing_terminations,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>likelihood <span class="op">=</span> MemorySearchLikelihoodLoss(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>    CMRFactory, data, features<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>    mask_likelihoods<span class="op">=</span>mask_trailing_terminations,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>row <span class="op">=</span> trial_indices[<span class="dv">0</span>]</span>
-<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>probabilities <span class="op">=</span> likelihood.predict_trial(row, parameters)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>include <span class="op">=</span> mask_trailing_terminations(data[<span class="st">"recalls"</span>][row])</span>
-<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>event_nll <span class="op">=</span> log_likelihood(jnp.where(include, probabilities, <span class="fl">1.0</span>))</span>
-<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a><span class="bu">print</span>(<span class="st">"Included event probabilities:"</span>, probabilities[include])</span>
-<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a><span class="bu">print</span>(<span class="st">"Included events:"</span>, <span class="bu">int</span>(include.<span class="bu">sum</span>()))</span>
-<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a><span class="bu">print</span>(<span class="st">"NLL from event probabilities:"</span>, <span class="bu">float</span>(event_nll))</span>
-<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a><span class="bu">print</span>(<span class="st">"NLL from the loss call:"</span>, <span class="bu">float</span>(values[<span class="dv">0</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> log_likelihood</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> (</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    MemorySearchLikelihoodLoss, mask_trailing_terminations,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>likelihood <span class="op">=</span> MemorySearchLikelihoodLoss(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>    CMRFactory, data, features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>    mask_likelihoods<span class="op">=</span>mask_trailing_terminations,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>row <span class="op">=</span> trial_indices[<span class="dv">0</span>]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>probabilities <span class="op">=</span> likelihood.predict_trial(row, parameters)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>include <span class="op">=</span> mask_trailing_terminations(data[<span class="st">"recalls"</span>][row])</span>
+<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>event_nll <span class="op">=</span> log_likelihood(jnp.where(include, probabilities, <span class="fl">1.0</span>))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a><span class="bu">print</span>(<span class="st">"Included event probabilities:"</span>, probabilities[include])</span>
+<span id="cb6-15"><a href="#cb6-15" aria-label="15"></a><span class="bu">print</span>(<span class="st">"Included events:"</span>, <span class="bu">int</span>(include.<span class="bu">sum</span>()))</span>
+<span id="cb6-16"><a href="#cb6-16" aria-label="16"></a><span class="bu">print</span>(<span class="st">"NLL from event probabilities:"</span>, <span class="bu">float</span>(event_nll))</span>
+<span id="cb6-17"><a href="#cb6-17" aria-label="17"></a><span class="bu">print</span>(<span class="st">"NLL from the loss call:"</span>, <span class="bu">float</span>(values[<span class="dv">0</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Included event probabilities: [0.13703638 0.04187474 0.08562368 0.19103804 0.0785633  0.16413277]
@@ -513,16 +526,16 @@ NLL from the loss call: 13.62458774145214</code></pre>
 <h2 data-number="7.4" class="anchored" data-anchor-id="preparing-a-fixed-selection"><span class="header-section-number">7.4</span> Preparing a fixed selection</h2>
 <p><code>PreparableLossFn</code> is an optional capability used by fitting adapters to prepare observations before JIT compilation. An ordinary loss need only implement <code>LossFn</code>.</p>
 <p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="kw">class</span> PreparableLossFn(LossFn, Protocol):</span>
-<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>    <span class="kw">def</span> prepare_trials(</span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>        <span class="va">self</span>, trial_indices: Integer[Array, <span class="st">" trials"</span>]</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> PreparedLossFn: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="kw">class</span> PreparableLossFn(LossFn, Protocol):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>    <span class="kw">def</span> prepare_trials(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>        <span class="va">self</span>, trial_indices: Integer[Array, <span class="st">" trials"</span>]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> PreparedLossFn: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The returned <code>PreparedLossFn</code> takes <code>(base_params, free_param_names, x)</code> and returns the same candidate-wise objectives. The selected trials are already bound, including their order and multiplicity. Each prepared callable must retain its own selection. <code>BatchPreparableLossFn</code> extends this to several selections so implementations can share compatible preparation work.</p>
 <div id="9c2bc750" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Evaluate the same candidates with the selected trials already bound</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>prepared <span class="op">=</span> loss.prepare_trials(trial_indices)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>prepared(base_params, free_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>prepared <span class="op">=</span> loss.prepare_trials(trial_indices)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>prepared(base_params, free_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display" data-execution_count="3">
 <pre><code>Array([13.62458774, 13.05021919], dtype=float64)</code></pre>

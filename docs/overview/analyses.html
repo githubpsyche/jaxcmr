@@ -336,6 +336,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#recallanalysisfn" id="toc-recallanalysisfn" class="nav-link" data-scroll-target="#recallanalysisfn"><span class="header-section-number">4.2</span> Adding a summary to a model objective</a></li>
   <li><a href="#selecting-and-summarizing-trials" id="toc-selecting-and-summarizing-trials" class="nav-link" data-scroll-target="#selecting-and-summarizing-trials"><span class="header-section-number">4.3</span> Selecting and summarizing trials</a></li>
   <li><a href="#connecting-a-compatible-callback" id="toc-connecting-a-compatible-callback" class="nav-link" data-scroll-target="#connecting-a-compatible-callback"><span class="header-section-number">4.4</span> Connecting a compatible callback</a></li>
+  <li><a href="#template-input-conventions" id="toc-template-input-conventions" class="nav-link" data-scroll-target="#template-input-conventions"><span class="header-section-number">4.5</span> Template input conventions</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/analyses.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -431,21 +432,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="selecting-and-summarizing-trials" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="selecting-and-summarizing-trials"><span class="header-section-number">4.3</span> Selecting and summarizing trials</h2>
 <p><code>generate_trial_mask()</code> returns a one-dimensional Boolean mask; it does not filter the dictionary itself. A dataset-based analysis receives the selected rows of every field. <code>apply_by_subject()</code> performs that selection separately for each participant and passes each selected dictionary to its function.</p>
+<div id="locate-project-inputs" class="cell">
+<details class="code-fold">
+<summary>0 — Locate the project inputs</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="cf">try</span>:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
 <div id="0025e646" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Select mixed lists and compare the analysis input/output shapes</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask, apply_by_subject</span>
-<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.analyses.spc <span class="im">import</span> fixed_pres_spc, spc, plot_spc</span>
-<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a>data <span class="op">=</span> load_data(<span class="st">"data/Dupertuys2026.h5"</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>selected <span class="op">=</span> {name: values[mixed] <span class="cf">for</span> name, values <span class="kw">in</span> data.items()}</span>
-<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>pooled <span class="op">=</span> spc(selected)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>per_subject <span class="op">=</span> jnp.stack(apply_by_subject(data, mixed, spc))</span>
-<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Selected trials:"</span>, <span class="bu">int</span>(mixed.<span class="bu">sum</span>()))</span>
-<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Pooled summary shape:"</span>, pooled.shape)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Participant summary shape:"</span>, per_subject.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask, apply_by_subject</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.analyses.spc <span class="im">import</span> fixed_pres_spc, spc, plot_spc</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a>selected <span class="op">=</span> {name: values[mixed] <span class="cf">for</span> name, values <span class="kw">in</span> data.items()}</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>pooled <span class="op">=</span> spc(selected)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a>per_subject <span class="op">=</span> jnp.stack(apply_by_subject(data, mixed, spc))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Selected trials:"</span>, <span class="bu">int</span>(mixed.<span class="bu">sum</span>()))</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Pooled summary shape:"</span>, pooled.shape)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Participant summary shape:"</span>, per_subject.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Selected trials: 246
@@ -459,12 +473,12 @@ Participant summary shape: (123, 12)</code></pre>
 <div id="1c4e215d" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Use JAXCMR to plot participant-aggregated recall</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>plot_spc(data, mixed, labels<span class="op">=</span>[<span class="st">"Mixed lists"</span>])<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>plot_spc(data, mixed, labels<span class="op">=</span>[<span class="st">"Mixed lists"</span>])<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="analyses_files/figure-html/cell-3-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="analyses_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></a></p>
+<p><a href="analyses_files/figure-html/cell-4-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="analyses_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -476,20 +490,20 @@ Participant summary shape: (123, 12)</code></pre>
 <div id="06895fd4" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Adapt the existing SPC calculation to RecallAnalysisFn</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> jaxcmr.loss.mse <span class="im">import</span> make_factory <span class="im">as</span> make_summary_loss</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a><span class="kw">def</span> spc_summary(recalls, <span class="op">*</span>, list_length, dataset, trial_indices):</span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    <span class="cf">return</span> fixed_pres_spc(</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>        recalls.reshape(<span class="op">-</span><span class="dv">1</span>, recalls.shape[<span class="op">-</span><span class="dv">1</span>]), list_length</span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    )</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>SpcLoss <span class="op">=</span> make_summary_loss({<span class="st">"spc"</span>: spc_summary}, simulation_count<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>observed_summary <span class="op">=</span> spc_summary(</span>
-<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>    data[<span class="st">"recalls"</span>][trial_indices, <span class="va">None</span>, :], list_length<span class="op">=</span><span class="dv">12</span>,</span>
-<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>    dataset<span class="op">=</span>data, trial_indices<span class="op">=</span>trial_indices,</span>
-<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>observed_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.loss.mse <span class="im">import</span> make_factory <span class="im">as</span> make_summary_loss</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a><span class="kw">def</span> spc_summary(recalls, <span class="op">*</span>, list_length, dataset, trial_indices):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    <span class="cf">return</span> fixed_pres_spc(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>        recalls.reshape(<span class="op">-</span><span class="dv">1</span>, recalls.shape[<span class="op">-</span><span class="dv">1</span>]), list_length</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>    )</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>SpcLoss <span class="op">=</span> make_summary_loss({<span class="st">"spc"</span>: spc_summary}, simulation_count<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>observed_summary <span class="op">=</span> spc_summary(</span>
+<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>    data[<span class="st">"recalls"</span>][trial_indices, <span class="va">None</span>, :], list_length<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>    dataset<span class="op">=</span>data, trial_indices<span class="op">=</span>trial_indices,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a>observed_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display" data-execution_count="3">
 <pre><code>Array([0.7195122 , 0.64634144, 0.64634144, 0.6219512 , 0.60162604,
@@ -501,36 +515,36 @@ Participant summary shape: (123, 12)</code></pre>
 <div id="81a20bee" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Supply the configured summary loss to a fitter without running a fit</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a><span class="im">import</span> json</span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
-<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
-<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a></span>
-<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>data <span class="op">=</span> load_data(<span class="st">"data/Dupertuys2026.h5"</span>)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>record <span class="op">=</span> json.loads(Path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>).read_text())</span>
-<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
-<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
-<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
-<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
-<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a></span>
-<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>CMRFactory <span class="op">=</span> make_factory(</span>
-<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
-<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
-<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
-<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>)</span>
-<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a></span>
-<span id="cb7-23"><a href="#cb7-23" aria-label="23"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
-<span id="cb7-24"><a href="#cb7-24" aria-label="24"></a></span>
-<span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>fitter <span class="op">=</span> ScipyDE(</span>
-<span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>    dataset<span class="op">=</span>data, features<span class="op">=</span><span class="va">None</span>, base_params<span class="op">=</span>record[<span class="st">"fixed"</span>],</span>
-<span id="cb7-27"><a href="#cb7-27" aria-label="27"></a>    model_factory_cls<span class="op">=</span>CMRFactory, loss_fn_cls<span class="op">=</span>SpcLoss,</span>
-<span id="cb7-28"><a href="#cb7-28" aria-label="28"></a>    hyperparams<span class="op">=</span>{<span class="st">"bounds"</span>: record[<span class="st">"free"</span>]},</span>
-<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a>)</span>
-<span id="cb7-30"><a href="#cb7-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Configured summaries:"</span>, <span class="bu">tuple</span>(fitter.loss_fn.analysis_fns))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
+<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb8-7"><a href="#cb8-7" aria-label="7"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb8-8"><a href="#cb8-8" aria-label="8"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-label="9"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-label="10"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb8-11"><a href="#cb8-11" aria-label="11"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb8-12"><a href="#cb8-12" aria-label="12"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb8-13"><a href="#cb8-13" aria-label="13"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb8-14"><a href="#cb8-14" aria-label="14"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb8-15"><a href="#cb8-15" aria-label="15"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-label="16"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb8-17"><a href="#cb8-17" aria-label="17"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-label="18"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb8-19"><a href="#cb8-19" aria-label="19"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-label="20"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-label="21"></a>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-label="22"></a></span>
+<span id="cb8-23"><a href="#cb8-23" aria-label="23"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> ScipyDE</span>
+<span id="cb8-24"><a href="#cb8-24" aria-label="24"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-label="25"></a>fitter <span class="op">=</span> ScipyDE(</span>
+<span id="cb8-26"><a href="#cb8-26" aria-label="26"></a>    dataset<span class="op">=</span>data, features<span class="op">=</span><span class="va">None</span>, base_params<span class="op">=</span>record[<span class="st">"fixed"</span>],</span>
+<span id="cb8-27"><a href="#cb8-27" aria-label="27"></a>    model_factory_cls<span class="op">=</span>CMRFactory, loss_fn_cls<span class="op">=</span>SpcLoss,</span>
+<span id="cb8-28"><a href="#cb8-28" aria-label="28"></a>    hyperparams<span class="op">=</span>{<span class="st">"bounds"</span>: record[<span class="st">"free"</span>]},</span>
+<span id="cb8-29"><a href="#cb8-29" aria-label="29"></a>)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Configured summaries:"</span>, <span class="bu">tuple</span>(fitter.loss_fn.analysis_fns))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Configured summaries: ('spc',)</code></pre>
@@ -538,6 +552,45 @@ Participant summary shape: (123, 12)</code></pre>
 </div>
 <p>A compatible callback is reusable through the existing loss and fitter. More complex datasets may require an adapter that translates codes, handles repeated presentations or preserves participant weighting. The <code>RecallAnalysisFn</code> signature provides the necessary inputs; it does not choose those scientific conventions.</p>
 <p>See <a href="../overview/losses.html">Loss Functions</a> for the objective interface and <a href="../overview/fitting.html">Fitting Procedures</a> for fitting configuration. The <a href="../templates/spc.html">SPC template</a> covers the complete behavioral procedure and interpretation of its curve.</p>
+</section>
+<section id="template-input-conventions" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="template-input-conventions"><span class="header-section-number">4.5</span> Template input conventions</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Input or setting</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Distance matrix</td>
+<td>Square array indexed by global item identifier minus one; use the same matrix and bins for comparisons.</td>
+</tr>
+<tr class="even">
+<td>Distance-CRP <code>features_path</code></td>
+<td>Item-by-feature array, using the same identifier alignment; takes precedence over the precomputed matrix.</td>
+</tr>
+<tr class="odd">
+<td>Category-CRP <code>category_features_path</code></td>
+<td>One category per item, or an item-by-feature array with zero-based <code>feature_column</code>; otherwise derive categories from the dataset.</td>
+</tr>
+<tr class="even">
+<td>Category recall <code>comparisons</code></td>
+<td><code>(label, left_condition, left_category, right_condition, right_category)</code>; indices are zero-based positions in the configured conditions and <code>category_values</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>contrast_of_contrasts</code></td>
+<td><code>(label, left_a, left_b, right_a, right_b)</code> with each cell expressed as <code>(condition_index, category_index)</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Category contrasts pair the participant IDs with defined values in every required cell. Missing cells remain unavailable, not zero. Category denominators exclude padded study slots. PNR divides by selected trials, including trials that end before the queried response. Conditional stopping uses the sequences still at risk; the terminal recording bin need not be an observed stop. The supplied simulations impose recorded recall counts, so matching lengths and pure-list category totals are not predictions.</p>
+<p>Temporal and semantic transition measures compare actual transitions with eligible unrecalled alternatives. Their undefined bins remain undefined. Rank summaries and their statistical output use the configured participant-level scores; simulation repetitions retain their participant identifiers. The template’s rank method and uncertainty settings determine the reference and interval calculation.</p>
 
 
 </section>

@@ -333,6 +333,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#pooling-and-participant-fits" id="toc-pooling-and-participant-fits" class="nav-link" data-scroll-target="#pooling-and-participant-fits"><span class="header-section-number">8.2</span> Pooling and participant fits</a></li>
   <li><a href="#the-returned-record" id="toc-the-returned-record" class="nav-link" data-scroll-target="#the-returned-record"><span class="header-section-number">8.3</span> The returned record</a></li>
   <li><a href="#what-the-template-adds" id="toc-what-the-template-adds" class="nav-link" data-scroll-target="#what-the-template-adds"><span class="header-section-number">8.4</span> What the template adds</a></li>
+  <li><a href="#selecting-an-optimizer-in-the-template" id="toc-selecting-an-optimizer-in-the-template" class="nav-link" data-scroll-target="#selecting-an-optimizer-in-the-template"><span class="header-section-number">8.5</span> Selecting an optimizer in the template</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/fitting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -435,17 +436,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>    diagnostics: NotRequired[<span class="bu">dict</span>[<span class="bu">str</span>, Any]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Entries at the same index in <code>fitness</code>, <code>nit</code>, <code>converged</code> and every <code>fits</code> array refer to the same fit row. <code>fits['subject']</code> identifies that row; identifiers are labels, not positional indices. <code>fits</code> includes fixed and fitted parameter values, while <code>fixed</code> and <code>free</code> preserve their roles.</p>
 <p><code>fitness</code> means the selected loss, not necessarily likelihood. <code>converged</code> reports the optimizer’s stopping criterion. It does not establish parameter recovery, a global optimum or an adequate account of the behavior.</p>
+<div id="locate-project-inputs" class="cell">
+<details class="code-fold">
+<summary>0 — Locate the project inputs</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="cf">try</span>:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
 <div id="2926e141" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Inspect the parameter roles and row alignment in a saved fit</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a>record <span class="op">=</span> json.loads(Path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>).read_text())</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="bu">print</span>(<span class="st">"Free parameter bounds:"</span>, record[<span class="st">"free"</span>])</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="bu">print</span>(<span class="st">"Fit-row identifiers:"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>])</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="bu">print</span>(<span class="st">"Objectives:"</span>, record[<span class="st">"fitness"</span>])</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="bu">print</span>(<span class="st">"Optimizer criterion met:"</span>, record[<span class="st">"converged"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="bu">print</span>(<span class="st">"Free parameter bounds:"</span>, record[<span class="st">"free"</span>])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="bu">print</span>(<span class="st">"Fit-row identifiers:"</span>, record[<span class="st">"fits"</span>][<span class="st">"subject"</span>])</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="bu">print</span>(<span class="st">"Objectives:"</span>, record[<span class="st">"fitness"</span>])</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="bu">print</span>(<span class="st">"Optimizer criterion met:"</span>, record[<span class="st">"converged"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Free parameter bounds: {'encoding_drift_rate': [2.220446049250313e-16, 0.9999999999999998], 'start_drift_rate': [2.220446049250313e-16, 0.9999999999999998], 'recall_drift_rate': [2.220446049250313e-16, 0.9999999999999998], 'learning_rate': [2.220446049250313e-16, 0.9999999999999998], 'shared_support': [2.220446049250313e-16, 100.0], 'item_support': [2.220446049250313e-16, 100.0], 'primacy_scale': [2.220446049250313e-16, 100.0], 'primacy_decay': [2.220446049250313e-16, 100.0], 'choice_sensitivity': [2.220446049250313e-16, 100.0]}
@@ -458,13 +472,13 @@ Optimizer criterion met: [True]</code></pre>
 <div id="b757cf97" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Render the existing parameter-summary helper</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown, display</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> summarize_parameters</span>
-<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>display(Markdown(summarize_parameters(</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>    [{<span class="op">**</span>record, <span class="st">"name"</span>: <span class="st">"Pooled CMR"</span>}],</span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    query_parameters<span class="op">=</span><span class="bu">list</span>(record[<span class="st">"free"</span>]),</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown, display</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> summarize_parameters</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>display(Markdown(summarize_parameters(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>    [{<span class="op">**</span>record, <span class="st">"name"</span>: <span class="st">"Pooled CMR"</span>}],</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>    query_parameters<span class="op">=</span><span class="bu">list</span>(record[<span class="st">"free"</span>]),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display cell-output-markdown">
 <table class="caption-top table table-sm table-striped small">
@@ -637,6 +651,49 @@ Optimizer criterion met: [True]</code></pre>
 <p><a href="../overview/simulation.html">Data Simulation</a> consumes the returned parameter values with an explicit assignment to participant IDs. Applying pooled values to participants requires that assignment; the <code>-1</code> label is not a participant in the observation dataset. <a href="../overview/evaluation.html">Model Evaluation</a> uses the objective and provenance to establish which comparisons are appropriate.</p>
 <p>The <a href="../templates/fitting.html">fitting template</a> supplies the complete configuration, optimization, saving, objective recalculation and subsequent simulation. This guide explains the interfaces that procedure connects.</p>
 <p>The supplied CMR fit estimates nine continuous parameters with learning before context updating and repeated recalls disabled. Preparation compared seeds 0 and 1, each with three restarts; <code>search_comparison</code> retains both results and the selected seed. These are preparation metadata, not required <code>FitResult</code> fields. The source fingerprint identifies the actual code even when a version label is unchanged. Historical parameters require their original model semantics; loading them into a changed implementation does not reproduce the original fit.</p>
+</section>
+<section id="selecting-an-optimizer-in-the-template" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="selecting-an-optimizer-in-the-template"><span class="header-section-number">8.5</span> Selecting an optimizer in the template</h2>
+<p>Set both <code>fit_alg_path</code> and the complete <code>fit_hyperparams</code> value. These short runs exercise the interface; they are not convergence settings. The notebook adds the model’s free-parameter bounds and seed from <code>model_configs</code>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>fit_alg_path</code></th>
+<th>Small <code>fit_hyperparams</code> example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>jaxcmr.fitting.ScipyDE</code></td>
+<td><code>{"num_steps": 2, "pop_size": 4, "best_of": 1, "polish": False, "init": "latinhypercube", "progress_bar": False}</code></td>
+</tr>
+<tr class="even">
+<td><code>jaxcmr.fitting.EvosaxDE</code></td>
+<td><code>{"num_steps": 2, "pop_size": 4, "best_of": 1, "polish": False, "init": "latinhypercube", "progress_bar": False}</code></td>
+</tr>
+<tr class="odd">
+<td><code>jaxcmr.fitting.ScanEvosaxDE</code></td>
+<td><code>{"num_steps": 2, "pop_size": 4, "best_of": 1, "polish": False, "init": "latinhypercube", "progress_bar": False}</code></td>
+</tr>
+<tr class="even">
+<td><code>jaxcmr.fitting.MapEvosaxDE</code></td>
+<td><code>{"num_steps": 2, "pop_size": 4, "best_of": 1, "polish": False, "init": "latinhypercube", "map_batch_size": 1, "progress_bar": False}</code></td>
+</tr>
+<tr class="odd">
+<td><code>jaxcmr.fitting.ScipyLBFGSB</code></td>
+<td><code>{"num_steps": 2, "best_of": 1, "screening_size": 4, "screening_batch_size": 4, "progress_bar": False}</code></td>
+</tr>
+<tr class="even">
+<td><code>jaxcmr.fitting.ScipyTrustConstr</code></td>
+<td><code>{"num_steps": 2, "best_of": 1, "screening_size": 4, "screening_batch_size": 4, "progress_bar": False}</code></td>
+</tr>
+</tbody>
+</table>
+<p>DE’s <code>pop_size</code> multiplies the number of free parameters. <code>MapEvosaxDE</code>’s <code>map_batch_size</code> controls participant batching when <code>pooled=False</code>; <code>subject_indices</code> still selects the work unit. Gradient fitters require a differentiable objective; the template’s likelihood is suitable. Their screening and restart controls replace DE’s population controls. To exercise only fitting, set <code>redo_sims=False</code> and <code>redo_figures=False</code>. One entry in <code>model_configs</code> makes a single-model job.</p>
 
 
 </section>
