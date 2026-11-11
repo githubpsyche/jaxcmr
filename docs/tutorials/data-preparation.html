@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Computational models of memory search">
+
+<title>3&nbsp; Preparing data for JAXCMR – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../tutorials/template-tour.html" rel="next">
+<link href="../developer-setup.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5cfa02e47064ef246ca607ad056c3693.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">JAXCMR</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/githubpsyche/jaxcmr" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">jaxcmr</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../developer-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Developer Setup</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Tutorials</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/data-preparation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/template-tour.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../overview/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Library Guide</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false" aria-label="Toggle section: Library Guide">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Recall Analyses</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/models.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/components.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Model Components</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/losses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Loss Functions</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Fitting Procedures</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Data Simulation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview/evaluation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../templates.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Templates</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="false" aria-label="Toggle section: Templates">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Fitting models</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/parameter_shifting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/model_comparison.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Comparing pooled model fits</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Serial position curves</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Recall by output position</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">When recall ends</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Lag-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Temporal organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Distance-conditional response probability</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Distance-based organization scores</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Recall rates by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Serial position curves by category</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../templates/catcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Transitions within and between categories</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#start-with-scored-records" id="toc-start-with-scored-records" class="nav-link active" data-scroll-target="#start-with-scored-records"><span class="header-section-number">3.1</span> Start with scored records</a></li>
+  <li><a href="#align-trials-study-positions-and-item-identities" id="toc-align-trials-study-positions-and-item-identities" class="nav-link" data-scroll-target="#align-trials-study-positions-and-item-identities"><span class="header-section-number">3.2</span> Align trials, study positions and item identities</a></li>
+  <li><a href="#prepare-semantic-inputs" id="toc-prepare-semantic-inputs" class="nav-link" data-scroll-target="#prepare-semantic-inputs"><span class="header-section-number">3.3</span> Prepare semantic inputs</a></li>
+  <li><a href="#save-and-reuse-the-inputs" id="toc-save-and-reuse-the-inputs" class="nav-link" data-scroll-target="#save-and-reuse-the-inputs"><span class="header-section-number">3.4</span> Save and reuse the inputs</a></li>
+  </ul>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/tutorials/data-preparation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/guide/tutorials/data-preparation.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Turn scored study and recall records into a dataset and aligned semantic inputs. This small, invented example uses four stimuli and three lists so that every conversion is visible; its feature values are for teaching, not empirical semantic estimates. Run the notebook from top to bottom after <a href="../developer-setup.html">Developer Setup</a>, or use Colab; no input files are needed.</p>
+<div id="8ebb11be" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
+<details class="code-fold">
+<summary>1 — Set the output location</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>project_root <span class="op">=</span> <span class="va">None</span>  <span class="co"># Git root locally; the working directory otherwise.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>output_dir <span class="op">=</span> <span class="st">"results/tutorial/data-preparation"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="16d7b9ed" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>2 — Install JAXCMR when running in Colab</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
+<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    subprocess.check_call([</span>
+<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>        sys.executable, <span class="st">"-m"</span>, <span class="st">"pip"</span>, <span class="st">"install"</span>, <span class="st">"--upgrade"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>    ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="0e72c1ac" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>3 — Import packages</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> json</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.factory <span class="im">import</span> build_trial_connections_from_similarity</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> (</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a>    find_project_root,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a>    load_data,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a>    resolve_project_path,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>    save_dict_to_hdf5,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.math <span class="im">import</span> cosine_similarity_matrix</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="a4ead629" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>4 — Resolve the working folder</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="cf">else</span>:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>    <span class="cf">try</span>:</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>        root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>    <span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>        root_path <span class="op">=</span> Path.cwd()</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>output_path <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>output_path.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="start-with-scored-records" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="start-with-scored-records"><span class="header-section-number">3.1</span> Start with scored records</h2>
+<p>Each record is one study–recall trial. Responses have already been matched to stimulus identities, in recall order. These lists contain no repeated presentations or intrusions; deciding how to score those is part of preparing a real experiment, before this conversion.</p>
+<div id="1193a96f" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>5 — Describe the study lists and scored recall order</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>records <span class="op">=</span> [</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>    {<span class="st">"subject"</span>: <span class="dv">1</span>, <span class="st">"condition"</span>: <span class="dv">1</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>     <span class="st">"studied"</span>: [<span class="st">"apple"</span>, <span class="st">"pear"</span>, <span class="st">"hammer"</span>], <span class="st">"recalled"</span>: [<span class="st">"hammer"</span>, <span class="st">"apple"</span>]},</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    {<span class="st">"subject"</span>: <span class="dv">1</span>, <span class="st">"condition"</span>: <span class="dv">2</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>     <span class="st">"studied"</span>: [<span class="st">"cup"</span>, <span class="st">"hammer"</span>, <span class="st">"apple"</span>, <span class="st">"pear"</span>], <span class="st">"recalled"</span>: [<span class="st">"pear"</span>, <span class="st">"cup"</span>]},</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    {<span class="st">"subject"</span>: <span class="dv">2</span>, <span class="st">"condition"</span>: <span class="dv">1</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>     <span class="st">"studied"</span>: [<span class="st">"pear"</span>, <span class="st">"apple"</span>, <span class="st">"cup"</span>], <span class="st">"recalled"</span>: []},</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>]</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>stimuli <span class="op">=</span> [<span class="st">"apple"</span>, <span class="st">"pear"</span>, <span class="st">"hammer"</span>, <span class="st">"cup"</span>]</span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>item_ids <span class="op">=</span> {name: index <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> index, name <span class="kw">in</span> <span class="bu">enumerate</span>(stimuli)}</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Shared stimulus IDs:"</span>, item_ids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Shared stimulus IDs: {'apple': 1, 'pear': 2, 'hammer': 3, 'cup': 4}</code></pre>
+</div>
+</div>
+</section>
+<section id="align-trials-study-positions-and-item-identities" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="align-trials-study-positions-and-item-identities"><span class="header-section-number">3.2</span> Align trials, study positions and item identities</h2>
+<p>Positive <code>recalls</code> codes identify <strong>one-based study positions</strong>; zero is padding. <code>pres_itemids</code> holds identities shared across trials, while <code>pres_itemnos</code> holds within-list item codes. With distinct items in each list, the latter equal study positions. An empty recall sequence stays an all-zero row, retaining that trial and participant.</p>
+<div id="94c66289" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>6 — Convert stimulus identities into aligned arrays</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>trial_count <span class="op">=</span> <span class="bu">len</span>(records)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>study_width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(record[<span class="st">"studied"</span>]) <span class="cf">for</span> record <span class="kw">in</span> records)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>response_width <span class="op">=</span> study_width</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>pres_itemnos <span class="op">=</span> np.zeros((trial_count, study_width), dtype<span class="op">=</span>np.int32)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>pres_itemids <span class="op">=</span> np.zeros_like(pres_itemnos)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>recalls <span class="op">=</span> np.zeros((trial_count, response_width), dtype<span class="op">=</span>np.int32)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>rec_itemids <span class="op">=</span> np.zeros_like(recalls)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a><span class="cf">for</span> trial_index, record <span class="kw">in</span> <span class="bu">enumerate</span>(records):</span>
+<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>    study_positions <span class="op">=</span> {item: position <span class="cf">for</span> position, item <span class="kw">in</span> <span class="bu">enumerate</span>(record[<span class="st">"studied"</span>], <span class="dv">1</span>)}</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>    <span class="cf">for</span> column, item <span class="kw">in</span> <span class="bu">enumerate</span>(record[<span class="st">"studied"</span>]):</span>
+<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>        pres_itemnos[trial_index, column] <span class="op">=</span> column <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>        pres_itemids[trial_index, column] <span class="op">=</span> item_ids[item]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>    <span class="cf">for</span> output_position, item <span class="kw">in</span> <span class="bu">enumerate</span>(record[<span class="st">"recalled"</span>]):</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>        recalls[trial_index, output_position] <span class="op">=</span> study_positions[item]</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>        rec_itemids[trial_index, output_position] <span class="op">=</span> item_ids[item]</span>
+<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>data <span class="op">=</span> {</span>
+<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    <span class="st">"subject"</span>: np.array([[record[<span class="st">"subject"</span>]] <span class="cf">for</span> record <span class="kw">in</span> records], dtype<span class="op">=</span>np.int32),</span>
+<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    <span class="st">"listLength"</span>: (pres_itemnos <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>).astype(np.int32),</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>    <span class="st">"pres_itemnos"</span>: pres_itemnos,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>    <span class="st">"recalls"</span>: recalls,</span>
+<span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>    <span class="st">"pres_itemids"</span>: pres_itemids,</span>
+<span id="cb7-24"><a href="#cb7-24" aria-label="24"></a>    <span class="st">"rec_itemids"</span>: rec_itemids,</span>
+<span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>    <span class="st">"condition"</span>: np.array([[record[<span class="st">"condition"</span>]] <span class="cf">for</span> record <span class="kw">in</span> records], dtype<span class="op">=</span>np.int32),</span>
+<span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>}</span>
+<span id="cb7-27"><a href="#cb7-27" aria-label="27"></a><span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"listLength"</span>, <span class="st">"pres_itemids"</span>, <span class="st">"recalls"</span>]:</span>
+<span id="cb7-28"><a href="#cb7-28" aria-label="28"></a>    <span class="bu">print</span>(name, <span class="st">"=</span><span class="ch">\n</span><span class="st">"</span>, data[name])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>listLength =
+ [[3]
+ [4]
+ [3]]
+pres_itemids =
+ [[1 2 3 0]
+ [4 3 1 2]
+ [2 1 4 0]]
+recalls =
+ [[3 1 0 0]
+ [4 1 0 0]
+ [0 0 0 0]]</code></pre>
+</div>
+</div>
+<p>In the first trial, <code>hammer</code> is shared item 3 at study position 3; in the second, it is still shared item 3 but at study position 2. The second trial’s first recall, <code>pear</code>, is therefore stored as position <strong>4</strong>, not its shared item ID <strong>2</strong>. See <a href="../overview/data.html">Data</a> for the field reference and repeated-item conventions.</p>
+<div id="48df43d4" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>7 — Check that recall positions recover the scored identities</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a><span class="cf">for</span> trial_index, record <span class="kw">in</span> <span class="bu">enumerate</span>(records):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>    positions <span class="op">=</span> data[<span class="st">"recalls"</span>][trial_index]</span>
+<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a>    recalled_ids <span class="op">=</span> data[<span class="st">"pres_itemids"</span>][trial_index, positions[positions <span class="op">&gt;</span> <span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a>    expected_ids <span class="op">=</span> [item_ids[item] <span class="cf">for</span> item <span class="kw">in</span> record[<span class="st">"recalled"</span>]]</span>
+<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a>    <span class="cf">assert</span> recalled_ids.tolist() <span class="op">==</span> expected_ids</span>
+<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a><span class="bu">print</span>(<span class="st">"Recall order and stimulus identities preserved in all three trials."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Recall order and stimulus identities preserved in all three trials.</code></pre>
+</div>
+</div>
+</section>
+<section id="prepare-semantic-inputs" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="prepare-semantic-inputs"><span class="header-section-number">3.3</span> Prepare semantic inputs</h2>
+<p>Rows of an item-feature matrix must follow the shared ID order: item 1 is row 0. Here the features are supplied explicitly; real features could come from a separately chosen embedding model or stimulus descriptors. Human pairwise similarity ratings instead begin with an item-by-item matrix and its row/column labels.</p>
+<div id="2d1c6ddf" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>8 — Align item features and calculate cosine similarities</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-label="1"></a>features_by_item <span class="op">=</span> {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-label="2"></a>    <span class="st">"apple"</span>: [<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>],</span>
+<span id="cb11-3"><a href="#cb11-3" aria-label="3"></a>    <span class="st">"pear"</span>: [<span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>],</span>
+<span id="cb11-4"><a href="#cb11-4" aria-label="4"></a>    <span class="st">"hammer"</span>: [<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb11-5"><a href="#cb11-5" aria-label="5"></a>    <span class="st">"cup"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>],</span>
+<span id="cb11-6"><a href="#cb11-6" aria-label="6"></a>}</span>
+<span id="cb11-7"><a href="#cb11-7" aria-label="7"></a>features <span class="op">=</span> jnp.asarray([features_by_item[item] <span class="cf">for</span> item <span class="kw">in</span> stimuli])</span>
+<span id="cb11-8"><a href="#cb11-8" aria-label="8"></a>similarities <span class="op">=</span> cosine_similarity_matrix(features)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-label="9"></a><span class="co"># For cosine similarity specifically, cosine distance is 1 - similarity.</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-label="10"></a>distances <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> similarities</span>
+<span id="cb11-11"><a href="#cb11-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Row and column order:"</span>, stimuli)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Cosine similarities:</span><span class="ch">\n</span><span class="st">"</span>, np.<span class="bu">round</span>(similarities, <span class="dv">3</span>))</span>
+<span id="cb11-13"><a href="#cb11-13" aria-label="13"></a><span class="bu">print</span>(<span class="st">"Cosine distances:</span><span class="ch">\n</span><span class="st">"</span>, np.<span class="bu">round</span>(distances, <span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Row and column order: ['apple', 'pear', 'hammer', 'cup']
+Cosine similarities:
+ [[1.    0.707 0.    0.   ]
+ [0.707 1.    0.    0.5  ]
+ [0.    0.    1.    0.707]
+ [0.    0.5   0.707 1.   ]]
+Cosine distances:
+ [[0.    0.293 1.    1.   ]
+ [0.293 0.    1.    0.5  ]
+ [1.    1.    0.    0.293]
+ [1.    0.5   0.293 0.   ]]</code></pre>
+</div>
+</div>
+<p>A larger similarity means a closer pair; a smaller distance means a closer pair. The conversion <code>1 - similarity</code> here is specific to cosine distance, not a general rule for arbitrary rating scales. Features, similarities and distances are separate files, and none belongs in the trial-aligned dataset dictionary.</p>
+<div id="af1add17" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>9 — Extract model associations in each trial’s study order</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>trial_connections <span class="op">=</span> build_trial_connections_from_similarity(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    data[<span class="st">"pres_itemids"</span>], similarities</span>
+<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a><span class="bu">print</span>(<span class="st">"First trial:"</span>, records[<span class="dv">0</span>][<span class="st">"studied"</span>], <span class="st">"+ one padded slot"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a><span class="bu">print</span>(np.<span class="bu">round</span>(trial_connections[<span class="dv">0</span>], <span class="dv">3</span>))</span>
+<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a><span class="cf">assert</span> np.<span class="bu">all</span>(np.asarray(trial_connections[<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>]) <span class="op">==</span> <span class="dv">0</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a><span class="cf">assert</span> np.<span class="bu">all</span>(np.asarray(trial_connections[<span class="dv">0</span>, :, <span class="op">-</span><span class="dv">1</span>]) <span class="op">==</span> <span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>First trial: ['apple', 'pear', 'hammer'] + one padded slot
+[[0.    0.707 0.    0.   ]
+ [0.707 0.    0.    0.   ]
+ [0.    0.    0.    0.   ]
+ [0.    0.    0.    0.   ]]</code></pre>
+</div>
+</div>
+<p>This model helper removes self-connections, clips negative similarities, and excludes padding. Pass the original feature matrix to a feature-based semantic model such as <code>additive_semantic_cmr</code>, or the similarity matrix to <code>additive_semantic_matrix_cmr</code>; do not give a similarity matrix to a factory expecting feature vectors. The <a href="../templates/distcrp.html">distance-CRP</a> and <a href="../templates/distrank.html">distance-rank</a> templates accept distances for describing recall organization. The three supplied workshop fits do not include a semantic input.</p>
+</section>
+<section id="save-and-reuse-the-inputs" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="save-and-reuse-the-inputs"><span class="header-section-number">3.4</span> Save and reuse the inputs</h2>
+<div id="86f6dfef" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>10 — Save the dataset, semantic arrays and stimulus lookup</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-label="1"></a>dataset_path <span class="op">=</span> output_path <span class="op">/</span> <span class="st">"teaching_recall.h5"</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-label="2"></a>save_dict_to_hdf5(data, <span class="bu">str</span>(dataset_path))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-label="3"></a>np.save(output_path <span class="op">/</span> <span class="st">"item_features.npy"</span>, np.asarray(features))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-label="4"></a>np.save(output_path <span class="op">/</span> <span class="st">"semantic_similarities.npy"</span>, np.asarray(similarities))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-label="5"></a>np.save(output_path <span class="op">/</span> <span class="st">"semantic_distances.npy"</span>, np.asarray(distances))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-label="6"></a>(output_path <span class="op">/</span> <span class="st">"stimulus_ids.json"</span>).write_text(json.dumps(item_ids, indent<span class="op">=</span><span class="dv">2</span>) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-label="7"></a>reloaded <span class="op">=</span> load_data(<span class="bu">str</span>(dataset_path))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-label="8"></a>arrays_preserved <span class="op">=</span> <span class="bu">all</span>(np.array_equal(data[name], reloaded[name]) <span class="cf">for</span> name <span class="kw">in</span> data)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-label="9"></a><span class="cf">assert</span> arrays_preserved</span>
+<span id="cb15-10"><a href="#cb15-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"All dataset arrays preserved:"</span>, arrays_preserved)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Saved files:"</span>, <span class="bu">sorted</span>(path.name <span class="cf">for</span> path <span class="kw">in</span> output_path.iterdir()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>All dataset arrays preserved: True
+Saved files: ['item_features.npy', 'semantic_distances.npy', 'semantic_similarities.npy', 'stimulus_ids.json', 'teaching_recall.h5']</code></pre>
+</div>
+</div>
+<p>Supply <code>teaching_recall.h5</code> as an analysis input and, for semantic analyses, <code>semantic_distances.npy</code> as <code>distance_matrix_path</code>. This example’s condition field is <code>condition</code>, so use queries such as <code>data['condition'] == 1</code> rather than the workshop’s <code>list_type</code>. Keep <code>stimulus_ids.json</code> with the semantic arrays when adapting the procedure to another experiment.</p>
+<p><a href="../downloads/examples/war-photo-data-preparation.ipynb">Complete research example: preparing the war-photo-recall data</a> shows the original workbook reconciliation, scoring exclusions, item mapping and saved provenance. It requires private lab inputs and is provided for inspection; the tutorial above is self-contained. The real example’s final feature table contains <strong>emotion ratings</strong>, not semantic associations.</p>
+<p>Continue with <a href="../tutorials/template-tour.html">From data to model comparison</a>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../developer-setup.html" class="pagination-link" aria-label="Developer Setup">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Developer Setup</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../tutorials/template-tour.html" class="pagination-link" aria-label="From data to model comparison">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

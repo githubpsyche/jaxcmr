@@ -65,8 +65,8 @@ from `main` at https://githubpsyche.github.io/jaxcmr/. After changing the guide,
 prepare and review a local preview before committing and publishing the source and `docs/`.
 Notebook cells are not executed during rendering.
 
-The independent Quarto book in `guide/` contains 26 content pages: the introduction,
-setup page, Library Guide introduction and eight topic notebooks, Templates index and
+The independent Quarto book in `guide/` contains 28 content pages: the introduction,
+setup page, two tutorials, Library Guide introduction and eight topic notebooks, Templates index and
 fourteen prepared template notebooks. Use [Quarto](https://quarto.org/docs/download/)
 1.10.20 or newer; earlier versions have an [upstream bug](https://github.com/quarto-dev/quarto-cli/issues/13583)
 that breaks Show All Code / Hide All Code when copy buttons are enabled. The current
@@ -88,10 +88,12 @@ Rebuild the book after notebook changes to refresh the displayed chapters and do
 Review locally, then commit and push the approved sources and `docs/`.
 
 The `book.chapters` list is the publication list. Keep notebook entries as plain
-`- templates/name.ipynb` or `- overview/name.ipynb` lines. Authoritative template
+`- templates/name.ipynb`, `- overview/name.ipynb` or `- tutorials/name.ipynb` lines. Authoritative template
 notebooks live in `templates/`; their copies in `guide/templates/` are generated.
-Authoritative Library Guide pages live in `guide/overview/`. The build stages notebook
-downloads for both sections under `guide/downloads/`; do not edit those copies.
+Authoritative Library Guide pages live in `guide/overview/`; tutorials live in
+`guide/tutorials/`. Supporting example notebooks in `guide/examples/` are downloads,
+not book chapters. The build stages notebook downloads under `guide/downloads/`;
+do not edit those copies.
 Run a changed notebook in a working folder with the documented `data/` inputs,
 retain useful outputs, and review its rendered chapter and download. This is
 example preparation; no automated documentation suite is added.

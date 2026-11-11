@@ -46,10 +46,14 @@ def stage():
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps(notebook, ensure_ascii=False, indent=1) + "\n")
 
-    for name in ["developer-setup.ipynb", *re.findall(r"^\s*- (overview/\w+\.ipynb)\s*$", guide, re.M)]:
+    for name in ["developer-setup.ipynb", *re.findall(r"^\s*- ((?:overview|tutorials)/[\w-]+\.ipynb)\s*$", guide, re.M)]:
         destination = downloads / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / "guide" / name, destination)
+    for source in (ROOT / "guide/examples").glob("*.ipynb"):
+        destination = downloads / "examples" / source.name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
     for name in [*registry(), "data/fits/README.md"]:
         destination = ROOT / "guide/templates" / name
         destination.parent.mkdir(parents=True, exist_ok=True)
