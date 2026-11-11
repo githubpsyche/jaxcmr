@@ -40,8 +40,8 @@ def test_calculate_ci_exact_halfwidth():
 def test_generate_t_p_matrices_exact_t_stat():
     """Off-diagonal t-stat matches scipy ttest_rel."""
     results = [
-        {"name": "ModelX", "fitness": [10.0, 13.0, 11.0], "free": ["p1"]},
-        {"name": "ModelY", "fitness": [9.0, 11.0, 10.0], "free": ["p1"]},
+        {"subject": [1, 2, 3], "name": "ModelX", "fitness": [10.0, 13.0, 11.0], "free": ["p1"]},
+        {"subject": [1, 2, 3], "name": "ModelY", "fitness": [9.0, 11.0, 10.0], "free": ["p1"]},
     ]
     expected_t, expected_p = ttest_rel([9.0, 11.0, 10.0], [10.0, 13.0, 11.0], alternative="less")
     t_df, p_df = generate_t_p_matrices(results)

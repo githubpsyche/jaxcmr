@@ -253,494 +253,464 @@ def summarize_parameters(
     return md_table
 
 
-def generate_t_p_matrices(results: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Returns matrices of t-values and p-values from paired t-tests on model fitness results.
+def _score_array(model: dict, field: str) -> np.ndarray:
+    values = np.asarray(model[field], dtype=float)
+    if values.ndim != 1 or values.size == 0 or not np.isfinite(values).all():
+        raise ValueError(
+            f"{model['name']}: {field} must be a nonempty, finite 1D array"
+        )
+    return values
 
-    Args:
-    - results: dicts containing `name` and subjectwise `fitness` data for each model.
-    """
-    # Extract model names
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
 
-    # Initialize matrices for t-values and 'less' p-values
-    t_values = np.zeros((num_models, num_models))
-    p_values_less = np.zeros((num_models, num_models))
-
-    # Populate the matrices with t and p values from the paired t-tests
-    for i, model_a in enumerate(results):
-        for j, model_b in enumerate(results):
-            t, p_less = ttest_rel(
-                model_a["fitness"], model_b["fitness"], alternative="less"
+def _subject_ids(model: dict, size: int) -> list | None:
+    """Read current fit IDs, legacy IDs, or CV IDs without changing their order."""
+    candidates = [
+        source[key]
+        for source, key in [
+            (model.get("fits", {}), "subject"),
+            (model, "subject"),
+            (model, "subjects"),
+        ]
+        if key in source
+    ]
+    identifiers = None
+    for candidate in candidates:
+        array = np.asarray(candidate, dtype=object)
+        if array.ndim != 1 or len(array) != size:
+            raise ValueError(
+                f"{model['name']}: subject identifiers must match the score rows"
             )
-            t_values[i, j] = t
-            p_values_less[i, j] = p_less
-
-    # Convert matrices to pandas DataFrames, replacing NaNs with empty strings
-    df_t = pd.DataFrame(t_values, index=model_names, columns=model_names).replace(
-        np.nan, ""
-    )
-    df_p = pd.DataFrame(p_values_less, index=model_names, columns=model_names).replace(
-        np.nan, ""
-    )
-
-    return df_t, df_p
-
-
-def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
-    """
-    Calculates the Akaike Information Criterion weights for a list of models.
-
-    Parameters:
-    - results (list): A list of dictionaries, each with 'name', 'fitness', and 'free' (parameters).
-
-    Returns:
-    - DataFrame: A pandas DataFrame with a row for each model and their AICw scores.
-    """
-    aics = []
-    names = []
-
-    # Calculate AIC for each model
-    for model in results:
-        k = len(model["free"])  # number of parameters
-        n_subjects = len(model["fitness"])
-        total_nll = sum(model["fitness"])
-        aic = 2 * k * n_subjects + 2 * total_nll
-        aics.append(aic)
-        names.append(model["name"])
-
-    # Convert AICs to AIC weights
-    aics = np.array(aics)
-    min_aic = np.min(aics)
-    delta_aic = aics - min_aic
-    weights = np.exp(-0.5 * delta_aic)
-    aic_weights = weights / np.sum(weights)
-
-    # Create DataFrame
-    df = pd.DataFrame({"Model": names, "AICw": aic_weights})
-    return df.sort_values(by="AICw", ascending=False)
+        values = array.tolist()
+        if any(
+            isinstance(x, (bool, np.bool_)) or not isinstance(x, (str, int, np.integer))
+            for x in values
+        ):
+            raise ValueError(
+                f"{model['name']}: subject identifiers must be integers or strings"
+            )
+        if len(set(values)) != size:
+            raise ValueError(f"{model['name']}: duplicate subject identifiers")
+        if identifiers is not None and identifiers != values:
+            raise ValueError(f"{model['name']}: conflicting subject identifier fields")
+        identifiers = values
+    return identifiers
 
 
-def calculate_aic(results: list[dict]) -> pd.DataFrame:
-    """
-    Return a DataFrame of Akaike Information Criterion (AIC) scores
-    for a collection of model-fit summaries.
-
-    Each `model` dictionary must contain:
-      • "name"   – a string identifying the model
-      • "fitness" – an iterable of per-observation log-likelihoods
-      • "free"    – a collection of free parameters (length = k)
-
-    AIC = 2k – 2·LL, where LL is the total log-likelihood.
-    Lower AIC indicates a better trade-off between fit and complexity.
-    """
-    aics, names = [], []
-
-    for model in results:
-        k = len(model["free"])  # number of free parameters
-        ll = np.sum(model["fitness"])  # total log-likelihood (positive)
-        aic = 2 * k - 2 * ll  # <-- note the minus sign
-        aics.append(aic)
-        names.append(model["name"])
-
-    df = pd.DataFrame({"Model": names, "AIC": aics})
-    return df.sort_values(by="AIC", ascending=True)  # best (lowest) first
-
-
-def calculate_bic_scores(
-    results: list[dict],
-) -> pd.DataFrame:
-    """
-    Return a DataFrame of Bayesian Information Criterion (BIC) scores
-    for a collection of model-fit summaries.
-    """
-    names, bics = [], []
-
-    for model in results:
-        k = len(model["free"])  # number of free parameters
-        ll = np.sum(model["fitness"])  # total log-likelihood
-
-        # determine sample size for this model
-        n = len(model["fitness"])
-
-        bic = k * np.log(n) - 2 * ll
-        names.append(model["name"])
-        bics.append(bic)
-
-    df = pd.DataFrame({"Model": names, "BIC": bics})
-    return df.sort_values(by="BIC", ascending=False)
+def _comparison_data(
+    results: list[dict], field: str = "fitness", *, participantwise: bool = False
+) -> tuple[list[str], np.ndarray, list | None]:
+    """Align to a stable ID order; an unidentified single pooled row is allowed for ICs."""
+    if not results:
+        raise ValueError("At least one model result is required")
+    names = [model["name"] for model in results]
+    if any(not isinstance(name, str) or not name for name in names) or len(
+        set(names)
+    ) != len(names):
+        raise ValueError("Model names must be nonempty and unique")
+    arrays = [_score_array(model, field) for model in results]
+    ids = [_subject_ids(model, len(values)) for model, values in zip(results, arrays)]
+    if any(len(values) != len(arrays[0]) for values in arrays):
+        raise ValueError("Models must contain the same score rows and subject set")
+    if any(subjects is None for subjects in ids):
+        if (
+            participantwise
+            or len(arrays[0]) > 1
+            or any(subjects is not None for subjects in ids)
+        ):
+            raise ValueError(
+                "Subject identifiers are required for participant-wise comparisons"
+            )
+        return names, np.stack(arrays), None
+    if any(set(subjects) != set(ids[0]) for subjects in ids):
+        raise ValueError("Models must contain the same subject set")
+    if participantwise and ids[0] == [-1]:
+        raise ValueError("A pooled fit is not a participant-wise sample")
+    order = sorted(ids[0], key=lambda value: (isinstance(value, str), value))
+    aligned = []
+    for subjects, values in zip(ids, arrays):
+        positions = {subject: i for i, subject in enumerate(subjects)}
+        aligned.append(values[[positions[subject] for subject in order]])
+    return names, np.stack(aligned), order
 
 
-def pairwise_aic_differences(
-    results: list[dict],
-    confidence: float = 0.95,
-    equivalence_margin: float = 2.0,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise AIC differences between models.
-
-    Args:
-      results: Model summaries containing `name`, per-subject `fitness`, and `free`.
-      confidence: Confidence level for the ΔAIC intervals.
-      equivalence_margin: Half-width in AIC units used for practical equivalence.
-
-    Returns:
-      (mean_delta, ci_halfwidth, equivalent): DataFrames with model names on rows
-      and columns. For each pair (i, j):
-
-      * mean_delta[i, j] is the mean ΔAIC_s = AIC_i,s − AIC_j,s across subjects.
-        Negative values favor model i; positive values favor model j.
-      * ci_halfwidth[i, j] is the half-width of the confidence interval for ΔAIC.
-      * equivalent[i, j] is True when |mean_delta| ≤ equivalence_margin and the
-        confidence interval includes zero, indicating practical equivalence.
-    """
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
-
-    aic_values = [_subjectwise_aic(model) for model in results]
-
-    mean_delta = np.full((num_models, num_models), np.nan, dtype=float)
-    ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
-    equivalent = np.zeros((num_models, num_models), dtype=bool)
-
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        if i == j:
-            continue
-
-        diff = aic_values[i] - aic_values[j]
-        valid = ~np.isnan(diff)
-        if np.count_nonzero(valid) <= 1:
-            continue
-
-        diff_valid = diff[valid]
-        mean_value = float(np.mean(diff_valid))
-        ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
-
-        mean_delta[i, j] = mean_value
-        ci_halfwidth[i, j] = ci
-
-        lower, upper = mean_value - ci, mean_value + ci
-        equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
-            lower <= 0.0 <= upper
+def _free_parameters(model: dict) -> list[str]:
+    free = model["free"]
+    if not isinstance(free, (Mapping, list, tuple)):
+        raise ValueError(f"{model['name']}: free must list the fitted parameter names")
+    names = list(free)
+    if any(not isinstance(name, str) or not name for name in names) or len(
+        set(names)
+    ) != len(names):
+        raise ValueError(
+            f"{model['name']}: free parameter names must be unique strings"
         )
-
-    df_mean = pd.DataFrame(mean_delta, index=model_names, columns=model_names)
-    df_ci = pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names)
-    df_equiv = pd.DataFrame(equivalent, index=model_names, columns=model_names)
-
-    return df_mean, df_ci, df_equiv
+    return names
 
 
-def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
-    """Returns matrix of fractions of AIC in model i < model j.
-
-    Args:
-        - results: dicts containing each containing 'name', 'fitness', and 'free' data.
-            Per-subject AIC is computed as 2k + 2*NLL_s.
-    """
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
-    penalized = [_subjectwise_aic(model) for model in results]
-
-    comparison_matrix = np.zeros((num_models, num_models))
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        comparison_matrix[i, j] = (
-            float(np.mean(penalized[i] < penalized[j])) if i != j else np.nan
+def _observation_counts(n_obs, size: int) -> np.ndarray:
+    counts = np.asarray(n_obs, dtype=float)
+    if counts.ndim == 0 and size == 1:
+        counts = counts.reshape(1)
+    if (
+        counts.ndim != 1
+        or len(counts) != size
+        or not np.isfinite(counts).all()
+        or np.any(counts <= 0)
+        or np.any(counts != np.floor(counts))
+    ):
+        raise ValueError(
+            "n_obs must contain one positive integer per fit row; scalars require one row"
         )
-    return pd.DataFrame(comparison_matrix, index=model_names, columns=model_names)
-
-
-def raw_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
-    """Returns matrix of fractions of fitness in row model < in model j.
-
-    Args:
-        - results: dicts containing each containing 'name' and 'fitness' data for each model.
-    """
-    # Extract model names
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
-
-    # Initialize matrix for comparison results
-    comparison_matrix = np.zeros((num_models, num_models))
-
-    # Populate the matrix with comparison fractions
-    for i, model_a in enumerate(results):
-        for j, model_b in enumerate(results):
-            if i != j:
-                # Calculate the fraction of fitness values in model_a that are lower than those in model_b
-                comparison_scores = np.array(model_a["fitness"]) < np.array(
-                    model_b["fitness"]
-                )
-                comparison_fraction = np.mean(comparison_scores)
-                comparison_matrix[i, j] = comparison_fraction
-            else:
-                # Set diagonal to NaN for clarity, since self-comparison does not make sense here
-                comparison_matrix[i, j] = np.nan
-
-    return pd.DataFrame(comparison_matrix, index=model_names, columns=model_names)
-
-
-def pairwise_cv_differences(
-    results: list[dict],
-    confidence: float = 0.95,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise CV-NLL differences between models.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'`` and ``'cv_fitness'`` (per-subject CV-NLL).
-    confidence : float
-        Confidence level for the difference intervals.
-
-    Returns
-    -------
-    tuple[pd.DataFrame, pd.DataFrame]
-        (mean_delta, ci_halfwidth). Negative mean_delta[i, j] favors model i.
-
-    """
-    model_names = [m["name"] for m in results]
-    n = len(model_names)
-    cv_values = [np.asarray(m["cv_fitness"], dtype=float) for m in results]
-
-    mean_delta = np.full((n, n), np.nan, dtype=float)
-    ci_hw = np.full((n, n), np.nan, dtype=float)
-
-    for i, j in itertools.product(range(n), range(n)):
-        if i == j:
-            continue
-        diff = cv_values[i] - cv_values[j]
-        valid = ~np.isnan(diff)
-        if np.count_nonzero(valid) <= 1:
-            continue
-        diff_valid = diff[valid]
-        mean_delta[i, j] = float(np.mean(diff_valid))
-        ci_hw[i, j] = calculate_ci(diff_valid.tolist(), confidence=confidence)
-
-    return (
-        pd.DataFrame(mean_delta, index=model_names, columns=model_names),
-        pd.DataFrame(ci_hw, index=model_names, columns=model_names),
-    )
-
-
-def cv_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
-    """Return fraction of subjects where model i has lower CV-NLL than model j.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'`` and ``'cv_fitness'``.
-
-    Returns
-    -------
-    pd.DataFrame
-        Matrix with model names as row/column labels.
-
-    """
-    model_names = [m["name"] for m in results]
-    n = len(model_names)
-    cv_values = [np.asarray(m["cv_fitness"], dtype=float) for m in results]
-
-    matrix = np.full((n, n), np.nan, dtype=float)
-    for i, j in itertools.product(range(n), range(n)):
-        if i != j:
-            matrix[i, j] = float(np.mean(cv_values[i] < cv_values[j]))
-
-    return pd.DataFrame(matrix, index=model_names, columns=model_names)
+    return counts
 
 
 def _subjectwise_aic(model: dict) -> np.ndarray:
-    """Return per-subject AIC values: AIC_s = 2k + 2*NLL_s.
-
-    Parameters
-    ----------
-    model : dict
-        Model summary with ``'fitness'`` (per-subject NLL) and ``'free'``.
-
-    Returns
-    -------
-    np.ndarray
-        Per-subject AIC values.
-
-    """
-    fitness = np.asarray(model["fitness"], dtype=float)
-    penalty = 2.0 * len(model.get("free", []))
-    return 2.0 * fitness + penalty
+    """Per-fit AIC in original row order; retained for existing research callers."""
+    return 2 * _score_array(model, "fitness") + 2 * len(_free_parameters(model))
 
 
 def _subjectwise_aicc(model: dict, n_obs: np.ndarray) -> np.ndarray:
-    """Return per-subject AICc values: AICc_s = 2k + 2*NLL_s + 2k(k+1)/(n_s - k - 1).
+    """Per-fit AICc in original row order, with explicitly matching counts."""
+    aic = _subjectwise_aic(model)
+    counts = _observation_counts(n_obs, len(aic))
+    k = len(_free_parameters(model))
+    if np.any(counts <= k + 1):
+        raise ValueError("AICc undefined where n_obs <= k + 1")
+    return aic + 2 * k * (k + 1) / (counts - k - 1)
 
-    AICc is the bias-corrected variant of AIC for finite samples. The
-    correction term vanishes as n_s → ∞, so AICc converges to AIC.
-    Burnham & Anderson (2002) recommend always using AICc; it is
-    especially important when n_s / k < 40.
 
-    Parameters
-    ----------
-    model : dict
-        Model summary with ``'fitness'`` (per-subject NLL) and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts (e.g. number of trials).
+def _criterion_data(
+    results: list[dict],
+    criterion: str = "AIC",
+    n_obs=None,
+    *,
+    participantwise: bool = False,
+) -> tuple[list[str], np.ndarray, list | None]:
+    names, nll, ids = _comparison_data(results, participantwise=participantwise)
+    k = np.array([len(_free_parameters(model)) for model in results])[:, None]
+    if criterion == "AIC":
+        return names, 2 * nll + 2 * k, ids
+    counts = _observation_counts(n_obs, nll.shape[1])
+    # Count vectors refer to the FIRST record's original row order, before alignment.
+    if ids is not None:
+        original = _subject_ids(results[0], len(counts))
+        positions = {subject: i for i, subject in enumerate(original)}
+        counts = counts[[positions[subject] for subject in ids]]
+    if criterion == "BIC":
+        return names, 2 * nll + k * np.log(counts), ids
+    denominator = counts - k - 1
+    if np.any(denominator <= 0):
+        raise ValueError("AICc undefined where n_obs <= k + 1")
+    return names, 2 * nll + 2 * k + 2 * k * (k + 1) / denominator, ids
 
-    Returns
-    -------
-    np.ndarray
-        Per-subject AICc values.
 
-    Raises
-    ------
-    ValueError
-        If any subject has n_s <= k + 1, making the correction undefined.
+def _criterion_table(results: list[dict], criterion: str, n_obs=None) -> pd.DataFrame:
+    names, values, _ = _criterion_data(results, criterion, n_obs)
+    return pd.DataFrame({"Model": names, criterion: values.sum(axis=1)}).sort_values(
+        criterion
+    )
 
+
+def calculate_aic(results: list[dict]) -> pd.DataFrame:
+    """Return AIC = sum_rows(2*NLL + 2*k), lowest first.
+
+    Each record supplies ``name``, ``free`` parameter names, and a 1D ``fitness``
+    array of SUMMED negative log likelihoods, one per independently fitted
+    parameter set. A pooled fit has one row and incurs one penalty. Multiple
+    rows require matching subject identifiers (see ``pairwise_aic_differences``).
+    This convention also applies to AICc, BIC and information-criterion weights.
+    Generic optimizer objectives such as MSE or mean/scaled NLL must not be used.
+    Neither the objective nor its sign can be inferred from its numerical value.
     """
-    fitness = np.asarray(model["fitness"], dtype=float)
-    n_obs = np.asarray(n_obs, dtype=float)
-    k = len(model.get("free", []))
-    denom = n_obs - k - 1.0
-    if np.any(denom <= 0):
-        bad = np.where(denom <= 0)[0]
-        raise ValueError(
-            f"AICc undefined for {len(bad)} subject(s) where n_obs <= k + 1 "
-            f"(k={k}). Subject indices: {bad.tolist()}"
-        )
-    aic = 2.0 * fitness + 2.0 * k
-    correction = 2.0 * k * (k + 1.0) / denom
-    return aic + correction
+    return _criterion_table(results, "AIC")
+
+
+def calculate_bic_scores(results: list[dict], n_obs: np.ndarray | int) -> pd.DataFrame:
+    """Return sum_rows(2*NLL + k*log(n_obs)), lowest first.
+
+    ``n_obs`` gives positive integer observation counts in the FIRST record's
+    row order; it is realigned with the subject IDs. A scalar is allowed only
+    for one fitted row. The caller defines the scientific observation unit;
+    the number of fitted participants is never substituted for these counts.
+    Scores and parameter counts follow ``calculate_aic``.
+    """
+    return _criterion_table(results, "BIC", n_obs)
+
+
+def calculate_aicc(results: list[dict], n_obs: np.ndarray | int) -> pd.DataFrame:
+    """Return sum_rows(AIC + 2*k*(k+1)/(n_obs-k-1)), lowest first.
+
+    The caller supplies observation counts in the first record's row order,
+    as for ``calculate_bic_scores``, and determines whether this finite-sample
+    correction is appropriate for the likelihood. Raise ValueError when any
+    count is <= k+1. A scalar count is allowed only for one fitted row.
+    """
+    return _criterion_table(results, "AICc", n_obs)
+
+
+def _criterion_weights(
+    table: pd.DataFrame, criterion: str, column: str
+) -> pd.DataFrame:
+    delta = table[criterion] - table[criterion].min()
+    weights = np.exp(-0.5 * delta)
+    return (
+        table[["Model"]]
+        .assign(**{column: weights / weights.sum()})
+        .sort_values(column, ascending=False)
+    )
+
+
+def calculate_aic_weights(results: list[dict]) -> pd.DataFrame:
+    """Return weights from ``calculate_aic`` scores, largest first (Model, AICw)."""
+    return _criterion_weights(calculate_aic(results), "AIC", "AICw")
+
+
+def calculate_aicc_weights(
+    results: list[dict], n_obs: np.ndarray | int
+) -> pd.DataFrame:
+    """Return weights from ``calculate_aicc`` scores, largest first (Model, AICcw)."""
+    return _criterion_weights(calculate_aicc(results, n_obs), "AICc", "AICcw")
+
+
+def _validate_confidence(confidence: float) -> None:
+    if not np.isfinite(confidence) or not 0 < confidence < 1:
+        raise ValueError("confidence must be between 0 and 1")
+
+
+def _mean_differences(names: list[str], values: np.ndarray, confidence: float):
+    _validate_confidence(confidence)
+    mean = np.full((len(names), len(names)), np.nan)
+    halfwidth = mean.copy()
+    if values.shape[1] > 1:
+        for i, j in itertools.product(range(len(names)), repeat=2):
+            if i != j:
+                difference = values[i] - values[j]
+                mean[i, j] = np.mean(difference)
+                halfwidth[i, j] = calculate_ci(difference.tolist(), confidence)
+    return tuple(
+        pd.DataFrame(array, index=names, columns=names) for array in (mean, halfwidth)
+    )
+
+
+def pairwise_aic_differences(
+    results: list[dict], confidence: float = 0.95
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return mean participant-wise AIC differences and t-interval half-widths.
+
+    Entries are row model minus column model: negative favors the row model.
+    IDs come from ``fits['subject']``, legacy ``subject``, or CV ``subjects``;
+    conflicting fields, duplicate IDs, unequal sets and nonfinite scores fail.
+    Fit rows are aligned by ID. Pooled sentinel -1 is not a participant sample.
+    Diagonals and comparisons with fewer than two participants are NaN.
+    No Boolean equivalence decision is made. Scores follow ``calculate_aic``.
+    """
+    names, values, _ = _criterion_data(results, participantwise=True)
+    return _mean_differences(names, values, confidence)
+
+
+def pairwise_aicc_differences(
+    results: list[dict], n_obs: np.ndarray, confidence: float = 0.95
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return mean AICc differences and t-interval half-widths.
+
+    Pairing and output follow ``pairwise_aic_differences``; counts follow
+    ``calculate_aicc`` and refer to the first record's original row order.
+    """
+    names, values, _ = _criterion_data(results, "AICc", n_obs, participantwise=True)
+    return _mean_differences(names, values, confidence)
+
+
+def pairwise_cv_differences(
+    results: list[dict], confidence: float = 0.95
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return mean differences and t-interval half-widths for aligned ``cv_fitness``.
+
+    Values are held-out NLL; negative row-minus-column differences favor the
+    row model. Pairing and missing-value rules follow ``pairwise_aic_differences``.
+    """
+    names, values, _ = _comparison_data(results, "cv_fitness", participantwise=True)
+    return _mean_differences(names, values, confidence)
+
+
+def _winner_matrix(names: list[str], values: np.ndarray) -> pd.DataFrame:
+    winners = np.mean(values[:, None, :] < values[None, :, :], axis=2)
+    np.fill_diagonal(winners, np.nan)
+    return pd.DataFrame(winners, index=names, columns=names)
+
+
+def winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
+    """Fraction of aligned participants with strictly lower AIC in the row model.
+
+    Ties are wins for neither model; diagonals are NaN. Identifiers and finite
+    scores are required as for ``pairwise_aic_differences``.
+    """
+    names, values, _ = _criterion_data(results, participantwise=True)
+    return _winner_matrix(names, values)
+
+
+def aicc_winner_comparison_matrix(
+    results: list[dict], n_obs: np.ndarray
+) -> pd.DataFrame:
+    """AICc strict-win fractions; counts follow ``calculate_aicc``, pairing follows AIC."""
+    names, values, _ = _criterion_data(results, "AICc", n_obs, participantwise=True)
+    return _winner_matrix(names, values)
+
+
+def raw_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
+    """Aligned strict-win fractions for raw objectives (lower is better), without a penalty."""
+    names, values, _ = _comparison_data(results, participantwise=True)
+    return _winner_matrix(names, values)
+
+
+def cv_winner_comparison_matrix(results: list[dict]) -> pd.DataFrame:
+    """Aligned strict-win fractions for held-out ``cv_fitness`` (NLL), without a penalty."""
+    names, values, _ = _comparison_data(results, "cv_fitness", participantwise=True)
+    return _winner_matrix(names, values)
+
+
+def generate_t_p_matrices(results: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Paired t-statistics and one-sided p-values for aligned raw objectives.
+
+    The alternative is row < column. These are descriptive raw-fitness
+    comparisons, without complexity penalties. Undefined cells remain empty
+    strings for existing table formatting. Pairing follows the AIC helpers.
+    """
+    names, values, _ = _comparison_data(results, participantwise=True)
+    statistics = np.full((len(names), len(names)), np.nan)
+    probabilities = statistics.copy()
+    if values.shape[1] > 1:
+        for i, j in itertools.product(range(len(names)), repeat=2):
+            if i != j:
+                statistics[i, j], probabilities[i, j] = ttest_rel(
+                    values[i], values[j], alternative="less"
+                )
+    return tuple(
+        pd.DataFrame(array, index=names, columns=names).replace(np.nan, "")
+        for array in (statistics, probabilities)
+    )
+
+
+def _median_differences(
+    names: list[str], values: np.ndarray, confidence: float, n_bootstrap: int
+):
+    _validate_confidence(confidence)
+    if (
+        isinstance(n_bootstrap, bool)
+        or not isinstance(n_bootstrap, (int, np.integer))
+        or n_bootstrap <= 0
+    ):
+        raise ValueError("n_bootstrap must be a positive integer")
+    median = np.full((len(names), len(names)), np.nan)
+    lower, upper = median.copy(), median.copy()
+    rng = np.random.default_rng(42)
+    tail = (1 - confidence) / 2
+    if values.shape[1] > 1:
+        for i, j in itertools.product(range(len(names)), repeat=2):
+            if i == j:
+                continue
+            difference = values[i] - values[j]
+            median[i, j] = np.median(difference)
+            samples = [
+                np.median(rng.choice(difference, size=len(difference), replace=True))
+                for _ in range(n_bootstrap)
+            ]
+            lower[i, j], upper[i, j] = np.percentile(
+                samples, [100 * tail, 100 * (1 - tail)]
+            )
+    return tuple(
+        pd.DataFrame(array, index=names, columns=names)
+        for array in (median, lower, upper)
+    )
+
+
+def pairwise_median_aic_differences(
+    results: list[dict], confidence: float = 0.95, n_bootstrap: int = 10_000
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Return median AIC differences and percentile-bootstrap lower/upper endpoints.
+
+    Resample aligned participants with replacement (seed 42). The percentile
+    interval need not be centered on the sample median. Pairing, direction
+    and undefined cells follow ``pairwise_aic_differences``.
+    """
+    names, values, _ = _criterion_data(results, participantwise=True)
+    return _median_differences(names, values, confidence, n_bootstrap)
+
+
+def pairwise_median_aicc_differences(
+    results: list[dict],
+    n_obs: np.ndarray,
+    confidence: float = 0.95,
+    n_bootstrap: int = 10_000,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Median AICc differences with percentile-bootstrap endpoints (seed 42).
+
+    Counts follow ``calculate_aicc``; output follows ``pairwise_median_aic_differences``.
+    """
+    names, values, _ = _criterion_data(results, "AICc", n_obs, participantwise=True)
+    return _median_differences(names, values, confidence, n_bootstrap)
 
 
 def floor_nested_fitness(
-    results: list[dict],
-    nesting_pairs: list[tuple[str, str]],
-) -> int:
-    """Floor child model fitness at parent fitness for nested model pairs.
+    results: list[dict], nesting_pairs: list[tuple[str, str]]
+) -> tuple[list[dict], pd.DataFrame]:
+    """Return separate nested-model comparison scores and a substitution table.
 
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'`` and ``'fitness'``. Modified in place.
-    nesting_pairs : list[tuple[str, str]]
-        Each pair is ``(parent_name, child_name)`` where the child nests
-        the parent. Pairs may be provided as tuples, lists, or stringified
-        pairs emitted by notebook parameterization tools. The child's
-        per-subject fitness is floored at the parent's value (element-wise
-        minimum), correcting optimizer failures where a nested model
-        reports worse NLL than its parent.
+    Each (parent, child) declaration applies the elementwise minimum NLL in
+    the supplied order, using matching IDs. Tuple, list and stringified pairs
+    from notebook parameterization are accepted. Raw records remain untouched.
+    Returned records contain only names, free parameter names, copied scores,
+    IDs and a comparison-only marker, NEVER fitted parameter estimates.
 
-    Returns
-    -------
-    int
-        Total number of subject-model entries that were floored.
-
+    The table records subject, parent, child, original_nll and adjusted_nll
+    for each change (subject is None for unidentified single-row pooled fits).
+    Chained adjustments record the original raw child score at every step.
+    This reporting adjustment trusts declared nesting; it neither verifies a
+    feasible parameter mapping nor produces an optimized fit. Use raw records
+    for parameter summaries and simulation. Use these explicitly labelled
+    comparison records only for the adjusted in-sample comparisons, not CV.
     """
-
-    def _normalize_pair(pair: object) -> tuple[str, str]:
+    names, raw, ids = _comparison_data(results)
+    free = [_free_parameters(model) for model in results]
+    values = raw.copy()
+    positions = {name: i for i, name in enumerate(names)}
+    changes = []
+    for pair in nesting_pairs:
         if isinstance(pair, str):
             try:
                 pair = ast.literal_eval(pair)
             except (ValueError, SyntaxError) as exc:
-                raise ValueError(
-                    f"Invalid nesting pair string {pair!r}; expected a "
-                    "two-element literal like ('Parent', 'Child')."
-                ) from exc
-
-        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
-            raise ValueError(
-                f"Invalid nesting pair {pair!r}; expected a two-element sequence."
+                raise ValueError(f"Invalid nesting pair: {pair!r}") from exc
+        if (
+            not isinstance(pair, (tuple, list))
+            or len(pair) != 2
+            or any(not isinstance(x, str) for x in pair)
+        ):
+            raise ValueError(f"Invalid nesting pair: {pair!r}")
+        parent, child = pair
+        if parent not in positions or child not in positions:
+            raise ValueError(f"Unknown model in nesting pair: {pair!r}")
+        p, c = positions[parent], positions[child]
+        for row in np.flatnonzero(values[c] > values[p]):
+            values[c, row] = values[p, row]
+            changes.append(
+                dict(
+                    subject=None if ids is None else ids[row],
+                    parent=parent,
+                    child=child,
+                    original_nll=raw[c, row],
+                    adjusted_nll=values[c, row],
+                )
             )
-
-        parent_name, child_name = pair
-        if not isinstance(parent_name, str) or not isinstance(child_name, str):
-            raise TypeError(
-                f"Invalid nesting pair {pair!r}; both entries must be strings."
-            )
-
-        return parent_name, child_name
-
-    name_to_result = {r["name"]: r for r in results}
-    total_floored = 0
-
-    for parent_name, child_name in map(_normalize_pair, nesting_pairs):
-        if parent_name not in name_to_result:
-            raise ValueError(
-                f"Parent model '{parent_name}' not found in results. "
-                f"Available: {list(name_to_result)}"
-            )
-        if child_name not in name_to_result:
-            raise ValueError(
-                f"Child model '{child_name}' not found in results. "
-                f"Available: {list(name_to_result)}"
-            )
-
-        parent = name_to_result[parent_name]
-        child = name_to_result[child_name]
-        parent_fitness = np.asarray(parent["fitness"], dtype=float)
-        child_fitness = np.asarray(child["fitness"], dtype=float)
-        n_floored = int(np.sum(child_fitness > parent_fitness))
-        total_floored += n_floored
-        child["fitness"] = np.minimum(child_fitness, parent_fitness).tolist()
-
-    return total_floored
-
-
-def pairwise_median_aic_differences(
-    results: list[dict],
-    confidence: float = 0.95,
-    n_bootstrap: int = 10_000,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise median AIC differences between models.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    confidence : float
-        Confidence level for the bootstrap interval.
-    n_bootstrap : int
-        Number of bootstrap resamples.
-
-    Returns
-    -------
-    tuple[pd.DataFrame, pd.DataFrame]
-        (median_delta, ci_halfwidth). For each pair (i, j),
-        median_delta[i, j] is the median of AIC_i,s - AIC_j,s.
-        Negative values favor model i; positive values favor model j.
-
-    """
-    model_names = [m["name"] for m in results]
-    num_models = len(model_names)
-    aic_values = [_subjectwise_aic(m) for m in results]
-
-    median_delta = np.full((num_models, num_models), np.nan, dtype=float)
-    ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
-
-    rng = np.random.default_rng(42)
-    alpha = (1.0 - confidence) / 2.0
-
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        if i == j:
-            continue
-        diff = aic_values[i] - aic_values[j]
-        valid = ~np.isnan(diff)
-        if np.count_nonzero(valid) <= 1:
-            continue
-
-        diff_valid = diff[valid]
-        med = float(np.median(diff_valid))
-        median_delta[i, j] = med
-
-        boot_medians = np.array(
-            [
-                np.median(rng.choice(diff_valid, size=len(diff_valid), replace=True))
-                for _ in range(n_bootstrap)
-            ]
+    records = []
+    for name, params, scores in zip(names, free, values):
+        record = dict(
+            name=name, free=params, fitness=scores.tolist(), comparison_only=True
         )
-        lo = float(np.percentile(boot_medians, 100 * alpha))
-        hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
-        ci_halfwidth[i, j] = (hi - lo) / 2.0
-
-    return (
-        pd.DataFrame(median_delta, index=model_names, columns=model_names),
-        pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names),
+        if ids is not None:
+            record["subject"] = ids.copy()
+        records.append(record)
+    return records, pd.DataFrame(
+        changes, columns=["subject", "parent", "child", "original_nll", "adjusted_nll"]
     )
 
 
@@ -752,332 +722,75 @@ def bayesian_model_selection(
     n_samples: int = 100_000,
     n_obs: np.ndarray | None = None,
 ) -> pd.DataFrame:
-    """Random-effects Bayesian model selection.
+    """Random-effects BMS using approximate per-participant log evidence -IC/2.
 
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'`` (per-subject NLL),
-        and ``'free'``.
-    alpha0 : float
-        Dirichlet prior concentration per model (1.0 = uniform).
-    max_iter : int
-        Maximum variational Bayes iterations.
-    tol : float
-        Convergence tolerance on Dirichlet parameters.
-    n_samples : int
-        Monte Carlo samples for exceedance probabilities.
-    n_obs : np.ndarray, optional
-        Per-subject observation counts. When provided, AICc is used
-        instead of AIC for the log-evidence approximation.
+    IC is AIC, or AICc when observation counts are supplied in the first
+    record's row order. This is an evidence approximation, not an integrated
+    model likelihood. Participant IDs and finite scores are required. Pooled
+    fits are not participant samples. alpha0 is the positive symmetric
+    Dirichlet prior per model. Monte Carlo exceedance uses seed 0.
 
-    Returns
-    -------
-    pd.DataFrame
-        Columns: Model, Expected Frequency, Exceedance Probability,
-        Protected XP, Alpha.
+    Returns Model, Expected Frequency, Exceedance Probability, Protected XP,
+    Alpha. Raises RuntimeError if the variational iteration fails to converge
+    within max_iter (maximum absolute alpha change < tol).
 
-    Notes
-    -----
-    Implements the variational Bayes algorithm of Stephan et al. (2009)
-    with protected exceedance probability from Rigoux et al. (2014).
-
-    Per-subject log model evidence is approximated as ``-0.5 * IC_s``,
-    where IC is AICc (when ``n_obs`` is provided) or AIC (otherwise).
-    This works because AIC ≈ -2·log p(data|model) asymptotically, so
-    multiplying by -0.5 recovers the log-evidence scale. The factor of
-    2 in AIC is a convention; the ``-0.5`` undoes it, leaving a single
-    complexity penalty of ``k`` (no double penalization). AICc adds a
-    finite-sample correction that improves the approximation when the
-    ratio of observations to parameters is small (Burnham & Anderson,
-    2002 recommend AICc whenever n/k < 40).
-
-    References
-    ----------
-    Stephan, K. E., et al. (2009). Bayesian model selection for group
-    studies. *NeuroImage*, 46(4), 1004–1017.
-
-    Rigoux, L., et al. (2014). Bayesian model selection for group
-    studies — revisited. *NeuroImage*, 84, 971–985.
-
-    Burnham, K. P., & Anderson, D. R. (2002). *Model Selection and
-    Multimodel Inference* (2nd ed.). Springer.
-
+    References: Stephan et al. (2009), NeuroImage 46:1004–1017; Rigoux et al.
+    (2014), NeuroImage 84:971–985, equations A.17/A.20 and protected XP.
+    Reference decomposition: https://github.com/spm/spm/blob/main/spm_BMS_bor.m
     """
-    from scipy.special import digamma, gammaln
+    from scipy.special import digamma, expit, gammaln, logsumexp, softmax, xlogy
 
-    model_names = [m["name"] for m in results]
-    K = len(results)
-    N = len(results[0]["fitness"])
-
-    log_evidence = np.zeros((N, K))
-    for k, model in enumerate(results):
-        if n_obs is not None:
-            log_evidence[:, k] = -0.5 * _subjectwise_aicc(model, n_obs)
-        else:
-            log_evidence[:, k] = -0.5 * _subjectwise_aic(model)
-
-    alpha = np.ones(K) * alpha0
-
+    names, criteria, _ = _criterion_data(
+        results, "AIC" if n_obs is None else "AICc", n_obs, participantwise=True
+    )
+    if len(names) < 2:
+        raise ValueError("BMS requires at least two models")
+    if not np.isfinite(alpha0) or alpha0 <= 0 or not np.isfinite(tol) or tol <= 0:
+        raise ValueError("alpha0 and tol must be finite and positive")
+    if any(
+        isinstance(x, bool) or not isinstance(x, (int, np.integer)) or x <= 0
+        for x in (max_iter, n_samples)
+    ):
+        raise ValueError("max_iter and n_samples must be positive integers")
+    evidence = -0.5 * criteria.T
+    evidence -= evidence.max(axis=1, keepdims=True)  # harmless per-subject offsets
+    k = len(names)
+    alpha = np.full(k, alpha0, dtype=float)
     for _ in range(max_iter):
-        log_u = log_evidence + digamma(alpha) - digamma(np.sum(alpha))
-        log_u -= np.max(log_u, axis=1, keepdims=True)
-        u = np.exp(log_u)
-        r = u / np.sum(u, axis=1, keepdims=True)
-
-        alpha_new = alpha0 + np.sum(r, axis=0)
-
-        if np.max(np.abs(alpha_new - alpha)) < tol:
-            alpha = alpha_new
+        responsibility = softmax(
+            evidence + digamma(alpha) - digamma(alpha.sum()), axis=1
+        )
+        updated = alpha0 + responsibility.sum(axis=0)
+        change = np.max(np.abs(updated - alpha))
+        alpha = updated
+        if change < tol:
             break
-        alpha = alpha_new
-
-    expected_freq = alpha / np.sum(alpha)
-
-    rng = np.random.default_rng(0)
-    samples = rng.dirichlet(alpha, size=n_samples)
-    winners = np.argmax(samples, axis=1)
-    xp = np.array([float(np.mean(winners == k)) for k in range(K)])
-
-    log_r = np.log(r + 1e-300)
-    free_energy = float(
-        np.sum(r * (log_evidence + digamma(alpha) - digamma(np.sum(alpha)) - log_r))
-        + gammaln(K * alpha0)
-        - K * gammaln(alpha0)
-        - gammaln(np.sum(alpha))
+    else:
+        raise RuntimeError(
+            f"BMS did not converge after {max_iter} iterations (alpha change {change:g})"
+        )
+    expected_log_frequency = digamma(alpha) - digamma(alpha.sum())
+    responsibility = softmax(evidence + expected_log_frequency, axis=1)
+    # Expected log joint plus categorical and Dirichlet entropies (Rigoux A.20).
+    free_energy = (
+        np.sum(responsibility * (evidence + expected_log_frequency))
+        - np.sum(xlogy(responsibility, responsibility))
+        + gammaln(k * alpha0)
+        - k * gammaln(alpha0)
         + np.sum(gammaln(alpha))
+        - gammaln(alpha.sum())
+        + np.sum((alpha0 - alpha) * expected_log_frequency)
     )
-    log_p_h0 = float(
-        np.sum(np.log(1.0 / K) + np.logaddexp.reduce(log_evidence, axis=1))
-    )
-    bor = float(np.exp(log_p_h0 - np.logaddexp(log_p_h0, free_energy)))
-
-    pxp = bor * (1.0 / K) + (1.0 - bor) * xp
-
+    null_evidence = np.sum(logsumexp(evidence, axis=1) - np.log(k))
+    omnibus_risk = expit(null_evidence - free_energy)
+    draws = np.random.default_rng(0).dirichlet(alpha, size=n_samples)
+    xp = np.bincount(draws.argmax(axis=1), minlength=k) / n_samples
     return pd.DataFrame(
         {
-            "Model": model_names,
-            "Expected Frequency": expected_freq,
+            "Model": names,
+            "Expected Frequency": alpha / alpha.sum(),
             "Exceedance Probability": xp,
-            "Protected XP": pxp,
+            "Protected XP": omnibus_risk / k + (1 - omnibus_risk) * xp,
             "Alpha": alpha,
         }
     )
-
-
-def calculate_aicc(results: list[dict], n_obs: np.ndarray) -> pd.DataFrame:
-    """Return a DataFrame of corrected AIC (AICc) scores.
-
-    AICc = 2k - 2*LL + 2k(k+1)/(n - k - 1), summed across subjects.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts.
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns: Model, AICc. Sorted ascending (best first).
-
-    """
-    aiccs, names = [], []
-    for model in results:
-        aicc_values = _subjectwise_aicc(model, n_obs)
-        aiccs.append(float(np.sum(aicc_values)))
-        names.append(model["name"])
-
-    df = pd.DataFrame({"Model": names, "AICc": aiccs})
-    return df.sort_values(by="AICc", ascending=True)
-
-
-def calculate_aicc_weights(results: list[dict], n_obs: np.ndarray) -> pd.DataFrame:
-    """Calculate AICc weights for a list of models.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts.
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns: Model, AICcw. Sorted descending by weight.
-
-    """
-    aiccs = []
-    names = []
-
-    for model in results:
-        aicc_values = _subjectwise_aicc(model, n_obs)
-        aiccs.append(float(np.sum(aicc_values)))
-        names.append(model["name"])
-
-    aiccs = np.array(aiccs)
-    min_aicc = np.min(aiccs)
-    delta_aicc = aiccs - min_aicc
-    weights = np.exp(-0.5 * delta_aicc)
-    aicc_weights = weights / np.sum(weights)
-
-    df = pd.DataFrame({"Model": names, "AICcw": aicc_weights})
-    return df.sort_values(by="AICcw", ascending=False)
-
-
-def pairwise_aicc_differences(
-    results: list[dict],
-    n_obs: np.ndarray,
-    confidence: float = 0.95,
-    equivalence_margin: float = 2.0,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise AICc differences between models.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts.
-    confidence : float
-        Confidence level for the ΔAICc intervals.
-    equivalence_margin : float
-        Half-width in AICc units used for practical equivalence.
-
-    Returns
-    -------
-    tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
-        (mean_delta, ci_halfwidth, equivalent). Negative mean_delta[i, j]
-        favors model i.
-
-    """
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
-
-    aicc_values = [_subjectwise_aicc(model, n_obs) for model in results]
-
-    mean_delta = np.full((num_models, num_models), np.nan, dtype=float)
-    ci_hw = np.full((num_models, num_models), np.nan, dtype=float)
-    equivalent = np.zeros((num_models, num_models), dtype=bool)
-
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        if i == j:
-            continue
-
-        diff = aicc_values[i] - aicc_values[j]
-        valid = ~np.isnan(diff)
-        if np.count_nonzero(valid) <= 1:
-            continue
-
-        diff_valid = diff[valid]
-        mean_value = float(np.mean(diff_valid))
-        ci = calculate_ci(diff_valid.tolist(), confidence=confidence)
-
-        mean_delta[i, j] = mean_value
-        ci_hw[i, j] = ci
-
-        lower, upper = mean_value - ci, mean_value + ci
-        equivalent[i, j] = (abs(mean_value) <= equivalence_margin) and (
-            lower <= 0.0 <= upper
-        )
-
-    return (
-        pd.DataFrame(mean_delta, index=model_names, columns=model_names),
-        pd.DataFrame(ci_hw, index=model_names, columns=model_names),
-        pd.DataFrame(equivalent, index=model_names, columns=model_names),
-    )
-
-
-def pairwise_median_aicc_differences(
-    results: list[dict],
-    n_obs: np.ndarray,
-    confidence: float = 0.95,
-    n_bootstrap: int = 10_000,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise median AICc differences between models.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts.
-    confidence : float
-        Confidence level for the bootstrap interval.
-    n_bootstrap : int
-        Number of bootstrap resamples.
-
-    Returns
-    -------
-    tuple[pd.DataFrame, pd.DataFrame]
-        (median_delta, ci_halfwidth). Negative values favor model i.
-
-    """
-    model_names = [m["name"] for m in results]
-    num_models = len(model_names)
-    aicc_values = [_subjectwise_aicc(m, n_obs) for m in results]
-
-    median_delta = np.full((num_models, num_models), np.nan, dtype=float)
-    ci_halfwidth = np.full((num_models, num_models), np.nan, dtype=float)
-
-    rng = np.random.default_rng(42)
-    alpha = (1.0 - confidence) / 2.0
-
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        if i == j:
-            continue
-        diff = aicc_values[i] - aicc_values[j]
-        valid = ~np.isnan(diff)
-        if np.count_nonzero(valid) <= 1:
-            continue
-
-        diff_valid = diff[valid]
-        med = float(np.median(diff_valid))
-        median_delta[i, j] = med
-
-        boot_medians = np.array(
-            [
-                np.median(rng.choice(diff_valid, size=len(diff_valid), replace=True))
-                for _ in range(n_bootstrap)
-            ]
-        )
-        lo = float(np.percentile(boot_medians, 100 * alpha))
-        hi = float(np.percentile(boot_medians, 100 * (1 - alpha)))
-        ci_halfwidth[i, j] = (hi - lo) / 2.0
-
-    return (
-        pd.DataFrame(median_delta, index=model_names, columns=model_names),
-        pd.DataFrame(ci_halfwidth, index=model_names, columns=model_names),
-    )
-
-
-def aicc_winner_comparison_matrix(
-    results: list[dict], n_obs: np.ndarray
-) -> pd.DataFrame:
-    """Return fraction of subjects where model i has lower AICc than model j.
-
-    Parameters
-    ----------
-    results : list[dict]
-        Model summaries with ``'name'``, ``'fitness'``, and ``'free'``.
-    n_obs : np.ndarray
-        Per-subject observation counts.
-
-    Returns
-    -------
-    pd.DataFrame
-        Matrix with model names as row/column labels.
-
-    """
-    model_names = [model["name"] for model in results]
-    num_models = len(model_names)
-    penalized = [_subjectwise_aicc(model, n_obs) for model in results]
-
-    matrix = np.full((num_models, num_models), np.nan, dtype=float)
-    for i, j in itertools.product(range(num_models), range(num_models)):
-        if i != j:
-            matrix[i, j] = float(np.mean(penalized[i] < penalized[j]))
-
-    return pd.DataFrame(matrix, index=model_names, columns=model_names)
