@@ -2,31 +2,11 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "JAXCMR",
+    "title": "JAXCMR documentation",
     "section": "",
-    "text": "0.1 Installation\njaxcmr is a Python library for specifying and evaluating computational models of memory search. It leverages a compositional design and JAX’s support for easy just-in-time compilation to streamline model prototyping and simulation so researchers can explore more ideas in less time.\nJAX’s automatic differentiation computes objective gradients efficiently, supporting fast gradient-based parameter fitting.",
+    "text": "Computational models of memory describe how people learn and retrieve information. Implementing these models and comparing their predictions with experimental data can require substantial programming.\njaxcmr is a Python package for computational memory research. It leverages a compositional design and JAX’s support for just-in-time compilation, vectorization, and automatic differentiation to streamline data analysis and model development so researchers can explore more ideas in less time.\nIf you use jaxcmr, please cite the paper [citation to be added].\nSee the code repository for version release notes.\n\n\n\n\nInstallation\nAnalyzing free-recall data\n\nPreparing data\nRecall performance\nRecall order\nComparing conditions\n\nEvaluating memory models\n\nConfiguring a model\nFitting parameters\nSimulating recall\nAssessing predictions and comparing models\n\nDeveloping memory models\n\nModel structure\nModifying model components\nImplementing new models\nTesting and validating models\n\nExamples and templates\nAPI reference\n\nData and analyses\nModels and components\nFitting and evaluation\nSimulation\n\nContributor guide\n\nDevelopment setup\nContributing code and tests\nWriting documentation\n\nReferences",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>jaxcmr</span>"
-    ]
-  },
-  {
-    "objectID": "index.html#installation",
-    "href": "index.html#installation",
-    "title": "JAXCMR",
-    "section": "",
-    "text": "pip install git+https://github.com/githubpsyche/jaxcmr",
-    "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>jaxcmr</span>"
-    ]
-  },
-  {
-    "objectID": "index.html#example-fitting-cmr-to-free-recall-data",
-    "href": "index.html#example-fitting-cmr-to-free-recall-data",
-    "title": "JAXCMR",
-    "section": "0.2 Example: Fitting CMR to Free Recall Data",
-    "text": "0.2 Example: Fitting CMR to Free Recall Data\nLoad behavioral data, fit CMR via maximum likelihood, simulate, and compare model predictions to human recall patterns.\n\n\n1 — Import packages\nimport os\nimport warnings\nimport jax.numpy as jnp\nfrom jax import random\nimport matplotlib.pyplot as plt\n\nfrom jaxcmr.helpers import find_project_root, load_data, generate_trial_mask\nfrom jaxcmr.models.cmr import make_factory\nfrom jaxcmr.components.linear_memory import init_mfc, init_mcf\nfrom jaxcmr.components.context import init as init_context\nfrom jaxcmr.components.termination import NoStopTermination\nfrom jaxcmr.fitting import ScipyDE\nfrom jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss\nfrom jaxcmr.simulation import simulate_h5_from_h5, simulate_study_free_recall_and_forced_stop\nfrom jaxcmr.analyses.spc import plot_spc\nfrom jaxcmr.analyses.crp import plot_crp\nfrom jaxcmr.analyses.pnr import plot_pnr\n\nwarnings.filterwarnings(\"ignore\")\n\n\n\n\n2 — Load and select the recall data\n# Load free recall data (Healey & Kahana, 2014)\ndata = load_data(os.path.join(find_project_root(), \"data/HealeyKahana2014.h5\"))\ntrial_mask = generate_trial_mask(data, \"data['listtype'] == -1\")\n\nprint(f\"Loaded {trial_mask.sum()} trials from {len(jnp.unique(data['subject']))} subjects\")\n\n\nLoaded 3528 trials from 126 subjects\n\n\n\n\n3 — Configure the model and fitting algorithm\n# Configure model and fitting\nmodel_factory_cls = make_factory(\n    mfc_create_fn=init_mfc,\n    mcf_create_fn=init_mcf,\n    context_create_fn=init_context,\n    termination_policy_create_fn=NoStopTermination,\n)\n\nfitter = ScipyDE(\n    dataset=data,\n    features=None,\n    base_params={\"allow_repeated_recalls\": False, \"learn_after_context_update\": False},\n    model_factory_cls=model_factory_cls,\n    loss_fn_cls=ExcludeTerminationLikelihoodLoss,\n    hyperparams={\n        \"bounds\": {\n            \"encoding_drift_rate\": [0.0, 1.0],\n            \"start_drift_rate\": [0.0, 1.0],\n            \"recall_drift_rate\": [0.0, 1.0],\n            \"shared_support\": [0.0, 100.0],\n            \"item_support\": [0.0, 100.0],\n            \"learning_rate\": [0.0, 1.0],\n            \"primacy_scale\": [0.0, 100.0],\n            \"primacy_decay\": [0.0, 100.0],\n            \"choice_sensitivity\": [0.0, 100.0],\n        },\n        \"num_steps\": 1000,\n        \"pop_size\": 15,\n        \"best_of\": 1,\n        \"progress_bar\": True,\n    },\n)\n\n\n\n\n4 — Fit the model to each participant\n# Fit model to each subjectresults = fitter.fit_subjects(trial_mask)\n\n\n\n\n5 — Simulate recall from the fitted parameters\n# Simulate from fitted parameters\nparams = {key: jnp.array(val) for key, val in results[\"fits\"].items()}\n\nsim = simulate_h5_from_h5(\n    model_factory_cls, data, None, params, trial_mask,\n    experiment_count=1, rng=random.PRNGKey(0), simulate_trial_fn=simulate_study_free_recall_and_forced_stop\n)\nsim_mask = jnp.ones(sim[\"recalls\"].shape[0], dtype=bool)\n\nprint(f\"Simulated {sim['recalls'].shape[0]} trials\")\n\n\nSimulated 3528 trials\n\n\n\n6 — Compare model predictions with observed recall\ncolors = [\"#1f77b4\", \"#ff7f0e\"]\n\nplot_spc([sim, data], [sim_mask, trial_mask], color_cycle=list(colors), labels=[\"Model\", \"Data\"])\nplt.show()\n\nplot_crp([sim, data], [sim_mask, trial_mask], color_cycle=list(colors), labels=[\"Model\", \"Data\"])\nplt.show()\n\nplot_pnr([sim, data], [sim_mask, trial_mask], color_cycle=list(colors), labels=[\"Model\", \"Data\"])\nplt.show()\n\n\n\n\n\n\n\nSerial Position Curve\n\n\n\n\n\n\n\nLag-CRP\n\n\n\n\n\n\n\nProbability of First Recall",
-    "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>jaxcmr</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>JAXCMR documentation</span>"
     ]
   },
   {
