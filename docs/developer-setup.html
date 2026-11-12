@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Developer Setup – JAXCMR</title>
+<title>Local setup with VS Code – JAXCMR</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -70,6 +70,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./installation.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
@@ -111,7 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -128,7 +129,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./installation.html"> 
+    <a class="nav-link active" href="./installation.html" aria-current="page"> 
 <span class="menu-text">Installation</span></a>
   </li>  
   <li class="nav-item">
@@ -161,31 +162,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
             <div id="quarto-search" class="" title="Search"></div>
       </div> <!-- /container-fluid -->
     </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./developer-setup.html">Setup walkthrough</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
 </header>
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./installation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Installation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./developer-setup.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Setup walkthrough</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#install-vs-code-and-git" id="toc-install-vs-code-and-git" class="nav-link active" data-scroll-target="#install-vs-code-and-git">Install VS Code and Git</a></li>
-  <li><a href="#clone-and-open-the-repository" id="toc-clone-and-open-the-repository" class="nav-link" data-scroll-target="#clone-and-open-the-repository">Clone and open the repository</a></li>
-  <li><a href="#install-python-and-dependencies" id="toc-install-python-and-dependencies" class="nav-link" data-scroll-target="#install-python-and-dependencies">Install Python and dependencies</a></li>
-  <li><a href="#open-the-notebook-and-choose-its-kernel" id="toc-open-the-notebook-and-choose-its-kernel" class="nav-link" data-scroll-target="#open-the-notebook-and-choose-its-kernel">Open the notebook and choose its kernel</a></li>
-  <li><a href="#working-with-template-paths" id="toc-working-with-template-paths" class="nav-link" data-scroll-target="#working-with-template-paths">Working with template paths</a></li>
-  <li><a href="#quick-start" id="toc-quick-start" class="nav-link" data-scroll-target="#quick-start">Quick start</a></li>
+  <li><a href="#install-vs-code" id="toc-install-vs-code" class="nav-link active" data-scroll-target="#install-vs-code">1. Install VS Code</a></li>
+  <li><a href="#install-git" id="toc-install-git" class="nav-link" data-scroll-target="#install-git">2. Install Git</a></li>
+  <li><a href="#install-uv" id="toc-install-uv" class="nav-link" data-scroll-target="#install-uv">3. Install uv</a></li>
+  <li><a href="#download-jaxcmr-and-its-examples" id="toc-download-jaxcmr-and-its-examples" class="nav-link" data-scroll-target="#download-jaxcmr-and-its-examples">4. Download JAXCMR and its examples</a></li>
+  <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">5. Install Python and JAXCMR</a></li>
+  <li><a href="#open-the-simulation-example" id="toc-open-the-simulation-example" class="nav-link" data-scroll-target="#open-the-simulation-example">6. Open the simulation example</a></li>
+  <li><a href="#run-the-simulation-and-read-its-output" id="toc-run-the-simulation-and-read-its-output" class="nav-link" data-scroll-target="#run-the-simulation-and-read-its-output">7. Run the simulation and read its output</a>
+  <ul class="collapse">
+  <li><a href="#understand-the-result" id="toc-understand-the-result" class="nav-link" data-scroll-target="#understand-the-result">Understand the result</a></li>
+  </ul></li>
+  <li><a href="#return-to-the-example-later" id="toc-return-to-the-example-later" class="nav-link" data-scroll-target="#return-to-the-example-later">Return to the example later</a></li>
+  <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a>
+  <ul class="collapse">
+  <li><a href="#git-or-uv-is-not-found" id="toc-git-or-uv-is-not-found" class="nav-link" data-scroll-target="#git-or-uv-is-not-found">Git or uv is not found</a></li>
+  <li><a href="#uv-cannot-find-pyproject.toml" id="toc-uv-cannot-find-pyproject.toml" class="nav-link" data-scroll-target="#uv-cannot-find-pyproject.toml">uv cannot find pyproject.toml</a></li>
+  <li><a href="#venv-is-not-listed-as-a-kernel" id="toc-venv-is-not-listed-as-a-kernel" class="nav-link" data-scroll-target="#venv-is-not-listed-as-a-kernel">.venv is not listed as a kernel</a></li>
+  <li><a href="#the-notebook-says-no-module-named-jaxcmr" id="toc-the-notebook-says-no-module-named-jaxcmr" class="nav-link" data-scroll-target="#the-notebook-says-no-module-named-jaxcmr">The notebook says No module named jaxcmr</a></li>
+  <li><a href="#jax-reports-a-dll-error-on-windows" id="toc-jax-reports-a-dll-error-on-windows" class="nav-link" data-scroll-target="#jax-reports-a-dll-error-on-windows">JAX reports a DLL error on Windows</a></li>
+  </ul></li>
   </ul>
-<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="downloads/developer-setup.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="downloads/examples/first-simulation.ipynb"><i class="bi bi-download"></i>Download simulation notebook</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Developer Setup</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+<h1 class="title">Local setup with VS Code</h1>
 </div>
 
 
@@ -202,171 +245,164 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Set up the complete JAXCMR repository in VS Code on an <strong>Apple Silicon Mac</strong> or <strong>Windows x64 PC</strong>, then run a small CMR simulation. uv manages Python and the repository’s dependencies.</p>
-<section id="install-vs-code-and-git" class="level2">
-<h2 class="anchored" data-anchor-id="install-vs-code-and-git">Install VS Code and Git</h2>
-<p>Download <a href="https://code.visualstudio.com/download">Visual Studio Code</a> for your computer. On Mac, move it to Applications; on Windows, run the installer. Open VS Code’s Extensions view and install <strong>Python</strong> and <strong>Jupyter</strong>, both published by Microsoft.</p>
-<p>Install Git for your operating system:</p>
+<p>This walkthrough takes you from installing the software to running a memory-model simulation on your computer and understanding its output. You do not need any previous experience with Python or VS Code. The example includes all the code you need.</p>
+<p>You will simulate a model studying a short list of items and then recalling them. The result is a sequence showing which items it recalled and in what order.</p>
+<p>These instructions cover <strong>Macs with an Apple chip</strong>, such as an M1 or M2, and <strong>Windows PCs with a 64-bit Intel or AMD processor</strong>. Intel Macs are not supported by this installation route because the required version of JAX does not provide an Intel Mac installer. You will need an internet connection and permission to install software.</p>
+<p>On a Mac, choose <strong>Apple menu → About This Mac</strong> to check: an Apple chip is listed under <strong>Chip</strong>; an Intel processor is listed under <strong>Processor</strong>.</p>
+<section id="install-vs-code" class="level2">
+<h2 class="anchored" data-anchor-id="install-vs-code">1. Install VS Code</h2>
+<p><a href="https://code.visualstudio.com/download">Visual Studio Code</a>, usually called <strong>VS Code</strong>, is the application you will use to open the example and run its code.</p>
+<p>Download the version for your computer:</p>
+<ul>
+<li><strong>Mac:</strong> choose the Apple Silicon download. Open the downloaded ZIP file if needed, then move Visual Studio Code to your Applications folder.</li>
+<li><strong>Windows:</strong> choose the x64 User Installer, open it, and follow the installation steps.</li>
+</ul>
+<p>Open VS Code. You will also need two <strong>extensions</strong>: additions that let VS Code work with Python and the example files used in this guide.</p>
+<ol type="1">
+<li>Choose <strong>View → Extensions</strong>.</li>
+<li>Search for <strong>Python</strong>. Select the extension published by <strong>Microsoft</strong> and click <strong>Install</strong>.</li>
+<li>Search for <strong>Jupyter</strong>. Select the extension published by <strong>Microsoft</strong> and click <strong>Install</strong>.</li>
+</ol>
+</section>
+<section id="install-git" class="level2">
+<h2 class="anchored" data-anchor-id="install-git">2. Install Git</h2>
+<p><strong>Git</strong> will download JAXCMR and its examples from GitHub, the website where the project is stored.</p>
+<p>Some of the steps below use a <strong>terminal</strong>: a panel where you give your computer instructions by typing commands. In VS Code, choose <strong>Terminal → New Terminal</strong> to open it. To run a command, copy it into the terminal and press <strong>Return</strong> on Mac or <strong>Enter</strong> on Windows. Do not copy the surrounding box or add any extra characters.</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Apple Silicon Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Windows</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Windows</a></li></ul>
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
-<p>Open <strong>Terminal → New Terminal</strong> in VS Code and run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">xcode-select</span> <span class="at">--install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Complete the Command Line Tools installer. If the tools are already installed, continue.</p>
+<p>In the VS Code terminal, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">xcode-select</span> <span class="at">--install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Follow the prompts to install Apple’s Command Line Tools, which include Git. If you see a message saying the tools are already installed, continue to the next step.</p>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<p>Install <a href="https://git-scm.com/downloads/win">Git for Windows</a>. Keep the option that makes Git available from the command line and other software, then close and reopen VS Code.</p>
+<p>Download the <strong>x64 installer</strong> from <a href="https://git-scm.com/downloads/win">Git for Windows</a> and run it.</p>
+<p>Use the default installation options. In particular, keep <strong>Git from the command line and also from 3rd-party software</strong> when asked how Git should be used.</p>
 </div>
 </div>
 </div>
-<p>In a new VS Code terminal, run <code>git --version</code> to confirm that Git is available.</p>
+<p>Finish the installation before continuing.</p>
 </section>
-<section id="clone-and-open-the-repository" class="level2">
-<h2 class="anchored" data-anchor-id="clone-and-open-the-repository">Clone and open the repository</h2>
-<p>Open the Command Palette (<strong>Cmd+Shift+P</strong> on Mac; <strong>Ctrl+Shift+P</strong> on Windows), choose <strong>Git: Clone</strong>, and enter:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a>https://github.com/githubpsyche/jaxcmr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Choose a parent folder, such as Documents. Git creates a <code>jaxcmr</code> folder there. Choose <strong>Open</strong> when cloning finishes. If you already have a checkout, use <strong>File → Open Folder</strong> to open it instead.</p>
-</section>
-<section id="install-python-and-dependencies" class="level2">
-<h2 class="anchored" data-anchor-id="install-python-and-dependencies">Install Python and dependencies</h2>
-<p>Open <strong>Terminal → New Terminal</strong>. It should start in the <code>jaxcmr</code> folder, where <code>pyproject.toml</code> and <code>uv.lock</code> are visible in the Explorer. Enter the following commands in this terminal, not in a notebook cell.</p>
-<p>Install <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> using the command for your operating system:</p>
+<section id="install-uv" class="level2">
+<h2 class="anchored" data-anchor-id="install-uv">3. Install uv</h2>
+<p><strong>Python</strong> is the programming language that JAXCMR uses. <strong>uv</strong> installs Python and the additional Python packages needed for this example. It keeps them together in an <strong>environment</strong>, a folder containing the software for this project. You do not need to install Python separately.</p>
+<p>In VS Code, open <strong>Terminal → New Terminal</strong> if the terminal is not already open. Run the command for your computer:</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Apple Silicon Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Windows</a></li></ul>
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Windows</a></li></ul>
 <div class="tab-content">
 <div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="ex">curl</span> <span class="at">-LsSf</span> https://astral.sh/uv/install.sh <span class="kw">|</span> <span class="fu">sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-LsSf</span> https://astral.sh/uv/install.sh <span class="kw">|</span> <span class="fu">sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
-<p>Use a <strong>PowerShell</strong> terminal:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource powershell number-lines code-with-copy"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>powershell <span class="op">-</span>ExecutionPolicy ByPass <span class="op">-</span>c <span class="st">"irm https://astral.sh/uv/install.ps1 | iex"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Use a <strong>PowerShell</strong> terminal. If the terminal has a different name, use the arrow beside the <strong>+</strong> button in the terminal panel and choose <strong>PowerShell</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy ByPass <span class="op">-</span>c <span class="st">"irm https://astral.sh/uv/install.ps1 | iex"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
-<p>Close and reopen VS Code so it can find uv. Reopen the repository folder and a new terminal, then run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The repository’s <code>.python-version</code> selects Python 3.12; uv downloads it if needed, creates <code>.venv</code>, and installs JAXCMR and the default development tools from <code>uv.lock</code>. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.</p>
-<p>Specialized tools are optional: use <code>uv sync --group embeddings</code> for sentence-transformers, <code>uv sync --group profiling</code> for line-profiler, or <code>uv sync --extra experimental</code> for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use <code>uv sync --extra test</code>; see <a href="./development.html">Development</a>.</p>
+<p>These are the commands from <a href="https://docs.astral.sh/uv/getting-started/installation/">uv’s installation instructions</a>.</p>
+<p>When installation finishes, <strong>quit VS Code completely and reopen it</strong> so it can find Git and uv. On Mac, use <strong>Code → Quit Visual Studio Code</strong>; on Windows, close all VS Code windows.</p>
+<p>Open <strong>Terminal → New Terminal</strong> and run these commands one at a time:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each should print its name and a version number, such as <code>git version …</code> and <code>uv …</code>. If either command is not found or not recognized, see <a href="#if-something-goes-wrong">If something goes wrong</a> before continuing.</p>
 </section>
-<section id="open-the-notebook-and-choose-its-kernel" class="level2">
-<h2 class="anchored" data-anchor-id="open-the-notebook-and-choose-its-kernel">Open the notebook and choose its kernel</h2>
-<p>In the Explorer, open <strong><code>guide/developer-setup.ipynb</code></strong>. This is the notebook behind this page, including the quickstart below.</p>
-<p>Choose <strong>Select Kernel → Select Another Kernel → Python Environments</strong>, then select the repository’s <code>.venv</code>. Some VS Code versions show <strong>Python Environments</strong> directly. The kernel is the Python process that runs notebook cells. Its executable is:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Platform</th>
-<th>Interpreter inside the repository</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Apple Silicon Mac</td>
-<td><code>.venv/bin/python</code></td>
-</tr>
-<tr class="even">
-<td>Windows</td>
-<td><code>.venv\Scripts\python.exe</code></td>
-</tr>
-</tbody>
-</table>
-<p>If <code>.venv</code> is missing, use <strong>Python: Select Interpreter → Enter interpreter path</strong> from the Command Palette to select that file, then return to the kernel picker. If VS Code asks to install <code>ipykernel</code>, confirm that <code>uv sync</code> completed and that this environment is selected; the repository already includes it.</p>
-<p>An import error usually means the wrong kernel is selected or installation did not finish. On Windows, a JAX DLL error may require the <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist">Microsoft Visual C++ Redistributable for x64</a>; restart the kernel after installing it. See <a href="https://docs.jax.dev/en/latest/installation.html#pip-installation-cpu">JAX’s CPU installation instructions</a>.</p>
-<p>To return later, reopen the same folder and notebook, select the same kernel, and use <strong>Restart Kernel</strong>, then <strong>Run All</strong>. After updating the checkout, rerun the <code>uv sync</code> command first. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-notebooks">VS Code’s notebook instructions</a> for the editor controls.</p>
+<section id="download-jaxcmr-and-its-examples" class="level2">
+<h2 class="anchored" data-anchor-id="download-jaxcmr-and-its-examples">4. Download JAXCMR and its examples</h2>
+<p>JAXCMR’s <strong>repository</strong> is the collection of files containing its code, examples, and documentation. Downloading a copy with Git is called <strong>cloning</strong>.</p>
+<ol type="1">
+<li><p>In VS Code, choose <strong>View → Command Palette</strong>. This opens a search box for VS Code commands.</p></li>
+<li><p>Type <strong>Git: Clone</strong> and select that command.</p></li>
+<li><p>Paste this repository address and press <strong>Return</strong> or <strong>Enter</strong>:</p>
+<pre class="text"><code>https://github.com/githubpsyche/jaxcmr</code></pre></li>
+<li><p>Choose a folder where you want to keep the project, such as <strong>Documents</strong>. Git will create a new folder named <code>jaxcmr</code> inside it.</p></li>
+<li><p>When the download finishes, choose <strong>Open</strong> to open the <code>jaxcmr</code> folder in VS Code.</p></li>
+<li><p>If VS Code asks whether you trust the authors of the files, confirm that you trust this project folder so you can run its example code.</p></li>
+</ol>
+<p>You do not need a GitHub account to download this public repository.</p>
+<p>Choose <strong>View → Explorer</strong> to see the project’s files in the left-hand panel. You should see folders including <code>guide</code> and <code>templates</code>, and files including <code>pyproject.toml</code> and <code>uv.lock</code>.</p>
 </section>
-<section id="working-with-template-paths" class="level2">
-<h2 class="anchored" data-anchor-id="working-with-template-paths">Working with template paths</h2>
-<p>Templates find the enclosing Git project even when the kernel starts inside <code>templates/</code> or a nested job folder. Their relative inputs and outputs use that project root. You do not need a particular VS Code or Jupyter working-directory setting.</p>
-<p>Set the template’s <code>project_root</code> parameter when the kernel starts outside your project. For a downloaded notebook without a Git checkout, the default is the kernel’s working folder. Absolute input and output paths remain absolute. On Windows, use forward slashes, for example <code>project_root = "C:/Users/Alex/Documents/my-study"</code>, or a Python raw string such as <code>r"C:\Users\Alex\Documents\my-study"</code>. See the <a href="./templates.html#paths-and-working-directories">template path rules</a>.</p>
+<section id="install-python-and-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="install-python-and-jaxcmr">5. Install Python and JAXCMR</h2>
+<p>With the <code>jaxcmr</code> folder open in VS Code, choose <strong>Terminal → New Terminal</strong>. The new terminal should start inside this folder.</p>
+<p>Run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This installs Python 3.12 if needed, JAXCMR, and the tools needed to run the example. The first installation may take several minutes.</p>
+<p>Wait until the command finishes and the terminal is ready for another command. If it ends with an error, resolve that before continuing.</p>
+<p>The installed software is kept in a folder named <code>.venv</code> inside <code>jaxcmr</code>. In the next step, you will tell VS Code to use it.</p>
 </section>
-<section id="quick-start" class="level2">
-<h2 class="anchored" data-anchor-id="quick-start">Quick start</h2>
-<p>This is the <a href="https://github.com/githubpsyche/jaxcmr/blob/ae04fe1d/index.qmd">earlier quickstart</a>, updated for the current API. Run the following Python cells in order with <strong>Shift+Enter</strong>. No dataset or fitted model is required.</p>
-<div id="51725a98" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:26.656762Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:26.656464Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:39.733912Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:39.733644Z&quot;}}" data-execution_count="1">
-<details class="code-fold">
-<summary>1 — Import packages and check the environment</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">import</span> sys</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a><span class="im">from</span> jax <span class="im">import</span> lax, random</span>
-<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a><span class="im">import</span> jaxcmr</span>
-<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> CMR</span>
-<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_study_and_free_recall</span>
-<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Python:"</span>, sys.version.split()[<span class="dv">0</span>])</span>
-<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Environment:"</span>, sys.executable)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"JAXCMR source:"</span>, jaxcmr.<span class="va">__file__</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-</div>
-<p>Expect Python 3.12, an interpreter inside the repository’s <code>.venv</code>, and a JAXCMR source path ending in <code>jaxcmr/jaxcmr/__init__.py</code> inside your checkout.</p>
-<div id="949b5a2b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:39.735144Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:39.735013Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:39.736861Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:39.736656Z&quot;}}" data-execution_count="2">
-<details class="code-fold">
-<summary>2 — Set the example model parameters</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>params <span class="op">=</span> {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>    <span class="st">"encoding_drift_rate"</span>: <span class="fl">0.5</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>    <span class="st">"start_drift_rate"</span>: <span class="fl">0.5</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="st">"recall_drift_rate"</span>: <span class="fl">0.5</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    <span class="st">"shared_support"</span>: <span class="fl">0.05</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>    <span class="st">"item_support"</span>: <span class="fl">0.25</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>    <span class="st">"primacy_scale"</span>: <span class="fl">1.0</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>    <span class="st">"primacy_decay"</span>: <span class="fl">0.6</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>    <span class="st">"learning_rate"</span>: <span class="fl">0.5</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>    <span class="st">"stop_probability_scale"</span>: <span class="fl">0.05</span>,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>    <span class="st">"stop_probability_growth"</span>: <span class="fl">0.2</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>    <span class="st">"choice_sensitivity"</span>: <span class="fl">0.6</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>    <span class="st">"learn_after_context_update"</span>: <span class="va">False</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>    <span class="st">"allow_repeated_recalls"</span>: <span class="va">False</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-</div>
-<div id="ff8211ca" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:39.737914Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:39.737833Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:40.740150Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:40.739892Z&quot;}}" data-execution_count="3">
-<details class="code-fold">
-<summary>3 — Simulate study and free recall</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>list_length <span class="op">=</span> <span class="dv">5</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>present <span class="op">=</span> jnp.arange(<span class="dv">1</span>, list_length <span class="op">+</span> <span class="dv">1</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>rng <span class="op">=</span> random.PRNGKey(<span class="dv">0</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>model <span class="op">=</span> CMR(list_length, params)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a><span class="co"># Free recall does not use the trial argument in this shared interface.</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-label="7"></a>trial <span class="op">=</span> jnp.zeros_like(present)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-label="8"></a>model, recalls <span class="op">=</span> simulate_study_and_free_recall(model, present, trial, rng)</span>
-<span id="cb8-9"><a href="#cb8-9" aria-label="9"></a><span class="bu">print</span>(<span class="st">"Simulated recalls:"</span>, recalls)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Simulated recalls: [1 5 2 4 3]</code></pre>
-</div>
-</div>
-<p>The numbers identify recalled items within the five-item list; zero denotes padding after stopping. The fixed random seed makes this example repeatable.</p>
-<div id="d9e422e0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:40.741326Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:40.741241Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:41.106955Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:41.106697Z&quot;}}" data-execution_count="4">
-<details class="code-fold">
-<summary>4 — Inspect probabilities after studying the list</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>model <span class="op">=</span> CMR(list_length, params)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-label="2"></a>model <span class="op">=</span> lax.fori_loop(</span>
-<span id="cb10-3"><a href="#cb10-3" aria-label="3"></a>    <span class="dv">0</span>, present.size, <span class="kw">lambda</span> i, model: model.experience(present[i]), model</span>
-<span id="cb10-4"><a href="#cb10-4" aria-label="4"></a>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>model <span class="op">=</span> model.start_retrieving()</span>
-<span id="cb10-6"><a href="#cb10-6" aria-label="6"></a><span class="bu">print</span>(model.outcome_probabilities())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[0.05       0.23007919 0.19744956 0.17994162 0.17206511 0.17046441]</code></pre>
-</div>
-</div>
-<p>The first entry is the probability of stopping; the remaining entries correspond to items 1–5. Together they sum to one.</p>
-<div id="5c71bcd2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:44:41.108194Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:44:41.108114Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:44:41.162797Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:44:41.162527Z&quot;}}" data-execution_count="5">
-<details class="code-fold">
-<summary>5 — Recall item 5 and inspect the updated probabilities</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>model <span class="op">=</span> model.retrieve(<span class="dv">5</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="bu">print</span>(model.outcome_probabilities())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[0.06107014 0.2645688  0.23522906 0.22138919 0.21774279 0.        ]</code></pre>
-</div>
-</div>
-<p>The probabilities change after retrieval. The final entry becomes zero because this example disables repeated recalls. Reaching these outputs confirms that the checkout imports, JAX runs, and the notebook kernel can execute the model.</p>
+<section id="open-the-simulation-example" class="level2">
+<h2 class="anchored" data-anchor-id="open-the-simulation-example">6. Open the simulation example</h2>
+<p>A <strong>notebook</strong> is a file that combines explanations, Python code, and the results of running that code. Its filename ends in <code>.ipynb</code>.</p>
+<p>In VS Code’s Explorer:</p>
+<ol type="1">
+<li>Expand the <strong>guide</strong> folder.</li>
+<li>Expand the <strong>examples</strong> folder inside it.</li>
+<li>Double-click <strong>first-simulation.ipynb</strong>.</li>
+</ol>
+<p>The notebook opens in the main part of the window. Before running it, choose the Python environment you just installed:</p>
+<ol type="1">
+<li>Click <strong>Select Kernel</strong> near the top right of the notebook.</li>
+<li>Choose <strong>Select Another Kernel → Python Environments</strong>. If <strong>Python Environments</strong> is already shown, choose it directly.</li>
+<li>Select <strong>.venv</strong>, with Python 3.12, inside your <code>jaxcmr</code> folder.</li>
+</ol>
+<p>A <strong>kernel</strong> is the Python process that runs the notebook’s code. Selecting this environment gives it access to JAXCMR and the other packages installed in the previous step. If a kernel is already selected, click its name to check or change it.</p>
+</section>
+<section id="run-the-simulation-and-read-its-output" class="level2">
+<h2 class="anchored" data-anchor-id="run-the-simulation-and-read-its-output">7. Run the simulation and read its output</h2>
+<p>The notebook is divided into <strong>cells</strong>: separate blocks of text or code. Its code loads JAXCMR, supplies some example model settings, and simulates study and recall. You can run it without editing anything.</p>
+<p>Click <strong>Run All</strong> at the top of the notebook. This runs its code cells in order. You may already see saved results when you open the file; <strong>Run All</strong> computes them again on your computer.</p>
+<p>The first run may take a little longer while JAX prepares the calculation. Wait for the code cells to finish. The last code cell prints:</p>
+<pre class="text"><code>Study order: [1 2 3 4 5]
+Simulated recalls: [1 5 2 4 3]</code></pre>
+<section id="understand-the-result" class="level3">
+<h3 class="anchored" data-anchor-id="understand-the-result">Understand the result</h3>
+<p>The numbers are <strong>item identifiers</strong>. Here, each number stands for a different item in a five-item list.</p>
+<ul>
+<li><strong>Study order</strong> shows what the model studied: item 1, then 2, 3, 4, and 5.</li>
+<li><strong>Simulated recalls</strong> shows the order in which the model recalled them: item 1 first, then 5, 2, 4, and 3.</li>
+</ul>
+<p>In this run, the model recalled all five items, in a different order from how they were studied. This is one simulated recall sequence, not a summary of many participants or an estimate of average performance.</p>
+<p>The output always reserves five spaces for recalls in this example. If the model stops early, the remaining spaces contain <strong>0</strong>. For example, <code>[1 5 0 0 0]</code> would mean it recalled items 1 and 5, then stopped. Zero does not identify a studied item.</p>
+<p>The example uses a fixed <strong>random seed</strong>, a starting value for its random choices. Running the unchanged example again in the same environment should produce the same sequence.</p>
+</section>
+</section>
+<section id="return-to-the-example-later" class="level2">
+<h2 class="anchored" data-anchor-id="return-to-the-example-later">Return to the example later</h2>
+<p>You only need to install the software once.</p>
+<ol type="1">
+<li>Open VS Code and choose <strong>File → Open Folder</strong> to reopen the same <code>jaxcmr</code> folder.</li>
+<li>Open <code>guide/examples/first-simulation.ipynb</code> in the Explorer.</li>
+<li>Check that the selected kernel uses the project’s <code>.venv</code> environment.</li>
+<li>Click <strong>Run All</strong> to run the simulation again.</li>
+</ol>
+<p>Use <strong>File → Save</strong> to save the notebook, including its output.</p>
+</section>
+<section id="if-something-goes-wrong" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
+<section id="git-or-uv-is-not-found" class="level3">
+<h3 class="anchored" data-anchor-id="git-or-uv-is-not-found">Git or uv is not found</h3>
+<p>Quit VS Code completely, reopen it, and open a new terminal. Try <code>git --version</code> and <code>uv --version</code> again. If a command is still missing, check that its installation finished successfully.</p>
+</section>
+<section id="uv-cannot-find-pyproject.toml" class="level3">
+<h3 class="anchored" data-anchor-id="uv-cannot-find-pyproject.toml">uv cannot find pyproject.toml</h3>
+<p>The terminal is probably in the wrong folder. Use <strong>File → Open Folder</strong> to open the <code>jaxcmr</code> folder containing <code>pyproject.toml</code>, then open a <strong>new terminal</strong> and run <code>uv sync</code> again.</p>
+</section>
+<section id="venv-is-not-listed-as-a-kernel" class="level3">
+<h3 class="anchored" data-anchor-id="venv-is-not-listed-as-a-kernel">.venv is not listed as a kernel</h3>
+<p>Check that <code>uv sync</code> finished successfully. Quit and reopen VS Code, reopen the notebook, and try the kernel picker again.</p>
+</section>
+<section id="the-notebook-says-no-module-named-jaxcmr" class="level3">
+<h3 class="anchored" data-anchor-id="the-notebook-says-no-module-named-jaxcmr">The notebook says No module named jaxcmr</h3>
+<p>Check that <code>uv sync</code> finished in the <code>jaxcmr</code> folder and that the notebook’s selected kernel uses the <code>.venv</code> inside that folder. Select that environment, then click <strong>Run All</strong> again.</p>
+</section>
+<section id="jax-reports-a-dll-error-on-windows" class="level3">
+<h3 class="anchored" data-anchor-id="jax-reports-a-dll-error-on-windows">JAX reports a DLL error on Windows</h3>
+<p>JAX may also need Microsoft’s <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist">Visual C++ Redistributable for x64</a>. Install it, restart VS Code, and try running the notebook again. This requirement is described in <a href="https://docs.jax.dev/en/latest/installation.html#pip-installation-cpu">JAX’s installation instructions</a>.</p>
+<p>If you ask for help, include the step you reached and the complete error message.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -440,57 +476,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
-    }
-    const viewSource = window.document.getElementById('quarto-view-source') ||
-                       window.document.getElementById('quarto-code-tools-source');
-    if (viewSource) {
-      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
-      viewSource.addEventListener("click", function(e) {
-        if (sourceUrl) {
-          // rstudio viewer pane
-          if (/\bcapabilities=\b/.test(window.location)) {
-            window.open(sourceUrl);
-          } else {
-            window.location.href = sourceUrl;
-          }
-        } else {
-          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
-          modal.show();
-        }
-        return false;
-      });
-    }
-    function toggleCodeHandler(show) {
-      return function(e) {
-        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
-        for (let i=0; i<cellDetails.length; i++) {
-          const details = cellDetails[i];
-          if (show) {
-            details.open = true;
-          } else {
-            details.removeAttribute("open");
-          }
-        }
-        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
-        const fromCls = show ? "hidden" : "unhidden";
-        const toCls = show ? "unhidden" : "hidden";
-        for (let i=0; i<cellCodeDivs.length; i++) {
-          const codeDiv = cellCodeDivs[i];
-          if (codeDiv.classList.contains(fromCls)) {
-            codeDiv.classList.remove(fromCls);
-            codeDiv.classList.add(toCls);
-          } 
-        }
-        return false;
-      }
-    }
-    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
-    if (hideAllCode) {
-      hideAllCode.addEventListener("click", toggleCodeHandler(false));
-    }
-    const showAllCode = window.document.getElementById("quarto-show-all-code");
-    if (showAllCode) {
-      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -897,6 +882,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <script type="application/javascript">
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="./installation.html" class="pagination-link" aria-label="Installation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Installation</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+  </div>
+</nav>
 </div> <!-- /content -->
 
 

@@ -171,7 +171,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#run-the-tests" id="toc-run-the-tests" class="nav-link active" data-scroll-target="#run-the-tests">Run the tests</a></li>
+  <li><a href="#optional-tools" id="toc-optional-tools" class="nav-link active" data-scroll-target="#optional-tools">Optional tools</a></li>
+  <li><a href="#run-the-tests" id="toc-run-the-tests" class="nav-link" data-scroll-target="#run-the-tests">Run the tests</a></li>
   <li><a href="#add-or-change-a-test" id="toc-add-or-change-a-test" class="nav-link" data-scroll-target="#add-or-change-a-test">Add or change a test</a></li>
   <li><a href="#edit-the-documentation" id="toc-edit-the-documentation" class="nav-link" data-scroll-target="#edit-the-documentation">Edit the documentation</a></li>
   </ul>
@@ -199,7 +200,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>For changes to JAXCMR itself, start with <a href="./developer-setup.html">Developer Setup</a> to obtain the checkout and environment. Run the commands below from the repository root.</p>
+<p>For changes to JAXCMR itself, start with the <a href="./developer-setup.html">Local setup with VS Code</a> to obtain the checkout and environment. Run the commands below from the repository root.</p>
+<section id="optional-tools" class="level2">
+<h2 class="anchored" data-anchor-id="optional-tools">Optional tools</h2>
+<p>The default <code>uv sync</code> installation includes the tools needed to run the notebooks. For specialized work, add the relevant dependency group or extra:</p>
+<ul>
+<li><code>uv sync --group embeddings</code> installs sentence-transformers for computing embeddings.</li>
+<li><code>uv sync --group profiling</code> installs line-profiler for inspecting performance.</li>
+<li><code>uv sync --extra experimental</code> installs Numba for the experimental conversion helper.</li>
+</ul>
+</section>
 <section id="run-the-tests" class="level2">
 <h2 class="anchored" data-anchor-id="run-the-tests">Run the tests</h2>
 <p>Install the test dependencies alongside the default development tools, then run the complete suite:</p>

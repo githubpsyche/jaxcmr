@@ -42,10 +42,11 @@ uv sync
 ```
 
 The repository selects Python 3.12 and installs the default notebook and development
-tools. Follow [Developer Setup](guide/developer-setup.ipynb) for VS Code and kernel
+tools. Follow the [Local setup with VS Code](guide/developer-setup.ipynb) for VS Code and kernel
 selection. See [Development](guide/development.qmd) for running tests, adding
 regressions and editing the documentation. Embeddings, profiling and
-Numba tooling are opt-in dependency groups or extras described in the setup page.
+Numba tooling are opt-in dependency groups or extras described in the
+[development guide](guide/development.qmd#optional-tools).
 
 ## Paper draft
 

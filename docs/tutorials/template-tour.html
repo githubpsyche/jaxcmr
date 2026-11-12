@@ -236,7 +236,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>Follow the war-photo-recall data through analysis, fitting, simulation and comparison. The first sections identify the settings and outputs in each template; the final section executes the same sequence with Papermill, including a separate fitting run for each model. It reuses the supplied completed fits by default.</p>
-<p>Use the repository and environment from <a href="../developer-setup.html">Developer Setup</a>. Open this notebook in that environment. The repository contains the observations and completed fits; no lab-drive files are needed. For preparing your own inputs, start with <a href="../tutorials/data-preparation.html">Preparing data for JAXCMR</a>.</p>
+<p>Use the repository and environment from <a href="../developer-setup.html">Local setup with VS Code</a>. Open this notebook in that environment. The repository contains the observations and completed fits; no lab-drive files are needed. For preparing your own inputs, start with <a href="../tutorials/data-preparation.html">Preparing data for JAXCMR</a>.</p>
 <div id="b0a67172" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details class="code-fold">
 <summary>1 — Configure the tutorial work units</summary>
@@ -325,7 +325,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sequence-the-templates-with-papermill" class="level2">
 <h2 class="anchored" data-anchor-id="sequence-the-templates-with-papermill">Sequence the templates with Papermill</h2>
 <p><a href="https://papermill.readthedocs.io/en/latest/usage-execute.html">Papermill</a> executes a notebook with a parameter dictionary and saves the executed copy. Its <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">parameter injection</a> occurs immediately after the tagged <code>parameters</code> cell, before paths, masks and models are constructed. The templates are already tagged, and Papermill is included in <code>uv sync</code>.</p>
-<p>The following cells form an ordinary Python script, kept here in the notebook: import packages, prepare work units, then call <code>pm.execute_notebook</code> in the required order. Each fitting call receives a different one-entry <code>model_configs</code> dictionary. Shared memory between notebooks is unnecessary: paths identify the saved products passed to the next call. The <code>python3</code> kernel must be the project’s environment, as in Developer Setup.</p>
+<p>The following cells form an ordinary Python script, kept here in the notebook: import packages, prepare work units, then call <code>pm.execute_notebook</code> in the required order. Each fitting call receives a different one-entry <code>model_configs</code> dictionary. Shared memory between notebooks is unnecessary: paths identify the saved products passed to the next call. The <code>python3</code> kernel must be the project’s environment, as in Local setup with VS Code.</p>
 <div id="31cafedf" class="cell" data-tags="[]" data-execution_count="3">
 <details class="code-fold">
 <summary>2 — Import the sequencing and display tools</summary>
@@ -354,7 +354,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-9"><a href="#cb3-9" aria-label="9"></a>output_path.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb3-10"><a href="#cb3-10" aria-label="10"></a>template_path <span class="op">=</span> root_path <span class="op">/</span> <span class="st">"templates"</span></span>
 <span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="cf">if</span> <span class="kw">not</span> (template_path <span class="op">/</span> <span class="st">"fitting.ipynb"</span>).is_file():</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>    <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(<span class="st">"Set project_root to the JAXCMR checkout from Developer Setup."</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>    <span class="cf">raise</span> <span class="pp">FileNotFoundError</span>(<span class="st">"Set project_root to the JAXCMR checkout from Local setup with VS Code."</span>)</span>
 <span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>executed_path <span class="op">=</span> output_path <span class="op">/</span> <span class="st">"executed"</span></span>
 <span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>executed_path.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>observation_path <span class="op">=</span> resolve_project_path(data_path, root_path)</span>

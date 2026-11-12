@@ -2,9 +2,18 @@
 title: "Development"
 ---
 
-For changes to JAXCMR itself, start with [Developer Setup](developer-setup.ipynb)
+For changes to JAXCMR itself, start with the [Local setup with VS Code](developer-setup.ipynb)
 to obtain the checkout and environment. Run the commands below from the repository
 root.
+
+## Optional tools
+
+The default `uv sync` installation includes the tools needed to run the notebooks.
+For specialized work, add the relevant dependency group or extra:
+
+- `uv sync --group embeddings` installs sentence-transformers for computing embeddings.
+- `uv sync --group profiling` installs line-profiler for inspecting performance.
+- `uv sync --extra experimental` installs Numba for the experimental conversion helper.
 
 ## Run the tests
 
