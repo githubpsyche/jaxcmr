@@ -1,0 +1,45 @@
+---
+title: "Installation"
+format:
+  html:
+    code-fold: false
+    code-line-numbers: false
+---
+
+**If you are new to Python or need help setting up your computer, start with the [step-by-step setup guide](developer-setup.ipynb).** It walks you through installing the software you need, obtaining the examples, and running a memory-model simulation to see its results. You do not need to have Python installed beforehand.
+
+## Install the package
+
+These instructions assume you already have a Python environment for your work. JAXCMR requires **Python 3.12 or later**. Activate your chosen environment before running either installation command below.
+
+Install from GitHub to obtain the version covered by this documentation; the release on PyPI is older. These commands require [Git](https://git-scm.com/downloads), which the installer uses to download the source. Required Python dependencies are installed automatically.
+
+### With uv — recommended
+
+We recommend [uv](https://docs.astral.sh/uv/getting-started/installation/) because it can manage Python versions, environments, and packages together. With uv installed, run:
+
+```bash
+uv pip install git+https://github.com/githubpsyche/jaxcmr
+```
+
+### With pip
+
+If you prefer pip, install into your existing Python environment with:
+
+```bash
+python -m pip install git+https://github.com/githubpsyche/jaxcmr
+```
+
+## Get the repository and examples
+
+Cloning the repository gives you a local copy of JAXCMR's source code and example notebooks. The repository includes a configuration for setting up its Python environment with uv.
+
+Install both [Git](https://git-scm.com/downloads) and [uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+
+```bash
+git clone https://github.com/githubpsyche/jaxcmr.git
+cd jaxcmr
+uv sync
+```
+
+`uv sync` downloads Python 3.12 if needed, creates a `.venv` environment, and installs JAXCMR and the notebook tools. Changes to JAXCMR's source files are available without reinstalling the package.
