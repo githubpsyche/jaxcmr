@@ -26,6 +26,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -183,11 +218,17 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#open-and-keep-a-notebook" id="toc-open-and-keep-a-notebook" class="nav-link active" data-scroll-target="#open-and-keep-a-notebook">1. Open and keep a notebook</a></li>
-  <li><a href="#connect-to-a-computer" id="toc-connect-to-a-computer" class="nav-link" data-scroll-target="#connect-to-a-computer">2. Connect to a computer</a></li>
-  <li><a href="#check-your-setup" id="toc-check-your-setup" class="nav-link" data-scroll-target="#check-your-setup">3. Check your setup</a></li>
-  <li><a href="#save-and-return-later" id="toc-save-and-return-later" class="nav-link" data-scroll-target="#save-and-return-later">4. Save and return later</a></li>
-  <li><a href="#continue-with-the-tutorials" id="toc-continue-with-the-tutorials" class="nav-link" data-scroll-target="#continue-with-the-tutorials">Continue with the tutorials</a></li>
+  <li><a href="#create-and-work-in-a-notebook" id="toc-create-and-work-in-a-notebook" class="nav-link active" data-scroll-target="#create-and-work-in-a-notebook">1. Create and work in a notebook</a></li>
+  <li><a href="#prepare-the-runtime" id="toc-prepare-the-runtime" class="nav-link" data-scroll-target="#prepare-the-runtime">2. Prepare the runtime</a></li>
+  <li><a href="#make-your-files-available" id="toc-make-your-files-available" class="nav-link" data-scroll-target="#make-your-files-available">3. Make your files available</a>
+  <ul class="collapse">
+  <li><a href="#use-drive-for-an-ongoing-project" id="toc-use-drive-for-an-ongoing-project" class="nav-link" data-scroll-target="#use-drive-for-an-ongoing-project">Use Drive for an ongoing project</a></li>
+  <li><a href="#upload-directly-for-occasional-work" id="toc-upload-directly-for-occasional-work" class="nav-link" data-scroll-target="#upload-directly-for-occasional-work">Upload directly for occasional work</a></li>
+  </ul></li>
+  <li><a href="#set-input-and-output-paths" id="toc-set-input-and-output-paths" class="nav-link" data-scroll-target="#set-input-and-output-paths">4. Set input and output paths</a></li>
+  <li><a href="#save-files-and-use-them-again" id="toc-save-files-and-use-them-again" class="nav-link" data-scroll-target="#save-files-and-use-them-again">5. Save files and use them again</a></li>
+  <li><a href="#return-to-your-work" id="toc-return-to-your-work" class="nav-link" data-scroll-target="#return-to-your-work">6. Return to your work</a></li>
+  <li><a href="#continue-with-jaxcmr" id="toc-continue-with-jaxcmr" class="nav-link" data-scroll-target="#continue-with-jaxcmr">Continue with JAXCMR</a></li>
   <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a></li>
   </ul>
 </nav>
@@ -214,91 +255,208 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Prepare a notebook workspace for JAXCMR in your web browser. You do not need previous Python experience or to install Python, VS Code, or other software on your computer.</p>
-<p><a href="https://research.google.com/colaboratory/faq.html">Google Colaboratory</a>, usually called <strong>Colab</strong>, lets you work with Jupyter notebooks using Google’s computers. You need a Google account and an internet connection. We will use a small supplied notebook to check the setup; it needs neither a GPU nor a paid Colab plan.</p>
-<p>The screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. Click an image to enlarge it.</p>
-<section id="open-and-keep-a-notebook" class="level2">
-<h2 class="anchored" data-anchor-id="open-and-keep-a-notebook">1. Open and keep a notebook</h2>
-<p>A <strong>Jupyter notebook</strong> combines explanations, Python code, and results in one document. Its sections are called <strong>cells</strong>: text cells explain the work, and code cells contain instructions for Python to execute. Colab provides the controls for working with these documents in a browser.</p>
-<ol type="1">
-<li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/guide/examples/first-simulation.ipynb">Open the first simulation in Colab</a> and sign in if prompted.</li>
-<li>Choose <strong>File → Save a copy in Drive</strong> to create your own editable copy.</li>
-<li>Give the copy a recognizable name and continue working in that copy.</li>
-</ol>
-<div id="fig-colab-copy-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab File menu in dark mode, with Save a copy in Drive outlined in red.">
+<p>Use <a href="https://colab.research.google.com/">Google Colab</a> to write and run notebooks, work with your own data, and keep results for later. Colab runs Python on Google’s computers through your web browser. You need a Google account and an internet connection; you do not need to install Python or an editor on your computer.</p>
+<p>This guide covers the workspace you will use for JAXCMR tutorials and your own analyses. No previous Colab experience is assumed. The screenshots use dark mode; the same controls are available in light mode. Red boxes highlight controls, and clicking an image enlarges it.</p>
+<section id="create-and-work-in-a-notebook" class="level2">
+<h2 class="anchored" data-anchor-id="create-and-work-in-a-notebook">1. Create and work in a notebook</h2>
+<p>A <strong>Jupyter notebook</strong> is a document ending in <code>.ipynb</code>. It combines <strong>text cells</strong> for explanations with <strong>code cells</strong> containing Python instructions. Results appear beneath the code that produced them.</p>
+<ul>
+<li><strong>Start your own notebook:</strong> open <a href="https://colab.research.google.com/">Colab</a>, sign in, and choose <strong>New notebook</strong>. From an open notebook, use <strong>File → New notebook in Drive</strong>. Click its title to give it a useful name.</li>
+<li><strong>Adapt a supplied notebook:</strong> open its <strong>Open in Colab</strong> link, then choose <strong>File → Save a copy in Drive</strong>. Work in your copy; the original on GitHub stays unchanged.</li>
+<li><strong>Continue an existing notebook:</strong> open it from Google Drive, or choose <strong>File → Open notebook</strong>. Use <strong>File → Upload notebook</strong> for an <code>.ipynb</code> file on your computer.</li>
+</ul>
+<div id="fig-colab-copy-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab File menu with New notebook in Drive and Save a copy in Drive outlined in red.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-colab-copy-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/colab-copy-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: File → Save a copy in Drive creates the copy you will work in."><img src="images/setup/colab-copy-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab File menu in dark mode, with Save a copy in Drive outlined in red."></a>
+<a href="images/setup/colab-copy-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: The File menu lets you create a new notebook or keep your own copy of a supplied one."><img src="images/setup/colab-copy-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab File menu with New notebook in Drive and Save a copy in Drive outlined in red."></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-copy-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: <strong>File → Save a copy in Drive</strong> creates the copy you will work in.
+Figure&nbsp;1: The <strong>File</strong> menu lets you create a new notebook or keep your own copy of a supplied one.
 </figcaption>
 </figure>
 </div>
-<p>Your copy should show <strong>Your first JAXCMR simulation</strong>. It includes all the code and needs no dataset. Editing this copy leaves the original on GitHub unchanged.</p>
-<p>The notebook includes saved output from an earlier run. Seeing that output does not mean your copy has run yet.</p>
+<p>Use <strong>+ Code</strong> or <strong>+ Text</strong> in the toolbar to add a cell below the selected one. Click inside a code cell to edit it; double-click a text cell to edit its explanation. Run a code cell with its triangle button or <strong>Shift+Enter</strong>. <strong>Runtime → Run all</strong> runs the notebook from top to bottom.</p>
+<p>Cells share Python’s memory within the same session. If you change a value in an earlier cell, run that cell and the later cells that use it. Editing text in a code cell alone does not update its results. Keep setup and imports near the top, followed by loading data, calculations, and saving results, so the notebook can run in order. Stop and resolve an error before running dependent cells.</p>
 </section>
-<section id="connect-to-a-computer" class="level2">
-<h2 class="anchored" data-anchor-id="connect-to-a-computer">2. Connect to a computer</h2>
-<p>Choose <strong>Runtime → Change runtime type</strong>. Use <strong>Python 3</strong> and select <strong>CPU</strong> (or <strong>None</strong> for the hardware accelerator), then save. Click <strong>Connect</strong> near the top of the notebook if it is not already connected.</p>
-<p>Colab calls the computer running your code a <strong>runtime</strong>. Your notebook is saved in Drive; Python runs in this separate, temporary session. Your own computer displays the notebook.</p>
-<div id="fig-colab-runtime-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab runtime settings in dark mode, with Python 3 and CPU outlined in red.">
+<section id="prepare-the-runtime" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-the-runtime">2. Prepare the runtime</h2>
+<p>The <strong>runtime</strong> is the remote computer running your code. Your notebook can be saved in Drive while its runtime is temporary. Opening a notebook does not recreate the Python variables or installed packages from its last session.</p>
+<p>Choose <strong>Runtime → Change runtime type</strong>, select <strong>Python 3</strong> and <strong>CPU</strong>, and save. CPU is sufficient to get started with JAXCMR. Click <strong>Connect</strong> if the notebook is not already connected. JAXCMR requires Python <strong>3.12 or later</strong>; use the latest runtime version if installation reports an older Python.</p>
+<div id="fig-colab-runtime-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab runtime settings with Python 3 and CPU outlined in red.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-colab-runtime-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/colab-runtime-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: In Runtime → Change runtime type, choose Python 3 and CPU."><img src="images/setup/colab-runtime-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab runtime settings in dark mode, with Python 3 and CPU outlined in red."></a>
+<a href="images/setup/colab-runtime-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Choose Python 3 and CPU in the runtime settings."><img src="images/setup/colab-runtime-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab runtime settings with Python 3 and CPU outlined in red."></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-runtime-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: In <strong>Runtime → Change runtime type</strong>, choose <strong>Python 3</strong> and <strong>CPU</strong>.
+Figure&nbsp;2: Choose <strong>Python 3</strong> and <strong>CPU</strong> in the runtime settings.
 </figcaption>
 </figure>
 </div>
+<p>In a new notebook, add this as your first code cell and run it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>pip install <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>%pip</code> installs packages into this runtime. This installs the JAXCMR version covered by the documentation and its dependencies; <code>pandas</code> provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use <strong>Runtime → Restart session</strong>, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.</p>
+<p>Our Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates also fetch their supplied example inputs when their setup cells run. Those downloads do not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.</p>
 </section>
-<section id="check-your-setup" class="level2">
-<h2 class="anchored" data-anchor-id="check-your-setup">3. Check your setup</h2>
-<p>Choose <strong>Runtime → Run all</strong>, or click <strong>Run all</strong> in the notebook toolbar. Colab runs the code cells in order, so later cells can use what earlier cells have prepared. The included <strong>Install JAXCMR in Colab</strong> cell first installs JAXCMR and its required packages in the runtime. The following cells run the setup check.</p>
-<p>Wait for execution to finish. Installation messages are normal. If Colab asks for a restart after installation, choose <strong>Runtime → Restart session</strong>, then <strong>Run all</strong> again. A session restart clears Python’s memory while keeping packages installed in that runtime. Resolve any execution error before continuing.</p>
-<p>JAXCMR requires Python 3.12 or later. If installation reports an older Python version, check <strong>Runtime → Change runtime type</strong> and use the latest available runtime version.</p>
-<p>The first calculation may take longer while JAX prepares it. Look beneath the final code cell for output like:</p>
-<pre class="text"><code>Study order: [1 2 3 4 5]
-Simulated recalls: [1 5 2 4 3]</code></pre>
-<div id="fig-colab-notebook-controls" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab in dark mode with Run all and the two simulation output lines outlined in red.">
+<section id="make-your-files-available" class="level2">
+<h2 class="anchored" data-anchor-id="make-your-files-available">3. Make your files available</h2>
+<p>Saving a notebook in Drive does not automatically give Python access to nearby files. Choose how the runtime will reach your inputs and where it will keep outputs:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Location</th>
+<th>What it is for</th>
+<th>Available after the runtime is deleted?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Notebook saved in Drive</td>
+<td>Code, explanations, and saved cell outputs</td>
+<td>Yes; Python’s running state is not included.</td>
+</tr>
+<tr class="even">
+<td>Runtime storage, usually under <code>/content</code></td>
+<td>Temporary uploads, downloads, and working files</td>
+<td>No.</td>
+</tr>
+<tr class="odd">
+<td>Connected Google Drive</td>
+<td>Project inputs and results you want to keep</td>
+<td>Yes; reconnect Drive in a fresh runtime.</td>
+</tr>
+</tbody>
+</table>
+<section id="use-drive-for-an-ongoing-project" class="level3">
+<h3 class="anchored" data-anchor-id="use-drive-for-an-ongoing-project">Use Drive for an ongoing project</h3>
+<p>In <a href="https://drive.google.com/">Google Drive</a>, use <strong>New → New folder</strong> to create a project folder. Give it a name such as <code>memory-project</code>, create <code>data</code> and <code>results</code> folders inside it, and upload your input files into <code>data</code>. You can keep your notebooks in the project folder too.</p>
+<p>Near the top of your notebook, after installation, add and run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> google.colab <span class="im">import</span> drive</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>drive.mount(<span class="st">"/content/drive"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Follow Colab’s prompts to connect your Google account. This makes your Drive files accessible to code in the notebook, so connect it only for notebooks you trust. After the connection succeeds, <strong>My Drive</strong> is available at <code>/content/drive/MyDrive</code>. Files written there are stored in Drive.</p>
+<p>Open the <strong>Files</strong> panel using the folder icon on the left. Expand <code>drive</code>, then <code>MyDrive</code>, to find your project. Use the panel’s refresh button if a new file has not appeared. Right-click a file and choose <strong>Copy path</strong> to obtain the location you can use in Python.</p>
+<div id="fig-colab-file-actions" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab Files panel in dark mode with Copy path and Download outlined in red in a file's menu.">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-colab-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/colab-run-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: Use Run all in the toolbar, then look beneath the final code cell for the two output lines. The image shows saved output; run your own copy to check your setup."><img src="images/setup/colab-run-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab in dark mode with Run all and the two simulation output lines outlined in red."></a>
+<div aria-describedby="fig-colab-file-actions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/colab-file-actions-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: In the Files panel, a file’s menu offers Copy path and Download. Colab’s built-in sample files are shown here; your project appears under drive/MyDrive after you connect Drive."><img src="images/setup/colab-file-actions-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab Files panel in dark mode with Copy path and Download outlined in red in a file's menu."></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Use <strong>Run all</strong> in the toolbar, then look beneath the final code cell for the two output lines. The image shows saved output; run your own copy to check your setup.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-file-actions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: In the <strong>Files</strong> panel, a file’s menu offers <strong>Copy path</strong> and <strong>Download</strong>. Colab’s built-in sample files are shown here; your project appears under <code>drive/MyDrive</code> after you connect Drive.
 </figcaption>
 </figure>
 </div>
-<p>Reaching this output confirms that the runtime can load JAXCMR and execute a model. The notebook’s <strong>Read the output</strong> section explains the simulation.</p>
 </section>
-<section id="save-and-return-later" class="level2">
-<h2 class="anchored" data-anchor-id="save-and-return-later">4. Save and return later</h2>
-<p>Your copy is saved in Google Drive. Use <strong>File → Save</strong> to save your changes and results. You can also use <strong>File → Download → Download .ipynb</strong> to keep a copy on your own computer.</p>
-<div id="fig-colab-save-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab File menu in dark mode, with Save and Download outlined in red.">
+<section id="upload-directly-for-occasional-work" class="level3">
+<h3 class="anchored" data-anchor-id="upload-directly-for-occasional-work">Upload directly for occasional work</h3>
+<p>If you prefer to keep files on your own computer, click <strong>Upload to session storage</strong> at the top of the Files panel and select your inputs. Use <strong>Copy path</strong> on the uploaded file. These uploads are temporary: upload them again in a fresh runtime, and download any results you want to keep before leaving it.</p>
+<p>See <a href="https://colab.research.google.com/notebooks/io.ipynb">Colab’s file and Drive guidance</a> for other storage options.</p>
+</section>
+</section>
+<section id="set-input-and-output-paths" class="level2">
+<h2 class="anchored" data-anchor-id="set-input-and-output-paths">4. Set input and output paths</h2>
+<p>A <strong>path</strong> is a file or folder’s address. <code>/content/drive/MyDrive/memory-project/data/trials.csv</code> identifies a particular file; <code>data/trials.csv</code> is a <em>relative</em> path, interpreted from Python’s current working folder. The folder containing the notebook in Drive does not set that working folder.</p>
+<p>Keep your locations together in a cell near the top of each notebook. Adapt this pattern to your own folder and filename:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path(<span class="st">"/content/drive/MyDrive/memory-project"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>input_path <span class="op">=</span> project <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"trials.csv"</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>output_dir <span class="op">=</span> project <span class="op">/</span> <span class="st">"results"</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input file exists:"</span>, input_path.is_file())</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Save results in:"</span>, output_dir)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>Path</code> builds file locations; <code>/</code> joins their parts. The <code>mkdir</code> line creates the output folder if needed. Replace <code>memory-project</code> and <code>trials.csv</code> with your names, preserving spelling and capitalization. The input check should print <code>True</code>; if it prints <code>False</code>, inspect the Files panel and compare the copied path. This pattern also works with an uploaded file: set <code>input_path</code> to its copied path, and choose an output location separately.</p>
+<p>For a CSV table, a later cell can read the file into Python:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.read_csv(input_path)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>table.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>import</code> line makes pandas available under the short name <code>pd</code>. <code>table</code> holds the data in memory; <code>head()</code> displays its first few rows. Reading other formats requires a suitable reader. <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> explains how to turn study and recall records into the dataset format JAXCMR uses.</p>
+<p>When adapting a JAXCMR template, edit its existing configuration cell. Set <code>project_root</code> to your project folder’s full path, <code>data_path</code> to your prepared dataset, and <code>output_dir</code> to a results folder. Relative paths in those templates are resolved against <code>project_root</code>. Check any additional output settings, such as <code>simulation_dir</code> or <code>figure_dir</code>, too. The example-input downloader leaves custom paths alone; you must make those files available yourself.</p>
+</section>
+<section id="save-files-and-use-them-again" class="level2">
+<h2 class="anchored" data-anchor-id="save-files-and-use-them-again">5. Save files and use them again</h2>
+<p>Displaying a table or figure beneath a cell is different from writing a file. <strong>File → Save</strong> keeps the notebook and its displayed outputs; it does not collect every file the code creates.</p>
+<p>To write the table loaded above as a separate CSV file:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>saved_path <span class="op">=</span> output_dir <span class="op">/</span> <span class="st">"trials-copy.csv"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>table.to_csv(saved_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(saved_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This writes the current contents of <code>table</code>; <code>index=False</code> omits pandas’ extra row-number column. After an analysis, use the same pattern with its result table and a meaningful filename. A figure needs its own save operation, such as Matplotlib’s <code>savefig</code>; JAXCMR templates write files according to their output settings. A printed path tells you where to find each saved file.</p>
+<p>Choose a new filename or results folder for runs you want to keep separately. Writing to an existing filename can replace its contents.</p>
+<p>For Drive outputs, wait for writing to finish and check that the files appear in Google Drive before ending the session. For temporary outputs, right-click each file in Colab’s <strong>Files</strong> panel and choose <strong>Download</strong>. This downloads the data or result file. <strong>File → Download → Download .ipynb</strong> downloads the notebook itself.</p>
+<div id="fig-colab-save-dark" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab File menu with Save and Download outlined in red.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-colab-save-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/colab-save-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: File → Save keeps your changes in Drive. Download lets you keep a notebook file on your computer."><img src="images/setup/colab-save-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab File menu in dark mode, with Save and Download outlined in red."></a>
+<a href="images/setup/colab-save-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: File → Save saves the notebook. Its Download submenu exports the notebook; use the Files panel to download separate result files."><img src="images/setup/colab-save-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab File menu with Save and Download outlined in red."></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-save-dark-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: <strong>File → Save</strong> keeps your changes in Drive. <strong>Download</strong> lets you keep a notebook file on your computer.
+Figure&nbsp;4: <strong>File → Save</strong> saves the notebook. Its <strong>Download</strong> submenu exports the notebook; use the <strong>Files</strong> panel to download separate result files.
 </figcaption>
 </figure>
 </div>
-<p>Your saved notebook and its displayed results are separate from its runtime. Colab runtimes are temporary: when one is deleted, its installed packages, Python variables, and files stored only on that runtime disappear. They are not automatically saved with the notebook. See <a href="https://research.google.com/colaboratory/faq.html">Colab’s explanation of storage and runtime limits</a>.</p>
-<p>When you return, open your saved notebook, connect, and choose <strong>Runtime → Run all</strong>. The installation cell prepares a fresh runtime when needed. Results already visible in the document may be from your previous session.</p>
+<p>A later notebook can reuse the saved CSV without repeating the calculations that created it. After connecting Drive and defining the same <code>project</code> location, load it with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>saved_table <span class="op">=</span> pd.read_csv(project <span class="op">/</span> <span class="st">"results"</span> <span class="op">/</span> <span class="st">"trials-copy.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For a later JAXCMR template, set its input path to the appropriate file produced by the earlier notebook. Notebooks do not automatically share Python variables or temporary files; saved files provide the connection between them.</p>
 </section>
-<section id="continue-with-the-tutorials" class="level2">
-<h2 class="anchored" data-anchor-id="continue-with-the-tutorials">Continue with the tutorials</h2>
-<p>Open <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> and use its <strong>Open in Colab</strong> link. Save your own copy and run it from the beginning, including its setup cell. The tutorial explains the calculations; the notebook and runtime work as they do here.</p>
+<section id="return-to-your-work" class="level2">
+<h2 class="anchored" data-anchor-id="return-to-your-work">6. Return to your work</h2>
+<p>Open your saved notebook from Drive. In a fresh runtime:</p>
+<ol type="1">
+<li>Run the installation cell and your imports.</li>
+<li>Reconnect Drive, or upload your local inputs again.</li>
+<li>Run the cells defining your paths and loading data or saved results.</li>
+<li>Run the calculations you need, then save new outputs.</li>
+</ol>
+<p><strong>Runtime → Restart session</strong> clears Python’s variables but keeps packages and files in the current runtime. A replacement runtime starts afresh: its installed packages and temporary files are gone. Your saved notebook and Drive files remain. Results already visible in a notebook may be from an earlier session. <a href="https://research.google.com/colaboratory/faq.html">Colab’s FAQ</a> explains runtime lifetimes and storage.</p>
+<p>For your own notebooks, use <strong>Run all</strong> when you intend to repeat the entire workflow. To resume from saved results, load those files and run the subsequent cells rather than automatically rerunning an expensive calculation.</p>
+</section>
+<section id="continue-with-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="continue-with-jaxcmr">Continue with JAXCMR</h2>
+<p>Use <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> to learn the library’s data format, then the <a href="./templates.html">templates</a> for analysis and modelling. Their setup cells prepare the supplied examples. Apply the file and output settings above when you move to your own work.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: check installation with the supplied simulation
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/guide/examples/first-simulation.ipynb">Open the first simulation in Colab</a>, save your own copy, and choose <strong>Run all</strong>. Its installation cell prepares the runtime; no input file is needed. The final cell should print:</p>
+<pre class="text"><code>Study order: [1 2 3 4 5]
+Simulated recalls: [1 5 2 4 3]</code></pre>
+<div id="fig-colab-notebook-controls" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Colab notebook with Run all and the simulation output outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-colab-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/colab-run-dark.jpg" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Run all executes the cells in order. This screenshot shows saved output; running the notebook produces it in your current session."><img src="images/setup/colab-run-dark.jpg" class="img-fluid figure-img" style="width:100.0%" alt="Colab notebook with Run all and the simulation output outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-colab-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: <strong>Run all</strong> executes the cells in order. This screenshot shows saved output; running the notebook produces it in your current session.
+</figcaption>
+</figure>
+</div>
+<p>The notebook’s <strong>Read the output</strong> section explains the simulation. Completing this check verifies installation; use the earlier sections to work with your own notebooks and files.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="if-something-goes-wrong" class="level2">
 <h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
 <ul>
-<li><strong>No module named jaxcmr:</strong> run the installation cell in the current session, then run the model cells in order.</li>
-<li><strong>A name is not defined:</strong> run the earlier code cells again; a new session does not remember their variables.</li>
-<li><strong>The runtime disconnects:</strong> reconnect and check whether the session has restarted. If it has, repeat installation and run the notebook from the beginning.</li>
+<li><strong>No module named jaxcmr:</strong> run the installation cell in the current runtime, then your imports.</li>
+<li><strong>A name is not defined:</strong> run the earlier cell that defines it. Variables do not carry over from another notebook or a restarted session.</li>
+<li><strong>File not found:</strong> check that Drive is connected or the file uploaded, then compare the path with <strong>Copy path</strong> in the Files panel.</li>
+<li><strong>Results disappeared:</strong> reopen files saved in Drive or downloaded to your computer. Files kept only in a deleted runtime cannot be recovered by reopening the notebook.</li>
 </ul>
 <p>If you ask for help, include the cell you ran and the complete error message.</p>
 

@@ -715,7 +715,7 @@
     "href": "colab-setup.html",
     "title": "Google Colab setup",
     "section": "",
-    "text": "Prepare a notebook workspace for JAXCMR in your web browser. You do not need previous Python experience or to install Python, VS Code, or other software on your computer.\nGoogle Colaboratory, usually called Colab, lets you work with Jupyter notebooks using Google’s computers. You need a Google account and an internet connection. We will use a small supplied notebook to check the setup; it needs neither a GPU nor a paid Colab plan.\nThe screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. Click an image to enlarge it.",
+    "text": "Use Google Colab to write and run notebooks, work with your own data, and keep results for later. Colab runs Python on Google’s computers through your web browser. You need a Google account and an internet connection; you do not need to install Python or an editor on your computer.\nThis guide covers the workspace you will use for JAXCMR tutorials and your own analyses. No previous Colab experience is assumed. The screenshots use dark mode; the same controls are available in light mode. Red boxes highlight controls, and clicking an image enlarges it.",
     "crumbs": [
       "Installation",
       "Google Colab setup"
@@ -781,7 +781,7 @@
     "href": "colab-setup.html#if-something-goes-wrong",
     "title": "Google Colab setup",
     "section": "If something goes wrong",
-    "text": "If something goes wrong\n\nNo module named jaxcmr: run the installation cell in the current session, then run the model cells in order.\nA name is not defined: run the earlier code cells again; a new session does not remember their variables.\nThe runtime disconnects: reconnect and check whether the session has restarted. If it has, repeat installation and run the notebook from the beginning.\n\nIf you ask for help, include the cell you ran and the complete error message.",
+    "text": "If something goes wrong\n\nNo module named jaxcmr: run the installation cell in the current runtime, then your imports.\nA name is not defined: run the earlier cell that defines it. Variables do not carry over from another notebook or a restarted session.\nFile not found: check that Drive is connected or the file uploaded, then compare the path with Copy path in the Files panel.\nResults disappeared: reopen files saved in Drive or downloaded to your computer. Files kept only in a deleted runtime cannot be recovered by reopening the notebook.\n\nIf you ask for help, include the cell you ran and the complete error message.",
     "crumbs": [
       "Installation",
       "Google Colab setup"
@@ -1856,6 +1856,83 @@
     "crumbs": [
       "Templates",
       "When recall ends"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#create-and-work-in-a-notebook",
+    "href": "colab-setup.html#create-and-work-in-a-notebook",
+    "title": "Google Colab setup",
+    "section": "1. Create and work in a notebook",
+    "text": "1. Create and work in a notebook\nA Jupyter notebook is a document ending in .ipynb. It combines text cells for explanations with code cells containing Python instructions. Results appear beneath the code that produced them.\n\nStart your own notebook: open Colab, sign in, and choose New notebook. From an open notebook, use File → New notebook in Drive. Click its title to give it a useful name.\nAdapt a supplied notebook: open its Open in Colab link, then choose File → Save a copy in Drive. Work in your copy; the original on GitHub stays unchanged.\nContinue an existing notebook: open it from Google Drive, or choose File → Open notebook. Use File → Upload notebook for an .ipynb file on your computer.\n\n\n\n\n\n\n\nFigure 1: The File menu lets you create a new notebook or keep your own copy of a supplied one.\n\n\n\nUse + Code or + Text in the toolbar to add a cell below the selected one. Click inside a code cell to edit it; double-click a text cell to edit its explanation. Run a code cell with its triangle button or Shift+Enter. Runtime → Run all runs the notebook from top to bottom.\nCells share Python’s memory within the same session. If you change a value in an earlier cell, run that cell and the later cells that use it. Editing text in a code cell alone does not update its results. Keep setup and imports near the top, followed by loading data, calculations, and saving results, so the notebook can run in order. Stop and resolve an error before running dependent cells.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#prepare-the-runtime",
+    "href": "colab-setup.html#prepare-the-runtime",
+    "title": "Google Colab setup",
+    "section": "2. Prepare the runtime",
+    "text": "2. Prepare the runtime\nThe runtime is the remote computer running your code. Your notebook can be saved in Drive while its runtime is temporary. Opening a notebook does not recreate the Python variables or installed packages from its last session.\nChoose Runtime → Change runtime type, select Python 3 and CPU, and save. CPU is sufficient to get started with JAXCMR. Click Connect if the notebook is not already connected. JAXCMR requires Python 3.12 or later; use the latest runtime version if installation reports an older Python.\n\n\n\n\n\n\nFigure 2: Choose Python 3 and CPU in the runtime settings.\n\n\n\nIn a new notebook, add this as your first code cell and run it:\n%pip install \"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main\" pandas\n%pip installs packages into this runtime. This installs the JAXCMR version covered by the documentation and its dependencies; pandas provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use Runtime → Restart session, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.\nOur Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates also fetch their supplied example inputs when their setup cells run. Those downloads do not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#make-your-files-available",
+    "href": "colab-setup.html#make-your-files-available",
+    "title": "Google Colab setup",
+    "section": "3. Make your files available",
+    "text": "3. Make your files available\nSaving a notebook in Drive does not automatically give Python access to nearby files. Choose how the runtime will reach your inputs and where it will keep outputs:\n\n\n\n\n\n\n\n\nLocation\nWhat it is for\nAvailable after the runtime is deleted?\n\n\n\n\nNotebook saved in Drive\nCode, explanations, and saved cell outputs\nYes; Python’s running state is not included.\n\n\nRuntime storage, usually under /content\nTemporary uploads, downloads, and working files\nNo.\n\n\nConnected Google Drive\nProject inputs and results you want to keep\nYes; reconnect Drive in a fresh runtime.\n\n\n\n\nUse Drive for an ongoing project\nIn Google Drive, use New → New folder to create a project folder. Give it a name such as memory-project, create data and results folders inside it, and upload your input files into data. You can keep your notebooks in the project folder too.\nNear the top of your notebook, after installation, add and run:\nfrom google.colab import drive\n\ndrive.mount(\"/content/drive\")\nFollow Colab’s prompts to connect your Google account. This makes your Drive files accessible to code in the notebook, so connect it only for notebooks you trust. After the connection succeeds, My Drive is available at /content/drive/MyDrive. Files written there are stored in Drive.\nOpen the Files panel using the folder icon on the left. Expand drive, then MyDrive, to find your project. Use the panel’s refresh button if a new file has not appeared. Right-click a file and choose Copy path to obtain the location you can use in Python.\n\n\n\n\n\n\nFigure 3: In the Files panel, a file’s menu offers Copy path and Download. Colab’s built-in sample files are shown here; your project appears under drive/MyDrive after you connect Drive.\n\n\n\n\n\nUpload directly for occasional work\nIf you prefer to keep files on your own computer, click Upload to session storage at the top of the Files panel and select your inputs. Use Copy path on the uploaded file. These uploads are temporary: upload them again in a fresh runtime, and download any results you want to keep before leaving it.\nSee Colab’s file and Drive guidance for other storage options.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#set-input-and-output-paths",
+    "href": "colab-setup.html#set-input-and-output-paths",
+    "title": "Google Colab setup",
+    "section": "4. Set input and output paths",
+    "text": "4. Set input and output paths\nA path is a file or folder’s address. /content/drive/MyDrive/memory-project/data/trials.csv identifies a particular file; data/trials.csv is a relative path, interpreted from Python’s current working folder. The folder containing the notebook in Drive does not set that working folder.\nKeep your locations together in a cell near the top of each notebook. Adapt this pattern to your own folder and filename:\nfrom pathlib import Path\n\nproject = Path(\"/content/drive/MyDrive/memory-project\")\ninput_path = project / \"data\" / \"trials.csv\"\noutput_dir = project / \"results\"\noutput_dir.mkdir(parents=True, exist_ok=True)\n\nprint(\"Input file exists:\", input_path.is_file())\nprint(\"Save results in:\", output_dir)\nPath builds file locations; / joins their parts. The mkdir line creates the output folder if needed. Replace memory-project and trials.csv with your names, preserving spelling and capitalization. The input check should print True; if it prints False, inspect the Files panel and compare the copied path. This pattern also works with an uploaded file: set input_path to its copied path, and choose an output location separately.\nFor a CSV table, a later cell can read the file into Python:\nimport pandas as pd\n\ntable = pd.read_csv(input_path)\ntable.head()\nThe import line makes pandas available under the short name pd. table holds the data in memory; head() displays its first few rows. Reading other formats requires a suitable reader. Preparing data for JAXCMR explains how to turn study and recall records into the dataset format JAXCMR uses.\nWhen adapting a JAXCMR template, edit its existing configuration cell. Set project_root to your project folder’s full path, data_path to your prepared dataset, and output_dir to a results folder. Relative paths in those templates are resolved against project_root. Check any additional output settings, such as simulation_dir or figure_dir, too. The example-input downloader leaves custom paths alone; you must make those files available yourself.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#save-files-and-use-them-again",
+    "href": "colab-setup.html#save-files-and-use-them-again",
+    "title": "Google Colab setup",
+    "section": "5. Save files and use them again",
+    "text": "5. Save files and use them again\nDisplaying a table or figure beneath a cell is different from writing a file. File → Save keeps the notebook and its displayed outputs; it does not collect every file the code creates.\nTo write the table loaded above as a separate CSV file:\nsaved_path = output_dir / \"trials-copy.csv\"\ntable.to_csv(saved_path, index=False)\nprint(saved_path)\nThis writes the current contents of table; index=False omits pandas’ extra row-number column. After an analysis, use the same pattern with its result table and a meaningful filename. A figure needs its own save operation, such as Matplotlib’s savefig; JAXCMR templates write files according to their output settings. A printed path tells you where to find each saved file.\nChoose a new filename or results folder for runs you want to keep separately. Writing to an existing filename can replace its contents.\nFor Drive outputs, wait for writing to finish and check that the files appear in Google Drive before ending the session. For temporary outputs, right-click each file in Colab’s Files panel and choose Download. This downloads the data or result file. File → Download → Download .ipynb downloads the notebook itself.\n\n\n\n\n\n\nFigure 4: File → Save saves the notebook. Its Download submenu exports the notebook; use the Files panel to download separate result files.\n\n\n\nA later notebook can reuse the saved CSV without repeating the calculations that created it. After connecting Drive and defining the same project location, load it with:\nimport pandas as pd\n\nsaved_table = pd.read_csv(project / \"results\" / \"trials-copy.csv\")\nFor a later JAXCMR template, set its input path to the appropriate file produced by the earlier notebook. Notebooks do not automatically share Python variables or temporary files; saved files provide the connection between them.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#return-to-your-work",
+    "href": "colab-setup.html#return-to-your-work",
+    "title": "Google Colab setup",
+    "section": "6. Return to your work",
+    "text": "6. Return to your work\nOpen your saved notebook from Drive. In a fresh runtime:\n\nRun the installation cell and your imports.\nReconnect Drive, or upload your local inputs again.\nRun the cells defining your paths and loading data or saved results.\nRun the calculations you need, then save new outputs.\n\nRuntime → Restart session clears Python’s variables but keeps packages and files in the current runtime. A replacement runtime starts afresh: its installed packages and temporary files are gone. Your saved notebook and Drive files remain. Results already visible in a notebook may be from an earlier session. Colab’s FAQ explains runtime lifetimes and storage.\nFor your own notebooks, use Run all when you intend to repeat the entire workflow. To resume from saved results, load those files and run the subsequent cells rather than automatically rerunning an expensive calculation.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#continue-with-jaxcmr",
+    "href": "colab-setup.html#continue-with-jaxcmr",
+    "title": "Google Colab setup",
+    "section": "Continue with JAXCMR",
+    "text": "Continue with JAXCMR\nUse Preparing data for JAXCMR to learn the library’s data format, then the templates for analysis and modelling. Their setup cells prepare the supplied examples. Apply the file and output settings above when you move to your own work.\n\n\n\n\n\n\nNoteOptional: check installation with the supplied simulation\n\n\n\n\n\nOpen the first simulation in Colab, save your own copy, and choose Run all. Its installation cell prepares the runtime; no input file is needed. The final cell should print:\nStudy order: [1 2 3 4 5]\nSimulated recalls: [1 5 2 4 3]\n\n\n\n\n\n\nFigure 5: Run all executes the cells in order. This screenshot shows saved output; running the notebook produces it in your current session.\n\n\n\nThe notebook’s Read the output section explains the simulation. Completing this check verifies installation; use the earlier sections to work with your own notebooks and files.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
     ]
   }
 ]
