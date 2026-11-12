@@ -711,11 +711,88 @@
     ]
   },
   {
+    "objectID": "colab-setup.html",
+    "href": "colab-setup.html",
+    "title": "Google Colab setup",
+    "section": "",
+    "text": "Prepare a notebook workspace for JAXCMR in your web browser. You do not need previous Python experience or to install Python, VS Code, or other software on your computer.\nGoogle Colaboratory, usually called Colab, lets you work with Jupyter notebooks using Google’s computers. You need a Google account and an internet connection. We will use a small supplied notebook to check the setup; it needs neither a GPU nor a paid Colab plan.\nThe screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. Click an image to enlarge it.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#open-and-keep-a-notebook",
+    "href": "colab-setup.html#open-and-keep-a-notebook",
+    "title": "Google Colab setup",
+    "section": "1. Open and keep a notebook",
+    "text": "1. Open and keep a notebook\nA Jupyter notebook combines explanations, Python code, and results in one document. Its sections are called cells: text cells explain the work, and code cells contain instructions for Python to execute. Colab provides the controls for working with these documents in a browser.\n\nOpen the first simulation in Colab and sign in if prompted.\nChoose File → Save a copy in Drive to create your own editable copy.\nGive the copy a recognizable name and continue working in that copy.\n\n\n\n\n\n\n\nFigure 1: File → Save a copy in Drive creates the copy you will work in.\n\n\n\nYour copy should show Your first JAXCMR simulation. It includes all the code and needs no dataset. Editing this copy leaves the original on GitHub unchanged.\nThe notebook includes saved output from an earlier run. Seeing that output does not mean your copy has run yet.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#connect-to-a-computer",
+    "href": "colab-setup.html#connect-to-a-computer",
+    "title": "Google Colab setup",
+    "section": "2. Connect to a computer",
+    "text": "2. Connect to a computer\nChoose Runtime → Change runtime type. Use Python 3 and select CPU (or None for the hardware accelerator), then save. Click Connect near the top of the notebook if it is not already connected.\nColab calls the computer running your code a runtime. Your notebook is saved in Drive; Python runs in this separate, temporary session. Your own computer displays the notebook.\n\n\n\n\n\n\nFigure 2: In Runtime → Change runtime type, choose Python 3 and CPU.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#check-your-setup",
+    "href": "colab-setup.html#check-your-setup",
+    "title": "Google Colab setup",
+    "section": "3. Check your setup",
+    "text": "3. Check your setup\nChoose Runtime → Run all, or click Run all in the notebook toolbar. Colab runs the code cells in order, so later cells can use what earlier cells have prepared. The included Install JAXCMR in Colab cell first installs JAXCMR and its required packages in the runtime. The following cells run the setup check.\nWait for execution to finish. Installation messages are normal. If Colab asks for a restart after installation, choose Runtime → Restart session, then Run all again. A session restart clears Python’s memory while keeping packages installed in that runtime. Resolve any execution error before continuing.\nJAXCMR requires Python 3.12 or later. If installation reports an older Python version, check Runtime → Change runtime type and use the latest available runtime version.\nThe first calculation may take longer while JAX prepares it. Look beneath the final code cell for output like:\nStudy order: [1 2 3 4 5]\nSimulated recalls: [1 5 2 4 3]\n\n\n\n\n\n\nFigure 3: Use Run all in the toolbar, then look beneath the final code cell for the two output lines. The image shows saved output; run your own copy to check your setup.\n\n\n\nReaching this output confirms that the runtime can load JAXCMR and execute a model. The notebook’s Read the output section explains the simulation.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#save-and-return-later",
+    "href": "colab-setup.html#save-and-return-later",
+    "title": "Google Colab setup",
+    "section": "4. Save and return later",
+    "text": "4. Save and return later\nYour copy is saved in Google Drive. Use File → Save to save your changes and results. You can also use File → Download → Download .ipynb to keep a copy on your own computer.\n\n\n\n\n\n\nFigure 4: File → Save keeps your changes in Drive. Download lets you keep a notebook file on your computer.\n\n\n\nYour saved notebook and its displayed results are separate from its runtime. Colab runtimes are temporary: when one is deleted, its installed packages, Python variables, and files stored only on that runtime disappear. They are not automatically saved with the notebook. See Colab’s explanation of storage and runtime limits.\nWhen you return, open your saved notebook, connect, and choose Runtime → Run all. The installation cell prepares a fresh runtime when needed. Results already visible in the document may be from your previous session.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#continue-with-the-tutorials",
+    "href": "colab-setup.html#continue-with-the-tutorials",
+    "title": "Google Colab setup",
+    "section": "Continue with the tutorials",
+    "text": "Continue with the tutorials\nOpen Preparing data for JAXCMR and use its Open in Colab link. Save your own copy and run it from the beginning, including its setup cell. The tutorial explains the calculations; the notebook and runtime work as they do here.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
+    "objectID": "colab-setup.html#if-something-goes-wrong",
+    "href": "colab-setup.html#if-something-goes-wrong",
+    "title": "Google Colab setup",
+    "section": "If something goes wrong",
+    "text": "If something goes wrong\n\nNo module named jaxcmr: run the installation cell in the current session, then run the model cells in order.\nA name is not defined: run the earlier code cells again; a new session does not remember their variables.\nThe runtime disconnects: reconnect and check whether the session has restarted. If it has, repeat installation and run the notebook from the beginning.\n\nIf you ask for help, include the cell you ran and the complete error message.",
+    "crumbs": [
+      "Installation",
+      "Google Colab setup"
+    ]
+  },
+  {
     "objectID": "installation.html",
     "href": "installation.html",
     "title": "Installation",
     "section": "",
-    "text": "If you are new to Python or need help setting up your computer, start with the step-by-step local setup guide. It walks you through installing the software you need, obtaining the examples, and running a memory-model simulation to see its results. You do not need to have Python installed beforehand.",
+    "text": "If you are new to Python or need help setting up your computer, the step-by-step local setup guide explains the tools, installs the software, and helps you check that your workspace is ready. You do not need to have Python installed beforehand.\nChoose where you want to work:\nIf you already have a Python environment, use the installation commands below.",
     "crumbs": [
       "Installation"
     ]
@@ -745,17 +822,17 @@
     "href": "index.html",
     "title": "JAXCMR documentation",
     "section": "",
-    "text": "Computational models of memory describe how people learn and retrieve information. Implementing these models and comparing their predictions with experimental data can require substantial programming.\njaxcmr is a Python package for computational memory research. It leverages a compositional design and JAX’s support for just-in-time compilation, vectorization, and automatic differentiation to streamline data analysis and model development so researchers can explore more ideas in less time.\nIf you use jaxcmr, please cite the paper [citation to be added].\nSee the code repository for version release notes.\n\n\n\nInstallation\n\nLocal setup with VS Code\n\nAnalyzing free-recall data\n\nPreparing data\nRecall performance\nRecall order\nComparing conditions\n\nEvaluating memory models\n\nConfiguring a model\nFitting parameters\nSimulating recall\nAssessing predictions and comparing models\n\nDeveloping memory models\n\nModel structure\nModifying model components\nImplementing new models\nTesting and validating models\n\nExamples and templates\nAPI reference\n\nData and analyses\nModels and components\nFitting and evaluation\nSimulation\n\nContributor guide\n\nDevelopment setup\nContributing code and tests\nWriting documentation\n\nReferences"
+    "text": "Computational models of memory describe how people learn and retrieve information. Implementing these models and comparing their predictions with experimental data can require substantial programming.\njaxcmr is a Python package for computational memory research. It leverages a compositional design and JAX’s support for just-in-time compilation, vectorization, and automatic differentiation to streamline data analysis and model development so researchers can explore more ideas in less time.\nIf you use jaxcmr, please cite the paper [citation to be added].\nSee the code repository for version release notes.\n\n\n\nInstallation\n\nLocal setup with VS Code\nGoogle Colab setup\nSlurm cluster setup with VS Code\n\nAnalyzing free-recall data\n\nPreparing data\nRecall performance\nRecall order\nComparing conditions\n\nEvaluating memory models\n\nConfiguring a model\nFitting parameters\nSimulating recall\nAssessing predictions and comparing models\n\nDeveloping memory models\n\nModel structure\nModifying model components\nImplementing new models\nTesting and validating models\n\nExamples and templates\nAPI reference\n\nData and analyses\nModels and components\nFitting and evaluation\nSimulation\n\nContributor guide\n\nDevelopment setup\nContributing code and tests\nWriting documentation\n\nReferences"
   },
   {
     "objectID": "developer-setup.html",
     "href": "developer-setup.html",
     "title": "Local setup with VS Code",
     "section": "",
-    "text": "This walkthrough takes you from installing the software to running a memory-model simulation on your computer and understanding its output. You do not need any previous experience with Python or VS Code. The example includes all the code you need.\nYou will simulate a model studying a short list of items and then recalling them. The result is a sequence showing which items it recalled and in what order.\nThese instructions cover Macs with an Apple chip, such as an M1 or M2, and Windows PCs with a 64-bit Intel or AMD processor. Intel Macs are not supported by this installation route because the required version of JAX does not provide an Intel Mac installer. You will need an internet connection and permission to install software.\nOn a Mac, choose Apple menu → About This Mac to check: an Apple chip is listed under Chip; an Intel processor is listed under Processor.",
+    "text": "Prepare a workspace for JAXCMR tutorials and your own work. You will install the software, open a notebook, and run a small check that everything works. You do not need any previous experience with Python or VS Code; the check includes all the code you need.\nThese instructions cover Macs with an Apple chip, such as an M1 or M2, and Windows PCs with a 64-bit Intel or AMD processor. Intel Macs are not supported by this installation route because the required version of JAX does not provide an Intel Mac installer. You will need an internet connection and permission to install software.\nIf your computer cannot use this route, you can run the code on another computer instead. The Google Colab setup guide prepares a notebook workspace in your browser using Google’s computers. If you have access to a research cluster, follow Slurm cluster setup with VS Code to prepare it for JAXCMR. Both routes run Python on the remote computer.\nOn a Mac, choose Apple menu → About This Mac to check: an Apple chip is listed under Chip; an Intel processor is listed under Processor.\nThe screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. The VS Code images show Microsoft examples, so use the JAXCMR filenames and Python version specified in the steps below.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
@@ -763,10 +840,10 @@
     "href": "developer-setup.html#install-vs-code",
     "title": "Local setup with VS Code",
     "section": "1. Install VS Code",
-    "text": "1. Install VS Code\nVisual Studio Code, usually called VS Code, is the application you will use to open the example and run its code.\nDownload the version for your computer:\n\nMac: choose the Apple Silicon download. Open the downloaded ZIP file if needed, then move Visual Studio Code to your Applications folder.\nWindows: choose the x64 User Installer, open it, and follow the installation steps.\n\nOpen VS Code. You will also need two extensions: additions that let VS Code work with Python and the example files used in this guide.\n\nChoose View → Extensions.\nSearch for Python. Select the extension published by Microsoft and click Install.\nSearch for Jupyter. Select the extension published by Microsoft and click Install.",
+    "text": "1. Install VS Code\nVisual Studio Code, usually called VS Code, is the application you will use to open project files and work with notebooks.\nA Jupyter notebook is a file ending in .ipynb that combines explanations, Python code, and results. Its sections are called cells. Text cells explain the work; code cells contain instructions for Python to execute. The Jupyter extension below gives VS Code its notebook controls.\nDownload the version for your computer:\n\nMac: choose the Apple Silicon download. Open the downloaded ZIP file if needed, then move Visual Studio Code to your Applications folder.\nWindows: choose the x64 User Installer, open it, and follow the installation steps.\n\nOpen VS Code. You will also need two extensions: additions that let VS Code work with Python and the example files used in this guide.\n\nChoose View → Extensions.\nSearch for Python. Select the extension published by Microsoft and click Install.\nSearch for Jupyter. Select the extension published by Microsoft and click Install.\n\n\n\n\n\n\n\nFigure 1: Choose Python, published by Microsoft (shown after installation). Repeat the search for Jupyter.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
@@ -774,10 +851,10 @@
     "href": "developer-setup.html#install-git",
     "title": "Local setup with VS Code",
     "section": "2. Install Git",
-    "text": "2. Install Git\nGit will download JAXCMR and its examples from GitHub, the website where the project is stored.\nSome of the steps below use a terminal: a panel where you give your computer instructions by typing commands. In VS Code, choose Terminal → New Terminal to open it. To run a command, copy it into the terminal and press Return on Mac or Enter on Windows. Do not copy the surrounding box or add any extra characters.\n\nMacWindows\n\n\nIn the VS Code terminal, run:\nxcode-select --install\nFollow the prompts to install Apple’s Command Line Tools, which include Git. If you see a message saying the tools are already installed, continue to the next step.\n\n\nDownload the x64 installer from Git for Windows and run it.\nUse the default installation options. In particular, keep Git from the command line and also from 3rd-party software when asked how Git should be used.\n\n\n\nFinish the installation before continuing.",
+    "text": "2. Install Git\nGit will download JAXCMR and its examples from GitHub, the website where the project is stored.\nSome of the steps below use a terminal: a panel where you give your computer instructions by typing commands. In VS Code, choose Terminal → New Terminal to open it. To run a command, copy it into the terminal and press Return on Mac or Enter on Windows. Do not copy the surrounding box or add any extra characters.\n\n\n\n\n\n\nFigure 2: Type commands at the prompt in the Terminal panel. This example shows Windows; the prompt looks different on a Mac.\n\n\n\n\nMacWindows\n\n\nIn the VS Code terminal, run:\nxcode-select --install\nFollow the prompts to install Apple’s Command Line Tools, which include Git. If you see a message saying the tools are already installed, continue to the next step.\n\n\nDownload the x64 installer from Git for Windows and run it.\nUse the default installation options. In particular, keep Git from the command line and also from 3rd-party software when asked how Git should be used.\n\n\n\nFinish the installation before continuing.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
@@ -785,10 +862,10 @@
     "href": "developer-setup.html#install-uv",
     "title": "Local setup with VS Code",
     "section": "3. Install uv",
-    "text": "3. Install uv\nPython is the programming language that JAXCMR uses. uv installs Python and the additional Python packages needed for this example. It keeps them together in an environment, a folder containing the software for this project. You do not need to install Python separately.\nIn VS Code, open Terminal → New Terminal if the terminal is not already open. Run the command for your computer:\n\nMacWindows\n\n\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n\nUse a PowerShell terminal. If the terminal has a different name, use the arrow beside the + button in the terminal panel and choose PowerShell.\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n\n\n\nThese are the commands from uv’s installation instructions.\nWhen installation finishes, quit VS Code completely and reopen it so it can find Git and uv. On Mac, use Code → Quit Visual Studio Code; on Windows, close all VS Code windows.\nOpen Terminal → New Terminal and run these commands one at a time:\ngit --version\nuv --version\nEach should print its name and a version number, such as git version … and uv …. If either command is not found or not recognized, see If something goes wrong before continuing.",
+    "text": "3. Install uv\nPython runs the calculations, and JAXCMR is a package of Python tools for memory research. uv installs Python and the packages this project needs, keeping them together in an environment. This lets notebooks in the project use the same installed software. You do not need to install Python separately.\nIn VS Code, open Terminal → New Terminal if the terminal is not already open. Run the command for your computer:\n\nMacWindows\n\n\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n\nUse a PowerShell terminal. If the terminal has a different name, use the arrow beside the + button in the terminal panel and choose PowerShell.\n\n\n\n\n\n\nFigure 3: On Windows, use the arrow beside + to choose PowerShell.\n\n\n\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n\n\n\nThese are the commands from uv’s installation instructions.\nWhen installation finishes, quit VS Code completely and reopen it so it can find Git and uv. On Mac, use Code → Quit Visual Studio Code; on Windows, close all VS Code windows.\nOpen Terminal → New Terminal and run these commands one at a time:\ngit --version\nuv --version\nEach should print its name and a version number, such as git version … and uv …. If either command is not found or not recognized, see If something goes wrong before continuing.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
@@ -796,10 +873,10 @@
     "href": "developer-setup.html#download-jaxcmr-and-its-examples",
     "title": "Local setup with VS Code",
     "section": "4. Download JAXCMR and its examples",
-    "text": "4. Download JAXCMR and its examples\nJAXCMR’s repository is the collection of files containing its code, examples, and documentation. Downloading a copy with Git is called cloning.\n\nIn VS Code, choose View → Command Palette. This opens a search box for VS Code commands.\nType Git: Clone and select that command.\nPaste this repository address and press Return or Enter:\nhttps://github.com/githubpsyche/jaxcmr\nChoose a folder where you want to keep the project, such as Documents. Git will create a new folder named jaxcmr inside it.\nWhen the download finishes, choose Open to open the jaxcmr folder in VS Code.\nIf VS Code asks whether you trust the authors of the files, confirm that you trust this project folder so you can run its example code.\n\nYou do not need a GitHub account to download this public repository.\nChoose View → Explorer to see the project’s files in the left-hand panel. You should see folders including guide and templates, and files including pyproject.toml and uv.lock.",
+    "text": "4. Download JAXCMR and its examples\nJAXCMR’s repository is the collection of files containing its code, examples, and documentation. Downloading a copy with Git is called cloning.\n\nIn VS Code, choose View → Command Palette. This opens a search box for VS Code commands.\nType Git: Clone and select that command.\nPaste this repository address and press Return or Enter:\nhttps://github.com/githubpsyche/jaxcmr\nChoose a folder where you want to keep the project, such as Documents. Git will create a new folder named jaxcmr inside it.\nWhen the download finishes, choose Open to open the jaxcmr folder in VS Code.\nIf VS Code asks whether you trust the authors of the files, confirm that you trust this project folder so you can run its example code.\n\n\n\n\n\n\n\nFigure 4: Type Git: Clone in the Command Palette’s search box.\n\n\n\nYou do not need a GitHub account to download this public repository.\nChoose View → Explorer to see the project’s files in the left-hand panel. You should see folders including guide and templates, and files including pyproject.toml and uv.lock.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
@@ -810,40 +887,51 @@
     "text": "5. Install Python and JAXCMR\nWith the jaxcmr folder open in VS Code, choose Terminal → New Terminal. The new terminal should start inside this folder.\nRun:\nuv sync\nThis installs Python 3.12 if needed, JAXCMR, and the tools needed to run the example. The first installation may take several minutes.\nWait until the command finishes and the terminal is ready for another command. If it ends with an error, resolve that before continuing.\nThe installed software is kept in a folder named .venv inside jaxcmr. In the next step, you will tell VS Code to use it.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
-    "objectID": "developer-setup.html#open-the-simulation-example",
-    "href": "developer-setup.html#open-the-simulation-example",
+    "objectID": "developer-setup.html#open-a-notebook-and-select-its-environment",
+    "href": "developer-setup.html#open-a-notebook-and-select-its-environment",
     "title": "Local setup with VS Code",
-    "section": "6. Open the simulation example",
-    "text": "6. Open the simulation example\nA notebook is a file that combines explanations, Python code, and the results of running that code. Its filename ends in .ipynb.\nIn VS Code’s Explorer:\n\nExpand the guide folder.\nExpand the examples folder inside it.\nDouble-click first-simulation.ipynb.\n\nThe notebook opens in the main part of the window. Before running it, choose the Python environment you just installed:\n\nClick Select Kernel near the top right of the notebook.\nChoose Select Another Kernel → Python Environments. If Python Environments is already shown, choose it directly.\nSelect .venv, with Python 3.12, inside your jaxcmr folder.\n\nA kernel is the Python process that runs the notebook’s code. Selecting this environment gives it access to JAXCMR and the other packages installed in the previous step. If a kernel is already selected, click its name to check or change it.",
+    "section": "6. Open a notebook and select its environment",
+    "text": "6. Open a notebook and select its environment\nUse the supplied simulation notebook to check your setup. You can open other notebooks in this project in the same way.\nIn VS Code’s Explorer:\n\nExpand the guide folder.\nExpand the examples folder inside it.\nDouble-click first-simulation.ipynb.\n\nThe notebook opens in the main part of the window. Its toolbar contains the controls for choosing Python and running the code.\n\n\n\n\n\n\nFigure 5: Click Select Kernel at the upper right to choose the Python environment for this notebook.\n\n\n\nBefore running the notebook, choose the Python environment you just installed:\n\nClick Select Kernel near the top right of the notebook.\nChoose Select Another Kernel → Python Environments. If Python Environments is already shown, choose it directly.\nSelect .venv, with Python 3.12, inside your jaxcmr folder.\n\nA kernel is the Python process that runs the notebook’s code. Selecting this environment gives it access to JAXCMR and the other packages installed in the previous step. If a kernel is already selected, click its name to check or change it.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
-    "objectID": "developer-setup.html#run-the-simulation-and-read-its-output",
-    "href": "developer-setup.html#run-the-simulation-and-read-its-output",
+    "objectID": "developer-setup.html#check-your-setup",
+    "href": "developer-setup.html#check-your-setup",
     "title": "Local setup with VS Code",
-    "section": "7. Run the simulation and read its output",
-    "text": "7. Run the simulation and read its output\nThe notebook is divided into cells: separate blocks of text or code. Its code loads JAXCMR, supplies some example model settings, and simulates study and recall. You can run it without editing anything.\nClick Run All at the top of the notebook. This runs its code cells in order. You may already see saved results when you open the file; Run All computes them again on your computer.\nThe first run may take a little longer while JAX prepares the calculation. Wait for the code cells to finish. The last code cell prints:\nStudy order: [1 2 3 4 5]\nSimulated recalls: [1 5 2 4 3]\n\nUnderstand the result\nThe numbers are item identifiers. Here, each number stands for a different item in a five-item list.\n\nStudy order shows what the model studied: item 1, then 2, 3, 4, and 5.\nSimulated recalls shows the order in which the model recalled them: item 1 first, then 5, 2, 4, and 3.\n\nIn this run, the model recalled all five items, in a different order from how they were studied. This is one simulated recall sequence, not a summary of many participants or an estimate of average performance.\nThe output always reserves five spaces for recalls in this example. If the model stops early, the remaining spaces contain 0. For example, [1 5 0 0 0] would mean it recalled items 1 and 5, then stopped. Zero does not identify a studied item.\nThe example uses a fixed random seed, a starting value for its random choices. Running the unchanged example again in the same environment should produce the same sequence.",
+    "section": "7. Check your setup",
+    "text": "7. Check your setup\nClick Run All at the top of the notebook. This runs its code cells in order, so later cells can use what earlier cells have prepared. The first cell is for Colab and skips installation on your computer.\n\n\n\n\n\n\nFigure 6: Run All executes the notebook from the beginning. Each code cell displays its results underneath it.\n\n\n\nYou may already see saved results when you open the file; they do not mean its code has run in your current session. Run All computes them again. Wait for execution to finish; the first run may take longer while JAX prepares the calculation. If a cell reports an error, resolve it before continuing.\nThe last code cell prints:\nStudy order: [1 2 3 4 5]\nSimulated recalls: [1 5 2 4 3]\nReaching this output confirms that the selected Python environment can load JAXCMR and execute a model. The notebook’s Read the output section explains the simulation.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
     ]
   },
   {
-    "objectID": "developer-setup.html#return-to-the-example-later",
-    "href": "developer-setup.html#return-to-the-example-later",
+    "objectID": "developer-setup.html#save-and-return-to-your-workspace",
+    "href": "developer-setup.html#save-and-return-to-your-workspace",
     "title": "Local setup with VS Code",
-    "section": "Return to the example later",
-    "text": "Return to the example later\nYou only need to install the software once.\n\nOpen VS Code and choose File → Open Folder to reopen the same jaxcmr folder.\nOpen guide/examples/first-simulation.ipynb in the Explorer.\nCheck that the selected kernel uses the project’s .venv environment.\nClick Run All to run the simulation again.\n\nUse File → Save to save the notebook, including its output.",
+    "section": "Save and return to your workspace",
+    "text": "Save and return to your workspace\nUse File → Save to keep the notebook and its displayed results. The notebook file and your installed environment remain on your computer when you close VS Code. The running Python session is separate: starting a new kernel, or using Restart Kernel, clears the values held in memory but does not remove the installed packages.\nTo return:\n\nUse File → Open Folder to reopen the same jaxcmr folder.\nOpen the notebook you want to work with in Explorer.\nCheck that its selected kernel uses the project’s .venv environment.\nRun its code from the beginning to recreate the session’s results.\n\n\n\n\n\n\n\nFigure 7: You can also find File: Open Folder… in the Command Palette to reopen your jaxcmr folder.\n\n\n\nYou normally do not repeat installation for each notebook in this project.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "developer-setup.html#continue-with-the-tutorials",
+    "href": "developer-setup.html#continue-with-the-tutorials",
+    "title": "Local setup with VS Code",
+    "section": "Continue with the tutorials",
+    "text": "Continue with the tutorials\nFor Preparing data for JAXCMR, open guide/tutorials/data-preparation.ipynb in this workspace and select the same .venv environment. That tutorial explains the calculations; the procedure for opening and running its notebook is the one you have just used.",
+    "crumbs": [
+      "Installation",
+      "Local setup with VS Code"
     ]
   },
   {
@@ -851,10 +939,142 @@
     "href": "developer-setup.html#if-something-goes-wrong",
     "title": "Local setup with VS Code",
     "section": "If something goes wrong",
-    "text": "If something goes wrong\n\nGit or uv is not found\nQuit VS Code completely, reopen it, and open a new terminal. Try git --version and uv --version again. If a command is still missing, check that its installation finished successfully.\n\n\nuv cannot find pyproject.toml\nThe terminal is probably in the wrong folder. Use File → Open Folder to open the jaxcmr folder containing pyproject.toml, then open a new terminal and run uv sync again.\n\n\n.venv is not listed as a kernel\nCheck that uv sync finished successfully. Quit and reopen VS Code, reopen the notebook, and try the kernel picker again.\n\n\nThe notebook says No module named jaxcmr\nCheck that uv sync finished in the jaxcmr folder and that the notebook’s selected kernel uses the .venv inside that folder. Select that environment, then click Run All again.\n\n\nJAX reports a DLL error on Windows\nJAX may also need Microsoft’s Visual C++ Redistributable for x64. Install it, restart VS Code, and try running the notebook again. This requirement is described in JAX’s installation instructions.\nIf you ask for help, include the step you reached and the complete error message.",
+    "text": "If something goes wrong\n\nGit or uv is not found\nQuit VS Code completely, reopen it, and open a new terminal. Try git --version and uv --version again. If a command is still missing, check that its installation finished successfully.\n\n\nuv cannot find pyproject.toml\nThe terminal is probably in the wrong folder. Use File → Open Folder to open the jaxcmr folder containing pyproject.toml, then open a new terminal and run uv sync again.\n\n\n.venv is not listed as a kernel\nCheck that uv sync finished successfully. Quit and reopen VS Code, reopen the notebook, and try the kernel picker again.\n\n\nThe notebook says No module named jaxcmr\nCheck that uv sync finished in the jaxcmr folder and that the notebook’s selected kernel uses the .venv inside that folder. Select that environment, then click Run All again.\n\n\nJAX reports a DLL error on Windows\nJAX may also need Microsoft’s Visual C++ Redistributable for x64. Install it, restart VS Code, and try running the notebook again. This requirement is described in JAX’s installation instructions.\nIf you ask for help, include the step you reached and the complete error message.\n\n\n\n\n\n\nNoteScreenshot sources\n\n\n\n\n\nVS Code screenshots: Microsoft, CC BY 3.0 US. Sources: extensions, terminal, Command Palette, and notebooks. Red highlights have been added where needed; the source images are unchanged.",
     "crumbs": [
       "Installation",
-      "Setup walkthrough"
+      "Local setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html",
+    "href": "slurm-setup.html",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "",
+    "text": "Prepare a remote workspace for JAXCMR and run a notebook on resources allocated by Slurm. You do not need to understand JAXCMR’s models or have Python installed on your own computer.\nA cluster is a collection of shared computers. It can provide more memory and processors and run independent jobs simultaneously. This guide establishes an interactive workspace; long-running work that continues after disconnecting uses separately submitted batch jobs. Requesting more CPUs does not automatically make a calculation faster.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#where-the-work-happens",
+    "href": "slurm-setup.html#where-the-work-happens",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "Where the work happens",
+    "text": "Where the work happens\n\n\n\n\n\n\n\nLocation\nRole\n\n\n\n\nYour computer\nDisplays VS Code and connects to the cluster\n\n\nLogin node\nProvides access to files and lets you prepare and submit work\n\n\nCompute node\nRuns calculations using resources allocated by Slurm\n\n\n\nA node is a computer in the cluster. Login nodes are shared access points, so substantial calculations belong on compute nodes. Slurm manages access: you request resources, and it starts your work when suitable resources are available.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#before-you-begin",
+    "href": "slurm-setup.html#before-you-begin",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "Before you begin",
+    "text": "Before you begin\nYou need a cluster account and the following details from your institution:\n\n\n\n\n\n\n\nInformation\nWhat you need it for\n\n\n\n\nLogin address and username\nConnecting to the cluster\n\n\nAuthentication requirements\nAny VPN, password, authentication app, or SSH key needed to sign in\n\n\nProject storage location\nKeeping code, installed software, and results\n\n\nSlurm account\nSelecting the research allocation charged for computing use\n\n\nCPU partition\nSelecting a permitted group of compute nodes\n\n\nSupported VS Code access method\nConnecting the editor to allocated resources\n\n\n\nYour login username and Slurm account may differ. Choose storage accessible from both login and compute nodes, suitable for Python environments. Check its backup and automatic-deletion policies.\nPrefer your institution’s managed VS Code service if it provides one. Use its connection and allocation instructions, then follow the project, environment, and notebook steps below in that workspace.\nThe SSH route below requires your institution to support all three of these:\n\nVS Code and software installation on the login node.\nSSH access through the login node to a compute node assigned to you, including any required key setup.\nRunning the connected VS Code processes inside your Slurm allocation. A matching computer name alone does not establish this; the cluster must support this connection method.\n\nThese are cluster settings to confirm before starting. For example, Harvard documents distinct SSH and tunnel routes. If direct SSH is unsupported, use the institution’s managed service or documented tunnel procedure.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#connect-vs-code-to-the-login-node",
+    "href": "slurm-setup.html#connect-vs-code-to-the-login-node",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "1. Connect VS Code to the login node",
+    "text": "1. Connect VS Code to the login node\nOn your computer, install VS Code. On macOS, move it into Applications; on Windows, run the installer. SSH creates an encrypted connection to another computer; see VS Code’s SSH client instructions if it is not installed.\n\nChoose View → Extensions and install Remote - SSH, published by Microsoft.\nOpen View → Command Palette, which searches VS Code’s commands, and select Remote-SSH: Add New SSH Host….\nEnter the following command with your username and login address, then choose the configuration file in your user folder to save it:\n\nssh YOUR_USERNAME@LOGIN_HOST\nReplace both capitalized values; @ separates your username from the computer’s address. Use your institution’s connection command if it differs. From the Command Palette, choose Remote-SSH: Connect to Host… and select the saved host.\nComplete sign-in, checking any first-connection host fingerprint against your institution’s published information. Select Linux if asked for the remote operating system. The new window’s lower-left indicator should show SSH: and the login host. See VS Code’s connection instructions.\nIn this window, Explorer, saved edits, and new terminals use the cluster. A local project copy remains separate; Remote-SSH does not synchronize it automatically.\nUse this window to prepare the project and request resources.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#open-your-project-on-the-cluster",
+    "href": "slurm-setup.html#open-your-project-on-the-cluster",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "2. Open your project on the cluster",
+    "text": "2. Open your project on the cluster\nChoose File → Open Folder and open your approved project storage location. Choose Terminal → New Terminal. A terminal accepts commands; enter each command below and press Return or Enter:\npwd\ngit clone https://github.com/githubpsyche/jaxcmr.git\ncd jaxcmr\npwd\n\npwd prints the current folder, where commands look for relative filenames.\ngit clone downloads JAXCMR’s code and examples into a new jaxcmr folder.\ncd jaxcmr moves the terminal into it; the final pwd prints its full location.\n\nUse File → Open Folder to open that full location. Confirm that you trust this project if prompted. Explorer should show guide, templates, pyproject.toml, and uv.lock. If you already have a checkout on the cluster, open it instead of cloning again.\n\n\n\n\n\n\nNoteIf Git or uv is unavailable\n\n\n\n\n\nSome clusters provide software through environment modules. A command such as module load NAME selects an administrator-installed package and adjusts the current terminal so it can find that software. Replace NAME with your institution’s actual module name and version. This selects existing software; uv installs Python packages for your project. Record any required module commands, since new sessions and jobs may need them again. If Git and uv are already available, no extra module is needed. See the Environment Modules documentation.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#install-python-and-jaxcmr",
+    "href": "slurm-setup.html#install-python-and-jaxcmr",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "3. Install Python and JAXCMR",
+    "text": "3. Install Python and JAXCMR\nOpen a new terminal in the remote jaxcmr folder. Python runs the calculations; uv installs Python and the packages the project needs. Check for uv with:\nuv --version\nIf your institution provides uv, use that installation. Otherwise, where user installations are permitted, run:\ncurl -LsSf https://astral.sh/uv/install.sh | sh\nsource \"$HOME/.local/bin/env\"\nThe first command downloads and runs uv’s installer. For its default installation location, the second makes uv available in this terminal: $HOME is your cluster home folder, and source applies settings from the named file. If downloads are restricted, use your institution’s supported installation route.\nInstall the project:\nuv sync --locked\nThis installs Python 3.12 if needed, JAXCMR, and notebook tools into .venv, the project’s environment folder. Notebooks in this project can use this same installed software. --locked uses the repository’s recorded package versions. Wait for installation to finish successfully. See uv’s environment documentation.\nCreate this environment on the cluster even if you have a local installation; copying your computer’s environment does not make it portable.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#request-computing-resources",
+    "href": "slurm-setup.html#request-computing-resources",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "4. Request computing resources",
+    "text": "4. Request computing resources\nAn interactive allocation gives you temporary resources for commands entered in a terminal. Use your institution’s interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with jaxcmr as the current folder:\nsrun \\\n  --account=YOUR_ACCOUNT \\\n  --partition=YOUR_CPU_PARTITION \\\n  --nodes=1 \\\n  --ntasks=1 \\\n  --cpus-per-task=1 \\\n  --mem=4G \\\n  --time=00:30:00 \\\n  --pty bash\nReplace the account and partition. Each backslash continues the same command onto the next line.\n\n\n\n\n\n\n\nPart\nMeaning\n\n\n\n\nsrun\nRequests resources and starts a program\n\n\n--account\nSelects the project allocation\n\n\n--partition\nSelects the group of machines\n\n\n--nodes=1\nUses one compute node\n\n\n--ntasks=1\nStarts one task\n\n\n--cpus-per-task=1\nAllocates one CPU to that task\n\n\n--mem=4G\nRequests 4 GB of memory\n\n\n--time=00:30:00\nLimits the session to thirty minutes after it starts\n\n\n--pty bash\nOpens an interactive command shell on the allocated node\n\n\n\nThese values suit a small setup check; adapt them to your cluster’s permitted requests and required options. You may wait for resources. See Slurm’s srun documentation.\nOnce the session starts, run:\nhostname\necho \"$SLURM_JOB_ID\"\nRecord the computer name and job number: hostname identifies the allocated node; echo prints the job number stored in SLURM_JOB_ID. Keep this terminal and its VS Code window open. They hold the allocation while you connect a second window to the node.\nOnly this terminal has moved to the compute node. The original VS Code window and its notebook kernels still belong to the login node.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#connect-a-second-window-to-the-compute-node",
+    "href": "slurm-setup.html#connect-a-second-window-to-the-compute-node",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "5. Connect a second window to the compute node",
+    "text": "5. Connect a second window to the compute node\nFor a managed VS Code service, use its allocated workspace and continue to step 6. For the supported SSH route:\n\nChoose File → New Window to open a local VS Code window. Keep the allocation window open.\nIn the new window, choose Remote-SSH: Open SSH Configuration File… from the Command Palette. Select the local configuration file used in step 1.\nAdd this entry before any general Host * entry, replacing the capitalized values. COMPUTE_HOST is the allocated node’s SSH address, usually the name printed above. LOGIN_HOST is the login address or configured alias from step 1.\n\nHost jaxcmr-compute\n    HostName COMPUTE_HOST\n    User YOUR_USERNAME\n    ProxyJump YOUR_USERNAME@LOGIN_HOST\njaxcmr-compute is a convenient connection name. HostName selects the computer, User selects your account, and ProxyJump routes the connection through the login host. Keep any additional authentication settings your institution requires.\nSave the file, then use Remote-SSH: Connect to Host… → jaxcmr-compute in this new window. After authentication, its lower-left indicator should show SSH: jaxcmr-compute. Open a new terminal and run hostname; it must match the allocated node, not the login node.\nUse File → Open Folder to open the same full jaxcmr path on shared storage. The files are already there. This second window is now your working window for notebooks.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#select-the-environment-and-check-your-setup",
+    "href": "slurm-setup.html#select-the-environment-and-check-your-setup",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "6. Select the environment and check your setup",
+    "text": "6. Select the environment and check your setup\nA Jupyter notebook is an .ipynb file combining explanations, Python code, and results. Its sections are called cells; code cells run in a Python process called a kernel. VS Code’s Jupyter extension supplies the notebook controls.\nIn the compute window:\n\nOpen View → Extensions and install Microsoft’s Python and Jupyter extensions for SSH: jaxcmr-compute. Use your institution’s supplied extensions if installation is restricted.\nIn Explorer, open guide/examples/first-simulation.ipynb.\nChoose Select Kernel → Select Another Kernel → Python Environments and select Python 3.12 from this project’s .venv. If a kernel is already selected, click its name to change it.\nClick Run All. The Colab installation cell skips installation here. Wait for all cells to finish; the first calculation may take longer while JAX prepares it.\n\nChoosing Python Environments in the compute window selects Python on that computer. Selecting an environment in the original login window would run there instead. See VS Code’s kernel guidance.\nThe final cell should print study and recall sequences, confirming that JAXCMR can run in the selected environment. Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#finish-and-return-later",
+    "href": "slurm-setup.html#finish-and-return-later",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "Finish and return later",
+    "text": "Finish and return later\nSave the notebook with File → Save, then close the compute connection. In the original allocation terminal, run:\nexit\nThis ends the interactive job and returns that terminal to the login node. Run squeue --jobs=YOUR_JOB_ID, replacing the placeholder with the recorded job number, to check that it has ended. If it remains queued or running, scancel YOUR_JOB_ID cancels that allocation. Closing only the editor window is not a substitute for ending the job.\nYour files and .venv remain on shared storage, subject to its retention policy. Live Python state disappears when the kernel ends. To return, reconnect to the login host, request a new allocation, update HostName in the existing jaxcmr-compute entry, and reconnect the compute window. Open the project, select its environment, and run your notebook from the beginning. Load any site-required modules as part of the supported connection procedure.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#continue-with-the-tutorials",
+    "href": "slurm-setup.html#continue-with-the-tutorials",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "Continue with the tutorials",
+    "text": "Continue with the tutorials\nIn an allocated compute window, open guide/tutorials/data-preparation.ipynb for Preparing data for JAXCMR and select the same .venv environment. You can use this workspace for other project notebooks while the allocation remains active. Choose resources appropriate to their work; this setup request is only for a small check.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
+    ]
+  },
+  {
+    "objectID": "slurm-setup.html#if-something-goes-wrong",
+    "href": "slurm-setup.html#if-something-goes-wrong",
+    "title": "Slurm cluster setup with VS Code",
+    "section": "If something goes wrong",
+    "text": "If something goes wrong\n\n\n\n\n\n\nNoteSSH or VS Code cannot connect\n\n\n\n\n\nFrom a local VS Code window, open Terminal → New Terminal and try ssh YOUR_USERNAME@LOGIN_HOST. If ssh is missing, follow the SSH client instructions in step 1. If sign-in fails, check the login address, VPN, and authentication requirements. After a successful terminal test, exit returns to your computer. If SSH works but VS Code does not, inspect View → Output → Remote - SSH.\nFor the compute connection, confirm that the allocation is still running, HostName names its node, and your institution supports SSH through the login host with your authentication setup. Use its managed service or tunnel procedure where direct SSH is unsupported.\n\n\n\n\n\n\n\n\n\nNoteA command is not found\n\n\n\n\n\nCheck which machine the terminal belongs to. On the cluster, confirm that installation completed and load any required software module. For a default uv installation, source \"$HOME/.local/bin/env\" makes it available in the current terminal.\n\n\n\n\n\n\n\n\n\nNoteSlurm rejects the request\n\n\n\n\n\nCheck the account, partition, and permitted resource settings against your allocation. These are cluster access settings, not Python settings.\n\n\n\n\n\n\n\n\n\nNoteThe compute node cannot find the project or import JAXCMR\n\n\n\n\n\nCheck pwd, shared storage access, and whether installation finished successfully. Use .venv/bin/python from the intended project folder.\n\n\n\nWhen asking for help, include the command, complete error message, and whether it ran on your computer, a login node, or a compute node.",
+    "crumbs": [
+      "Installation",
+      "Slurm cluster setup with VS Code"
     ]
   },
   {

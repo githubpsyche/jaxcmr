@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Slurm cluster setup with VS Code – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./colab-setup.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">JAXCMR</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./installation.html" aria-current="page"> 
+<span class="menu-text">Installation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/data-preparation.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./overview/index.html"> 
+<span class="menu-text">Library Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./templates.html"> 
+<span class="menu-text">Templates</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img" aria-label="Source Code">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./slurm-setup.html">Slurm cluster setup with VS Code</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./installation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Installation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./developer-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local setup with VS Code</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Google Colab setup</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./slurm-setup.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Slurm cluster setup with VS Code</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#where-the-work-happens" id="toc-where-the-work-happens" class="nav-link active" data-scroll-target="#where-the-work-happens">Where the work happens</a></li>
+  <li><a href="#before-you-begin" id="toc-before-you-begin" class="nav-link" data-scroll-target="#before-you-begin">Before you begin</a></li>
+  <li><a href="#connect-vs-code-to-the-login-node" id="toc-connect-vs-code-to-the-login-node" class="nav-link" data-scroll-target="#connect-vs-code-to-the-login-node">1. Connect VS Code to the login node</a></li>
+  <li><a href="#open-your-project-on-the-cluster" id="toc-open-your-project-on-the-cluster" class="nav-link" data-scroll-target="#open-your-project-on-the-cluster">2. Open your project on the cluster</a></li>
+  <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">3. Install Python and JAXCMR</a></li>
+  <li><a href="#request-computing-resources" id="toc-request-computing-resources" class="nav-link" data-scroll-target="#request-computing-resources">4. Request computing resources</a></li>
+  <li><a href="#connect-a-second-window-to-the-compute-node" id="toc-connect-a-second-window-to-the-compute-node" class="nav-link" data-scroll-target="#connect-a-second-window-to-the-compute-node">5. Connect a second window to the compute node</a></li>
+  <li><a href="#select-the-environment-and-check-your-setup" id="toc-select-the-environment-and-check-your-setup" class="nav-link" data-scroll-target="#select-the-environment-and-check-your-setup">6. Select the environment and check your setup</a></li>
+  <li><a href="#finish-and-return-later" id="toc-finish-and-return-later" class="nav-link" data-scroll-target="#finish-and-return-later">Finish and return later</a></li>
+  <li><a href="#continue-with-the-tutorials" id="toc-continue-with-the-tutorials" class="nav-link" data-scroll-target="#continue-with-the-tutorials">Continue with the tutorials</a></li>
+  <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Slurm cluster setup with VS Code</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Prepare a remote workspace for JAXCMR and run a notebook on resources allocated by Slurm. You do not need to understand JAXCMR’s models or have Python installed on your own computer.</p>
+<p>A cluster is a collection of shared computers. It can provide more memory and processors and run independent jobs simultaneously. This guide establishes an interactive workspace; long-running work that continues after disconnecting uses separately submitted batch jobs. Requesting more CPUs does not automatically make a calculation faster.</p>
+<section id="where-the-work-happens" class="level2">
+<h2 class="anchored" data-anchor-id="where-the-work-happens">Where the work happens</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Location</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Your computer</strong></td>
+<td>Displays VS Code and connects to the cluster</td>
+</tr>
+<tr class="even">
+<td><strong>Login node</strong></td>
+<td>Provides access to files and lets you prepare and submit work</td>
+</tr>
+<tr class="odd">
+<td><strong>Compute node</strong></td>
+<td>Runs calculations using resources allocated by Slurm</td>
+</tr>
+</tbody>
+</table>
+<p>A <strong>node</strong> is a computer in the cluster. Login nodes are shared access points, so substantial calculations belong on compute nodes. <strong>Slurm</strong> manages access: you request resources, and it starts your work when suitable resources are available.</p>
+</section>
+<section id="before-you-begin" class="level2">
+<h2 class="anchored" data-anchor-id="before-you-begin">Before you begin</h2>
+<p>You need a cluster account and the following details from your institution:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Information</th>
+<th>What you need it for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Login address and username</td>
+<td>Connecting to the cluster</td>
+</tr>
+<tr class="even">
+<td>Authentication requirements</td>
+<td>Any VPN, password, authentication app, or SSH key needed to sign in</td>
+</tr>
+<tr class="odd">
+<td>Project storage location</td>
+<td>Keeping code, installed software, and results</td>
+</tr>
+<tr class="even">
+<td>Slurm account</td>
+<td>Selecting the research allocation charged for computing use</td>
+</tr>
+<tr class="odd">
+<td>CPU partition</td>
+<td>Selecting a permitted group of compute nodes</td>
+</tr>
+<tr class="even">
+<td>Supported VS Code access method</td>
+<td>Connecting the editor to allocated resources</td>
+</tr>
+</tbody>
+</table>
+<p>Your login username and Slurm account may differ. Choose storage accessible from both login and compute nodes, suitable for Python environments. Check its backup and automatic-deletion policies.</p>
+<p>Prefer your institution’s managed VS Code service if it provides one. Use its connection and allocation instructions, then follow the project, environment, and notebook steps below in that workspace.</p>
+<p>The SSH route below requires your institution to support all three of these:</p>
+<ul>
+<li>VS Code and software installation on the login node.</li>
+<li>SSH access through the login node to a compute node assigned to you, including any required key setup.</li>
+<li>Running the connected VS Code processes inside your Slurm allocation. A matching computer name alone does not establish this; the cluster must support this connection method.</li>
+</ul>
+<p>These are cluster settings to confirm before starting. For example, <a href="https://docs.rc.fas.harvard.edu/kb/vscode-remote-development-via-ssh-or-tunnel/">Harvard documents distinct SSH and tunnel routes</a>. If direct SSH is unsupported, use the institution’s managed service or documented tunnel procedure.</p>
+</section>
+<section id="connect-vs-code-to-the-login-node" class="level2">
+<h2 class="anchored" data-anchor-id="connect-vs-code-to-the-login-node">1. Connect VS Code to the login node</h2>
+<p><strong>On your computer</strong>, install <a href="https://code.visualstudio.com/download">VS Code</a>. On macOS, move it into Applications; on Windows, run the installer. <strong>SSH</strong> creates an encrypted connection to another computer; see <a href="https://code.visualstudio.com/docs/remote/troubleshooting#_installing-a-supported-ssh-client">VS Code’s SSH client instructions</a> if it is not installed.</p>
+<ol type="1">
+<li>Choose <strong>View → Extensions</strong> and install <strong>Remote - SSH</strong>, published by <strong>Microsoft</strong>.</li>
+<li>Open <strong>View → Command Palette</strong>, which searches VS Code’s commands, and select <strong>Remote-SSH: Add New SSH Host…</strong>.</li>
+<li>Enter the following command with your username and login address, then choose the configuration file in your user folder to save it:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> YOUR_USERNAME@LOGIN_HOST</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace both capitalized values; <code>@</code> separates your username from the computer’s address. Use your institution’s connection command if it differs. From the Command Palette, choose <strong>Remote-SSH: Connect to Host…</strong> and select the saved host.</p>
+<p>Complete sign-in, checking any first-connection host fingerprint against your institution’s published information. Select <strong>Linux</strong> if asked for the remote operating system. The new window’s lower-left indicator should show <strong>SSH:</strong> and the login host. See <a href="https://code.visualstudio.com/docs/remote/ssh">VS Code’s connection instructions</a>.</p>
+<p>In this window, <strong>Explorer</strong>, saved edits, and new terminals use the cluster. A local project copy remains separate; Remote-SSH does not synchronize it automatically.</p>
+<p>Use this window to prepare the project and request resources.</p>
+</section>
+<section id="open-your-project-on-the-cluster" class="level2">
+<h2 class="anchored" data-anchor-id="open-your-project-on-the-cluster">2. Open your project on the cluster</h2>
+<p>Choose <strong>File → Open Folder</strong> and open your approved project storage location. Choose <strong>Terminal → New Terminal</strong>. A terminal accepts commands; enter each command below and press <strong>Return</strong> or <strong>Enter</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/githubpsyche/jaxcmr.git</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> jaxcmr</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>pwd</code> prints the current folder, where commands look for relative filenames.</li>
+<li><code>git clone</code> downloads JAXCMR’s code and examples into a new <code>jaxcmr</code> folder.</li>
+<li><code>cd jaxcmr</code> moves the terminal into it; the final <code>pwd</code> prints its full location.</li>
+</ul>
+<p>Use <strong>File → Open Folder</strong> to open that full location. Confirm that you trust this project if prompted. Explorer should show <code>guide</code>, <code>templates</code>, <code>pyproject.toml</code>, and <code>uv.lock</code>. If you already have a checkout on the cluster, open it instead of cloning again.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>If Git or uv is unavailable
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Some clusters provide software through <strong>environment modules</strong>. A command such as <code>module load NAME</code> selects an administrator-installed package and adjusts the current terminal so it can find that software. Replace <code>NAME</code> with your institution’s actual module name and version. This selects existing software; uv installs Python packages for your project. Record any required module commands, since new sessions and jobs may need them again. If Git and uv are already available, no extra module is needed. See the <a href="https://modules.readthedocs.io/en/latest/module.html">Environment Modules documentation</a>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="install-python-and-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="install-python-and-jaxcmr">3. Install Python and JAXCMR</h2>
+<p>Open a new terminal in the remote <code>jaxcmr</code> folder. <strong>Python</strong> runs the calculations; <strong>uv</strong> installs Python and the packages the project needs. Check for uv with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If your institution provides uv, use that installation. Otherwise, where user installations are permitted, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-LsSf</span> https://astral.sh/uv/install.sh <span class="kw">|</span> <span class="fu">sh</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/.local/bin/env"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first command downloads and runs <a href="https://docs.astral.sh/uv/getting-started/installation/">uv’s installer</a>. For its default installation location, the second makes uv available in this terminal: <code>$HOME</code> is your cluster home folder, and <code>source</code> applies settings from the named file. If downloads are restricted, use your institution’s supported installation route.</p>
+<p>Install the project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This installs Python 3.12 if needed, JAXCMR, and notebook tools into <strong><code>.venv</code></strong>, the project’s environment folder. Notebooks in this project can use this same installed software. <code>--locked</code> uses the repository’s recorded package versions. Wait for installation to finish successfully. See <a href="https://docs.astral.sh/uv/concepts/projects/sync/">uv’s environment documentation</a>.</p>
+<p>Create this environment on the cluster even if you have a local installation; copying your computer’s environment does not make it portable.</p>
+</section>
+<section id="request-computing-resources" class="level2">
+<h2 class="anchored" data-anchor-id="request-computing-resources">4. Request computing resources</h2>
+<p>An <strong>interactive allocation</strong> gives you temporary resources for commands entered in a terminal. Use your institution’s interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with <code>jaxcmr</code> as the current folder:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--account</span><span class="op">=</span>YOUR_ACCOUNT <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--partition</span><span class="op">=</span>YOUR_CPU_PARTITION <span class="dt">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--nodes</span><span class="op">=</span>1 <span class="dt">\</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--ntasks</span><span class="op">=</span>1 <span class="dt">\</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--cpus-per-task</span><span class="op">=</span>1 <span class="dt">\</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--mem</span><span class="op">=</span>4G <span class="dt">\</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--time</span><span class="op">=</span>00:30:00 <span class="dt">\</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pty</span> bash</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace the account and partition. Each backslash continues the same command onto the next line.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Part</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>srun</code></td>
+<td>Requests resources and starts a program</td>
+</tr>
+<tr class="even">
+<td><code>--account</code></td>
+<td>Selects the project allocation</td>
+</tr>
+<tr class="odd">
+<td><code>--partition</code></td>
+<td>Selects the group of machines</td>
+</tr>
+<tr class="even">
+<td><code>--nodes=1</code></td>
+<td>Uses one compute node</td>
+</tr>
+<tr class="odd">
+<td><code>--ntasks=1</code></td>
+<td>Starts one task</td>
+</tr>
+<tr class="even">
+<td><code>--cpus-per-task=1</code></td>
+<td>Allocates one CPU to that task</td>
+</tr>
+<tr class="odd">
+<td><code>--mem=4G</code></td>
+<td>Requests 4 GB of memory</td>
+</tr>
+<tr class="even">
+<td><code>--time=00:30:00</code></td>
+<td>Limits the session to thirty minutes after it starts</td>
+</tr>
+<tr class="odd">
+<td><code>--pty bash</code></td>
+<td>Opens an interactive command shell on the allocated node</td>
+</tr>
+</tbody>
+</table>
+<p>These values suit a small setup check; adapt them to your cluster’s permitted requests and required options. You may wait for resources. See <a href="https://slurm.schedmd.com/srun.html">Slurm’s <code>srun</code> documentation</a>.</p>
+<p>Once the session starts, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hostname</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"</span><span class="va">$SLURM_JOB_ID</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Record the computer name and job number: <code>hostname</code> identifies the allocated node; <code>echo</code> prints the job number stored in <code>SLURM_JOB_ID</code>. <strong>Keep this terminal and its VS Code window open.</strong> They hold the allocation while you connect a second window to the node.</p>
+<p>Only this terminal has moved to the compute node. The original VS Code window and its notebook kernels still belong to the login node.</p>
+</section>
+<section id="connect-a-second-window-to-the-compute-node" class="level2">
+<h2 class="anchored" data-anchor-id="connect-a-second-window-to-the-compute-node">5. Connect a second window to the compute node</h2>
+<p>For a managed VS Code service, use its allocated workspace and continue to step 6. For the supported SSH route:</p>
+<ol type="1">
+<li>Choose <strong>File → New Window</strong> to open a local VS Code window. Keep the allocation window open.</li>
+<li>In the new window, choose <strong>Remote-SSH: Open SSH Configuration File…</strong> from the Command Palette. Select the local configuration file used in step 1.</li>
+<li>Add this entry before any general <code>Host *</code> entry, replacing the capitalized values. <code>COMPUTE_HOST</code> is the allocated node’s SSH address, usually the name printed above. <code>LOGIN_HOST</code> is the login address or configured alias from step 1.</li>
+</ol>
+<pre class="text"><code>Host jaxcmr-compute
+    HostName COMPUTE_HOST
+    User YOUR_USERNAME
+    ProxyJump YOUR_USERNAME@LOGIN_HOST</code></pre>
+<p><code>jaxcmr-compute</code> is a convenient connection name. <code>HostName</code> selects the computer, <code>User</code> selects your account, and <a href="https://man.openbsd.org/ssh_config#ProxyJump">ProxyJump</a> routes the connection through the login host. Keep any additional authentication settings your institution requires.</p>
+<p>Save the file, then use <strong>Remote-SSH: Connect to Host… → jaxcmr-compute</strong> in this new window. After authentication, its lower-left indicator should show <strong>SSH: jaxcmr-compute</strong>. Open a new terminal and run <code>hostname</code>; it must match the allocated node, not the login node.</p>
+<p>Use <strong>File → Open Folder</strong> to open the same full <code>jaxcmr</code> path on shared storage. The files are already there. This second window is now your working window for notebooks.</p>
+</section>
+<section id="select-the-environment-and-check-your-setup" class="level2">
+<h2 class="anchored" data-anchor-id="select-the-environment-and-check-your-setup">6. Select the environment and check your setup</h2>
+<p>A <strong>Jupyter notebook</strong> is an <code>.ipynb</code> file combining explanations, Python code, and results. Its sections are called <strong>cells</strong>; code cells run in a Python process called a <strong>kernel</strong>. VS Code’s Jupyter extension supplies the notebook controls.</p>
+<p>In the compute window:</p>
+<ol type="1">
+<li>Open <strong>View → Extensions</strong> and install Microsoft’s <strong>Python</strong> and <strong>Jupyter</strong> extensions for <strong>SSH: jaxcmr-compute</strong>. Use your institution’s supplied extensions if installation is restricted.</li>
+<li>In Explorer, open <code>guide/examples/first-simulation.ipynb</code>.</li>
+<li>Choose <strong>Select Kernel → Select Another Kernel → Python Environments</strong> and select Python 3.12 from this project’s <code>.venv</code>. If a kernel is already selected, click its name to change it.</li>
+<li>Click <strong>Run All</strong>. The Colab installation cell skips installation here. Wait for all cells to finish; the first calculation may take longer while JAX prepares it.</li>
+</ol>
+<p>Choosing <strong>Python Environments</strong> in the compute window selects Python on that computer. Selecting an environment in the original login window would run there instead. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-kernel-management">VS Code’s kernel guidance</a>.</p>
+<p>The final cell should print study and recall sequences, confirming that JAXCMR can run in the selected environment. Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.</p>
+</section>
+<section id="finish-and-return-later" class="level2">
+<h2 class="anchored" data-anchor-id="finish-and-return-later">Finish and return later</h2>
+<p>Save the notebook with <strong>File → Save</strong>, then close the compute connection. In the original allocation terminal, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This ends the interactive job and returns that terminal to the login node. Run <code>squeue --jobs=YOUR_JOB_ID</code>, replacing the placeholder with the recorded job number, to check that it has ended. If it remains queued or running, <code>scancel YOUR_JOB_ID</code> cancels that allocation. Closing only the editor window is not a substitute for ending the job.</p>
+<p>Your files and <code>.venv</code> remain on shared storage, subject to its retention policy. Live Python state disappears when the kernel ends. To return, reconnect to the login host, request a new allocation, update <code>HostName</code> in the existing <code>jaxcmr-compute</code> entry, and reconnect the compute window. Open the project, select its environment, and run your notebook from the beginning. Load any site-required modules as part of the supported connection procedure.</p>
+</section>
+<section id="continue-with-the-tutorials" class="level2">
+<h2 class="anchored" data-anchor-id="continue-with-the-tutorials">Continue with the tutorials</h2>
+<p>In an allocated compute window, open <code>guide/tutorials/data-preparation.ipynb</code> for <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> and select the same <code>.venv</code> environment. You can use this workspace for other project notebooks while the allocation remains active. Choose resources appropriate to their work; this setup request is only for a small check.</p>
+</section>
+<section id="if-something-goes-wrong" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>SSH or VS Code cannot connect
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>From a local VS Code window, open <strong>Terminal → New Terminal</strong> and try <code>ssh YOUR_USERNAME@LOGIN_HOST</code>. If <code>ssh</code> is missing, follow the SSH client instructions in step 1. If sign-in fails, check the login address, VPN, and authentication requirements. After a successful terminal test, <code>exit</code> returns to your computer. If SSH works but VS Code does not, inspect <strong>View → Output → Remote - SSH</strong>.</p>
+<p>For the compute connection, confirm that the allocation is still running, <code>HostName</code> names its node, and your institution supports SSH through the login host with your authentication setup. Use its managed service or tunnel procedure where direct SSH is unsupported.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A command is not found
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Check which machine the terminal belongs to. On the cluster, confirm that installation completed and load any required software module. For a default uv installation, <code>source "$HOME/.local/bin/env"</code> makes it available in the current terminal.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Slurm rejects the request
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Check the account, partition, and permitted resource settings against your allocation. These are cluster access settings, not Python settings.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The compute node cannot find the project or import JAXCMR
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Check <code>pwd</code>, shared storage access, and whether installation finished successfully. Use <code>.venv/bin/python</code> from the intended project folder.</p>
+</div>
+</div>
+</div>
+<p>When asking for help, include the command, complete error message, and whether it ran on your computer, a login node, or a compute node.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="./colab-setup.html" class="pagination-link" aria-label="Google Colab setup">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Google Colab setup</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -70,6 +70,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./colab-setup.html" rel="next">
 <link href="./installation.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -82,6 +83,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -110,6 +114,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
 
+<link rel="stylesheet" href="images/setup/screenshots.css">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -167,7 +172,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./developer-setup.html">Setup walkthrough</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./developer-setup.html">Local setup with VS Code</a></li></ol></nav>
         <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -188,7 +193,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./developer-setup.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Setup walkthrough</span></a>
+ <span class="menu-text">Local setup with VS Code</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./colab-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Google Colab setup</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./slurm-setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Slurm cluster setup with VS Code</span></a>
   </div>
 </li>
     </ul>
@@ -206,12 +223,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#install-uv" id="toc-install-uv" class="nav-link" data-scroll-target="#install-uv">3. Install uv</a></li>
   <li><a href="#download-jaxcmr-and-its-examples" id="toc-download-jaxcmr-and-its-examples" class="nav-link" data-scroll-target="#download-jaxcmr-and-its-examples">4. Download JAXCMR and its examples</a></li>
   <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">5. Install Python and JAXCMR</a></li>
-  <li><a href="#open-the-simulation-example" id="toc-open-the-simulation-example" class="nav-link" data-scroll-target="#open-the-simulation-example">6. Open the simulation example</a></li>
-  <li><a href="#run-the-simulation-and-read-its-output" id="toc-run-the-simulation-and-read-its-output" class="nav-link" data-scroll-target="#run-the-simulation-and-read-its-output">7. Run the simulation and read its output</a>
-  <ul class="collapse">
-  <li><a href="#understand-the-result" id="toc-understand-the-result" class="nav-link" data-scroll-target="#understand-the-result">Understand the result</a></li>
-  </ul></li>
-  <li><a href="#return-to-the-example-later" id="toc-return-to-the-example-later" class="nav-link" data-scroll-target="#return-to-the-example-later">Return to the example later</a></li>
+  <li><a href="#open-a-notebook-and-select-its-environment" id="toc-open-a-notebook-and-select-its-environment" class="nav-link" data-scroll-target="#open-a-notebook-and-select-its-environment">6. Open a notebook and select its environment</a></li>
+  <li><a href="#check-your-setup" id="toc-check-your-setup" class="nav-link" data-scroll-target="#check-your-setup">7. Check your setup</a></li>
+  <li><a href="#save-and-return-to-your-workspace" id="toc-save-and-return-to-your-workspace" class="nav-link" data-scroll-target="#save-and-return-to-your-workspace">Save and return to your workspace</a></li>
+  <li><a href="#continue-with-the-tutorials" id="toc-continue-with-the-tutorials" class="nav-link" data-scroll-target="#continue-with-the-tutorials">Continue with the tutorials</a></li>
   <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a>
   <ul class="collapse">
   <li><a href="#git-or-uv-is-not-found" id="toc-git-or-uv-is-not-found" class="nav-link" data-scroll-target="#git-or-uv-is-not-found">Git or uv is not found</a></li>
@@ -245,13 +260,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This walkthrough takes you from installing the software to running a memory-model simulation on your computer and understanding its output. You do not need any previous experience with Python or VS Code. The example includes all the code you need.</p>
-<p>You will simulate a model studying a short list of items and then recalling them. The result is a sequence showing which items it recalled and in what order.</p>
+<p>Prepare a workspace for JAXCMR tutorials and your own work. You will install the software, open a notebook, and run a small check that everything works. You do not need any previous experience with Python or VS Code; the check includes all the code you need.</p>
 <p>These instructions cover <strong>Macs with an Apple chip</strong>, such as an M1 or M2, and <strong>Windows PCs with a 64-bit Intel or AMD processor</strong>. Intel Macs are not supported by this installation route because the required version of JAX does not provide an Intel Mac installer. You will need an internet connection and permission to install software.</p>
+<p>If your computer cannot use this route, you can run the code on another computer instead. The <a href="./colab-setup.html">Google Colab setup guide</a> prepares a notebook workspace in your browser using Google’s computers. If you have access to a research cluster, follow <a href="./slurm-setup.html">Slurm cluster setup with VS Code</a> to prepare it for JAXCMR. Both routes run Python on the remote computer.</p>
 <p>On a Mac, choose <strong>Apple menu → About This Mac</strong> to check: an Apple chip is listed under <strong>Chip</strong>; an Intel processor is listed under <strong>Processor</strong>.</p>
+<p>The screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. The VS Code images show Microsoft examples, so use the JAXCMR filenames and Python version specified in the steps below.</p>
 <section id="install-vs-code" class="level2">
 <h2 class="anchored" data-anchor-id="install-vs-code">1. Install VS Code</h2>
-<p><a href="https://code.visualstudio.com/download">Visual Studio Code</a>, usually called <strong>VS Code</strong>, is the application you will use to open the example and run its code.</p>
+<p><a href="https://code.visualstudio.com/download">Visual Studio Code</a>, usually called <strong>VS Code</strong>, is the application you will use to open project files and work with notebooks.</p>
+<p>A <strong>Jupyter notebook</strong> is a file ending in <code>.ipynb</code> that combines explanations, Python code, and results. Its sections are called <strong>cells</strong>. Text cells explain the work; code cells contain instructions for Python to execute. The Jupyter extension below gives VS Code its notebook controls.</p>
 <p>Download the version for your computer:</p>
 <ul>
 <li><strong>Mac:</strong> choose the Apple Silicon download. Open the downloaded ZIP file if needed, then move Visual Studio Code to your Applications folder.</li>
@@ -263,11 +280,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Search for <strong>Python</strong>. Select the extension published by <strong>Microsoft</strong> and click <strong>Install</strong>.</li>
 <li>Search for <strong>Jupyter</strong>. Select the extension published by <strong>Microsoft</strong> and click <strong>Install</strong>.</li>
 </ol>
+<div id="fig-vscode-extensions" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Extensions view with the Microsoft Python result outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-extensions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-extensions.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Choose Python, published by Microsoft (shown after installation). Repeat the search for Jupyter."><img src="images/setup/vscode-extensions.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Extensions view with the Microsoft Python result outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-extensions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Choose <strong>Python</strong>, published by <strong>Microsoft</strong> (shown after installation). Repeat the search for <strong>Jupyter</strong>.
+</figcaption>
+</figure>
+</div>
 </section>
 <section id="install-git" class="level2">
 <h2 class="anchored" data-anchor-id="install-git">2. Install Git</h2>
 <p><strong>Git</strong> will download JAXCMR and its examples from GitHub, the website where the project is stored.</p>
 <p>Some of the steps below use a <strong>terminal</strong>: a panel where you give your computer instructions by typing commands. In VS Code, choose <strong>Terminal → New Terminal</strong> to open it. To run a command, copy it into the terminal and press <strong>Return</strong> on Mac or <strong>Enter</strong> on Windows. Do not copy the surrounding box or add any extra characters.</p>
+<div id="fig-vscode-terminal" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code with its Terminal panel, shell name, and command prompt outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-terminal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-terminal.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Type commands at the prompt in the Terminal panel. This example shows Windows; the prompt looks different on a Mac."><img src="images/setup/vscode-terminal.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code with its Terminal panel, shell name, and command prompt outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-terminal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Type commands at the prompt in the <strong>Terminal</strong> panel. This example shows Windows; the prompt looks different on a Mac.
+</figcaption>
+</figure>
+</div>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Windows</a></li></ul>
 <div class="tab-content">
@@ -286,7 +323,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="install-uv" class="level2">
 <h2 class="anchored" data-anchor-id="install-uv">3. Install uv</h2>
-<p><strong>Python</strong> is the programming language that JAXCMR uses. <strong>uv</strong> installs Python and the additional Python packages needed for this example. It keeps them together in an <strong>environment</strong>, a folder containing the software for this project. You do not need to install Python separately.</p>
+<p><strong>Python</strong> runs the calculations, and JAXCMR is a <strong>package</strong> of Python tools for memory research. <strong>uv</strong> installs Python and the packages this project needs, keeping them together in an <strong>environment</strong>. This lets notebooks in the project use the same installed software. You do not need to install Python separately.</p>
 <p>In VS Code, open <strong>Terminal → New Terminal</strong> if the terminal is not already open. Run the command for your computer:</p>
 <div class="tabset-margin-container"></div><div class="panel-tabset">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">Mac</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Windows</a></li></ul>
@@ -296,6 +333,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
 <p>Use a <strong>PowerShell</strong> terminal. If the terminal has a different name, use the arrow beside the <strong>+</strong> button in the terminal panel and choose <strong>PowerShell</strong>.</p>
+<div id="fig-vscode-shell" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code terminal profile menu, with PowerShell and the dropdown arrow outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-shell-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-shell.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: On Windows, use the arrow beside + to choose PowerShell."><img src="images/setup/vscode-shell.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code terminal profile menu, with PowerShell and the dropdown arrow outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-shell-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: On Windows, use the arrow beside <strong>+</strong> to choose <strong>PowerShell</strong>.
+</figcaption>
+</figure>
+</div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy ByPass <span class="op">-</span>c <span class="st">"irm https://astral.sh/uv/install.ps1 | iex"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
@@ -319,6 +366,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>When the download finishes, choose <strong>Open</strong> to open the <code>jaxcmr</code> folder in VS Code.</p></li>
 <li><p>If VS Code asks whether you trust the authors of the files, confirm that you trust this project folder so you can run its example code.</p></li>
 </ol>
+<div id="fig-vscode-clone-palette" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Command Palette with its search box outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-clone-palette-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-clone-palette.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Type Git: Clone in the Command Palette’s search box."><img src="images/setup/vscode-clone-palette.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Command Palette with its search box outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-clone-palette-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Type <strong>Git: Clone</strong> in the Command Palette’s search box.
+</figcaption>
+</figure>
+</div>
 <p>You do not need a GitHub account to download this public repository.</p>
 <p>Choose <strong>View → Explorer</strong> to see the project’s files in the left-hand panel. You should see folders including <code>guide</code> and <code>templates</code>, and files including <code>pyproject.toml</code> and <code>uv.lock</code>.</p>
 </section>
@@ -331,16 +388,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Wait until the command finishes and the terminal is ready for another command. If it ends with an error, resolve that before continuing.</p>
 <p>The installed software is kept in a folder named <code>.venv</code> inside <code>jaxcmr</code>. In the next step, you will tell VS Code to use it.</p>
 </section>
-<section id="open-the-simulation-example" class="level2">
-<h2 class="anchored" data-anchor-id="open-the-simulation-example">6. Open the simulation example</h2>
-<p>A <strong>notebook</strong> is a file that combines explanations, Python code, and the results of running that code. Its filename ends in <code>.ipynb</code>.</p>
+<section id="open-a-notebook-and-select-its-environment" class="level2">
+<h2 class="anchored" data-anchor-id="open-a-notebook-and-select-its-environment">6. Open a notebook and select its environment</h2>
+<p>Use the supplied simulation notebook to check your setup. You can open other notebooks in this project in the same way.</p>
 <p>In VS Code’s Explorer:</p>
 <ol type="1">
 <li>Expand the <strong>guide</strong> folder.</li>
 <li>Expand the <strong>examples</strong> folder inside it.</li>
 <li>Double-click <strong>first-simulation.ipynb</strong>.</li>
 </ol>
-<p>The notebook opens in the main part of the window. Before running it, choose the Python environment you just installed:</p>
+<p>The notebook opens in the main part of the window. Its toolbar contains the controls for choosing Python and running the code.</p>
+<div id="fig-vscode-notebook-controls" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code notebook toolbar with Select Kernel outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-notebook-controls.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Click Select Kernel at the upper right to choose the Python environment for this notebook."><img src="images/setup/vscode-notebook-controls.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code notebook toolbar with Select Kernel outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Click <strong>Select Kernel</strong> at the upper right to choose the Python environment for this notebook.
+</figcaption>
+</figure>
+</div>
+<p>Before running the notebook, choose the Python environment you just installed:</p>
 <ol type="1">
 <li>Click <strong>Select Kernel</strong> near the top right of the notebook.</li>
 <li>Choose <strong>Select Another Kernel → Python Environments</strong>. If <strong>Python Environments</strong> is already shown, choose it directly.</li>
@@ -348,35 +416,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ol>
 <p>A <strong>kernel</strong> is the Python process that runs the notebook’s code. Selecting this environment gives it access to JAXCMR and the other packages installed in the previous step. If a kernel is already selected, click its name to check or change it.</p>
 </section>
-<section id="run-the-simulation-and-read-its-output" class="level2">
-<h2 class="anchored" data-anchor-id="run-the-simulation-and-read-its-output">7. Run the simulation and read its output</h2>
-<p>The notebook is divided into <strong>cells</strong>: separate blocks of text or code. Its code loads JAXCMR, supplies some example model settings, and simulates study and recall. You can run it without editing anything.</p>
-<p>Click <strong>Run All</strong> at the top of the notebook. This runs its code cells in order. You may already see saved results when you open the file; <strong>Run All</strong> computes them again on your computer.</p>
-<p>The first run may take a little longer while JAX prepares the calculation. Wait for the code cells to finish. The last code cell prints:</p>
+<section id="check-your-setup" class="level2">
+<h2 class="anchored" data-anchor-id="check-your-setup">7. Check your setup</h2>
+<p>Click <strong>Run All</strong> at the top of the notebook. This runs its code cells in order, so later cells can use what earlier cells have prepared. The first cell is for Colab and skips installation on your computer.</p>
+<div id="fig-vscode-run" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code notebook showing the Run All button outlined in red and output beneath a code cell.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-run-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-run.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6: Run All executes the notebook from the beginning. Each code cell displays its results underneath it."><img src="images/setup/vscode-run.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code notebook showing the Run All button outlined in red and output beneath a code cell."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-run-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: <strong>Run All</strong> executes the notebook from the beginning. Each code cell displays its results underneath it.
+</figcaption>
+</figure>
+</div>
+<p>You may already see saved results when you open the file; they do not mean its code has run in your current session. <strong>Run All</strong> computes them again. Wait for execution to finish; the first run may take longer while JAX prepares the calculation. If a cell reports an error, resolve it before continuing.</p>
+<p>The last code cell prints:</p>
 <pre class="text"><code>Study order: [1 2 3 4 5]
 Simulated recalls: [1 5 2 4 3]</code></pre>
-<section id="understand-the-result" class="level3">
-<h3 class="anchored" data-anchor-id="understand-the-result">Understand the result</h3>
-<p>The numbers are <strong>item identifiers</strong>. Here, each number stands for a different item in a five-item list.</p>
-<ul>
-<li><strong>Study order</strong> shows what the model studied: item 1, then 2, 3, 4, and 5.</li>
-<li><strong>Simulated recalls</strong> shows the order in which the model recalled them: item 1 first, then 5, 2, 4, and 3.</li>
-</ul>
-<p>In this run, the model recalled all five items, in a different order from how they were studied. This is one simulated recall sequence, not a summary of many participants or an estimate of average performance.</p>
-<p>The output always reserves five spaces for recalls in this example. If the model stops early, the remaining spaces contain <strong>0</strong>. For example, <code>[1 5 0 0 0]</code> would mean it recalled items 1 and 5, then stopped. Zero does not identify a studied item.</p>
-<p>The example uses a fixed <strong>random seed</strong>, a starting value for its random choices. Running the unchanged example again in the same environment should produce the same sequence.</p>
+<p>Reaching this output confirms that the selected Python environment can load JAXCMR and execute a model. The notebook’s <strong>Read the output</strong> section explains the simulation.</p>
 </section>
-</section>
-<section id="return-to-the-example-later" class="level2">
-<h2 class="anchored" data-anchor-id="return-to-the-example-later">Return to the example later</h2>
-<p>You only need to install the software once.</p>
+<section id="save-and-return-to-your-workspace" class="level2">
+<h2 class="anchored" data-anchor-id="save-and-return-to-your-workspace">Save and return to your workspace</h2>
+<p>Use <strong>File → Save</strong> to keep the notebook and its displayed results. The notebook file and your installed environment remain on your computer when you close VS Code. The running Python session is separate: starting a new kernel, or using <strong>Restart Kernel</strong>, clears the values held in memory but does not remove the installed packages.</p>
+<p>To return:</p>
 <ol type="1">
-<li>Open VS Code and choose <strong>File → Open Folder</strong> to reopen the same <code>jaxcmr</code> folder.</li>
-<li>Open <code>guide/examples/first-simulation.ipynb</code> in the Explorer.</li>
-<li>Check that the selected kernel uses the project’s <code>.venv</code> environment.</li>
-<li>Click <strong>Run All</strong> to run the simulation again.</li>
+<li>Use <strong>File → Open Folder</strong> to reopen the same <code>jaxcmr</code> folder.</li>
+<li>Open the notebook you want to work with in Explorer.</li>
+<li>Check that its selected kernel uses the project’s <code>.venv</code> environment.</li>
+<li>Run its code from the beginning to recreate the session’s results.</li>
 </ol>
-<p>Use <strong>File → Save</strong> to save the notebook, including its output.</p>
+<div id="fig-vscode-open-folder" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Command Palette with File Open Folder outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-open-folder.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;7: You can also find File: Open Folder… in the Command Palette to reopen your jaxcmr folder."><img src="images/setup/vscode-open-folder.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Command Palette with File Open Folder outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: You can also find <strong>File: Open Folder…</strong> in the Command Palette to reopen your <code>jaxcmr</code> folder.
+</figcaption>
+</figure>
+</div>
+<p>You normally do not repeat installation for each notebook in this project.</p>
+</section>
+<section id="continue-with-the-tutorials" class="level2">
+<h2 class="anchored" data-anchor-id="continue-with-the-tutorials">Continue with the tutorials</h2>
+<p>For <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a>, open <code>guide/tutorials/data-preparation.ipynb</code> in this workspace and select the same <code>.venv</code> environment. That tutorial explains the calculations; the procedure for opening and running its notebook is the one you have just used.</p>
 </section>
 <section id="if-something-goes-wrong" class="level2">
 <h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
@@ -400,6 +483,22 @@ Simulated recalls: [1 5 2 4 3]</code></pre>
 <h3 class="anchored" data-anchor-id="jax-reports-a-dll-error-on-windows">JAX reports a DLL error on Windows</h3>
 <p>JAX may also need Microsoft’s <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist">Visual C++ Redistributable for x64</a>. Install it, restart VS Code, and try running the notebook again. This requirement is described in <a href="https://docs.jax.dev/en/latest/installation.html#pip-installation-cpu">JAX’s installation instructions</a>.</p>
 <p>If you ask for help, include the step you reached and the complete error message.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Screenshot sources
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>VS Code screenshots: Microsoft, <a href="https://creativecommons.org/licenses/by/3.0/us/">CC BY 3.0 US</a>. Sources: <a href="https://code.visualstudio.com/docs/configure/extensions/extension-marketplace">extensions</a>, <a href="https://code.visualstudio.com/docs/terminal/getting-started">terminal</a>, <a href="https://code.visualstudio.com/docs/getstarted/userinterface">Command Palette</a>, and <a href="https://code.visualstudio.com/docs/datascience/jupyter-notebooks">notebooks</a>. Red highlights have been added where needed; the source images are unchanged.</p>
+</div>
+</div>
+</div>
 
 
 </section>
@@ -889,9 +988,44 @@ Simulated recalls: [1 5 2 4 3]</code></pre>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="./colab-setup.html" class="pagination-link" aria-label="Google Colab setup">
+        <span class="nav-page-text">Google Colab setup</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

@@ -1,0 +1,77 @@
+---
+title: "Google Colab setup"
+format:
+  html:
+    css: images/setup/screenshots.css
+    code-fold: false
+    code-line-numbers: false
+---
+
+Prepare a notebook workspace for JAXCMR in your web browser. You do not need previous Python experience or to install Python, VS Code, or other software on your computer.
+
+[Google Colaboratory](https://research.google.com/colaboratory/faq.html), usually called **Colab**, lets you work with Jupyter notebooks using Google's computers. You need a Google account and an internet connection. We will use a small supplied notebook to check the setup; it needs neither a GPU nor a paid Colab plan.
+
+The screenshots use dark mode; the same controls are available in light mode. Red boxes mark the controls to look for. Click an image to enlarge it.
+
+## 1. Open and keep a notebook
+
+A **Jupyter notebook** combines explanations, Python code, and results in one document. Its sections are called **cells**: text cells explain the work, and code cells contain instructions for Python to execute. Colab provides the controls for working with these documents in a browser.
+
+1. [Open the first simulation in Colab](https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/guide/examples/first-simulation.ipynb) and sign in if prompted.
+2. Choose **File → Save a copy in Drive** to create your own editable copy.
+3. Give the copy a recognizable name and continue working in that copy.
+
+![**File → Save a copy in Drive** creates the copy you will work in.](images/setup/colab-copy-dark.jpg){#fig-colab-copy-dark fig-alt="Colab File menu in dark mode, with Save a copy in Drive outlined in red." width=100%}
+
+Your copy should show **Your first JAXCMR simulation**. It includes all the code and needs no dataset. Editing this copy leaves the original on GitHub unchanged.
+
+The notebook includes saved output from an earlier run. Seeing that output does not mean your copy has run yet.
+
+## 2. Connect to a computer
+
+Choose **Runtime → Change runtime type**. Use **Python 3** and select **CPU** (or **None** for the hardware accelerator), then save. Click **Connect** near the top of the notebook if it is not already connected.
+
+Colab calls the computer running your code a **runtime**. Your notebook is saved in Drive; Python runs in this separate, temporary session. Your own computer displays the notebook.
+
+![In **Runtime → Change runtime type**, choose **Python 3** and **CPU**.](images/setup/colab-runtime-dark.jpg){#fig-colab-runtime-dark fig-alt="Colab runtime settings in dark mode, with Python 3 and CPU outlined in red." width=100%}
+
+## 3. Check your setup
+
+Choose **Runtime → Run all**, or click **Run all** in the notebook toolbar. Colab runs the code cells in order, so later cells can use what earlier cells have prepared. The included **Install JAXCMR in Colab** cell first installs JAXCMR and its required packages in the runtime. The following cells run the setup check.
+
+Wait for execution to finish. Installation messages are normal. If Colab asks for a restart after installation, choose **Runtime → Restart session**, then **Run all** again. A session restart clears Python's memory while keeping packages installed in that runtime. Resolve any execution error before continuing.
+
+JAXCMR requires Python 3.12 or later. If installation reports an older Python version, check **Runtime → Change runtime type** and use the latest available runtime version.
+
+The first calculation may take longer while JAX prepares it. Look beneath the final code cell for output like:
+
+```text
+Study order: [1 2 3 4 5]
+Simulated recalls: [1 5 2 4 3]
+```
+
+![Use **Run all** in the toolbar, then look beneath the final code cell for the two output lines. The image shows saved output; run your own copy to check your setup.](images/setup/colab-run-dark.jpg){#fig-colab-notebook-controls fig-alt="Colab in dark mode with Run all and the two simulation output lines outlined in red." width=100%}
+
+Reaching this output confirms that the runtime can load JAXCMR and execute a model. The notebook's **Read the output** section explains the simulation.
+
+## 4. Save and return later
+
+Your copy is saved in Google Drive. Use **File → Save** to save your changes and results. You can also use **File → Download → Download .ipynb** to keep a copy on your own computer.
+
+![**File → Save** keeps your changes in Drive. **Download** lets you keep a notebook file on your computer.](images/setup/colab-save-dark.jpg){#fig-colab-save-dark fig-alt="Colab File menu in dark mode, with Save and Download outlined in red." width=100%}
+
+Your saved notebook and its displayed results are separate from its runtime. Colab runtimes are temporary: when one is deleted, its installed packages, Python variables, and files stored only on that runtime disappear. They are not automatically saved with the notebook. See [Colab's explanation of storage and runtime limits](https://research.google.com/colaboratory/faq.html).
+
+When you return, open your saved notebook, connect, and choose **Runtime → Run all**. The installation cell prepares a fresh runtime when needed. Results already visible in the document may be from your previous session.
+
+## Continue with the tutorials
+
+Open [Preparing data for JAXCMR](tutorials/data-preparation.ipynb) and use its **Open in Colab** link. Save your own copy and run it from the beginning, including its setup cell. The tutorial explains the calculations; the notebook and runtime work as they do here.
+
+## If something goes wrong
+
+- **No module named jaxcmr:** run the installation cell in the current session, then run the model cells in order.
+- **A name is not defined:** run the earlier code cells again; a new session does not remember their variables.
+- **The runtime disconnects:** reconnect and check whether the session has restarted. If it has, repeat installation and run the notebook from the beginning.
+
+If you ask for help, include the cell you ran and the complete error message.
