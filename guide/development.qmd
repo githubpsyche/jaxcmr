@@ -48,20 +48,22 @@ Edit the sources; the build prepares notebook copies, downloads and HTML:
 | Material | Authoritative location |
 |---|---|
 | Published templates | `templates/` |
-| Book pages and supporting examples | `guide/` |
+| Website pages and supporting examples | `guide/` |
 | Generated notebook copies and downloads | `guide/templates/`, `guide/downloads/` |
 | Rendered website | `docs/` |
 
-`guide/_quarto.yml` selects the published chapters. Install
-[Quarto](https://quarto.org/docs/download/) 1.10.20 or newer, then render the book:
+`guide/_quarto.yml` selects the published pages and defines the site navigation.
+The render list excludes notebook downloads and supporting examples from the
+published pages. Install [Quarto](https://quarto.org/docs/download/) 1.10.20 or
+newer, then render the website:
 
 ```{.bash code-summary="(3) Render the documentation"}
 bash build-docs.sh
 ```
 
-This command prepares notebook chapters before Quarto checks that they exist,
+This command prepares notebook pages before Quarto discovers the render targets,
 so it also works in a fresh checkout. It refreshes downloads, removes retired
-staging files and clears the generated book output without executing notebook
+staging files and clears the generated website output without executing notebook
 cells. Execute changed notebooks separately and retain their
 useful outputs before rendering. Do not edit the generated copies.
 

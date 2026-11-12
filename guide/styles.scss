@@ -1,0 +1,81 @@
+/*-- scss:defaults --*/
+$font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+$font-size-root: 16px;
+$body-color: #262b30;
+$headings-font-weight: 600;
+$h1-font-size: 2.625rem;
+$h2-font-size: 1.75rem;
+$h3-font-size: 1.375rem;
+$link-color: #28717c;
+$navbar-bg: #fff;
+$navbar-fg: #343a40;
+$navbar-hl: $link-color;
+$code-block-bg: #f7f8f9;
+
+/*-- scss:rules --*/
+.navbar {
+  border-bottom: 1px solid #e5e8eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding-block: 0.75rem;
+}
+
+.navbar-brand {
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.navbar .nav-link {
+  font-size: 0.9375rem;
+}
+
+#title-block-header {
+  margin-bottom: 1.5rem;
+}
+
+h1.title {
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+main.content p {
+  line-height: 1.65;
+}
+
+main.content a:not(.anchorjs-link):not(.code-copy-button) {
+  text-underline-offset: 0.15em;
+}
+
+// Long paths and identifiers must not determine a table column's minimum width.
+main.content table :is(th, td),
+main.content table code {
+  overflow-wrap: anywhere;
+}
+
+.sidebar-navigation .sidebar-item {
+  padding-block: 0.15rem;
+}
+
+.homepage-contents ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+.homepage-contents ul ul {
+  padding-left: 1.5rem;
+}
+
+.homepage-contents > ul > li {
+  margin-top: 0.5rem;
+}
+
+.homepage-contents li {
+  line-height: 1.8;
+}
+
+@media (max-width: 767.98px) {
+  h1.title {
+    font-size: 2rem;
+  }
+}

@@ -1,4 +1,4 @@
-"""Stage the Quarto book's notebooks and downloads, with Colab links to main."""
+"""Stage the website's notebooks and downloads, with Colab links to main."""
 
 import ast
 import json
@@ -29,9 +29,9 @@ def stage():
     guide = (GUIDE / "_quarto.yml").read_text()
     names = re.findall(r"^\s*- (templates/\w+\.ipynb)\s*$", guide, re.M)
     if not names:
-        raise ValueError("No template chapters found in guide/_quarto.yml.")
+        raise ValueError("No template pages found in guide/_quarto.yml.")
 
-    # Read every required source before changing staging or the rendered book.
+    # Read every required source before changing staging or the rendered site.
     prepared = {}
     downloads = GUIDE / "downloads"
     for name in names:
@@ -63,7 +63,7 @@ def stage():
             output = GUIDE / output
         output = Path(os.path.abspath(output))
         check_destination(output)
-        # Within the checkout, only docs/ is generated book output. Also reject
+        # Within the checkout, only docs/ is generated site output. Also reject
         # ancestors of the checkout when an external output directory is used.
         if ROOT.is_relative_to(output) or (
             output.is_relative_to(ROOT) and not output.is_relative_to(ROOT / "docs")

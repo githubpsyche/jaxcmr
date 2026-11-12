@@ -6,9 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Computational models of memory search">
 
-<title>4&nbsp; From data to model comparison – JAXCMR</title>
+<title>From data to model comparison – JAXCMR</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -66,13 +65,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../overview/index.html" rel="next">
 <link href="../tutorials/data-preparation.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -84,23 +81,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-5cfa02e47064ef246ca607ad056c3693.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
-  "location": "sidebar",
+  "location": "navbar",
   "copy-button": false,
   "collapse-after": 3,
-  "panel-placement": "start",
-  "type": "textbox",
+  "panel-placement": "end",
+  "type": "overlay",
   "limit": 50,
   "keyboard-shortcut": [
     "f",
     "/",
     "s"
   ],
-  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -119,233 +115,83 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">JAXCMR</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../developer-setup.html"> 
+<span class="menu-text">Developer Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../tutorials/data-preparation.html" aria-current="page"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview/index.html"> 
+<span class="menu-text">Library Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../templates.html"> 
+<span class="menu-text">Templates</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img" aria-label="Source Code">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
   <nav class="quarto-secondary-nav" aria-label="Toolbar">
     <div class="container-fluid d-flex">
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/template-tour.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/template-tour.html">From data to model comparison</a></li></ol></nav>
         <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
-      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
-        <i class="bi bi-search"></i>
-      </button>
     </div>
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
-    <div class="sidebar-title mb-0 py-0">
-      <a href="../">JAXCMR</a> 
-        <div class="sidebar-tools-main">
-    <a href="https://github.com/githubpsyche/jaxcmr" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
-</div>
-    </div>
-      </div>
-        <div class="mt-2 flex-shrink-0 align-items-center">
-        <div class="sidebar-search">
-        <div id="quarto-search" class="" title="Search"></div>
-        </div>
-        </div>
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
     <div class="sidebar-menu-container"> 
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">jaxcmr</span></span></a>
+  <a href="../tutorials/data-preparation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preparing data for JAXCMR</span></a>
   </div>
 </li>
         <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../developer-setup.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Developer Setup</span></span></a>
-  </div>
-</li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
- <span class="menu-text" id="quarto-sidebar-section-1-label">Tutorials</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
-      </div>
-      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../tutorials/data-preparation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../tutorials/template-tour.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a href="../overview/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text" id="quarto-sidebar-section-2-label">Library Guide</span></a>
-            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false" aria-label="Toggle section: Library Guide">
-              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
-            </button> 
-      </div>
-      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 ">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/data.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/analyses.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Recall Analyses</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/models.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Memory Search Models</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/components.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Model Components</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/losses.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Loss Functions</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/fitting.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Fitting Procedures</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/simulation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Data Simulation</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../overview/evaluation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Model Evaluation</span></span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a href="../templates.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text" id="quarto-sidebar-section-3-label">Templates</span></a>
-            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="false" aria-label="Toggle section: Templates">
-              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
-            </button> 
-      </div>
-      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 ">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/fitting.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Fitting models</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/simulation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Simulating from saved fits</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/parameter_shifting.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Exploring parameter effects</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/model_comparison.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Comparing pooled model fits</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/spc.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Serial position curves</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/pnr.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Recall by output position</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/termination_probability.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">When recall ends</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/crp.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Lag-conditional response probability</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/lagrank.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Temporal organization scores</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/distcrp.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Distance-conditional response probability</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/distrank.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Distance-based organization scores</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/cat_recall_rate.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Recall rates by category</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/cat_spc.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Serial position curves by category</span></span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../templates/catcrp.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Transitions within and between categories</span></span></a>
-  </div>
-</li>
-      </ul>
-  </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../development.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Development</span></span></a>
+ <span class="menu-text">From data to model comparison</span></a>
   </div>
 </li>
     </ul>
@@ -355,24 +201,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
-    <h2 id="toc-title">Table of contents</h2>
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#describe-observed-recall" id="toc-describe-observed-recall" class="nav-link active" data-scroll-target="#describe-observed-recall"><span class="header-section-number">4.1</span> Describe observed recall</a></li>
-  <li><a href="#inspect-a-fitted-model" id="toc-inspect-a-fitted-model" class="nav-link" data-scroll-target="#inspect-a-fitted-model"><span class="header-section-number">4.2</span> Inspect a fitted model</a></li>
-  <li><a href="#generate-responses-from-the-fits" id="toc-generate-responses-from-the-fits" class="nav-link" data-scroll-target="#generate-responses-from-the-fits"><span class="header-section-number">4.3</span> Generate responses from the fits</a></li>
-  <li><a href="#compare-observed-and-simulated-recall" id="toc-compare-observed-and-simulated-recall" class="nav-link" data-scroll-target="#compare-observed-and-simulated-recall"><span class="header-section-number">4.4</span> Compare observed and simulated recall</a></li>
-  <li><a href="#compare-models" id="toc-compare-models" class="nav-link" data-scroll-target="#compare-models"><span class="header-section-number">4.5</span> Compare models</a></li>
-  <li><a href="#sequence-the-templates-with-papermill" id="toc-sequence-the-templates-with-papermill" class="nav-link" data-scroll-target="#sequence-the-templates-with-papermill"><span class="header-section-number">4.6</span> Sequence the templates with Papermill</a></li>
+  <li><a href="#describe-observed-recall" id="toc-describe-observed-recall" class="nav-link active" data-scroll-target="#describe-observed-recall">Describe observed recall</a></li>
+  <li><a href="#inspect-a-fitted-model" id="toc-inspect-a-fitted-model" class="nav-link" data-scroll-target="#inspect-a-fitted-model">Inspect a fitted model</a></li>
+  <li><a href="#generate-responses-from-the-fits" id="toc-generate-responses-from-the-fits" class="nav-link" data-scroll-target="#generate-responses-from-the-fits">Generate responses from the fits</a></li>
+  <li><a href="#compare-observed-and-simulated-recall" id="toc-compare-observed-and-simulated-recall" class="nav-link" data-scroll-target="#compare-observed-and-simulated-recall">Compare observed and simulated recall</a></li>
+  <li><a href="#compare-models" id="toc-compare-models" class="nav-link" data-scroll-target="#compare-models">Compare models</a></li>
+  <li><a href="#sequence-the-templates-with-papermill" id="toc-sequence-the-templates-with-papermill" class="nav-link" data-scroll-target="#sequence-the-templates-with-papermill">Sequence the templates with Papermill</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/tutorials/template-tour.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/data-preparation.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/template-tour.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">From data to model comparison</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+<div class="quarto-title-block"><div><h1 class="title">From data to model comparison</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -415,13 +261,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<section id="describe-observed-recall" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="describe-observed-recall"><span class="header-section-number">4.1</span> Describe observed recall</h2>
+<section id="describe-observed-recall" class="level2">
+<h2 class="anchored" data-anchor-id="describe-observed-recall">Describe observed recall</h2>
 <p>Open <a href="../templates/spc.html">Serial position curves</a>. In its parameter cell, set <code>data_paths = ["data/Dupertuys2026.h5"]</code>, <code>data_labels = ["Observed"]</code> and <code>output_dir = "results/tutorial/model-comparison/observed"</code>. Leave the single-input override <code>data_path</code> unset. Retain the three <code>trial_queries</code> and matching <code>labels</code> shown above.</p>
 <p>Run the notebook. It reports 491 complete lists from 123 participants, excluding the one padded study list, and produces one condition panel per query. The saved figure is <code>observed/spc.png</code> beneath this tutorial’s output folder. The vertical axis describes recall probability at each study position; the curve alone does not identify a memory mechanism.</p>
 </section>
-<section id="inspect-a-fitted-model" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="inspect-a-fitted-model"><span class="header-section-number">4.2</span> Inspect a fitted model</h2>
+<section id="inspect-a-fitted-model" class="level2">
+<h2 class="anchored" data-anchor-id="inspect-a-fitted-model">Inspect a fitted model</h2>
 <p>Open <a href="../templates/fitting.html">Fitting models</a>. Its first cell collects the observation selection, model specifications, fixed/free parameters, optimizer and output settings. The three supplied specifications fit all 492 lists with pooled parameters; the analysis selection for complete lists does not change the fitting selection.</p>
 <table class="caption-top table">
 <colgroup>
@@ -460,24 +306,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The Papermill cells below place copies of the supplied fits at the expected paths before executing fitting. They display fitted parameters and independently recalculated objectives. Expected NLLs are approximately <strong>7202.029</strong> (CMR), <strong>7169.426</strong> (source-only) and <strong>7164.358</strong> (broader eCMR). Each fit estimates one parameter set across all participants.</p>
 <p>To start new fits, choose a new <code>output_dir</code> and set this tour’s <code>redo_fits = True</code>. That uses the full recorded SciPy DE settings: 1,000 generations, population multiplier 15 and three restarts, with the recorded bounds and seeds. It can take substantially longer than inspecting saved fits. For different scientific specifications, edit the per-job <code>model_configs</code> passed to fitting and use a new output directory.</p>
 </section>
-<section id="generate-responses-from-the-fits" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="generate-responses-from-the-fits"><span class="header-section-number">4.3</span> Generate responses from the fits</h2>
+<section id="generate-responses-from-the-fits" class="level2">
+<h2 class="anchored" data-anchor-id="generate-responses-from-the-fits">Generate responses from the fits</h2>
 <p>Open <a href="../templates/simulation.html">Simulating from saved fits</a>. Supply fitting’s printed <code>fit_paths</code>, set <code>experiment_count = 10</code> and <code>simulation_seed = 1</code>, and choose a <code>simulation_dir</code>. The sequence below uses a distinct folder for each model and sets <code>redo_sims = False</code>, allowing matching responses to be reused on a later run.</p>
 <p>The first run generates 4,920 response rows per model: ten repetitions of each of the 492 lists, retaining the original 123 participant IDs and list conditions. Each <code>.h5</code> response file has a <code>.json</code> provenance sidecar. These simulations impose observed recall lengths; matching recall counts are not a successful prediction of stopping behavior.</p>
 </section>
-<section id="compare-observed-and-simulated-recall" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="compare-observed-and-simulated-recall"><span class="header-section-number">4.4</span> Compare observed and simulated recall</h2>
+<section id="compare-observed-and-simulated-recall" class="level2">
+<h2 class="anchored" data-anchor-id="compare-observed-and-simulated-recall">Compare observed and simulated recall</h2>
 <p>Return to <a href="../templates/spc.html">SPC</a>. Supply the observation file followed by simulation’s printed response paths as <code>data_paths</code>, with matching <code>data_labels</code>. Use the same condition queries and complete-list selection. Simulated repetitions stay grouped under the original participant IDs when summarizing behavior.</p>
 <p>The sequence below writes <code>predictions/spc.png</code>: each condition panel compares observations with all three models. Other <a href="../templates.html">analysis templates</a> can read these same saved response files without fitting or simulating again.</p>
 </section>
-<section id="compare-models" class="level2" data-number="4.5">
-<h2 data-number="4.5" class="anchored" data-anchor-id="compare-models"><span class="header-section-number">4.5</span> Compare models</h2>
+<section id="compare-models" class="level2">
+<h2 class="anchored" data-anchor-id="compare-models">Compare models</h2>
 <p>Open <a href="../templates/model_comparison.html">Comparing pooled model fits</a>. Supply the same named <code>fit_paths</code> and <code>simulation_paths</code>. The notebook checks that the models use matching observations, objectives and stopping rules, recalculates likelihoods, and reports NLL, parameter counts, AIC, ΔAIC and search histories alongside behavioral comparisons.</p>
 <p>The expected parameter counts are 9, 10 and 10. Lower AIC is better within this comparison, but its interpretation depends on the fitted specifications and optimization quality; these pooled results are not independent participant-level estimates. The saved table is <code>comparison/pooled_model_comparison.csv</code>.</p>
 <p>For supported statistical examples, see <a href="../templates/cat_recall_rate.html">category recall rate</a> for paired participant contrasts and <a href="../templates/distrank.html">distance rank</a> for tests against chance. Use participant summaries as the sampling units; simulation repetitions are not additional participants.</p>
 </section>
-<section id="sequence-the-templates-with-papermill" class="level2" data-number="4.6">
-<h2 data-number="4.6" class="anchored" data-anchor-id="sequence-the-templates-with-papermill"><span class="header-section-number">4.6</span> Sequence the templates with Papermill</h2>
+<section id="sequence-the-templates-with-papermill" class="level2">
+<h2 class="anchored" data-anchor-id="sequence-the-templates-with-papermill">Sequence the templates with Papermill</h2>
 <p><a href="https://papermill.readthedocs.io/en/latest/usage-execute.html">Papermill</a> executes a notebook with a parameter dictionary and saves the executed copy. Its <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">parameter injection</a> occurs immediately after the tagged <code>parameters</code> cell, before paths, masks and models are constructed. The templates are already tagged, and Papermill is included in <code>uv sync</code>.</p>
 <p>The following cells form an ordinary Python script, kept here in the notebook: import packages, prepare work units, then call <code>pm.execute_notebook</code> in the required order. Each fitting call receives a different one-entry <code>model_configs</code> dictionary. Shared memory between notebooks is unnecessary: paths identify the saved products passed to the next call. The <code>python3</code> kernel must be the project’s environment, as in Developer Setup.</p>
 <div id="31cafedf" class="cell" data-tags="[]" data-execution_count="3">
@@ -1232,13 +1078,10 @@ Broader eCMR                     10                   7164.358  14348.716       
 <nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
       <a href="../tutorials/data-preparation.html" class="pagination-link" aria-label="Preparing data for JAXCMR">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Preparing data for JAXCMR</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Preparing data for JAXCMR</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../overview/index.html" class="pagination-link" aria-label="Library Guide">
-        <span class="nav-page-text">Library Guide</span> <i class="bi bi-arrow-right-short"></i>
-      </a>
   </div>
 </nav>
 </div> <!-- /content -->

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare generated chapters before Quarto checks the book's chapter list.
+# Prepare generated pages before Quarto discovers the website's render targets.
 set -euo pipefail
 cd "$(dirname "$0")"
 

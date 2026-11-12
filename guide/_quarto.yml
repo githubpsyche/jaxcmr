@@ -2,28 +2,62 @@
 quarto-required: ">=1.10.20"
 
 project:
-  type: book
+  type: website
   output-dir: ../docs
+  render:
+    - index.ipynb
+    - developer-setup.ipynb
+    - tutorials/*.ipynb
+    - overview/*.qmd
+    - overview/*.ipynb
+    - templates.qmd
+    - templates/*.ipynb
+    - development.qmd
+    - "!downloads/**"
+    - "!examples/**"
   pre-render: uv run --no-sync python prepare.py
   resources:
     - .nojekyll
     - templates/data/**
     - downloads/**
 
-book:
+website:
   title: "JAXCMR"
   description: "Computational models of memory search"
   site-url: https://githubpsyche.github.io/jaxcmr/
   repo-url: https://github.com/githubpsyche/jaxcmr
-  chapters:
-    - index.ipynb
-    - developer-setup.ipynb
-    - part: Tutorials
-      chapters:
+  page-navigation: true
+  search:
+    location: navbar
+    type: overlay
+  navbar:
+    background: white
+    pinned: true
+    left:
+      - href: developer-setup.ipynb
+        text: Developer Setup
+      - href: tutorials/data-preparation.ipynb
+        text: Tutorials
+      - href: overview/index.qmd
+        text: Library Guide
+      - href: templates.qmd
+        text: Templates
+      - href: development.qmd
+        text: Development
+    right:
+      - icon: github
+        href: https://github.com/githubpsyche/jaxcmr
+        aria-label: Source Code
+  sidebar:
+    - title: Tutorials
+      style: floating
+      collapse-level: 1
+      contents:
         - tutorials/data-preparation.ipynb
         - tutorials/template-tour.ipynb
-    - part: overview/index.qmd
-      chapters:
+    - title: Library Guide
+      contents:
+        - overview/index.qmd
         - overview/data.ipynb
         - overview/analyses.ipynb
         - overview/models.ipynb
@@ -32,8 +66,9 @@ book:
         - overview/fitting.ipynb
         - overview/simulation.ipynb
         - overview/evaluation.ipynb
-    - part: templates.qmd
-      chapters:
+    - title: Templates
+      contents:
+        - templates.qmd
         - templates/fitting.ipynb
         - templates/simulation.ipynb
         - templates/parameter_shifting.ipynb
@@ -48,21 +83,21 @@ book:
         - templates/cat_recall_rate.ipynb
         - templates/cat_spc.ipynb
         - templates/catcrp.ipynb
-    - development.qmd
-  search: true
-  sidebar:
-    collapse-level: 1
 
 format:
   html:
-    theme: cosmo
+    theme:
+      - default
+      - styles.scss
+    number-sections: false
     lightbox: true
     toc: true
     toc-location: right
     grid:
-      sidebar-width: 210px
-      body-width: 1000px
-      gutter-width: 1rem
+      sidebar-width: 230px
+      body-width: 900px
+      margin-width: 220px
+      gutter-width: 1.5rem
     code-copy: true
     code-line-numbers: true
     code-fold: true
