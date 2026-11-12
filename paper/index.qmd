@@ -1,0 +1,373 @@
+---
+title: "jaxcmr: Developing and evaluating models of memory search"
+subtitle: "Working manuscript"
+from: markdown+tex_math_single_backslash
+keywords:
+  - memory search
+  - computational modeling
+  - model evaluation
+  - parameter estimation
+  - JAX
+---
+
+<!-- Canonical manuscript. Scope and evidence provenance: work/paper/. -->
+<!-- Author list, affiliations, and final title remain to be supplied. -->
+
+::: {.callout-note appearance="simple" collapse="true" title="Status of this working draft"}
+This draft develops the proposed article in completed form so that its scientific scope can be evaluated. Bracketed placeholders identify demonstrations, results, and release checks that remain to be completed; the empirical application has not yet been run. Numerical examples and development benchmarks reported without placeholders are recorded results, with provenance in `work/paper/evidence.md`. The development benchmarks precede the eventual paper release and are identified as such throughout.
+:::
+
+# Abstract
+
+Computational models of memory search explain how learning and retrieval determine which experiences come to mind and in what order. Developing these accounts requires researchers to compare mechanisms, evaluate several aspects of behavior, and estimate parameters efficiently. We introduce jaxcmr, a Python library that connects these research operations through separate interfaces for models, behavioral analyses, fitting objectives, and parameter search. Comparisons among retrieved-context models motivate the design. Worked examples distinguish changing a stopping rule from changing the representation of repeated experiences, showing how shared evaluation procedures accommodate both kinds of extension. An application to free recall connects fitting behavioral summaries with evaluating response sequences and predicting behavior in repetition conditions. We then distinguish the computational cost of a model evaluation from the effectiveness of a complete fitting procedure. In development benchmarks for temporal CMR, equivalent computation accelerated unchanged differential-evolution searches by approximately 13–15 times. Combining that computation with gradient-based fitting reduced completed search time by approximately 44–54 times in two directly paired cases; broader checks assessed fit quality across nine participants. These improvements apply to a specified CMR configuration and an objective that evaluates item choices over observed recall lengths. The library provides both shared research procedures and a route for incorporating efficient model-specific computation, supporting further model development without concealing the assumptions that determine its predictions.
+
+# Introduction {#memory-search-research-as-a-library-design-problem}
+
+Recalling a studied list involves recovering its contents and choosing a path through them. In free recall, participants can report studied items in any order; in serial recall, they are asked to reproduce the presentation order. Two people can remember the same items while recalling them in very different sequences. Models of memory search seek to explain how learning and retrieval produce these differences in accessibility and order. Developing such an account requires more than reproducing an aggregate recall score: the model must connect individual retrievals to the study history and explain how one response changes the prospects for the next.
+
+Retrieved-context theory provides an influential account of this connection. During study, items become associated with a changing representation of temporal context. Because that representation retains information from recent experience, items encountered near one another acquire associations with similar contextual states. Recalling an item reinstates information from its associated context, which helps cue items encountered nearby in the study sequence [@howard2002distributed]. The history of learning consequently guides the unfolding retrieval sequence.
+
+The Context Maintenance and Retrieval model (CMR) extended this principle to explain how several sources of organization interact [@polyn2009context]. Its contextual representation includes information about the circumstances of encoding, such as the task performed on a word, while its associative structure also represents longstanding semantic relationships. Words can therefore cluster during recall because they were studied close together, share meaning, or received similar processing. Later applications made other features of experience central to the explanation. A repeated presentation can reinstate earlier context and alter associations involving surrounding items [@lohnas2014retrieved]. Emotional CMR combines temporal and emotional context with changes in associative binding to explain interactions between emotional and neutral items [@talmi2019retrieved]. Continued development requires implementations that can express new representations and learning rules while retaining useful procedures for evaluating their consequences.
+
+## Comparing mechanisms and evaluating their consequences
+
+A named model often combines several assumptions that could be investigated separately. @gunn2025bridging examined this problem through a factorial comparison of CMR and the Context Retrieval and Updating model (CRU), which was developed for ordered sequence production. Their comparison varied associative learning, recall initiation, primacy, item identification, and termination under a common likelihood-based evaluation. The contribution of a mechanism depended on the task: CMR's output-dependent stopping rule was favored in free recall, whereas incorporating CRU's context-dependent stopping mechanism improved CMR's fit to serial recall. Decomposing the comparison made it possible to identify contributions that would have been obscured by treating each model as an indivisible alternative.
+
+Such comparisons place specific demands on software. Changing a stopping rule should leave the intended learning and retrieval calculations intact, and the inputs required by the new rule should be identifiable. Some changes also require a different representation: a rule that retrieves an end-of-list event presupposes that this event was encoded. Reusable software must therefore support controlled substitutions while allowing coordinated changes when the theory requires them. The appropriate unit of reuse can be a small component, a complete model, or an evaluation procedure shared across otherwise different models.
+
+Evaluation introduces another set of choices. Researchers often fit serial-position curves, probabilities of first recall, and measures of transitions between recalled items. These summaries connect model predictions to familiar behavioral phenomena, but each retains only part of the information in the response sequence. @morton2016predictive showed why this matters for semantic organization: semantic clustering can be affected by temporal relationships between the same items. Their predictive framework evaluated each observed response in its study and retrieval history, allowing semantic representations and cuing mechanisms to be compared within CMR. A likelihood-based comparison and a comparison of behavioral curves can therefore illuminate different aspects of the same model.
+
+The objective used in parameter search can also express a different scientific question. @zhang2023optimal used Bayesian optimization first to fit behavioral summaries and then to find encoding and retrieval policies that maximized recall under specified constraints. The optimization method was useful for both tasks, although the meaning of a successful solution changed. This example motivates separating the model, the objective applied to its predictions, and the procedure used to search for parameters. It also makes clear why a library should permit objectives beyond a single preferred measure of fit.
+
+## A library for continued model development
+
+Research software already supports substantial parts of this work. CyMR provides a Cython implementation of CMR with fitting and simulation facilities [@cymr]. In related areas, Dynamic Models of Choice connects model specification, estimation, recovery, and empirical assessment [@heathcote2019dynamic], while dynConfiR presents a workflow from data preparation through prediction and model comparison [@hellmann2026dynconfir]. SpeedyIBL illustrates the importance of connecting a precise theoretical specification to an efficient implementation across applications [@nguyen2023speedyibl]. These projects establish a practical expectation: a modeling library should help researchers complete and check an analysis, as well as express a model.
+
+jaxcmr addresses this expectation for memory search by organizing the workflow around shared model operations, behavioral analyses, objectives, and fitters. A new model supplies its study and retrieval calculations; compatible procedures then simulate it, score observations, and search its parameters. The library uses JAX for compilation, vectorization, and automatic differentiation [@jax2018github]. It also permits a model to supply a more efficient calculation of its sequence predictions when its structure supports one. The resulting design gives researchers a route from an understandable event-by-event implementation to specialized computation without moving the model's scientific assumptions into a separate fitting objective.
+
+Computational efficiency matters because model evaluation is repeated many times. Each participant, theoretical variant, starting point, or recovery dataset adds parameter searches, and each search may require thousands of model evaluations. A faster calculation expands the comparisons that can be checked within a research budget. Its practical value nevertheless depends on fit quality: quickly terminating at an inferior solution does not provide the same benefit as reaching an equally good solution sooner.
+
+The demonstrations below address these requirements in sequence. First, small examples show how a component substitution and a change in representation pass through the same model interface. Second, a free-recall application connects behavioral fitting targets, sequence likelihood, and predictions for repeated presentations. Third, numerical validation and performance comparisons separate equivalent computation from improvements in parameter search. The empirical and performance examples use regular temporal CMR and one dataset, keeping the evaluation close enough to the model specification for readers to inspect the full chain from assumptions to results.
+
+# Library design and model implementation
+
+## Study, prediction, and retrieval as shared operations
+
+A memory-search model describes how experience changes its state and how that state determines the next response. In jaxcmr, the principal interface expresses these commitments through four operations (@tbl-model-operations). An *interface* specifies what other code can request from an object. A Python *protocol* records the methods and data needed to fulfill that request without requiring all implementations to inherit from one model class. A model may consequently use different internal representations while remaining compatible with the simulator and likelihood evaluator.
+
+| Operation | Method | Role in an analysis |
+| --- | --- | --- |
+| Study an item | `experience` | Update the model for every presentation, including repetitions. |
+| Begin recall | `start_retrieving` | Establish the cue and other state used to initiate retrieval. |
+| Predict an outcome | `outcome_probability` | Assign probability to a response or to stopping. |
+| Incorporate an outcome | `retrieve` | Update the state used to predict the next outcome. |
+
+: Models own the scientific calculations; shared procedures determine which events are supplied and how predictions are used. {#tbl-model-operations}
+
+Prediction and retrieval updating are separate operations because simulation and likelihood evaluation obtain the next response in different ways. A simulator samples from the predicted distribution. A likelihood evaluator supplies the response that was observed and records its probability. Both then incorporate that response into the model before predicting the next one. The same distinction permits selective scoring: an unscored response can still update the state when it belongs to the history of a later scored response.
+
+For example, the following calculation scores the sequence A, C after studying A, B, A, C. Item labels are represented by positive integers; zero is reserved for stopping or padding under the relevant procedure. The second A remains a separate study event.
+
+```python
+for item in (1, 2, 1, 3):
+    model = model.experience(item)
+model = model.start_retrieving()
+
+log_probability = 0.0
+for response in (1, 3):
+    log_probability += jnp.log(model.outcome_probability(response))
+    model = model.retrieve(response)
+```
+
+Here, `model` is an initialized implementation and `jnp` is JAX's numerical array module. The state returned by each operation replaces the previous state. This style makes the sequence of updates explicit and supports JAX transformations; library procedures use compiled loops and vectorization to perform the corresponding work over trials and candidate parameter values.
+
+The dataset interface preserves the distinction between a presented item and its occurrences. Common fields identify participants, presentation counts, presented item labels, and recall responses. Additional array-valued fields can describe semantic identities, valence, or other experimental variables. A model that requires an additional field checks for it when its factory is constructed. Interpretation of the response codes remains explicit in the evaluation procedure: a response naming a repeated item does not, by itself, identify which presentation supplied the remembered context.
+
+## Example 1: Changing a stopping rule
+
+An output-dependent stopping rule and a rule based on retrieval support provide a compact controlled comparison. Both can be attached to regular CMR while retaining its context representation and associative memories. The output-dependent rule uses the number of responses already made. The support-ratio rule uses the model's activations for available and previously recalled items. Their input protocols express these different requirements; the latter also requires that the availability masks and activations refer to the same candidate items.
+
+We studied A, B, C, D and supplied two histories, A–B and A–D, to otherwise identical models. The output-dependent rule was (p_{\mathrm{stop}}(t)=a\exp(bt)), capped below one while items remained available. For illustration, both policies used their scale and growth settings of 0.02 and 0.5; these settings have different meanings in the two rules and were not calibrated to produce equal overall stopping rates. The remaining parameters are given in Appendix A. No parameters were fitted in this example.
+
+| Supplied history | Output-dependent stopping | Support-ratio stopping | Conditional item probabilities under either rule |
+| --- | ---: | ---: | --- |
+| A–B | 0.0544 | 0.6136 | C: 0.5349; D: 0.4651 |
+| A–D | 0.0544 | 0.6045 | B: 0.5079; C: 0.4921 |
+
+: Exchanging a stopping rule changes continuation while preserving item selection conditional on continuation at the same supplied history. Values were calculated with 64-bit arithmetic. {#tbl-stopping-example}
+
+The context state and both associative matrices were identical across policies at each supplied history. The item probabilities conditional on continuing were also identical (@tbl-stopping-example). The resulting probability of a particular overt response was its conditional item probability multiplied by the policy's probability of continuing. Thus, the substitution had an identifiable computational consequence while leaving the intended study and reinstatement calculations fixed. Simulated sequences could subsequently diverge because one policy stopped earlier; the controlled check compares the models before such differences in generated histories accumulate.
+
+This example also clarifies the scope of component exchange. CRU's end-of-list mechanism requires an encoded STOP candidate that participates in retrieval. It cannot be supplied to ordinary CMR solely by replacing a stopping function, because the required candidate is absent. The CRU–CMR comparison motivates making such dependencies explicit; the present example demonstrates a substitution whose required information is already available. Reproducing the full factorial comparison is a separate modeling application.
+
+## Example 2: Changing the representation of a repeated item
+
+A change in what the model represents can require replacing more than one component. In regular CMR, repeated presentations of A probe the same item input and update associations involving that input. Positional CMR instead associates each presentation position with context and records which item occurred there. A response naming A can therefore correspond to more than one stored occurrence. This implementation uses their retrieval supports to weight the occurrence associations that reinstate context. It implements a weighted mixture; it does not select a single latent occurrence on every retrieval.
+
+We studied A, B, A, C in both models, disabled stochastic stopping, and supplied A as the first recall. At the illustrative parameter values in Appendix A, regular CMR assigned the next response probabilities 0.5139 to B and 0.4861 to C. Positional CMR assigned 0.4885 and 0.5115, respectively. Immediately before A was recalled, the positional model assigned weights 0.5076 and 0.4924 to A's two occurrences. These values are predictions of the specified implementations at one parameter setting, illustrating the consequence of a representation change rather than an empirical advantage for either account.
+
+The shared evaluator still supplied four study events and one recalled item, then requested the next item probabilities. Inside the positional model, however, availability referred to occurrences, and recalling A suppressed both of its occurrences as future responses. Code that assumed availability was always item-indexed would misinterpret that state. The model interface allows this internal change, whereas a more specialized component can require an additional contract when it needs to interpret the candidate representation.
+
+Together, the two examples distinguish the levels at which research software can support a theoretical comparison. A compatible stopping rule can be replaced while retaining the surrounding model. A different representation can be introduced through a new model that retains the external study and retrieval operations. Both remain available to shared simulation and evaluation procedures, with their scientific differences located in the implementation that defines them.
+
+# Worked application: Behavioral fitting and sequence evaluation
+
+## Data, model, and observation conventions
+
+The empirical example uses the repetition experiment reported by @lohnas2014retrieved, distributed in the local data archive as `LohnasKahana2014`. The archive contains 35 participants and 1,680 lists. Each list has 40 presentations. All-novel lists contain 40 distinct items; massed and spaced repetition lists contain 20 distinct items presented twice; mixed lists contain 34 distinct items, including six presented twice. This design lets the same model be evaluated on familiar free-recall summaries and on changes in item accessibility when presentations repeat.
+
+The worked application uses the nine participants included in the computational investigations below. They form an illustrative analysis set selected during method development, not a representative sample chosen to estimate a population effect. Parameters are estimated separately for each participant. We fit the all-novel lists and then evaluate the same parameters on repetition lists. This separation asks whether a model calibrated to ordinary recall generates useful predictions when the study history changes. The repetition conditions were known during model development, so this is a demonstration of transfer between conditions rather than an independent confirmation of the theory.
+
+**[APPLICATION E1 TO COMPLETE: Run the specified nine-participant analysis; record participant and trial inclusion, all fit attempts, final objectives, and predictions. The following methods specify that demonstration; its empirical results remain unmeasured.]**
+
+The model is the temporal CMR configuration used in the performance investigations: linear associative memories, learning against the context preceding the current integration step, no semantic pathway, and suppression of previously recalled item identities. Its nine continuous parameters govern context updating, associative support, primacy, and item choice (Appendix A). The same parameterization and bounds are used for both fitting objectives. This is a particular probabilistic CMR implementation, rather than a claim that every published implementation of CMR specifies identical response probabilities.
+
+The observation convention restricts the question further. Stochastic stopping is disabled, and each simulated list is truncated after the number of responses observed on that list. Likelihood evaluation scores the corresponding observed item choices. Both procedures therefore evaluate item selection and order over an externally supplied number of outputs. They do not predict total recall or the decision to stop. A list with no observed responses contributes no item-choice likelihood, and analyses requiring a first response or a transition use only lists with the corresponding opportunity.
+
+Repeated study events are preserved throughout data preparation. In this archive, recall codes identify study positions; before scoring a response as an item choice, the code is mapped through that trial's presentation sequence to its item identity. Both presentations of the same item consequently map to the same overt response. Eligibility checks reject unsupported response codes, repeated item responses, and interior padding rather than silently deleting them. **[E1 DATA: Confirm the archive's preprocessing provenance and report any exclusions in the application set, including whether the distributed data already removed errors.]** These choices define the observations the present model can explain; an application to intrusions or repeated responses requires an appropriate model and observation procedure.
+
+## Fitting behavioral summaries
+
+The summary objective combines three conventional analyses of all-novel lists. The serial-position curve estimates the probability that an item at each presentation position is recalled. The probability-of-first-recall curve describes where search begins. The lag conditional-response-probability curve describes transitions between study positions relative to the opportunities remaining after previous recalls. We use lags −5 through −1 and 1 through 5, excluding transitions or opportunities invalid under the stated response convention. These summaries respectively constrain accessibility, initiation, and local organization without requiring an occurrence assignment for repeated items.
+
+Each analysis function is applied to both observations and model simulations. The fitting objective averages squared error within each analysis and then gives the three analyses equal weight. Let (a_{jb}) be observed bin (b) of analysis (j), \(\widehat a_{jb}(\theta)\) its simulated value, and \(s_{jb}>0\) a specified scale. With eligible bins \(B_j\),
+
+$$
+E(\theta)=\frac{\sum_j w_j\,|B_j|^{-1}
+\sum_{b\in B_j}\left[\frac{\widehat a_{jb}(\theta)-a_{jb}}{s_{jb}}\right]^2}
+{\sum_j w_j}.
+$$ {#eq-summary-error}
+
+For this application, all weights and scales are one. Equal analysis weights prevent the two 40-bin curves from automatically outweighing the 10-bin transition curve. A bin without an empirical opportunity is omitted; a zero observed probability with a valid denominator remains part of the objective. All three analyses share the same simulated sequences for a candidate parameter vector. The library also supports pooling eligible bins and specifying other weights or scales, making these choices explicit parts of the fitting objective.
+
+We fit this objective with evosax differential evolution (DE), which does not require derivatives. Random streams are held fixed within each search to reduce changes in the simulated objective caused solely by drawing a new sample at every candidate. Final candidates are reevaluated with independent simulations, so an apparently good fit is checked beyond the simulation draws used to find it. **[E1 FITTING: Set and report the simulation count, independent verification count, repeat count, and search budget after a small convergence check; retain the same resulting settings across participants.]**
+
+## Fitting the observed sequences
+
+Sequence evaluation uses the same study lists and response histories but retains the identity of each observed choice at each output. For trial \(l\), let \(S_l\) denote the study sequence, \(r_{lt}\) the response at output \(t\), and \(r_{l,<t}\) the preceding responses. Under the specified convention, the negative log-likelihood is
+
+$$
+\mathcal L(\theta)=
+-\sum_l\sum_{t=1}^{n_l}
+\log q_\theta(r_{lt}\mid S_l,r_{l,<t}),
+$$ {#eq-sequence-likelihood}
+
+where \(n_l\) is the externally supplied output count and \(q_\theta\) is the distribution over available item identities with stochastic stopping disabled. The evaluator records the probability of an observed response before incorporating that response into the model. Recalling A on the repeated list A, B, A, C therefore contributes one item-choice term; both study occurrences have already affected the state from which its probability is calculated.
+
+This objective must be distinguished from dropping only the final STOP term of a model that can stop. Such a model generally assigns an item probability of \((1-p_{\mathrm{stop}})q_\theta\), so its likelihood still penalizes a low probability of continuing before each observed item. Nor does the present procedure evaluate a joint distribution over recall lengths and sequences. Supplying the output count deliberately focuses both fitting objectives on item selection and organization.
+
+For the comparison between objectives, we also fit the sequence likelihood with DE, using repeated searches and retaining each objective's best verified solution. This keeps the interpretation from depending on assigning a different local optimizer to each objective. Equal computational budgets do not establish equal proximity to their optima; final score stability across repeats is reported alongside the predictions. Gradient-based estimation is examined separately in the performance comparison, where every method optimizes the same likelihood.
+
+## Assessing fitted predictions and transfer to repetition lists
+
+The application evaluates both sets of fitted parameters with the same analyses. On all-novel lists, simulated serial-position, first-recall, and transition curves show which aspects of ordinary recall each fitted model captures. Each parameter set is also scored by its sequence likelihood. These are two evaluations of the fitted predictions; raw MSE and negative log-likelihood are not placed on a common numerical scale or treated as interchangeable measures of evidence.
+
+For repetition lists, parameters remain fixed at their all-novel estimates. Sequence scores are expressed per observed response and summarized separately for massed, spaced, and mixed conditions. This comparison is meaningful between fitting procedures within a condition. Differences in candidate-set size mean that raw scores across list types do not, by themselves, indicate which condition the model explains better.
+
+Mixed lists supply a complementary behavioral diagnostic with an unambiguous item-level denominator. For each list, we calculate the fraction of distinct repeated items recalled and the fraction of distinct singleton items recalled. An item recalled once counts once regardless of whether it had one or two presentations. Their difference describes the allocation of recall to repeated items under the observed output count. Because total recall length is supplied, this analysis cannot establish that the model explains the overall benefit of repetition for the number of items recalled. It also does not isolate a particular local encoding mechanism from other effects of the mixed list.
+
+**[FIGURE E1: Four panels. A–C show empirical and independently simulated serial-position, first-recall, and lag-CRP curves for the two objectives. D shows the repeated-minus-singleton recall-probability difference in mixed lists, with paired participant points and both model predictions. Give participants equal weight in the plotted group means and resample participants, not individual responses, for interval estimates. The caption should emphasize that fitting targets and subsequent behavioral checks use the same analysis definitions.]**
+
+**[RESULT E1: Report the observed and predicted curves, deviations for each objective, variation across participants, and simulation uncertainty. Supply per-response sequence scores on all-novel and repetition lists. State whether any differences between fitting objectives exceed simulation and optimization instability; if they do not, report that outcome.]**
+
+This demonstration links parameter estimation to the scientific questions asked of a model. The three fitting curves emphasize selected features of ordinary recall. Sequence evaluation asks how well particular choices are predicted in their histories. The mixed-list analysis then tests a consequence of repeated encoding without assigning an observed response to an unobserved occurrence. The workflow remains useful whether the two objectives yield similar predictions or expose different failures: each outcome identifies what the available observations and scoring choices constrain.
+
+# Numerical validation and computational performance
+
+## Efficient computation within the model
+
+JAX contributes three capabilities to repeated model evaluation. Just-in-time compilation turns a numerical function into an executable calculation that can be reused for compatible inputs. Vectorization applies a calculation across collections such as trials or parameter candidates. Automatic differentiation computes how an output changes with its numerical inputs [@jax2018github; @jaxconcepts]. For a differentiable sequence likelihood, a compiled value-and-gradient calculation returns the objective and its derivatives with respect to the fitted parameters. A fitter can use those derivatives to choose subsequent candidate values.
+
+The distinction between likelihood and simulation matters here. Evaluating an observed sequence supplies its discrete responses, allowing differentiation through the state updates and response probabilities. Sampling new discrete responses for MSE does not provide the same ordinary differentiable calculation of expected error. The present gradient comparisons therefore concern the likelihood objective. Simulation-based fitting remains available through methods such as DE, and both objectives benefit when their underlying model computations become cheaper.
+
+Compilation alone does not remove unnecessary model calculations. Regular CMR permits an additional implementation that uses the complete observed presentation and recall schedules to organize its work (@tbl-optimization-scope). The optimized model retains study contexts and constructs the required associations from them, rather than carrying every changing associative matrix through every operation. Repeated presentations still reinstate previously learned information. When identical study schedules occur on several lists, encoding can be shared; when a context dimension never becomes active, it need not be represented in the calculation.
+
+| Computational change | Reason it preserves the supported calculation | Boundary for a new model |
+| --- | --- | --- |
+| Prepare item mappings and requested outputs once | Observed codes and scoring masks are fixed across candidate parameters. | Retain events needed for later states even when their own scores are omitted. |
+| Index an item or position directly | A one-hot probe of linear memory selects the corresponding row or column. | A nonlinear instance-memory probe requires its own derivation. |
+| Construct associations from saved study contexts | The supported learning rule is additive, and unused intermediate associations need not be materialized. | Associations used during encoding must be available when they affect the next state. |
+| Share identical encoding and omit inactive dimensions | The retained inputs determine the same study trajectory. | Valence, source, semantics, and occurrence units must be included when they influence encoding. |
+| Calculate recall contexts before scoring the responses | In this CMR configuration, the supplied item determines reinstatement independently of retrieval competition. | Support-weighted occurrence reinstatement couples scoring to the next context. |
+
+: Optimizations are justified by dependencies in a specified model. The table identifies what must be reconsidered when extending that model; it does not establish speed gains for unbenchmarked variants. {#tbl-optimization-scope}
+
+The last change explains an important limit. In ordinary temporal CMR, the observed recalled item determines the input that updates context. The trajectory can therefore be generated first and the required choice probabilities calculated together afterward. In the positional model illustrated above, retrieval support weights the occurrence associations reinstated after a response. Changing that support can alter the next context, so the same separation would not preserve the calculation. An efficient positional implementation must respect that dependency.
+
+jaxcmr places this specialized computation in `models/optimized_cmr.py`. An optional sequence-prediction interface allows the model to prepare fixed data and return the probabilities requested by a generic likelihood. The likelihood still decides which events to score and how to combine their log probabilities. New models can initially use the ordinary event interface, then supply specialized predictions where equivalence has been established. This arrangement makes the scope of the optimization a property of the model implementation rather than an undocumented assumption inside a loss function.
+
+## Validation methods
+
+Numerical validation compares the optimized implementation with the ordinary event-by-event CMR implementation under matching parameters and observation conventions. The test cases include a single repeated-presentation trial, four lists covering all list types, and complete participant datasets. Parameter cases cover the interior of the permitted region and diagnostically important boundaries. Checks compare response probabilities, total negative log-likelihood, and derivatives with respect to all nine continuous parameters. Finite-difference checks at well-behaved interior points provide a further check on differentiation that does not rely solely on two automatic-differentiation paths.
+
+The supported configuration fixes linear memories, learning before context integration, no repeated item responses, and `NoStopTermination`. The optimized implementation rejects incompatible options rather than silently applying its shortcuts to a different model. Relabeling item identities should leave the corresponding probabilities unchanged, while removing a repeated presentation generally should not. These properties distinguish a harmless change in data representation from a change to the study history the model must explain.
+
+**[VALIDATION V1: Assemble the release validation table with the number and construction of parameter cases, maximum absolute and relative errors, derivative and finite-difference tolerances, relabeling and padding checks, and explicit incompatible-input checks. Identify which are existing regression tests and which were added for the paper. Run the table against the archived paper release.]**
+
+The existing development validation supplies a substantial starting point. Forty parameter cases were checked on the repetition trial, the four-list set, and participants 31 and 36. The model-owned calculation and the preceding specialized likelihood returned exactly matching negative log-likelihoods; event probabilities and all nine derivatives agreed with ordinary CMR within the recorded tolerances. A subsequent two-participant integration comparison retained the same DE parameters and likelihoods after 198 and 191 generations, respectively. These checks establish continuity with the development implementation; the release table will make the numerical error bounds available alongside the article's claims.
+
+One change to the original computation was a numerical correction rather than an algebraically equivalent acceleration. A historical power-scaling shortcut at a sensitivity of exactly one changed its normalization. Removing that shortcut altered a diagnostic likelihood by approximately \(5.2\times10^{-6}\). The benchmark distinguishes this repair from subsequent computational changes. Agreement at sampled parameter vectors does not justify claiming exact equivalence to every behavior of the uncorrected source.
+
+## Performance methods
+
+Performance evaluation addresses three questions: how much faster the same work can be performed, how reliably a fitting procedure reaches a strong solution, and how much elapsed time the complete procedure requires. The development experiments used CPU execution with 64-bit arithmetic on macOS 26.5.2 (arm64), with Python 3.12.13, JAX and jaxlib 0.8.3, SciPy 1.15.0, and evosax 0.3.1. Each full-participant fitting problem included the participant's 48 lists, preserving all four list types, and optimized all nine continuous parameters jointly. This workload differs from the all-novel calibration in the preceding application: here the full observed dataset supplies a common optimization problem for every method.
+
+The first comparison held evosax DE fixed while changing the likelihood computation [@lange2022evosax]. It used participant 2, a population of 135, 24 generations, and three common random seeds. Fixed generation counts permit a direct comparison of computational cost without attributing earlier convergence to faster execution. The reference was an archived initial jaxcmr implementation. A second, longer comparison retained the same DE search while requiring a stricter convergence tolerance to reach a comparable solution quality.
+
+The optimizer comparison gave every method the efficient likelihood. Gradient procedures used SciPy's bounded L-BFGS-B solver or its constrained trust-region solver, with either an exact JAX Hessian or a BFGS approximation [@virtanen2020scipy]. A Hessian describes how gradients change with the parameters; the BFGS method estimates this curvature from successive evaluations. DE was compared in both its original coordinates and improved coordinates, so the gradient procedures did not receive sole access to the coordinate changes used during development.
+
+The screened gradient procedures first evaluated a bank of 64 candidate parameter vectors, then refined four promising starts separated in parameter space. Sampling used log-transformed positive scales and a primacy-retention coordinate. During local optimization, parameters were linear except for the retention transformation \(r=\exp(-d)\), where \(d\) is primacy decay. Bounds were mapped to preserve the allowed physical model parameters. Primacy amplitude and decay remained distinct parameters, and the model continued to report decay in its original units. The complete recipe includes the screening distribution, coordinate transformation, restart selection, and local solver; its performance cannot be attributed to the solver alone.
+
+Searches received a four-second warm budget, including candidate screening and restarts, with at most one second for each local refinement. DE used 135 candidates, differential weights of 0.5–1, crossover 0.9, and relative tolerance \(10^{-6}\). Monitoring inspected its population in blocks of four generations. We retained overshoot in elapsed-time records and credited only solutions available before the deadline. For each participant, success meant reaching a negative log-likelihood within 0.1 of a separately established reference. The references were best observed solutions, not known global optima, and were unavailable to the optimizers' stopping decisions. This criterion measures agreement with a strong fit; it is not a threshold for adequate explanation of behavior.
+
+Six participants were used in the first complete-procedure comparison, with three seeds per participant. The settings were then held fixed for three additional participants selected before their validation fits, again with three seeds each. The development set included cases that had informed earlier exploration, so the two groups are reported separately. The second group tests the unchanged procedure on additional participants; it does not establish general performance across datasets or model families.
+
+Warm search time excludes preparation and compilation but includes the search's initialization and restarts. Setup is reported separately, and setup-plus-search summaries add the corresponding times within each run before aggregation. A retrospective time to reach a reference score is distinguished from actual completion: the fitter does not know that it has reached a benchmark target. Timed JAX computations are synchronized so the measurement includes their execution. Data loading, independent verification, and interpreter startup are excluded from the recorded development timings.
+
+**[BENCHMARK B1: Record the exact CPU, operating system, thread settings, package versions, precision settings, source identifiers, and data checksum for the paper release. Repeat the selected paired comparisons and report individual runs and variation. Add an independently measured first-use latency rather than treating the historical setup sum as a fresh-process measurement.]**
+
+## Results: Faster computation benefits differential evolution
+
+Holding the DE search fixed isolates the shared computational improvement (@tbl-shared-computation). Median warm time fell from 18.150 s to 1.289 s, a 14.08-fold reduction. The searches returned identical parameter vectors and generation counts across the compared implementations; the largest negative log-likelihood discrepancy was below \(10^{-12}\). These short runs did not reach the strong reference fits and therefore measure evaluation cost rather than time to an adequate solution.
+
+| Likelihood computation | Median warm search (s) | Speed relative to initial |
+| --- | ---: | ---: |
+| Initial implementation | 18.150 | 1.00× |
+| Numerical repairs | 17.874 | 1.02× |
+| Unscored trailing padding removed | 14.717 | 1.23× |
+| Compressed temporal CMR calculation | 1.743 | 10.41× |
+| Association history retained only where needed | 1.289 | 14.08× |
+
+: Development comparison with unchanged evosax DE: participant 2, 48 lists, 135 candidates, 24 generations, and three seeds. Warm time includes initialization and search after compilation. The rows trace successive implementations; the compressed calculation combines several changes and does not isolate their individual contributions. {#tbl-shared-computation}
+
+Longer paired searches reached comparable fit quality in two participants (@tbl-paired-fits). Replacing only the likelihood computation reduced completed DE search time from 107.303 to 7.524 s for participant 2 and from 140.746 to 10.676 s for participant 31. These are shared gains of 14.26 and 13.18 times, respectively. They show that the principal computational acceleration remains useful to a population-based optimizer that does not use gradients.
+
+| Participant | Initial computation, DE (s) | Efficient computation, same DE (s) | Efficient computation, screened trust/BFGS (s) | Shared gain | Combined gain |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2 | 107.303 | 7.524 | 2.447 | 14.26× | 43.86× |
+| 31 | 140.746 | 10.676 | 2.615 | 13.18× | 53.82× |
+
+: Directly paired completed warm searches from development records, one common seed per participant. All listed fits reached their participant's reference criterion. Initial and efficient DE returned the same parameter vectors. Combined gains compare the entire gradient recipe with the initial DE computation; compilation and data loading are excluded. Other DE seeds sometimes failed the criterion, as discussed below. {#tbl-paired-fits}
+
+Moving the efficient calculation into the model preserved its behavior and performance. In a subsequent two-participant check including preparation and fitting, gradient time was 8.212 s compared with 8.441 s for the preceding specialized loss, and DE time was 20.926 s compared with 21.670 s. These near-equal measurements show that the revised library boundary retained the earlier acceleration. They do not establish another independent speedup to multiply by the ratios in @tbl-paired-fits.
+
+## Results: Fit quality and the cost of complete procedures
+
+The six-participant comparison showed why optimizer quality must accompany timing (@tbl-fitting-recipes). Both screened trust-region procedures reached the reference criterion in all 18 runs; screened L-BFGS-B reached it in 15. Neither DE configuration reached its criterion within the four-second budget. This deadline result does not imply that DE could not fit the data: longer runs reached the target in all three checks for participant 2 and one of three for participant 31. With the usual, looser relative tolerance of 0.001, the checked fast DE runs for participant 2 terminated earlier but missed the criterion.
+
+| Complete recipe | Criterion reached | Median warm time to criterion (s) | Median completed warm search (s) | Median setup (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Screened L-BFGS-B | 15/18 | 0.743 | 2.578 | 2.238 |
+| Screened trust region, exact Hessian | 18/18 | 0.674 | 3.517 | 6.115 |
+| Screened trust region, BFGS approximation | 18/18 | 0.439 | 2.100 | 2.238 |
+| DE, original coordinates | 0/18 | >4 | 4.131 | 2.977 |
+| DE, improved coordinates | 0/18 | >4 | 4.115 | 2.561 |
+| DE followed by exact-Hessian trust region | 18/18 | 2.141 | 2.450 | 7.902 |
+
+: Six participants and three seeds per method in the development comparison. All methods used the same efficient likelihood. Times to criterion are retrospective; failures were capped at four seconds for the recorded numerical summaries. Completed DE times include monitoring overshoot, while success credits only pre-deadline states. Setup values are recorded construction and required compilation times, not independent fresh-process latencies. {#tbl-fitting-recipes}
+
+The additional-participant check provides a separate assessment of the unchanged gradient recipes. All three reached their criteria in all nine runs. Median completed warm time was 1.553 s for trust/BFGS, 1.947 s for L-BFGS-B, and 2.801 s for exact-Hessian trust. Median setup-plus-search time was 3.790, 4.134, and 8.713 s, respectively. L-BFGS-B was faster on one of the three participants, so the ranking was not uniform. The economical procedure in these tests used gradients and an approximate curvature update; calculating exact second derivatives did not consistently repay its additional cost.
+
+Together, the two cohorts yielded 27 successful runs out of 27 for each trust-region recipe and 24 out of 27 for L-BFGS-B. The direct paired cases in @tbl-paired-fits combined shared computational gains with a more efficient search procedure, giving completed warm improvements of approximately 44–54 times over the strengthened initial DE baseline. That magnitude is established for those two pairs. The wider cohort supports the reliability of the screened procedures within the tested scope, but does not extend the same baseline speed ratio to every participant.
+
+**[FIGURE B1: Plot each participant and seed's final likelihood gap against elapsed time for the selected paper-release recipes, distinguishing the development and additional-participant groups. Show setup separately from search, and display failures as failures. Include a panel for the two directly paired initial-DE comparisons; do not present their single-seed ratios as a cohort distribution.]**
+
+An external implementation supplies a different comparison from an archived jaxcmr baseline. CyMR is the relevant existing CMR package, but an external speed ratio is interpretable only after aligning the learning rule, choice rule, initialization, precision, and scoring conventions. **[EXTERNAL B2: Establish and document a genuinely matched CMR configuration with CyMR, verify its response probabilities on small lists, and then report simulation or likelihood timings for that common calculation. If equivalence cannot be established, explain the model differences and omit an interchangeable-computation speed ratio.]** The present numerical results establish improvement over the recorded evosax-based jaxcmr workflow; they do not establish a measured advantage over CyMR.
+
+# Discussion
+
+Developing a memory-search model involves deciding what changes, what remains shared, and which observations bear on the difference. jaxcmr organizes these decisions around model operations, evaluation procedures, and parameter search. The stopping example shows a substitution that leaves learning and reinstatement intact at a supplied history. The positional example changes the representation while retaining the operations used by shared evaluators. The empirical application connects familiar behavioral summaries to sequence evaluation, and the computational comparisons distinguish faster calculation from a more successful search. These demonstrations make the library's contribution assessable through research operations that a user can reproduce.
+
+## Reuse follows the scientific comparison
+
+The CRU–CMR comparison illustrates why modularity has scientific value: a difference between named models can be decomposed into mechanisms whose contributions vary across tasks. Software supports that reasoning when a change has a visible location and compatible calculations remain shared. A protocol is useful because it states the operations a component requires; scientific interpretation additionally depends on what its inputs mean. Item and occurrence availability, for example, cannot be interchanged merely because both are Boolean arrays.
+
+New research will continue to require changes that exceed a reference model's component boundaries. A researcher introducing emotional context, a different semantic pathway, or occurrence-based retrieval should be able to implement the necessary state and updates while retaining compatible simulation and scoring procedures. The event interface provides that starting point. Specialized sequence prediction then permits another implementation of the same model when its dependencies justify a faster calculation. The validation obligation is attached to that implementation: the speedups demonstrated for temporal CMR do not automatically transfer to positional, semantic, emotional, or nonlinear instance-memory models.
+
+## Evaluation choices remain part of the method
+
+Behavioral summaries and likelihoods answer related but distinct questions. A summary objective explicitly weights selected regularities; a sequence likelihood evaluates the observed choices in their particular histories. Subsequent behavioral checks remain informative under either approach. **[DISCUSSION E1: Replace this sentence with the specific lesson supported by the completed empirical application, including any agreement or discrepancy between objectives and any failure of transfer to repetition conditions.]** The application is intended to show how those choices can be made and inspected, without treating either objective as generally sufficient for model evaluation.
+
+The observation convention is equally consequential. Supplying recall length makes a tractable item-choice analysis possible and permits a matched comparison with simulated summaries. It leaves stopping unexplained. Likewise, a repeated response identity can be observed without revealing which occurrence context was reinstated. A likelihood over those identities must be derived from the specified retrieval rule, whether it is a mixture or a model that explicitly represents latent occurrence selection. Computational convenience does not establish that two such rules are equivalent.
+
+## What faster fitting makes possible
+
+The performance results identify two sources of practical improvement. Equivalent computation reduces the cost of objective evaluations and benefits DE as well as gradient methods. Derivatives, informative initialization, and repeated local refinement can then reduce the search needed to reach a strong solution. Reporting those contributions separately prevents a comparison from crediting gradients with all the benefits of a faster likelihood. It also provides a useful fallback: a model or objective that cannot use ordinary gradients may still benefit from improved computation and population search.
+
+Cheaper complete fits could make stability checks, model comparisons, and recovery analyses more routine. The present benchmarks demonstrate the computational opportunity, rather than completing each of those scientific applications. In particular, convergence to a strong likelihood does not establish identifiable parameters. Several parameter combinations may produce similar predictions, especially when nine parameters are estimated from a small number of lists. A study interpreting parameter differences would require recovery and sensitivity analyses matched to its design. The current paper's performance claim concerns attaining fit quality, not recovering a unique psychological parameter vector.
+
+The measurements are also limited to CPU execution, one dataset, a temporal CMR configuration, and a conditional item-choice objective. They do not establish the relative value of gradient methods on accelerators, a universal optimizer ranking, or equally large gains for other model families. Compilation can dominate short jobs, while repeated analyses can amortize it. Reporting both setup and search, unsuccessful starts, and the precision and source of the numerical calculation allows researchers to judge which result applies to their use case.
+
+jaxcmr brings these choices into a common workflow. A researcher can specify a new account of study and retrieval, evaluate it against explicit observations and behavioral targets, and improve its computation while checking the predictions that should be preserved. The library's value lies in making this cycle easier to carry out and inspect as the models themselves continue to change.
+
+# Availability and reproducibility
+
+jaxcmr is implemented in Python and distributed under the Apache 2.0 license. Source code is available at [the project repository](https://github.com/githubpsyche/jaxcmr), and the manuscript links to the documentation for additional examples. The version used for the article, executable worked examples, environment specification, selected benchmark records, and scripts producing the figures and tables are archived at **[RELEASE R1: version, persistent repository identifier, and working example entry points]**. The article uses saved analysis outputs; rendering it does not run fitting experiments.
+
+The archive distinguishes the paper's release measurements from the development records used to motivate its comparisons. Reproduction instructions identify the input-data version, model and objective configuration, seeds, and timing boundaries for each result. **[RELEASE R1: Supply a short verified installation and execution example that reproduces a small repeated-presentation likelihood and its gradient before the full empirical application. Confirm data redistribution permissions and provide the original dataset source and checksum.]** This small example is the entry point for readers checking their installation or adapting the workflow to a new model.
+
+# Appendix A: Temporal CMR configuration
+
+The regular-CMR examples use normalized temporal context and linear item-to-context and context-to-item associations. Each study event first retrieves contextual input from its item representation. Context is updated using the encoding drift rate, while learning in the chosen configuration associates the item with the preceding context state. Repeated presentations probe the accumulated associations for the same item. Recall begins by integrating the initial context into the end-of-study state, with a separate drift rate controlling this reinstatement. A recalled item then reinstates its associated contextual input using the recall drift rate.
+
+| Parameter | Function | Illustrative value |
+| --- | --- | ---: |
+| `encoding_drift_rate` | Integration of retrieved input during study | 0.5 |
+| `start_drift_rate` | Integration of initial context before recall | 0.4 |
+| `recall_drift_rate` | Integration following an item recall | 0.6 |
+| `learning_rate` | Item-to-context learning and its initial-association balance | 0.3 |
+| `shared_support` | Background context-to-item support shared across item units | 1.0 |
+| `item_support` | Initial support connecting corresponding context and item units | 1.5 |
+| `primacy_scale` | Additional context-to-item learning at the start of study | 1.0 |
+| `primacy_decay` | Decline in additional learning across study events | 0.1 |
+| `choice_sensitivity` | Power transformation of retrieval support before item choice | 2.0 |
+
+: Continuous parameters of the temporal CMR configuration. Values specify the small mechanism examples, not fitted empirical parameters. {#tbl-model-parameters}
+
+Context-to-item learning at zero-indexed study event \(k\) is scaled by \(1+\phi\exp(-dk)\), where \(\phi\) and \(d\) are primacy scale and decay. For available items, nonnegative retrieval support is raised to the choice-sensitivity power relative to its maximum, a small positive floor is added, and the values are normalized into item probabilities. This probabilistic choice rule is part of the specified implementation. With repeats suppressed, recalling an item removes that identity from the subsequent response set.
+
+The fitting investigations constrain the three drift rates and learning rate to the interior of (0, 1), and the remaining five parameters to positive values no greater than 100. The source uses machine epsilon to avoid exact endpoints. Learning after context integration and repeated recall responses are disabled. The positional example additionally fixes occurrence-weight sensitivity to one; its weighted reinstatement and occurrence-level availability are described in the main text. The stopping example adds the two policy parameters, whereas the empirical and performance likelihoods disable stochastic stopping.
+
+For an explicit specification, let \(F\) have item inputs as rows and context outputs as columns, and let \(G\) have context inputs as rows and item outputs as columns. Context unit zero represents the start of the list; the remaining units correspond to item identities. Initially, \(F_i=(1-\lambda)e_i\), where \(e_i\) selects item \(i\)'s context unit and \(\lambda\) is `learning_rate`. The start row of \(G\) is zero. Its item-unit diagonal contains `item_support`, and its off-diagonal item-unit entries contain `shared_support`. Thus, the diagonal parameter specifies the complete initial same-item association, rather than an increment added to shared support.
+
+For context \(c\), normalized input \(u\), and drift rate \(\beta\), integration is
+
+$$
+I(c,u,\beta)=\rho c+\beta u,\qquad
+\rho=\sqrt{1+\beta^2[(c^\mathsf{T}u)^2-1]}
+-\beta c^\mathsf{T}u.
+$$ {#eq-context-update}
+
+For nonzero input, the model normalizes the probed vector before integration. An exactly zero vector remains zero; the integration then contracts context by \(\sqrt{1-\beta^2}\). Context begins at the unit vector for list start. At study event \(k\) presenting item \(i\), the model computes the new context from the current \(F_i\), then makes the learning updates
+
+$$
+F_i\leftarrow F_i+\lambda c_k,\qquad
+G_{:,i}\leftarrow G_{:,i}+[1+\phi e^{-dk}]c_k,
+$$ {#eq-association-update}
+
+where \(c_k\) is the context before that integration. Recall initiation integrates the initial context using `start_drift_rate`; an item recall integrates the normalized final \(F_i\) using `recall_drift_rate`. Associations are fixed during recall. Retrieval support is \(c^\mathsf{T}G\), restricted to available items. Relative power scaling maps a positive support \(s_i\) to \((s_i/\max_j s_j)^\gamma\), with structural zeros retained; \(\gamma\) is `choice_sensitivity`. The implementation then adds a floor of \(2^{-23}\) to available candidates and normalizes. An all-zero support vector consequently produces a uniform choice over available items. These conventions, including the floor, are retained in the optimized calculation and its numerical comparisons.
+
+# Declarations
+
+**Funding.** [AUTHORS: Supply funding information.]
+
+**Competing interests.** [AUTHORS: Supply the declaration.]
+
+**Ethics approval and consent to participate.** The empirical application reuses an existing dataset. [AUTHORS: Verify and report the applicable original approval, consent, and secondary-analysis requirements.]
+
+**Consent for publication.** [AUTHORS: Supply the applicable statement.]
+
+**Availability of data and materials.** [RELEASE R1: Give the original data source, permitted access route, and archive for the derived results.]
+
+**Code availability.** Source code is available at [the jaxcmr repository](https://github.com/githubpsyche/jaxcmr). [RELEASE R1: Add the persistent archive for the tested release and article materials.]
+
+**Author contributions.** [AUTHORS: Supply the agreed author list and contributions.]
+
+# Open practices statement
+
+[RELEASE R1: State where all materials, analysis code, and results can be accessed, and accurately report preregistration status. Frozen internal benchmark settings and prospective participant checks should not be described as preregistration unless an applicable registration exists.]
+
+# References
+
+::: {#refs}
+:::

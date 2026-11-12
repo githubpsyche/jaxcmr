@@ -1,0 +1,17 @@
+/* Keep manuscript tables usable in the narrow in-app reading pane. */
+figure.quarto-float-tbl > div[aria-describedby] {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Long equations scroll independently of the article text. */
+.math.display {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* APA reference links can exceed the width left by a hanging indent. */
+.csl-entry a {
+  overflow-wrap: anywhere;
+}

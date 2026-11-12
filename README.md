@@ -47,6 +47,13 @@ selection. Use `uv sync --extra test` for packaging checks; see [TESTING.md](TES
 for the existing test commands and local guide preview. Embeddings, profiling and
 Numba tooling are opt-in dependency groups or extras described in the setup page.
 
+## Paper draft
+
+The working manuscript is [paper/index.qmd](paper/index.qmd). From the repository
+root, run `quarto render paper` to write `_site/paper/index.html`, or
+`quarto preview paper` for a live preview. Rendering does not execute code.
+Supporting research records remain local and are not included with this draft.
+
 ## Quick Start
 
 ```python

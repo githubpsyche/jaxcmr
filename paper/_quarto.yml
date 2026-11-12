@@ -1,0 +1,32 @@
+project:
+  type: manuscript
+  output-dir: ../_site/paper
+  render:
+    - index.qmd
+
+manuscript:
+  article: index.qmd
+  code-links:
+    - text: GitHub Repo
+      icon: github
+      href: https://github.com/githubpsyche/jaxcmr/
+      target: _blank
+
+bibliography: references.bib
+csl: apa.csl
+
+format:
+  html:
+    theme: darkly
+    css: paper.css
+    toc: true
+    toc-depth: 2
+    fig-cap-location: bottom
+    include-before-body:
+      - text: |
+          <div class="small mb-4">
+          <p><strong>Using jaxcmr?</strong> Browse the <a href="https://githubpsyche.github.io/jaxcmr/">documentation</a> for an introduction and installation instructions.</p>
+          </div>
+
+execute:
+  enabled: false
