@@ -339,6 +339,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./development.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Development</span></span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -425,7 +431,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Close and reopen VS Code so it can find uv. Reopen the repository folder and a new terminal, then run:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The repository’s <code>.python-version</code> selects Python 3.12; uv downloads it if needed, creates <code>.venv</code>, and installs JAXCMR and the default development tools from <code>uv.lock</code>. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.</p>
-<p>Specialized tools are optional: use <code>uv sync --group embeddings</code> for sentence-transformers, <code>uv sync --group profiling</code> for line-profiler, or <code>uv sync --extra experimental</code> for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use <code>uv sync --extra test</code>; see <a href="https://github.com/githubpsyche/jaxcmr/blob/main/TESTING.md">Testing</a>.</p>
+<p>Specialized tools are optional: use <code>uv sync --group embeddings</code> for sentence-transformers, <code>uv sync --group profiling</code> for line-profiler, or <code>uv sync --extra experimental</code> for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use <code>uv sync --extra test</code>; see <a href="./development.html">Development</a>.</p>
 </section>
 <section id="open-the-notebook-and-choose-its-kernel" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="open-the-notebook-and-choose-its-kernel"><span class="header-section-number">2.4</span> Open the notebook and choose its kernel</h2>

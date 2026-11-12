@@ -109,8 +109,6 @@ def test_archives_include_licenses_and_exclude_research(artifacts):
             "pyproject.toml",
             "LICENSE",
             "README.md",
-            "TESTING.md",
-            "testing-audit.json",
             "tests/fixtures/recall.json",
             "templates/models/cmr.ipynb",
             "templates/guide/getting-started.qmd",

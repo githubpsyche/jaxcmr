@@ -39,6 +39,7 @@ __all__ = [
     "simulate_h5_from_h5",
     "simulate_study_and_free_recall",
     "simulate_study_first_recall_and_free_recall",
+    "simulate_study_first_recall_and_forced_stop",
     "simulate_study_free_recall_and_forced_stop",
 ]
 
@@ -295,6 +296,49 @@ def simulate_study_free_recall_and_forced_stop(
     model = model.start_retrieving()
     model, recalls = simulate_free_recall(model, trial.size, rng)
     return model, recalls * (trial != 0)
+
+
+def simulate_study_first_recall_and_forced_stop(
+    model: MemorySearch,
+    present: Integer[Array, " study_events"],
+    trial: Integer[Array, " recalls"],
+    rng: PRNGKeyArray,
+) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+    """Simulate study and recall conditional on the first item and total count.
+
+    Parameters
+    ----------
+    model : MemorySearch
+        Memory search model in study mode. Use NoStopTermination to prevent
+        early stopping, and disable repeated recalls for first-mention data.
+    present : Integer[Array, " study_events"]
+        One-indexed study sequence for the trial.
+    trial : Integer[Array, " recalls"]
+        Compact observed sequence with trailing zeros. Its first item is
+        forced and its nonzero count sets the total number of recalls.
+    rng : PRNGKeyArray
+        Random key for the generated recalls after the first item.
+
+    Returns
+    -------
+    tuple[MemorySearch, Integer[Array, " recall_events"]]
+        Updated model and recalls with the same width as trial. The forced
+        first recall updates retrieval state exactly once. Zero- and
+        one-recall trials generate no additional choices.
+
+    """
+    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = model.start_retrieving()
+    if trial.size == 0:
+        return model, trial
+    recall_count = jnp.count_nonzero(trial)
+    model = lax.cond(
+        recall_count > 0, lambda m: m.retrieve(trial[0]), lambda m: m, model
+    )
+    # The count primitive compares model.recall_total with an absolute target.
+    # The forced first recall is already included in that total.
+    model, recalls = simulate_free_recall_count(model, recall_count, trial.size - 1, rng)
+    return model, jnp.concatenate((trial[:1], recalls))
 
 
 class MemorySearchSimulator:

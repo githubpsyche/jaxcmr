@@ -43,8 +43,8 @@ uv sync
 
 The repository selects Python 3.12 and installs the default notebook and development
 tools. Follow [Developer Setup](guide/developer-setup.ipynb) for VS Code and kernel
-selection. Use `uv sync --extra test` for packaging checks; see [TESTING.md](TESTING.md)
-for the existing test commands and local guide preview. Embeddings, profiling and
+selection. See [Development](guide/development.qmd) for running tests, adding
+regressions and editing the documentation. Embeddings, profiling and
 Numba tooling are opt-in dependency groups or extras described in the setup page.
 
 ## Paper draft

@@ -371,6 +371,12 @@ window.Quarto = {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../development.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Development</span></span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -532,6 +538,9 @@ Recorded loss: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikel
 <p>The new source-only and broader fits have NLLs 7169.426 and 7164.358, respectively. Their AIC difference is 10.137, favoring broader eCMR. The within-model differences between the two three-restart seed sets are 0.005 and 0.049 NLL units. The ranking is the same in both seed sets.</p>
 <p>The result is a library-produced table. Lower AIC is preferred within this comparison; it does not establish a unique explanation of the experiment. Each model contributes one pooled parameter set, so <code>len(free)</code> is the parameter count for that row. <code>calculate_aic_weights()</code> uses the same NLL convention and parameter penalties as <code>calculate_aic()</code>.</p>
 <p>Participant-wise comparisons align rows by subject identifier and require finite scores for the same participant set. A pooled row is not a sample of independent participant estimates. Mean-difference helpers return the mean and interval half-width; median-difference helpers return the median and the actual bootstrap lower and upper endpoints.</p>
+<p><code>calculate_bic_scores(results, n_obs)</code> and the AICc helpers require positive observation counts for each fitted parameter row. Counts follow the first record’s original participant order; the library aligns them with the scores. Specify the scientific counting unit and selection explicitly. A scalar count is valid only for one fitted row; AICc requires each count to exceed <code>k + 1</code>.</p>
+<p><code>floor_nested_fitness(raw_results, nesting_pairs)</code> returns separate comparison records and an adjustment table without changing the raw fits. Label adjusted scores and save the adjustment table beside them. Keep raw fits for parameter summaries, simulations and held-out evaluation: an adjusted score is not a newly optimized parameter set. The helper trusts the declared nesting relationships.</p>
+<p>Bayesian model selection uses an AIC/AICc-based evidence approximation over participant fits. A pooled row cannot supply participant-level inference; failure to converge raises an error rather than returning a result.</p>
 </section>
 <section id="experimental-cross-validation-functionality" class="level2" data-number="12.4">
 <h2 data-number="12.4" class="anchored" data-anchor-id="experimental-cross-validation-functionality"><span class="header-section-number">12.4</span> Experimental cross-validation functionality</h2>

@@ -64,7 +64,7 @@
     "href": "developer-setup.html#install-python-and-dependencies",
     "title": "2  Developer Setup",
     "section": "2.3 Install Python and dependencies",
-    "text": "2.3 Install Python and dependencies\nOpen Terminal → New Terminal. It should start in the jaxcmr folder, where pyproject.toml and uv.lock are visible in the Explorer. Enter the following commands in this terminal, not in a notebook cell.\nInstall uv using the command for your operating system:\n\nApple Silicon MacWindows\n\n\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n\nUse a PowerShell terminal:\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n\n\n\nClose and reopen VS Code so it can find uv. Reopen the repository folder and a new terminal, then run:\nuv sync\nThe repository’s .python-version selects Python 3.12; uv downloads it if needed, creates .venv, and installs JAXCMR and the default development tools from uv.lock. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.\nSpecialized tools are optional: use uv sync --group embeddings for sentence-transformers, uv sync --group profiling for line-profiler, or uv sync --extra experimental for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use uv sync --extra test; see Testing.",
+    "text": "2.3 Install Python and dependencies\nOpen Terminal → New Terminal. It should start in the jaxcmr folder, where pyproject.toml and uv.lock are visible in the Explorer. Enter the following commands in this terminal, not in a notebook cell.\nInstall uv using the command for your operating system:\n\nApple Silicon MacWindows\n\n\ncurl -LsSf https://astral.sh/uv/install.sh | sh\n\n\nUse a PowerShell terminal:\npowershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"\n\n\n\nClose and reopen VS Code so it can find uv. Reopen the repository folder and a new terminal, then run:\nuv sync\nThe repository’s .python-version selects Python 3.12; uv downloads it if needed, creates .venv, and installs JAXCMR and the default development tools from uv.lock. JAXCMR is installed in editable mode, so imports use this checkout’s source files. The first download can take several minutes; you do not need to install Python separately or activate the environment.\nSpecialized tools are optional: use uv sync --group embeddings for sentence-transformers, uv sync --group profiling for line-profiler, or uv sync --extra experimental for the Numba conversion helper. The normal notebook workflows need none of these. Packaging checks use uv sync --extra test; see Development.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Developer Setup</span>"
     ]
@@ -682,7 +682,7 @@
     "href": "overview/evaluation.html#compare-summed-negative-log-likelihoods",
     "title": "12  Model Evaluation",
     "section": "12.3 Compare summed negative log likelihoods",
-    "text": "12.3 Compare summed negative log likelihoods\njaxcmr.summarize.calculate_aic() accepts records containing name, free and fitness, and returns a DataFrame sorted by AIC. Each fitness entry must be a summed negative log likelihood for one fitted parameter set:\n\\[\\mathrm{AIC} = 2k + 2\\,\\mathrm{NLL}.\\]\nThese saved fits already contain NLL and can be supplied directly. A pooled fit incurs one parameter penalty. Independently fitted participant rows incur one penalty each, and their identifiers must match across models.\n\n\nCalculate AIC directly from the saved NLL records\nfrom jaxcmr.summarize import calculate_aic\n\ncalculate_aic(records)\n\n\n\n\n\n\n\n\n\nModel\nAIC\n\n\n\n\n1\nBroader eCMR\n14348.715746\n\n\n0\nSource-only eCMR\n14358.852540\n\n\n\n\n\n\n\nThe new source-only and broader fits have NLLs 7169.426 and 7164.358, respectively. Their AIC difference is 10.137, favoring broader eCMR. The within-model differences between the two three-restart seed sets are 0.005 and 0.049 NLL units. The ranking is the same in both seed sets.\nThe result is a library-produced table. Lower AIC is preferred within this comparison; it does not establish a unique explanation of the experiment. Each model contributes one pooled parameter set, so len(free) is the parameter count for that row. calculate_aic_weights() uses the same NLL convention and parameter penalties as calculate_aic().\nParticipant-wise comparisons align rows by subject identifier and require finite scores for the same participant set. A pooled row is not a sample of independent participant estimates. Mean-difference helpers return the mean and interval half-width; median-difference helpers return the median and the actual bootstrap lower and upper endpoints.",
+    "text": "12.3 Compare summed negative log likelihoods\njaxcmr.summarize.calculate_aic() accepts records containing name, free and fitness, and returns a DataFrame sorted by AIC. Each fitness entry must be a summed negative log likelihood for one fitted parameter set:\n\\[\\mathrm{AIC} = 2k + 2\\,\\mathrm{NLL}.\\]\nThese saved fits already contain NLL and can be supplied directly. A pooled fit incurs one parameter penalty. Independently fitted participant rows incur one penalty each, and their identifiers must match across models.\n\n\nCalculate AIC directly from the saved NLL records\nfrom jaxcmr.summarize import calculate_aic\n\ncalculate_aic(records)\n\n\n\n\n\n\n\n\n\nModel\nAIC\n\n\n\n\n1\nBroader eCMR\n14348.715746\n\n\n0\nSource-only eCMR\n14358.852540\n\n\n\n\n\n\n\nThe new source-only and broader fits have NLLs 7169.426 and 7164.358, respectively. Their AIC difference is 10.137, favoring broader eCMR. The within-model differences between the two three-restart seed sets are 0.005 and 0.049 NLL units. The ranking is the same in both seed sets.\nThe result is a library-produced table. Lower AIC is preferred within this comparison; it does not establish a unique explanation of the experiment. Each model contributes one pooled parameter set, so len(free) is the parameter count for that row. calculate_aic_weights() uses the same NLL convention and parameter penalties as calculate_aic().\nParticipant-wise comparisons align rows by subject identifier and require finite scores for the same participant set. A pooled row is not a sample of independent participant estimates. Mean-difference helpers return the mean and interval half-width; median-difference helpers return the median and the actual bootstrap lower and upper endpoints.\ncalculate_bic_scores(results, n_obs) and the AICc helpers require positive observation counts for each fitted parameter row. Counts follow the first record’s original participant order; the library aligns them with the scores. Specify the scientific counting unit and selection explicitly. A scalar count is valid only for one fitted row; AICc requires each count to exceed k + 1.\nfloor_nested_fitness(raw_results, nesting_pairs) returns separate comparison records and an adjustment table without changing the raw fits. Label adjusted scores and save the adjustment table beside them. Keep raw fits for parameter summaries, simulations and held-out evaluation: an adjusted score is not a newly optimized parameter set. The helper trusts the declared nesting relationships.\nBayesian model selection uses an AIC/AICc-based evidence approximation over participant fits. A pooled row cannot supply participant-level inference; failure to converge raises an error rather than returning a result.",
     "crumbs": [
       "Library Guide",
       "<span class='chapter-number'>12</span>  <span class='chapter-title'>Model Evaluation</span>"
@@ -1368,6 +1368,46 @@
     "crumbs": [
       "Templates",
       "<span class='chapter-number'>26</span>  <span class='chapter-title'>Transitions within and between categories</span>"
+    ]
+  },
+  {
+    "objectID": "development.html",
+    "href": "development.html",
+    "title": "27  Development",
+    "section": "",
+    "text": "27.1 Run the tests\nFor changes to JAXCMR itself, start with Developer Setup to obtain the checkout and environment. Run the commands below from the repository root.\nInstall the test dependencies alongside the default development tools, then run the complete suite:\nWhile editing, run the relevant test file:\nThe complete run includes scientific regressions, package installation and notebook execution checks. Installation checks require internet access and create temporary environments. Run the full suite before submitting changes. The CI workflow defines the supported check platforms.\nThe historical test-suite audit records the earlier suite consolidation.",
+    "crumbs": [
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Development</span>"
+    ]
+  },
+  {
+    "objectID": "development.html#run-the-tests",
+    "href": "development.html#run-the-tests",
+    "title": "27  Development",
+    "section": "",
+    "text": "uv sync --locked --extra test\nuv run --no-sync python -m pytest\n\nuv run --no-sync python -m pytest tests/test_transitions.py",
+    "crumbs": [
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Development</span>"
+    ]
+  },
+  {
+    "objectID": "development.html#add-or-change-a-test",
+    "href": "development.html#add-or-change-a-test",
+    "title": "27  Development",
+    "section": "27.2 Add or change a test",
+    "text": "27.2 Add or change a test\n\nEach new scenario must catch an incorrect behavior that existing scenarios do not.\nPrefer independently established numerical answers and supported workflows over checks of shapes or types alone.\nKeep expected answers beside their scenarios. Share fixtures where they reduce duplication; see the fixture documentation.\nExpose independent scenarios through parametrization instead of hiding them in loops.\nRequired checks must not silently skip because private data is missing.",
+    "crumbs": [
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Development</span>"
+    ]
+  },
+  {
+    "objectID": "development.html#edit-the-documentation",
+    "href": "development.html#edit-the-documentation",
+    "title": "27  Development",
+    "section": "27.3 Edit the documentation",
+    "text": "27.3 Edit the documentation\nEdit the sources; the build prepares notebook copies, downloads and HTML:\n\n\n\n\n\n\n\nMaterial\nAuthoritative location\n\n\n\n\nPublished templates\ntemplates/\n\n\nBook pages and supporting examples\nguide/\n\n\nGenerated notebook copies and downloads\nguide/templates/, guide/downloads/\n\n\nRendered website\ndocs/\n\n\n\nguide/_quarto.yml selects the published chapters. Install Quarto 1.10.20 or newer, then render the book:\nbash build-docs.sh\nThis command prepares notebook chapters before Quarto checks that they exist, so it also works in a fresh checkout. It refreshes downloads, removes retired staging files and clears the generated book output without executing notebook cells. Execute changed notebooks separately and retain their useful outputs before rendering. Do not edit the generated copies.\nOpen docs/index.html, or start a live preview:\nquarto preview guide\nAfter editing an original notebook in templates/, run bash build-docs.sh again: live preview does not watch those files outside the guide project. Review the rendered pages and notebook downloads locally before publication. Colab links and package installation follow main. GitHub Pages publishes the committed docs/ directory.",
+    "crumbs": [
+      "<span class='chapter-number'>27</span>  <span class='chapter-title'>Development</span>"
     ]
   }
 ]

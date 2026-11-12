@@ -1,0 +1,77 @@
+---
+title: "Development"
+---
+
+For changes to JAXCMR itself, start with [Developer Setup](developer-setup.ipynb)
+to obtain the checkout and environment. Run the commands below from the repository
+root.
+
+## Run the tests
+
+Install the test dependencies alongside the default development tools, then run
+the complete suite:
+
+```{.bash code-summary="(1) Install test dependencies and run the suite"}
+uv sync --locked --extra test
+uv run --no-sync python -m pytest
+```
+
+While editing, run the relevant test file:
+
+```{.bash code-summary="(2) Run a focused test file"}
+uv run --no-sync python -m pytest tests/test_transitions.py
+```
+
+The complete run includes scientific regressions, package installation and
+notebook execution checks. Installation checks require internet access and create
+temporary environments. Run the full suite before submitting changes. The
+[CI workflow](https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml)
+defines the supported check platforms.
+
+The [historical test-suite audit](https://github.com/githubpsyche/jaxcmr/blob/0fe217a1eb9876b013d2de01d4febfeda9b9765b/testing-audit.json)
+records the earlier suite consolidation.
+
+## Add or change a test
+
+- Each new scenario must catch an incorrect behavior that existing scenarios do not.
+- Prefer independently established numerical answers and supported workflows over
+  checks of shapes or types alone.
+- Keep expected answers beside their scenarios. Share fixtures where they reduce
+  duplication; see the [fixture documentation](https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md).
+- Expose independent scenarios through parametrization instead of hiding them in loops.
+- Required checks must not silently skip because private data is missing.
+
+## Edit the documentation
+
+Edit the sources; the build prepares notebook copies, downloads and HTML:
+
+| Material | Authoritative location |
+|---|---|
+| Published templates | `templates/` |
+| Book pages and supporting examples | `guide/` |
+| Generated notebook copies and downloads | `guide/templates/`, `guide/downloads/` |
+| Rendered website | `docs/` |
+
+`guide/_quarto.yml` selects the published chapters. Install
+[Quarto](https://quarto.org/docs/download/) 1.10.20 or newer, then render the book:
+
+```{.bash code-summary="(3) Render the documentation"}
+bash build-docs.sh
+```
+
+This command prepares notebook chapters before Quarto checks that they exist,
+so it also works in a fresh checkout. It refreshes downloads, removes retired
+staging files and clears the generated book output without executing notebook
+cells. Execute changed notebooks separately and retain their
+useful outputs before rendering. Do not edit the generated copies.
+
+Open `docs/index.html`, or start a live preview:
+
+```{.bash code-summary="(4) Preview the documentation"}
+quarto preview guide
+```
+
+After editing an original notebook in `templates/`, run `bash build-docs.sh` again: live preview
+does not watch those files outside the guide project. Review the rendered pages
+and notebook downloads locally before publication. Colab links and package
+installation follow `main`. GitHub Pages publishes the committed `docs/` directory.

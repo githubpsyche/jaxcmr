@@ -32,9 +32,11 @@ from jaxcmr.typing import (
 
 __all__ = [
     "ExcludeFirstRecallLikelihoodLoss",
+    "ExcludeFirstRecallAndTerminationLikelihoodLoss",
     "ExcludeTerminationLikelihoodLoss",
     "MemorySearchLikelihoodLoss",
     "mask_first_recall",
+    "mask_first_recall_and_terminations",
     "mask_trailing_terminations",
 ]
 
@@ -60,6 +62,17 @@ def mask_first_recall(
     """
     mask = jnp.ones_like(recalls, dtype=bool)
     return mask.at[0].set(False)
+
+
+def mask_first_recall_and_terminations(
+    recalls: Integer[Array, " recall_events"],
+) -> Bool[Array, " recall_events"]:
+    """Keep nonzero recall events after the observed first recall.
+
+    Args:
+        recalls: Compact recall sequence with trailing zero padding.
+    """
+    return mask_first_recall(recalls) & mask_trailing_terminations(recalls)
 
 
 class MemorySearchLikelihoodLoss:
@@ -332,6 +345,62 @@ class ExcludeTerminationLikelihoodLoss:
 
         Returns:
             One prepared loss per selection, excluding termination scores.
+        """
+        return self._inner.prepare_selections(trial_indices)
+
+    def __call__(
+        self,
+        trial_indices: Integer[Array, " trials"],
+        base_params: Mapping[str, Float_],
+        free_param_names: Iterable[str],
+        x: jnp.ndarray,
+    ) -> Float[Array, " n_samples"]:
+        return self._inner(trial_indices, base_params, free_param_names, x)
+
+
+class ExcludeFirstRecallAndTerminationLikelihoodLoss:
+    """Score later recalls conditional on the observed first recall, without STOP.
+
+    The first recall still updates the model before later choices are scored.
+    Pair this loss with NoStopTermination to exclude stopping probabilities
+    from the nonzero choice probabilities as well. Keep the full compact
+    recall sequence in the dataset; only scoring is masked.
+    """
+
+    def __init__(
+        self,
+        model_factory_cls: type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Float[Array, " word_pool_items features_count"] | None,
+    ) -> None:
+        self._inner = MemorySearchLikelihoodLoss(
+            model_factory_cls,
+            dataset,
+            features,
+            mask_likelihoods=mask_first_recall_and_terminations,
+        )
+
+    def prepare_trials(self, trial_indices: Array) -> PreparedLoss:
+        """Prepare selected rows, conditioning on the unscored first recall.
+
+        Args:
+            trial_indices: Concrete one-dimensional array of dataset rows.
+
+        Returns:
+            Prepared loss using the same combined mask as direct evaluation.
+        """
+        return self._inner.prepare_trials(trial_indices)
+
+    def prepare_selections(
+        self, trial_indices: Iterable[Array]
+    ) -> tuple[PreparedLoss, ...]:
+        """Prepare trial-index selections in order, sharing layouts when supported.
+
+        Args:
+            trial_indices: One concrete dataset-row array per selection.
+
+        Returns:
+            One prepared loss per selection, excluding first-recall and termination scores.
         """
         return self._inner.prepare_selections(trial_indices)
 
