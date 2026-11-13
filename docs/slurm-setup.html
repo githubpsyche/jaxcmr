@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Slurm cluster setup with VS Code – JAXCMR</title>
+<title>Remote setup with VS Code on a Slurm cluster – JAXCMR</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -70,6 +70,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./tutorials/slurm-batch-jobs.html" rel="next">
 <link href="./colab-setup.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -167,7 +168,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./slurm-setup.html">Slurm cluster setup with VS Code</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./slurm-setup.html">Remote setup with VS Code on a Slurm cluster</a></li></ol></nav>
         <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -194,13 +195,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./colab-setup.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Google Colab setup</span></a>
+ <span class="menu-text">Remote setup in your browser with Google Colab</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./slurm-setup.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Slurm cluster setup with VS Code</span></a>
+ <span class="menu-text">Remote setup with VS Code on a Slurm cluster</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container">
+  <a href="./tutorials/slurm-batch-jobs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Run batches of notebooks unattended on Slurm</span></a>
   </div>
 </li>
     </ul>
@@ -234,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Slurm cluster setup with VS Code</h1>
+<h1 class="title">Remote setup with VS Code on a Slurm cluster</h1>
 </div>
 
 
@@ -252,7 +259,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>Use VS Code to work with notebooks and files on a Slurm cluster. Your computer displays the editor; the cluster stores your research project and runs Python. You do not need Python installed locally.</p>
-<p>A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer’s capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. Unattended work and multiple submitted jobs use batch jobs, which are outside this setup guide. Requesting more CPUs does not automatically make a calculation faster.</p>
+<p>A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer’s capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. For unattended execution and multiple independent runs, continue with <a href="./tutorials/slurm-batch-jobs.html">Run batches of notebooks unattended on Slurm</a>. Requesting more CPUs does not automatically make a calculation faster.</p>
 <section id="where-the-work-happens" class="level2">
 <h2 class="anchored" data-anchor-id="where-the-work-happens">Where the work happens</h2>
 <table class="caption-top table">
@@ -592,6 +599,7 @@ Simulated recalls: [1 5 2 4 3]</code></pre>
 <section id="continue-with-jaxcmr" class="level2">
 <h2 class="anchored" data-anchor-id="continue-with-jaxcmr">Continue with JAXCMR</h2>
 <p>Download <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a>, transfer it into the cluster project’s <code>notebooks</code> folder, and open it in an allocated compute window. Then use the <a href="./templates.html">templates</a> for analysis and modelling. Select the same <code>.venv</code> environment and choose resources appropriate to the work; the setup allocation above is only for a small check.</p>
+<p>Once you have a notebook you can run and inspect, follow <a href="./tutorials/slurm-batch-jobs.html">Run batches of notebooks unattended on Slurm</a> to submit it without keeping an interactive session open, repeat it with different settings, and manage multiple independent jobs.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -1177,11 +1185,14 @@ Simulated recalls: [1 5 2 4 3]</code></pre>
   </script>
 <nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
-      <a href="./colab-setup.html" class="pagination-link" aria-label="Google Colab setup">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Google Colab setup</span>
+      <a href="./colab-setup.html" class="pagination-link" aria-label="Remote setup in your browser with Google Colab">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Remote setup in your browser with Google Colab</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="./tutorials/slurm-batch-jobs.html" class="pagination-link" aria-label="Run batches of notebooks unattended on Slurm">
+        <span class="nav-page-text">Run batches of notebooks unattended on Slurm</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->

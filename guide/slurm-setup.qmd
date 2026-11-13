@@ -1,5 +1,5 @@
 ---
-title: "Slurm cluster setup with VS Code"
+title: "Remote setup with VS Code on a Slurm cluster"
 format:
   html:
     code-fold: false
@@ -9,7 +9,7 @@ toc-depth: 2
 
 Use VS Code to work with notebooks and files on a Slurm cluster. Your computer displays the editor; the cluster stores your research project and runs Python. You do not need Python installed locally.
 
-A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer's capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. Unattended work and multiple submitted jobs use batch jobs, which are outside this setup guide. Requesting more CPUs does not automatically make a calculation faster.
+A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer's capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. For unattended execution and multiple independent runs, continue with [Run batches of notebooks unattended on Slurm](tutorials/slurm-batch-jobs.qmd). Requesting more CPUs does not automatically make a calculation faster.
 
 ## Where the work happens
 
@@ -311,6 +311,8 @@ The environment normally remains available between allocations. If you intention
 ## Continue with JAXCMR
 
 Download [Preparing data for JAXCMR](tutorials/data-preparation.ipynb), transfer it into the cluster project's `notebooks` folder, and open it in an allocated compute window. Then use the [templates](templates.qmd) for analysis and modelling. Select the same `.venv` environment and choose resources appropriate to the work; the setup allocation above is only for a small check.
+
+Once you have a notebook you can run and inspect, follow [Run batches of notebooks unattended on Slurm](tutorials/slurm-batch-jobs.qmd) to submit it without keeping an interactive session open, repeat it with different settings, and manage multiple independent jobs.
 
 ::: {.callout-note collapse="true" title="Optional: work with the JAXCMR checkout"}
 

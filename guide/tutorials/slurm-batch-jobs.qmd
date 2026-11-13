@@ -1,0 +1,254 @@
+---
+title: "Run batches of notebooks unattended on Slurm"
+format:
+  html:
+    code-fold: false
+    code-line-numbers: false
+toc-depth: 2
+---
+
+Batch jobs let the cluster run your work without keeping VS Code or an interactive session open. They also let you run several independent calculations at once.
+
+You will first submit a notebook and inspect its results, then repeat it with different settings and manage the resulting jobs.
+
+Start with the [Slurm setup guide](../slurm-setup.qmd). You need your project, inputs, and Python environment on shared cluster storage.
+
+## 1. Run one notebook unattended
+
+Choose a notebook that already runs successfully from a restarted kernel in an allocated compute session. It must finish without prompts, manual cell selection, or variables left over from earlier work.
+
+You can use your own notebook immediately. If you need a starting point, download the [first simulation notebook](../downloads/examples/first-simulation.ipynb) into your project's `notebooks` folder. It requires no input files and prints the presented items and simulated recalls.
+
+The commands below use `notebooks/analysis.ipynb`; substitute your notebook's filename. If your notebook saves files, give this first check a fresh output location in its existing settings.
+
+**Papermill** runs notebook cells and saves an executed copy containing their output. **Slurm** schedules that execution on a compute node. You can continue working with the notebook in VS Code between submissions. See the [Papermill documentation](https://papermill.readthedocs.io/en/latest/usage-cli.html).
+
+In a cluster terminal opened at your project folder, install Papermill and register the project's Python kernel:
+
+```bash
+uv add papermill
+.venv/bin/python -m ipykernel install --sys-prefix --name memory-project
+```
+
+The second command gives Papermill an explicit name for the Python environment containing your packages. Do this once per environment. See [kernel registration](https://ipython.readthedocs.io/en/stable/install/kernel_install.html).
+
+Create folders for submission files and logs:
+
+```bash
+mkdir -p jobs logs
+```
+
+`mkdir -p` creates missing folders and leaves existing ones in place.
+
+Save the following as `jobs/notebook.sbatch`. A batch script tells Slurm what resources to request and which command to run.
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=notebook
+#SBATCH --account=YOUR_ACCOUNT
+#SBATCH --partition=YOUR_CPU_PARTITION
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4G
+#SBATCH --time=00:30:00
+#SBATCH --output=logs/%j.log
+
+set -euo pipefail
+cd "$SLURM_SUBMIT_DIR"
+
+# Add any software-module setup required by your cluster here.
+
+notebook="$1"
+shift
+
+# Give each submission and run its own folder.
+submission="${SLURM_ARRAY_JOB_ID:-$SLURM_JOB_ID}"
+run="${SLURM_ARRAY_TASK_ID:-1}"
+run_dir="$PWD/results/$submission/$run"
+mkdir -p "$run_dir"
+
+# An optional second argument supplies settings for repeated runs.
+if [[ $# -eq 1 ]]; then
+    cp "$1/run-$run.yaml" "$run_dir/settings.yaml"
+    set -- -f "$run_dir/settings.yaml" -r output_dir "$run_dir"
+fi
+
+srun .venv/bin/python -m papermill \
+    "$notebook" "$run_dir/executed.ipynb" \
+    -k memory-project --cwd "$PWD" --log-output \
+    "$@"
+```
+
+Replace `YOUR_ACCOUNT` and `YOUR_CPU_PARTITION` with your cluster's values. The request is for one task with one CPU, 4 GB of memory, and thirty minutes. Adjust those values for your notebook and your institution's requirements. Keep the `#SBATCH` lines above the executable commands. See the [Slurm batch-script reference](https://slurm.schedmd.com/sbatch.html).
+
+The script runs from your project folder and uses its `.venv`. It creates a results folder, then uses `srun` to start Papermill within the allocation. The optional-settings block will be used in step 3; your first submission uses the notebook's existing settings.
+
+From the **login node**, with your project folder open, submit:
+
+```bash
+sbatch jobs/notebook.sbatch notebooks/analysis.ipynb
+```
+
+Slurm prints a job number. The job may wait for resources before starting. Once accepted, it can run after you disconnect; you do not need to keep an interactive allocation open. See [Slurm's batch workflow](https://slurm.schedmd.com/quickstart.html).
+
+## 2. Find and check its results
+
+Suppose the submission number is `12345`. Use your actual number:
+
+```bash
+squeue --jobs=12345
+```
+
+`PD` means pending; `R` means running. The final column can explain why a job is waiting. After it finishes, inspect its recorded outcome:
+
+```bash
+sacct --jobs=12345 --format=JobID,State,Elapsed,ExitCode
+```
+
+Look for `COMPLETED` and exit code `0:0`. Accounting records can take time to appear and depend on your cluster's configuration. See the [Slurm accounting reference](https://slurm.schedmd.com/sacct.html).
+
+Open these files in remote VS Code:
+
+| Location | What to inspect |
+|---|---|
+| `logs/12345.log` | Execution messages and errors |
+| `results/12345/1/executed.ipynb` | The cells and outputs from this run |
+| Your notebook's configured output locations | Separately saved tables, arrays, figures, or other results |
+
+The script saves an executed notebook in a new folder. **It does not automatically redirect every file your code writes.** Those files still follow the paths in your notebook.
+
+Check that the run processed the intended inputs and produced the expected outputs. For the supplied simulation, inspect the study-order and simulated-recall lines. For your own work, inspect something meaningful: the selected dataset, number of observations, saved table, or resulting figure.
+
+A completed job tells you the program finished. These checks tell you whether it did the work you intended.
+
+## 3. Repeat your work with different settings
+
+Now identify what should change between runs. You might process different input files or repeat a simulation with different random seeds.
+
+Runs are independent when each can finish without another run's unfinished results. They may read the same inputs, but should write separate outputs. An analysis combining their results comes afterwards.
+
+Choose the division according to your analysis. For example, fitting each participant separately changes the analysis if you originally intended one pooled fit.
+
+### Make the changing settings explicit
+
+For a notebook you wrote yourself, put the values you want to vary in an early code cell. For repeated simulations, that might be:
+
+```python
+seed = 0
+output_dir = "results/manual"
+```
+
+A seed controls a calculation's random choices. The calculation must actually use it: in the supplied simulation notebook, replace `random.PRNGKey(0)` with `random.PRNGKey(seed)`.
+
+For your own notebook, expose the settings it needs—such as an input filename or a selection of observations. These execution settings need not be parameters of the scientific model.
+
+Select the settings cell in VS Code, open the Command Palette, choose **Add Cell Tag**, and enter `parameters`. Save the notebook. Microsoft's Jupyter Cell Tags extension supplies this command. See the [cell-tag instructions](https://github.com/microsoft/vscode-jupyter-cell-tags/blob/main/README.md).
+
+Papermill will insert replacement values immediately after that cell. Put calculations derived from the settings in later cells, so they use the replacements. See [parameter injection](https://papermill.readthedocs.io/en/latest/usage-parameterize.html).
+
+For example, create the output folder in a later cell:
+
+```python
+from pathlib import Path
+
+output = Path(output_dir)
+output.mkdir(parents=True, exist_ok=True)
+```
+
+Save your results beneath `output`. For an existing result table named `summary`, use:
+
+```python
+summary.to_csv(output / "summary.csv", index=False)
+```
+
+Check every place your notebook writes files. Concurrent runs must not overwrite a shared filename.
+
+JAXCMR [templates](../templates.qmd) already have a tagged settings cell. Keep their existing variable names, set `project_root` to the cluster project, and review any separate figure, fit, or simulation output paths.
+
+### Give each run its settings
+
+Create a `jobs/settings` folder. For three simulation repetitions, save these three plain text files:
+
+| File | Contents |
+|---|---|
+| `jobs/settings/run-1.yaml` | `seed: 0` |
+| `jobs/settings/run-2.yaml` | `seed: 1` |
+| `jobs/settings/run-3.yaml` | `seed: 2` |
+
+YAML expresses settings as `name: value` pairs. Use names from your notebook's tagged cell. For a different analysis, a file could instead contain:
+
+```yaml
+input_path: "data/session-a.csv"
+```
+
+Add the settings that distinguish that run. Leave `output_dir` out: the submission script supplies a new output folder for each attempt.
+
+Test the first settings file using the **same script**, now passing the settings folder as a second argument:
+
+```bash
+sbatch jobs/notebook.sbatch notebooks/analysis.ipynb jobs/settings
+```
+
+This selects `run-1.yaml`. Inspect the executed notebook to confirm the injected values were used, and check that separately saved results went into this submission's results folder.
+
+### Submit the collection
+
+A **job array** repeats a script with a different task index for each run. Our script uses that index to select `run-1.yaml`, `run-2.yaml`, and so on.
+
+Submit all three:
+
+```bash
+sbatch --array=1-3%2 --output='logs/%A_%a.log' \
+    jobs/notebook.sbatch notebooks/analysis.ipynb jobs/settings
+```
+
+`1-3` selects three runs. `%2` permits at most two to run simultaneously; fewer may run while resources are unavailable. Each run receives the script's CPU, memory, and time request. `%A` and `%a` put the array number and task index in each log filename. See [Slurm job arrays](https://slurm.schedmd.com/job_array.html).
+
+To keep the successful first run and submit only the remaining two, use `--array=2-3%2`.
+
+For a larger batch, create the corresponding settings files and extend the range. Increase concurrency within your cluster's limits. More concurrent jobs run more independent calculations; additional CPUs per job help only when the calculation can use them.
+
+Keep jobs with substantially different resource needs in separate submissions. Leave submitted notebooks, settings, inputs, and the environment unchanged while their jobs are pending or running: Slurm does not snapshot your whole project. See [Slurm file handling](https://slurm.schedmd.com/sbatch.html).
+
+## 4. Manage the collection
+
+For an array numbered `23456`, inspect individual tasks:
+
+```bash
+squeue --array --jobs=23456
+sacct --jobs=23456 --format=JobID,State,Elapsed,ExitCode
+```
+
+Task `23456_2` used `run-2.yaml`. Its log is `logs/23456_2.log`, and its results are under `results/23456/2/`, including a copy of its settings.
+
+If a task fails, start with its log:
+
+| Finding | What to address |
+|---|---|
+| Missing file or import | Input paths, transferred files, or installed packages |
+| Python traceback | The failing calculation |
+| `OUT_OF_MEMORY` | Memory requirements or the amount of work in each job |
+| `TIMEOUT` | Runtime requirements or whether the work should be divided |
+
+Fix and test the cause before submitting again. If only task 2 needs another attempt:
+
+```bash
+sbatch --array=2 --output='logs/%A_%a.log' \
+    jobs/notebook.sbatch notebooks/analysis.ipynb jobs/settings
+```
+
+The new submission gets a new results folder, preserving the earlier attempt. It starts the notebook again from the beginning unless your code explicitly supports resuming saved work.
+
+To cancel one task or the whole array, respectively:
+
+```bash
+scancel 23456_2
+scancel 23456
+```
+
+Cancellation leaves files already written on storage. See [array cancellation](https://slurm.schedmd.com/job_array.html).
+
+Keep a short record of what each submission ran and which successful attempts you will use. Before combining results, check that every required run produced usable output and that you have not included both an original run and its retry.
+
+Open completed results in another allocated notebook session, or submit the follow-up analysis as another batch job. Use the [setup guide's file-transfer instructions](../slurm-setup.qmd#move-files-between-your-computer-and-the-cluster) to bring saved results back to your computer.
