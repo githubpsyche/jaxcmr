@@ -7,9 +7,9 @@ format:
 toc-depth: 2
 ---
 
-Prepare a remote workspace for JAXCMR and run a notebook on resources allocated by Slurm. You do not need to understand JAXCMR's models or have Python installed on your own computer.
+Use VS Code to work with notebooks and files on a Slurm cluster. Your computer displays the editor; the cluster stores your research project and runs Python. You do not need Python installed locally.
 
-A cluster is a collection of shared computers. It can provide more memory and processors and run independent jobs simultaneously. This guide establishes an interactive workspace; long-running work that continues after disconnecting uses separately submitted batch jobs. Requesting more CPUs does not automatically make a calculation faster.
+A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer's capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. Unattended work and multiple submitted jobs use batch jobs, which are outside this setup guide. Requesting more CPUs does not automatically make a calculation faster.
 
 ## Where the work happens
 
@@ -34,7 +34,7 @@ You need a cluster account and the following details from your institution:
 | CPU partition | Selecting a permitted group of compute nodes |
 | Supported VS Code access method | Connecting the editor to allocated resources |
 
-Your login username and Slurm account may differ. Choose storage accessible from both login and compute nodes, suitable for Python environments. Check its backup and automatic-deletion policies.
+Your login username and Slurm account may differ.
 
 Prefer your institution's managed VS Code service if it provides one. Use its connection and allocation instructions, then follow the project, environment, and notebook steps below in that workspace.
 
@@ -45,6 +45,20 @@ The SSH route below requires your institution to support all three of these:
 - Running the connected VS Code processes inside your Slurm allocation. A matching computer name alone does not establish this; the cluster must support this connection method.
 
 These are cluster settings to confirm before starting. For example, [Harvard documents distinct SSH and tunnel routes](https://docs.rc.fas.harvard.edu/kb/vscode-remote-development-via-ssh-or-tunnel/). If direct SSH is unsupported, use the institution's managed service or documented tunnel procedure.
+
+### Choose storage for your work
+
+Use a project location accessible from both login and compute nodes. Your institution should identify where to keep software environments, research inputs, and results.
+
+Storage names vary, but the distinctions matter:
+
+| Storage characteristic | What it means for your work |
+|---|---|
+| Persistent shared storage | Files remain available across allocations; check whether it is backed up. |
+| Scratch storage | Intended for working files; it may have an automatic-deletion policy. |
+| Storage local to a compute node | May disappear or become inaccessible when the allocation ends. |
+
+Keep the only copy of important inputs and completed results in storage whose retention and backup arrangements you understand. A saved notebook does not contain every separate file its code produces.
 
 ## 1. Connect VS Code to the login node
 
@@ -66,34 +80,31 @@ In this window, **Explorer**, saved edits, and new terminals use the cluster. A 
 
 Use this window to prepare the project and request resources.
 
-## 2. Open your project on the cluster
+## 2. Create or open your research project
 
-Choose **File → Open Folder** and open your approved project storage location. Choose **Terminal → New Terminal**. A terminal accepts commands; enter each command below and press **Return** or **Enter**:
+In the remote VS Code window, choose **File → Open Folder** and open your approved shared storage location.
+
+For a new project, right-click that folder in Explorer and choose **New Folder** to create a folder such as `memory-project`. Open it with **File → Open Folder**, confirm trust if prompted, then create `notebooks`, `data`, and `results` folders inside it.
+
+If you already have a research project on your computer, transfer its notebooks, required inputs, and environment configuration to this location using the [file-transfer instructions below](#transfer-an-existing-projects-configuration). You can also create and edit notebooks directly on the cluster.
+
+This folder belongs to your research. JAXCMR will be installed into its Python environment.
+
+## 3. Install the project's software on the cluster
+
+Open **Terminal → New Terminal** in the remote project folder. A terminal accepts commands; enter each command and press **Return** or **Enter**. Use `pwd` to print the current folder and check that it is your project.
+
+**Python** runs the calculations; **uv** installs Python and the packages the project needs. Check that Git and uv are available:
 
 ```bash
-pwd
-git clone https://github.com/githubpsyche/jaxcmr.git
-cd jaxcmr
-pwd
+git --version
+uv --version
 ```
 
-- `pwd` prints the current folder, where commands look for relative filenames.
-- `git clone` downloads JAXCMR's code and examples into a new `jaxcmr` folder.
-- `cd jaxcmr` moves the terminal into it; the final `pwd` prints its full location.
-
-Use **File → Open Folder** to open that full location. Confirm that you trust this project if prompted. Explorer should show `guide`, `templates`, `pyproject.toml`, and `uv.lock`. If you already have a checkout on the cluster, open it instead of cloning again.
+Git is used to fetch JAXCMR during installation. Use your institution's software modules or installation instructions if either command is unavailable.
 
 ::: {.callout-note collapse="true" title="If Git or uv is unavailable"}
 Some clusters provide software through **environment modules**. A command such as `module load NAME` selects an administrator-installed package and adjusts the current terminal so it can find that software. Replace `NAME` with your institution's actual module name and version. This selects existing software; uv installs Python packages for your project. Record any required module commands, since new sessions and jobs may need them again. If Git and uv are already available, no extra module is needed. See the [Environment Modules documentation](https://modules.readthedocs.io/en/latest/module.html).
-:::
-
-## 3. Install Python and JAXCMR
-
-Open a new terminal in the remote `jaxcmr` folder. **Python** runs the calculations; **uv** installs Python and the packages the project needs. Check for uv with:
-
-```bash
-uv --version
-```
 
 If your institution provides uv, use that installation. Otherwise, where user installations are permitted, run:
 
@@ -103,20 +114,39 @@ source "$HOME/.local/bin/env"
 ```
 
 The first command downloads and runs [uv's installer](https://docs.astral.sh/uv/getting-started/installation/). For its default installation location, the second makes uv available in this terminal: `$HOME` is your cluster home folder, and `source` applies settings from the named file. If downloads are restricted, use your institution's supported installation route.
+:::
 
-Install the project:
+### For a new project
+
+Run:
+
+```bash
+uv init --bare --python 3.12 --vcs none
+uv python pin 3.12
+uv add "jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main" ipykernel pandas
+```
+
+These commands create the project's software configuration, select Python 3.12, and install JAXCMR, notebook support, and table-handling tools. The initialization options keep the starting files minimal and leave version-control setup to you. uv downloads Python if needed and permitted by your cluster.
+
+The installed environment is stored in `.venv`. The configuration files—`pyproject.toml`, `uv.lock`, and `.python-version`—record what it needs. The [local guide explains these files](developer-setup.ipynb#install-python-and-jaxcmr).
+
+### For a project transferred from your computer
+
+If you transferred those configuration files from an existing uv project, run:
 
 ```bash
 uv sync --locked
 ```
 
-This installs Python 3.12 if needed, JAXCMR, and notebook tools into **`.venv`**, the project's environment folder. Notebooks in this project can use this same installed software. `--locked` uses the repository's recorded package versions. Wait for installation to finish successfully. See [uv's environment documentation](https://docs.astral.sh/uv/concepts/projects/sync/).
+This creates the cluster's `.venv` using the recorded dependencies. It checks that the configuration and lockfile agree rather than silently changing the recorded dependency selection. See [uv's locking and syncing guidance](https://docs.astral.sh/uv/concepts/projects/sync/).
 
-Create this environment on the cluster even if you have a local installation; copying your computer's environment does not make it portable.
+Create the environment on the cluster even if you already have one locally. Installed environments contain software specific to the computer where they were created.
+
+Wait for installation to finish successfully before continuing.
 
 ## 4. Request computing resources
 
-An **interactive allocation** gives you temporary resources for commands entered in a terminal. Use your institution's interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with `jaxcmr` as the current folder:
+An **interactive allocation** gives you temporary resources for commands entered in a terminal. Use your institution's interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with `memory-project` as the current folder:
 
 ```bash
 srun \
@@ -176,26 +206,92 @@ Host jaxcmr-compute
 
 Save the file, then use **Remote-SSH: Connect to Host… → jaxcmr-compute** in this new window. After authentication, its lower-left indicator should show **SSH: jaxcmr-compute**. Open a new terminal and run `hostname`; it must match the allocated node, not the login node.
 
-Use **File → Open Folder** to open the same full `jaxcmr` path on shared storage. The files are already there. This second window is now your working window for notebooks.
+Use **File → Open Folder** to open the same full `memory-project` path on shared storage. The files are already there. This second window is now your working window for notebooks.
 
-## 6. Select the environment and check your setup
+## 6. Work with your own notebooks
 
 A **Jupyter notebook** is an `.ipynb` file combining explanations, Python code, and results. Its sections are called **cells**; code cells run in a Python process called a **kernel**. VS Code's Jupyter extension supplies the notebook controls.
 
-In the compute window:
+In the compute window, open **View → Extensions** and install Microsoft's **Python** and **Jupyter** extensions for **SSH: jaxcmr-compute**. Use your institution's supplied extensions if installation is restricted. Open the shared `memory-project` folder.
 
-1. Open **View → Extensions** and install Microsoft's **Python** and **Jupyter** extensions for **SSH: jaxcmr-compute**. Use your institution's supplied extensions if installation is restricted.
-2. In Explorer, open `guide/examples/first-simulation.ipynb`.
-3. Choose **Select Kernel → Select Another Kernel → Python Environments** and select Python 3.12 from this project's `.venv`. If a kernel is already selected, click its name to change it.
-4. Click **Run All**. The Colab installation cell skips installation here. Wait for all cells to finish; the first calculation may take longer while JAX prepares it.
+Create a notebook through **View → Command Palette → Create: New Jupyter Notebook** and save it in `notebooks` with a filename ending in `.ipynb`. You can also download a JAXCMR notebook through its documentation page and transfer it to `notebooks`, or use **File → Save As** to copy an existing notebook. Obtain any separate inputs listed by its instructions; the templates' automatic example downloads run only in Colab.
 
-Choosing **Python Environments** in the compute window selects Python on that computer. Selecting an environment in the original login window would run there instead. See [VS Code's kernel guidance](https://code.visualstudio.com/docs/datascience/jupyter-kernel-management).
+Choose **Select Kernel → Select Another Kernel → Python Environments** and select Python 3.12 from the `.venv` inside your cluster `memory-project` folder. If a kernel is already selected, click its name to check or change it.
 
-The final cell should print study and recall sequences, confirming that JAXCMR can run in the selected environment. Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.
+The notebook controls work as described in [Create or download a notebook](developer-setup.ipynb#create-or-adapt-a-notebook) in the local guide. You can follow that section directly without installing anything on your own computer.
+
+In this window, notebook execution happens on the compute node and saved files belong to the cluster. Selecting an environment in the original login window would run there instead. Keep calculations in the compute window; the login window remains useful for preparing files and managing allocations. See [VS Code's kernel guidance](https://code.visualstudio.com/docs/datascience/jupyter-kernel-management).
+
+::: {.callout-note collapse="true" title="Optional: check your installation"}
+
+Download the [first simulation notebook](downloads/examples/first-simulation.ipynb) to your computer and [transfer it](#move-files-between-your-computer-and-the-cluster) into the cluster project's `notebooks` folder. In the compute window, open it, select the project's `.venv`, and click **Run All**. The Colab installation cell skips installation here. The notebook needs no input file; the first calculation may take longer while JAX prepares it.
+
+The final cell should print:
+
+```text
+Study order: [1 2 3 4 5]
+Simulated recalls: [1 5 2 4 3]
+```
+
+Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.
+
+:::
+
+## 7. Move files between your computer and the cluster
+
+Remote SSH does not automatically synchronize local and cluster copies. You can create notebooks directly on the cluster, but inputs already on your computer must be transferred.
+
+Use your institution's transfer service if it specifies one. Where ordinary SSH file transfers are supported, `scp` copies files using your SSH sign-in.
+
+On **your own computer**, open a local VS Code window, use **File → Open Folder** to open the folder containing your input file, and choose **Terminal → New Terminal**. Copy a file to the cluster with:
+
+```bash
+scp "trials.csv" "YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/data/"
+```
+
+Replace `trials.csv` with your filename, the username and host with your sign-in details, and `/FULL/PROJECT/PATH` with the cluster's `memory-project` location. Obtain that full path with **Copy Path** in the remote Explorer. Create the destination folder first. The first argument is the source; the second is the destination. The colon separates a remote computer's address from its file path.
+
+To retrieve a results folder, open the desired destination folder locally, open a new terminal there, and run:
+
+```bash
+scp -r "YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/results" .
+```
+
+`-r` copies a folder and its contents; `.` means the local terminal's current folder. The same pattern transfers notebooks or other files. Copying can replace matching filenames, and subsequent edits do not synchronize automatically. See the [OpenSSH file-copy reference](https://man.openbsd.org/scp).
+
+### Transfer an existing project's configuration {#transfer-an-existing-projects-configuration}
+
+Use the file-transfer method supported by your institution. Where `scp` is supported, first create the destination project folder on the cluster.
+
+On **your own computer**, open the local project folder in VS Code and choose **Terminal → New Terminal**. Copy its environment configuration with:
+
+```bash
+scp pyproject.toml uv.lock .python-version "YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/"
+```
+
+Replace the username, login host, and destination with your cluster details. Copy notebooks and inputs using the same method. For the folder arrangement used here:
+
+```bash
+scp -r notebooks data "YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/"
+```
+
+Transfer existing results too if the cluster work needs them. Recreate `.venv` using `uv sync --locked` in the remote project folder.
+
+After transfer, local and cluster copies remain separate. Update full paths in notebook settings to their cluster locations. Copy completed outputs back using the results-transfer instructions above.
+
+## 8. Use inputs and save outputs
+
+Follow [Use your own files](developer-setup.ipynb#use-your-own-files) and [Save results and return later](developer-setup.ipynb#save-results-and-return-later) in the local guide, using paths copied from the **remote** Explorer.
+
+Set the notebook's `project` path, or its `project_root` configuration where present, to the cluster's `memory-project` folder. A path pointing to your laptop's Documents folder will not locate the transferred file. After copying an input, check that it appears in the remote Explorer and that the notebook's input check prints `True`.
+
+Save tables, figures, and other outputs to shared storage, using separate filenames or folders for runs you want to preserve. You can reopen these files in another allocation or transfer them to your computer. Saving a result file is what makes it available later; leaving a value in Python's memory does not.
 
 ## Finish and return later
 
-Save the notebook with **File → Save**, then close the compute connection. In the original allocation terminal, run:
+Save your notebook and any results you want to retain before ending the allocation. When the allocation's time limit is reached, its running calculations may be terminated; code that has not yet saved its results cannot be recovered simply by reopening the notebook.
+
+Close the compute connection. In the original allocation terminal, run:
 
 ```bash
 exit
@@ -203,11 +299,26 @@ exit
 
 This ends the interactive job and returns that terminal to the login node. Run `squeue --jobs=YOUR_JOB_ID`, replacing the placeholder with the recorded job number, to check that it has ended. If it remains queued or running, `scancel YOUR_JOB_ID` cancels that allocation. Closing only the editor window is not a substitute for ending the job.
 
-Your files and `.venv` remain on shared storage, subject to its retention policy. Live Python state disappears when the kernel ends. To return, reconnect to the login host, request a new allocation, update `HostName` in the existing `jaxcmr-compute` entry, and reconnect the compute window. Open the project, select its environment, and run your notebook from the beginning. Load any site-required modules as part of the supported connection procedure.
+Your saved files and `.venv` remain on shared storage according to its retention policy. To return:
 
-## Continue with the tutorials
+1. Reconnect to the login host and request a new allocation. Load any site-required modules as part of the supported connection procedure.
+2. Update `HostName` in the existing `jaxcmr-compute` SSH configuration entry and reconnect the compute window.
+3. Open the same shared project folder and select its `.venv`.
+4. Run your imports and path settings, then load inputs or saved results.
 
-In an allocated compute window, open `guide/tutorials/data-preparation.ipynb` for [Preparing data for JAXCMR](tutorials/data-preparation.ipynb) and select the same `.venv` environment. You can use this workspace for other project notebooks while the allocation remains active. Choose resources appropriate to their work; this setup request is only for a small check.
+The environment normally remains available between allocations. If you intentionally transfer updated dependency configuration from another computer, run `uv sync --locked` before starting notebook kernels. The new session's Python variables must be recreated by running code. Use **Run All** when you intend to repeat the whole workflow; otherwise, load saved results and run the subsequent steps you need.
+
+## Continue with JAXCMR
+
+Download [Preparing data for JAXCMR](tutorials/data-preparation.ipynb), transfer it into the cluster project's `notebooks` folder, and open it in an allocated compute window. Then use the [templates](templates.qmd) for analysis and modelling. Select the same `.venv` environment and choose resources appropriate to the work; the setup allocation above is only for a small check.
+
+::: {.callout-note collapse="true" title="Optional: work with the JAXCMR checkout"}
+
+If you need the complete repository or want to modify JAXCMR itself, follow the [local guide's optional cloning instructions](developer-setup.ipynb#optional-repository-checkout) in a cluster terminal, using approved shared storage. The existing [template tour](tutorials/template-tour.ipynb) uses this route.
+
+Keep that checkout separate from your research project. Open its folder and select its own `.venv` when working on the library or running repository-dependent examples.
+
+:::
 
 ## If something goes wrong
 
@@ -227,6 +338,10 @@ Check the account, partition, and permitted resource settings against your alloc
 
 ::: {.callout-note collapse="true" title="The compute node cannot find the project or import JAXCMR"}
 Check `pwd`, shared storage access, and whether installation finished successfully. Use `.venv/bin/python` from the intended project folder.
+:::
+
+::: {.callout-note collapse="true" title="A notebook cannot find an input file"}
+Check that the file was transferred and appears in the remote Explorer. Use **Copy Path** there to compare its cluster location with the notebook's settings. A local file path does not refer to the remote copy. Check `Path.cwd()` inside the notebook if using a relative path.
 :::
 
 When asking for help, include the command, complete error message, and whether it ran on your computer, a login node, or a compute node.

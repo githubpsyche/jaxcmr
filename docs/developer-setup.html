@@ -221,18 +221,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#install-vs-code" id="toc-install-vs-code" class="nav-link active" data-scroll-target="#install-vs-code">1. Install VS Code</a></li>
   <li><a href="#install-git" id="toc-install-git" class="nav-link" data-scroll-target="#install-git">2. Install Git</a></li>
   <li><a href="#install-uv" id="toc-install-uv" class="nav-link" data-scroll-target="#install-uv">3. Install uv</a></li>
-  <li><a href="#download-jaxcmr-and-its-examples" id="toc-download-jaxcmr-and-its-examples" class="nav-link" data-scroll-target="#download-jaxcmr-and-its-examples">4. Download JAXCMR and its examples</a></li>
-  <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">5. Install Python and JAXCMR</a></li>
-  <li><a href="#open-a-notebook-and-select-its-environment" id="toc-open-a-notebook-and-select-its-environment" class="nav-link" data-scroll-target="#open-a-notebook-and-select-its-environment">6. Open a notebook and select its environment</a></li>
-  <li><a href="#check-your-setup" id="toc-check-your-setup" class="nav-link" data-scroll-target="#check-your-setup">7. Check your setup</a></li>
-  <li><a href="#save-and-return-to-your-workspace" id="toc-save-and-return-to-your-workspace" class="nav-link" data-scroll-target="#save-and-return-to-your-workspace">Save and return to your workspace</a></li>
-  <li><a href="#continue-with-the-tutorials" id="toc-continue-with-the-tutorials" class="nav-link" data-scroll-target="#continue-with-the-tutorials">Continue with the tutorials</a></li>
+  <li><a href="#create-your-project-folder" id="toc-create-your-project-folder" class="nav-link" data-scroll-target="#create-your-project-folder">4. Create your project folder</a></li>
+  <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">5. Install Python and JAXCMR for this project</a></li>
+  <li><a href="#create-or-adapt-a-notebook" id="toc-create-or-adapt-a-notebook" class="nav-link" data-scroll-target="#create-or-adapt-a-notebook">6. Create or download a notebook</a>
+  <ul class="collapse">
+  <li><a href="#downloading-a-notebook-and-its-inputs" id="toc-downloading-a-notebook-and-its-inputs" class="nav-link" data-scroll-target="#downloading-a-notebook-and-its-inputs">Downloading a notebook and its inputs</a></li>
+  <li><a href="#work-with-cells" id="toc-work-with-cells" class="nav-link" data-scroll-target="#work-with-cells">Work with cells</a></li>
+  </ul></li>
+  <li><a href="#use-your-own-files" id="toc-use-your-own-files" class="nav-link" data-scroll-target="#use-your-own-files">7. Use your own files</a></li>
+  <li><a href="#save-results-and-return-later" id="toc-save-results-and-return-later" class="nav-link" data-scroll-target="#save-results-and-return-later">8. Save results and return later</a>
+  <ul class="collapse">
+  <li><a href="#add-software-or-move-to-another-computer" id="toc-add-software-or-move-to-another-computer" class="nav-link" data-scroll-target="#add-software-or-move-to-another-computer">Add software or move to another computer</a></li>
+  </ul></li>
+  <li><a href="#continue-with-jaxcmr" id="toc-continue-with-jaxcmr" class="nav-link" data-scroll-target="#continue-with-jaxcmr">Continue with JAXCMR</a></li>
   <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a>
   <ul class="collapse">
   <li><a href="#git-or-uv-is-not-found" id="toc-git-or-uv-is-not-found" class="nav-link" data-scroll-target="#git-or-uv-is-not-found">Git or uv is not found</a></li>
   <li><a href="#uv-cannot-find-pyproject.toml" id="toc-uv-cannot-find-pyproject.toml" class="nav-link" data-scroll-target="#uv-cannot-find-pyproject.toml">uv cannot find pyproject.toml</a></li>
   <li><a href="#venv-is-not-listed-as-a-kernel" id="toc-venv-is-not-listed-as-a-kernel" class="nav-link" data-scroll-target="#venv-is-not-listed-as-a-kernel">.venv is not listed as a kernel</a></li>
   <li><a href="#the-notebook-says-no-module-named-jaxcmr" id="toc-the-notebook-says-no-module-named-jaxcmr" class="nav-link" data-scroll-target="#the-notebook-says-no-module-named-jaxcmr">The notebook says No module named jaxcmr</a></li>
+  <li><a href="#a-name-is-not-defined" id="toc-a-name-is-not-defined" class="nav-link" data-scroll-target="#a-name-is-not-defined">A name is not defined</a></li>
+  <li><a href="#a-file-is-not-found" id="toc-a-file-is-not-found" class="nav-link" data-scroll-target="#a-file-is-not-found">A file is not found</a></li>
   <li><a href="#jax-reports-a-dll-error-on-windows" id="toc-jax-reports-a-dll-error-on-windows" class="nav-link" data-scroll-target="#jax-reports-a-dll-error-on-windows">JAX reports a DLL error on Windows</a></li>
   </ul></li>
   </ul>
@@ -260,7 +269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Prepare a workspace for JAXCMR tutorials and your own work. You will install the software, open a notebook, and run a small check that everything works. You do not need any previous experience with Python or VS Code; the check includes all the code you need.</p>
+<p>Use VS Code to write and run Python notebooks, work with your own files, and save results for later. This guide creates your own research project and installs JAXCMR into its Python environment. You can download tutorials and templates to use in that project; cloning the library is optional. No previous experience with Python or VS Code is assumed.</p>
 <p>These instructions cover <strong>Macs with an Apple chip</strong>, such as an M1 or M2, and <strong>Windows PCs with a 64-bit Intel or AMD processor</strong>. Intel Macs are not supported by this installation route because the required version of JAX does not provide an Intel Mac installer. You will need an internet connection and permission to install software.</p>
 <p>If your computer cannot use this route, you can run the code on another computer instead. The <a href="./colab-setup.html">Google Colab setup guide</a> prepares a notebook workspace in your browser using Google’s computers. If you have access to a research cluster, follow <a href="./slurm-setup.html">Slurm cluster setup with VS Code</a> to prepare it for JAXCMR. Both routes run Python on the remote computer.</p>
 <p>On a Mac, choose <strong>Apple menu → About This Mac</strong> to check: an Apple chip is listed under <strong>Chip</strong>; an Intel processor is listed under <strong>Processor</strong>.</p>
@@ -293,7 +302,7 @@ Figure&nbsp;1: Choose <strong>Python</strong>, published by <strong>Microsoft</s
 </section>
 <section id="install-git" class="level2">
 <h2 class="anchored" data-anchor-id="install-git">2. Install Git</h2>
-<p><strong>Git</strong> will download JAXCMR and its examples from GitHub, the website where the project is stored.</p>
+<p>The installation command below uses <strong>Git</strong> to fetch JAXCMR from GitHub, the website where its source is stored. You do not need a GitHub account or a separate checkout of JAXCMR’s repository.</p>
 <p>Some of the steps below use a <strong>terminal</strong>: a panel where you give your computer instructions by typing commands. In VS Code, choose <strong>Terminal → New Terminal</strong> to open it. To run a command, copy it into the terminal and press <strong>Return</strong> on Mac or <strong>Enter</strong> on Windows. Do not copy the surrounding box or add any extra characters.</p>
 <div id="fig-vscode-terminal" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code with its Terminal panel, shell name, and command prompt outlined in red.">
 <figure class="quarto-float quarto-float-fig figure">
@@ -354,70 +363,182 @@ Figure&nbsp;3: On Windows, use the arrow beside <strong>+</strong> to choose <st
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Each should print its name and a version number, such as <code>git version …</code> and <code>uv …</code>. If either command is not found or not recognized, see <a href="#if-something-goes-wrong">If something goes wrong</a> before continuing.</p>
 </section>
-<section id="download-jaxcmr-and-its-examples" class="level2">
-<h2 class="anchored" data-anchor-id="download-jaxcmr-and-its-examples">4. Download JAXCMR and its examples</h2>
-<p>JAXCMR’s <strong>repository</strong> is the collection of files containing its code, examples, and documentation. Downloading a copy with Git is called <strong>cloning</strong>.</p>
-<ol type="1">
-<li><p>In VS Code, choose <strong>View → Command Palette</strong>. This opens a search box for VS Code commands.</p></li>
-<li><p>Type <strong>Git: Clone</strong> and select that command.</p></li>
-<li><p>Paste this repository address and press <strong>Return</strong> or <strong>Enter</strong>:</p>
-<pre class="text"><code>https://github.com/githubpsyche/jaxcmr</code></pre></li>
-<li><p>Choose a folder where you want to keep the project, such as <strong>Documents</strong>. Git will create a new folder named <code>jaxcmr</code> inside it.</p></li>
-<li><p>When the download finishes, choose <strong>Open</strong> to open the <code>jaxcmr</code> folder in VS Code.</p></li>
-<li><p>If VS Code asks whether you trust the authors of the files, confirm that you trust this project folder so you can run its example code.</p></li>
-</ol>
-<div id="fig-vscode-clone-palette" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Command Palette with its search box outlined in red.">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-vscode-clone-palette-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/vscode-clone-palette.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Type Git: Clone in the Command Palette’s search box."><img src="images/setup/vscode-clone-palette.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Command Palette with its search box outlined in red."></a>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-clone-palette-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: Type <strong>Git: Clone</strong> in the Command Palette’s search box.
-</figcaption>
-</figure>
-</div>
-<p>You do not need a GitHub account to download this public repository.</p>
-<p>Choose <strong>View → Explorer</strong> to see the project’s files in the left-hand panel. You should see folders including <code>guide</code> and <code>templates</code>, and files including <code>pyproject.toml</code> and <code>uv.lock</code>.</p>
+<section id="create-your-project-folder" class="level2">
+<h2 class="anchored" data-anchor-id="create-your-project-folder">4. Create your project folder</h2>
+<p>A <strong>project folder</strong> keeps the notebooks, inputs, results, and software settings for one piece of research together.</p>
+<p>Using Finder or Windows File Explorer, create a folder somewhere convenient, such as Documents. Give it a meaningful name; this guide uses <code>memory-project</code>.</p>
+<p>In VS Code, choose <strong>File → Open Folder</strong> and open that folder. If prompted, confirm that you trust the folder you created.</p>
+<p>Choose <strong>View → Explorer</strong> to see the folder in the left-hand panel. Right-click its name and choose <strong>New Folder</strong> to create each of these three folders:</p>
+<pre class="text"><code>memory-project/
+├── notebooks/
+├── data/
+└── results/</code></pre>
+<p>Keep your notebooks in <code>notebooks</code>, input files in <code>data</code>, and saved outputs in <code>results</code>. These names are suggestions; you can use another arrangement or keep large datasets elsewhere.</p>
 </section>
 <section id="install-python-and-jaxcmr" class="level2">
-<h2 class="anchored" data-anchor-id="install-python-and-jaxcmr">5. Install Python and JAXCMR</h2>
-<p>With the <code>jaxcmr</code> folder open in VS Code, choose <strong>Terminal → New Terminal</strong>. The new terminal should start inside this folder.</p>
-<p>Run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This installs Python 3.12 if needed, JAXCMR, and the tools needed to run the example. The first installation may take several minutes.</p>
-<p>Wait until the command finishes and the terminal is ready for another command. If it ends with an error, resolve that before continuing.</p>
-<p>The installed software is kept in a folder named <code>.venv</code> inside <code>jaxcmr</code>. In the next step, you will tell VS Code to use it.</p>
+<h2 class="anchored" data-anchor-id="install-python-and-jaxcmr">5. Install Python and JAXCMR for this project</h2>
+<p>Choose <strong>Terminal → New Terminal</strong>. The terminal should open inside <code>memory-project</code>.</p>
+<p>If you already have a uv-managed research project, open that folder and run only the <code>uv add</code> command below; keep its existing project configuration. For a new project, run all three commands one at a time:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> init <span class="at">--bare</span> <span class="at">--python</span> 3.12 <span class="at">--vcs</span> none</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> python pin 3.12</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> ipykernel pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first command creates the project’s software configuration. <code>--bare</code> keeps the starting files minimal, and <code>--vcs none</code> leaves version-control setup to you. The second records Python 3.12 as the version to use. See <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv’s project commands</a>.</p>
+<p>The last command installs:</p>
+<ul>
+<li><strong>JAXCMR</strong>, from the GitHub version used by this documentation.</li>
+<li><strong>ipykernel</strong>, which lets VS Code run notebook cells using this environment.</li>
+<li><strong>pandas</strong>, which provides the table-reading and writing tools used later in this guide.</li>
+</ul>
+<p>uv downloads Python if needed and installs the packages in a <code>.venv</code> folder inside your project. Wait for installation to finish successfully before continuing. <a href="https://docs.astral.sh/uv/guides/integration/jupyter/#using-jupyter-from-vs-code">uv’s VS Code instructions</a> explain the notebook connection.</p>
+<p>After installation, your folder also contains:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>File or folder</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pyproject.toml</code></td>
+<td>Records the packages your project uses.</td>
+</tr>
+<tr class="even">
+<td><code>uv.lock</code></td>
+<td>Records the resolved package versions and JAXCMR revision.</td>
+</tr>
+<tr class="odd">
+<td><code>.python-version</code></td>
+<td>Records the Python version to use.</td>
+</tr>
+<tr class="even">
+<td><code>.venv</code></td>
+<td>Contains the installed software for this computer.</td>
+</tr>
+</tbody>
+</table>
+<p>Keep the three configuration files with your research project. They let uv recreate its environment on another computer. See <a href="https://docs.astral.sh/uv/guides/projects/#project-structure">uv’s project structure</a>.</p>
 </section>
-<section id="open-a-notebook-and-select-its-environment" class="level2">
-<h2 class="anchored" data-anchor-id="open-a-notebook-and-select-its-environment">6. Open a notebook and select its environment</h2>
-<p>Use the supplied simulation notebook to check your setup. You can open other notebooks in this project in the same way.</p>
-<p>In VS Code’s Explorer:</p>
-<ol type="1">
-<li>Expand the <strong>guide</strong> folder.</li>
-<li>Expand the <strong>examples</strong> folder inside it.</li>
-<li>Double-click <strong>first-simulation.ipynb</strong>.</li>
-</ol>
-<p>The notebook opens in the main part of the window. Its toolbar contains the controls for choosing Python and running the code.</p>
+<section id="create-or-adapt-a-notebook" class="level2">
+<h2 class="anchored" data-anchor-id="create-or-adapt-a-notebook">6. Create or download a notebook</h2>
+<p>With <code>memory-project</code> open in VS Code, choose how to begin:</p>
+<ul>
+<li><strong>Create your own notebook:</strong> open <strong>View → Command Palette</strong>, which searches VS Code’s commands, run <strong>Create: New Jupyter Notebook</strong>, and use <strong>File → Save As</strong> to save it in <code>notebooks</code> with a filename ending in <code>.ipynb</code>.</li>
+<li><strong>Use a JAXCMR tutorial or template:</strong> open its documentation page and choose <strong>Download notebook</strong>. Move the downloaded file into <code>notebooks</code>, then open it in VS Code.</li>
+<li><strong>Continue existing work:</strong> open its notebook from Explorer.</li>
+</ul>
+<p>Choose <strong>Select Kernel → Select Another Kernel → Python Environments</strong> and select the Python 3.12 <code>.venv</code> inside <strong>your <code>memory-project</code> folder</strong>. If <strong>Python Environments</strong> is already shown, choose it directly. A <strong>kernel</strong> is the running Python process; the selected environment supplies its installed packages. Use that environment for each notebook belonging to this project. If a kernel is already selected, click its name to check or change it.</p>
 <div id="fig-vscode-notebook-controls" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code notebook toolbar with Select Kernel outlined in red.">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-vscode-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/vscode-notebook-controls.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Click Select Kernel at the upper right to choose the Python environment for this notebook."><img src="images/setup/vscode-notebook-controls.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code notebook toolbar with Select Kernel outlined in red."></a>
+<a href="images/setup/vscode-notebook-controls.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Click Select Kernel at the upper right to choose the Python environment for this notebook."><img src="images/setup/vscode-notebook-controls.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code notebook toolbar with Select Kernel outlined in red."></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-notebook-controls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: Click <strong>Select Kernel</strong> at the upper right to choose the Python environment for this notebook.
+Figure&nbsp;4: Click <strong>Select Kernel</strong> at the upper right to choose the Python environment for this notebook.
 </figcaption>
 </figure>
 </div>
-<p>Before running the notebook, choose the Python environment you just installed:</p>
-<ol type="1">
-<li>Click <strong>Select Kernel</strong> near the top right of the notebook.</li>
-<li>Choose <strong>Select Another Kernel → Python Environments</strong>. If <strong>Python Environments</strong> is already shown, choose it directly.</li>
-<li>Select <strong>.venv</strong>, with Python 3.12, inside your <code>jaxcmr</code> folder.</li>
-</ol>
-<p>A <strong>kernel</strong> is the Python process that runs the notebook’s code. Selecting this environment gives it access to JAXCMR and the other packages installed in the previous step. If a kernel is already selected, click its name to check or change it.</p>
+<section id="downloading-a-notebook-and-its-inputs" class="level3">
+<h3 class="anchored" data-anchor-id="downloading-a-notebook-and-its-inputs">Downloading a notebook and its inputs</h3>
+<p>A notebook download contains its code, explanations, and saved cell outputs. Separate input files must also be available.</p>
+<p>The <a href="./tutorials/data-preparation.html">data-preparation tutorial</a> creates its small teaching dataset in code. Other notebooks may need downloaded inputs: the <a href="./templates.html#download-the-shared-inputs">templates page</a> lists the example files and where to save them.</p>
+<p>The templates’ automatic example downloads currently run in Colab. For local work, download the required files yourself or supply your own data.</p>
+<p>When a notebook has a <code>project_root</code> setting, set it to the full path of <code>memory-project</code>. In Explorer, right-click that folder and choose <strong>Copy Path</strong>. For example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> <span class="vs">r"PASTE_PROJECT_PATH_HERE"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace the text between the quotation marks. This makes the notebook’s relative input and output paths refer to your project folder, even though the notebook itself is saved inside <code>notebooks</code>.</p>
+<p>Check its input and output settings before running. If it has a <code>notebook_source</code> setting, update that to your saved notebook’s location so its record of the run includes your copy. The next section explains file paths in more detail.</p>
 </section>
-<section id="check-your-setup" class="level2">
-<h2 class="anchored" data-anchor-id="check-your-setup">7. Check your setup</h2>
+<section id="work-with-cells" class="level3">
+<h3 class="anchored" data-anchor-id="work-with-cells">Work with cells</h3>
+<p>Use <strong>+ Code</strong> to add Python instructions and <strong>+ Markdown</strong> to add explanatory text. Click inside a code cell to edit it. Run it with the triangle beside the cell or <strong>Shift+Enter</strong>; its output appears underneath. <strong>Run All</strong> executes the notebook from top to bottom. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-notebooks">VS Code’s notebook controls</a>.</p>
+<p>Cells use values created by earlier executions. Changing a value in an earlier cell requires running that cell again, followed by the cells that depend on it. Editing code alone does not update the results.</p>
+<p>Arrange your notebook so it can run in order: imports and settings, loading files, calculations, then saving results. Stop and resolve an error before running cells that depend on the failed step.</p>
+</section>
+</section>
+<section id="use-your-own-files" class="level2">
+<h2 class="anchored" data-anchor-id="use-your-own-files">7. Use your own files</h2>
+<p>Copy your input files into the project’s <code>data</code> folder using Finder or Windows File Explorer, or leave them in an existing location and use their full paths.</p>
+<p>A <strong>path</strong> identifies a file or folder. A full path starts from your computer’s filesystem root or drive. A relative path, such as <code>data/trials.csv</code>, is interpreted from Python’s current working folder. That folder can differ from the terminal’s; inspect it inside the notebook with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(Path.cwd())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For a straightforward starting arrangement, use a full project path. In VS Code’s Explorer, right-click <code>memory-project</code> and choose <strong>Copy Path</strong>. Paste it between the quotation marks below, replacing <code>PASTE_PROJECT_PATH_HERE</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path(<span class="vs">r"PASTE_PROJECT_PATH_HERE"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>input_path <span class="op">=</span> project <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"trials.csv"</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>output_dir <span class="op">=</span> project <span class="op">/</span> <span class="st">"results"</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input file exists:"</span>, input_path.is_file())</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Save results in:"</span>, output_dir)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep the <code>r</code> before the quotation mark; it allows Windows paths containing backslashes. Replace <code>trials.csv</code> with your filename. <code>/</code> joins path components, and <code>mkdir</code> creates the output folder if needed. If the input check prints <code>False</code>, compare the path with the file’s actual location and spelling. These operations use Python’s <a href="https://docs.python.org/3/library/pathlib.html">path tools</a>.</p>
+<p>For a CSV table, load and inspect it with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.read_csv(input_path)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>table.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>pandas</code> is installed with this workspace. The import makes its tools available as <code>pd</code>; <code>table</code> holds the loaded data in Python’s memory, and <code>head()</code> displays its first few rows. Other file formats need a suitable reader. See <a href="https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html">pandas’ CSV reader</a>.</p>
+<p>When adapting a JAXCMR template, edit its existing configuration cell: set <code>project_root</code> to your project’s full path and adjust its input and output settings. Check additional locations such as <code>simulation_dir</code> or <code>figure_dir</code> where present. Moving a notebook does not automatically change the files it reads or writes.</p>
+<p><a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> explains the data format needed for modelling.</p>
+</section>
+<section id="save-results-and-return-later" class="level2">
+<h2 class="anchored" data-anchor-id="save-results-and-return-later">8. Save results and return later</h2>
+<p><strong>File → Save</strong> preserves the notebook’s code, explanations, and displayed outputs. To use a result in another notebook or application, write it as a separate file.</p>
+<p>For example, save the table loaded above as a CSV:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>saved_path <span class="op">=</span> output_dir <span class="op">/</span> <span class="st">"trials-copy.csv"</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>table.to_csv(saved_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(saved_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>index=False</code> leaves out pandas’ extra row-number column. After an analysis, use this pattern with its result table and a meaningful filename. Choose distinct filenames or folders for results you want to retain separately; saving to an existing filename can replace it. See <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html">pandas’ CSV writer</a>.</p>
+<p>Find the saved file in Explorer. A figure needs its own save operation; JAXCMR templates save files according to their output settings.</p>
+<p>Closing VS Code leaves your saved files and installed environment on disk. A new or restarted kernel begins without the previous session’s Python variables. <strong>Restart Kernel</strong> clears that running state without removing installed packages. Results already visible in a notebook may be saved output from an earlier session.</p>
+<p>When returning:</p>
+<ol type="1">
+<li>Use <strong>File → Open Folder</strong> to open <code>memory-project</code>, then open your notebook.</li>
+<li>Select the project’s <code>.venv</code>.</li>
+<li>Run the imports and path settings.</li>
+<li>Load your inputs or previously saved results, then run the calculations you need.</li>
+</ol>
+<div id="fig-vscode-open-folder" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Command Palette with File Open Folder outlined in red.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="images/setup/vscode-open-folder.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: You can also find File: Open Folder… in the Command Palette to reopen your memory-project folder."><img src="images/setup/vscode-open-folder.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Command Palette with File Open Folder outlined in red."></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: You can also find <strong>File: Open Folder…</strong> in the Command Palette to reopen your <code>memory-project</code> folder.
+</figcaption>
+</figure>
+</div>
+<p>For example, after defining <code>project</code> and importing pandas, a later notebook can read the saved table:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>saved_table <span class="op">=</span> pd.read_csv(project <span class="op">/</span> <span class="st">"results"</span> <span class="op">/</span> <span class="st">"trials-copy.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Saved files let separate notebooks share results. Using the same environment gives them access to the same packages; it does not automatically share their variables. You normally do not repeat installation for each notebook.</p>
+<p>Use <strong>Run All</strong> when you intend to repeat the whole workflow. To continue from saved results, load those files and run the subsequent steps.</p>
+<section id="add-software-or-move-to-another-computer" class="level3">
+<h3 class="anchored" data-anchor-id="add-software-or-move-to-another-computer">Add software or move to another computer</h3>
+<p>You normally install packages once per project. If another notebook needs an additional package, add it from a terminal in this folder using <code>uv add PACKAGE_NAME</code>, replacing the placeholder with that package’s name. This records the dependency as well as installing it. See <a href="https://docs.astral.sh/uv/concepts/projects/dependencies/#adding-dependencies">Managing project dependencies</a>.</p>
+<p>On another computer, copy <code>pyproject.toml</code>, <code>uv.lock</code>, and <code>.python-version</code> along with the notebooks and data you need. Install Git and uv there, open the copied project folder, and recreate the environment with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Recreate <code>.venv</code> on the destination computer rather than copying it. Keep backups of your notebooks, inputs, results, and configuration files.</p>
+</section>
+</section>
+<section id="continue-with-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="continue-with-jaxcmr">Continue with JAXCMR</h2>
+<p>Download <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> into <code>notebooks</code>, then use the <a href="./templates.html">templates</a> for analysis and modelling. Apply the same notebook, input-path, and output-path choices when moving to your own work. The existing <a href="./tutorials/template-tour.html">template tour</a> uses the <a href="#optional-repository-checkout">optional repository checkout</a> below.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: check your installation
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Download the <a href="downloads/examples/first-simulation.ipynb">first simulation notebook</a>, move it into <code>notebooks</code>, and open it in VS Code. Select the Python 3.12 <code>.venv</code> inside your <code>memory-project</code> folder. This supplied notebook needs no input file.</p>
 <p>Click <strong>Run All</strong> at the top of the notebook. This runs its code cells in order, so later cells can use what earlier cells have prepared. The first cell is for Colab and skips installation on your computer.</p>
 <div id="fig-vscode-run" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code notebook showing the Run All button outlined in red and output beneath a code cell.">
 <figure class="quarto-float quarto-float-fig figure">
@@ -434,32 +555,32 @@ Figure&nbsp;6: <strong>Run All</strong> executes the notebook from the beginning
 <pre class="text"><code>Study order: [1 2 3 4 5]
 Simulated recalls: [1 5 2 4 3]</code></pre>
 <p>Reaching this output confirms that the selected Python environment can load JAXCMR and execute a model. The notebook’s <strong>Read the output</strong> section explains the simulation.</p>
-</section>
-<section id="save-and-return-to-your-workspace" class="level2">
-<h2 class="anchored" data-anchor-id="save-and-return-to-your-workspace">Save and return to your workspace</h2>
-<p>Use <strong>File → Save</strong> to keep the notebook and its displayed results. The notebook file and your installed environment remain on your computer when you close VS Code. The running Python session is separate: starting a new kernel, or using <strong>Restart Kernel</strong>, clears the values held in memory but does not remove the installed packages.</p>
-<p>To return:</p>
-<ol type="1">
-<li>Use <strong>File → Open Folder</strong> to reopen the same <code>jaxcmr</code> folder.</li>
-<li>Open the notebook you want to work with in Explorer.</li>
-<li>Check that its selected kernel uses the project’s <code>.venv</code> environment.</li>
-<li>Run its code from the beginning to recreate the session’s results.</li>
-</ol>
-<div id="fig-vscode-open-folder" class="quarto-float quarto-figure quarto-figure-center anchored" alt="VS Code Command Palette with File Open Folder outlined in red.">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="images/setup/vscode-open-folder.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;7: You can also find File: Open Folder… in the Command Palette to reopen your jaxcmr folder."><img src="images/setup/vscode-open-folder.png" class="img-fluid figure-img" style="width:100.0%" alt="VS Code Command Palette with File Open Folder outlined in red."></a>
+<p>Completing this check verifies installation; use the earlier sections to work with your own notebooks and files.</p>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vscode-open-folder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7: You can also find <strong>File: Open Folder…</strong> in the Command Palette to reopen your <code>jaxcmr</code> folder.
-</figcaption>
-</figure>
 </div>
-<p>You normally do not repeat installation for each notebook in this project.</p>
-</section>
-<section id="continue-with-the-tutorials" class="level2">
-<h2 class="anchored" data-anchor-id="continue-with-the-tutorials">Continue with the tutorials</h2>
-<p>For <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a>, open <code>guide/tutorials/data-preparation.ipynb</code> in this workspace and select the same <code>.venv</code> environment. That tutorial explains the calculations; the procedure for opening and running its notebook is the one you have just used.</p>
+</div>
+<div id="optional-repository-checkout" class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: get the complete JAXCMR repository
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>JAXCMR’s <strong>repository</strong> contains its source code, examples, and documentation. <strong>Cloning</strong> downloads a checkout of that collection. Use this route if you want to work on the library itself or obtain the complete examples. The existing <a href="./tutorials/template-tour.html">template tour</a>, which coordinates several notebooks and supplied datasets, currently uses this route.</p>
+<p>Keep the checkout in a separate folder beside your research project. In VS Code, open the parent folder, such as Documents, choose <strong>Terminal → New Terminal</strong>, and run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/githubpsyche/jaxcmr.git</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> jaxcmr</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first command downloads the repository into a new <code>jaxcmr</code> folder, <code>cd</code> moves the terminal into it, and <code>uv sync --locked</code> installs its recorded software environment.</p>
+<p>Open the resulting <code>jaxcmr</code> folder with <strong>File → Open Folder</strong>, confirm trust if prompted, and select its <code>.venv</code> when working through repository examples or modifying the library. Return to your research folder and its environment for your own project.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="if-something-goes-wrong" class="level2">
 <h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
@@ -469,22 +590,30 @@ Figure&nbsp;7: You can also find <strong>File: Open Folder…</strong> in the Co
 </section>
 <section id="uv-cannot-find-pyproject.toml" class="level3">
 <h3 class="anchored" data-anchor-id="uv-cannot-find-pyproject.toml">uv cannot find pyproject.toml</h3>
-<p>The terminal is probably in the wrong folder. Use <strong>File → Open Folder</strong> to open the <code>jaxcmr</code> folder containing <code>pyproject.toml</code>, then open a <strong>new terminal</strong> and run <code>uv sync</code> again.</p>
+<p>The terminal is probably in the wrong folder. Use <strong>File → Open Folder</strong> to open your research folder containing <code>pyproject.toml</code>, then open a <strong>new terminal</strong> and retry the command. For a new folder without that file, complete step 5 first.</p>
 </section>
 <section id="venv-is-not-listed-as-a-kernel" class="level3">
 <h3 class="anchored" data-anchor-id="venv-is-not-listed-as-a-kernel">.venv is not listed as a kernel</h3>
-<p>Check that <code>uv sync</code> finished successfully. Quit and reopen VS Code, reopen the notebook, and try the kernel picker again.</p>
+<p>Check that the <code>uv add</code> installation in step 5, or <code>uv sync --locked</code> for a copied project, finished successfully. Quit and reopen VS Code, reopen the notebook, and try the kernel picker again.</p>
 </section>
 <section id="the-notebook-says-no-module-named-jaxcmr" class="level3">
 <h3 class="anchored" data-anchor-id="the-notebook-says-no-module-named-jaxcmr">The notebook says No module named jaxcmr</h3>
-<p>Check that <code>uv sync</code> finished in the <code>jaxcmr</code> folder and that the notebook’s selected kernel uses the <code>.venv</code> inside that folder. Select that environment, then click <strong>Run All</strong> again.</p>
+<p>Check that installation finished in your research project folder and that the notebook’s selected kernel uses the <code>.venv</code> inside that folder. Select that environment, then rerun the cell that imports JAXCMR.</p>
+</section>
+<section id="a-name-is-not-defined" class="level3">
+<h3 class="anchored" data-anchor-id="a-name-is-not-defined">A name is not defined</h3>
+<p>Run the earlier cell that defines that name, including imports and path settings. Variables from a previous kernel session or a different notebook are not automatically available.</p>
+</section>
+<section id="a-file-is-not-found" class="level3">
+<h3 class="anchored" data-anchor-id="a-file-is-not-found">A file is not found</h3>
+<p>Compare the filename and location with <strong>Copy Path</strong> in Explorer. Check <code>Path.cwd()</code> if using a relative path. Moving or copying a notebook does not move its input files or update its path settings.</p>
 </section>
 <section id="jax-reports-a-dll-error-on-windows" class="level3">
 <h3 class="anchored" data-anchor-id="jax-reports-a-dll-error-on-windows">JAX reports a DLL error on Windows</h3>
 <p>JAX may also need Microsoft’s <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist">Visual C++ Redistributable for x64</a>. Install it, restart VS Code, and try running the notebook again. This requirement is described in <a href="https://docs.jax.dev/en/latest/installation.html#pip-installation-cpu">JAX’s installation instructions</a>.</p>
 <p>If you ask for help, include the step you reached and the complete error message.</p>
 <div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -493,7 +622,7 @@ Figure&nbsp;7: You can also find <strong>File: Open Folder…</strong> in the Co
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>VS Code screenshots: Microsoft, <a href="https://creativecommons.org/licenses/by/3.0/us/">CC BY 3.0 US</a>. Sources: <a href="https://code.visualstudio.com/docs/configure/extensions/extension-marketplace">extensions</a>, <a href="https://code.visualstudio.com/docs/terminal/getting-started">terminal</a>, <a href="https://code.visualstudio.com/docs/getstarted/userinterface">Command Palette</a>, and <a href="https://code.visualstudio.com/docs/datascience/jupyter-notebooks">notebooks</a>. Red highlights have been added where needed; the source images are unchanged.</p>
 </div>

@@ -216,13 +216,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#where-the-work-happens" id="toc-where-the-work-happens" class="nav-link active" data-scroll-target="#where-the-work-happens">Where the work happens</a></li>
   <li><a href="#before-you-begin" id="toc-before-you-begin" class="nav-link" data-scroll-target="#before-you-begin">Before you begin</a></li>
   <li><a href="#connect-vs-code-to-the-login-node" id="toc-connect-vs-code-to-the-login-node" class="nav-link" data-scroll-target="#connect-vs-code-to-the-login-node">1. Connect VS Code to the login node</a></li>
-  <li><a href="#open-your-project-on-the-cluster" id="toc-open-your-project-on-the-cluster" class="nav-link" data-scroll-target="#open-your-project-on-the-cluster">2. Open your project on the cluster</a></li>
-  <li><a href="#install-python-and-jaxcmr" id="toc-install-python-and-jaxcmr" class="nav-link" data-scroll-target="#install-python-and-jaxcmr">3. Install Python and JAXCMR</a></li>
+  <li><a href="#create-or-open-your-research-project" id="toc-create-or-open-your-research-project" class="nav-link" data-scroll-target="#create-or-open-your-research-project">2. Create or open your research project</a></li>
+  <li><a href="#install-the-projects-software-on-the-cluster" id="toc-install-the-projects-software-on-the-cluster" class="nav-link" data-scroll-target="#install-the-projects-software-on-the-cluster">3. Install the project’s software on the cluster</a></li>
   <li><a href="#request-computing-resources" id="toc-request-computing-resources" class="nav-link" data-scroll-target="#request-computing-resources">4. Request computing resources</a></li>
   <li><a href="#connect-a-second-window-to-the-compute-node" id="toc-connect-a-second-window-to-the-compute-node" class="nav-link" data-scroll-target="#connect-a-second-window-to-the-compute-node">5. Connect a second window to the compute node</a></li>
-  <li><a href="#select-the-environment-and-check-your-setup" id="toc-select-the-environment-and-check-your-setup" class="nav-link" data-scroll-target="#select-the-environment-and-check-your-setup">6. Select the environment and check your setup</a></li>
+  <li><a href="#work-with-your-own-notebooks" id="toc-work-with-your-own-notebooks" class="nav-link" data-scroll-target="#work-with-your-own-notebooks">6. Work with your own notebooks</a></li>
+  <li><a href="#move-files-between-your-computer-and-the-cluster" id="toc-move-files-between-your-computer-and-the-cluster" class="nav-link" data-scroll-target="#move-files-between-your-computer-and-the-cluster">7. Move files between your computer and the cluster</a></li>
+  <li><a href="#use-inputs-and-save-outputs" id="toc-use-inputs-and-save-outputs" class="nav-link" data-scroll-target="#use-inputs-and-save-outputs">8. Use inputs and save outputs</a></li>
   <li><a href="#finish-and-return-later" id="toc-finish-and-return-later" class="nav-link" data-scroll-target="#finish-and-return-later">Finish and return later</a></li>
-  <li><a href="#continue-with-the-tutorials" id="toc-continue-with-the-tutorials" class="nav-link" data-scroll-target="#continue-with-the-tutorials">Continue with the tutorials</a></li>
+  <li><a href="#continue-with-jaxcmr" id="toc-continue-with-jaxcmr" class="nav-link" data-scroll-target="#continue-with-jaxcmr">Continue with JAXCMR</a></li>
   <li><a href="#if-something-goes-wrong" id="toc-if-something-goes-wrong" class="nav-link" data-scroll-target="#if-something-goes-wrong">If something goes wrong</a></li>
   </ul>
 </nav>
@@ -249,8 +251,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Prepare a remote workspace for JAXCMR and run a notebook on resources allocated by Slurm. You do not need to understand JAXCMR’s models or have Python installed on your own computer.</p>
-<p>A cluster is a collection of shared computers. It can provide more memory and processors and run independent jobs simultaneously. This guide establishes an interactive workspace; long-running work that continues after disconnecting uses separately submitted batch jobs. Requesting more CPUs does not automatically make a calculation faster.</p>
+<p>Use VS Code to work with notebooks and files on a Slurm cluster. Your computer displays the editor; the cluster stores your research project and runs Python. You do not need Python installed locally.</p>
+<p>A cluster is a collection of shared computers. Clusters provide resources for work that exceeds your computer’s capacity and for running independent jobs simultaneously. This guide prepares an interactive workspace for developing and checking your work. Unattended work and multiple submitted jobs use batch jobs, which are outside this setup guide. Requesting more CPUs does not automatically make a calculation faster.</p>
 <section id="where-the-work-happens" class="level2">
 <h2 class="anchored" data-anchor-id="where-the-work-happens">Where the work happens</h2>
 <table class="caption-top table">
@@ -322,7 +324,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Your login username and Slurm account may differ. Choose storage accessible from both login and compute nodes, suitable for Python environments. Check its backup and automatic-deletion policies.</p>
+<p>Your login username and Slurm account may differ.</p>
 <p>Prefer your institution’s managed VS Code service if it provides one. Use its connection and allocation instructions, then follow the project, environment, and notebook steps below in that workspace.</p>
 <p>The SSH route below requires your institution to support all three of these:</p>
 <ul>
@@ -331,6 +333,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Running the connected VS Code processes inside your Slurm allocation. A matching computer name alone does not establish this; the cluster must support this connection method.</li>
 </ul>
 <p>These are cluster settings to confirm before starting. For example, <a href="https://docs.rc.fas.harvard.edu/kb/vscode-remote-development-via-ssh-or-tunnel/">Harvard documents distinct SSH and tunnel routes</a>. If direct SSH is unsupported, use the institution’s managed service or documented tunnel procedure.</p>
+<section id="choose-storage-for-your-work" class="level3">
+<h3 class="anchored" data-anchor-id="choose-storage-for-your-work">Choose storage for your work</h3>
+<p>Use a project location accessible from both login and compute nodes. Your institution should identify where to keep software environments, research inputs, and results.</p>
+<p>Storage names vary, but the distinctions matter:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Storage characteristic</th>
+<th>What it means for your work</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Persistent shared storage</td>
+<td>Files remain available across allocations; check whether it is backed up.</td>
+</tr>
+<tr class="even">
+<td>Scratch storage</td>
+<td>Intended for working files; it may have an automatic-deletion policy.</td>
+</tr>
+<tr class="odd">
+<td>Storage local to a compute node</td>
+<td>May disappear or become inaccessible when the allocation ends.</td>
+</tr>
+</tbody>
+</table>
+<p>Keep the only copy of important inputs and completed results in storage whose retention and backup arrangements you understand. A saved notebook does not contain every separate file its code produces.</p>
+</section>
 </section>
 <section id="connect-vs-code-to-the-login-node" class="level2">
 <h2 class="anchored" data-anchor-id="connect-vs-code-to-the-login-node">1. Connect VS Code to the login node</h2>
@@ -346,19 +380,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In this window, <strong>Explorer</strong>, saved edits, and new terminals use the cluster. A local project copy remains separate; Remote-SSH does not synchronize it automatically.</p>
 <p>Use this window to prepare the project and request resources.</p>
 </section>
-<section id="open-your-project-on-the-cluster" class="level2">
-<h2 class="anchored" data-anchor-id="open-your-project-on-the-cluster">2. Open your project on the cluster</h2>
-<p>Choose <strong>File → Open Folder</strong> and open your approved project storage location. Choose <strong>Terminal → New Terminal</strong>. A terminal accepts commands; enter each command below and press <strong>Return</strong> or <strong>Enter</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/githubpsyche/jaxcmr.git</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> jaxcmr</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li><code>pwd</code> prints the current folder, where commands look for relative filenames.</li>
-<li><code>git clone</code> downloads JAXCMR’s code and examples into a new <code>jaxcmr</code> folder.</li>
-<li><code>cd jaxcmr</code> moves the terminal into it; the final <code>pwd</code> prints its full location.</li>
-</ul>
-<p>Use <strong>File → Open Folder</strong> to open that full location. Confirm that you trust this project if prompted. Explorer should show <code>guide</code>, <code>templates</code>, <code>pyproject.toml</code>, and <code>uv.lock</code>. If you already have a checkout on the cluster, open it instead of cloning again.</p>
+<section id="create-or-open-your-research-project" class="level2">
+<h2 class="anchored" data-anchor-id="create-or-open-your-research-project">2. Create or open your research project</h2>
+<p>In the remote VS Code window, choose <strong>File → Open Folder</strong> and open your approved shared storage location.</p>
+<p>For a new project, right-click that folder in Explorer and choose <strong>New Folder</strong> to create a folder such as <code>memory-project</code>. Open it with <strong>File → Open Folder</strong>, confirm trust if prompted, then create <code>notebooks</code>, <code>data</code>, and <code>results</code> folders inside it.</p>
+<p>If you already have a research project on your computer, transfer its notebooks, required inputs, and environment configuration to this location using the <a href="#transfer-an-existing-projects-configuration">file-transfer instructions below</a>. You can also create and edit notebooks directly on the cluster.</p>
+<p>This folder belongs to your research. JAXCMR will be installed into its Python environment.</p>
+</section>
+<section id="install-the-projects-software-on-the-cluster" class="level2">
+<h2 class="anchored" data-anchor-id="install-the-projects-software-on-the-cluster">3. Install the project’s software on the cluster</h2>
+<p>Open <strong>Terminal → New Terminal</strong> in the remote project folder. A terminal accepts commands; enter each command and press <strong>Return</strong> or <strong>Enter</strong>. Use <code>pwd</code> to print the current folder and check that it is your project.</p>
+<p><strong>Python</strong> runs the calculations; <strong>uv</strong> installs Python and the packages the project needs. Check that Git and uv are available:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Git is used to fetch JAXCMR during installation. Use your institution’s software modules or installation instructions if either command is unavailable.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -372,26 +407,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Some clusters provide software through <strong>environment modules</strong>. A command such as <code>module load NAME</code> selects an administrator-installed package and adjusts the current terminal so it can find that software. Replace <code>NAME</code> with your institution’s actual module name and version. This selects existing software; uv installs Python packages for your project. Record any required module commands, since new sessions and jobs may need them again. If Git and uv are already available, no extra module is needed. See the <a href="https://modules.readthedocs.io/en/latest/module.html">Environment Modules documentation</a>.</p>
-</div>
-</div>
-</div>
-</section>
-<section id="install-python-and-jaxcmr" class="level2">
-<h2 class="anchored" data-anchor-id="install-python-and-jaxcmr">3. Install Python and JAXCMR</h2>
-<p>Open a new terminal in the remote <code>jaxcmr</code> folder. <strong>Python</strong> runs the calculations; <strong>uv</strong> installs Python and the packages the project needs. Check for uv with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If your institution provides uv, use that installation. Otherwise, where user installations are permitted, run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-LsSf</span> https://astral.sh/uv/install.sh <span class="kw">|</span> <span class="fu">sh</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/.local/bin/env"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-LsSf</span> https://astral.sh/uv/install.sh <span class="kw">|</span> <span class="fu">sh</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/.local/bin/env"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The first command downloads and runs <a href="https://docs.astral.sh/uv/getting-started/installation/">uv’s installer</a>. For its default installation location, the second makes uv available in this terminal: <code>$HOME</code> is your cluster home folder, and <code>source</code> applies settings from the named file. If downloads are restricted, use your institution’s supported installation route.</p>
-<p>Install the project:</p>
+</div>
+</div>
+</div>
+<section id="for-a-new-project" class="level3">
+<h3 class="anchored" data-anchor-id="for-a-new-project">For a new project</h3>
+<p>Run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> init <span class="at">--bare</span> <span class="at">--python</span> 3.12 <span class="at">--vcs</span> none</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> python pin 3.12</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> ipykernel pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>These commands create the project’s software configuration, select Python 3.12, and install JAXCMR, notebook support, and table-handling tools. The initialization options keep the starting files minimal and leave version-control setup to you. uv downloads Python if needed and permitted by your cluster.</p>
+<p>The installed environment is stored in <code>.venv</code>. The configuration files—<code>pyproject.toml</code>, <code>uv.lock</code>, and <code>.python-version</code>—record what it needs. The <a href="./developer-setup.html#install-python-and-jaxcmr">local guide explains these files</a>.</p>
+</section>
+<section id="for-a-project-transferred-from-your-computer" class="level3">
+<h3 class="anchored" data-anchor-id="for-a-project-transferred-from-your-computer">For a project transferred from your computer</h3>
+<p>If you transferred those configuration files from an existing uv project, run:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This installs Python 3.12 if needed, JAXCMR, and notebook tools into <strong><code>.venv</code></strong>, the project’s environment folder. Notebooks in this project can use this same installed software. <code>--locked</code> uses the repository’s recorded package versions. Wait for installation to finish successfully. See <a href="https://docs.astral.sh/uv/concepts/projects/sync/">uv’s environment documentation</a>.</p>
-<p>Create this environment on the cluster even if you have a local installation; copying your computer’s environment does not make it portable.</p>
+<p>This creates the cluster’s <code>.venv</code> using the recorded dependencies. It checks that the configuration and lockfile agree rather than silently changing the recorded dependency selection. See <a href="https://docs.astral.sh/uv/concepts/projects/sync/">uv’s locking and syncing guidance</a>.</p>
+<p>Create the environment on the cluster even if you already have one locally. Installed environments contain software specific to the computer where they were created.</p>
+<p>Wait for installation to finish successfully before continuing.</p>
+</section>
 </section>
 <section id="request-computing-resources" class="level2">
 <h2 class="anchored" data-anchor-id="request-computing-resources">4. Request computing resources</h2>
-<p>An <strong>interactive allocation</strong> gives you temporary resources for commands entered in a terminal. Use your institution’s interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with <code>jaxcmr</code> as the current folder:</p>
+<p>An <strong>interactive allocation</strong> gives you temporary resources for commands entered in a terminal. Use your institution’s interactive-access command if it provides one. Otherwise, this is a standard Slurm example, run from the login node with <code>memory-project</code> as the current folder:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> <span class="dt">\</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--account</span><span class="op">=</span>YOUR_ACCOUNT <span class="dt">\</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--partition</span><span class="op">=</span>YOUR_CPU_PARTITION <span class="dt">\</span></span>
@@ -473,36 +516,104 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     ProxyJump YOUR_USERNAME@LOGIN_HOST</code></pre>
 <p><code>jaxcmr-compute</code> is a convenient connection name. <code>HostName</code> selects the computer, <code>User</code> selects your account, and <a href="https://man.openbsd.org/ssh_config#ProxyJump">ProxyJump</a> routes the connection through the login host. Keep any additional authentication settings your institution requires.</p>
 <p>Save the file, then use <strong>Remote-SSH: Connect to Host… → jaxcmr-compute</strong> in this new window. After authentication, its lower-left indicator should show <strong>SSH: jaxcmr-compute</strong>. Open a new terminal and run <code>hostname</code>; it must match the allocated node, not the login node.</p>
-<p>Use <strong>File → Open Folder</strong> to open the same full <code>jaxcmr</code> path on shared storage. The files are already there. This second window is now your working window for notebooks.</p>
+<p>Use <strong>File → Open Folder</strong> to open the same full <code>memory-project</code> path on shared storage. The files are already there. This second window is now your working window for notebooks.</p>
 </section>
-<section id="select-the-environment-and-check-your-setup" class="level2">
-<h2 class="anchored" data-anchor-id="select-the-environment-and-check-your-setup">6. Select the environment and check your setup</h2>
+<section id="work-with-your-own-notebooks" class="level2">
+<h2 class="anchored" data-anchor-id="work-with-your-own-notebooks">6. Work with your own notebooks</h2>
 <p>A <strong>Jupyter notebook</strong> is an <code>.ipynb</code> file combining explanations, Python code, and results. Its sections are called <strong>cells</strong>; code cells run in a Python process called a <strong>kernel</strong>. VS Code’s Jupyter extension supplies the notebook controls.</p>
-<p>In the compute window:</p>
-<ol type="1">
-<li>Open <strong>View → Extensions</strong> and install Microsoft’s <strong>Python</strong> and <strong>Jupyter</strong> extensions for <strong>SSH: jaxcmr-compute</strong>. Use your institution’s supplied extensions if installation is restricted.</li>
-<li>In Explorer, open <code>guide/examples/first-simulation.ipynb</code>.</li>
-<li>Choose <strong>Select Kernel → Select Another Kernel → Python Environments</strong> and select Python 3.12 from this project’s <code>.venv</code>. If a kernel is already selected, click its name to change it.</li>
-<li>Click <strong>Run All</strong>. The Colab installation cell skips installation here. Wait for all cells to finish; the first calculation may take longer while JAX prepares it.</li>
-</ol>
-<p>Choosing <strong>Python Environments</strong> in the compute window selects Python on that computer. Selecting an environment in the original login window would run there instead. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-kernel-management">VS Code’s kernel guidance</a>.</p>
-<p>The final cell should print study and recall sequences, confirming that JAXCMR can run in the selected environment. Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.</p>
+<p>In the compute window, open <strong>View → Extensions</strong> and install Microsoft’s <strong>Python</strong> and <strong>Jupyter</strong> extensions for <strong>SSH: jaxcmr-compute</strong>. Use your institution’s supplied extensions if installation is restricted. Open the shared <code>memory-project</code> folder.</p>
+<p>Create a notebook through <strong>View → Command Palette → Create: New Jupyter Notebook</strong> and save it in <code>notebooks</code> with a filename ending in <code>.ipynb</code>. You can also download a JAXCMR notebook through its documentation page and transfer it to <code>notebooks</code>, or use <strong>File → Save As</strong> to copy an existing notebook. Obtain any separate inputs listed by its instructions; the templates’ automatic example downloads run only in Colab.</p>
+<p>Choose <strong>Select Kernel → Select Another Kernel → Python Environments</strong> and select Python 3.12 from the <code>.venv</code> inside your cluster <code>memory-project</code> folder. If a kernel is already selected, click its name to check or change it.</p>
+<p>The notebook controls work as described in <a href="./developer-setup.html#create-or-adapt-a-notebook">Create or download a notebook</a> in the local guide. You can follow that section directly without installing anything on your own computer.</p>
+<p>In this window, notebook execution happens on the compute node and saved files belong to the cluster. Selecting an environment in the original login window would run there instead. Keep calculations in the compute window; the login window remains useful for preparing files and managing allocations. See <a href="https://code.visualstudio.com/docs/datascience/jupyter-kernel-management">VS Code’s kernel guidance</a>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: check your installation
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Download the <a href="downloads/examples/first-simulation.ipynb">first simulation notebook</a> to your computer and <a href="#move-files-between-your-computer-and-the-cluster">transfer it</a> into the cluster project’s <code>notebooks</code> folder. In the compute window, open it, select the project’s <code>.venv</code>, and click <strong>Run All</strong>. The Colab installation cell skips installation here. The notebook needs no input file; the first calculation may take longer while JAX prepares it.</p>
+<p>The final cell should print:</p>
+<pre class="text"><code>Study order: [1 2 3 4 5]
+Simulated recalls: [1 5 2 4 3]</code></pre>
+<p>Saved output can be visible before execution, so check that this run finishes without errors. The notebook explains the simulation itself.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="move-files-between-your-computer-and-the-cluster" class="level2">
+<h2 class="anchored" data-anchor-id="move-files-between-your-computer-and-the-cluster">7. Move files between your computer and the cluster</h2>
+<p>Remote SSH does not automatically synchronize local and cluster copies. You can create notebooks directly on the cluster, but inputs already on your computer must be transferred.</p>
+<p>Use your institution’s transfer service if it specifies one. Where ordinary SSH file transfers are supported, <code>scp</code> copies files using your SSH sign-in.</p>
+<p>On <strong>your own computer</strong>, open a local VS Code window, use <strong>File → Open Folder</strong> to open the folder containing your input file, and choose <strong>Terminal → New Terminal</strong>. Copy a file to the cluster with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> <span class="st">"trials.csv"</span> <span class="st">"YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/data/"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace <code>trials.csv</code> with your filename, the username and host with your sign-in details, and <code>/FULL/PROJECT/PATH</code> with the cluster’s <code>memory-project</code> location. Obtain that full path with <strong>Copy Path</strong> in the remote Explorer. Create the destination folder first. The first argument is the source; the second is the destination. The colon separates a remote computer’s address from its file path.</p>
+<p>To retrieve a results folder, open the desired destination folder locally, open a new terminal there, and run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> <span class="at">-r</span> <span class="st">"YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/results"</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>-r</code> copies a folder and its contents; <code>.</code> means the local terminal’s current folder. The same pattern transfers notebooks or other files. Copying can replace matching filenames, and subsequent edits do not synchronize automatically. See the <a href="https://man.openbsd.org/scp">OpenSSH file-copy reference</a>.</p>
+<section id="transfer-an-existing-projects-configuration" class="level3">
+<h3 class="anchored" data-anchor-id="transfer-an-existing-projects-configuration">Transfer an existing project’s configuration</h3>
+<p>Use the file-transfer method supported by your institution. Where <code>scp</code> is supported, first create the destination project folder on the cluster.</p>
+<p>On <strong>your own computer</strong>, open the local project folder in VS Code and choose <strong>Terminal → New Terminal</strong>. Copy its environment configuration with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> pyproject.toml uv.lock .python-version <span class="st">"YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace the username, login host, and destination with your cluster details. Copy notebooks and inputs using the same method. For the folder arrangement used here:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> <span class="at">-r</span> notebooks data <span class="st">"YOUR_USERNAME@LOGIN_HOST:/FULL/PROJECT/PATH/"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Transfer existing results too if the cluster work needs them. Recreate <code>.venv</code> using <code>uv sync --locked</code> in the remote project folder.</p>
+<p>After transfer, local and cluster copies remain separate. Update full paths in notebook settings to their cluster locations. Copy completed outputs back using the results-transfer instructions above.</p>
+</section>
+</section>
+<section id="use-inputs-and-save-outputs" class="level2">
+<h2 class="anchored" data-anchor-id="use-inputs-and-save-outputs">8. Use inputs and save outputs</h2>
+<p>Follow <a href="./developer-setup.html#use-your-own-files">Use your own files</a> and <a href="./developer-setup.html#save-results-and-return-later">Save results and return later</a> in the local guide, using paths copied from the <strong>remote</strong> Explorer.</p>
+<p>Set the notebook’s <code>project</code> path, or its <code>project_root</code> configuration where present, to the cluster’s <code>memory-project</code> folder. A path pointing to your laptop’s Documents folder will not locate the transferred file. After copying an input, check that it appears in the remote Explorer and that the notebook’s input check prints <code>True</code>.</p>
+<p>Save tables, figures, and other outputs to shared storage, using separate filenames or folders for runs you want to preserve. You can reopen these files in another allocation or transfer them to your computer. Saving a result file is what makes it available later; leaving a value in Python’s memory does not.</p>
 </section>
 <section id="finish-and-return-later" class="level2">
 <h2 class="anchored" data-anchor-id="finish-and-return-later">Finish and return later</h2>
-<p>Save the notebook with <strong>File → Save</strong>, then close the compute connection. In the original allocation terminal, run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Save your notebook and any results you want to retain before ending the allocation. When the allocation’s time limit is reached, its running calculations may be terminated; code that has not yet saved its results cannot be recovered simply by reopening the notebook.</p>
+<p>Close the compute connection. In the original allocation terminal, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This ends the interactive job and returns that terminal to the login node. Run <code>squeue --jobs=YOUR_JOB_ID</code>, replacing the placeholder with the recorded job number, to check that it has ended. If it remains queued or running, <code>scancel YOUR_JOB_ID</code> cancels that allocation. Closing only the editor window is not a substitute for ending the job.</p>
-<p>Your files and <code>.venv</code> remain on shared storage, subject to its retention policy. Live Python state disappears when the kernel ends. To return, reconnect to the login host, request a new allocation, update <code>HostName</code> in the existing <code>jaxcmr-compute</code> entry, and reconnect the compute window. Open the project, select its environment, and run your notebook from the beginning. Load any site-required modules as part of the supported connection procedure.</p>
+<p>Your saved files and <code>.venv</code> remain on shared storage according to its retention policy. To return:</p>
+<ol type="1">
+<li>Reconnect to the login host and request a new allocation. Load any site-required modules as part of the supported connection procedure.</li>
+<li>Update <code>HostName</code> in the existing <code>jaxcmr-compute</code> SSH configuration entry and reconnect the compute window.</li>
+<li>Open the same shared project folder and select its <code>.venv</code>.</li>
+<li>Run your imports and path settings, then load inputs or saved results.</li>
+</ol>
+<p>The environment normally remains available between allocations. If you intentionally transfer updated dependency configuration from another computer, run <code>uv sync --locked</code> before starting notebook kernels. The new session’s Python variables must be recreated by running code. Use <strong>Run All</strong> when you intend to repeat the whole workflow; otherwise, load saved results and run the subsequent steps you need.</p>
 </section>
-<section id="continue-with-the-tutorials" class="level2">
-<h2 class="anchored" data-anchor-id="continue-with-the-tutorials">Continue with the tutorials</h2>
-<p>In an allocated compute window, open <code>guide/tutorials/data-preparation.ipynb</code> for <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> and select the same <code>.venv</code> environment. You can use this workspace for other project notebooks while the allocation remains active. Choose resources appropriate to their work; this setup request is only for a small check.</p>
+<section id="continue-with-jaxcmr" class="level2">
+<h2 class="anchored" data-anchor-id="continue-with-jaxcmr">Continue with JAXCMR</h2>
+<p>Download <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a>, transfer it into the cluster project’s <code>notebooks</code> folder, and open it in an allocated compute window. Then use the <a href="./templates.html">templates</a> for analysis and modelling. Select the same <code>.venv</code> environment and choose resources appropriate to the work; the setup allocation above is only for a small check.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: work with the JAXCMR checkout
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>If you need the complete repository or want to modify JAXCMR itself, follow the <a href="./developer-setup.html#optional-repository-checkout">local guide’s optional cloning instructions</a> in a cluster terminal, using approved shared storage. The existing <a href="./tutorials/template-tour.html">template tour</a> uses this route.</p>
+<p>Keep that checkout separate from your research project. Open its folder and select its own <code>.venv</code> when working on the library or running repository-dependent examples.</p>
+</div>
+</div>
+</div>
 </section>
 <section id="if-something-goes-wrong" class="level2">
 <h2 class="anchored" data-anchor-id="if-something-goes-wrong">If something goes wrong</h2>
 <div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -511,42 +622,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>From a local VS Code window, open <strong>Terminal → New Terminal</strong> and try <code>ssh YOUR_USERNAME@LOGIN_HOST</code>. If <code>ssh</code> is missing, follow the SSH client instructions in step 1. If sign-in fails, check the login address, VPN, and authentication requirements. After a successful terminal test, <code>exit</code> returns to your computer. If SSH works but VS Code does not, inspect <strong>View → Output → Remote - SSH</strong>.</p>
 <p>For the compute connection, confirm that the allocation is still running, <code>HostName</code> names its node, and your institution supports SSH through the login host with your authentication setup. Use its managed service or tunnel procedure where direct SSH is unsupported.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>A command is not found
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-3" class="callout-3-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<p>Check which machine the terminal belongs to. On the cluster, confirm that installation completed and load any required software module. For a default uv installation, <code>source "$HOME/.local/bin/env"</code> makes it available in the current terminal.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Slurm rejects the request
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-4" class="callout-4-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<p>Check the account, partition, and permitted resource settings against your allocation. These are cluster access settings, not Python settings.</p>
 </div>
 </div>
 </div>
@@ -556,13 +635,61 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>The compute node cannot find the project or import JAXCMR
+<span class="screen-reader-only">Note</span>A command is not found
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
+<p>Check which machine the terminal belongs to. On the cluster, confirm that installation completed and load any required software module. For a default uv installation, <code>source "$HOME/.local/bin/env"</code> makes it available in the current terminal.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Slurm rejects the request
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Check the account, partition, and permitted resource settings against your allocation. These are cluster access settings, not Python settings.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The compute node cannot find the project or import JAXCMR
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
 <p>Check <code>pwd</code>, shared storage access, and whether installation finished successfully. Use <code>.venv/bin/python</code> from the intended project folder.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A notebook cannot find an input file
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Check that the file was transferred and appears in the remote Explorer. Use <strong>Copy Path</strong> there to compare its cluster location with the notebook’s settings. A local file path does not refer to the remote copy. Check <code>Path.cwd()</code> inside the notebook if using a relative path.</p>
 </div>
 </div>
 </div>
