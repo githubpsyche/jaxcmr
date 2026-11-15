@@ -1,9 +1,9 @@
 """Simulation utilities for memory-search models.
 
 Provides functions to run forward simulations of memory-search models,
-converting model parameters and study lists into simulated recall
-sequences. Supports single-trial, multi-trial (vmapped), and
-dataset-level simulation with optional study-phase replay.
+building from retrieval events and study sequences to trial procedures,
+prepared dataset simulation, and parameter sweeps. Saved-response reuse is
+handled separately at the end of the module.
 
 """
 
@@ -37,91 +37,17 @@ __all__ = [
     "MemorySearchSimulator",
     "item_to_study_positions",
     "load_matching_simulation",
-    "parameter_shifted_simulate_h5_from_h5",
-    "preallocate_for_h5_dataset",
+    "replicate_trials",
+    "simulate_dataset",
     "simulate_free_recall",
     "simulate_free_recall_count",
-    "simulate_h5_from_h5",
+    "simulate_parameter_sweep",
+    "simulate_study",
     "simulate_study_and_free_recall",
     "simulate_study_first_recall_and_forced_stop",
     "simulate_study_first_recall_and_free_recall",
     "simulate_study_free_recall_and_forced_stop",
 ]
-
-
-def load_matching_simulation(
-    response_path: str | Path, expected_settings: Mapping[str, Any]
-) -> RecallDataset | None:
-    """Load saved responses when their recorded settings match the request.
-
-    Args:
-        response_path: HDF5 response file. Its settings are stored alongside it
-            with the same basename and a ``.json`` suffix.
-        expected_settings: Requested JSON-compatible settings. Every supplied
-            field must be present and equal; extra saved fields are allowed.
-            Older records can supply ``jaxcmr_version`` and ``jax_enable_x64``
-            inside ``implementation`` when absent at the top level.
-
-    Returns:
-        The dataset loaded by ``load_data``, or ``None`` if either file is absent
-        or the requested settings differ. Missing fields differ from explicit
-        ``None`` values. Neither file nor the requested settings are modified.
-
-    JSON parsing and dataset-reading errors propagate when loading is attempted.
-    The caller decides whether reuse is allowed after a refit or an explicit
-    regeneration request. Matching settings do not detect edits to input files
-    or model code at the same location.
-    """
-    response_path = Path(response_path)
-    metadata_path = response_path.with_suffix(".json")
-    if not response_path.exists() or not metadata_path.exists():
-        return None
-    saved_settings = json.loads(metadata_path.read_text())
-    if not _simulation_metadata_matches(saved_settings, expected_settings):
-        return None
-    return load_data(response_path)
-
-
-def _simulation_metadata_matches(
-    saved: Mapping[str, Any], expected: Mapping[str, Any]
-) -> bool:
-    """Compare requested fields, accepting the older version-metadata layout."""
-    saved_metadata = dict(saved)
-    implementation = saved_metadata.get("implementation", {})
-    for key in ("jaxcmr_version", "jax_enable_x64"):
-        if key not in saved_metadata and key in implementation:
-            saved_metadata[key] = implementation[key]
-    return all(
-        key in saved_metadata and saved_metadata[key] == value
-        for key, value in expected.items()
-    )
-
-
-def _reindex_recalls(
-    recalls: Integer[Array, " trial_count recall_events"],
-    presentations: Integer[Array, " trial_count list_length"],
-    size: int,
-) -> Integer[Array, " trial_count recall_events"]:
-    """Reindex recall indices as study positions.
-
-    Parameters
-    ----------
-    recalls : Integer[Array, " trial_count recall_events"]
-        Simulated recall indices per trial.
-    presentations : Integer[Array, " trial_count list_length"]
-        Study sequences aligned with each trial.
-    size : int
-        Number of positions to retain.
-
-    Returns
-    -------
-    Integer[Array, " trial_count recall_events"]
-        Recalls expressed as study positions.
-
-    """
-    return vmap(
-        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )(recalls, presentations, size)[:, :, 0]
 
 
 def _single_free_recall(
@@ -229,6 +155,23 @@ def simulate_free_recall_count(
     )
 
 
+def simulate_study(
+    model: MemorySearch, present: Integer[Array, " study_events"]
+) -> MemorySearch:
+    """Return the model after experiencing each study item in order.
+
+    ``present`` contains the one-indexed item codes used by ``model.experience``.
+    This operation leaves the model in its study phase; callers can inspect the
+    resulting state or explicitly call ``start_retrieving`` to begin recall.
+    """
+    return lax.fori_loop(
+        0,
+        present.size,
+        lambda position, state: state.experience(present[position]),
+        model,
+    )
+
+
 def simulate_study_and_free_recall(
     model: MemorySearch,
     present: Integer[Array, " study_events"],
@@ -254,7 +197,7 @@ def simulate_study_and_free_recall(
         Updated model and recalled item indices.
 
     """
-    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = simulate_study(model, present)
     model = model.start_retrieving()
     return simulate_free_recall(model, present.size, rng)
 
@@ -284,7 +227,7 @@ def simulate_study_first_recall_and_free_recall(
         Updated model and recalled item indices.
 
     """
-    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = simulate_study(model, present)
     model = model.start_retrieving()
     model = model.retrieve(trial[0])
     model, recalls = simulate_free_recall(model, present.size - 1, rng)
@@ -316,7 +259,7 @@ def simulate_study_free_recall_and_forced_stop(
         Updated model and masked recall indices.
 
     """
-    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = simulate_study(model, present)
     model = model.start_retrieving()
     model, recalls = simulate_free_recall(model, trial.size, rng)
     return model, recalls * (trial != 0)
@@ -351,7 +294,7 @@ def simulate_study_first_recall_and_forced_stop(
         one-recall trials generate no additional choices.
 
     """
-    model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
+    model = simulate_study(model, present)
     model = model.start_retrieving()
     if trial.size == 0:
         return model, trial
@@ -361,12 +304,72 @@ def simulate_study_first_recall_and_forced_stop(
     )
     # The count primitive compares model.recall_total with an absolute target.
     # The forced first recall is already included in that total.
-    model, recalls = simulate_free_recall_count(model, recall_count, trial.size - 1, rng)
+    model, recalls = simulate_free_recall_count(
+        model, recall_count, trial.size - 1, rng
+    )
     return model, jnp.concatenate((trial[:1], recalls))
 
 
+def _recall_items_to_first_study_positions(
+    recalls: Integer[Array, " trial_count recall_events"],
+    presentations: Integer[Array, " trial_count list_length"],
+    size: int,
+) -> Integer[Array, " trial_count recall_events"]:
+    """Convert recalled item codes to their first study positions.
+
+    Parameters
+    ----------
+    recalls : Integer[Array, " trial_count recall_events"]
+        Simulated within-list item codes per trial; zero denotes no recall.
+    presentations : Integer[Array, " trial_count list_length"]
+        Study sequences aligned with each trial.
+    size : int
+        Maximum number of matching study positions to gather per item.
+        Only the first is used in the returned recall codes.
+
+    Returns
+    -------
+    Integer[Array, " trial_count recall_events"]
+        One-indexed first study positions, with zero for padding or absent items.
+
+    """
+    return vmap(
+        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
+    )(recalls, presentations, size)[:, :, 0]
+
+
+def _parameter_indices_for_subjects(
+    subject_ids: Integer[Array, " trial_count"],
+    parameters: Mapping[
+        str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]
+    ],
+) -> Integer[Array, " trial_count"]:
+    """Map integer participant IDs to parameter rows under the simulation contract.
+
+    With a subject column, IDs are unique and cover the selected participants.
+    Without it, dataset IDs already are valid zero-based parameter-row indices.
+    Participant identities are concrete host inputs; numerical parameter columns
+    remain available for JAX transformations.
+    """
+    if "subject" not in parameters:
+        return subject_ids
+    parameter_subject_ids = np.asarray(parameters["subject"])
+    row_by_subject = {
+        subject: index for index, subject in enumerate(parameter_subject_ids)
+    }
+    return jnp.asarray(
+        [row_by_subject[subject] for subject in np.asarray(subject_ids)],
+        dtype=jnp.int32,
+    )
+
+
 class MemorySearchSimulator:
-    """Stateless trial-level simulator usable with vmap."""
+    """Prepare a dataset once, then simulate its trials under different parameters.
+
+    ``simulate_trial`` returns within-list item codes for one model instance.
+    ``simulate`` returns a new dataset with recalls recorded as study positions.
+    Preparation is reused; each call supplies its own parameters and random key.
+    """
 
     def __init__(
         self,
@@ -389,6 +392,7 @@ class MemorySearchSimulator:
             Trial simulation function.
 
         """
+        self._dataset = dataset
         factory = model_factory_cls(dataset, features)
         self.create_model = factory.create_trial_model
         self.present_lists = jnp.array(dataset["pres_itemnos"])
@@ -410,7 +414,9 @@ class MemorySearchSimulator:
         self,
         trial_index: Integer[Array, ""],
         subject_index: Integer[Array, ""],
-        parameters: Mapping[str, Real[Array, " participants"] | Bool[Array, " participants"]],
+        parameters: Mapping[
+            str, Real[Array, " participants"] | Bool[Array, " participants"]
+        ],
         rng: PRNGKeyArray,
     ) -> Integer[Array, " recall_events"]:
         """Simulate a single trial using per-subject parameters.
@@ -437,35 +443,58 @@ class MemorySearchSimulator:
         # Participant identity selects the row; it is not a model parameter.
         model_parameters = {
             name: values[subject_index]
-            for name, values in parameters.items() if name != "subject"
+            for name, values in parameters.items()
+            if name != "subject"
         }
         model = self.create_model(trial_index, model_parameters)
         return self._simulate_trial_fn(
             model, self.present_lists[trial_index], self.trials[trial_index], rng
         )[1]
 
+    def simulate(
+        self,
+        parameters: Mapping[
+            str, Real[Array, " participants"] | Bool[Array, " participants"]
+        ],
+        rng: PRNGKeyArray,
+        size: int = 3,
+        recall_dependent_fields: Collection[str] = (),
+    ) -> RecallDataset:
+        """Simulate every prepared trial and return a dataset with new recalls.
 
-def _parameter_indices_for_subjects(
-    subject_ids: Integer[Array, " trial_count"],
-    parameters: Mapping[str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]],
-) -> Integer[Array, " trial_count"]:
-    """Map integer participant IDs to parameter rows under the simulation contract.
+        Args:
+            parameters: Aligned numeric or Boolean parameter columns. The optional
+                integer ``subject`` column maps participants to rows; without it,
+                dataset IDs are valid zero-based parameter-row indices. Assign
+                pooled fits to participants before calling this method.
+            rng: Random key split once across the prepared trials.
+            size: Maximum matching study positions gathered per recalled item;
+                the first position supplies the output recall code.
+            recall_dependent_fields: Additional response fields to omit from the
+                output, alongside the library's known response-dependent fields.
 
-    With a subject column, IDs are unique and cover the selected participants.
-    Without it, dataset IDs already are valid zero-based parameter-row indices.
-    Participant identities are concrete host inputs; numerical parameter columns
-    remain available for JAX transformations.
-    """
-    if "subject" not in parameters:
-        return subject_ids
-    parameter_subject_ids = np.asarray(parameters["subject"])
-    row_by_subject = {subject: index for index, subject in enumerate(parameter_subject_ids)}
-    return jnp.asarray(
-        [row_by_subject[subject] for subject in np.asarray(subject_ids)], dtype=jnp.int32
-    )
+        Selection and trial repetition happen before construction. Calls reuse
+        the factory and prepared observations without modifying them or the
+        parameter mapping. Participant IDs are concrete host inputs; numerical
+        parameter columns may be mapped with JAX, as in ``simulate_dataset``.
+        """
+        total_trials = self._dataset["subject"].size
+        trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
+        subject_ids = self._dataset["subject"].flatten()
+        parameter_row_indices = _parameter_indices_for_subjects(subject_ids, parameters)
+        trial_keys = random.split(rng, total_trials)
+        recalls = vmap(self.simulate_trial, in_axes=(0, 0, None, 0))(
+            trial_indices, parameter_row_indices, parameters, trial_keys
+        )
+        simulated_recalls = _recall_items_to_first_study_positions(
+            recalls, self._dataset["pres_itemnos"], size
+        )
+        return _replace_recalls(
+            self._dataset, simulated_recalls, recall_dependent_fields
+        )
 
 
-def preallocate_for_h5_dataset(
+def replicate_trials(
     data: RecallDataset, trial_mask: Bool[Array, " trial_count"], experiment_count: int
 ) -> RecallDataset:
     """Replicate selected trials for batch simulation.
@@ -477,7 +506,7 @@ def preallocate_for_h5_dataset(
     trial_mask : Bool[Array, " trial_count"]
         Mask selecting trials to include.
     experiment_count : int
-        Replication count per trial.
+        Replication count per trial; copies of each selected trial are adjacent.
 
     Returns
     -------
@@ -485,17 +514,17 @@ def preallocate_for_h5_dataset(
         Dataset with selected trials replicated.
 
     """
-    trial_indices = jnp.repeat(
-        jnp.flatnonzero(trial_mask), experiment_count
-    )
+    trial_indices = jnp.repeat(jnp.flatnonzero(trial_mask), experiment_count)
     return _select_trials(data, trial_indices)
 
 
-def simulate_h5_from_h5(
+def simulate_dataset(
     model_factory_cls: type[MemorySearchModelFactory],
     dataset: RecallDataset,
     features: Float[Array, " word_pool_items features_count"] | None,
-    parameters: dict[str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]],
+    parameters: dict[
+        str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]
+    ],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
     rng: PRNGKeyArray,
@@ -546,33 +575,20 @@ def simulate_h5_from_h5(
 
     """
 
-    simulation_data = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
+    simulation_data = replicate_trials(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
         model_factory_cls, simulation_data, features, simulate_trial_fn
     )
-
-    # Flat trial + subject index vectors (static shapes)
-    total_trials = simulation_data["subject"].size
-    trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
-    subject_ids = simulation_data["subject"].flatten()
-    parameter_row_indices = _parameter_indices_for_subjects(subject_ids, parameters)
-    trial_keys = random.split(rng, total_trials)
-
-    # One jit-compiled vmap over trials
-    recalls = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
-        trial_indices, parameter_row_indices, parameters, trial_keys
-    )
-
-    # Reindex study positions
-    simulated_recalls = _reindex_recalls(recalls, simulation_data["pres_itemnos"], size)
-    return _replace_recalls(simulation_data, simulated_recalls, recall_dependent_fields)
+    return simulator.simulate(parameters, rng, size, recall_dependent_fields)
 
 
-def parameter_shifted_simulate_h5_from_h5(
+def simulate_parameter_sweep(
     model_factory_cls: type[MemorySearchModelFactory],
     dataset: RecallDataset,
     features: Float[Array, " word_pool_items features_count"] | None,
-    parameters: dict[str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]],
+    parameters: dict[
+        str, Real[Array, " subject_count"] | Bool[Array, " subject_count"]
+    ],
     trial_mask: Bool[Array, " trial_count"],
     experiment_count: int,
     varied_parameter: str,
@@ -625,25 +641,10 @@ def parameter_shifted_simulate_h5_from_h5(
 
     """
 
-    template = preallocate_for_h5_dataset(dataset, trial_mask, experiment_count)
+    simulation_data = replicate_trials(dataset, trial_mask, experiment_count)
     simulator = MemorySearchSimulator(
-        model_factory_cls, template, features, simulate_trial_fn
+        model_factory_cls, simulation_data, features, simulate_trial_fn
     )
-    total_trials = template["subject"].size
-    trial_indices = jnp.arange(total_trials, dtype=jnp.int32)
-    subject_ids = template["subject"].flatten()
-    def run_for_parameters(
-        parameter_columns: Mapping[str, Real[Array, " participants"] | Bool[Array, " participants"]],
-        sweep_rng: PRNGKeyArray,
-    ) -> RecallDataset:
-        trial_keys = random.split(sweep_rng, total_trials)
-        parameter_row_indices = _parameter_indices_for_subjects(subject_ids, parameter_columns)
-        recalls = vmap(simulator.simulate_trial, in_axes=(0, 0, None, 0))(
-            trial_indices, parameter_row_indices, parameter_columns, trial_keys
-        )
-        simulated_recalls = _reindex_recalls(recalls, template["pres_itemnos"], size)
-        return _replace_recalls(template, simulated_recalls, recall_dependent_fields)
-
     results: list[RecallDataset] = []
     for value in parameter_values:
         rng, sweep_key = random.split(rng)
@@ -651,6 +652,50 @@ def parameter_shifted_simulate_h5_from_h5(
             **parameters,
             varied_parameter: jnp.full_like(parameters[varied_parameter], value),
         }
-        results.append(run_for_parameters(swept_parameters, sweep_key))
-
+        results.append(
+            simulator.simulate(
+                swept_parameters, sweep_key, size, recall_dependent_fields
+            )
+        )
     return results
+
+
+def load_matching_simulation(
+    response_path: str | Path, expected_settings: Mapping[str, Any]
+) -> RecallDataset | None:
+    """Load saved responses when their recorded settings match the request.
+
+    Args:
+        response_path: HDF5 response file. Its settings are stored alongside it
+            with the same basename and a ``.json`` suffix.
+        expected_settings: Requested JSON-compatible settings. Every supplied
+            field must be present and equal; extra saved fields are allowed.
+            Older records can supply ``jaxcmr_version`` and ``jax_enable_x64``
+            inside ``implementation`` when absent at the top level.
+
+    Returns:
+        The dataset loaded by ``load_data``, or ``None`` if either file is absent
+        or the requested settings differ. Missing fields differ from explicit
+        ``None`` values. Neither file nor the requested settings are modified.
+
+    JSON parsing and dataset-reading errors propagate when loading is attempted.
+    The caller decides whether reuse is allowed after a refit or an explicit
+    regeneration request. Matching settings do not detect edits to input files
+    or model code at the same location.
+    """
+    response_path = Path(response_path)
+    metadata_path = response_path.with_suffix(".json")
+    if not response_path.exists() or not metadata_path.exists():
+        return None
+    saved_settings = dict(json.loads(metadata_path.read_text()))
+    # Older files kept these settings inside "implementation".
+    implementation = saved_settings.get("implementation", {})
+    for key in ("jaxcmr_version", "jax_enable_x64"):
+        if key not in saved_settings and key in implementation:
+            saved_settings[key] = implementation[key]
+    if any(
+        key not in saved_settings or saved_settings[key] != value
+        for key, value in expected_settings.items()
+    ):
+        return None
+    return load_data(response_path)
