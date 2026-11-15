@@ -247,7 +247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-trial-procedure-is-an-entry-point" id="toc-the-trial-procedure-is-an-entry-point" class="nav-link active" data-scroll-target="#the-trial-procedure-is-an-entry-point">The trial procedure is an entry point</a></li>
   <li><a href="#the-dataset-wrapper" id="toc-the-dataset-wrapper" class="nav-link" data-scroll-target="#the-dataset-wrapper">The dataset wrapper</a></li>
   <li><a href="#the-returned-dataset" id="toc-the-returned-dataset" class="nav-link" data-scroll-target="#the-returned-dataset">The returned dataset</a></li>
-  <li><a href="#checking-whether-saved-responses-match-a-run" id="toc-checking-whether-saved-responses-match-a-run" class="nav-link" data-scroll-target="#checking-whether-saved-responses-match-a-run">Checking whether saved responses match a run</a></li>
+  <li><a href="#loading-matching-saved-responses" id="toc-loading-matching-saved-responses" class="nav-link" data-scroll-target="#loading-matching-saved-responses">Loading matching saved responses</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/simulation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -356,14 +356,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Participant IDs need not be consecutive or equal row indices. The wrapper matches each trial’s ID to <code>parameters['subject']</code>, then uses the same entry from every parameter array. Missing IDs, duplicate assignments and unequal column lengths raise an error before responses are generated. Use <code>parameters_for_subjects</code> to broadcast a pooled fit explicitly.</p>
-<p>The legacy mapping without <code>subject</code> treats dataset IDs as zero-based row indices into every parameter column. Simulation does not interpret a short column as a pooled fit.</p>
+<p>Participant IDs are integers and need not be consecutive or equal row indices. The wrapper matches each trial’s ID to <code>parameters['subject']</code>, then uses the same entry from every parameter array. Supply nonempty, equally sized parameter vectors and unique integer IDs covering every selected participant. Floating-point IDs, Boolean IDs and pooled rows are outside this interface. Use <code>parameters_for_subjects</code> to broadcast a pooled fit explicitly.</p>
+<p>The legacy mapping without <code>subject</code> treats dataset IDs as zero-based row indices into every parameter column, so each ID must be a valid index. These are caller preconditions; simulation does not validate assignments or interpret a short column as a pooled fit.</p>
+<p>Dataset selection and participant identities are prepared on the host. Numerical parameter columns remain JAX arrays, so you can <code>vmap</code> over parameter sets with a fixed dataset and fixed participant assignments. This does not make the whole data-selection wrapper JIT-compatible or discrete sampling differentiable.</p>
 <div id="locate-project-inputs" class="cell">
 <details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="cf">try</span>:</span>
 <span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
@@ -378,50 +379,51 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
 <span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> jax</span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
-<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
-<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
-<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> (</span>
-<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a>    simulate_h5_from_h5, simulate_study_free_recall_and_forced_stop,</span>
-<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>)</span>
-<span id="cb3-29"><a href="#cb3-29" aria-label="29"></a></span>
-<span id="cb3-30"><a href="#cb3-30" aria-label="30"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
-<span id="cb3-31"><a href="#cb3-31" aria-label="31"></a>participant_ids <span class="op">=</span> jnp.unique(data[<span class="st">"subject"</span>][mixed])[:<span class="dv">2</span>]</span>
-<span id="cb3-32"><a href="#cb3-32" aria-label="32"></a>trial_mask <span class="op">=</span> mixed <span class="op">&amp;</span> jnp.isin(data[<span class="st">"subject"</span>].ravel(), participant_ids)</span>
-<span id="cb3-33"><a href="#cb3-33" aria-label="33"></a>simulation_parameters <span class="op">=</span> {</span>
-<span id="cb3-34"><a href="#cb3-34" aria-label="34"></a>    name: jnp.full(participant_ids.size, value)</span>
-<span id="cb3-35"><a href="#cb3-35" aria-label="35"></a>    <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items()</span>
-<span id="cb3-36"><a href="#cb3-36" aria-label="36"></a>}</span>
-<span id="cb3-37"><a href="#cb3-37" aria-label="37"></a>simulation_parameters[<span class="st">"subject"</span>] <span class="op">=</span> participant_ids</span>
-<span id="cb3-38"><a href="#cb3-38" aria-label="38"></a></span>
-<span id="cb3-39"><a href="#cb3-39" aria-label="39"></a>simulated <span class="op">=</span> simulate_h5_from_h5(</span>
-<span id="cb3-40"><a href="#cb3-40" aria-label="40"></a>    model_factory_cls<span class="op">=</span>CMRFactory, dataset<span class="op">=</span>data, features<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb3-41"><a href="#cb3-41" aria-label="41"></a>    parameters<span class="op">=</span>simulation_parameters, trial_mask<span class="op">=</span>trial_mask,</span>
-<span id="cb3-42"><a href="#cb3-42" aria-label="42"></a>    experiment_count<span class="op">=</span><span class="dv">2</span>, rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
-<span id="cb3-43"><a href="#cb3-43" aria-label="43"></a>    simulate_trial_fn<span class="op">=</span>simulate_study_free_recall_and_forced_stop,</span>
-<span id="cb3-44"><a href="#cb3-44" aria-label="44"></a>)</span>
-<span id="cb3-45"><a href="#cb3-45" aria-label="45"></a><span class="bu">print</span>(<span class="st">"Parameter-row IDs:"</span>, simulation_parameters[<span class="st">"subject"</span>])</span>
-<span id="cb3-46"><a href="#cb3-46" aria-label="46"></a><span class="bu">print</span>(<span class="st">"Selected trials:"</span>, <span class="bu">int</span>(trial_mask.<span class="bu">sum</span>()))</span>
-<span id="cb3-47"><a href="#cb3-47" aria-label="47"></a><span class="bu">print</span>(<span class="st">"Generated participant IDs:"</span>, simulated[<span class="st">"subject"</span>].ravel())</span>
-<span id="cb3-48"><a href="#cb3-48" aria-label="48"></a><span class="bu">print</span>(<span class="st">"Generated recall shape:"</span>, simulated[<span class="st">"recalls"</span>].shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
+<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> (</span>
+<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>    simulate_h5_from_h5, simulate_study_free_recall_and_forced_stop,</span>
+<span id="cb3-29"><a href="#cb3-29" aria-label="29"></a>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-label="30"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-label="31"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-label="32"></a>participant_ids <span class="op">=</span> jnp.unique(data[<span class="st">"subject"</span>][mixed])[:<span class="dv">2</span>]</span>
+<span id="cb3-33"><a href="#cb3-33" aria-label="33"></a>trial_mask <span class="op">=</span> mixed <span class="op">&amp;</span> jnp.isin(data[<span class="st">"subject"</span>].ravel(), participant_ids)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-label="34"></a>simulation_parameters <span class="op">=</span> {</span>
+<span id="cb3-35"><a href="#cb3-35" aria-label="35"></a>    name: jnp.full(participant_ids.size, value)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-label="36"></a>    <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items()</span>
+<span id="cb3-37"><a href="#cb3-37" aria-label="37"></a>}</span>
+<span id="cb3-38"><a href="#cb3-38" aria-label="38"></a>simulation_parameters[<span class="st">"subject"</span>] <span class="op">=</span> participant_ids</span>
+<span id="cb3-39"><a href="#cb3-39" aria-label="39"></a></span>
+<span id="cb3-40"><a href="#cb3-40" aria-label="40"></a>simulated <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb3-41"><a href="#cb3-41" aria-label="41"></a>    model_factory_cls<span class="op">=</span>CMRFactory, dataset<span class="op">=</span>data, features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-42"><a href="#cb3-42" aria-label="42"></a>    parameters<span class="op">=</span>simulation_parameters, trial_mask<span class="op">=</span>trial_mask,</span>
+<span id="cb3-43"><a href="#cb3-43" aria-label="43"></a>    experiment_count<span class="op">=</span><span class="dv">2</span>, rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
+<span id="cb3-44"><a href="#cb3-44" aria-label="44"></a>    simulate_trial_fn<span class="op">=</span>simulate_study_free_recall_and_forced_stop,</span>
+<span id="cb3-45"><a href="#cb3-45" aria-label="45"></a>)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-label="46"></a><span class="bu">print</span>(<span class="st">"Parameter-row IDs:"</span>, simulation_parameters[<span class="st">"subject"</span>])</span>
+<span id="cb3-47"><a href="#cb3-47" aria-label="47"></a><span class="bu">print</span>(<span class="st">"Selected trials:"</span>, <span class="bu">int</span>(trial_mask.<span class="bu">sum</span>()))</span>
+<span id="cb3-48"><a href="#cb3-48" aria-label="48"></a><span class="bu">print</span>(<span class="st">"Generated participant IDs:"</span>, simulated[<span class="st">"subject"</span>].ravel())</span>
+<span id="cb3-49"><a href="#cb3-49" aria-label="49"></a><span class="bu">print</span>(<span class="st">"Generated recall shape:"</span>, simulated[<span class="st">"recalls"</span>].shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Parameter-row IDs: [1 2]
@@ -457,17 +459,19 @@ Omitted response fields: ['rec_itemids']</code></pre>
 <p>Original response measurements cannot describe new responses. The wrapper omits <code>rec_itemids</code>, <code>irt</code>, <code>cue_clips</code> and <code>_should_tabulate</code> when present. Supply additional response-dependent field names through <code>recall_dependent_fields</code>. Study-aligned fields remain attached to their lists.</p>
 <p>Use <a href="../overview/data.html">Data</a> for coding and storage conventions. The <a href="../templates/simulation.html">simulation template</a> handles a complete run, saved outputs and behavioral comparisons; the <a href="../templates/parameter_shifting.html">parameter exploration template</a> repeats that procedure under deliberately changed parameters.</p>
 </section>
-<section id="checking-whether-saved-responses-match-a-run" class="level2">
-<h2 class="anchored" data-anchor-id="checking-whether-saved-responses-match-a-run">Checking whether saved responses match a run</h2>
-<p><code>simulation_metadata_matches</code> compares in-memory metadata before your script decides whether to reuse responses:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.provenance <span class="im">import</span> simulation_metadata_matches</span>
+<section id="loading-matching-saved-responses" class="level2">
+<h2 class="anchored" data-anchor-id="loading-matching-saved-responses">Loading matching saved responses</h2>
+<p><code>load_matching_simulation</code> reads an HDF5 response file when its accompanying JSON settings match the requested run. Your script decides whether reuse is allowed:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> load_matching_simulation</span>
 <span id="cb7-2"><a href="#cb7-2" aria-label="2"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>reuse <span class="op">=</span> (</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="kw">not</span> force_regeneration</span>
-<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    <span class="kw">and</span> <span class="kw">not</span> fitted_now</span>
-<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>    <span class="kw">and</span> simulation_metadata_matches(saved_metadata, expected_configuration)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The comparison includes every supplied expected setting; extra saved fields are allowed. Older metadata with <code>jaxcmr_version</code> and <code>jax_enable_x64</code> inside <code>implementation</code> are accepted when those values are absent at the top level. The function returns a boolean without modifying either mapping. It does not inspect response files, parse JSON, load data, or decide whether a refit permits reuse. Your script still checks file existence, reads metadata and chooses between loading and generating responses. Malformed saved JSON remains a reading error rather than being silently treated as a cache miss. The fitting template always regenerates responses after a new fit. Changes to data or code in place require explicit regeneration: recorded paths and versions do not establish that file contents or calculations are unchanged.</p>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>responses <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a><span class="cf">if</span> <span class="kw">not</span> force_regeneration <span class="kw">and</span> <span class="kw">not</span> fitted_now:</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    responses <span class="op">=</span> load_matching_simulation(response_path, expected_configuration)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a><span class="co"># When responses is None, run the simulation and save its responses and settings.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For <code>responses.h5</code>, settings are read from <code>responses.json</code>. The function returns <code>None</code> if either file is absent or a requested setting differs. Every requested field must be present, even when its expected value is <code>None</code>; extra saved fields are allowed. Older records may place <code>jaxcmr_version</code> and <code>jax_enable_x64</code> inside <code>implementation</code>. Top-level values take precedence.</p>
+<p>The helper does not modify the files or requested settings. Malformed JSON and errors reading matching response files propagate. Forced regeneration skips the loader, so broken old files do not prevent a fresh simulation. The fitting template also regenerates responses after a new fit. Model construction, simulation, output paths, saving and post-processing remain in the caller.</p>
+<p>Matching settings do not detect edits to data or model code at the same location. After those changes, request regeneration explicitly.</p>
 
 
 </section>
