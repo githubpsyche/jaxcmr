@@ -13,7 +13,7 @@ from IPython.core.interactiveshell import InteractiveShell
 
 from jaxcmr.helpers import save_dict_to_hdf5
 from jaxcmr.fitting import parameters_for_subjects
-from jaxcmr.simulation import simulation_metadata_matches
+from jaxcmr.simulation import load_matching_simulation
 
 ROOT=Path(__file__).parents[1]
 
@@ -64,37 +64,44 @@ def test_custom_category_data_selection_layout_and_paired_outputs(tmp_path, monk
     plt.close('all')
 
 
-def test_new_fit_regenerates_even_matching_saved_responses(tmp_path):
-    """A default run has no cache; exercise the refit guard against an existing one."""
-    template = ROOT / "templates/fitting.ipynb"
+@pytest.mark.parametrize("template_name,cell_id", [
+    ("fitting", "e8348092"), ("simulation", "c48d5c11")
+])
+def test_response_reuse_and_forced_regeneration(tmp_path, template_name, cell_id):
+    template = ROOT / f"templates/{template_name}.ipynb"
     notebook = json.loads(template.read_text())
     source = next("".join(cell["source"]) for cell in notebook["cells"]
-                  if cell["cell_type"] == "code"
-                  and cell.get("id") == "e8348092")
+                  if cell["cell_type"] == "code" and cell.get("id") == cell_id)
     path = tmp_path / "responses.h5"
-    path.write_bytes(b"cached")
     configuration = {"seed": 1, "simulation_function": "example"}
-    path.with_suffix(".json").write_text(json.dumps(configuration))
-    data = {"recalls": jnp.array([[1, 0]])}
+    data = {"subject": jnp.array([[1]]), "listLength": jnp.array([[2]]),
+            "pres_itemnos": jnp.array([[1, 2]]), "recalls": jnp.array([[1, 0]])}
+    save_dict_to_hdf5(data, path)
     calls = []
     prepared = dict(model_factory=None, features=None, parameters={},
                     trial_mask=jnp.ones(1, bool), configuration=configuration)
     namespace = dict(
         json=json, simulation_inputs={"m": prepared}, simulation_paths={"m": path},
-        redo_sims=False, simulation_metadata_matches=simulation_metadata_matches,
-        load_data=lambda *args: calls.append("load") or data,
-        simulate_h5_from_h5=lambda *args, **kwargs: calls.append("generate") or data,
-        save_dict_to_hdf5=lambda *args: None, import_from_string=lambda path: None,
+        load_matching_simulation=load_matching_simulation,
+        simulate_dataset=lambda *args, **kwargs: calls.append("generate") or data,
+        save_dict_to_hdf5=save_dict_to_hdf5, import_from_string=lambda path: None,
         experiment_count=1, simulation_seed=1, filter_repeated_recalls=False, data=data,
         jax=SimpleNamespace(__version__="test", random=SimpleNamespace(PRNGKey=lambda seed: seed)),
         jaxcmr=SimpleNamespace(__version__="test"),
     )
-    # Establish that this cache is usable, then change only the refit decision.
-    for fitted_now, expected in [(set(), "load"), ({"m"}, "generate")]:
+    cases = [(False, set(), False), (True, set(), True)]
+    if template_name == "fitting":
+        cases.append((False, {"m"}, True))
+    for redo_sims, fitted_now, regenerate in cases:
         calls.clear()
-        namespace["fitted_now"] = fitted_now
+        namespace.update(redo_sims=redo_sims, fitted_now=fitted_now)
+        # Forced runs must bypass old metadata entirely, even if it is broken.
+        path.with_suffix(".json").write_text(
+            "not JSON" if regenerate else json.dumps(configuration)
+        )
         exec(compile(source, str(template), "exec"), namespace)
-        assert calls == [expected]
+        assert calls == (["generate"] if regenerate else [])
+        np.testing.assert_array_equal(namespace["simulations"]["m"]["recalls"], data["recalls"])
 
 
 def test_simultaneous_intervention_preserves_baseline(tmp_path):
@@ -113,7 +120,7 @@ def test_simultaneous_intervention_preserves_baseline(tmp_path):
         parameter_sweeps={}, parameter_interventions={'off': {'fit': 'm', 'overrides': {'s_emotional': 0., 's_neutral': 0.}}},
         parameters_for_subjects=parameters_for_subjects, records={'m': record}, selections={'m': jnp.ones(2, bool)}, data={'subject': jnp.array([[1], [2]])},
         figure_dir=None, output_dir=tmp_path, construct_model=lambda _: None, load_features=lambda _: None,
-        import_from_string=lambda _: None, simulate_h5_from_h5=simulate,
+        import_from_string=lambda _: None, simulate_dataset=simulate,
         save_dict_to_hdf5=lambda data, path: Path(path).touch(), fit_paths={'m': fit_path},
         simulation_seed=1, experiment_count=2, data_source='data/fixture.h5', root_path=tmp_path, enable_x64=True,
         resolve_project_path=lambda path, root: root / path,

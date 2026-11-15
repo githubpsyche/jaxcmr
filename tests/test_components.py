@@ -1,10 +1,11 @@
 """Numerical boundaries of context drift, memory updates, and stopping."""
 
 from types import SimpleNamespace
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from jaxcmr.components import context, linear_memory
+from jaxcmr.components import context, instance_memory, linear_memory
 from jaxcmr.components.termination import (
     NoStopTermination,
     RetrievalDependentTermination,
@@ -82,3 +83,134 @@ def test_stopping_probabilities(policy, recallable, active, total, expected):
         3, {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     ).stop_probability(model)
     assert result == pytest.approx(expected, rel=1e-6)
+
+
+def test_instance_memory_stores_traces_and_distinguishes_scaled_and_raw_probes():
+    memory = instance_memory.InstanceMemory(
+        jnp.zeros((3, 5)), jnp.zeros(5), 0, 2.0, 2, 3
+    )
+    changed = memory.associate(jnp.array([1.0, 0]), jnp.array([2.0, 4, 1]), 0.5)
+    changed = changed.associate(jnp.array([0.0, 1]), jnp.array([1.0, 0, 2]), 0.25)
+    np.testing.assert_array_equal(memory.state, np.zeros((3, 5)))
+    np.testing.assert_array_equal(
+        changed.state,
+        [
+            [1, 0, 1, 2, 0.5],
+            [0, 1, 0.25, 0, 0.5],
+            [0, 0, 0, 0, 0],
+        ],
+    )
+    assert changed.study_index == 2
+    cue = jnp.array([2.0, 1])
+    # Raw supports are [2, 1, 0]. Normalized powers at two are [1, 1/4, 0].
+    np.testing.assert_allclose(
+        jax.jit(lambda mem: mem.probe(cue))(changed), [1.0625, 2, 0.625]
+    )
+    np.testing.assert_allclose(
+        jax.jit(lambda mem: mem.probe_without_scale(cue))(changed), [2.25, 4, 1.5]
+    )
+    np.testing.assert_array_equal(changed.probe(jnp.zeros(2)), np.zeros(3))
+
+    def total_support(sensitivity):
+        return changed.replace(trace_activation_scale=sensitivity).probe(cue).sum()
+
+    # Sum of learned outputs: 3.5 + 0.75 * (1/2)**sensitivity.
+    sensitivities = jnp.array([0.999, 1.0, 1.001, 2.0])
+    values, derivatives = jax.jit(jax.vmap(jax.value_and_grad(total_support)))(
+        sensitivities
+    )
+    np.testing.assert_allclose(
+        values, 3.5 + 0.75 * 0.5 ** np.asarray(sensitivities), rtol=1e-6
+    )
+    np.testing.assert_allclose(
+        derivatives, 0.75 * 0.5 ** np.asarray(sensitivities) * np.log(0.5), rtol=1e-6
+    )
+
+
+@pytest.mark.parametrize(
+    "direction,expected",
+    [
+        ("mfc", [[0, 0.6, 0, 0, 0], [0, 0, 0.6, 0, 0]]),
+        ("mcf", [[0, 0], [1.5, 0.2], [0.2, 1.5], [0, 0], [0, 0]]),
+    ],
+)
+def test_instance_memory_creators_preserve_item_alignment_and_spare_context(
+    direction, expected
+):
+    parameters = {
+        "learning_rate": 0.4,
+        "item_support": 1.5,
+        "shared_support": 0.2,
+        "mcf_trace_sensitivity": 1.0,
+    }
+    creator = (
+        instance_memory.init_mfc if direction == "mfc" else instance_memory.init_mcf
+    )
+    memory = creator(2, parameters, context.TemporalContext.init_expanded(2))
+    np.testing.assert_array_equal(memory.state[2:], np.zeros((2, 7)))
+    # Basis probes expose item/context alignment, including start and outlist units.
+    responses = jax.jit(jax.vmap(memory.probe))(jnp.eye(memory.input_size))
+    np.testing.assert_allclose(responses, expected, rtol=1e-6)
+
+
+def test_instance_memory_composes_with_ordinary_cmr_and_differentiates_at_one():
+    from support import CMR_PARAMS
+    from jaxcmr.dataset import make_dataset
+    from jaxcmr.models.cmr import make_factory
+
+    data = make_dataset([1, 2, 0], pres_itemnos=[1, 2, 1, 3])
+    parameters = CMR_PARAMS | {
+        "mfc_trace_sensitivity": 1.0,
+        "stop_probability_scale": 0.05,
+        "stop_probability_growth": 0.2,
+    }
+    instance_factory = make_factory(
+        instance_memory.init_mfc,
+        instance_memory.init_mcf,
+        context.init,
+        PositionalTermination,
+    )(data, None)
+    linear_factory = make_factory(
+        linear_memory.init_mfc,
+        linear_memory.init_mcf,
+        context.init,
+        PositionalTermination,
+    )(data, None)
+
+    def outcome_probabilities(factory, sensitivity):
+        model = factory.create_trial_model(
+            jnp.int32(0),
+            parameters
+            | {
+                "mcf_trace_sensitivity": sensitivity,
+            },
+        )
+        for item in (1, 2, 1, 3):
+            model = model.experience(jnp.int32(item))
+        model = model.start_retrieving()
+        return jnp.stack(
+            [
+                model.outcome_probabilities(),
+                model.retrieve(jnp.int32(1)).outcome_probabilities(),
+            ]
+        )
+
+    # At one, trace and matrix probes differ only by a common positive
+    # factor; ordinary CMR normalizes it away before choosing an item.
+    probabilities = jax.jit(
+        lambda scale: outcome_probabilities(instance_factory, scale)
+    )
+    np.testing.assert_allclose(
+        probabilities(1.0), outcome_probabilities(linear_factory, 1.0), atol=1e-6
+    )
+    batch = jax.vmap(probabilities)(jnp.array([0.7, 1.0, 1.6]))
+    np.testing.assert_allclose(batch.sum(axis=-1), 1.0, atol=1e-6)
+    assert np.all(np.asarray(batch) >= 0)
+    np.testing.assert_array_equal(batch[:, 1, 1], np.zeros(3))
+    np.testing.assert_array_equal(batch[:, :, 4], np.zeros((3, 2)))
+    assert not np.allclose(batch[0], batch[2])
+    derivative = jax.grad(lambda scale: probabilities(scale)[0, 2])(1.0)
+    finite_difference = (
+        probabilities(1.001)[0, 2] - probabilities(0.999)[0, 2]
+    ) / 0.002
+    np.testing.assert_allclose(derivative, finite_difference, rtol=5e-3, atol=1e-6)

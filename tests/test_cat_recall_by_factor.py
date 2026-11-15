@@ -213,16 +213,6 @@ def test_real_plot_uses_lpp_units_and_retains_legacy_labels():
     assert axis.lines[0].get_label() == "observed"
 
 
-@pytest.mark.parametrize(
-    "edges", [jnp.array([0.0, 0.0, 1.0]), jnp.array([2.0, 1.0]), jnp.array([0.0, jnp.nan])]
-)
-def test_plotting_rejects_invalid_bin_edges(edges):
-    with pytest.raises(ValueError, match="strictly increasing"):
-        plot_cat_recall_by_factor(
-            _dataset(), jnp.array([True, True]), "category", [1], "score", edges
-        )
-
-
 def test_no_reference_values_are_undefined_numerically_and_clear_in_plotting():
     data = _dataset()
     data["score"] = jnp.full((2, 3), jnp.nan)

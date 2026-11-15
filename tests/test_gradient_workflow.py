@@ -155,19 +155,3 @@ def test_restart_callbacks_keep_their_own_record_and_deadline(monkeypatch):
         callbacks[0][0](np.array(records[0]["initial_unit"]))
     callbacks[1][0](np.array(records[1]["initial_unit"]))
     assert [record["nfev"] for record in records] == [1, 2]
-
-
-@pytest.mark.parametrize(
-    "options",
-    [
-        {"local_time_limit_seconds": 0},
-        {"local_time_limit_seconds": np.inf},
-        {"initial_trust_radius": -1},
-        {"step_tolerance": np.nan},
-        {"relative_tolerance": 1e-09},
-        {"max_fun": 100},
-    ],
-)
-def test_invalid_trust_options_fail_clearly(options):
-    with pytest.raises(ValueError):
-        fitter(**options)

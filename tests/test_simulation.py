@@ -1,3 +1,4 @@
+import json
 from copy import deepcopy
 from types import SimpleNamespace
 import pytest
@@ -5,10 +6,17 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import random
+from support import CMR_PARAMS
+from jaxcmr.models.cmr import CMR
+from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.dataset import make_dataset
+from jaxcmr.helpers.io import save_dict_to_hdf5
 from jaxcmr.simulation import (
-    parameter_shifted_simulate_h5_from_h5,
-    simulate_h5_from_h5,
-    simulation_metadata_matches,
+    MemorySearchSimulator,
+    simulate_study,
+    simulate_dataset,
+    simulate_parameter_sweep,
+    load_matching_simulation,
 )
 
 
@@ -26,6 +34,20 @@ def _recall_item_selected_by_parameter(model, present, trial, rng):
     """Returns a single recalled item chosen by the model's encoded index."""
     recall_item = present[model.recall_index]
     return (model, jnp.array([recall_item, 0], dtype=jnp.int32))
+
+
+def test_study_matches_replayed_events_before_retrieval():
+    model = CMR(4, CMR_PARAMS, termination_policy_create_fn=NoStopTermination)
+    present = jnp.array([2, 1, 2, 3])
+    initial = [np.array(value, copy=True) for value in jax.tree.leaves(model)]
+    expected = model
+    for item in present:
+        expected = expected.experience(item)
+    actual = jax.jit(simulate_study)(model, present)
+    for observed, reference in zip(jax.tree.leaves(actual), jax.tree.leaves(expected), strict=True):
+        np.testing.assert_allclose(observed, reference, rtol=1e-6, atol=1e-7)
+    for observed, reference in zip(jax.tree.leaves(model), initial, strict=True):
+        np.testing.assert_array_equal(observed, reference)
 
 
 def test_sets_first_study_position_when_reindexing_after_simulation():
@@ -49,7 +71,7 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
     params = {"alpha": jnp.array([1.0])}
     mask = jnp.array([True])
     rng = random.PRNGKey(0)
-    out = simulate_h5_from_h5(
+    out = simulate_dataset(
         _ParameterFactory,
         dataset,
         features=None,
@@ -70,7 +92,7 @@ def test_sets_first_study_position_when_reindexing_after_simulation():
     )
 
 
-def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
+def test_simulate_dataset_maps_nonconsecutive_subject_ids():
     """Aligns per-subject parameters using subject identifiers."""
     dataset = {
         "subject": jnp.array([[63], [138]], dtype=jnp.int32),
@@ -84,7 +106,7 @@ def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
     }
     mask = jnp.array([True, True])
     rng = random.PRNGKey(10)
-    out = simulate_h5_from_h5(
+    out = simulate_dataset(
         _ParameterFactory,
         dataset,
         features=None,
@@ -99,8 +121,21 @@ def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
     assert int(out["recalls"][0, 0]) == 1
     assert int(out["recalls"][1, 0]) == 2, "Simulation must assign parameters by subject identity"
 
+    # Reuse the same prepared dataset for A/B/A parameter assignments.
+    simulator = MemorySearchSimulator(
+        _ParameterFactory, dataset, None, _recall_item_selected_by_parameter
+    )
+    original = deepcopy(dataset)
+    for alpha, expected in [([0, 1], [[1, 0], [2, 0]]),
+                            ([1, 0], [[2, 0], [1, 0]]),
+                            ([0, 1], [[1, 0], [2, 0]])]:
+        result = simulator.simulate({**params, "alpha": jnp.array(alpha)}, rng, size=2)
+        np.testing.assert_array_equal(result["recalls"], expected)
+    for field, values in dataset.items():
+        np.testing.assert_array_equal(values, original[field])
+
     def simulate_parameters(alpha):
-        return simulate_h5_from_h5(
+        return simulate_dataset(
             _ParameterFactory, dataset, None, {**params, 'alpha': alpha}, mask, 1, rng,
             size=2, simulate_trial_fn=_recall_item_selected_by_parameter,
         )['recalls']
@@ -108,17 +143,8 @@ def test_simulate_h5_from_h5_maps_nonconsecutive_subject_ids():
     mapped = jax.vmap(simulate_parameters)(jnp.array([[0, 1], [1, 0]]))
     np.testing.assert_array_equal(mapped, [[[1, 0], [2, 0]], [[2, 0], [1, 0]]])
 
-    for invalid in (
-        {"subject": jnp.array([63, 63]), "alpha": jnp.array([0, 1])},
-        {"subject": jnp.array([63, 139]), "alpha": jnp.array([0, 1])},
-        {"alpha": jnp.array([0, 1])},  # IDs 63/138 cannot be positional row indices.
-    ):
-        with pytest.raises(ValueError):
-            simulate_h5_from_h5(_ParameterFactory, dataset, None, invalid, mask, 1, rng,
-                               size=2, simulate_trial_fn=_recall_item_selected_by_parameter)
 
-
-def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
+def test_parameter_sweep_maps_subject_ids():
     """Applies subject-id mapping while sweeping parameters."""
     dataset = {
         "subject": jnp.array([[138]], dtype=jnp.int32),
@@ -133,7 +159,7 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
     }
     mask = jnp.array([True])
     rng = random.PRNGKey(11)
-    sims = parameter_shifted_simulate_h5_from_h5(
+    sims = simulate_parameter_sweep(
         _ParameterFactory,
         dataset,
         features=None,
@@ -152,31 +178,64 @@ def test_parameter_shifted_simulate_h5_from_h5_maps_subject_ids():
     assert all(("rec_itemids" not in sim for sim in sims))
 
 
-def test_metadata_legacy_versions_and_requested_settings():
+def test_load_matching_simulation_settings_and_legacy_metadata(tmp_path):
+    path = tmp_path / "responses.h5"
+    data = make_dataset(recalls=[1, 0], listLength=2)
+    save_dict_to_hdf5(data, path)
     saved = {"implementation": {"jaxcmr_version": "v", "jax_enable_x64": True},
              "data_path": "data/example.h5", "seed": 1,
              "provenance": {"identity": "obsolete"}, "data_sha256": "obsolete"}
+    metadata_path = path.with_suffix(".json")
+    metadata_path.write_text(json.dumps(saved))
     expected = {"jaxcmr_version": "v", "jax_enable_x64": True,
                 "data_path": "data/example.h5", "seed": 1}
-    before = deepcopy((saved, expected))
-    assert simulation_metadata_matches(saved, expected)
-    assert (saved, expected) == before
+    before = deepcopy(expected), path.read_bytes(), metadata_path.read_bytes()
+    loaded = load_matching_simulation(str(path), expected)
+    assert loaded is not None
+    assert loaded.keys() == data.keys()
+    for field, values in data.items():
+        np.testing.assert_array_equal(loaded[field], values)
     for field, value in [("seed", 2), ("data_path", "other.h5"),
                          ("missing", 1), ("jaxcmr_version", "new")]:
-        assert not simulation_metadata_matches(saved, {**expected, field: value})
+        assert load_matching_simulation(path, {**expected, field: value}) is None
+    assert (expected, path.read_bytes(), metadata_path.read_bytes()) == before
 
-def test_metadata_distinguishes_missing_fields_from_none():
-    # Cover ordinary fields and the two fields with a legacy fallback.
+
+def test_load_matching_simulation_distinguishes_missing_fields_from_none(tmp_path):
+    path = tmp_path / "responses.h5"
+    save_dict_to_hdf5(make_dataset(recalls=[1, 0], listLength=2), path)
+    metadata_path = path.with_suffix(".json")
     for field in ("feature_column", "jaxcmr_version", "jax_enable_x64"):
         expected = {field: None}
-        assert not simulation_metadata_matches({}, expected)
-        assert simulation_metadata_matches({field: None}, expected)
+        metadata_path.write_text("{}")
+        assert load_matching_simulation(path, expected) is None
+        metadata_path.write_text(json.dumps(expected))
+        assert load_matching_simulation(path, expected) is not None
 
-    # An explicitly recorded legacy None is different from an absent field.
-    saved = {"implementation": {"jaxcmr_version": None}}
-    assert simulation_metadata_matches(saved, {"jaxcmr_version": None})
-    # Current fields take precedence over conflicting legacy values.
-    saved["jaxcmr_version"] = "current"
-    assert simulation_metadata_matches(saved, {"jaxcmr_version": "current"})
-    assert not simulation_metadata_matches(saved, {"jaxcmr_version": None})
+    metadata_path.write_text(json.dumps({"implementation": {"jaxcmr_version": None}}))
+    assert load_matching_simulation(path, {"jaxcmr_version": None}) is not None
+    metadata_path.write_text(json.dumps({
+        "implementation": {"jaxcmr_version": None}, "jaxcmr_version": "current"
+    }))
+    assert load_matching_simulation(path, {"jaxcmr_version": "current"}) is not None
+    assert load_matching_simulation(path, {"jaxcmr_version": None}) is None
 
+
+def test_load_matching_simulation_missing_files_and_read_errors(tmp_path):
+    path = tmp_path / "responses.h5"
+    metadata_path = path.with_suffix(".json")
+    expected = {"seed": 1}
+    assert load_matching_simulation(path, expected) is None
+    metadata_path.write_text("not JSON")
+    assert load_matching_simulation(path, expected) is None
+    metadata_path.unlink()
+    path.write_bytes(b"not HDF5")
+    assert load_matching_simulation(path, expected) is None
+    metadata_path.write_text("not JSON")
+    with pytest.raises(json.JSONDecodeError):
+        load_matching_simulation(path, expected)
+    metadata_path.write_text(json.dumps({"seed": 2}))
+    assert load_matching_simulation(path, expected) is None
+    metadata_path.write_text(json.dumps(expected))
+    with pytest.raises(OSError):
+        load_matching_simulation(path, expected)

@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 import jax
 import numpy as np
@@ -32,6 +33,9 @@ def test_fitters_return_the_analytic_minimum_for_each_subject(algorithm):
     np.testing.assert_array_equal(repeated["fits"]["a"], result["fits"]["a"])
     np.testing.assert_array_equal(repeated["fits"]["b"], result["fits"]["b"])
     assert list(result["fits"]["subject"]) == [5, 11]
+    saved_subjects = json.loads(json.dumps(result))["fits"]["subject"]
+    assert saved_subjects == [5, 11]
+    assert all(type(subject) is int for subject in saved_subjects)
     fitted = np.array([result["fits"]["a"], result["fits"]["b"]])
     assert np.all((fitted >= 0) & (fitted <= 1))
     np.testing.assert_allclose(fitted, [[0.25, 0.25], [0.75, 0.75]], atol=1e-3)
@@ -51,21 +55,6 @@ class QuadraticLoss:
     def __call__(self, trial_indices, base_params, free_param_names, x):
         target = self.target[: len(list(free_param_names))]
         return jnp.sum(jnp.square(x - target[:, None]), axis=0)
-
-
-@pytest.mark.parametrize("algorithm", [ScipyDE, EvosaxDE])
-def test_fit_rejects_empty_observation_selections(algorithm):
-    fitter = algorithm(
-        {"subject": jnp.array([[1], [2]])}, None, {}, DummyModelFactory, QuadraticLoss,
-        hyperparams={"bounds": {"a": [0., 1.]}, "num_steps": 1, "pop_size": 6,
-                     "best_of": 1, "progress_bar": False},
-    )
-    mask = jnp.array([False, False])
-    with pytest.raises(ValueError, match="nonempty"):
-        fitter.fit(mask)
-    if algorithm is EvosaxDE:
-        with pytest.raises(ValueError, match="nonempty"):
-            fitter.fit_once(mask, jax.random.PRNGKey(1))
 
 
 class IndexedNonfiniteLoss:
@@ -274,26 +263,6 @@ def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra):
     np.testing.assert_allclose(mapped_result["fits"]["y"], sequential_result["fits"]["y"])
     if driver is MapEvosaxDE:
         assert mapped_result["hyperparameters"]["map_batch_size"] == 2
-
-
-def test_scanevosaxde_requires_equal_trial_counts():
-    """``ScanEvosaxDE`` raises clearly on unequal selected trial counts."""
-    fitter = ScanEvosaxDE(
-        make_minimal_dataset([1, 1, 2, 2, 2]),
-        None,
-        {},
-        DummyModelFactory,
-        QuadraticLoss,
-        hyperparams={
-            "bounds": {"x": [0.0, 1.0]},
-            "num_steps": 10,
-            "pop_size": 5,
-            "progress_bar": False,
-            "seed": 0,
-        },
-    )
-    with pytest.raises(ValueError, match="same number of selected trials per subject"):
-        fitter.fit_subjects(np.array([True, True, True, True, True]))
 
 
 def test_evosaxde_replaces_nonfinite_population_fitness():

@@ -162,8 +162,6 @@ def test_fitters_preserve_observations_across_selection_changes_and_replanning(k
 
     for mask in (masks[0], masks[1], masks[0]):
         check(mask)
-    with pytest.raises(ValueError, match="at least one trial"):
-        fitter.prepare_selections([masks[1], jnp.zeros(4, dtype=bool)])
     check(masks[0])
     fitter.prepare_selections([masks[1]])
     check(masks[1])

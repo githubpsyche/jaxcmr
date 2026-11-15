@@ -150,20 +150,31 @@ optimizer populations retain their explicitly shaped array annotations.
 
 ## Keep validation proportionate
 
-Treat annotated types and shapes as caller responsibilities throughout the
-library. Do not add runtime guards or tests solely to enforce those annotations.
+Treat annotations and documented preconditions as caller responsibilities.
+This includes array shapes, matching labels and masks, supported model inputs,
+and valid option values. Do not add guards or negative tests solely to police
+those requirements. Explain them beside the operation; use precise annotations
+where practical. Broad annotations such as `Any` do not justify extra guards.
 
 Keep numerical functions focused on their calculations. Document valid input
 shapes, codes and configuration; rely on ordinary array errors instead of repeating
 shape, dtype and key checks in kernels. Valid inputs must compose with JAX
 transformations, including numerical parameters passed through `vmap`.
 
-Check fixed data at explicit preparation boundaries when needed to protect
-participant assignment, prepared observations, saved-fit compatibility or file
-integrity. Do not convert dynamic numerical arguments to NumPy for those checks.
-Full distance preflight remains optional. Scientific eligibility masks, padding
-and missing-observation rules stay in the calculation. Test supported numerical
-behavior and demonstrated composition failures; remove tests for discarded guards.
+Preparation is not an exception: ordinary fitting and analysis calls trust
+their documented inputs. Keep normalization, participant alignment and observation
+preparation themselves. Do not add equivalent checks through a wrapper or a
+strict zip over caller-supplied collections.
+
+Clients own input validity and saved-fit reuse, including checks they choose to
+perform explicitly. Do not add standalone validators or move their implementation
+into notebooks. Document the required inputs and reuse decisions beside the calls.
+
+Keep external-file protections, internal invariants, and failures
+encountered during computation (including nonconvergence, precision collapse and
+undefined AICc). Scientific eligibility masks, padding and missing-observation
+rules remain part of the calculation. Preserve supported numerical tests; remove
+only the invalid-call portions of tests that also exercise useful behavior.
 
 ## Maintain the supplied examples
 
@@ -200,7 +211,9 @@ the affected calculations. Keep the input files and notebook with results you in
 to reproduce.
 
 Automatic source capture and the former `jaxcmr.provenance` module have been
-removed. Import `simulation_metadata_matches` from `jaxcmr.simulation`. Update
+removed. Use `load_matching_simulation` from `jaxcmr.simulation` to load responses
+whose saved settings match a requested run. Keep regeneration decisions in the
+caller; the settings comparison is private. Update
 older notebook copies that import
 `capture_notebook` or `file_sha256` from `jaxcmr.provenance`; those functions and the
 `provenance_dir`, `provenance_source_paths` and `notebook_source` controls are no longer

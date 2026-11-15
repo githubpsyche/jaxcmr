@@ -32,7 +32,7 @@ def test_select_query_masks_filtering_order_and_nonmutation():
 
 
 def test_constructor_broadcasts_then_repeats_and_pads_mixed_lengths():
-    data = make_dataset([1, 0], listLength=[2, 3], subject=[7., 9.], reps=2)
+    data = make_dataset([1, 0], listLength=[2, 3], subject=[7, 9], reps=2)
     np.testing.assert_array_equal(data["subject"].ravel(), [7, 9, 7, 9])
     np.testing.assert_array_equal(data["pres_itemnos"], [[1, 2, 0], [1, 2, 3]] * 2)
     np.testing.assert_array_equal(data["recalls"], [[1, 0]] * 4)
@@ -62,11 +62,8 @@ def test_constructor_composes_with_jit_and_vmap():
     np.testing.assert_array_equal(generated['pres_itemnos'], [[1, 2, 3]] * 2)
 
 
-def test_apply_by_subject_preserves_trial_fields_and_rejects_misaligned_data():
+def test_apply_by_subject_preserves_trial_fields():
     data = make_dataset(recalls=jnp.array([[1, 0], [2, 0]]), subject=jnp.array([[1], [2]]))
     data["condition"] = jnp.array([[10], [20]])
     selected = apply_by_subject(data, jnp.array([True, True]), lambda subject: subject["condition"])
     assert [int(values[0, 0]) for values in selected] == [10, 20]
-    data["word_pool"] = jnp.array([1, 2, 3])
-    with pytest.raises(ValueError, match="word_pool.*2 trial rows"):
-        apply_by_subject(data, jnp.array([True, True]), lambda subject: subject["recalls"])

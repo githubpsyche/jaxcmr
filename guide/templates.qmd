@@ -210,8 +210,10 @@ fit_paths = {"CMR": "results/fits/Dupertuys2026_CMR_demo_best_of_3.json"}
 | Parameter shifting, model comparison and analyses | Explicit `figure_dir` overrides its default; summary tables use `output_dir`. |
 
 Give independent jobs distinct names or directories for every product they write.
-`redo_fits=False` reuses a matching existing fit; a missing fit is still computed and
-an incompatible record is reported. `redo_sims=False` permits matching response reuse;
+`redo_fits=False` loads an existing fit at the chosen path; you must establish that
+its model, parameters, participants, observations and input data match your intended
+run. Compatibility is not checked. A missing fit is still computed. After relevant
+changes, set `redo_fits=True` or choose a new output location. `redo_sims=False` permits matching response reuse;
 when predictions are requested, missing or stale responses are regenerated. Fitting
 is fit-only when both `redo_sims` and `redo_figures` are false. `figure_str=""` disables
 figure saving, but does not disable summary CSVs.

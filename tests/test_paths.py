@@ -3,7 +3,6 @@
 from pathlib import Path
 import sys
 
-import pytest
 
 from jaxcmr.helpers.paths import resolve_project_root
 
@@ -22,9 +21,6 @@ def test_root_precedence_and_no_side_effects(tmp_path,monkeypatch,capsys):
     assert capsys.readouterr().out==''
 
 
-def test_root_fallback_and_path_validation(tmp_path,monkeypatch):
+def test_root_fallback(tmp_path,monkeypatch):
     monkeypatch.chdir(tmp_path);monkeypatch.delitem(sys.modules,'google.colab',raising=False)
     assert resolve_project_root()==tmp_path
-    with pytest.raises(ValueError):resolve_project_root('C:relative')
-    if sys.platform!='win32':
-        with pytest.raises(ValueError):resolve_project_root('C:/foreign/path')

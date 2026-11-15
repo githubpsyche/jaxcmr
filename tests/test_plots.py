@@ -107,10 +107,6 @@ def test_conditional_distance_features_take_precedence_over_conflicting_matrix()
         data, mask, include, features=features, distance_matrix=conflict, **kwargs
     )
     np.testing.assert_allclose(axis.lines[0].get_ydata(), [1.0, 0.0])
-    with pytest.raises(ValueError):
-        conditional_distcrp.plot_dist_crp(data, mask, include, **kwargs)
-    with pytest.raises(ValueError, match="Exactly one"):
-        distcrp.plot_dist_crp(data, mask, features=features, distance_matrix=conflict, **kwargs)
 
 
 def sample_data():
@@ -133,18 +129,6 @@ def test_panels_use_explicit_mode_even_with_one_dataset():
     np.testing.assert_array_equal(second[1]['trial_masks'][0],masks[1])
     second[0]['labels'].append('extra')
     assert second[1]['labels']==['Observed','Model']
-
-
-@pytest.mark.parametrize('kwargs', [
-    {'mode':'conditions','datasets':[sample_data(),sample_data()]},
-    {'dataset_labels':[]}, {'condition_labels':['Only one']},
-])
-def test_panel_input_alignment_errors(kwargs):
-    data=sample_data()
-    arguments=dict(datasets=[data],masks_by_dataset=[[jnp.ones(4,bool)]*2],
-                   dataset_labels=['Data'],condition_labels=['A','B'],mode='datasets')
-    arguments.update(kwargs)
-    with pytest.raises(ValueError):comparison_panels(**arguments)
 
 
 PLOT_CALLS = []
@@ -180,14 +164,6 @@ def test_figure_iteration_masks_options_suffixes_and_laziness():
     np.testing.assert_array_equal(PLOT_CALLS[1][1][0],[False,False,True,False])
     assert configs==original
     assert PLOT_CALLS[0][0][0] is data
-def test_plot_rejects_dataset_mask_count_mismatch_before_creating_a_figure():
-    import matplotlib.pyplot as plt
-    from jaxcmr.analyses.spc import plot_spc
-    data = make_dataset(jnp.array([[1, 0], [2, 0]]))
-    before = plt.get_fignums()
-    with pytest.raises(ValueError, match="one trial mask per dataset"):
-        plot_spc([data, data], [jnp.ones(2, bool)])
-    assert plt.get_fignums() == before
 
 
 def test_save_explicit_figure_even_when_another_is_current(tmp_path,monkeypatch):

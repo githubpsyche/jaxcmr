@@ -13,7 +13,7 @@ from jaxcmr.fitting.gradient import ScipyLBFGSB
 from jaxcmr.helpers.io import load_data, save_dict_to_hdf5
 from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
-from jaxcmr.simulation import simulate_h5_from_h5
+from jaxcmr.simulation import simulate_dataset
 from support import recall_fixture
 
 PARAMS = dict(
@@ -77,7 +77,7 @@ def test_complete_modeling_workflow(tmp_path):
     result_path.write_text(json.dumps(result))
     restored = json.loads(result_path.read_text())
     assert restored == result
-    simulated = simulate_h5_from_h5(
+    simulated = simulate_dataset(
         factory,
         data,
         None,

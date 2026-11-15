@@ -18,7 +18,7 @@ from jaxcmr.loss.transform_sequence_likelihood import (
 from jaxcmr.experimental import optimized_cmr
 from jaxcmr.experimental.optimized_cmr import _sequence_likelihood
 from jaxcmr.models.cmr import make_factory
-from jaxcmr.simulation import simulate_free_recall, simulate_h5_from_h5
+from jaxcmr.simulation import simulate_free_recall, simulate_dataset
 
 PARAMS = dict(CMR_PARAMS)
 OPTIMIZED_PARAMS = dict(OPTIMIZED_CMR_PARAMS)
@@ -224,7 +224,6 @@ class OrdinaryFactory:
         return SimpleModel(parameters["rate"] + 0.05 * trial_index)
 
 
-
 def test_ordinary_likelihood_preserves_trial_identity_and_multiplicity():
     data = make_dataset(
         jnp.array([[2, 1, 0, 0], [3, 2, 0, 0]]),
@@ -261,7 +260,7 @@ def test_dataset_simulation_maps_parameter_sets_for_optimized_and_regular_cmr():
     def simulate(factory, base, drift):
         parameters = {name: jnp.asarray([value]) for name, value in base.items()}
         parameters['subject'] = jnp.array([1])
-        return simulate_h5_from_h5(
+        return simulate_dataset(
             factory, data, None, {**parameters, 'encoding_drift_rate': drift[None]},
             mask, 2, key,
         )['recalls']
@@ -271,7 +270,3 @@ def test_dataset_simulation_maps_parameter_sets_for_optimized_and_regular_cmr():
     actual = jax.vmap(lambda value: simulate(optimized_cmr.ModelFactory, OPTIMIZED_PARAMS, value))(drift)
     np.testing.assert_array_equal(actual, expected)
     np.testing.assert_array_equal(simulate(optimized_cmr.ModelFactory, OPTIMIZED_PARAMS, drift[0]), expected[0])
-    # The driver consumes subject metadata but must not discard model settings.
-    with pytest.raises(TypeError, match="allow_repeated_recalls"):
-        simulate(optimized_cmr.ModelFactory,
-                 OPTIMIZED_PARAMS | {'allow_repeated_recalls': True}, drift[0])

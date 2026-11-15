@@ -18,7 +18,7 @@ from jaxcmr.models import additive_semantic_matrix_cmr, cmr
 from jaxcmr.experimental import optimized_cmr
 from jaxcmr.experimental.optimized_cmr import _sequence_likelihood
 from jaxcmr.simulation import (
-    simulate_h5_from_h5,
+    simulate_dataset,
     simulate_study_first_recall_and_forced_stop,
 )
 
@@ -131,7 +131,7 @@ def test_simulation_forces_start_count_and_exact_retrieval_state(count, semantic
     # Dataset API converts local item labels back to actual study positions.
     subject_parameters = {k: jnp.array([v]) for k, v in params.items()}
     subject_parameters['subject'] = jnp.array([7])
-    simulated = simulate_h5_from_h5(
+    simulated = simulate_dataset(
         factory, data, features, subject_parameters,
         jnp.array([True]), 8, jax.random.PRNGKey(19),
         simulate_trial_fn=simulate_study_first_recall_and_forced_stop,

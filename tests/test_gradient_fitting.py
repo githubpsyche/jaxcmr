@@ -95,6 +95,9 @@ def test_one_parameter_fit_is_reproducible_bounded_and_improves_likelihood():
     np.testing.assert_array_equal(result["fitness"], again["fitness"])
     assert result["fits"] == again["fits"]
     assert result["fits"]["subject"] == [2]
+    saved_subjects = json.loads(json.dumps(result))["fits"]["subject"]
+    assert saved_subjects == [2]
+    assert type(saved_subjects[0]) is int
     assert "diagnostics" in result
     assert len(result["diagnostics"]["restarts"]) == 2
     assert result["diagnostics"]["nfev"] > 0

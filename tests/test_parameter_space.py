@@ -3,7 +3,6 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pytest
 from jaxcmr.fitting.parameters import ParameterSpace, bound_params
 
 
@@ -45,8 +44,6 @@ def test_log1p_roundtrip_and_derivative_near_zero():
         np.testing.assert_allclose(jax.jit(space.to_physical)(unit), physical, rtol=1e-13, atol=1e-14)
         derivative = jax.jit(jax.jacfwd(space.to_physical))(unit[1])
         np.testing.assert_allclose(derivative[0, 0], (1 + 1e-08) * np.log1p(100), rtol=1e-13)
-        with pytest.raises(ValueError, match="above -1"):
-            ParameterSpace({"amplitude": [-1.0, 10.0]}, {"amplitude": "log1p"})
 
 
 def test_bound_params_clips_each_column_without_changing_inputs():
