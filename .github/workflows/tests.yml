@@ -1,15 +1,29 @@
-name: Tests
-on: [push, pull_request]
+name: Checks and website
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  scientific:
-    name: Scientific checks (${{ matrix.os }})
+  library:
+    name: Library tests (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-15]
-    runs-on: ${{ matrix.os }}
+        include:
+          - platform: Linux
+            os: ubuntu-24.04
+          - platform: macOS
+            os: macos-15
+          - platform: Windows
+            os: windows-2025
     env:
       MPLBACKEND: Agg
       JAX_PLATFORMS: cpu
@@ -18,24 +32,58 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - run: python -m pip install uv
-      - run: uv sync --locked --no-dev --extra test
-      - run: uv run --no-sync python -m pytest tests --ignore=tests/test_distribution.py --junitxml=scientific.xml
-  distribution:
-    name: Installation and documentation (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15]
-    runs-on: ${{ matrix.os }}
-    env:
-      MPLBACKEND: Agg
-      JAX_PLATFORMS: cpu
+      - name: Install JAXCMR and test dependencies
+        run: python -m pip install ".[test]"
+      - name: Run library tests against the installed package
+        # -P prevents the checkout root from shadowing the installed package.
+        run: >-
+          python -P -m pytest tests -m "not audit"
+          --ignore=tests/test_distribution.py
+          --ignore=tests/test_reader_checks.py
+          --ignore=tests/test_template_adaptation.py
+          --ignore=tests/test_documentation.py
+          --junitxml="${{ runner.temp }}/scientific.xml"
+  website:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: python -m pip install uv
       - run: uv sync --locked --no-dev --extra test
-      - run: uv run --no-sync python -m pytest tests/test_distribution.py --junitxml=distribution.xml
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: '1.11.9'
+      - name: Build the checked source commit
+        run: bash build-docs.sh
+      - run: uv run --no-sync python guide/tools/check_site.py docs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: website-preview
+          path: docs
+          include-hidden-files: true
+      - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: docs
+  deploy:
+    needs: [library, website]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    steps:
+      - name: Reject an obsolete main revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh api repos/${{ github.repository }}/commits/main --jq .sha)" = "${{ github.sha }}"
+      - uses: actions/deploy-pages@v4
+        id: deployment

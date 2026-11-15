@@ -7,9 +7,8 @@ package.
 
 """
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from typing import (
-    TYPE_CHECKING,
     Any,
     NotRequired,
     Protocol,
@@ -19,18 +18,14 @@ from typing import (
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, PRNGKeyArray, Real, Shaped
 from typing_extensions import TypedDict
 
-if TYPE_CHECKING:
-    from jaxcmr.models.sequence import PreparedPrediction
-
-Float_ = Float[Array, ""] | float | int
-Int_ = Integer[Array, ""] | int
-Bool_ = Bool[Array, ""] | bool
+type Float_ = Float[Array, ""] | float | int
+type Int_ = Integer[Array, ""] | int
+type Bool_ = Bool[Array, ""] | bool
+type Parameters = Mapping[str, Float_ | Int_ | Bool_]
 
 __all__ = [
     "Array",
     "ArrayLike",
-    "BatchPreparableLossFn",
-    "BatchSequencePredictionFactory",
     "Bool",
     "Bool_",
     "CVResult",
@@ -50,12 +45,10 @@ __all__ = [
     "MemorySearchCreateFn",
     "MemorySearchModelFactory",
     "PRNGKeyArray",
-    "PreparableLossFn",
-    "PreparedLossFn",
+    "Parameters",
     "Real",
     "RecallAnalysisFn",
     "RecallDataset",
-    "SequencePredictionFactory",
     "Shaped",
     "TerminationPolicy",
     "TerminationPolicyCreateFn",
@@ -319,7 +312,7 @@ class MemoryCreateFn(Protocol):
     def __call__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         context: Context,
     ) -> Memory:
         """Return the memories for the given configuration."""
@@ -339,7 +332,7 @@ class TerminationPolicyCreateFn[ModelT](Protocol):
     def __call__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
     ) -> TerminationPolicy[ModelT]:
         """Return a termination policy that can accept ``ModelT``."""
         ...
@@ -352,7 +345,7 @@ class MemorySearchCreateFn(Protocol):
     def __call__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         connections: Float[Array, " study_events study_events"] | None,
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters."""
@@ -386,7 +379,7 @@ class MemorySearchModelFactory(Protocol):
 
     def create_model(
         self,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
         ...
@@ -394,42 +387,9 @@ class MemorySearchModelFactory(Protocol):
     def create_trial_model(
         self,
         trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
     ) -> MemorySearch:
         """Create a new memory search model with the specified parameters for the specified trial."""
-        ...
-
-
-@runtime_checkable
-class SequencePredictionFactory(MemorySearchModelFactory, Protocol):
-    """Optional model-owned prediction of complete observed sequences.
-
-    Masks specify which outputs the caller needs, not which events to process.
-    Every real preceding event must still condition later predictions. A model
-    may group/reorder blocks, but must preserve the requested observations and
-    multiplicity, returning aligned masks in its PreparedPrediction. No loss
-    reduction, parameter search, or assumptions about another model belong here.
-    """
-
-    def prepare_predictions(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        mask: Bool[Array, "trials recall_events"],
-    ) -> "PreparedPrediction[Any]":
-        """Prepare immutable observations before JIT; return model computation."""
-        ...
-
-
-@runtime_checkable
-class BatchSequencePredictionFactory(SequencePredictionFactory, Protocol):
-    """Optional model-owned layout planning across trial selections."""
-
-    def prepare_prediction_selections(
-        self,
-        trial_indices: Iterable[Integer[Array, " trials"]],
-        masks: Iterable[Bool[Array, "trials recall_events"]],
-    ) -> Sequence["PreparedPrediction[Any]"]:
-        """Return one independent prediction plan per requested selection."""
         ...
 
 
@@ -448,55 +408,11 @@ class LossFn(Protocol):
     def __call__(
         self,
         trial_indices: Integer[Array, " trials"],
-        base_params: Mapping[str, Float_],
+        base_params: Parameters,
         free_param_names: Iterable[str],
         x: Float[Array, " parameters n_samples"],
     ) -> Float[Array, " n_samples"]:
         """Return one loss per parameter vector."""
-        ...
-
-
-type PreparedLossFn = Callable[
-    [Mapping[str, Float_], Iterable[str], Float[Array, "parameters n_samples"]],
-    Float[Array, " n_samples"],
-]
-
-
-@runtime_checkable
-class PreparableLossFn(LossFn, Protocol):
-    """Optional loss capability for preprocessing a fixed trial selection.
-
-    Preparation runs on the host before JIT compilation. The returned callable
-    scores exactly the supplied trials (including their order/multiplicity) and
-    accepts base parameters, free parameter names and a parameter matrix.
-    It must retain its own selection rather than mutate another prepared loss.
-    Ordinary LossFn implementations need not implement this capability.
-    """
-
-    def prepare_trials(
-        self, trial_indices: Integer[Array, " trials"]
-    ) -> PreparedLossFn:
-        """Bind concrete trial indices and return a JAX-compatible loss."""
-        ...
-
-
-@runtime_checkable
-class BatchPreparableLossFn(PreparableLossFn, Protocol):
-    """Optional preparation of compatible layouts for multiple trial selections.
-
-    Return one independent callable per selection, in the supplied order.
-    Each must preserve that selection's trial multiplicity and scoring rules.
-    Implementations may share layout metadata to permit compilation reuse;
-    they must not change an already returned callable. A fitter can pass a
-    jaxcmr.loss.prepared.PreparedLoss as dynamic data to JIT. Other returned
-    callables retain the ordinary prepared-loss path.
-    """
-
-    def prepare_selections(
-        self,
-        trial_indices: Iterable[Integer[Array, " trials"]],
-    ) -> Sequence[PreparedLossFn]:
-        """Prepare explicit selections without compiling or fitting them."""
         ...
 
 
@@ -584,11 +500,11 @@ class FittingAlgorithm(Protocol):
         self,
         dataset: RecallDataset,
         features: Float[Array, "word_pool_items features_count"] | None,
-        base_params: Mapping[str, Float_],
+        base_params: Parameters,
         model_factory_cls: type[MemorySearchModelFactory],
         loss_fn_cls: type[LossFn],
         hyperparams: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Configure the fitting algorithm.
 

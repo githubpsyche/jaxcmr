@@ -8,44 +8,58 @@ used across the package.
 
 import importlib
 import os
+import sys
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path, PureWindowsPath
-from typing import Callable, Iterable, List, Mapping, Sequence
+from typing import Any, Concatenate, Literal
 
 import h5py
 import jax.numpy as jnp
-import numpy as np  # preserved here in order to evaluate some trial queries
+import numpy as np
 from jax import lax, vmap
+from matplotlib.figure import Figure
+from numpy.typing import ArrayLike
 
 from jaxcmr.dataset import _transform_trial_rows
-from jaxcmr.typing import Array, Bool, Bool_, Float, Integer, Real, RecallDataset
+from jaxcmr.typing import (
+    Array,
+    Bool,
+    Bool_,
+    Float,
+    Integer,
+    Real,
+    RecallDataset,
+    Shaped,
+)
 
 __all__ = [
-    "have_common_nonzero",
     "all_rows_identical",
-    "log_likelihood",
-    "import_from_string",
-    "format_floats",
-    "find_project_root",
-    "resolve_project_path",
-    "generate_trial_mask",
-    "generate_recall_mask",
-    "make_subject_trial_masks",
-    "load_data",
-    "limit_to_first_subjects",
-    "save_dict_to_hdf5",
-    "find_max_list_length",
     "apply_by_subject",
+    "find_max_list_length",
+    "find_project_root",
+    "format_floats",
+    "generate_recall_mask",
+    "generate_trial_mask",
     "has_repeats_per_row",
+    "have_common_nonzero",
+    "import_from_string",
+    "limit_to_first_subjects",
+    "load_data",
+    "log_likelihood",
     "make_dataset",
+    "make_subject_trial_masks",
     "require_pres_itemids",
     "require_valence",
+    "resolve_project_path",
+    "resolve_project_root",
+    "save_dict_to_hdf5",
     "save_figure",
 ]
 
 
 def have_common_nonzero(
-    a: Integer[Array, " size"],
-    b: Integer[Array, " size"],
+    a: Integer[Array, " first_items"],
+    b: Integer[Array, " second_items"],
 ) -> Bool_:
     """
     Return True iff there exists i, j such that
@@ -57,7 +71,7 @@ def have_common_nonzero(
     return jnp.any(values_equal & (a > 0)[:, None] & (b > 0)[None, :])
 
 
-def all_rows_identical(arr: Real[Array, " x y"]) -> bool:
+def all_rows_identical(arr: Real[Array, " rows columns"]) -> bool:
     """Return whether all rows in the 2D array are identical."""
     return jnp.all(arr == arr[0]).item()
 
@@ -67,25 +81,26 @@ def log_likelihood(likelihoods: Float[Array, "trial_count ..."]) -> Float[Array,
     return -jnp.sum(jnp.log(likelihoods))
 
 
-def import_from_string(import_string):
-    """
-    Import a module or function from a string.
+def import_from_string(import_string: str) -> Any:
+    """Import the attribute named by a dotted Python path.
 
     Args:
         import_string: A string in the format 'module.submodule.ClassName' or 'module.function_name'.
 
     Returns:
-        The imported module or function.
+        The named attribute, such as a function or class.
 
     Raises:
-        ImportError: If the import string is not valid.
+        ValueError: If the path has no module/attribute separator.
+        ImportError: If the module cannot be imported.
+        AttributeError: If the module has no such attribute.
     """
-    module_name, function_name = import_string.rsplit(".", 1)
+    module_name, attribute_name = import_string.rsplit(".", 1)
     module = importlib.import_module(module_name)
-    return getattr(module, function_name)
+    return getattr(module, attribute_name)
 
 
-def format_floats(iterable: Iterable[float], precision: int = 2) -> List[str]:
+def format_floats(iterable: Iterable[float], precision: int = 2) -> list[str]:
     """
     Formats a list of floats to a specified precision.
 
@@ -96,8 +111,8 @@ def format_floats(iterable: Iterable[float], precision: int = 2) -> List[str]:
     Returns:
         List of formatted strings.
     """
-    format_str = f"{{:.{precision}f}}"
-    return [format_str.format(x) for x in iterable]
+    number_format = f"{{:.{precision}f}}"
+    return [number_format.format(value) for value in iterable]
 
 
 def find_project_root(marker: str = ".git") -> str:
@@ -105,10 +120,10 @@ def find_project_root(marker: str = ".git") -> str:
     Finds the project root by traversing upwards from the working directory
     until a directory containing `marker` is found.
     """
-    start = Path.cwd()
-    for path in [start, *start.parents]:
-        if (path / marker).exists():
-            return str(path)
+    working_directory = Path.cwd()
+    for directory in [working_directory, *working_directory.parents]:
+        if (directory / marker).exists():
+            return str(directory)
     raise FileNotFoundError(f"Could not find project root containing {marker}.")
 
 
@@ -127,17 +142,36 @@ def resolve_project_path(path: str | Path, base_dir: str | Path) -> Path:
     if os.name == "nt":
         if path.root and not path.drive:
             raise ValueError(f"Include the drive in absolute Windows path {str(path)!r}.")
-        for part in path.parts[bool(path.anchor):]:
-            if part in (".", ".."):
+        for component in path.parts[bool(path.anchor):]:
+            if component in (".", ".."):
                 continue
-            if (PureWindowsPath(part).is_reserved() or part.endswith((" ", "."))
-                    or any(character in '<>:"|?*' or ord(character) < 32 for character in part)):
-                raise ValueError(f"Invalid Windows filename component: {part!r}.")
+            if (PureWindowsPath(component).is_reserved() or component.endswith((" ", "."))
+                    or any(character in '<>:"|?*' or ord(character) < 32 for character in component)):
+                raise ValueError(f"Invalid Windows filename component: {component!r}.")
     return (path if path.is_absolute() else Path(base_dir).expanduser() / path).resolve()
 
 
+def resolve_project_root(project_root: str | Path | None = None) -> Path:
+    """Resolve an explicit project directory or discover the current project.
+
+    An explicit path is normalized against the current directory with the same
+    validation as resolve_project_path. Otherwise Colab uses the current
+    directory; elsewhere the nearest enclosing Git root is used, falling back
+    to the current directory. Returns a Path without printing, changing the
+    working directory, creating directories, or fetching inputs.
+    """
+    if project_root is not None:
+        return resolve_project_path(project_root, Path.cwd())
+    if "google.colab" in sys.modules:
+        return Path.cwd()
+    try:
+        return Path(find_project_root())
+    except FileNotFoundError:
+        return Path.cwd()
+
+
 def generate_trial_mask(
-    data: RecallDataset, trial_query:str | None
+    data: RecallDataset, trial_query: str | None
 ) -> Bool[Array, " trial_count"]:
     """Returns a boolean mask for selecting trials based on a specified query condition.
 
@@ -152,7 +186,7 @@ def generate_trial_mask(
 
 
 def generate_recall_mask(
-    data: RecallDataset, recall_query:str | None
+    data: RecallDataset, recall_query: str | None
 ) -> Bool[Array, " trial_count recall_events"]:
     """Returns a boolean mask for selecting recall events based on a query condition.
 
@@ -167,17 +201,18 @@ def generate_recall_mask(
 
 
 def make_subject_trial_masks(
-    trial_mask: Bool[Array, " trials"], subject_vector: Integer[Array, " trials"]
-):
+    trial_mask: Bool[Array, " trials"],
+    subject_vector: Integer[Array, " trials"],
+) -> tuple[list[Bool[Array, " trials"]], Integer[np.ndarray, " subjects"]]:
     """Returns a list of subject-specific masks and the list of unique subjects."""
     unique_subjects = np.unique(subject_vector)
     subject_masks = [
-        (subject_vector == s) & trial_mask.astype(bool) for s in unique_subjects
+        (subject_vector == subject_id) & trial_mask for subject_id in unique_subjects
     ]
     return subject_masks, unique_subjects
 
 
-def load_data(data_path: str, max_subjects: int = 0) -> dict[str, Array]:
+def load_data(data_path: str | Path, max_subjects: int = 0) -> dict[str, Array]:
     """
     Loads and processes an HDF5 dataset from the specified file.
 
@@ -192,14 +227,22 @@ def load_data(data_path: str, max_subjects: int = 0) -> dict[str, Array]:
         A dictionary where each key corresponds to a dataset name and each value is
         a jax.numpy array containing the transposed data. This storage-level helper
         does not assume a particular experimental dataset schema.
+
+    Raises:
+        TypeError: The "/data" object is not an HDF5 group.
     """
-    with h5py.File(data_path, "r") as f:
-        result = {key: jnp.array(f["/data"][key][()].T) for key in f["/data"].keys()}
+    with h5py.File(data_path, "r") as data_file:
+        data_group = data_file["/data"]
+        if not isinstance(data_group, h5py.Group):
+            raise TypeError("Expected /data to be an HDF5 group.")
+        data_arrays = {
+            name: jnp.array(values[()].T)
+            for name, values in data_group.items()
+        }
 
     if max_subjects == 0:
-        return result
-    else:
-        return limit_to_first_subjects(result, max_subjects)
+        return data_arrays
+    return limit_to_first_subjects(data_arrays, max_subjects)
 
 
 def limit_to_first_subjects(
@@ -210,7 +253,7 @@ def limit_to_first_subjects(
 
     Args:
       data: Trial-indexed arrays with a `subject` column shaped [trial_count, 1].
-      max_subjects: Maximum number of subjects to retain, preserving encounter order.
+      max_subjects: Maximum number of subjects to retain, ordered by subject ID.
     """
     subject_ids = data["subject"].reshape(-1)
     unique_subjects = np.unique(np.asarray(subject_ids))
@@ -220,15 +263,15 @@ def limit_to_first_subjects(
     return {key: value[include_mask] for key, value in data.items()}
 
 
-def save_dict_to_hdf5(data: dict, path: str):
-    """Save a dictionary of numpy arrays to an HDF5 file."""
-    with h5py.File(path, "w") as file:
-        data_group = file.create_group(
-            "data"
-        )  # Create a group named "data" in the HDF5 file
-        for key, value in data.items():
-            # Create each dataset within the "data" group
-            data_group.create_dataset(key, data=value.T)
+def save_dict_to_hdf5(
+    data: Mapping[str, Shaped[Array | np.ndarray, "..."]],
+    path: str | Path,
+) -> None:
+    """Save named NumPy or JAX arrays in the transposed HDF5 data layout."""
+    with h5py.File(path, "w") as data_file:
+        data_group = data_file.create_group("data")
+        for name, values in data.items():
+            data_group.create_dataset(name, data=values.T)
 
 
 def find_max_list_length(
@@ -265,13 +308,13 @@ def require_valence(data: RecallDataset) -> Array:
     return data["valence"]
 
 
-def apply_by_subject(
+def apply_by_subject[Result, **Parameters](
     data: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
-    func: Callable,
-    *args,
-    **kwargs,
-) -> list[jnp.ndarray]:
+    func: Callable[Concatenate[RecallDataset, Parameters], Result],
+    *args: Parameters.args,
+    **kwargs: Parameters.kwargs,
+) -> list[Result]:
     """Apply ``func`` per subject using the entire masked dataset slice.
 
     Args:
@@ -283,11 +326,11 @@ def apply_by_subject(
         **kwargs: Additional keyword arguments forwarded to ``func``.
     """
 
-    subject_indices = data["subject"].flatten()
-    results: list[jnp.ndarray] = []
+    subject_ids = data["subject"].flatten()
+    results: list[Result] = []
 
-    for subject in jnp.unique(data["subject"]):
-        subject_mask = jnp.logical_and(subject_indices == subject, trial_mask)
+    for subject_id in jnp.unique(data["subject"]):
+        subject_mask = jnp.logical_and(subject_ids == subject_id, trial_mask)
         if jnp.sum(subject_mask) == 0:
             continue
         subject_dataset = _transform_trial_rows(
@@ -298,7 +341,9 @@ def apply_by_subject(
     return results
 
 
-def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
+def has_repeats_per_row(
+    arr: Integer[Array, " trials recall_events"],
+) -> Bool[Array, " trials"]:
     """
     Returns a boolean array indicating which rows in `recalls` contain repeated nonzero values.
 
@@ -306,151 +351,142 @@ def has_repeats_per_row(arr: Integer[Array, " T L"]) -> Bool[Array, " T"]:
         arr: 2D array
     """
 
-    def check_row(row):
+    def check_row(row: Integer[Array, " recall_events"]) -> Bool[Array, ""]:
         # Only consider nonzero values
-        mask = row > 0
+        valid_positions = row > 0
         # Fill non-recalled slots with -1 so they cannot count as repeats.
-        values = lax.select(mask, row, jnp.full_like(row, -1))
+        padded_values = lax.select(valid_positions, row, jnp.full_like(row, -1))
 
         # Sort and compare adjacent values
-        sorted_vals = jnp.sort(values)
-        eq_adjacent = sorted_vals[1:] == sorted_vals[:-1]
+        sorted_values = jnp.sort(padded_values)
+        adjacent_matches = sorted_values[1:] == sorted_values[:-1]
 
         # Must ignore -1/-1 matches (which occur if multiple padding values present)
-        valid_repeats = eq_adjacent & (sorted_vals[1:] != -1)
+        valid_repeats = adjacent_matches & (sorted_values[1:] != -1)
         return jnp.any(valid_repeats)
 
     return vmap(check_row)(arr)
 
 
 def make_dataset(
-    recalls: Integer[Array, "n_trials num_recalled"],
-    pres_itemnos: Integer[Array, "n_trials num_presented"] | None = None,
-    listLength: Integer[Array, "n_trials 1"] | int | None = None,
-    subject: Integer[Array, "n_trials 1"] | int = 1,
+    recalls: ArrayLike,
+    pres_itemnos: ArrayLike | None = None,
+    listLength: ArrayLike | None = None,
+    subject: ArrayLike = 1,
     *,
     reps: int = 1,
 ) -> RecallDataset:
-    """Construct a ``RecallDataset`` from flexible inputs.
+    """Construct the four core trial arrays, broadcasting singleton inputs.
 
-    Parameters
-    ----------
-    recalls
-        Study-position recall codes (1-indexed, 0 = padding). A 1-D vector is
-        treated as a single trial.
-    pres_itemnos
-        Within-list presentation items. When omitted, generated as
-        ``arange(1, list_length + 1)`` per trial.
-    listLength
-        List length per trial. Inferred from *pres_itemnos* when omitted.
-        When both are provided, an assertion checks compatibility.
-        When neither is provided, inferred as
-        ``max(recalls.shape[1], recalls.max())``.
-    subject
-        Subject identifier per trial. Defaults to ``1`` (single subject).
-    reps
-        Number of times to tile the resulting trials along axis 0.
+    Args:
+        recalls: One- or two-dimensional study-position recall codes, supplied
+            as a sequence or array; a vector denotes one trial.
+        pres_itemnos: One- or two-dimensional within-list item codes;
+            a vector denotes one trial.
+            Omit to generate sequential codes, padded to the maximum list length.
+        listLength: Scalar, vector, or single-column array of study lengths.
+            With presentations, defaults to their storage width. Supply explicit
+            lengths for padded lists. Without presentations or lengths, the
+            default is max(response width, highest recall code), which cannot
+            establish the actual study length of an experiment.
+        subject: Scalar, vector, or single-column participant IDs; defaults to 1.
+        reps: Positive integer number of copies of the complete trial sequence.
 
-    Returns
-    -------
-    RecallDataset
-        Dictionary with keys ``recalls``, ``pres_itemnos``, ``listLength``,
-        and ``subject``, all shaped ``(n_trials * reps, ...)``.
+    Returns:
+        A new RecallDataset of int32 arrays. Singleton inputs are broadcast to
+        the common trial count before repetition. Input arrays are not modified.
 
+    Inputs must be integer-valued and representable as int32, with compatible
+    trial counts. Lengths must be nonnegative and agree with presentation
+    padding. These are caller responsibilities, not runtime value checks.
+
+    With explicit presentations, construction supports JIT and vmap; ``reps``
+    must be static. Generating presentations also works with a static integer
+    ``listLength``. Inferring their width from array values requires concrete
+    data and must happen before JIT.
     """
-    # -- normalise recalls (required) -----------------------------------------
-    recalls_arr = jnp.atleast_2d(jnp.asarray(recalls, dtype=jnp.int32))
+    recall_matrix = jnp.atleast_2d(jnp.asarray(recalls, dtype=jnp.int32))
+    presentation_matrix, list_lengths = _prepare_study_lists(
+        recall_matrix, pres_itemnos, listLength
+    )
+    subject_ids = jnp.asarray(subject, dtype=jnp.int32).reshape(-1, 1)
+    return _broadcast_and_repeat_trials(
+        recall_matrix, presentation_matrix, list_lengths, subject_ids, reps
+    )
 
-    # -- normalise pres_itemnos (optional) ------------------------------------
-    pres_arr: jnp.ndarray | None = None
-    if pres_itemnos is not None:
-        pres_arr = jnp.atleast_2d(jnp.asarray(pres_itemnos, dtype=jnp.int32))
 
-    # -- normalise listLength (optional) --------------------------------------
-    ll_arr: jnp.ndarray | None = None
-    if listLength is not None:
-        if isinstance(listLength, int):
-            ll_arr = jnp.array([[listLength]], dtype=jnp.int32)
-        else:
-            ll_arr = jnp.asarray(listLength, dtype=jnp.int32).reshape(-1, 1)
-
-    # -- normalise subject ----------------------------------------------------
-    if isinstance(subject, int):
-        subj_arr = jnp.array([[subject]], dtype=jnp.int32)
-    else:
-        subj_arr = jnp.asarray(subject, dtype=jnp.int32).reshape(-1, 1)
-
-    # -- resolve n_trials -----------------------------------------------------
-    sizes: list[int] = []
-    for arr in (recalls_arr, pres_arr, ll_arr, subj_arr):
-        if arr is not None and arr.shape[0] > 1:
-            sizes.append(arr.shape[0])
-    if sizes:
-        n_trials = sizes[0]
-        assert all(s == n_trials for s in sizes), (
-            f"Multi-trial args disagree on n_trials: {sizes}"
+def _prepare_study_lists(
+    recalls: Integer[Array, " recall_trials recall_events"],
+    presentation_items: ArrayLike | None,
+    list_lengths: ArrayLike | None,
+) -> tuple[
+    Integer[Array, " #study_trials study_events"],
+    Integer[Array, " #study_trials 1"],
+]:
+    """Normalize supplied study lists or generate padded sequential items."""
+    if presentation_items is not None:
+        presentations = jnp.atleast_2d(
+            jnp.asarray(presentation_items, dtype=jnp.int32)
         )
-    else:
-        n_trials = 1
+        if list_lengths is None:
+            list_lengths = presentations.shape[1]
+        length_column = jnp.asarray(list_lengths, dtype=jnp.int32).reshape(-1, 1)
+        return presentations, length_column
 
-    # -- tile single-trial args to n_trials -----------------------------------
-    if recalls_arr.shape[0] == 1 and n_trials > 1:
-        recalls_arr = jnp.tile(recalls_arr, (n_trials, 1))
-    if pres_arr is not None and pres_arr.shape[0] == 1 and n_trials > 1:
-        pres_arr = jnp.tile(pres_arr, (n_trials, 1))
-    if ll_arr is not None and ll_arr.shape[0] == 1 and n_trials > 1:
-        ll_arr = jnp.tile(ll_arr, (n_trials, 1))
-    if subj_arr.shape[0] == 1 and n_trials > 1:
-        subj_arr = jnp.tile(subj_arr, (n_trials, 1))
+    if list_lengths is None:
+        list_lengths = max(recalls.shape[1], int(recalls.max()))
+    length_column = jnp.asarray(list_lengths, dtype=jnp.int32).reshape(-1, 1)
+    # Keep a supplied integer static so generation also works under JIT.
+    study_width = (
+        list_lengths if isinstance(list_lengths, (int, np.integer))
+        else int(length_column.max())
+    )
+    study_positions = jnp.arange(1, study_width + 1, dtype=jnp.int32)[None, :]
+    presentations = jnp.where(study_positions <= length_column, study_positions, 0)
+    return presentations, length_column
 
-    # -- infer / validate list_length -----------------------------------------
-    if pres_arr is not None and ll_arr is not None:
-        assert jnp.all(ll_arr == pres_arr.shape[1]), (
-            f"listLength ({ll_arr.ravel()}) incompatible with "
-            f"pres_itemnos width ({pres_arr.shape[1]})"
-        )
-        list_length = int(pres_arr.shape[1])
-    elif pres_arr is not None:
-        list_length = int(pres_arr.shape[1])
-        ll_arr = jnp.full((n_trials, 1), list_length, dtype=jnp.int32)
-    elif ll_arr is not None:
-        list_length = int(ll_arr[0, 0])
-    else:
-        list_length = int(max(recalls_arr.shape[1], jnp.max(recalls_arr)))
-        ll_arr = jnp.full((n_trials, 1), list_length, dtype=jnp.int32)
 
-    # -- generate default pres_itemnos ----------------------------------------
-    if pres_arr is None:
-        row = jnp.arange(1, list_length + 1, dtype=jnp.int32)
-        pres_arr = jnp.tile(row[None, :], (n_trials, 1))
+def _broadcast_and_repeat_trials(
+    recalls: Integer[Array, " #trials recall_events"],
+    presentations: Integer[Array, " #trials study_events"],
+    list_lengths: Integer[Array, " #trials 1"],
+    subject_ids: Integer[Array, " #trials 1"],
+    repetitions: int,
+) -> RecallDataset:
+    """Align singleton trial rows, then repeat the complete trial sequence."""
+    trial_count = max(
+        values.shape[0]
+        for values in (recalls, presentations, list_lengths, subject_ids)
+    )
 
-    # -- apply reps -----------------------------------------------------------
-    if reps > 1:
-        recalls_arr = jnp.tile(recalls_arr, (reps, 1))
-        pres_arr = jnp.tile(pres_arr, (reps, 1))
-        ll_arr = jnp.tile(ll_arr, (reps, 1))
-        subj_arr = jnp.tile(subj_arr, (reps, 1))
+    def repeat_rows(
+        values: Integer[Array, " rows columns"],
+    ) -> Integer[Array, " repeated_trials columns"]:
+        trial_rows = jnp.broadcast_to(values, (trial_count, values.shape[1]))
+        return jnp.tile(trial_rows, (repetitions, 1))
 
     return {
-        "recalls": recalls_arr,
-        "pres_itemnos": pres_arr,
-        "listLength": ll_arr,
-        "subject": subj_arr,
+        "recalls": repeat_rows(recalls),
+        "pres_itemnos": repeat_rows(presentations),
+        "listLength": repeat_rows(list_lengths),
+        "subject": repeat_rows(subject_ids),
     }
 
 
 def save_figure(
-    figure_dir: str,
+    figure_dir: str | Path,
     figure_str: str,
-    suffix:str | None = None,
+    suffix: str | None = None,
     dpi: int = 600,
-    formats: Sequence[str] = ("png",),
+    formats: Sequence[Literal["png", "svg", "pdf"]] = ("png",),
+    *,
+    figure: Figure | None = None,
 ) -> None:
-    """Save the current matplotlib figure to disk, or just show it.
+    """Save a matplotlib figure to disk, or just show it.
 
     Parameters
     ----------
-    figure_dir : str
+    figure_dir : str or pathlib.Path
         Directory in which to save the figure.
     figure_str : str
         Base filename (without extension). If empty, the figure is
@@ -459,20 +495,27 @@ def save_figure(
         Appended to *figure_str* with an underscore separator.
     dpi : int, optional
         Resolution for the saved image. Default 600.
+    formats : sequence of {"png", "svg", "pdf"}, optional
+        Nonempty sequence of output formats. Default ("png",).
+    figure : matplotlib.figure.Figure, optional
+        Figure to lay out and save; defaults to pyplot's current figure.
+        Existing pyplot show behavior is retained. Supplying a figure avoids
+        accidentally saving another figure that became current in client code.
     """
-    import os
-
     import matplotlib.pyplot as plt
 
-    plt.tight_layout()
+    target_figure = plt.gcf() if figure is None else figure
+    target_figure.tight_layout()
     if not figure_str:
         plt.show()
         return
     os.makedirs(figure_dir, exist_ok=True)
-    suffix_str = f"_{suffix}" if suffix else ""
-    if not formats or any(fmt not in {"png", "svg", "pdf"} for fmt in formats):
-        raise ValueError("formats must contain png, svg, or pdf")
-    for fmt in dict.fromkeys(formats):
-        figure_path = os.path.join(figure_dir, f"{figure_str}{suffix_str}.{fmt}")
-        plt.savefig(figure_path, bbox_inches="tight", dpi=dpi)
+    filename_suffix = f"_{suffix}" if suffix else ""
+    if not formats:
+        raise ValueError("formats must contain at least one output format")
+    for image_format in dict.fromkeys(formats):
+        figure_path = os.path.join(
+            figure_dir, f"{figure_str}{filename_suffix}.{image_format}"
+        )
+        target_figure.savefig(figure_path, bbox_inches="tight", dpi=dpi)
     plt.show()

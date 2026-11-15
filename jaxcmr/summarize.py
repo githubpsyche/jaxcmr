@@ -84,7 +84,7 @@ def validate_params(
     loss_fn(model_init, list_arg, trials, test_params)
 
 
-def calculate_ci(data: list[float], confidence=0.95) -> float:
+def calculate_ci(data: list[float], confidence: float = 0.95) -> float:
     """Returns the confidence interval for a list of values.
 
     Args:
@@ -92,9 +92,9 @@ def calculate_ci(data: list[float], confidence=0.95) -> float:
         confidence (float, optional): The confidence level for the interval. Defaults to 0.95.
     """
     assert len(data) > 1
-    n = len(data)
-    stderr = np.std(np.array(data), ddof=1) / np.sqrt(n)
-    return stderr * t.ppf((1 + confidence) / 2.0, n - 1)
+    sample_count = len(data)
+    standard_error = np.std(np.array(data), ddof=1) / np.sqrt(sample_count)
+    return standard_error * t.ppf((1 + confidence) / 2.0, sample_count - 1)
 
 
 def _normalize_variant(values: list[float]) -> np.ndarray | None:
@@ -161,8 +161,8 @@ def add_summary_lines(
     md_table: str,
     errors: list[list[float]],
     label: str,
-    include_std=False,
-    include_ci=False,
+    include_std: bool = False,
+    include_ci: bool = False,
 ) -> str:
     """Add summary statistics rows to a Markdown table segment.
 
@@ -204,8 +204,8 @@ def add_summary_lines(
 def summarize_parameters(
     model_data: list[dict],
     query_parameters: list[str] | None = None,
-    include_std=False,
-    include_ci=False,
+    include_std: bool = False,
+    include_ci: bool = False,
 ) -> str:
     """Returns a Markdown table of parameter statistics across model variants.
 

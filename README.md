@@ -15,8 +15,8 @@ pip install git+https://github.com/githubpsyche/jaxcmr
 
 ## Documentation and examples
 
-Start with the [guide introduction](guide/index.ipynb) for how data, analyses,
-simulation, likelihood and fitting connect. The [Templates index](guide/templates.qmd)
+Start with the [documentation](https://githubpsyche.github.io/jaxcmr/) for how data, analyses,
+simulation, likelihood and fitting connect. The [Templates index](https://githubpsyche.github.io/jaxcmr/templates.html)
 links fourteen complete procedures using data from the war-photo-recall
 experiment, with downloadable notebooks and shared inputs. They cover behavioral
 analysis, fitting, simulation, parameter exploration and pooled model comparison.
@@ -25,13 +25,13 @@ The templates connect a [single configurable fitting procedure](templates/fittin
 to saved simulations, interventions and comparisons. Analysis notebooks read the supplied
 response files or your own saved inputs.
 
-Use **Open in Colab** in a prepared chapter to install JAXCMR from GitHub’s `main` branch
-and fetch its example inputs automatically; no PyPI release is required for this route.
-See [the Colab instructions](guide/templates.qmd#run-in-colab).
+Use **Open in Colab** on a template page to run it in your browser. Its setup cell
+installs JAXCMR from GitHub’s `main` branch, and its input setup copies the supplied
+examples from the package. See [Remote setup in your browser with Google Colab](https://githubpsyche.github.io/jaxcmr/colab-setup.html).
 
 The authoritative notebooks remain in [templates/](templates/). Other notebooks
 in that collection are research examples with varying dependencies and
-maintenance status; they are outside the prepared book chapters.
+maintenance status; they are not part of the fourteen published templates.
 
 ## Development and testing
 
@@ -46,7 +46,7 @@ tools. Follow the [Local setup with VS Code](guide/developer-setup.ipynb) for VS
 selection. See [Development](guide/development.qmd) for running tests, adding
 regressions and editing the documentation. Embeddings, profiling and
 Numba tooling are opt-in dependency groups or extras described in the
-[development guide](guide/development.qmd#optional-tools).
+[development guide](guide/development.qmd#prepare-the-environment).
 
 ## Paper draft
 
