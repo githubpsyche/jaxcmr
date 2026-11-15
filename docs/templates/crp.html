@@ -283,10 +283,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings">Settings</a></li>
+  <li><a href="#configure-this-run" id="toc-configure-this-run" class="nav-link active" data-scroll-target="#configure-this-run">Configure this run</a></li>
+  <li><a href="#prepare-the-environment-and-inputs" id="toc-prepare-the-environment-and-inputs" class="nav-link" data-scroll-target="#prepare-the-environment-and-inputs">Prepare the environment and inputs</a></li>
   <li><a href="#select-the-observations" id="toc-select-the-observations" class="nav-link" data-scroll-target="#select-the-observations">Select the observations</a></li>
   <li><a href="#follow-one-transition" id="toc-follow-one-transition" class="nav-link" data-scroll-target="#follow-one-transition">Follow one transition</a></li>
-  <li><a href="#aggregate-the-eligible-transitions" id="toc-aggregate-the-eligible-transitions" class="nav-link" data-scroll-target="#aggregate-the-eligible-transitions">Aggregate the eligible transitions</a></li>
+  <li><a href="#aggregate-and-interpret-the-curves" id="toc-aggregate-and-interpret-the-curves" class="nav-link" data-scroll-target="#aggregate-and-interpret-the-curves">Aggregate and interpret the curves</a></li>
+  <li><a href="#reuse-the-results" id="toc-reuse-the-results" class="nav-link" data-scroll-target="#reuse-the-results">Reuse the results</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/crp.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/templates/crp.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -312,185 +314,140 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Calculate how transitions between recalled items depend on their separation in the study list. Count observed transitions relative to available opportunities, compare selections and save lag-CRP curves.</p>
-<section id="settings" class="level2">
-<h2 class="anchored" data-anchor-id="settings">Settings</h2>
+<p>Use lag-conditional response probability (lag-CRP) to ask whether successive recalls favor nearby study positions, and whether forward and backward transitions differ. The procedure reads response files, compares chosen transitions with available opportunities, and saves a curve.</p>
+<p>Positive lag means moving forward in the study list; negative lag means moving backward. Opportunity correction matters because positions near a list boundary do not offer the same possible lags.</p>
+<p>For input conventions, see the <a href="https://githubpsyche.github.io/jaxcmr/overview/data.html">data guide</a>.</p>
+<section id="configure-this-run" class="level2">
+<h2 class="anchored" data-anchor-id="configure-this-run">Configure this run</h2>
+<p>Choose responses and conditions, then <code>max_lag</code> for the displayed range. <code>size</code> must accommodate repeated study identities. This temporal procedure requires complete study lists; its explicit check rejects a selection that still contains padding.</p>
+<p>Undefined lags have no eligible opportunities and should not be interpreted as zero transition probability.</p>
+<p>Keep all editable settings in this tagged cell. Later cells derive paths and selections after any Papermill overrides.</p>
 <div id="a8ea08fe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:31.883630Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:31.883535Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:31.887289Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:31.886803Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Working directory (None discovers the enclosing Git project).</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>project_root <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a><span class="co"># Response files</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>data_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># A supplied single path takes precedence over data_paths.</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>data_paths <span class="op">=</span> [</span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="st">"data/Dupertuys2026.h5"</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>]</span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="st">"CMR"</span>, <span class="st">"Source-only eCMR"</span>, <span class="st">"Broader eCMR"</span>]</span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a><span class="co"># Saved results</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>output_dir <span class="op">=</span> <span class="st">"results/crp"</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a><span class="co"># Analysis and uncertainty settings</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>max_lag <span class="op">=</span> <span class="dv">5</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>plot_seed <span class="op">=</span> <span class="dv">0</span>  <span class="co"># NumPy seed for bootstrap displays.</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>max_subjects <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a>figure_str <span class="op">=</span> <span class="st">"crp"</span>  <span class="co"># Empty displays the figure without saving it.</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a><span class="co"># Condition selection</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a>trial_query <span class="op">=</span> <span class="va">None</span>  <span class="co"># When supplied, use this one selection instead of trial_queries.</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a>trial_queries <span class="op">=</span> [</span>
-<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>    <span class="st">"jnp.equal(data['list_type'], 1)"</span>,</span>
-<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>    <span class="st">"jnp.equal(data['list_type'], 2)"</span>,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a>    <span class="st">"jnp.equal(data['list_type'], 3)"</span>,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>]</span>
-<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span>
-<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>selection_label <span class="op">=</span> <span class="st">"Selected lists"</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Inputs and saved results — change these for your project.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>project_root <span class="op">=</span> <span class="va">None</span>  <span class="co"># Explicit folder, enclosing Git root, or current directory.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>data_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># A supplied single path takes precedence over data_paths.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>data_paths <span class="op">=</span> [</span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>    <span class="st">"data/Dupertuys2026.h5"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    <span class="st">"data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="st">"CMR"</span>, <span class="st">"Source-only eCMR"</span>, <span class="st">"Broader eCMR"</span>]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>output_dir <span class="op">=</span> <span class="st">"results/crp"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a><span class="co"># Observation selection — queries use fields in your dataset.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>trial_query <span class="op">=</span> <span class="va">None</span>  <span class="co"># When supplied, use this one selection instead of trial_queries.</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>trial_queries <span class="op">=</span> [</span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>    <span class="st">"jnp.equal(data['list_type'], 1)"</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>    <span class="st">"jnp.equal(data['list_type'], 2)"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>    <span class="st">"jnp.equal(data['list_type'], 3)"</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span>
+<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>selection_label <span class="op">=</span> <span class="st">"Selected lists"</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a>max_subjects <span class="op">=</span> <span class="dv">0</span>  <span class="co"># Zero keeps all participants; a positive value selects the first IDs.</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>complete_lists_only <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a><span class="co"># Scientific settings — choose these for the question you are asking.</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a>max_lag <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a>size <span class="op">=</span> <span class="dv">3</span>  <span class="co"># Maximum study positions occupied by one item.</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a><span class="co"># Uncertainty and optional behavioral summaries.</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>plot_seed <span class="op">=</span> <span class="dv">0</span>  <span class="co"># NumPy seed for bootstrap displays.</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a><span class="co"># Output overrides and appearance — None uses the default location or style.</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>figure_str <span class="op">=</span> <span class="st">"crp"</span>  <span class="co"># Empty displays the figure without saving it.</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>figure_formats <span class="op">=</span> [<span class="st">"png"</span>]</span>
 <span id="cb1-37"><a href="#cb1-37" aria-label="37"></a>contrast_name <span class="op">=</span> <span class="va">None</span>  <span class="co"># Legend title for the selected comparisons.</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a>complete_lists_only <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a><span class="co"># Figure appearance</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-label="42"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-label="43"></a>ylim <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-label="44"></a>yticks <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-label="45"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-label="46"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-label="47"></a><span class="co"># Repeated-item capacity</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-label="48"></a>size <span class="op">=</span> <span class="dv">3</span>  <span class="co"># Maximum study positions occupied by one item.</span></span>
-<span id="cb1-49"><a href="#cb1-49" aria-label="49"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-label="50"></a><span class="co"># Artifact formats and exact local provenance</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-label="51"></a>figure_formats <span class="op">=</span> [<span class="st">"png"</span>]</span>
-<span id="cb1-52"><a href="#cb1-52" aria-label="52"></a>provenance_dir <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-label="53"></a>provenance_source_paths <span class="op">=</span> []</span>
-<span id="cb1-54"><a href="#cb1-54" aria-label="54"></a>notebook_source <span class="op">=</span> <span class="st">""</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a>ylim <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a>yticks <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="2dfb7544" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:31.888958Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:31.888819Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:31.891008Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:31.890685Z&quot;}}" data-execution_count="3">
-<details class="code-fold">
+</section>
+<section id="prepare-the-environment-and-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-the-environment-and-inputs">Prepare the environment and inputs</h2>
+<p>Run the following setup cells once, then continue in order. The short installation cell runs only in Colab; local and Slurm runs use the environment you selected during Setup.</p>
+<p><code>project_root</code> anchors relative paths. When it is unset, Colab uses the current directory; elsewhere the notebook uses the enclosing Git project if present, or the current directory. Check the printed location. <code>fetch_inputs</code> copies requested bundled examples there, reuses matching files, and refuses to overwrite conflicting files. Custom input paths remain your responsibility.</p>
+<div id="2dfb7544" class="cell">
+<details open="" class="code-fold">
 <summary>2 — Prepare the Colab environment</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
-<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
-<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    revision <span class="op">=</span> <span class="st">"main"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    subprocess.check_call(</span>
-<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        [</span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>            sys.executable,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>            <span class="st">"-m"</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a>            <span class="st">"pip"</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>            <span class="st">"install"</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>            <span class="st">"--upgrade"</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>            <span class="ss">f"jaxcmr[colab] @ git+https://github.com/githubpsyche/jaxcmr.git@</span><span class="sc">{</span>revision<span class="sc">}</span><span class="ss">"</span>,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>        ]</span>
-<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>    )</span>
-<span id="cb2-17"><a href="#cb2-17" aria-label="17"></a>    <span class="im">from</span> jaxcmr.colab <span class="im">import</span> fetch_inputs</span>
-<span id="cb2-18"><a href="#cb2-18" aria-label="18"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-label="19"></a>    fetch_inputs(</span>
-<span id="cb2-20"><a href="#cb2-20" aria-label="20"></a>        ([data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths), revision<span class="op">=</span>revision, base_dir<span class="op">=</span>project_root</span>
-<span id="cb2-21"><a href="#cb2-21" aria-label="21"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="op">%</span>pip install <span class="op">--</span>upgrade <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="5a8d692f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:31.892327Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:31.892262Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:32.964706Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:32.964146Z&quot;}}" data-execution_count="4">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>3 — Import packages</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> sys</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">import</span> jaxcmr</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.analyses.crp <span class="im">import</span> plot_crp</span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path, generate_trial_mask, load_data, save_figure</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.provenance <span class="im">import</span> capture_notebook</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.analyses.crp <span class="im">import</span> plot_crp</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_root, resolve_project_path, generate_trial_mask, load_data, save_figure</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> fetch_inputs</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> select_conditions</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> comparison_panels</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
 <section id="select-the-observations" class="level2">
 <h2 class="anchored" data-anchor-id="select-the-observations">Select the observations</h2>
+<p><code>select_conditions</code> returns the masks and participant coverage without altering your data. Check the printed list and participant counts before interpreting the results. Queries are Python expressions evaluated with the dataset named <code>data</code>; replace the supplied condition codes with those in your data. <code>trial_query</code> overrides the list of <code>trial_queries</code> and uses <code>selection_label</code>.</p>
+<p>With <code>data_path</code> set, the notebook reads that file and compares conditions. With <code>data_path=None</code>, <code>data_paths</code> and <code>data_labels</code> produce one panel per condition comparing datasets—even if the list contains just one file. Labels must correspond to the supplied selections and files.</p>
 <div id="a0b04002" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:32.966271Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:32.966150Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:32.968552Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:32.968201Z&quot;}}" data-execution_count="5">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="cf">elif</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>    root_path <span class="op">=</span> Path.cwd()</span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="cf">else</span>:</span>
-<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>    <span class="cf">try</span>:</span>
-<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>        root_path <span class="op">=</span> Path(find_project_root())</span>
-<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>    <span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
-<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>        root_path <span class="op">=</span> Path.cwd()</span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>np.random.seed(plot_seed)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>figure_dir <span class="op">=</span> resolve_project_path(figure_dir, root_path) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
-<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>queries <span class="op">=</span> trial_queries <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [trial_query]</span>
-<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>condition_labels <span class="op">=</span> labels <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [selection_label]</span>
-<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>input_paths <span class="op">=</span> [data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths</span>
-<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>input_paths <span class="op">=</span> [resolve_project_path(path, root_path) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span>
-<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>input_labels <span class="op">=</span> [selection_label] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_labels</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a><span class="cf">if</span> <span class="bu">len</span>(queries) <span class="op">!=</span> <span class="bu">len</span>(condition_labels) <span class="kw">or</span> <span class="bu">len</span>(input_paths) <span class="op">!=</span> <span class="bu">len</span>(input_labels):</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply a label for each input and each condition query."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-</div>
-<div id="8a24551c" class="cell" data-execution_count="6">
-<details class="code-fold">
-<summary>4a — Capture parameters, inputs and exact local source</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>provenance <span class="op">=</span> capture_notebook(</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>    {name: <span class="bu">globals</span>()[name] <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">'project_root'</span>, <span class="st">'color_cycle'</span>, <span class="st">'complete_lists_only'</span>, <span class="st">'confidence_level'</span>, <span class="st">'contrast_name'</span>, <span class="st">'data_labels'</span>, <span class="st">'data_path'</span>, <span class="st">'data_paths'</span>, <span class="st">'figure_dir'</span>, <span class="st">'figure_formats'</span>, <span class="st">'figure_str'</span>, <span class="st">'labels'</span>, <span class="st">'max_lag'</span>, <span class="st">'max_subjects'</span>, <span class="st">'notebook_source'</span>, <span class="st">'output_dir'</span>, <span class="st">'plot_seed'</span>, <span class="st">'provenance_dir'</span>, <span class="st">'provenance_source_paths'</span>, <span class="st">'selection_label'</span>, <span class="st">'size'</span>, <span class="st">'trial_queries'</span>, <span class="st">'trial_query'</span>, <span class="st">'ylim'</span>, <span class="st">'yticks'</span>]},</span>
-<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>    resolve_project_path(provenance_dir, root_path) <span class="cf">if</span> provenance_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> resolve_project_path(output_dir, root_path) <span class="op">/</span> <span class="st">"provenance"</span>,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    [Path(jaxcmr.<span class="va">__file__</span>).parent, <span class="op">*</span><span class="bu">map</span>(Path, provenance_source_paths)],</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>    notebook_source<span class="op">=</span>notebook_source,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    base_dir<span class="op">=</span>root_path,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a><span class="bu">print</span>(<span class="st">"Provenance:"</span>, provenance[<span class="st">"path"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>root_path <span class="op">=</span> resolve_project_root(project_root)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>fetch_inputs([data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths, base_dir<span class="op">=</span>root_path)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>np.random.seed(plot_seed)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>figure_dir <span class="op">=</span> resolve_project_path(figure_dir, root_path) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>queries <span class="op">=</span> trial_queries <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [trial_query]</span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>condition_labels <span class="op">=</span> labels <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [selection_label]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>input_paths <span class="op">=</span> [data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>input_paths <span class="op">=</span> [resolve_project_path(path, root_path) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>input_labels <span class="op">=</span> [selection_label] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_labels</span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a><span class="cf">if</span> <span class="bu">len</span>(queries) <span class="op">!=</span> <span class="bu">len</span>(condition_labels) <span class="kw">or</span> <span class="bu">len</span>(input_paths) <span class="op">!=</span> <span class="bu">len</span>(input_labels):</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply a label for each input and each condition query."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="caf3e05e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:32.969866Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:32.969775Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:33.003559Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:33.002977Z&quot;}}" data-execution_count="7">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>5 — Load the supplied response datasets</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>datasets <span class="op">=</span> [load_data(<span class="bu">str</span>(path), max_subjects<span class="op">=</span>max_subjects) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>datasets <span class="op">=</span> [load_data(<span class="bu">str</span>(path), max_subjects<span class="op">=</span>max_subjects) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="6955fdb8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:33.004867Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:33.004790Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:33.188220Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:33.187828Z&quot;}}" data-execution_count="8">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>6 — Select observations and report participant counts</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>masks_by_dataset <span class="op">=</span> []</span>
-<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a><span class="cf">for</span> dataset, dataset_label <span class="kw">in</span> <span class="bu">zip</span>(datasets, input_labels):</span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>    condition_masks <span class="op">=</span> [generate_trial_mask(dataset, query) <span class="cf">for</span> query <span class="kw">in</span> queries]</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="cf">if</span> complete_lists_only:</span>
-<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>        condition_masks <span class="op">=</span> [</span>
-<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>            condition_mask <span class="op">&amp;</span> jnp.<span class="bu">all</span>(dataset[<span class="st">"pres_itemnos"</span>] <span class="op">&gt;</span> <span class="dv">0</span>, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>            <span class="cf">for</span> condition_mask <span class="kw">in</span> condition_masks</span>
-<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>        ]</span>
-<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>    masks_by_dataset.append(condition_masks)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>    <span class="cf">for</span> condition_label, condition_mask <span class="kw">in</span> <span class="bu">zip</span>(condition_labels, condition_masks):</span>
-<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>        participant_ids <span class="op">=</span> np.unique(</span>
-<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>            np.asarray(dataset[<span class="st">"subject"</span>]).ravel()[np.asarray(condition_mask)]</span>
-<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>        )</span>
-<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>        <span class="bu">print</span>(</span>
-<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>            <span class="ss">f"</span><span class="sc">{</span>dataset_label<span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span>condition_label<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">int</span>(condition_mask.<span class="bu">sum</span>())<span class="sc">}</span><span class="ss"> lists, </span><span class="sc">{</span><span class="bu">len</span>(participant_ids)<span class="sc">}</span><span class="ss"> participants"</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>        )</span>
-<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="bu">len</span>(participant_ids):</span>
-<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>            <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
-<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>                <span class="st">"The selected input and condition contain no eligible lists."</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>            )</span>
-<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>data, trial_masks <span class="op">=</span> datasets[<span class="dv">0</span>], masks_by_dataset[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>selected_conditions <span class="op">=</span> [</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>    select_conditions(dataset, queries, complete_lists_only<span class="op">=</span>complete_lists_only)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    <span class="cf">for</span> dataset <span class="kw">in</span> datasets</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>masks_by_dataset <span class="op">=</span> [[condition.mask <span class="cf">for</span> condition <span class="kw">in</span> group] <span class="cf">for</span> group <span class="kw">in</span> selected_conditions]</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a><span class="cf">for</span> dataset_label, group <span class="kw">in</span> <span class="bu">zip</span>(input_labels, selected_conditions):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>    <span class="cf">for</span> condition_label, condition <span class="kw">in</span> <span class="bu">zip</span>(condition_labels, group):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>        <span class="bu">print</span>(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>            <span class="ss">f"</span><span class="sc">{</span>dataset_label<span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span>condition_label<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>condition<span class="sc">.</span>trial_count<span class="sc">}</span><span class="ss"> lists, "</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>            <span class="ss">f"</span><span class="sc">{</span>condition<span class="sc">.</span>participant_count<span class="sc">}</span><span class="ss"> participants"</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>        )</span>
+<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>data, trial_masks <span class="op">=</span> datasets[<span class="dv">0</span>], masks_by_dataset[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Observed / Mixed: 246 lists, 123 participants
@@ -508,56 +465,58 @@ Broader eCMR / Pure neutral: 1230 lists, 123 participants</code></pre>
 </div>
 </div>
 <div id="88300592" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:33.189858Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:33.189771Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:33.286934Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:33.286455Z&quot;}}" data-execution_count="9">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>7 — Require complete study lists for temporal analysis</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>presentations <span class="op">=</span> np.asarray(data[<span class="st">"pres_itemnos"</span>])</span>
-<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a><span class="cf">for</span> dataset, masks <span class="kw">in</span> <span class="bu">zip</span>(datasets, masks_by_dataset):</span>
-<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a>    <span class="cf">if</span> <span class="bu">any</span>(</span>
-<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a>        <span class="bu">bool</span>(jnp.<span class="bu">any</span>(mask <span class="op">&amp;</span> jnp.<span class="bu">any</span>(dataset[<span class="st">"pres_itemnos"</span>] <span class="op">==</span> <span class="dv">0</span>, axis<span class="op">=</span><span class="dv">1</span>)))</span>
-<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a>        <span class="cf">for</span> mask <span class="kw">in</span> masks</span>
-<span id="cb9-7"><a href="#cb9-7" aria-label="7"></a>    ):</span>
-<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"This temporal procedure requires complete study lists."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>presentations <span class="op">=</span> np.asarray(data[<span class="st">"pres_itemnos"</span>])</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="cf">for</span> dataset, masks <span class="kw">in</span> <span class="bu">zip</span>(datasets, masks_by_dataset):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    <span class="cf">if</span> <span class="bu">any</span>(</span>
+<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>        <span class="bu">bool</span>(jnp.<span class="bu">any</span>(mask <span class="op">&amp;</span> jnp.<span class="bu">any</span>(dataset[<span class="st">"pres_itemnos"</span>] <span class="op">==</span> <span class="dv">0</span>, axis<span class="op">=</span><span class="dv">1</span>)))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a>        <span class="cf">for</span> mask <span class="kw">in</span> masks</span>
+<span id="cb8-7"><a href="#cb8-7" aria-label="7"></a>    ):</span>
+<span id="cb8-8"><a href="#cb8-8" aria-label="8"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"This temporal procedure requires complete study lists."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
 <section id="follow-one-transition" class="level2">
 <h2 class="anchored" data-anchor-id="follow-one-transition">Follow one transition</h2>
+<p>The table takes the first two recalls from an eligible list. It shows the next item chosen, each available study position, and its lag from the preceding recall. This makes the denominator visible: every available alternative contributes an opportunity, while the chosen transition contributes an actual event.</p>
+<p>Later transitions have fewer alternatives because previously recalled items are removed. The full calculation applies the library’s repeated-item conventions; the small illustration selects an unrepeated study list.</p>
 <div id="69717376" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:33.288433Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:33.288362Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:33.293803Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:33.293509Z&quot;}}" data-execution_count="10">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>8 — Count the choices available for one transition</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>selected <span class="op">=</span> np.logical_or.<span class="bu">reduce</span>([np.asarray(mask) <span class="cf">for</span> mask <span class="kw">in</span> trial_masks])</span>
-<span id="cb10-2"><a href="#cb10-2" aria-label="2"></a>eligible <span class="op">=</span> selected <span class="op">&amp;</span> ((np.asarray(data[<span class="st">"recalls"</span>]) <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;=</span> <span class="dv">2</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-label="3"></a>unrepeated <span class="op">=</span> np.array(</span>
-<span id="cb10-4"><a href="#cb10-4" aria-label="4"></a>    [</span>
-<span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>        <span class="bu">len</span>(np.unique(items[items <span class="op">&gt;</span> <span class="dv">0</span>])) <span class="op">==</span> np.count_nonzero(items)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-label="6"></a>        <span class="cf">for</span> items <span class="kw">in</span> presentations</span>
-<span id="cb10-7"><a href="#cb10-7" aria-label="7"></a>    ]</span>
-<span id="cb10-8"><a href="#cb10-8" aria-label="8"></a>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-label="9"></a>eligible_rows <span class="op">=</span> np.flatnonzero(eligible <span class="op">&amp;</span> unrepeated)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-label="10"></a><span class="cf">if</span> <span class="kw">not</span> <span class="bu">len</span>(eligible_rows):</span>
-<span id="cb10-11"><a href="#cb10-11" aria-label="11"></a>    <span class="bu">print</span>(</span>
-<span id="cb10-12"><a href="#cb10-12" aria-label="12"></a>        <span class="st">"No unrepeated list with two recalls to illustrate; transition-based summaries are undefined for this selection."</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-label="13"></a>    )</span>
-<span id="cb10-14"><a href="#cb10-14" aria-label="14"></a><span class="cf">else</span>:</span>
-<span id="cb10-15"><a href="#cb10-15" aria-label="15"></a>    row <span class="op">=</span> <span class="bu">int</span>(eligible_rows[<span class="dv">0</span>])</span>
-<span id="cb10-16"><a href="#cb10-16" aria-label="16"></a>    recall <span class="op">=</span> np.asarray(data[<span class="st">"recalls"</span>])[row].astype(<span class="bu">int</span>)</span>
-<span id="cb10-17"><a href="#cb10-17" aria-label="17"></a>    recall <span class="op">=</span> recall[recall <span class="op">&gt;</span> <span class="dv">0</span>]</span>
-<span id="cb10-18"><a href="#cb10-18" aria-label="18"></a>    previous, chosen <span class="op">=</span> recall[:<span class="dv">2</span>]</span>
-<span id="cb10-19"><a href="#cb10-19" aria-label="19"></a>    available <span class="op">=</span> np.flatnonzero(presentations[row] <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-label="20"></a>    available <span class="op">=</span> available[available <span class="op">!=</span> previous]</span>
-<span id="cb10-21"><a href="#cb10-21" aria-label="21"></a>    <span class="bu">print</span>(</span>
-<span id="cb10-22"><a href="#cb10-22" aria-label="22"></a>        tabulate(</span>
-<span id="cb10-23"><a href="#cb10-23" aria-label="23"></a>            {</span>
-<span id="cb10-24"><a href="#cb10-24" aria-label="24"></a>                <span class="st">"Available study position"</span>: available,</span>
-<span id="cb10-25"><a href="#cb10-25" aria-label="25"></a>                <span class="st">"Lag from previous recall"</span>: available <span class="op">-</span> previous,</span>
-<span id="cb10-26"><a href="#cb10-26" aria-label="26"></a>                <span class="st">"Chosen next"</span>: available <span class="op">==</span> chosen,</span>
-<span id="cb10-27"><a href="#cb10-27" aria-label="27"></a>            },</span>
-<span id="cb10-28"><a href="#cb10-28" aria-label="28"></a>            headers<span class="op">=</span><span class="st">"keys"</span>,</span>
-<span id="cb10-29"><a href="#cb10-29" aria-label="29"></a>            floatfmt<span class="op">=</span><span class="st">".4g"</span>,</span>
-<span id="cb10-30"><a href="#cb10-30" aria-label="30"></a>        )</span>
-<span id="cb10-31"><a href="#cb10-31" aria-label="31"></a>    )</span>
-<span id="cb10-32"><a href="#cb10-32" aria-label="32"></a>    <span class="bu">print</span>(<span class="ss">f"Observed transition: </span><span class="sc">{</span>previous<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>chosen<span class="sc">}</span><span class="ss">; lag = </span><span class="sc">{</span>chosen <span class="op">-</span> previous<span class="sc">:+d}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>selected <span class="op">=</span> np.logical_or.<span class="bu">reduce</span>([np.asarray(mask) <span class="cf">for</span> mask <span class="kw">in</span> trial_masks])</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>eligible <span class="op">=</span> selected <span class="op">&amp;</span> ((np.asarray(data[<span class="st">"recalls"</span>]) <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;=</span> <span class="dv">2</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a>unrepeated <span class="op">=</span> np.array(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a>    [</span>
+<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a>        <span class="bu">len</span>(np.unique(items[items <span class="op">&gt;</span> <span class="dv">0</span>])) <span class="op">==</span> np.count_nonzero(items)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a>        <span class="cf">for</span> items <span class="kw">in</span> presentations</span>
+<span id="cb9-7"><a href="#cb9-7" aria-label="7"></a>    ]</span>
+<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-label="9"></a>eligible_rows <span class="op">=</span> np.flatnonzero(eligible <span class="op">&amp;</span> unrepeated)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-label="10"></a><span class="cf">if</span> <span class="kw">not</span> <span class="bu">len</span>(eligible_rows):</span>
+<span id="cb9-11"><a href="#cb9-11" aria-label="11"></a>    <span class="bu">print</span>(</span>
+<span id="cb9-12"><a href="#cb9-12" aria-label="12"></a>        <span class="st">"No unrepeated list with two recalls to illustrate; transition-based summaries are undefined for this selection."</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-label="13"></a>    )</span>
+<span id="cb9-14"><a href="#cb9-14" aria-label="14"></a><span class="cf">else</span>:</span>
+<span id="cb9-15"><a href="#cb9-15" aria-label="15"></a>    row <span class="op">=</span> <span class="bu">int</span>(eligible_rows[<span class="dv">0</span>])</span>
+<span id="cb9-16"><a href="#cb9-16" aria-label="16"></a>    recall <span class="op">=</span> np.asarray(data[<span class="st">"recalls"</span>])[row].astype(<span class="bu">int</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-label="17"></a>    recall <span class="op">=</span> recall[recall <span class="op">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb9-18"><a href="#cb9-18" aria-label="18"></a>    previous, chosen <span class="op">=</span> recall[:<span class="dv">2</span>]</span>
+<span id="cb9-19"><a href="#cb9-19" aria-label="19"></a>    available <span class="op">=</span> np.flatnonzero(presentations[row] <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-label="20"></a>    available <span class="op">=</span> available[available <span class="op">!=</span> previous]</span>
+<span id="cb9-21"><a href="#cb9-21" aria-label="21"></a>    <span class="bu">print</span>(</span>
+<span id="cb9-22"><a href="#cb9-22" aria-label="22"></a>        tabulate(</span>
+<span id="cb9-23"><a href="#cb9-23" aria-label="23"></a>            {</span>
+<span id="cb9-24"><a href="#cb9-24" aria-label="24"></a>                <span class="st">"Available study position"</span>: available,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-label="25"></a>                <span class="st">"Lag from previous recall"</span>: available <span class="op">-</span> previous,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-label="26"></a>                <span class="st">"Chosen next"</span>: available <span class="op">==</span> chosen,</span>
+<span id="cb9-27"><a href="#cb9-27" aria-label="27"></a>            },</span>
+<span id="cb9-28"><a href="#cb9-28" aria-label="28"></a>            headers<span class="op">=</span><span class="st">"keys"</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-label="29"></a>            floatfmt<span class="op">=</span><span class="st">".4g"</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-label="30"></a>        )</span>
+<span id="cb9-31"><a href="#cb9-31" aria-label="31"></a>    )</span>
+<span id="cb9-32"><a href="#cb9-32" aria-label="32"></a>    <span class="bu">print</span>(<span class="ss">f"Observed transition: </span><span class="sc">{</span>previous<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>chosen<span class="sc">}</span><span class="ss">; lag = </span><span class="sc">{</span>chosen <span class="op">-</span> previous<span class="sc">:+d}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  Available study position    Lag from previous recall    Chosen next
@@ -577,71 +536,63 @@ Observed transition: 2 to 8; lag = +6</code></pre>
 </div>
 </div>
 </section>
-<section id="aggregate-the-eligible-transitions" class="level2">
-<h2 class="anchored" data-anchor-id="aggregate-the-eligible-transitions">Aggregate the eligible transitions</h2>
+<section id="aggregate-and-interpret-the-curves" class="level2">
+<h2 class="anchored" data-anchor-id="aggregate-and-interpret-the-curves">Aggregate and interpret the curves</h2>
+<p>For each participant, counts of actual transitions are divided by available opportunities at each lag. The figure summarizes these participant curves with bootstrap intervals. An unavailable lag is undefined, not a zero-probability observation.</p>
+<p>Higher probabilities near zero describe temporal contiguity; differences between positive and negative lags describe directional asymmetry. Compare conditions under the same selection and lag range.</p>
 <div id="4b00ee7e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:33.295234Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:33.295164Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:33.297417Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:33.296937Z&quot;}}" data-execution_count="11">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>9 — Prepare the condition and dataset comparison panels</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>panels <span class="op">=</span> []</span>
-<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>    panels.append(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>        {</span>
-<span id="cb12-5"><a href="#cb12-5" aria-label="5"></a>            <span class="st">"datasets"</span>: [data] <span class="op">*</span> <span class="bu">len</span>(queries),</span>
-<span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>            <span class="st">"trial_masks"</span>: trial_masks,</span>
-<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>            <span class="st">"labels"</span>: condition_labels,</span>
-<span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>            <span class="st">"title"</span>: selection_label,</span>
-<span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>        }</span>
-<span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>    )</span>
-<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a><span class="cf">else</span>:</span>
-<span id="cb12-12"><a href="#cb12-12" aria-label="12"></a>    <span class="cf">for</span> condition_index, condition_label <span class="kw">in</span> <span class="bu">enumerate</span>(condition_labels):</span>
-<span id="cb12-13"><a href="#cb12-13" aria-label="13"></a>        panels.append(</span>
-<span id="cb12-14"><a href="#cb12-14" aria-label="14"></a>            {</span>
-<span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>                <span class="st">"datasets"</span>: datasets,</span>
-<span id="cb12-16"><a href="#cb12-16" aria-label="16"></a>                <span class="st">"trial_masks"</span>: [masks[condition_index] <span class="cf">for</span> masks <span class="kw">in</span> masks_by_dataset],</span>
-<span id="cb12-17"><a href="#cb12-17" aria-label="17"></a>                <span class="st">"labels"</span>: input_labels,</span>
-<span id="cb12-18"><a href="#cb12-18" aria-label="18"></a>                <span class="st">"title"</span>: condition_label,</span>
-<span id="cb12-19"><a href="#cb12-19" aria-label="19"></a>            }</span>
-<span id="cb12-20"><a href="#cb12-20" aria-label="20"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-label="1"></a>panels <span class="op">=</span> comparison_panels(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-label="2"></a>    datasets, masks_by_dataset, input_labels, condition_labels,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-label="3"></a>    mode<span class="op">=</span><span class="st">"conditions"</span> <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> <span class="st">"datasets"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-label="4"></a>    selection_label<span class="op">=</span>selection_label,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="2fbb69b1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:33.298429Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:33.298370Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:38.970720Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:38.970312Z&quot;}}" data-execution_count="12">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>10 — Calculate, plot and save the selected comparison</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="bu">len</span>(panels), <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.8</span> <span class="op">*</span> <span class="bu">len</span>(panels)), squeeze<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a><span class="cf">for</span> ax, panel <span class="kw">in</span> <span class="bu">zip</span>(axes.ravel(), panels):</span>
-<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a>    panel_data <span class="op">=</span> panel[<span class="st">"datasets"</span>]</span>
-<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>    panel_masks <span class="op">=</span> panel[<span class="st">"trial_masks"</span>]</span>
-<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>    curve_labels <span class="op">=</span> panel[<span class="st">"labels"</span>]</span>
-<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>    title <span class="op">=</span> panel[<span class="st">"title"</span>]</span>
-<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>    plot_crp(</span>
-<span id="cb13-8"><a href="#cb13-8" aria-label="8"></a>        panel_data,</span>
-<span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>        panel_masks,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-label="10"></a>        size<span class="op">=</span>size,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-label="11"></a>        max_lag<span class="op">=</span>max_lag,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>        labels<span class="op">=</span>curve_labels,</span>
-<span id="cb13-13"><a href="#cb13-13" aria-label="13"></a>        contrast_name<span class="op">=</span>contrast_name,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-label="14"></a>        color_cycle<span class="op">=</span>color_cycle,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-label="15"></a>        confidence_level<span class="op">=</span>confidence_level,</span>
-<span id="cb13-16"><a href="#cb13-16" aria-label="16"></a>        axis<span class="op">=</span>ax,</span>
-<span id="cb13-17"><a href="#cb13-17" aria-label="17"></a>    )</span>
-<span id="cb13-18"><a href="#cb13-18" aria-label="18"></a>    ax.set_title(title)</span>
-<span id="cb13-19"><a href="#cb13-19" aria-label="19"></a></span>
-<span id="cb13-20"><a href="#cb13-20" aria-label="20"></a>    <span class="cf">if</span> ax.get_legend_handles_labels()[<span class="dv">1</span>]:</span>
-<span id="cb13-21"><a href="#cb13-21" aria-label="21"></a>        ax.legend(title<span class="op">=</span>contrast_name)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-label="22"></a>    <span class="cf">if</span> ylim <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb13-23"><a href="#cb13-23" aria-label="23"></a>        ax.set_ylim(ylim)</span>
-<span id="cb13-24"><a href="#cb13-24" aria-label="24"></a>    <span class="cf">if</span> yticks <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb13-25"><a href="#cb13-25" aria-label="25"></a>        ax.set_yticks(yticks)</span>
-<span id="cb13-26"><a href="#cb13-26" aria-label="26"></a>save_figure(<span class="bu">str</span>(figure_dir), figure_str, formats<span class="op">=</span>figure_formats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="bu">len</span>(panels), <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.8</span> <span class="op">*</span> <span class="bu">len</span>(panels)), squeeze<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="cf">for</span> ax, panel <span class="kw">in</span> <span class="bu">zip</span>(axes.ravel(), panels):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>    panel_data <span class="op">=</span> panel[<span class="st">"datasets"</span>]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>    panel_masks <span class="op">=</span> panel[<span class="st">"trial_masks"</span>]</span>
+<span id="cb12-5"><a href="#cb12-5" aria-label="5"></a>    curve_labels <span class="op">=</span> panel[<span class="st">"labels"</span>]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>    title <span class="op">=</span> panel[<span class="st">"title"</span>]</span>
+<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>    plot_crp(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>        panel_data,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>        panel_masks,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>        size<span class="op">=</span>size,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a>        max_lag<span class="op">=</span>max_lag,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-label="12"></a>        labels<span class="op">=</span>curve_labels,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-label="13"></a>        contrast_name<span class="op">=</span>contrast_name,</span>
+<span id="cb12-14"><a href="#cb12-14" aria-label="14"></a>        color_cycle<span class="op">=</span>color_cycle,</span>
+<span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>        confidence_level<span class="op">=</span>confidence_level,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-label="16"></a>        axis<span class="op">=</span>ax,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-label="17"></a>    )</span>
+<span id="cb12-18"><a href="#cb12-18" aria-label="18"></a>    ax.set_title(title)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-label="19"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-label="20"></a>    <span class="cf">if</span> ax.get_legend_handles_labels()[<span class="dv">1</span>]:</span>
+<span id="cb12-21"><a href="#cb12-21" aria-label="21"></a>        ax.legend(title<span class="op">=</span>contrast_name)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-label="22"></a>    <span class="cf">if</span> ylim <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb12-23"><a href="#cb12-23" aria-label="23"></a>        ax.set_ylim(ylim)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-label="24"></a>    <span class="cf">if</span> yticks <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb12-25"><a href="#cb12-25" aria-label="25"></a>        ax.set_yticks(yticks)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-label="26"></a>save_figure(<span class="bu">str</span>(figure_dir), figure_str, formats<span class="op">=</span>figure_formats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="crp_files/figure-html/cell-12-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="crp_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></a></p>
+<p><a href="crp_files/figure-html/cell-11-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="crp_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
+</section>
+<section id="reuse-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="reuse-the-results">Reuse the results</h2>
+<p>The figure is saved using <code>figure_str</code> in <code>figure_dir</code> or <code>output_dir</code>, in the requested <code>figure_formats</code>. The provenance capture records effective settings and inputs. Use the temporal-rank template when you also need participant-level scalar organization scores.</p>
+<p>The <a href="https://githubpsyche.github.io/jaxcmr/templates.html">Templates overview</a> describes how saved products connect.</p>
 
 
 </section>

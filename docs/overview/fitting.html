@@ -249,6 +249,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-returned-record" id="toc-the-returned-record" class="nav-link" data-scroll-target="#the-returned-record">The returned record</a></li>
   <li><a href="#what-the-template-adds" id="toc-what-the-template-adds" class="nav-link" data-scroll-target="#what-the-template-adds">What the template adds</a></li>
   <li><a href="#selecting-an-optimizer-in-the-template" id="toc-selecting-an-optimizer-in-the-template" class="nav-link" data-scroll-target="#selecting-an-optimizer-in-the-template">Selecting an optimizer in the template</a></li>
+  <li><a href="#reusing-fits-and-aligning-participant-parameters" id="toc-reusing-fits-and-aligning-participant-parameters" class="nav-link" data-scroll-target="#reusing-fits-and-aligning-participant-parameters">Reusing fits and aligning participant parameters</a></li>
+  <li><a href="#assigning-a-fit-to-the-participants-being-simulated" id="toc-assigning-a-fit-to-the-participants-being-simulated" class="nav-link" data-scroll-target="#assigning-a-fit-to-the-participants-being-simulated">Assigning a fit to the participants being simulated</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/fitting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -352,7 +354,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Entries at the same index in <code>fitness</code>, <code>nit</code>, <code>converged</code> and every <code>fits</code> array refer to the same fit row. <code>fits['subject']</code> identifies that row; identifiers are labels, not positional indices. <code>fits</code> includes fixed and fitted parameter values, while <code>fixed</code> and <code>free</code> preserve their roles.</p>
 <p><code>fitness</code> means the selected loss, not necessarily likelihood. <code>converged</code> reports the optimizer’s stopping criterion. It does not establish parameter recovery, a global optimum or an adequate account of the behavior.</p>
 <div id="locate-project-inputs" class="cell">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
@@ -365,7 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="2926e141" class="cell" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Inspect the parameter roles and row alignment in a saved fit</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -385,7 +387,7 @@ Optimizer criterion met: [True]</code></pre>
 </div>
 <p><code>jaxcmr.summarize.summarize_parameters()</code> accepts named fit records and produces a Markdown summary. Specify <code>query_parameters</code> to select and order the displayed parameters. With one pooled fit, its mean, minimum and maximum all describe the same value; these are not estimates of participant variability.</p>
 <div id="b757cf97" class="cell" data-execution_count="2">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Render the existing parameter-summary helper</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Markdown, display</span>
 <span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> summarize_parameters</span>
@@ -562,10 +564,10 @@ Optimizer criterion met: [True]</code></pre>
 </section>
 <section id="what-the-template-adds" class="level2">
 <h2 class="anchored" data-anchor-id="what-the-template-adds">What the template adds</h2>
-<p>A <code>FitResult</code> is not a complete experiment specification. The fitting template saves additional fields for the observation source and selection, model factory, component creators, loss, package version, numerical precision, source fingerprint and run settings. It also saves the objective recalculated from the returned parameters. These are project conventions added around the fitter’s result.</p>
-<p><a href="../overview/simulation.html">Data Simulation</a> consumes the returned parameter values with an explicit assignment to participant IDs. Applying pooled values to participants requires that assignment; the <code>-1</code> label is not a participant in the observation dataset. <a href="../overview/evaluation.html">Model Evaluation</a> uses the objective and provenance to establish which comparisons are appropriate.</p>
+<p>A <code>FitResult</code> is not a complete experiment specification. The fitting template saves additional fields for the observation source and selection, model factory, component creators, loss, package version, numerical precision, input paths and run settings. It also saves the objective recalculated from the returned parameters. These are project conventions added around the fitter’s result.</p>
+<p><a href="../overview/simulation.html">Data Simulation</a> consumes the returned parameter values with an explicit assignment to participant IDs. Applying pooled values to participants requires that assignment; the <code>-1</code> label is not a participant in the observation dataset. <a href="../overview/evaluation.html">Model Evaluation</a> uses the objective and saved settings to establish which comparisons are appropriate.</p>
 <p>The <a href="../templates/fitting.html">fitting template</a> supplies the complete configuration, optimization, saving, objective recalculation and subsequent simulation. This guide explains the interfaces that procedure connects.</p>
-<p>The supplied CMR fit estimates nine continuous parameters with learning before context updating and repeated recalls disabled. Preparation compared seeds 0 and 1, each with three restarts; <code>search_comparison</code> retains both results and the selected seed. These are preparation metadata, not required <code>FitResult</code> fields. The source fingerprint identifies the actual code even when a version label is unchanged. Historical parameters require their original model semantics; loading them into a changed implementation does not reproduce the original fit.</p>
+<p>The supplied CMR fit estimates nine continuous parameters with learning before context updating and repeated recalls disabled. Preparation compared seeds 0 and 1, each with three restarts; <code>search_comparison</code> retains both results and the selected seed. These are preparation metadata, not required <code>FitResult</code> fields. Recorded paths and versions describe the run but cannot detect edits in place. Refit after changing observations or model code; matching parameter names do not establish that a model has the same meaning.</p>
 </section>
 <section id="selecting-an-optimizer-in-the-template" class="level2">
 <h2 class="anchored" data-anchor-id="selecting-an-optimizer-in-the-template">Selecting an optimizer in the template</h2>
@@ -609,6 +611,26 @@ Optimizer criterion met: [True]</code></pre>
 </tbody>
 </table>
 <p>DE’s <code>pop_size</code> multiplies the number of free parameters. <code>MapEvosaxDE</code>’s <code>map_batch_size</code> controls participant batching when <code>pooled=False</code>; <code>subject_indices</code> still selects the work unit. Gradient fitters require a differentiable objective; the template’s likelihood is suitable. Their screening and restart controls replace DE’s population controls. To exercise only fitting, set <code>redo_sims=False</code> and <code>redo_figures=False</code>. One entry in <code>model_configs</code> makes a single-model job.</p>
+</section>
+<section id="reusing-fits-and-aligning-participant-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="reusing-fits-and-aligning-participant-parameters">Reusing fits and aligning participant parameters</h2>
+<p>Saved workflows may add model/input identities and a <code>fit_configuration</code> to a <code>FitResult</code>. These are optional workflow metadata, rather than additional required fields of the core result type. The public record operations work on in-memory mappings and can be used from scripts as well as notebooks.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> validate_fit_compatibility, combine_participant_parameters</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>validate_fit_compatibility(saved_fit, requested_configuration)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>parameters <span class="op">=</span> combine_participant_parameters([fit_a[<span class="st">"fits"</span>], fit_b[<span class="st">"fits"</span>]])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>requested_configuration</code> contains the requested fixed/free <code>parameters</code>, <code>search_settings</code>, <code>selected_trial_indices</code>, <code>model_factory</code>, <code>components</code> and <code>loss_function</code>. Input paths and feature settings are compared when recorded; missing descriptions in older records cannot identify their inputs. Display-only optimizer options and obsolete digest fields are ignored. Recalculate the objective before reusing a fit, and refit after changing data or code in place.</p>
+<p><code>combine_participant_parameters</code> combines compatible participant parameter columns, sorts all columns by subject ID, and preserves boolean values. It rejects duplicate IDs, pooled rows (<code>subject=-1</code>), inconsistent keys and misaligned columns. First establish model and observation compatibility; the function does not do that for you. Its return value contains parameter rows only, not merged optimizer diagnostics or a complete <code>FitResult</code>. Both inputs remain unchanged.</p>
+</section>
+<section id="assigning-a-fit-to-the-participants-being-simulated" class="level2">
+<h2 class="anchored" data-anchor-id="assigning-a-fit-to-the-participants-being-simulated">Assigning a fit to the participants being simulated</h2>
+<p>After checking that a saved fit is suitable for the requested model and data, <code>parameters_for_subjects</code> prepares parameter arrays for dataset simulation:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> parameters_for_subjects</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>subject_parameters <span class="op">=</span> parameters_for_subjects(saved_fit, [<span class="dv">12</span>, <span class="dv">5</span>])</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="co"># Pass subject_parameters to simulate_h5_from_h5 with your model and trial mask.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Every returned column is a new JAX array aligned to participants 12 and 5, in that order. Both fit-record utilities normalize integer-valued participant IDs such as <code>3.0</code>; booleans and fractional IDs are rejected. Participant fits are matched by identity, rather than row position. A pooled fit broadcasts its single <code>subject=-1</code> row to the requested participants. Older records without a <code>pooled</code> field are recognized by that sentinel. Boolean parameter types are restored using optional <code>fit_configuration.parameters.fixed</code> metadata, falling back to <code>fixed</code>. These metadata fields are not additional required fields of <code>FitResult</code>.</p>
+<p>Missing participants, duplicate IDs, inconsistent column lengths and conflicting pooled declarations raise errors. The original record is unchanged. Unlike <code>combine_participant_parameters</code>, which assembles separate participant fits, this operation assigns one record’s values to a requested participant sequence. It does not load files, construct a model, or validate whether the fitted model and observations are scientifically compatible. Keep those checks and the decision to use pooled or participant fits in your procedure.</p>
 
 
 </section>

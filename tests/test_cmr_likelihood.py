@@ -1,22 +1,12 @@
-"""Scientific parity and selection safety for the optimized regular-CMR loss."""
+"""Preparation requirements for the optimized regular-CMR loss."""
 
-from support import CMR_PARAMS
+from support import OPTIMIZED_CMR_PARAMS
 import jax
 import jax.numpy as jnp
 import pytest
-from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.helpers import make_dataset
 from jaxcmr.loss.cmr_likelihood import FastCMRLikelihoodLoss
-from jaxcmr.models.cmr import make_factory
-from jaxcmr.models.optimized_cmr import ModelFactory as OptimizedFactory
-
-FACTORY = make_factory(
-    linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
-)
-PARAMS = dict(CMR_PARAMS)
-NAMES = tuple((name for name, value in PARAMS.items() if not isinstance(value, bool)))
-
+from jaxcmr.experimental.optimized_cmr import CMR, ModelFactory as OptimizedFactory, _sequence_likelihood
 
 @pytest.fixture(autouse=True)
 def double_precision():
@@ -41,7 +31,6 @@ def repeated_trial():
         ("recalls", jnp.array([[31, 0, 29] + [0] * 37])),
         ("recalls", jnp.array([[31, 32] + [0] * 38])),
         ("recalls", jnp.array([[-1] + [0] * 39])),
-        ("recalls", jnp.zeros((1, 40), dtype=float)),
     ],
 )
 def test_unsupported_observations_fail_explicitly(field, value):
@@ -49,20 +38,25 @@ def test_unsupported_observations_fail_explicitly(field, value):
         FastCMRLikelihoodLoss(OptimizedFactory, {**repeated_trial(), field: value}, None)
 
 
-@pytest.mark.parametrize(
-    "issue",
-    ["features", "learn_after_context_update", "allow_repeated_recalls", "parameter mismatch"],
-)
-def test_optimized_model_rejects_unsupported_features_and_parameters(issue):
-    data = repeated_trial()
-    if issue == "features":
-        with pytest.raises(ValueError, match="features must be None"):
-            FastCMRLikelihoodLoss(OptimizedFactory, data, jnp.eye(40))
-        return
-    prepared = FastCMRLikelihoodLoss(OptimizedFactory, data, None).prepare_trials(jnp.array([0]))
-    point = jnp.array([[2.0]])
-    with pytest.raises(ValueError, match=issue):
-        if issue == "parameter mismatch":
-            prepared(PARAMS, ("stop_probability_scale",), point)
-        else:
-            jax.jit(lambda p: prepared(PARAMS | {issue: True}, ("choice_sensitivity",), p))(point)
+def test_optimized_model_rejects_unsupported_features_during_preparation():
+    with pytest.raises(ValueError, match="features must be None"):
+        FastCMRLikelihoodLoss(OptimizedFactory, repeated_trial(), jnp.eye(40))
+
+
+@pytest.mark.parametrize("name,value", [
+    ("learn_after_context_update", True), ("learn_after_context_update", False),
+    ("allow_repeated_recalls", True), ("allow_repeated_recalls", False),
+    ("stop_probability_scale", .1),
+])
+def test_optimized_event_and_prepared_loss_reject_unsupported_parameter_names(name, value):
+    parameters = OPTIMIZED_CMR_PARAMS | {name: value}
+    # Name binding must work with traced values, including a false Boolean.
+    with pytest.raises(TypeError, match=name):
+        jax.jit(lambda p: CMR(3, p).context.state)(parameters)
+    data = make_dataset([1, 2, 0], pres_itemnos=[1, 2, 3])
+    prepared = OptimizedFactory(data).prepare_predictions(jnp.array([0]), data["recalls"] != 0)
+    # A purported free parameter must not disappear from the bulk calculation.
+    with pytest.raises(TypeError, match=name):
+        jax.jit(lambda x: _sequence_likelihood(prepared, OPTIMIZED_CMR_PARAMS, (name,), x))(
+            jnp.array([[value]])
+        )

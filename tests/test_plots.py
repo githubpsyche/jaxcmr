@@ -1,5 +1,8 @@
 """Check points drawn, selected trials, and labels, rather than Axes types."""
 
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -11,7 +14,8 @@ from jaxcmr.analyses import (
     distcrp,
     conditional_distcrp,
 )
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
+from jaxcmr.plotting import comparison_panels, iter_analysis_figures, save_figure
 
 
 @pytest.mark.parametrize(
@@ -39,7 +43,9 @@ from jaxcmr.helpers import make_dataset
 def test_recall_plots_draw_selected_values(plot, kwargs, expected, xlabel, ylabel):
     data = make_dataset(jnp.array([[1, 2, 3], [3, 0, 0]]), subject=jnp.array([2, 9]))
     axis = plot(data, jnp.array([True, False]), labels=["selected"], **kwargs)
-    (line,) = [line for line in axis.lines if line.get_label() == "selected"]
+    lines = [line for line in axis.lines if line.get_label() == "selected"]
+    assert len(lines) == 1, "Selected curve must be drawn"
+    line = lines[0]
     np.testing.assert_array_equal(line.get_xdata(), [1, 2, 3])
     np.testing.assert_allclose(line.get_ydata(), expected)
     assert axis.get_xlabel() == xlabel
@@ -105,3 +111,103 @@ def test_conditional_distance_features_take_precedence_over_conflicting_matrix()
         conditional_distcrp.plot_dist_crp(data, mask, include, **kwargs)
     with pytest.raises(ValueError, match="Exactly one"):
         distcrp.plot_dist_crp(data, mask, features=features, distance_matrix=conflict, **kwargs)
+
+
+def sample_data():
+    data = make_dataset(jnp.ones((4, 2), dtype=int))
+    data["condition"] = jnp.array([1, 1, 2, 2])
+    return data
+
+
+def test_panels_use_explicit_mode_even_with_one_dataset():
+    data=sample_data();masks=[data['condition'] == value for value in (1, 2)]
+    shared=( [data], [masks], ['Observed'], ['First','Second'] )
+    conditions=comparison_panels(*shared,mode='conditions',selection_label='Comparison')
+    datasets=comparison_panels(*shared,mode='datasets')
+    assert len(conditions)==1 and conditions[0]['labels']==['First','Second']
+    assert conditions[0]['title']=='Comparison' and conditions[0]['datasets']==[data,data]
+    assert len(datasets)==2 and [p['title'] for p in datasets]==['First','Second']
+    assert datasets[0]['labels']==['Observed']
+    second=comparison_panels([data,data],[masks,masks],['Observed','Model'],['First','Second'],mode='datasets')
+    assert second[1]['datasets'][1] is data
+    np.testing.assert_array_equal(second[1]['trial_masks'][0],masks[1])
+    second[0]['labels'].append('extra')
+    assert second[1]['labels']==['Observed','Model']
+
+
+@pytest.mark.parametrize('kwargs', [
+    {'mode':'conditions','datasets':[sample_data(),sample_data()]},
+    {'dataset_labels':[]}, {'condition_labels':['Only one']},
+])
+def test_panel_input_alignment_errors(kwargs):
+    data=sample_data()
+    arguments=dict(datasets=[data],masks_by_dataset=[[jnp.ones(4,bool)]*2],
+                   dataset_labels=['Data'],condition_labels=['A','B'],mode='datasets')
+    arguments.update(kwargs)
+    with pytest.raises(ValueError):comparison_panels(**arguments)
+
+
+PLOT_CALLS = []
+
+
+def plot_probe(datasets,masks,**options):
+    PLOT_CALLS.append((datasets,[np.asarray(m).copy() for m in masks],dict(options)))
+    options['axis'].plot([0,1],[0,1])
+
+
+def test_figure_iteration_masks_options_suffixes_and_laziness():
+    PLOT_CALLS.clear();data=sample_data()
+    configs=[
+        {'target':plot_probe,'title':'First','figsize':(3,2),'ylim':(-1,2),
+         'labels':['Override'],'kwargs':{'confidence_level':.8,'color_cycle':['red']},'color_cycle':['blue']},
+        {'target':plot_probe,'trial_query':"data['condition'] == 2"},
+        {'target':plot_probe,'figure_suffix':'named'},
+        {'target':__name__+'.plot_probe','figure_suffix':'imported'},
+    ]
+    original=deepcopy(configs)
+    iterator=iter_analysis_figures([data],configs,['Default'],base_masks=[jnp.array([True,False,True,False])],suffix='_single')
+    assert not PLOT_CALLS
+    first,suffix=next(iterator)
+    assert suffix=='probe_single_1' and len(PLOT_CALLS)==1
+    np.testing.assert_array_equal(PLOT_CALLS[0][1][0],[True,False,True,False])
+    assert PLOT_CALLS[0][2]['confidence_level']==.8
+    assert PLOT_CALLS[0][2]['color_cycle']==['blue']
+    assert PLOT_CALLS[0][2]['labels']==['Override']
+    assert first.axes[0].get_title()=='First' and first.axes[0].get_ylim()==(-1,2)
+    np.testing.assert_allclose(first.get_size_inches(),[3,2])
+    rest=list(iterator)
+    assert [s for _,s in rest]==['probe_single_2','named_single','imported_single']
+    np.testing.assert_array_equal(PLOT_CALLS[1][1][0],[False,False,True,False])
+    assert configs==original
+    assert PLOT_CALLS[0][0][0] is data
+def test_plot_rejects_dataset_mask_count_mismatch_before_creating_a_figure():
+    import matplotlib.pyplot as plt
+    from jaxcmr.analyses.spc import plot_spc
+    data = make_dataset(jnp.array([[1, 0], [2, 0]]))
+    before = plt.get_fignums()
+    with pytest.raises(ValueError, match="one trial mask per dataset"):
+        plot_spc([data, data], [jnp.ones(2, bool)])
+    assert plt.get_fignums() == before
+
+
+def test_save_explicit_figure_even_when_another_is_current(tmp_path,monkeypatch):
+    monkeypatch.setattr(plt,'show',lambda:None)
+    first,ax=plt.subplots();ax.plot([1,2],[3,4])
+    other,_=plt.subplots()
+    saved=[];real=first.savefig
+    monkeypatch.setattr(first,'savefig',lambda *a,**kw:(saved.append(a[0]),real(*a,**kw)))
+    monkeypatch.setattr(other,'savefig',lambda *a,**kw:pytest.fail('Saved the wrong figure'))
+    save_figure(str(tmp_path),'chosen',figure=first,dpi=40,formats=['png','svg'])
+    assert len(saved)==2 and (tmp_path/'chosen.png').exists()
+    save_figure(str(tmp_path),'',figure=first)
+    assert len(saved)==2
+
+
+def test_figure_formats(tmp_path, monkeypatch):
+    monkeypatch.setattr(plt, 'show', lambda: None)
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [0.2, 0.5])
+    save_figure(str(tmp_path), 'plot', formats=['png', 'svg'])
+    assert (tmp_path/'plot.png').stat().st_size > 0
+    assert '<svg' in (tmp_path/'plot.svg').read_text()
+    plt.close(fig)

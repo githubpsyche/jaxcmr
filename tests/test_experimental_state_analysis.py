@@ -16,6 +16,7 @@ from jaxcmr.components.instance_memory import init_mcf
 from jaxcmr.experimental.state_analysis import instance_memory_heatmap, plot_model_state
 from jaxcmr.models.cmr import CMR
 from jaxcmr.models.positional_cmr import CMR as PositionalCMR
+from jaxcmr.state_analysis import matrix_heatmap
 
 _PARAMETERS = CMR_PARAMS | {
     "stop_probability_scale": 0.05,
@@ -83,3 +84,48 @@ def test_instance_memory_heatmap_respects_input_width_and_trace_selection(
     )
     np.testing.assert_allclose(np.asarray(axis.collections[0].get_array()), expected)
     np.testing.assert_allclose(figure.get_size_inches(), (10, 6))
+
+
+@pytest.mark.parametrize(
+    "matrix, expected_annotations",
+    [
+        (
+            jnp.array([-1.0, 0.0, 0.124, 0.25, 1.0]),
+            {(0.5, 0.5): "-1.00", (3.5, 0.5): "0.25", (4.5, 0.5): "1.00"},
+        ),
+        (
+            np.array([[-1.0, -0.125, 0.124], [0.125, 1.0, np.nan]]),
+            {(0.5, 0.5): "-1.00", (1.5, 0.5): "-0.12", (0.5, 1.5): "0.12", (1.5, 1.5): "1.00"},
+        ),
+    ],
+)
+def test_matrix_heatmap_preserves_values_annotations_and_supplied_axes(
+    matrix, expected_annotations
+):
+    original = np.array(matrix, copy=True)
+    figure, axis = plt.subplots(figsize=(7, 4))
+    try:
+        returned_figure, returned_axis = matrix_heatmap(
+            matrix, axis=axis, print_threshold=0.125,
+            title="Memory", xlabel="Features", ylabel="Updates",
+            label_font_size=18, annot_font_size=12,
+        )
+        assert returned_figure is figure and returned_axis is axis
+        mesh = axis.collections[0]
+        np.testing.assert_allclose(
+            np.ma.filled(mesh.get_array(), np.nan), np.atleast_2d(original), equal_nan=True
+        )
+        np.testing.assert_allclose(np.asarray(matrix), original, equal_nan=True)
+        assert axis.get_ylim() == (np.atleast_2d(original).shape[0], 0)
+        assert mesh.cmap.name == "magma"
+        assert mesh.colorbar.ax in figure.axes and len(figure.axes) == 2
+        assert {text.get_position(): text.get_text() for text in axis.texts} == expected_annotations
+        assert all(text.get_fontsize() == 12 for text in axis.texts)
+        colours = {text.get_text(): text.get_color() for text in axis.texts}
+        assert colours["-1.00"] == "white" and colours["1.00"] == "black"
+        assert (axis.get_title(), axis.get_xlabel(), axis.get_ylabel()) == (
+            "Memory", "Features", "Updates"
+        )
+        assert axis.xaxis.label.get_fontsize() == 18
+    finally:
+        plt.close(figure)

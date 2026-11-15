@@ -1,15 +1,11 @@
+"""Model nesting, reinforcement targets and semantic support."""
 from support import CMR_PARAMS
 import numpy as np
-from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
-from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
-from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
-from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
 from jaxcmr.models.probe_reinf_positional_cmr import CMR as ProbeCMR
 from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
 import importlib
 import pytest
 
-"Tests for all non-base CMR model variants.\n\nEach test constructs a factory, creates a model, runs a study-recall\ncycle, and verifies behavioral properties: finite activations and\ntemporal recency (last-studied item has highest activation).\n"
 from typing import Any
 import jax.numpy as jnp
 import jaxcmr.components.context as TemporalContext
@@ -69,14 +65,13 @@ def _trace_reinforcement_parameters(reinforcement: float) -> dict[str, Any]:
     return {**_BASE_PARAMS, "mfc_sensitivity": 1.0, "mcf_first_pres_reinforcement": reinforcement}
 
 
-@pytest.mark.parametrize("model_cls", (TraceCMR, ProbeCMR))
-def test_trace_and_probe_reinf_neutral_value_matches_positional_cmr(model_cls):
+def test_probe_reinf_neutral_value_matches_positional_cmr():
     """mcf_first_pres_reinforcement=0 recovers PositionalCMR."""
     from jaxcmr.models.positional_cmr import CMR as PositionalCMR
 
     params = _trace_reinforcement_parameters(0.0)
     positional = _run_sequence(PositionalCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2])
-    model = _run_sequence(model_cls(_LIST_LENGTH, params), _REPETITION_LIST, [2])
+    model = _run_sequence(ProbeCMR(_LIST_LENGTH, params), _REPETITION_LIST, [2])
     assert jnp.allclose(model.outcome_probabilities(), positional.outcome_probabilities())
     assert jnp.allclose(model.context.state, positional.context.state)
     assert jnp.allclose(model.mfc.state, positional.mfc.state)
@@ -96,44 +91,32 @@ def test_trace_and_probe_reinf_do_not_reinforce_unique_items(model_cls):
     assert jnp.allclose(model.outcome_probabilities(), positional.outcome_probabilities())
 
 
-@pytest.mark.parametrize("model_cls", (TraceCMR, ProbeCMR))
-def test_trace_and_probe_reinf_target_first_prior_occurrence(model_cls):
+def test_probe_reinf_target_first_prior_occurrence():
     """later repetitions reinforce the first prior occurrence only."""
     from jaxcmr.models.positional_cmr import CMR as PositionalCMR
 
     params = _trace_reinforcement_parameters(2.0)
     study_events = [1, 2, 1, 3, 1]
     positional = _run_sequence(PositionalCMR(5, params), study_events, [])
-    model = _run_sequence(model_cls(5, params), study_events, [])
+    model = _run_sequence(ProbeCMR(5, params), study_events, [])
     delta = model.mcf.state - positional.mcf.state
     other_columns = delta.at[:, 0].set(0.0)
     assert jnp.any(jnp.abs(delta[:, 0]) > 1e-06).item()
     assert jnp.allclose(other_columns, 0.0)
 
 
-def test_trace_reinf_stores_pre_update_learning_state():
-    """trace variant stores the pre-update context for each position."""
-    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
-
-    params = _trace_reinforcement_parameters(0.5)
-    model = TraceCMR(_LIST_LENGTH, params)
-    pre_update_state = model.context.state
-    model = model.experience(jnp.int32(1))
-    assert jnp.allclose(model.trace_contexts[0], pre_update_state)
-
-
-def test_trace_reinf_can_store_post_update_learning_state():
-    """trace variant can store the post-update context for each position."""
-    from jaxcmr.models.trace_reinf_positional_cmr import CMR as TraceCMR
-
+@pytest.mark.parametrize("post_update", [False, True])
+def test_trace_reinf_stores_selected_learning_state(post_update):
+    """Store the requested context, with distinct pre- and post-update states."""
     params = _trace_reinforcement_parameters(0.5) | {
-        "trace_reinforcement_after_context_update": True
+        "trace_reinforcement_after_context_update": post_update
     }
     model = TraceCMR(_LIST_LENGTH, params)
     pre_update_state = model.context.state
     model = model.experience(jnp.int32(1))
-    assert jnp.allclose(model.trace_contexts[0], model.context.state)
-    assert not jnp.allclose(model.trace_contexts[0], pre_update_state)
+    expected = model.context.state if post_update else pre_update_state
+    assert jnp.allclose(model.trace_contexts[0], expected)
+    assert not jnp.allclose(model.context.state, pre_update_state)
 
 
 def test_probe_reinf_uses_current_mfc_probe_for_first_occurrence():

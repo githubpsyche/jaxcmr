@@ -12,16 +12,15 @@ For a minimal example with actual repeated presentations, add --trial-index 82.
 Use --output PATH to retain the full FitResult, timings and data provenance.
 This example fits recall order conditional on observed recall length. The
 NoStopTermination policy and loss do not estimate stopping behavior.
-The defaults use the validated screened trust-constr/BFGS recipe and optimized
+This experimental example defaults to screened trust-constr/BFGS and optimized
 regular-CMR model. Use --optimizer lbfgsb or --model reference to
-compare alternatives through the same public interfaces.
+compare the experimental route with ordinary event-based fitting.
 
 The model uses primacy_scale and primacy_decay. The fitter internally searches
 over exp(-primacy_decay); reported parameters and bounds remain physical.
 """
 
 import argparse
-import hashlib
 import json
 import time
 from pathlib import Path
@@ -32,11 +31,11 @@ import numpy as np
 
 from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.experimental import optimized_cmr_fitting
 from jaxcmr.fitting import ScipyLBFGSB, ScipyTrustConstr
 from jaxcmr.helpers import load_data
 from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
-from jaxcmr.models.optimized_cmr import ModelFactory as OptimizedCMRFactory
 from jaxcmr.typing import RecallDataset
 
 
@@ -44,7 +43,7 @@ def fit_cohort(
     fitter,
     dataset,
     reference_factory,
-    base_params,
+    reference_params,
     bounds,
     rows,
     args,
@@ -53,7 +52,7 @@ def fit_cohort(
     """Use the public preparation/warmup/fit methods for each selected subject."""
     subjects = np.asarray(dataset["subject"]).reshape(-1)
     masks = [jnp.asarray(subjects == subject) for subject in args.subjects]
-    preparation_seconds = fitter.prepare_selections(masks)
+    preparation_seconds = fitter.prepare_selections(masks) if args.model == "optimized" else 0.0
     canonical = ExcludeTerminationLikelihoodLoss(reference_factory, dataset, None)
     results = []
     for subject, mask in zip(args.subjects, masks, strict=True):
@@ -65,7 +64,7 @@ def fit_cohort(
         checked = float(
             jax.jit(
                 lambda p, selected: canonical(
-                    selected, base_params, tuple(bounds), p[:, None]
+                    selected, reference_params, tuple(bounds), p[:, None]
                 )[0]
             )(parameters, indices)
         )
@@ -92,7 +91,6 @@ def fit_cohort(
         + preparation_seconds
         + sum(row["warmup_seconds"] + row["fit"]["fit_time"] for row in results),
         "data_path": str(args.data.resolve()),
-        "data_sha256": hashlib.sha256(args.data.read_bytes()).hexdigest(),
         "row_indices": rows.tolist(),
         "model": args.model,
         "jax_x64": True,
@@ -117,7 +115,7 @@ def main() -> None:
         "--subjects",
         type=int,
         nargs="+",
-        help="Fit each participant with one shared preparation plan.",
+        help="Fit each participant; the experimental model shares prepared layouts.",
     )
     parser.add_argument("--seed", type=int, default=700)
     parser.add_argument("--seconds", type=float, default=4.0)
@@ -130,7 +128,7 @@ def main() -> None:
         "--model",
         choices=("optimized", "reference"),
         default="optimized",
-        help="Choose the CMR implementation; both use the same generic likelihood.",
+        help="Choose accelerated experimental CMR or ordinary reference CMR.",
     )
     parser.add_argument(
         "--trial-index",
@@ -205,13 +203,11 @@ def main() -> None:
         "primacy_decay": [eps, 100.0],
         "choice_sensitivity": [eps, 100.0],
     }
-    base_params = {"learn_after_context_update": False, "allow_repeated_recalls": False}
+    reference_params = {"learn_after_context_update": False, "allow_repeated_recalls": False}
+    base_params = {} if args.model == "optimized" else reference_params
     reference_factory = make_factory(
         linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
     )
-    factory = OptimizedCMRFactory if args.model == "optimized" else reference_factory
-    fitter_class = ScipyTrustConstr if args.optimizer == "trust-constr" else ScipyLBFGSB
-    loss_class = ExcludeTerminationLikelihoodLoss
     settings = {
         "bounds": bounds,
         "transforms": {"primacy_decay": "exp_neg"},
@@ -241,15 +237,26 @@ def main() -> None:
         settings.update(
             max_fun=15000, relative_tolerance=1e-12, max_line_search_steps=50
         )
+    loss_class = ExcludeTerminationLikelihoodLoss
     construction_started = time.perf_counter()
-    fitter = fitter_class(dataset, None, base_params, factory, loss_class, settings)
+    if args.model == "optimized":
+        fitter_class = (
+            optimized_cmr_fitting.ScipyTrustConstr if args.optimizer == "trust-constr"
+            else optimized_cmr_fitting.ScipyLBFGSB
+        )
+        fitter = fitter_class(dataset, base_params, settings)
+    else:
+        fitter_class = ScipyTrustConstr if args.optimizer == "trust-constr" else ScipyLBFGSB
+        fitter = fitter_class(
+            dataset, None, base_params, reference_factory, ExcludeTerminationLikelihoodLoss, settings,
+        )
     construction_seconds = time.perf_counter() - construction_started
     if args.subjects is not None:
         payload = fit_cohort(
             fitter,
             dataset,
             reference_factory,
-            base_params,
+            reference_params,
             bounds,
             rows,
             args,
@@ -290,7 +297,7 @@ def main() -> None:
     checked = float(
         ExcludeTerminationLikelihoodLoss(reference_factory, dataset, None)(
             jnp.arange(len(rows), dtype=jnp.int32),
-            base_params,
+            reference_params,
             tuple(bounds),
             parameters[:, None],
         )[0]
@@ -309,7 +316,6 @@ def main() -> None:
         "example_seconds": time.perf_counter() - example_started,
         "verified_nll": checked,
         "data_path": str(args.data.resolve()),
-        "data_sha256": hashlib.sha256(args.data.read_bytes()).hexdigest(),
         "row_indices": rows.tolist(),
         "list_count": len(rows),
         "recall_count": int(np.count_nonzero(np.asarray(dataset["recalls"]))),

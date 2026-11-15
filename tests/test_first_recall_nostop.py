@@ -4,18 +4,19 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from support import CMR_PARAMS
+from support import CMR_PARAMS, OPTIMIZED_CMR_PARAMS
 
 from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.helpers import make_dataset
 from jaxcmr.loss.transform_sequence_likelihood import (
     ExcludeFirstRecallAndTerminationLikelihoodLoss,
-    ExcludeFirstRecallLikelihoodLoss,
     ExcludeTerminationLikelihoodLoss,
     mask_first_recall_and_terminations,
 )
-from jaxcmr.models import additive_semantic_matrix_cmr, cmr, optimized_cmr
+from jaxcmr.models import additive_semantic_matrix_cmr, cmr
+from jaxcmr.experimental import optimized_cmr
+from jaxcmr.experimental.optimized_cmr import _sequence_likelihood
 from jaxcmr.simulation import (
     simulate_h5_from_h5,
     simulate_study_first_recall_and_forced_stop,
@@ -44,10 +45,12 @@ def dataset(recalls=(2, 4, 1, 0, 0)):
 
 
 @pytest.mark.parametrize('recalls', [(2, 4, 1, 0, 0), (2, 0, 0, 0, 0), (0, 0, 0, 0, 0)])
-@pytest.mark.parametrize('factory', [factory_for(cmr), optimized_cmr.ModelFactory])
-def test_conditional_product_and_prepared_gradients(recalls, factory):
+@pytest.mark.parametrize('factory,parameters', [
+    (factory_for(cmr), CMR_PARAMS), (optimized_cmr.ModelFactory, OPTIMIZED_CMR_PARAMS),
+])
+def test_conditional_product_and_prepared_gradients(recalls, factory, parameters):
     data = dataset(recalls)
-    params = dict(CMR_PARAMS)
+    params = dict(parameters)
     loss = ExcludeFirstRecallAndTerminationLikelihoodLoss(factory, data, None)
     model = factory(data, None).create_trial_model(jnp.int32(0), params)
     for item in data['pres_itemnos'][0]:
@@ -70,10 +73,18 @@ def test_conditional_product_and_prepared_gradients(recalls, factory):
     point = jnp.array([params[key] for key in names])
     direct = jax.jit(jax.value_and_grad(lambda p: loss(rows, params, names, p[:, None])[0]))(point)
     np.testing.assert_allclose(direct[0], expected, atol=1e-11)
-    for prepared in (loss.prepare_trials(rows), loss.prepare_selections([rows])[0]):
-        actual = jax.jit(jax.value_and_grad(lambda p: prepared(params, names, p[:, None])[0]))(point)
-        np.testing.assert_allclose(actual[0], direct[0], atol=1e-11)
-        np.testing.assert_allclose(actual[1], direct[1], atol=1e-10)
+    if factory is optimized_cmr.ModelFactory:
+        optimized = factory(data)
+        scoring = jax.vmap(mask_first_recall_and_terminations)(data["recalls"])
+        for sequence in (
+            optimized.prepare_predictions(rows, scoring),
+            optimized.prepare_prediction_selections([rows], [scoring])[0],
+        ):
+            actual = jax.jit(jax.value_and_grad(
+                lambda point: _sequence_likelihood(sequence, params, names, point[:, None])[0]
+            ))(point)
+            np.testing.assert_allclose(actual[0], direct[0], atol=1e-11)
+            np.testing.assert_allclose(actual[1], direct[1], atol=1e-10)
     if first_probability is not None:
         original = ExcludeTerminationLikelihoodLoss(factory, data, None)
         full = original(rows, params, names, point[:, None])[0]
@@ -82,13 +93,9 @@ def test_conditional_product_and_prepared_gradients(recalls, factory):
         np.testing.assert_array_equal(direct[1], 0)
 
 
-def test_masks_leave_existing_policies_unchanged():
+def test_combined_mask_scores_only_recalls_after_the_first():
     recalls = jnp.array([2, 4, 1, 0, 0])
     np.testing.assert_array_equal(mask_first_recall_and_terminations(recalls), [False, True, True, False, False])
-    first = ExcludeFirstRecallLikelihoodLoss(factory_for(cmr), dataset(), None)
-    stop = ExcludeTerminationLikelihoodLoss(factory_for(cmr), dataset(), None)
-    np.testing.assert_array_equal(first._inner.trial_masks[0], [False, True, True, True, True])
-    np.testing.assert_array_equal(stop._inner.trial_masks[0], [True, True, True, False, False])
 
 
 @pytest.mark.parametrize('count', [0, 1, 2, 4])
@@ -122,8 +129,10 @@ def test_simulation_forces_start_count_and_exact_retrieval_state(count, semantic
     for actual, expected in zip(jax.tree.leaves(state), jax.tree.leaves(reference), strict=True):
         np.testing.assert_allclose(actual, expected, atol=1e-12)
     # Dataset API converts local item labels back to actual study positions.
+    subject_parameters = {k: jnp.array([v]) for k, v in params.items()}
+    subject_parameters['subject'] = jnp.array([7])
     simulated = simulate_h5_from_h5(
-        factory, data, features, {k: jnp.array([v]) for k, v in params.items()},
+        factory, data, features, subject_parameters,
         jnp.array([True]), 8, jax.random.PRNGKey(19),
         simulate_trial_fn=simulate_study_first_recall_and_forced_stop,
     )

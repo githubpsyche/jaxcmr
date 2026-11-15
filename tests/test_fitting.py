@@ -53,6 +53,21 @@ class QuadraticLoss:
         return jnp.sum(jnp.square(x - target[:, None]), axis=0)
 
 
+@pytest.mark.parametrize("algorithm", [ScipyDE, EvosaxDE])
+def test_fit_rejects_empty_observation_selections(algorithm):
+    fitter = algorithm(
+        {"subject": jnp.array([[1], [2]])}, None, {}, DummyModelFactory, QuadraticLoss,
+        hyperparams={"bounds": {"a": [0., 1.]}, "num_steps": 1, "pop_size": 6,
+                     "best_of": 1, "progress_bar": False},
+    )
+    mask = jnp.array([False, False])
+    with pytest.raises(ValueError, match="nonempty"):
+        fitter.fit(mask)
+    if algorithm is EvosaxDE:
+        with pytest.raises(ValueError, match="nonempty"):
+            fitter.fit_once(mask, jax.random.PRNGKey(1))
+
+
 class IndexedNonfiniteLoss:
     def __init__(self, model_factory_cls, dataset, features):
         pass
@@ -221,8 +236,9 @@ def test_evosax_subject_results_override_free_parameter_defaults(fitter_cls):
     np.testing.assert_allclose(result["fitness"], (np.asarray(result["fits"]["x"]) - 0.25) ** 2)
 
 
-def test_scanevosaxde_matches_sequential_evosaxde_on_equal_counts():
-    """scanned and sequential EvoSax agree on equal-length subjects."""
+@pytest.mark.parametrize('driver,extra', [(ScanEvosaxDE, {}), (MapEvosaxDE, {'map_batch_size': 2})])
+def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra):
+    """Both batched drivers preserve the sequential fitted results."""
     hyperparams = {
         "bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
         "num_steps": 10,
@@ -230,6 +246,7 @@ def test_scanevosaxde_matches_sequential_evosaxde_on_equal_counts():
         "best_of": 2,
         "progress_bar": False,
         "seed": 0,
+        **extra,
     }
     sequential = EvosaxDE(
         make_minimal_dataset([1, 1, 2, 2]),
@@ -239,44 +256,7 @@ def test_scanevosaxde_matches_sequential_evosaxde_on_equal_counts():
         QuadraticLoss,
         hyperparams=hyperparams,
     )
-    scanned = ScanEvosaxDE(
-        make_minimal_dataset([1, 1, 2, 2]),
-        None,
-        {},
-        DummyModelFactory,
-        QuadraticLoss,
-        hyperparams=hyperparams,
-    )
-    sequential_result = sequential.fit_subjects(np.array([True, True, True, True]))
-    batched_result = scanned.fit_subjects(np.array([True, True, True, True]))
-    assert batched_result["fits"]["subject"] == sequential_result["fits"]["subject"]
-    assert batched_result["nit"] == sequential_result["nit"]
-    assert batched_result["converged"] == sequential_result["converged"]
-    np.testing.assert_allclose(batched_result["fitness"], sequential_result["fitness"])
-    np.testing.assert_allclose(batched_result["fits"]["x"], sequential_result["fits"]["x"])
-    np.testing.assert_allclose(batched_result["fits"]["y"], sequential_result["fits"]["y"])
-
-
-def test_mapevosaxde_matches_sequential_evosaxde_on_equal_counts():
-    """mapped and sequential EvoSax agree on equal-length subjects."""
-    hyperparams = {
-        "bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
-        "num_steps": 10,
-        "pop_size": 5,
-        "best_of": 2,
-        "progress_bar": False,
-        "seed": 0,
-        "map_batch_size": 2,
-    }
-    sequential = EvosaxDE(
-        make_minimal_dataset([1, 1, 2, 2]),
-        None,
-        {},
-        DummyModelFactory,
-        QuadraticLoss,
-        hyperparams=hyperparams,
-    )
-    mapped = MapEvosaxDE(
+    mapped = driver(
         make_minimal_dataset([1, 1, 2, 2]),
         None,
         {},
@@ -292,7 +272,8 @@ def test_mapevosaxde_matches_sequential_evosaxde_on_equal_counts():
     np.testing.assert_allclose(mapped_result["fitness"], sequential_result["fitness"])
     np.testing.assert_allclose(mapped_result["fits"]["x"], sequential_result["fits"]["x"])
     np.testing.assert_allclose(mapped_result["fits"]["y"], sequential_result["fits"]["y"])
-    assert mapped_result["hyperparameters"]["map_batch_size"] == 2
+    if driver is MapEvosaxDE:
+        assert mapped_result["hyperparameters"]["map_batch_size"] == 2
 
 
 def test_scanevosaxde_requires_equal_trial_counts():
@@ -334,7 +315,7 @@ def test_evosaxde_replaces_nonfinite_population_fitness():
     )
     population = jnp.ones((fitter.all_hyperparams["population_size"], 1))
     fitness = np.asarray(
-        fitter._evaluate_population(fitter._losses.select(jnp.asarray([0])), population)
+        fitter._evaluate_population(jnp.asarray([0]), population)
     )
     assert fitness[0] == 12345.0
     assert np.all(np.isfinite(fitness))
@@ -358,9 +339,10 @@ def test_evosaxde_convergence_matches_scipy_formula():
             "absolute_tolerance": 0.0,
         },
     )
-    fitness = jnp.asarray([9.0, 10.0, 11.0])
-    expected = jnp.std(fitness) <= 0.1 * jnp.abs(jnp.mean(fitness))
-    assert bool(fitter._has_converged(fitness)) == bool(expected)
+    # Both means are 10, giving tolerance 1. Population SDs are sqrt(2/3)
+    # and sqrt(8/3), respectively below and above that threshold.
+    for fitness, expected in [([9., 10., 11.], True), ([8., 10., 12.], False)]:
+        assert bool(fitter._has_converged(jnp.asarray(fitness))) is expected
 
 
 def test_evosaxde_penalized_population_does_not_converge():

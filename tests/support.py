@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+
 import jax.numpy as jnp
 
 
@@ -13,7 +14,7 @@ def recall_fixture():
     }
 
 
-CMR_PARAMS = {
+OPTIMIZED_CMR_PARAMS = {
     "encoding_drift_rate": 0.5,
     "start_drift_rate": 0.4,
     "recall_drift_rate": 0.6,
@@ -23,6 +24,10 @@ CMR_PARAMS = {
     "primacy_scale": 1.0,
     "primacy_decay": 0.1,
     "choice_sensitivity": 2.0,
+}
+
+CMR_PARAMS = {
+    **OPTIMIZED_CMR_PARAMS,
     "learn_after_context_update": False,
     "allow_repeated_recalls": False,
 }

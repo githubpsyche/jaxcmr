@@ -39,9 +39,9 @@ In a new notebook, add this as your first code cell and run it:
 %pip install "jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main" pandas
 ```
 
-`%pip` installs packages into this runtime. This installs the JAXCMR version covered by the documentation and its dependencies; `pandas` provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use **Runtime → Restart session**, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.
+`%pip` installs packages into this runtime. This installs the development version of JAXCMR from GitHub’s main branch and its dependencies; `pandas` provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use **Runtime → Restart session**, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.
 
-Our Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates also fetch their supplied example inputs when their setup cells run. Those downloads do not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.
+Our Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates copy the supplied example inputs from the installed package into the project folder when their input setup runs. This works without another download. It does not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.
 
 ## 3. Make your files available
 
@@ -108,7 +108,7 @@ table.head()
 
 The `import` line makes pandas available under the short name `pd`. `table` holds the data in memory; `head()` displays its first few rows. Reading other formats requires a suitable reader. [Preparing data for JAXCMR](tutorials/data-preparation.ipynb) explains how to turn study and recall records into the dataset format JAXCMR uses.
 
-When adapting a JAXCMR template, edit its existing configuration cell. Set `project_root` to your project folder's full path, `data_path` to your prepared dataset, and `output_dir` to a results folder. Relative paths in those templates are resolved against `project_root`. Check any additional output settings, such as `simulation_dir` or `figure_dir`, too. The example-input downloader leaves custom paths alone; you must make those files available yourself.
+When adapting a JAXCMR template, edit its existing configuration cell. Set `project_root` to your project folder's full path, `data_path` to your prepared dataset, and `output_dir` to a results folder. Relative paths in those templates are resolved against `project_root`. Check any additional output settings, such as `simulation_dir` or `figure_dir`, too. The example-input helper leaves custom paths alone; you must make those files available yourself.
 
 ## 5. Save files and use them again
 

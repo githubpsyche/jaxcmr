@@ -111,10 +111,10 @@ def test_neighbor_padding_and_real_last_position(present, recalls, direction, la
     expected = np.zeros(23, dtype=int)
     if lag is not None:
         expected[11 + lag] = 1
-        assert possible[11 + lag] == 1
+        assert possible[11 + lag] == 1, "Neighbor counts must distinguish padding"
     else:
-        assert not np.any(possible)
-    np.testing.assert_array_equal(actual, expected)
+        assert not np.any(possible), "Neighbor counts must distinguish padding"
+    np.testing.assert_array_equal(actual, expected, err_msg="Neighbor counts must distinguish padding")
 
 
 @pytest.mark.parametrize("direction,lag2", [("i2j", False), ("j2i", True), ("both", True)])

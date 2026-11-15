@@ -88,7 +88,10 @@ def test_source_target_counts_items_and_updates_excluded_events(
         target_values=[-1, 1],
         size=3,
     )
-    np.testing.assert_allclose(result, expected, equal_nan=True)
+    np.testing.assert_allclose(
+        result, expected, equal_nan=True,
+        err_msg="Transition probabilities must use available items",
+    )
 
 
 def test_target_enrichment_subtracts_available_fraction():

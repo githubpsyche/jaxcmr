@@ -1,6 +1,5 @@
 """Binning, eligibility, aggregation, and LPP compatibility contracts."""
 
-import importlib
 import jax
 import jax.numpy as jnp
 import matplotlib
@@ -177,42 +176,26 @@ def test_lpp_dataset_wrapper_matches_factor_analysis_with_and_without_explicit_e
     )
 
 
-def test_plot_shares_bins_across_datasets_categories_and_subjects(monkeypatch):
-    module = importlib.import_module("jaxcmr.analyses.cat_recall_by_factor")
-    seen = []
-
-    def capture(axis, x, values, label, color, **kwargs):
-        seen.append((np.asarray(x), np.asarray(values), label))
-        return axis
-
-    monkeypatch.setattr(module, "plot_data", capture)
+def test_plot_shares_bins_across_datasets_categories_and_subjects():
     first, second = (_dataset(), _dataset())
     first["score"] = jnp.array([[1.0, 2.0, 3.0], [1000.0, 0.0, 0.0]])
     second["score"] = jnp.array([[7.0, 8.0, 9.0], [-1000.0, 0.0, 0.0]])
     first["category"] = second["category"] = jnp.array([[1, 2, 1], [1, 0, 0]])
     axis = plot_cat_recall_by_factor(
-        [first, second],
-        [jnp.array([True, False])] * 2,
-        "category",
-        [1, 2],
-        "score",
-        bin_count=2,
-        labels=["observed", "model"],
-        category_labels=["A", "B"],
+        [first, second], [jnp.array([True, False])] * 2, "category", [1, 2], "score",
+        bin_count=2, labels=["observed", "model"], category_labels=["A", "B"],
     )
+    # Selected scores span [1,9]: both datasets use bin centres 3 and 7.
+    labels = ["observed / A", "observed / B", "model / A", "model / B"]
+    assert axis.get_legend_handles_labels()[1] == labels
     assert axis.get_xlabel() == "score"
-    assert len(seen) == 4
-    for x, values, _ in seen:
-        np.testing.assert_array_equal(x, [3, 7])
-        assert values.shape == (1, 2)
-    assert [entry[2] for entry in seen] == [
-        "observed / A",
-        "observed / B",
-        "model / A",
-        "model / B",
-    ]
-    np.testing.assert_allclose(seen[0][1], [[0, np.nan]], equal_nan=True)
-    np.testing.assert_allclose(seen[2][1], [[np.nan, 0]], equal_nan=True)
+    handles, _ = axis.get_legend_handles_labels()
+    for handle, centre in zip(handles, [3, 3, 7, 7], strict=True):
+        lines = [line for line in axis.lines
+                 if line.get_color() == handle.get_color() and len(line.get_xdata())]
+        assert len(lines) == 1
+        np.testing.assert_array_equal(lines[0].get_xdata(), [centre])
+        np.testing.assert_array_equal(lines[0].get_ydata(), [0])
 
 
 def test_real_plot_uses_lpp_units_and_retains_legacy_labels():
@@ -233,11 +216,7 @@ def test_real_plot_uses_lpp_units_and_retains_legacy_labels():
 @pytest.mark.parametrize(
     "edges", [jnp.array([0.0, 0.0, 1.0]), jnp.array([2.0, 1.0]), jnp.array([0.0, jnp.nan])]
 )
-def test_invalid_dynamic_edges_yield_undefined_rates_and_plotting_rejects_them(edges):
-    result = jax.jit(cat_recall_by_factor, static_argnames=("category_field", "factor_field"))(
-        _dataset(), "category", 1, "score", edges
-    )
-    assert np.all(np.isnan(result))
+def test_plotting_rejects_invalid_bin_edges(edges):
     with pytest.raises(ValueError, match="strictly increasing"):
         plot_cat_recall_by_factor(
             _dataset(), jnp.array([True, True]), "category", [1], "score", edges

@@ -10,7 +10,7 @@ from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.experimental.cross_validation import generate_fold_masks
 from jaxcmr.fitting.gradient import ScipyLBFGSB
-from jaxcmr.helpers import load_data, save_dict_to_hdf5
+from jaxcmr.helpers.io import load_data, save_dict_to_hdf5
 from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 from jaxcmr.simulation import simulate_h5_from_h5
@@ -33,11 +33,16 @@ PARAMS = dict(
 
 def test_complete_modeling_workflow(tmp_path):
     original = {key: value[:2] for key, value in recall_fixture().items()}
+    original["measurement"] = jnp.array([[0.25], [0.75]])
     data_path = tmp_path / "observations.h5"
     save_dict_to_hdf5(original, str(data_path))
     data = load_data(str(data_path))
+    assert data.keys() == original.keys()
+    limited = load_data(data_path, max_subjects=1)
+    assert limited.keys() == original.keys()
     for key in original:
         np.testing.assert_array_equal(data[key], original[key])
+        np.testing.assert_array_equal(limited[key], original[key][:1])
     np.testing.assert_allclose(spc(data), [0.5, 0.5, 1, 1, 1, 1, 0, 0])
     factory = make_factory(
         linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination

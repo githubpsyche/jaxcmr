@@ -346,8 +346,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A factory <strong>class</strong> is passed as <code>model_factory_cls</code> to a loss or simulator. Its constructor receives the dataset and optional vocabulary features. The resulting factory <strong>instance</strong> creates fresh models from parameters. <code>create_trial_model()</code> additionally receives a dataset row index, allowing trial-specific stimulus features or conditions to affect construction.</p>
 <p>For ordinary CMR, <code>jaxcmr.models.cmr.make_factory()</code> binds component creators and returns this factory class. Its models use the dataset’s maximum list length; the ordinary factory does not use trial-specific features. Other factories can require fields such as <code>pres_itemids</code> or <code>valence</code>.</p>
 <p>This is the model entry point for existing workflows: supply a compatible factory through <code>model_factory_cls</code>. Matching method names alone does not establish suitable event coding or scientific assumptions.</p>
+<p>Semantic factories check that <code>pres_itemids</code> aligns with study positions and that positive integer IDs are covered by the supplied vocabulary features or similarity matrix. A similarity matrix must be square. These checks occur once during factory preparation, outside the compiled model calculations; they do not impose a similarity scale or symmetry requirement.</p>
 <div id="locate-project-inputs" class="cell">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
@@ -360,7 +361,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="3d534cca" class="cell" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Create a model through a CMR factory</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -406,7 +407,7 @@ Initial study count: 0</code></pre>
 <h2 class="anchored" data-anchor-id="following-one-event-through-the-interface">Following one event through the interface</h2>
 <p>Study events already contain within-list item codes. Recorded recalls contain study positions, so the caller translates the first response through <code>pres_itemnos</code> before passing it to <code>retrieve()</code>.</p>
 <div id="6e0862b9" class="cell" data-execution_count="2">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Inspect state and probabilities across one retrieval</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>studied <span class="op">=</span> initial</span>
 <span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="cf">for</span> item <span class="kw">in</span> data[<span class="st">"pres_itemnos"</span>][trial_index]:</span>

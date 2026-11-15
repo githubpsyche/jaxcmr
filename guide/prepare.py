@@ -1,22 +1,19 @@
 """Stage the website's notebooks and downloads, with Colab links to main."""
 
-import ast
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import sys
 
 GUIDE = Path(__file__).resolve().parent
 ROOT = GUIDE.parent
 
 
-def registry():
-    module = ast.parse((ROOT / "jaxcmr/colab.py").read_text())
-    assignment = next(node for node in module.body if isinstance(node, ast.Assign)
-                      and any(isinstance(target, ast.Name) and target.id == "_INPUT_HASHES"
-                              for target in node.targets))
-    return ast.literal_eval(assignment.value)
+# Use the authoritative checkout catalog even when another JAXCMR is installed.
+sys.path.insert(0, str(ROOT))
+from jaxcmr.examples import _EXAMPLE_FILES
 
 
 def check_destination(path):
@@ -26,7 +23,7 @@ def check_destination(path):
 
 
 def stage():
-    guide = (GUIDE / "_quarto.yml").read_text()
+    guide = (GUIDE / "_quarto.yml").read_text(encoding="utf-8")
     names = re.findall(r"^\s*- (templates/\w+\.ipynb)\s*$", guide, re.M)
     if not names:
         raise ValueError("No template pages found in guide/_quarto.yml.")
@@ -52,8 +49,10 @@ def stage():
         prepared[downloads / name] = (GUIDE / name).read_bytes()
     for source in (GUIDE / "examples").glob("*.ipynb"):
         prepared[downloads / "examples" / source.name] = source.read_bytes()
-    for name in [*registry(), "data/fits/README.md"]:
-        prepared[GUIDE / "templates" / name] = (ROOT / name).read_bytes()
+    for name in _EXAMPLE_FILES:
+        raw = (ROOT / name).read_bytes()
+        prepared[GUIDE / "templates" / name] = raw
+    prepared[GUIDE / "templates/data/fits/README.md"] = (ROOT / "data/fits/README.md").read_bytes()
 
     full_render = os.environ.get("QUARTO_PROJECT_RENDER_ALL") == "1"
     output = None

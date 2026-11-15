@@ -1,27 +1,10 @@
-"""Tests for loss function variants.
-
-Covers base_sequence_likelihood, transform_sequence_likelihood,
-set_permutation_likelihood, and spc_mse.
-"""
-
-import jaxcmr.components.context as TemporalContext
-import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.termination import NoStopTermination, PositionalTermination
-from jaxcmr.models.cmr import make_factory as base_make_factory
-
-BaseCMRFactory = base_make_factory(
-    LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalTermination
-)
-NoStopCMRFactory = base_make_factory(
-    LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, NoStopTermination
-)
+"""Legacy import names remain supported aliases."""
 
 
 def test_old_loss_names_remain_import_aliases():
     from jaxcmr.fitting import BatchEvosaxDE, ScanEvosaxDE
 
     assert BatchEvosaxDE is ScanEvosaxDE
-    """old loss names remain temporary aliases for compatibility."""
     from jaxcmr import typing
     from jaxcmr.loss import (
         base_sequence_likelihood,

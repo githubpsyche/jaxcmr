@@ -43,8 +43,10 @@ def test_cat_recall_rate_pair_test_values():
     result = run_test_cat_recall_rate_pair(left, right, "left", "right")
     assert result.n == 3
     assert result.mean_diff == pytest.approx((0.2 + 0.2 + 0.1) / 3)
-    assert np.isfinite(result.t_stat)
-    assert np.isfinite(result.t_pval)
+    # Paired differences .2,.2,.1 have mean 1/6 and SEM 1/30: t=5.
+    # With df=2, the two-sided p-value is 1 - t/sqrt(t**2 + 2).
+    assert result.t_stat == pytest.approx(5)
+    assert result.t_pval == pytest.approx(1 - 5 / np.sqrt(27))
 
 
 def test_plot_cat_recall_rate_centers_present_category_points():

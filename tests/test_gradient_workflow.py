@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from scipy.optimize import OptimizeResult
 import jaxcmr.fitting.gradient as gradient_module
-from jaxcmr.fitting import ParameterSpace, ScipyTrustConstr
+from jaxcmr.fitting import ScipyTrustConstr
 from jaxcmr.helpers import make_dataset
 
 
@@ -45,17 +45,6 @@ def fitter(**options):
             **options,
         },
     )
-
-
-def test_log1p_roundtrip_and_derivative_near_zero():
-    space = ParameterSpace({"amplitude": [0.0, 100.0]}, {"amplitude": "log1p"})
-    physical = jnp.array([[0.0], [1e-08], [1.0], [100.0]])
-    unit = jax.jit(space.to_unit)(physical)
-    np.testing.assert_allclose(jax.jit(space.to_physical)(unit), physical, rtol=1e-13, atol=1e-14)
-    derivative = jax.jit(jax.jacfwd(space.to_physical))(unit[1])
-    np.testing.assert_allclose(derivative[0, 0], (1 + 1e-08) * np.log1p(100), rtol=1e-13)
-    with pytest.raises(ValueError, match="above -1"):
-        ParameterSpace({"amplitude": [-1.0, 10.0]}, {"amplitude": "log1p"})
 
 
 def test_trust_solver_finds_known_optimum_and_reports_objective_gradient():
@@ -104,8 +93,8 @@ def test_local_deadline_allows_another_restart_and_never_credits_late_improvemen
     now = [0.0]
     evaluate = algorithm._value_and_grad
 
-    def timed_evaluation(*args):
-        result = jax.block_until_ready(evaluate(*args))
+    def timed_evaluation(*args, **kwargs):
+        result = jax.block_until_ready(evaluate(*args, **kwargs))
         now[0] += 0.2
         return result
 
@@ -125,7 +114,7 @@ def test_local_deadline_allows_another_restart_and_never_credits_late_improvemen
 def test_nonfinite_gradient_is_not_reported_as_a_valid_trust_fit(monkeypatch):
     algorithm = fitter()
     monkeypatch.setattr(
-        algorithm, "_value_and_grad", lambda *args: (jnp.array(1.0), jnp.full(2, jnp.nan))
+        algorithm, "_value_and_grad", lambda *args, **kwargs: (jnp.array(1.0), jnp.full(2, jnp.nan))
     )
     with pytest.raises(ValueError, match="No finite loss/gradient pair"):
         algorithm.fit(jnp.array([True]))

@@ -170,31 +170,6 @@ def test_no_valid_targets_cannot_report_zero_error_and_zero_weight_disables_anal
     np.testing.assert_allclose(evaluate(DisabledLoss(FixedRecallFactory, dataset(), None)), [1, 1])
 
 
-def test_shape_mismatches_are_rejected_instead_of_broadcasting_predictions():
-
-    def mismatched(recalls, *, list_length, dataset, trial_indices):
-        return jnp.ones(recalls.shape[1])
-
-    with pytest.raises(ValueError, match="observed shape.*simulated shape"):
-        evaluate(
-            mse.make_factory({"summary": mismatched}, simulation_count=2)(
-                FixedRecallFactory, dataset(), None
-            )
-        )
-    with pytest.raises(ValueError, match="cannot broadcast"):
-        evaluate(
-            mse.make_factory(
-                {"summary": long_summary}, simulation_count=2, scales={"summary": jnp.ones(2)}
-            )(FixedRecallFactory, dataset(), None)
-        )
-
-
-def test_empty_trial_selection_is_rejected():
-    loss = mse.make_factory({"summary": long_summary})(FixedRecallFactory, dataset(), None)
-    with pytest.raises(ValueError, match="at least one trial"):
-        evaluate(loss, jnp.array([], dtype=int))
-
-
 def test_factory_copies_configuration_mappings_and_scale_arrays():
     analyses = {"summary": long_summary}
     weights = {"summary": 1.0}

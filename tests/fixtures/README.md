@@ -8,5 +8,7 @@ No private files or downloaded datasets are required. A missing fixture is an er
 
 The gradient test also retains one explicitly written 40-position adjacent-repeat
 example (responses at positions 31 and 29), because its previously established
-likelihood of 5.9108604179346145 is an independent numerical regression. It does
-not read the full Lohnas–Kahana dataset.
+likelihood of 5.9108604179346145 is a historical regression value. Its original
+independent derivation is not documented here; it checks continuity with earlier
+results, not independent validation of the CMR equations. It does not read the
+full Lohnas–Kahana dataset.

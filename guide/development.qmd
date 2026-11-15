@@ -2,87 +2,280 @@
 title: "Development"
 ---
 
-For changes to JAXCMR itself, start with the [Local setup with VS Code](developer-setup.ipynb)
-to obtain the checkout and environment. Run the commands below from the repository
-root.
+For changes to JAXCMR itself, use the optional repository checkout described in
+[Local setup with VS Code](developer-setup.ipynb). Run these commands from the
+repository root.
 
-## Optional tools
+## Prepare the environment
 
-The default `uv sync` installation includes the tools needed to run the notebooks.
-For specialized work, add the relevant dependency group or extra:
-
-- `uv sync --group embeddings` installs sentence-transformers for computing embeddings.
-- `uv sync --group profiling` installs line-profiler for inspecting performance.
-- `uv sync --extra experimental` installs Numba for the experimental conversion helper.
-
-## Run the tests
-
-Install the test dependencies alongside the default development tools, then run
-the complete suite:
-
-```{.bash code-summary="(1) Install test dependencies and run the suite"}
-uv sync --locked --extra test
-uv run --no-sync python -m pytest
+```bash
+uv sync --locked --extra test --group reader
 ```
 
-While editing, run the relevant test file:
+This installs the editable library, development tools, and notebook-test dependencies
+in one environment. The `test` extra adds only pytest. The default `dev` group includes
+the build and notebook tools for optional local checks; library CI does not install
+that group. Optional groups remain available: `--group embeddings` for
+sentence-transformers, `--group profiling` for line-profiler, and
+`--extra experimental` for the experimental Numba helper.
 
-```{.bash code-summary="(2) Run a focused test file"}
-uv run --no-sync python -m pytest tests/test_transitions.py
+## Edit and check notebooks
+
+Edit original notebooks in `templates/` or `guide/`, preserving useful saved outputs.
+Their short installation cells run only in Colab. Local and Slurm kernels use the
+environment the reader selected.
+
+While changing executable code, run the affected cases:
+
+```bash
+uv run --no-sync python guide/tools/check_notebooks.py --select cat_recall_rate
 ```
 
-The complete run includes scientific regressions, package installation and
-notebook execution checks. Installation checks require internet access and create
-temporary environments. Run the full suite before submitting changes. The
-[CI workflow](https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml)
-defines the supported check platforms.
+Run all 17 cases before publishing changes to shared setup, example inputs, or library
+functionality:
 
-The [historical test-suite audit](https://github.com/githubpsyche/jaxcmr/blob/0fe217a1eb9876b013d2de01d4febfeda9b9765b/testing-audit.json)
-records the earlier suite consolidation.
+```bash
+uv run --no-sync python guide/tools/check_notebooks.py
+```
 
-## Add or change a test
+The runner uses nbmake and pytest with two workers in the current environment. It
+executes temporary notebook copies, reduces workloads for testing, and reopens saved
+results in a separate process. The spreadsheet case uses synthetic inputs. Original
+notebook parameters and outputs are never rewritten. `--jobs 1` runs serially;
+`--platform windows` selects the representative Windows cases. The report identifies
+the environment used and separates preparation and execution time.
 
-- Each new scenario must catch an incorrect behavior that existing scenarios do not.
-- Prefer independently established numerical answers and supported workflows over
-  checks of shapes or types alone.
-- Keep expected answers beside their scenarios. Share fixtures where they reduce
-  duplication; see the [fixture documentation](https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md).
-- Expose independent scenarios through parametrization instead of hiding them in loops.
-- Required checks must not silently skip because private data is missing.
+Notebook execution is a local maintainer tool; GitHub Actions does not run notebooks
+or tests that execute notebook cells.
 
-## Edit the documentation
+For prose and saved-output changes, render and check the website; execution is needed
+when calculations change. Adding a published notebook also requires adding its bounded
+case to the notebook test runner.
 
-Edit the sources; the build prepares notebook copies, downloads and HTML:
+## Test the library and installation
 
-| Material | Authoritative location |
-|---|---|
-| Published templates | `templates/` |
-| Website pages and supporting examples | `guide/` |
-| Generated notebook copies and downloads | `guide/templates/`, `guide/downloads/` |
-| Rendered website | `docs/` |
+```bash
+uv run --no-sync python -m pytest tests -m "not audit" \
+  --ignore=tests/test_distribution.py \
+  --ignore=tests/test_reader_checks.py \
+  --ignore=tests/test_template_adaptation.py \
+  --ignore=tests/test_documentation.py
+```
 
-`guide/_quarto.yml` selects the published pages and defines the site navigation.
-The render list excludes notebook downloads and supporting examples from the
-published pages. Install [Quarto](https://quarto.org/docs/download/) 1.10.20 or
-newer, then render the website:
+While editing, select the relevant test file instead of repeating the full suite.
+Routine checks include scientific calculations, public validation, and complete modeling
+workflows. Two additional `audit` cases check compilation reuse across prepared participant
+selections in the experimental gradient and evolutionary CMR fitters:
 
-```{.bash code-summary="(3) Render the documentation"}
+```bash
+uv run --no-sync python -m pytest tests -m audit
+```
+
+Run these checks before releases and when changing experimental CMR preparation or fitting compilation.
+
+Ordinary fitting uses `LossFn` with explicit trial indices. OptimizedCMR's
+prepared observations and selection cache belong in
+`jaxcmr/experimental/optimized_cmr.py`; its fitting adapters belong in
+`jaxcmr/experimental/optimized_cmr_fitting.py`. Keep their types and preparation
+methods out of the ordinary model/loss protocols. The ordinary optimizer
+routines accept numerical objectives and are shared without importing the
+experimental implementation.
+Unfiltered pytest still includes the audit, notebook-related and distribution tests.
+Routine CI runs only the library selection above, against a normal installation made
+with `python -m pip install ".[test]"`. It uses `python -P -m pytest` so Python does not
+import the adjacent checkout in place of the installed package. This tests dependency
+resolution from the package requirements; local editable development still uses `uv.lock`.
+
+The optional local distribution tests build a wheel and source archive, rebuild from the archive,
+and install into a clean environment outside the checkout. They check the installed
+README example and offline preparation of all bundled inputs. Library tests cover input
+conflicts and custom paths; notebook checks exercise the current published notebooks.
+This separate installation check needs internet access for dependencies and does not run in CI:
+
+```bash
+uv run --no-sync python -m pytest tests/test_distribution.py
+```
+
+New tests should catch incorrect behavior using independently established numerical
+answers or supported workflows. Put short derivations beside analytic expectations;
+identify historical regression values as such. Check observable results rather than
+private object identities, and use small doubles only at necessary boundaries. Required
+checks must not silently skip because private data is unavailable. When an assertion's
+strength is uncertain, temporarily introduce the suspected fault and confirm that it fails
+for the intended reason. Keep the behavioral assertion, without adding a permanent test
+that reruns another test. Test our notebook preparation and result validation directly;
+rely on nbmake and pytest for notebook execution and failure reporting.
+
+See the [test fixtures](https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md)
+and [CI workflow](https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml).
+
+## Where shared operations live
+
+Use `jaxcmr.dataset` for dataset construction, trial and recall selections, and
+participant grouping. `jaxcmr.repetition` handles repeated items and shuffled
+controls; `jaxcmr.math` contains numerical primitives. Shared figure creation and
+the `save_figure` interface live in `jaxcmr.plotting`; analysis-specific plots stay
+with their analyses.
+
+`jaxcmr.analyses._study_positions` is private to the measurement analyses. It
+computes presentation-inclusion masks and recall indicators; public analyses
+own aggregation, weighting and interpretation. Keep measurement availability
+separate from recall classification, including when an item appears repeatedly.
+The operations in `repetition.py` return position indices for individual items;
+the private analysis helpers return Boolean matrices over trials and positions.
+
+The `jaxcmr.helpers` package contains general support modules: `io` reads and
+writes the HDF5 array layout and loads JSON optimization settings, `paths`
+resolves project directories and filenames,
+`general` provides dotted-name imports and number formatting, and `figures`
+implements figure saving. It does not import `plotting`, so plotting can use these
+support functions without a circular import.
+
+Library code imports directly from the module responsible for an operation.
+Existing `from jaxcmr.helpers import ...` imports remain supported by explicit
+re-exports in `helpers/__init__.py`; they do not contain separate implementations.
+The package-level `jaxcmr.make_dataset` and `jaxcmr.load_data` imports also remain
+available. `RecallDataset` and shared annotations stay in `jaxcmr.typing`.
+
+`jaxcmr.fitting.parameters.bound_params` clips parameter columns to their bounds;
+`jaxcmr.helpers.io.load_opt_params` reads fixed values and free-parameter bounds
+from JSON. Their old imports from `jaxcmr.summarize` remain direct re-exports.
+`summarize` owns descriptive parameter tables and statistical model comparisons,
+not parameter preparation or file loading. Its small record types describe the
+fields needed for reporting without requiring a complete optimizer result.
+
+Declare type aliases with the Python 3.12 `type` statement. Use `Parameters` for
+a mapping containing one set of scalar model settings; participant columns and
+optimizer populations retain their explicitly shaped array annotations.
+
+## Keep validation proportionate
+
+Treat annotated types and shapes as caller responsibilities throughout the
+library. Do not add runtime guards or tests solely to enforce those annotations.
+
+Keep numerical functions focused on their calculations. Document valid input
+shapes, codes and configuration; rely on ordinary array errors instead of repeating
+shape, dtype and key checks in kernels. Valid inputs must compose with JAX
+transformations, including numerical parameters passed through `vmap`.
+
+Check fixed data at explicit preparation boundaries when needed to protect
+participant assignment, prepared observations, saved-fit compatibility or file
+integrity. Do not convert dynamic numerical arguments to NumPy for those checks.
+Full distance preflight remains optional. Scientific eligibility masks, padding
+and missing-observation rules stay in the calculation. Test supported numerical
+behavior and demonstrated composition failures; remove tests for discarded guards.
+
+## Maintain the supplied examples
+
+The eleven selected files under `data/` and their fit methods document are the
+authoritative inputs. Packaging explicitly includes them; other research data and
+results remain excluded. The library’s `fetch_inputs(paths, base_dir=...)` copies
+only requested bundled examples, reuses matching files, and preserves conflicts and
+custom paths. An explicit `revision=` downloads reference bytes from GitHub on each call, including
+when checking an existing file. The default bundled route works offline. Neither
+route requires maintaining content hashes.
+
+When changing a supplied input, update its methods or source notes as needed.
+The filenames are listed in `jaxcmr/examples.py`; adding an example also requires
+including it in the package configuration. `jaxcmr.examples.fetch_inputs` is the
+current import; `jaxcmr.colab.fetch_inputs` remains compatible with older notebooks.
+Reinstall the editable package to refresh its bundled resources, then run the notebook
+and distribution checks:
+
+```bash
+uv sync --locked --extra test --group reader --reinstall-package jaxcmr
+```
+
+The website stages downloads from those same authoritative files. Notebook explanation
+and analysis changes can be published without a package release. Library and bundled
+data changes require readers to update their installation; the Git installation route
+does not require a PyPI release.
+
+## Saved settings and older notebooks
+
+Fit and simulation records describe the models, parameters, input paths, selected
+rows and run settings. Reuse checks compare these settings; fitting also recalculates
+the saved objective. Changes to data or code at an existing location require rerunning
+the affected calculations. Keep the input files and notebook with results you intend
+to reproduce.
+
+Automatic source capture and the former `jaxcmr.provenance` module have been
+removed. Import `simulation_metadata_matches` from `jaxcmr.simulation`. Update
+older notebook copies that import
+`capture_notebook` or `file_sha256` from `jaxcmr.provenance`; those functions and the
+`provenance_dir`, `provenance_source_paths` and `notebook_source` controls are no longer
+used. Existing records can retain obsolete digest fields, which no longer govern reuse.
+
+## Build and preview the website
+
+Use [Quarto 1.11.9](https://github.com/quarto-dev/quarto-cli/releases/tag/v1.11.9),
+available on your command path, matching CI:
+
+```bash
 bash build-docs.sh
+uv run --no-sync python guide/tools/check_site.py docs
+uv run --no-sync python -m http.server 8786 --bind 127.0.0.1 --directory docs
 ```
 
-This command prepares notebook pages before Quarto discovers the render targets,
-so it also works in a fresh checkout. It refreshes downloads, removes retired
-staging files and clears the generated website output without executing notebook
-cells. Execute changed notebooks separately and retain their
-useful outputs before rendering. Do not edit the generated copies.
+Open `http://127.0.0.1:8786/`. The build stages notebook pages and byte-for-byte source
+downloads before rendering, without executing notebooks. It removes retired generated
+files and protects source directories. Do not edit `guide/templates/`, `guide/downloads/`,
+or rendered HTML. Rebuild after edits; the file server serves the rebuilt pages.
 
-Open `docs/index.html`, or start a live preview:
+Colab links and installation commands follow `main`. A local preview’s download
+includes local changes; its Colab button still opens the last pushed notebook.
 
-```{.bash code-summary="(4) Preview the documentation"}
-quarto preview guide
-```
+## Publication and release handover
 
-After editing an original notebook in `templates/`, run `bash build-docs.sh` again: live preview
-does not watch those files outside the guide project. Review the rendered pages
-and notebook downloads locally before publication. Colab links and package
-installation follow `main`. GitHub Pages publishes the committed `docs/` directory.
+The routine **Checks and website** workflow runs on pull requests targeting `main`,
+pushes to `main`, and manual requests. It has four testing/build jobs:
+
+- **Library tests (Linux, macOS and Windows):** one shared job definition runs
+  separately on all three platforms, using Python 3.12 and CPU execution. Each installs
+  JAXCMR normally with `pip install ".[test]"`, then runs the same library tests and
+  exclusions. A failure on one platform does not cancel the other platform runs.
+- **Website:** a Quarto build, download/link checks, and a downloadable preview artifact.
+
+Feature-branch pushes do not also trigger a second run for an open pull request.
+Open a draft pull request to get automatic checks while working on a branch. There
+is no file-based change selection; each routine run performs the four jobs.
+
+CI does not execute notebooks, test notebook cells or run the separate distribution
+rehearsal. The website build renders saved outputs and verifies download copies and links
+without executing notebooks. There is no additional platform-compatibility workflow.
+Notebook and distribution tools remain available for local use.
+
+After the one-time Pages handover below, pushing documentation sources to `main`
+builds and publishes the website automatically. Local rendering remains useful for
+previewing changes; publishing no longer depends on committing generated HTML.
+Pull requests produce downloadable previews without publishing them.
+
+Deployment waits for the Linux, macOS, Windows and website jobs to pass, then publishes
+the website artifact from that same run. It also checks that its commit is still the
+latest `main`. A manual workflow run can publish `main` through the same checks.
+No additional repository variable is required.
+
+For the one-time handover:
+
+1. Push the reviewed workflow and its supporting source changes. In repository
+   **Settings → Pages → Build and deployment**, change **Source** from
+   **Deploy from a branch** to **GitHub Actions**.
+2. Run or rerun **Checks and website** for the current `main` commit, and verify that
+   the library, website and deployment jobs all succeed. If branch rules require the
+   previous job names, update those required checks when adopting this workflow.
+3. Verify the public Setup pages, notebook downloads, example inputs, and Colab links.
+   Check changed notebooks in hosted Colab separately, including a fresh runtime and
+   your own input/output files.
+4. After the replacement deployment is verified, remove `docs/` from Git tracking and
+   add `/docs/` to `.gitignore`, keeping local rendered files available for previews.
+
+Until the handover is completed, retain the tracked `docs/` site and the existing
+branch-based publishing configuration. If the replacement deployment fails, the
+previous public site remains available; fix the failure and rerun the workflow.
+
+PyPI publication remains separate. Before publishing a release, review the library and
+website checks, run the compilation audits, and select any additional local notebook or
+distribution checks needed for the changes being released.
+After publication, verify installation from
+PyPI in a clean environment before changing the short installation commands. A PyPI
+release is not required for ordinary notebook improvements or Git-based distribution.

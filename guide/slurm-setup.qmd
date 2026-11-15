@@ -123,6 +123,9 @@ Run:
 ```bash
 uv init --bare --python 3.12 --vcs none
 uv python pin 3.12
+```
+
+```bash
 uv add "jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main" ipykernel pandas
 ```
 
@@ -214,7 +217,7 @@ A **Jupyter notebook** is an `.ipynb` file combining explanations, Python code, 
 
 In the compute window, open **View → Extensions** and install Microsoft's **Python** and **Jupyter** extensions for **SSH: jaxcmr-compute**. Use your institution's supplied extensions if installation is restricted. Open the shared `memory-project` folder.
 
-Create a notebook through **View → Command Palette → Create: New Jupyter Notebook** and save it in `notebooks` with a filename ending in `.ipynb`. You can also download a JAXCMR notebook through its documentation page and transfer it to `notebooks`, or use **File → Save As** to copy an existing notebook. Obtain any separate inputs listed by its instructions; the templates' automatic example downloads run only in Colab.
+Create a notebook through **View → Command Palette → Create: New Jupyter Notebook** and save it in `notebooks` with a filename ending in `.ipynb`. You can also download a JAXCMR notebook through its documentation page and transfer it to `notebooks`, or use **File → Save As** to copy an existing notebook. JAXCMR templates prepare their supplied inputs from the installed package, including on compute nodes without internet access. Transfer your own input files separately and update the notebook's paths.
 
 Choose **Select Kernel → Select Another Kernel → Python Environments** and select Python 3.12 from the `.venv` inside your cluster `memory-project` folder. If a kernel is already selected, click its name to check or change it.
 

@@ -321,7 +321,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>A template is a maintained notebook for a complete procedure: selecting observations, performing a calculation and saving interpretable results. Its <strong>parameters</strong> cell specifies one run. Changing those settings lets you reuse the procedure for another selection, model or experiment, or prepare many independent jobs without maintaining a separate procedure for each one.</p>
-<p>These fourteen templates cover behavioral analysis, fitting, simulation, parameter exploration and pooled model comparison. Their defaults use the <strong>war-photo-recall experiment</strong> as a shared worked example. The saved figures and tables show that example; they are replaced when you execute a new run. Choose a task below, then download its notebook and required inputs.</p>
+<p>These fourteen templates cover behavioral analysis, fitting, simulation, parameter exploration and pooled model comparison. Their defaults use the <strong>war-photo-recall experiment</strong> as a shared worked example. The saved figures and tables show that example; they are replaced when you execute a new run. Choose a task below, then download its notebook. Its setup prepares the supplied inputs from the installed package; provide your own files when adapting it to your research.</p>
 <p>The procedures connect through saved products:</p>
 <ol type="1">
 <li><strong>Describe responses.</strong> Analysis templates read observed or simulated response files, establish a pattern and expose discrepancies.</li>
@@ -429,7 +429,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="download-the-shared-inputs" class="level2">
 <h2 class="anchored" data-anchor-id="download-the-shared-inputs">Download the shared inputs</h2>
-<p>Create a <code>data</code> folder in your working folder, with <code>fits</code> and <code>simulations</code> folders inside it. Save each file with the name shown below. Use <strong>Save Link As</strong> if your browser opens a JSON file instead of downloading it. No repository checkout is required.</p>
+<p>The templates automatically copy the inputs they need from the installed JAXCMR package into your project’s <code>data</code> folder. This works locally, on Slurm, and in Colab, without an additional download. Matching files are reused; conflicting files are preserved and reported. Custom input paths remain yours to provide.</p>
+<p>The links below are available if you want to inspect or download individual files yourself. Save them with the names shown; use <strong>Save Link As</strong> if your browser opens a JSON file. No repository checkout is required.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -463,7 +464,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5</code></td>
 </tr>
 <tr class="odd">
-<td><a href="templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json">CMR response provenance</a></td>
+<td><a href="templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json">CMR simulation settings</a></td>
 <td><code>data/simulations/Dupertuys2026_CMR_demo_best_of_3.json</code></td>
 </tr>
 <tr class="even">
@@ -471,7 +472,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5</code></td>
 </tr>
 <tr class="odd">
-<td><a href="templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json">Broader eCMR response provenance</a></td>
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json">Broader eCMR simulation settings</a></td>
 <td><code>data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json</code></td>
 </tr>
 <tr class="even">
@@ -479,21 +480,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><code>data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5</code></td>
 </tr>
 <tr class="odd">
-<td><a href="templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json">Source-only eCMR response provenance</a></td>
+<td><a href="templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json">Source-only eCMR simulation settings</a></td>
 <td><code>data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json</code></td>
 </tr>
 </tbody>
 </table>
-<p>The observation file and distance matrix are the existing JAXCMR inputs, with no extracts or recoding. The observation file also matches the ECMR3 project’s copy. All three fit records were prepared with the current library using the fitting procedure below, including an independent recalculation of their objectives. <a href="templates/data/fits/README.md">Fit provenance</a> records their sources and assumptions. The response examples were produced by the simulation template with ten repetitions per selected list and seed 1. Their JSON sidecars record the parameters, selections and simulation settings. They are saved inputs to analysis; analysis notebooks do not invoke fitting or simulation when an input is missing.</p>
-<p>Each chapter has <strong>Download notebook</strong> and <strong>Open in Colab</strong> links beside its contents list. Colab opens the current notebook on GitHub’s <code>main</code> branch. Code starts collapsed; expand a labeled block to see the calculation, or use the <strong>Code</strong> menu to show all code at once. Figures and tables remain visible.</p>
+<p>The observations and distance matrix describe the war-photo-recall experiment. The <a href="templates/data/fits/README.md">example-fit methods</a> identify the models, searches and assumptions behind the three supplied fit records. Response examples were generated with ten repetitions per selected list and seed 1. Their JSON files record the parameters, selections and simulation settings. These are saved inputs to analysis: analysis notebooks do not fit or simulate when an input is missing.</p>
+<p>Each template page has <strong>Download notebook</strong> and <strong>Open in Colab</strong> links beside its contents list. Colab opens the latest notebook on GitHub’s <code>main</code> branch. In a local preview, the download includes local edits while Colab still opens the last pushed version. Code is expanded by default. Collapse individual labeled blocks or use the <strong>Code</strong> menu to hide or show all code. Figures and tables remain visible.</p>
 </section>
 <section id="run-in-colab" class="level2">
 <h2 class="anchored" data-anchor-id="run-in-colab">Run in Colab</h2>
-<p>Choose <strong>Open in Colab</strong> beside a chapter’s contents list. Sign in to Google, then choose <strong>Runtime → Run all</strong>. For the notebook opened from this repository, Colab may ask you to confirm <strong>Run anyway</strong>. A standard CPU runtime is enough.</p>
-<p>The setup cell installs JAXCMR from GitHub’s <code>main</code> branch and downloads only that notebook’s supplied inputs, checking their hashes. This route works before the PyPI release. Matching files are reused when setup runs again; a conflicting file is preserved and reported. If you change a path to your own input, upload that file through Colab’s <strong>Files</strong> pane and keep the path consistent with the parameters cell.</p>
-<p>If Colab requests a restart after installation, choose <strong>Runtime → Restart session</strong>, then <strong>Run all</strong> again. The first raw cell contains Quarto page metadata; Colab labels it “Unsupported Cell Type”, but skips it when running the code cells.</p>
-<p>Results are written under the notebook’s <code>output_dir</code> (for SPC, <code>results/spc/spc.png</code>). In the <strong>Files</strong> pane, open that folder and use the file’s menu to <strong>Download</strong> the results. Download anything you want to keep before Colab deletes the temporary runtime. Use <strong>File → Download → Download .ipynb</strong> to retain an executed notebook, or <strong>Copy to Drive</strong> if you want a saved working copy. For local installation, use the <a href="./index.html#installation">homepage command</a>.</p>
-<p>Colab links and setup follow <code>main</code> as it changes. The rendered chapter and download are refreshed when the book is rebuilt. Analysis notebooks fetch saved model responses; they do not fit or simulate.</p>
+<p>Use <strong>Open in Colab</strong> on a template page, then save your own copy before editing. The <a href="./colab-setup.html">Colab setup guide</a> explains running cells, using your own files and keeping outputs between sessions.</p>
+<p>Keep the template’s short installation cell and input-preparation call. The cell installs JAXCMR from GitHub’s <code>main</code> branch; input preparation copies selected examples from that installation. Update the installation when you need newer library code or examples. Custom input files remain yours to provide. Colab labels the first raw cell “Unsupported Cell Type”; it contains website metadata and is skipped during execution.</p>
 </section>
 <section id="from-a-template-to-a-run" class="level2">
 <h2 class="anchored" data-anchor-id="from-a-template-to-a-run">From a template to a run</h2>
@@ -533,7 +531,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p>The notebook reports the chosen directory. Running from <code>templates/</code> or a nested prepared-job directory inside a checkout uses the same project inputs and outputs. When the kernel starts outside the project, supply <code>project_root</code> explicitly. The root belongs to your research project; it is not the installed JAXCMR package directory.</p>
 <p>Absolute paths remain absolute, and <code>~</code> expands to your home directory. On Windows, <code>"C:/Users/Alex/my-study"</code> or <code>r"C:\Users\Alex\my-study"</code> works; avoid a partially specified drive path such as <code>"C:my-study"</code>. UNC paths are supported on Windows. Relative defaults such as <code>"data/Dupertuys2026.h5"</code> work on both platforms. An absolute path from another computer must be updated there.</p>
-<p>Colab downloads recognized relative example names into this same base. Custom files remain your responsibility; selecting an absolute custom path does not download an example over it. Path resolution happens after parameter injection and does not change the process’s working directory.</p>
+<p>The input helper copies recognized relative example names into this same base on every platform. Custom files remain your responsibility; selecting an absolute custom path does not download an example over it. Path resolution happens after parameter injection and does not change the process’s working directory.</p>
 </section>
 <section id="saved-products-and-regeneration" class="level3">
 <h3 class="anchored" data-anchor-id="saved-products-and-regeneration">Saved products and regeneration</h3>
@@ -566,7 +564,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Give independent jobs distinct names or directories for every product they write. <code>redo_fits=False</code> reuses a matching existing fit; a missing fit is still computed and an incompatible record is reported. <code>redo_sims=False</code> permits matching response reuse; when predictions are requested, missing or stale responses are regenerated. Fitting is fit-only when both <code>redo_sims</code> and <code>redo_figures</code> are false. <code>figure_str=""</code> disables figure saving, but does not disable summary CSVs or provenance capture.</p>
+<p>Give independent jobs distinct names or directories for every product they write. <code>redo_fits=False</code> reuses a matching existing fit; a missing fit is still computed and an incompatible record is reported. <code>redo_sims=False</code> permits matching response reuse; when predictions are requested, missing or stale responses are regenerated. Fitting is fit-only when both <code>redo_sims</code> and <code>redo_figures</code> are false. <code>figure_str=""</code> disables figure saving, but does not disable summary CSVs.</p>
+<p>Reuse checks compare saved settings and, for fits, independently recalculate the objective. They do not detect edits to data or code in place. After such changes, set <code>redo_fits=True</code> and/or <code>redo_sims=True</code> for the affected calculations, or use a new output location. A matching path is not proof of matching file contents.</p>
 <p>Settings are ordinary values: paths, numbers, lists, dictionaries and import names. Imports, trial masks and model construction happen afterward, using the effective values. The fitting template can select a model and its components, objective, fitted parameters, participant subset and displayed analyses. Analysis templates expose their trial selections and measure-specific settings. Their inputs are saved response files; preparing or running an analysis does not generate missing simulations.</p>
 <p>Ordinary imports occupy their own cell after the optional Colab bootstrap. Derived paths, loading and calculations follow the injected parameters. <code>figure_str=""</code> displays figures without saving them; a nonempty name saves under <code>figure_dir</code>. The defaults provide explicit names for the worked examples. Subject-level CSV summaries use <code>output_dir</code>.</p>
 <p>The analysis controls include repeated-item capacity (<code>size</code>), stopping <code>mode</code>, condition queries, category fields and labels, and plot limits. Category recall also accepts configured paired contrasts and contrasts of contrasts. Select these for the question being asked; the defaults leave the optional tests empty.</p>
@@ -588,14 +587,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Then run the same command on either platform:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>quarto render templates/pnr.ipynb --execute -P query_recall_position:2 -P output_dir:results/pnr-third --output pnr-third.html</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Quarto normally executes from the notebook’s directory; the template’s root lookup handles that. An injected <code>project_root</code> also works for notebooks prepared outside the project. The book build itself does not execute notebooks.</p>
-<p>Output positions are zero-based, so <code>2</code> means the third response. Use <code>--execute-params settings.yml</code> for dictionaries or longer selections. The explicit <code>--execute</code> runs the notebook; rendering an <code>.ipynb</code> without it normally displays its stored results. The book itself displays stored examples.</p>
+<p>Quarto normally executes from the notebook’s directory; the template’s root lookup handles that. An injected <code>project_root</code> also works for notebooks prepared outside the project. The website build does not execute notebooks.</p>
+<p>Output positions are zero-based, so <code>2</code> means the third response. Use <code>--execute-params settings.yml</code> for dictionaries or longer selections. The explicit <code>--execute</code> runs the notebook; rendering an <code>.ipynb</code> without it normally displays its stored results. The website displays saved example outputs.</p>
 </section>
 <section id="prepare-independent-jobs-with-papermill" class="level3">
 <h3 class="anchored" data-anchor-id="prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</h3>
 <p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. From the repository root, the following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
-<div id="265376f8" class="cell">
-<details class="code-fold">
+<div id="60f3b0b5" class="cell">
+<details open="" class="code-fold">
 <summary>Prepare two fitting jobs without running them</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
@@ -666,7 +665,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td><a href="./templates/model_comparison.html">Comparing pooled model fits</a></td>
 <td><a href="downloads/model_comparison.ipynb">Download</a></td>
-<td>Observations + fit records + saved responses and provenance.</td>
+<td>Observations + fit records + saved responses and simulation settings.</td>
 </tr>
 </tbody>
 </table>
@@ -766,7 +765,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="adapting-a-procedure" class="level2">
 <h2 class="anchored" data-anchor-id="adapting-a-procedure">Adapting a procedure</h2>
-<p>Start by changing the settings cell: input paths, trial selection, parameters and output folder. Check the meanings of item codes, participant identifiers, categories and response padding before interpreting results. Retain the same selection for comparisons that are intended to address the same observations.</p>
+<p>Each published notebook explains its required inputs, common settings, selection checks, calculation and saved outputs. Start with its settings cell, then run in order. You can read the explanatory text with code folded on the website or beside the executable cells in Jupyter and Colab.</p>
+<p>In the analysis templates, setting <code>data_path</code> overrides <code>data_paths</code> and selects the single-file comparison layout. Leaving <code>data_path=None</code> uses the dataset-list layout, even when <code>data_paths</code> contains one file. Category-specific curves have additional category panels; each notebook explains its layout and label settings.</p>
+<p>Adapt the settings cell: input paths, trial selection, parameters and output folder. Check the meanings of item codes, participant identifiers, categories and response padding before interpreting results. Retain the same selection for comparisons that are intended to address the same observations.</p>
 <p>The <a href="https://github.com/githubpsyche/jaxcmr/tree/main/templates">remaining repository templates</a> are research examples with varying dependencies and maintenance status. They remain at their original paths and are outside this prepared set.</p>
 
 

@@ -143,3 +143,24 @@ def test_repetition_wrappers_keep_parameter_sweep_labels(plot):
     axis = plot([data, data], [mask, mask], max_lag=3, min_lag=4, size=2, labels=["0.0", "1.0"])
     assert {"0.0", "1.0"} <= set(axis.get_legend_handles_labels()[1])
     assert any(np.isfinite(np.asarray(line.get_ydata(), dtype=float)).any() for line in axis.lines)
+
+
+@pytest.mark.parametrize("enrichment", [False, True])
+@pytest.mark.parametrize("conditioned", [False, True])
+def test_conditional_plots_preserve_multiple_dataset_labels(enrichment, conditioned):
+    data = make_dataset(
+        jnp.array([[2, 1, 3, 0], [3, 2, 1, 0]]),
+        jnp.array([[1, 2, 3, 4]] * 2),
+    )
+    data["condition"] = jnp.array([[-1, 0, 1, 0]] * 2)
+    masks = [jnp.array([True, False]), jnp.array([False, True])]
+    labels = ["A zero", "A one", "B zero", "B one"] if conditioned else ["A", "B"]
+    options = {"source_field": "condition", "source_values": [0, 1]} if conditioned else {}
+    if enrichment:
+        plot = target_enrichment_crp.plot_target_enrichment_crp
+        options.update(target_field="condition", target_value=-1, target_values=[-1, 0, 1])
+    else:
+        plot = conditional_crp.plot_crp
+    axis = plot([data, data], masks, max_lag=3, labels=labels, **options)
+    assert axis.get_legend_handles_labels()[1] == labels
+    plt.close(axis.figure)

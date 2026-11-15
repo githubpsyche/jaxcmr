@@ -336,7 +336,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In <code>jaxcmr.loss.transform_sequence_likelihood</code>, <code>MemorySearchLikelihoodLoss</code> accepts this callback as <code>mask_likelihoods</code>. It translates recorded study positions to within-list item codes before calling the mask. The existing <code>mask_trailing_terminations()</code> returns <code>recalls != 0</code>.</p>
 <p>The convenient <code>ExcludeTerminationLikelihoodLoss</code> binds that mask and provides the standard three-argument <code>LossFn</code> constructor used by fitters. With the no-stop model used here, the objective scores the recorded item sequence without scoring its length. Zero-coded slots do not contribute. An excluded event does not erase the preceding history that conditions later predictions. A first-recall mask, for example, removes that event’s score while later events still follow it.</p>
 <div id="locate-project-inputs" class="cell">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
@@ -349,7 +349,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="07b50152" class="cell" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Evaluate two parameter columns through the loss interface</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -403,7 +403,7 @@ Negative log likelihoods: [13.62458774 13.05021919]</code></pre>
 <p>Only one mixed list is scored here to expose the interface. The first column uses the supplied fit’s parameter values; the second changes encoding drift. The returned values are not the objectives from fitting the whole experiment.</p>
 <p>The underlying likelihood also exposes event probabilities. Setting masked probabilities to one makes their contribution <code>-log(1) = 0</code>.</p>
 <div id="14b25d68" class="cell" data-execution_count="2">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Connect the event probabilities and mask to the returned NLL</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> log_likelihood</span>
 <span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> (</span>
@@ -447,7 +447,7 @@ NLL from the loss call: 13.62458774145214</code></pre>
 <span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> PreparedLossFn: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The returned <code>PreparedLossFn</code> takes <code>(base_params, free_param_names, x)</code> and returns the same candidate-wise objectives. The selected trials are already bound, including their order and multiplicity. Each prepared callable must retain its own selection. <code>BatchPreparableLossFn</code> extends this to several selections so implementations can share compatible preparation work.</p>
 <div id="9c2bc750" class="cell" data-execution_count="3">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Evaluate the same candidates with the selected trials already bound</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>prepared <span class="op">=</span> loss.prepare_trials(trial_indices)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>prepared(base_params, free_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

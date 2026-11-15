@@ -340,9 +340,9 @@ window.Quarto = {
 <p><code>FitResult</code> provides parameter roles, objective values and row identifiers. Comparison helpers additionally use a <code>name</code>. The templates record the data selection, model configuration and objective needed to establish comparability.</p>
 <p>Before comparing likelihood scores, establish that the records concern the same observations, included events and likelihood definition. Check whether parameters were pooled or independently fitted and how many values were estimated. A lower discrepancy loss cannot be substituted for NLL merely because both appear in a field named <code>fitness</code>.</p>
 <p>The supplied source-only and broader eCMR records are pooled fits to the same all-condition selection with the same termination-excluded objective and stopping policy. Their emotional modulation differs in whether it also acts on temporal context. Each has ten free parameters and one pooled fit row.</p>
-<p>These examples were refitted under the current library. Both learn before context updating, fix emotional encoding drift at 1 and tie emotional recall drift to temporal recall drift. They omit the legacy <code>emotion_drift_rate</code>. Historical fits also require their original context equations and parameter interpretations; a shared import path alone does not identify that behavior.</p>
+<p>Both supplied eCMR fits learn before context updating, fix emotional encoding drift at 1 and tie emotional recall drift to temporal recall drift. They omit the legacy <code>emotion_drift_rate</code>. Historical fits also require their original context equations and parameter interpretations; a shared import path alone does not identify that behavior.</p>
 <div id="locate-project-inputs" class="cell">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-label="2"></a></span>
@@ -355,7 +355,7 @@ window.Quarto = {
 </details>
 </div>
 <div id="4c5af45b" class="cell" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Read the named pooled records and their comparison basis</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -388,7 +388,7 @@ Recorded loss: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikel
 <p><span class="math display">\[\mathrm{AIC} = 2k + 2\,\mathrm{NLL}.\]</span></p>
 <p>These saved fits already contain NLL and can be supplied directly. A pooled fit incurs one parameter penalty. Independently fitted participant rows incur one penalty each, and their identifiers must match across models.</p>
 <div id="e8fbb429" class="cell" data-execution_count="2">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Calculate AIC directly from the saved NLL records</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> calculate_aic</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a></span>
@@ -423,7 +423,7 @@ Recorded loss: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikel
 </div>
 </div>
 </div>
-<p>The new source-only and broader fits have NLLs 7169.426 and 7164.358, respectively. Their AIC difference is 10.137, favoring broader eCMR. The within-model differences between the two three-restart seed sets are 0.005 and 0.049 NLL units. The ranking is the same in both seed sets.</p>
+<p>The supplied source-only and broader fits have NLLs 7169.426 and 7164.358, respectively. Their AIC difference is 10.137, favoring broader eCMR. The within-model differences between the two three-restart seed sets are 0.005 and 0.049 NLL units. The ranking is the same in both seed sets.</p>
 <p>The result is a library-produced table. Lower AIC is preferred within this comparison; it does not establish a unique explanation of the experiment. Each model contributes one pooled parameter set, so <code>len(free)</code> is the parameter count for that row. <code>calculate_aic_weights()</code> uses the same NLL convention and parameter penalties as <code>calculate_aic()</code>.</p>
 <p>Participant-wise comparisons align rows by subject identifier and require finite scores for the same participant set. A pooled row is not a sample of independent participant estimates. Mean-difference helpers return the mean and interval half-width; median-difference helpers return the median and the actual bootstrap lower and upper endpoints.</p>
 <p><code>calculate_bic_scores(results, n_obs)</code> and the AICc helpers require positive observation counts for each fitted parameter row. Counts follow the first record’s original participant order; the library aligns them with the scores. Specify the scientific counting unit and selection explicitly. A scalar count is valid only for one fitted row; AICc requires each count to exceed <code>k + 1</code>.</p>

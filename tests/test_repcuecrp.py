@@ -3,8 +3,10 @@ import matplotlib
 matplotlib.use("Agg")
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from scipy import stats
 from jaxcmr.analyses.repcuecrp import (
+    tabulate_trial,
     RepCueCRPTestResult,
     _access_band,
     _access_diagonal,
@@ -181,7 +183,10 @@ def test_first_second_access_band_bias_exact_difference():
     assert result.label_name == "Offsets"
     assert result.lags[0] == "-1,+1"
     assert np.isclose(result.mean_diffs[0], 0.4666666666666667, atol=1e-10)
-    assert result.t_stats[0] > 0
+    # Differences .5,.5,.4 have mean 7/15 and SEM 1/30: t=14.
+    # With df=2, the two-sided p-value is 1 - t/sqrt(t**2 + 2).
+    assert result.t_stats[0] == pytest.approx(14)
+    assert result.t_pvals[0] == pytest.approx(1 - 14 / np.sqrt(198))
 
 
 def test_access_wrapper_lines_match_repetition_index_argument():
@@ -234,9 +239,6 @@ def test_access_wrapper_uses_dataset_labels_for_parameter_sweeps():
     assert "1.0" in labels
 
 
-import pytest
-
-
 @pytest.mark.parametrize("view", ["lag", "offset"])
 def test_cue_surface_draws_selected_repetition_values(view):
     from jaxcmr.analyses.repcuecrp import plot_rep_cue_crp_surface, plot_rep_cue_offset_surface
@@ -253,9 +255,6 @@ def test_cue_surface_draws_selected_repetition_values(view):
     assert np.isfinite(expected).any()
     np.testing.assert_allclose(axis.images[0].get_array().filled(np.nan), expected, equal_nan=True)
     assert axis.get_xlabel() and axis.get_ylabel()
-
-
-from jaxcmr.analyses.repcuecrp import tabulate_trial
 
 
 def test_non_access_transition_counts_ordinary_transition_lag():

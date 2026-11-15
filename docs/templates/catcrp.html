@@ -282,9 +282,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#settings" id="toc-settings" class="nav-link active" data-scroll-target="#settings">Settings</a></li>
-  <li><a href="#build-the-lookup-from-the-selected-observations" id="toc-build-the-lookup-from-the-selected-observations" class="nav-link" data-scroll-target="#build-the-lookup-from-the-selected-observations">Build the lookup from the selected observations</a></li>
-  <li><a href="#calculate-and-plot" id="toc-calculate-and-plot" class="nav-link" data-scroll-target="#calculate-and-plot">Calculate and plot</a></li>
+  <li><a href="#configure-this-run" id="toc-configure-this-run" class="nav-link active" data-scroll-target="#configure-this-run">Configure this run</a></li>
+  <li><a href="#prepare-the-environment-and-inputs" id="toc-prepare-the-environment-and-inputs" class="nav-link" data-scroll-target="#prepare-the-environment-and-inputs">Prepare the environment and inputs</a></li>
+  <li><a href="#build-the-lookup-from-the-selected-observations" id="toc-build-the-lookup-from-the-selected-observations" class="nav-link" data-scroll-target="#build-the-lookup-from-the-selected-observations">Build the lookup from the selected observations</a>
+  <ul class="collapse">
+  <li><a href="#check-the-category-lookup" id="toc-check-the-category-lookup" class="nav-link" data-scroll-target="#check-the-category-lookup">Check the category lookup</a></li>
+  </ul></li>
+  <li><a href="#interpret-within--and-between-category-transitions" id="toc-interpret-within--and-between-category-transitions" class="nav-link" data-scroll-target="#interpret-within--and-between-category-transitions">Interpret within- and between-category transitions</a></li>
+  <li><a href="#reuse-the-results" id="toc-reuse-the-results" class="nav-link" data-scroll-target="#reuse-the-results">Reuse the results</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/catcrp.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/templates/catcrp.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
     </div>
@@ -310,165 +315,133 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Calculate transitions within and between item categories. Build a category lookup for the selected materials, count observed transitions relative to available opportunities and save the figure.</p>
-<section id="settings" class="level2">
-<h2 class="anchored" data-anchor-id="settings">Settings</h2>
+<p>Use this procedure to ask whether successive recalls tend to stay within an item category or switch between categories, accounting for the alternatives available. It reads response files with global item IDs and category information, then saves within/between-category curves.</p>
+<p>This concerns recall organization. The category recall-rate procedure instead measures how much of each category was recalled. Those questions can yield different results.</p>
+<p>For input conventions, see the <a href="https://githubpsyche.github.io/jaxcmr/overview/data.html">data guide</a>.</p>
+<section id="configure-this-run" class="level2">
+<h2 class="anchored" data-anchor-id="configure-this-run">Configure this run</h2>
+<p>Choose <code>category_field</code> for per-position category codes and select the lists to analyze. The default builds the item-category lookup from those observations. An optional <code>category_features_path</code> supplies a global lookup indexed by item ID minus one; <code>feature_column</code> selects the category column in a two-dimensional file.</p>
+<p>Selected observations must assign each global item identity a consistent category. Mixed-category lists provide opportunities for both within-category and between-category transitions.</p>
+<p>Keep all editable settings in this tagged cell. Later cells derive paths and selections after any Papermill overrides.</p>
 <div id="a390cf39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:55.186016Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:55.185924Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:55.190248Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:55.189780Z&quot;}}" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>1 — Set the parameters for this run</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Working directory (None discovers the enclosing Git project).</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>project_root <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a><span class="co"># Response files</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>data_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># A supplied single path takes precedence over data_paths.</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>data_paths <span class="op">=</span> [</span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"data/Dupertuys2026.h5"</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>    <span class="st">"data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5"</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>]</span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="st">"CMR"</span>, <span class="st">"Source-only eCMR"</span>, <span class="st">"Broader eCMR"</span>]</span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a><span class="co"># Saved results</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>output_dir <span class="op">=</span> <span class="st">"results/catcrp"</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a><span class="co"># Analysis and uncertainty settings</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>plot_seed <span class="op">=</span> <span class="dv">0</span>  <span class="co"># NumPy seed for bootstrap displays.</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>max_subjects <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a>figure_str <span class="op">=</span> <span class="st">"category_crp"</span>  <span class="co"># Empty displays the figure without saving it.</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a><span class="co"># Condition selection</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a>trial_query <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>]</span>
-<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>labels <span class="op">=</span> [<span class="st">"Mixed lists"</span>]</span>
-<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>selection_label <span class="op">=</span> <span class="st">"Mixed lists"</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>category_field <span class="op">=</span> <span class="st">"valence"</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>category_features_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># Optional lookup indexed by item ID minus one.</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>feature_column <span class="op">=</span> <span class="dv">6</span>  <span class="co"># Used for a two-dimensional category feature file.</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-label="37"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-label="38"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-label="39"></a><span class="co"># Figure appearance</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-label="40"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-label="41"></a>ylim <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-label="42"></a>yticks <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-label="43"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-label="44"></a>complete_lists_only <span class="op">=</span> <span class="va">False</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-label="45"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-label="46"></a>contrast_name <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-label="47"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-label="48"></a>feature_label <span class="op">=</span> <span class="st">"Relation to preceding recall"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Inputs and saved results — change these for your project.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>project_root <span class="op">=</span> <span class="va">None</span>  <span class="co"># Explicit folder, enclosing Git root, or current directory.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>data_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># A supplied single path takes precedence over data_paths.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>data_paths <span class="op">=</span> [</span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>    <span class="st">"data/Dupertuys2026.h5"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    <span class="st">"data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="st">"CMR"</span>, <span class="st">"Source-only eCMR"</span>, <span class="st">"Broader eCMR"</span>]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>output_dir <span class="op">=</span> <span class="st">"results/catcrp"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a><span class="co"># Observation selection — queries use fields in your dataset.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>trial_query <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>]</span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>labels <span class="op">=</span> [<span class="st">"Mixed lists"</span>]</span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>selection_label <span class="op">=</span> <span class="st">"Mixed lists"</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>max_subjects <span class="op">=</span> <span class="dv">0</span>  <span class="co"># Zero keeps all participants; a positive value selects the first IDs.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>complete_lists_only <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a><span class="co"># Scientific settings — choose these for the question you are asking.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a>category_field <span class="op">=</span> <span class="st">"valence"</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>category_features_path <span class="op">=</span> <span class="va">None</span>  <span class="co"># Optional lookup indexed by item ID minus one.</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-label="24"></a>feature_column <span class="op">=</span> <span class="dv">6</span>  <span class="co"># Used for a two-dimensional category feature file.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-label="25"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-label="26"></a><span class="co"># Uncertainty and optional behavioral summaries.</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-label="27"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-label="28"></a>plot_seed <span class="op">=</span> <span class="dv">0</span>  <span class="co"># NumPy seed for bootstrap displays.</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-label="29"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-label="30"></a><span class="co"># Output overrides and appearance — None uses the default location or style.</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-label="31"></a>figure_dir <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-label="32"></a>figure_str <span class="op">=</span> <span class="st">"category_crp"</span>  <span class="co"># Empty displays the figure without saving it.</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-label="33"></a>contrast_name <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-label="34"></a>feature_label <span class="op">=</span> <span class="st">"Relation to preceding recall"</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-label="35"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-label="36"></a>ylim <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-label="37"></a>yticks <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="8baa0066" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:55.191656Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:55.191576Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:55.193712Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:55.193298Z&quot;}}" data-execution_count="2">
-<details class="code-fold">
+</section>
+<section id="prepare-the-environment-and-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-the-environment-and-inputs">Prepare the environment and inputs</h2>
+<p>Run the following setup cells once, then continue in order. The short installation cell runs only in Colab; local and Slurm runs use the environment you selected during Setup.</p>
+<p><code>project_root</code> anchors relative paths. When it is unset, Colab uses the current directory; elsewhere the notebook uses the enclosing Git project if present, or the current directory. Check the printed location. <code>fetch_inputs</code> copies requested bundled examples there, reuses matching files, and refuses to overwrite conflicting files. Custom input paths remain your responsibility.</p>
+<div id="8baa0066" class="cell">
+<details open="" class="code-fold">
 <summary>2 — Prepare the Colab environment</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
-<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
-<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    revision <span class="op">=</span> <span class="st">"main"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    subprocess.check_call(</span>
-<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        [</span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>            sys.executable,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>            <span class="st">"-m"</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a>            <span class="st">"pip"</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>            <span class="st">"install"</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>            <span class="st">"--upgrade"</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>            <span class="ss">f"jaxcmr[colab] @ git+https://github.com/githubpsyche/jaxcmr.git@</span><span class="sc">{</span>revision<span class="sc">}</span><span class="ss">"</span>,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>        ]</span>
-<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>    )</span>
-<span id="cb2-17"><a href="#cb2-17" aria-label="17"></a>    <span class="im">from</span> jaxcmr.colab <span class="im">import</span> fetch_inputs</span>
-<span id="cb2-18"><a href="#cb2-18" aria-label="18"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-label="19"></a>    fetch_inputs(</span>
-<span id="cb2-20"><a href="#cb2-20" aria-label="20"></a>        ([data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-label="21"></a>        <span class="op">+</span> ([category_features_path] <span class="cf">if</span> category_features_path <span class="cf">else</span> []),</span>
-<span id="cb2-22"><a href="#cb2-22" aria-label="22"></a>        revision<span class="op">=</span>revision, base_dir<span class="op">=</span>project_root,</span>
-<span id="cb2-23"><a href="#cb2-23" aria-label="23"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="op">%</span>pip install <span class="op">--</span>upgrade <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="77d7dad7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:55.194806Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:55.194743Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.224491Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.223973Z&quot;}}" data-execution_count="3">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>3 — Import packages</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> sys</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.analyses.distcrp <span class="im">import</span> plot_cat_crp</span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_root, resolve_project_path, generate_trial_mask, load_data, save_figure</span>
 <span id="cb3-8"><a href="#cb3-8" aria-label="8"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.analyses.distcrp <span class="im">import</span> plot_cat_crp</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path, generate_trial_mask, load_data, save_figure</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> fetch_inputs</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> select_conditions</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> comparison_panels</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
 <section id="build-the-lookup-from-the-selected-observations" class="level2">
 <h2 class="anchored" data-anchor-id="build-the-lookup-from-the-selected-observations">Build the lookup from the selected observations</h2>
+<p><code>select_conditions</code> returns the masks and participant coverage without altering your data. Check the printed list and participant counts before interpreting the results. Queries are Python expressions evaluated with the dataset named <code>data</code>; replace the supplied condition codes with those in your data. <code>trial_query</code> overrides the list of <code>trial_queries</code> and uses <code>selection_label</code>.</p>
+<p>With <code>data_path</code> set, the notebook reads that file and compares conditions. With <code>data_path=None</code>, <code>data_paths</code> and <code>data_labels</code> produce one panel per condition comparing datasets—even if the list contains just one file. Labels must correspond to the supplied selections and files.</p>
 <div id="81d6ee68" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.226003Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.225885Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.228147Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.227808Z&quot;}}" data-execution_count="4">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>4 — Resolve input paths, conditions and output settings</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="cf">elif</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>    root_path <span class="op">=</span> Path.cwd()</span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="cf">else</span>:</span>
-<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>    <span class="cf">try</span>:</span>
-<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>        root_path <span class="op">=</span> Path(find_project_root())</span>
-<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>    <span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
-<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>        root_path <span class="op">=</span> Path.cwd()</span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>np.random.seed(plot_seed)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>figure_dir <span class="op">=</span> resolve_project_path(figure_dir, root_path) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
-<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>queries <span class="op">=</span> trial_queries <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [trial_query]</span>
-<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>condition_labels <span class="op">=</span> labels <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [selection_label]</span>
-<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>input_paths <span class="op">=</span> [data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths</span>
-<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>input_paths <span class="op">=</span> [resolve_project_path(path, root_path) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span>
-<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>input_labels <span class="op">=</span> [selection_label] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_labels</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a><span class="cf">if</span> <span class="bu">len</span>(queries) <span class="op">!=</span> <span class="bu">len</span>(condition_labels) <span class="kw">or</span> <span class="bu">len</span>(input_paths) <span class="op">!=</span> <span class="bu">len</span>(input_labels):</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply a label for each input and each condition query."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>root_path <span class="op">=</span> resolve_project_root(project_root)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>fetch_inputs(([data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths) <span class="op">+</span> ([category_features_path] <span class="cf">if</span> category_features_path <span class="cf">else</span> []), base_dir<span class="op">=</span>root_path)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>np.random.seed(plot_seed)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>figure_dir <span class="op">=</span> resolve_project_path(figure_dir, root_path) <span class="cf">if</span> figure_dir <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> output_dir</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>queries <span class="op">=</span> trial_queries <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [trial_query]</span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>condition_labels <span class="op">=</span> labels <span class="cf">if</span> trial_query <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> [selection_label]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>input_paths <span class="op">=</span> [data_path] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_paths</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>input_paths <span class="op">=</span> [resolve_project_path(path, root_path) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>input_labels <span class="op">=</span> [selection_label] <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> data_labels</span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a><span class="cf">if</span> <span class="bu">len</span>(queries) <span class="op">!=</span> <span class="bu">len</span>(condition_labels) <span class="kw">or</span> <span class="bu">len</span>(input_paths) <span class="op">!=</span> <span class="bu">len</span>(input_labels):</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Supply a label for each input and each condition query."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="3c88b091" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.229447Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.229381Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.260764Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.260245Z&quot;}}" data-execution_count="5">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>5 — Load the supplied response datasets</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>datasets <span class="op">=</span> [load_data(<span class="bu">str</span>(path), max_subjects<span class="op">=</span>max_subjects) <span class="cf">for</span> path <span class="kw">in</span> input_paths]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="25934f23" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.262124Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.262056Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.352072Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.351551Z&quot;}}" data-execution_count="6">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>6 — Select observations and report participant counts</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>masks_by_dataset <span class="op">=</span> []</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="cf">for</span> dataset, dataset_label <span class="kw">in</span> <span class="bu">zip</span>(datasets, input_labels):</span>
-<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    condition_masks <span class="op">=</span> [generate_trial_mask(dataset, query) <span class="cf">for</span> query <span class="kw">in</span> queries]</span>
-<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    <span class="cf">if</span> complete_lists_only:</span>
-<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>        condition_masks <span class="op">=</span> [</span>
-<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>            condition_mask <span class="op">&amp;</span> jnp.<span class="bu">all</span>(dataset[<span class="st">"pres_itemnos"</span>] <span class="op">&gt;</span> <span class="dv">0</span>, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>            <span class="cf">for</span> condition_mask <span class="kw">in</span> condition_masks</span>
-<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>        ]</span>
-<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>    masks_by_dataset.append(condition_masks)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>    <span class="cf">for</span> condition_label, condition_mask <span class="kw">in</span> <span class="bu">zip</span>(condition_labels, condition_masks):</span>
-<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>        participant_ids <span class="op">=</span> np.unique(</span>
-<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>            np.asarray(dataset[<span class="st">"subject"</span>]).ravel()[np.asarray(condition_mask)]</span>
-<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>        )</span>
-<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a>        <span class="bu">print</span>(</span>
-<span id="cb6-15"><a href="#cb6-15" aria-label="15"></a>            <span class="ss">f"</span><span class="sc">{</span>dataset_label<span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span>condition_label<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">int</span>(condition_mask.<span class="bu">sum</span>())<span class="sc">}</span><span class="ss"> lists, </span><span class="sc">{</span><span class="bu">len</span>(participant_ids)<span class="sc">}</span><span class="ss"> participants"</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-label="16"></a>        )</span>
-<span id="cb6-17"><a href="#cb6-17" aria-label="17"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="bu">len</span>(participant_ids):</span>
-<span id="cb6-18"><a href="#cb6-18" aria-label="18"></a>            <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
-<span id="cb6-19"><a href="#cb6-19" aria-label="19"></a>                <span class="st">"The selected input and condition contain no eligible lists."</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-label="20"></a>            )</span>
-<span id="cb6-21"><a href="#cb6-21" aria-label="21"></a>data, trial_masks <span class="op">=</span> datasets[<span class="dv">0</span>], masks_by_dataset[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>selected_conditions <span class="op">=</span> [</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>    select_conditions(dataset, queries, complete_lists_only<span class="op">=</span>complete_lists_only)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    <span class="cf">for</span> dataset <span class="kw">in</span> datasets</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>masks_by_dataset <span class="op">=</span> [[condition.mask <span class="cf">for</span> condition <span class="kw">in</span> group] <span class="cf">for</span> group <span class="kw">in</span> selected_conditions]</span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a><span class="cf">for</span> dataset_label, group <span class="kw">in</span> <span class="bu">zip</span>(input_labels, selected_conditions):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>    <span class="cf">for</span> condition_label, condition <span class="kw">in</span> <span class="bu">zip</span>(condition_labels, group):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a>        <span class="bu">print</span>(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a>            <span class="ss">f"</span><span class="sc">{</span>dataset_label<span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span>condition_label<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>condition<span class="sc">.</span>trial_count<span class="sc">}</span><span class="ss"> lists, "</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>            <span class="ss">f"</span><span class="sc">{</span>condition<span class="sc">.</span>participant_count<span class="sc">}</span><span class="ss"> participants"</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>        )</span>
+<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>data, trial_masks <span class="op">=</span> datasets[<span class="dv">0</span>], masks_by_dataset[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Observed / Mixed lists: 246 lists, 123 participants
@@ -477,8 +450,11 @@ Source-only eCMR / Mixed lists: 2460 lists, 123 participants
 Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </div>
 </div>
+<section id="check-the-category-lookup" class="level3">
+<h3 class="anchored" data-anchor-id="check-the-category-lookup">Check the category lookup</h3>
+<p>The following cells collect categories from valid positions in the selected lists and check consistency by global item ID. If an external lookup is supplied, its rows must describe the same identities. An item’s category cannot change across the selected observations under this lookup model.</p>
 <div id="fc5d9612" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.353465Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.353388Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.355166Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.354831Z&quot;}}" data-execution_count="7">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>7 — Load optional item-category features</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>category_features <span class="op">=</span> np.load(resolve_project_path(category_features_path, root_path)) <span class="cf">if</span> category_features_path <span class="cf">else</span> <span class="va">None</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-label="2"></a><span class="cf">if</span> category_features <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> category_features.ndim <span class="op">==</span> <span class="dv">2</span>:</span>
@@ -486,7 +462,7 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </details>
 </div>
 <div id="5726c165" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.356706Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.356621Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.359637Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.359204Z&quot;}}" data-execution_count="8">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>8 — Collect categories for selected valid study items</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>ids_blocks, category_blocks <span class="op">=</span> [], []</span>
 <span id="cb9-2"><a href="#cb9-2" aria-label="2"></a><span class="cf">for</span> dataset, masks <span class="kw">in</span> <span class="bu">zip</span>(datasets, masks_by_dataset):</span>
@@ -504,7 +480,7 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </details>
 </div>
 <div id="4ea9a3d0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.360733Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.360668Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.366379Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.366061Z&quot;}}" data-execution_count="9">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>9 — Build a consistent item-category lookup</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>ids <span class="op">=</span> np.concatenate(ids_blocks)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-label="2"></a>categories <span class="op">=</span> np.concatenate(category_blocks)</span>
@@ -536,35 +512,23 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </div>
 </div>
 </section>
-<section id="calculate-and-plot" class="level2">
-<h2 class="anchored" data-anchor-id="calculate-and-plot">Calculate and plot</h2>
+</section>
+<section id="interpret-within--and-between-category-transitions" class="level2">
+<h2 class="anchored" data-anchor-id="interpret-within--and-between-category-transitions">Interpret within- and between-category transitions</h2>
+<p>The category lookup produces a distance of zero for same-category item pairs and one for different-category pairs. The analysis divides actual transitions by available opportunities in each relation, then summarizes participant curves with bootstrap intervals.</p>
+<p>A raw excess of within-category transitions can follow from the available composition of the list. Opportunity correction is therefore essential. If a selection has no between-category alternatives, that estimate is undefined rather than zero.</p>
 <div id="0a0f7074" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.367537Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.367471Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:56.369459Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:56.369088Z&quot;}}" data-execution_count="10">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>10 — Prepare the condition and dataset comparison panels</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>panels <span class="op">=</span> []</span>
-<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>    panels.append(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>        {</span>
-<span id="cb12-5"><a href="#cb12-5" aria-label="5"></a>            <span class="st">"datasets"</span>: [data] <span class="op">*</span> <span class="bu">len</span>(queries),</span>
-<span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>            <span class="st">"trial_masks"</span>: trial_masks,</span>
-<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>            <span class="st">"labels"</span>: condition_labels,</span>
-<span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>            <span class="st">"title"</span>: selection_label,</span>
-<span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>        }</span>
-<span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>    )</span>
-<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a><span class="cf">else</span>:</span>
-<span id="cb12-12"><a href="#cb12-12" aria-label="12"></a>    <span class="cf">for</span> condition_index, condition_label <span class="kw">in</span> <span class="bu">enumerate</span>(condition_labels):</span>
-<span id="cb12-13"><a href="#cb12-13" aria-label="13"></a>        panels.append(</span>
-<span id="cb12-14"><a href="#cb12-14" aria-label="14"></a>            {</span>
-<span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>                <span class="st">"datasets"</span>: datasets,</span>
-<span id="cb12-16"><a href="#cb12-16" aria-label="16"></a>                <span class="st">"trial_masks"</span>: [masks[condition_index] <span class="cf">for</span> masks <span class="kw">in</span> masks_by_dataset],</span>
-<span id="cb12-17"><a href="#cb12-17" aria-label="17"></a>                <span class="st">"labels"</span>: input_labels,</span>
-<span id="cb12-18"><a href="#cb12-18" aria-label="18"></a>                <span class="st">"title"</span>: condition_label,</span>
-<span id="cb12-19"><a href="#cb12-19" aria-label="19"></a>            }</span>
-<span id="cb12-20"><a href="#cb12-20" aria-label="20"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>panels <span class="op">=</span> comparison_panels(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a>    datasets, masks_by_dataset, input_labels, condition_labels,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>    mode<span class="op">=</span><span class="st">"conditions"</span> <span class="cf">if</span> data_path <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> <span class="st">"datasets"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>    selection_label<span class="op">=</span>selection_label,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-label="5"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="762eca18" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:45:56.370567Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:45:56.370502Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:45:58.479718Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:45:58.479343Z&quot;}}" data-execution_count="11">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>11 — Calculate, plot and save the selected comparison</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="bu">len</span>(panels), <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.8</span> <span class="op">*</span> <span class="bu">len</span>(panels)), squeeze<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-label="2"></a><span class="cf">for</span> ax, panel <span class="kw">in</span> <span class="bu">zip</span>(axes.ravel(), panels):</span>
@@ -601,6 +565,11 @@ Broader eCMR / Mixed lists: 2460 lists, 123 participants</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="reuse-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="reuse-the-results">Reuse the results</h2>
+<p>The figure is saved using <code>figure_str</code> in <code>figure_dir</code> or <code>output_dir</code>. For another set of materials, check that global item IDs have consistent categories before rerunning. The input response files remain available for category recall-rate and serial-position analyses.</p>
+<p>The <a href="https://githubpsyche.github.io/jaxcmr/templates.html">Templates overview</a> describes how saved products connect.</p>
 
 
 </section>

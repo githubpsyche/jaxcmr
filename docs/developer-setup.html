@@ -209,7 +209,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
 </li>
         <li class="sidebar-item">
-  <div class="sidebar-item-container">
+  <div class="sidebar-item-container"> 
   <a href="./tutorials/slurm-batch-jobs.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Run batches of notebooks unattended on Slurm</span></a>
   </div>
@@ -386,12 +386,12 @@ Figure&nbsp;3: On Windows, use the arrow beside <strong>+</strong> to choose <st
 <p>Choose <strong>Terminal → New Terminal</strong>. The terminal should open inside <code>memory-project</code>.</p>
 <p>If you already have a uv-managed research project, open that folder and run only the <code>uv add</code> command below; keep its existing project configuration. For a new project, run all three commands one at a time:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> init <span class="at">--bare</span> <span class="at">--python</span> 3.12 <span class="at">--vcs</span> none</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> python pin 3.12</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> ipykernel pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> python pin 3.12</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> ipykernel pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The first command creates the project’s software configuration. <code>--bare</code> keeps the starting files minimal, and <code>--vcs none</code> leaves version-control setup to you. The second records Python 3.12 as the version to use. See <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv’s project commands</a>.</p>
 <p>The last command installs:</p>
 <ul>
-<li><strong>JAXCMR</strong>, from the GitHub version used by this documentation.</li>
+<li><strong>JAXCMR</strong>, from GitHub’s main branch.</li>
 <li><strong>ipykernel</strong>, which lets VS Code run notebook cells using this environment.</li>
 <li><strong>pandas</strong>, which provides the table-reading and writing tools used later in this guide.</li>
 </ul>
@@ -451,12 +451,12 @@ Figure&nbsp;4: Click <strong>Select Kernel</strong> at the upper right to choose
 <section id="downloading-a-notebook-and-its-inputs" class="level3">
 <h3 class="anchored" data-anchor-id="downloading-a-notebook-and-its-inputs">Downloading a notebook and its inputs</h3>
 <p>A notebook download contains its code, explanations, and saved cell outputs. Separate input files must also be available.</p>
-<p>The <a href="./tutorials/data-preparation.html">data-preparation tutorial</a> creates its small teaching dataset in code. Other notebooks may need downloaded inputs: the <a href="./templates.html#download-the-shared-inputs">templates page</a> lists the example files and where to save them.</p>
-<p>The templates’ automatic example downloads currently run in Colab. For local work, download the required files yourself or supply your own data.</p>
+<p>The <a href="./tutorials/data-preparation.html">data-preparation tutorial</a> creates its small teaching dataset in code. The templates copy their supplied inputs from the installed package; the <a href="./templates.html#download-the-shared-inputs">templates page</a> describes these files and provides optional individual downloads.</p>
+<p>The templates prepare their supplied example inputs from the installed package, on your computer as well as in Colab. Supply your own files separately and update the input paths when adapting a template.</p>
 <p>When a notebook has a <code>project_root</code> setting, set it to the full path of <code>memory-project</code>. In Explorer, right-click that folder and choose <strong>Copy Path</strong>. For example:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> <span class="vs">r"PASTE_PROJECT_PATH_HERE"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> <span class="vs">r"PASTE_PROJECT_PATH_HERE"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Replace the text between the quotation marks. This makes the notebook’s relative input and output paths refer to your project folder, even though the notebook itself is saved inside <code>notebooks</code>.</p>
-<p>Check its input and output settings before running. If it has a <code>notebook_source</code> setting, update that to your saved notebook’s location so its record of the run includes your copy. The next section explains file paths in more detail.</p>
+<p>Check its input and output settings before running. The next section explains file paths in more detail.</p>
 </section>
 <section id="work-with-cells" class="level3">
 <h3 class="anchored" data-anchor-id="work-with-cells">Work with cells</h3>
@@ -469,23 +469,23 @@ Figure&nbsp;4: Click <strong>Select Kernel</strong> at the upper right to choose
 <h2 class="anchored" data-anchor-id="use-your-own-files">7. Use your own files</h2>
 <p>Copy your input files into the project’s <code>data</code> folder using Finder or Windows File Explorer, or leave them in an existing location and use their full paths.</p>
 <p>A <strong>path</strong> identifies a file or folder. A full path starts from your computer’s filesystem root or drive. A relative path, such as <code>data/trials.csv</code>, is interpreted from Python’s current working folder. That folder can differ from the terminal’s; inspect it inside the notebook with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(Path.cwd())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(Path.cwd())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>For a straightforward starting arrangement, use a full project path. In VS Code’s Explorer, right-click <code>memory-project</code> and choose <strong>Copy Path</strong>. Paste it between the quotation marks below, replacing <code>PASTE_PROJECT_PATH_HERE</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path(<span class="vs">r"PASTE_PROJECT_PATH_HERE"</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>input_path <span class="op">=</span> project <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"trials.csv"</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>output_dir <span class="op">=</span> project <span class="op">/</span> <span class="st">"results"</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input file exists:"</span>, input_path.is_file())</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Save results in:"</span>, output_dir)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path(<span class="vs">r"PASTE_PROJECT_PATH_HERE"</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>input_path <span class="op">=</span> project <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"trials.csv"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>output_dir <span class="op">=</span> project <span class="op">/</span> <span class="st">"results"</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Input file exists:"</span>, input_path.is_file())</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Save results in:"</span>, output_dir)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Keep the <code>r</code> before the quotation mark; it allows Windows paths containing backslashes. Replace <code>trials.csv</code> with your filename. <code>/</code> joins path components, and <code>mkdir</code> creates the output folder if needed. If the input check prints <code>False</code>, compare the path with the file’s actual location and spelling. These operations use Python’s <a href="https://docs.python.org/3/library/pathlib.html">path tools</a>.</p>
 <p>For a CSV table, load and inspect it with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.read_csv(input_path)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>table.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.read_csv(input_path)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>table.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>pandas</code> is installed with this workspace. The import makes its tools available as <code>pd</code>; <code>table</code> holds the loaded data in Python’s memory, and <code>head()</code> displays its first few rows. Other file formats need a suitable reader. See <a href="https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html">pandas’ CSV reader</a>.</p>
 <p>When adapting a JAXCMR template, edit its existing configuration cell: set <code>project_root</code> to your project’s full path and adjust its input and output settings. Check additional locations such as <code>simulation_dir</code> or <code>figure_dir</code> where present. Moving a notebook does not automatically change the files it reads or writes.</p>
 <p><a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> explains the data format needed for modelling.</p>
@@ -494,9 +494,9 @@ Figure&nbsp;4: Click <strong>Select Kernel</strong> at the upper right to choose
 <h2 class="anchored" data-anchor-id="save-results-and-return-later">8. Save results and return later</h2>
 <p><strong>File → Save</strong> preserves the notebook’s code, explanations, and displayed outputs. To use a result in another notebook or application, write it as a separate file.</p>
 <p>For example, save the table loaded above as a CSV:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>saved_path <span class="op">=</span> output_dir <span class="op">/</span> <span class="st">"trials-copy.csv"</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>table.to_csv(saved_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(saved_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>saved_path <span class="op">=</span> output_dir <span class="op">/</span> <span class="st">"trials-copy.csv"</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>table.to_csv(saved_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(saved_path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>index=False</code> leaves out pandas’ extra row-number column. After an analysis, use this pattern with its result table and a meaningful filename. Choose distinct filenames or folders for results you want to retain separately; saving to an existing filename can replace it. See <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html">pandas’ CSV writer</a>.</p>
 <p>Find the saved file in Explorer. A figure needs its own save operation; JAXCMR templates save files according to their output settings.</p>
 <p>Closing VS Code leaves your saved files and installed environment on disk. A new or restarted kernel begins without the previous session’s Python variables. <strong>Restart Kernel</strong> clears that running state without removing installed packages. Results already visible in a notebook may be saved output from an earlier session.</p>
@@ -518,14 +518,14 @@ Figure&nbsp;5: You can also find <strong>File: Open Folder…</strong> in the Co
 </figure>
 </div>
 <p>For example, after defining <code>project</code> and importing pandas, a later notebook can read the saved table:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>saved_table <span class="op">=</span> pd.read_csv(project <span class="op">/</span> <span class="st">"results"</span> <span class="op">/</span> <span class="st">"trials-copy.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>saved_table <span class="op">=</span> pd.read_csv(project <span class="op">/</span> <span class="st">"results"</span> <span class="op">/</span> <span class="st">"trials-copy.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Saved files let separate notebooks share results. Using the same environment gives them access to the same packages; it does not automatically share their variables. You normally do not repeat installation for each notebook.</p>
 <p>Use <strong>Run All</strong> when you intend to repeat the whole workflow. To continue from saved results, load those files and run the subsequent steps.</p>
 <section id="add-software-or-move-to-another-computer" class="level3">
 <h3 class="anchored" data-anchor-id="add-software-or-move-to-another-computer">Add software or move to another computer</h3>
 <p>You normally install packages once per project. If another notebook needs an additional package, add it from a terminal in this folder using <code>uv add PACKAGE_NAME</code>, replacing the placeholder with that package’s name. This records the dependency as well as installing it. See <a href="https://docs.astral.sh/uv/concepts/projects/dependencies/#adding-dependencies">Managing project dependencies</a>.</p>
-<p>On another computer, copy <code>pyproject.toml</code>, <code>uv.lock</code>, and <code>.python-version</code> along with the notebooks and data you need. Install Git and uv there, open the copied project folder, and recreate the environment with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On another computer, copy <code>pyproject.toml</code>, <code>uv.lock</code>, and <code>.python-version</code> along with the notebooks and data you need. Install uv there (and Git if the project installs from GitHub), open the copied project folder, and recreate the environment with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Recreate <code>.venv</code> on the destination computer rather than copying it. Keep backups of your notebooks, inputs, results, and configuration files.</p>
 </section>
 </section>
@@ -579,9 +579,9 @@ Simulated recalls: [1 5 2 4 3]</code></pre>
 <div class="callout-body-container callout-body">
 <p>JAXCMR’s <strong>repository</strong> contains its source code, examples, and documentation. <strong>Cloning</strong> downloads a checkout of that collection. Use this route if you want to work on the library itself or obtain the complete examples. The existing <a href="./tutorials/template-tour.html">template tour</a>, which coordinates several notebooks and supplied datasets, currently uses this route.</p>
 <p>Keep the checkout in a separate folder beside your research project. In VS Code, open the parent folder, such as Documents, choose <strong>Terminal → New Terminal</strong>, and run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/githubpsyche/jaxcmr.git</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> jaxcmr</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/githubpsyche/jaxcmr.git</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> jaxcmr</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync <span class="at">--locked</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The first command downloads the repository into a new <code>jaxcmr</code> folder, <code>cd</code> moves the terminal into it, and <code>uv sync --locked</code> installs its recorded software environment.</p>
 <p>Open the resulting <code>jaxcmr</code> folder with <strong>File → Open Folder</strong>, confirm trust if prompted, and select its <code>.venv</code> when working through repository examples or modifying the library. Return to your research folder and its environment for your own project.</p>
 </div>

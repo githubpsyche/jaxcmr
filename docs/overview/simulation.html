@@ -247,6 +247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-trial-procedure-is-an-entry-point" id="toc-the-trial-procedure-is-an-entry-point" class="nav-link active" data-scroll-target="#the-trial-procedure-is-an-entry-point">The trial procedure is an entry point</a></li>
   <li><a href="#the-dataset-wrapper" id="toc-the-dataset-wrapper" class="nav-link" data-scroll-target="#the-dataset-wrapper">The dataset wrapper</a></li>
   <li><a href="#the-returned-dataset" id="toc-the-returned-dataset" class="nav-link" data-scroll-target="#the-returned-dataset">The returned dataset</a></li>
+  <li><a href="#checking-whether-saved-responses-match-a-run" id="toc-checking-whether-saved-responses-match-a-run" class="nav-link" data-scroll-target="#checking-whether-saved-responses-match-a-run">Checking whether saved responses match a run</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/simulation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -355,9 +356,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Participant IDs need not be consecutive or equal row indices. The wrapper matches each trial’s ID to <code>parameters['subject']</code>, then uses the same entry from every parameter array. To apply one pooled fit to several participants, repeat its parameter values and supply those participants’ actual IDs.</p>
+<p>Participant IDs need not be consecutive or equal row indices. The wrapper matches each trial’s ID to <code>parameters['subject']</code>, then uses the same entry from every parameter array. Missing IDs, duplicate assignments and unequal column lengths raise an error before responses are generated. Use <code>parameters_for_subjects</code> to broadcast a pooled fit explicitly.</p>
+<p>The legacy mapping without <code>subject</code> treats dataset IDs as zero-based row indices into every parameter column. Simulation does not interpret a short column as a pooled fit.</p>
 <div id="locate-project-inputs" class="cell">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
@@ -370,7 +372,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="0f15d75a" class="cell" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Assign pooled parameters to two participants and supply the trial callback</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -434,7 +436,7 @@ Generated recall shape: (8, 12)</code></pre>
 <h2 class="anchored" data-anchor-id="the-returned-dataset">The returned dataset</h2>
 <p>The wrapper repeats study information and trial conditions with each list. It converts generated item codes back to study-position recall codes, using the first occurrence when a study item repeats. The returned dictionary can therefore enter dataset-based <a href="../overview/analyses.html">recall analyses</a>.</p>
 <div id="b532aa84" class="cell" data-execution_count="2">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>Inspect the dataset boundary after simulation</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="bu">print</span>(<span class="st">"First two generated recall sequences:"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="bu">print</span>(simulated[<span class="st">"recalls"</span>][:<span class="dv">2</span>])</span>
@@ -454,6 +456,18 @@ Omitted response fields: ['rec_itemids']</code></pre>
 </div>
 <p>Original response measurements cannot describe new responses. The wrapper omits <code>rec_itemids</code>, <code>irt</code>, <code>cue_clips</code> and <code>_should_tabulate</code> when present. Supply additional response-dependent field names through <code>recall_dependent_fields</code>. Study-aligned fields remain attached to their lists.</p>
 <p>Use <a href="../overview/data.html">Data</a> for coding and storage conventions. The <a href="../templates/simulation.html">simulation template</a> handles a complete run, saved outputs and behavioral comparisons; the <a href="../templates/parameter_shifting.html">parameter exploration template</a> repeats that procedure under deliberately changed parameters.</p>
+</section>
+<section id="checking-whether-saved-responses-match-a-run" class="level2">
+<h2 class="anchored" data-anchor-id="checking-whether-saved-responses-match-a-run">Checking whether saved responses match a run</h2>
+<p><code>simulation_metadata_matches</code> compares in-memory metadata before your script decides whether to reuse responses:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.provenance <span class="im">import</span> simulation_metadata_matches</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>reuse <span class="op">=</span> (</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="kw">not</span> force_regeneration</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    <span class="kw">and</span> <span class="kw">not</span> fitted_now</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>    <span class="kw">and</span> simulation_metadata_matches(saved_metadata, expected_configuration)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The comparison includes every supplied expected setting; extra saved fields are allowed. Older metadata with <code>jaxcmr_version</code> and <code>jax_enable_x64</code> inside <code>implementation</code> are accepted when those values are absent at the top level. The function returns a boolean without modifying either mapping. It does not inspect response files, parse JSON, load data, or decide whether a refit permits reuse. Your script still checks file existence, reads metadata and chooses between loading and generating responses. Malformed saved JSON remains a reading error rather than being silently treated as a cache miss. The fitting template always regenerates responses after a new fit. Changes to data or code in place require explicit regeneration: recorded paths and versions do not establish that file contents or calculations are unchanged.</p>
 
 
 </section>

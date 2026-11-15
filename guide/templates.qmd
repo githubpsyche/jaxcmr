@@ -10,7 +10,7 @@ These fourteen templates cover behavioral analysis, fitting, simulation,
 parameter exploration and pooled model comparison. Their defaults use the
 **war-photo-recall experiment** as a shared worked example. The saved figures
 and tables show that example; they are replaced when you execute a new run.
-Choose a task below, then download its notebook and required inputs.
+Choose a task below, then download its notebook. Its setup prepares the supplied inputs from the installed package; provide your own files when adapting it to your research.
 
 The procedures connect through saved products:
 
@@ -112,9 +112,9 @@ an unavailable category or transition into a zero-valued observation.
 
 ## Download the shared inputs
 
-Create a `data` folder in your working folder, with `fits` and `simulations` folders inside it.
-Save each file with the name shown below. Use **Save Link As** if your browser
-opens a JSON file instead of downloading it. No repository checkout is required.
+The templates automatically copy the inputs they need from the installed JAXCMR package into your project’s `data` folder. This works locally, on Slurm, and in Colab, without an additional download. Matching files are reused; conflicting files are preserved and reported. Custom input paths remain yours to provide.
+
+The links below are available if you want to inspect or download individual files yourself. Save them with the names shown; use **Save Link As** if your browser opens a JSON file. No repository checkout is required.
 
 | Input | Save inside your working folder as |
 |---|---|
@@ -124,53 +124,36 @@ opens a JSON file instead of downloading it. No repository checkout is required.
 | [Source-only eCMR fit](templates/data/fits/Dupertuys2026_eCMR_source_only.json) | `data/fits/Dupertuys2026_eCMR_source_only.json` |
 | [Broader eCMR fit](templates/data/fits/Dupertuys2026_eCMR_broad.json) | `data/fits/Dupertuys2026_eCMR_broad.json` |
 | [CMR responses](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5` |
-| [CMR response provenance](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.json` |
+| [CMR simulation settings](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.json` |
 | [Broader eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5` |
-| [Broader eCMR response provenance](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json` |
+| [Broader eCMR simulation settings](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json` |
 | [Source-only eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5` |
-| [Source-only eCMR response provenance](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json` |
+| [Source-only eCMR simulation settings](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json` |
 
-The observation file and distance matrix are the existing JAXCMR inputs, with no
-extracts or recoding. The observation file also matches the ECMR3 project's copy.
-All three fit records were prepared with the current library using the fitting
-procedure below, including an independent recalculation of their objectives. [Fit provenance](templates/data/fits/README.md)
-records their sources and assumptions. The response examples were produced by the simulation
-template with ten repetitions per selected list and seed 1. Their JSON sidecars record the
-parameters, selections and simulation settings. They are saved inputs to analysis; analysis
-notebooks do not invoke fitting or simulation when an input is missing.
+The observations and distance matrix describe the war-photo-recall experiment.
+The [example-fit methods](templates/data/fits/README.md) identify the models,
+searches and assumptions behind the three supplied fit records. Response examples
+were generated with ten repetitions per selected list and seed 1. Their JSON
+files record the parameters, selections and simulation settings. These are saved
+inputs to analysis: analysis notebooks do not fit or simulate when an input is missing.
 
-Each chapter has **Download notebook** and **Open in Colab** links beside its
-contents list. Colab opens the current notebook on GitHub’s `main` branch.
-Code starts collapsed; expand a labeled block to see the calculation,
-or use the **Code** menu to show all code at once. Figures and tables remain visible.
+Each template page has **Download notebook** and **Open in Colab** links beside its
+contents list. Colab opens the latest notebook on GitHub’s `main` branch. In a local preview, the download includes local edits while Colab still opens the last pushed version.
+Code is expanded by default. Collapse individual labeled blocks or use the **Code**
+menu to hide or show all code. Figures and tables remain visible.
 
 ## Run in Colab
 
-Choose **Open in Colab** beside a chapter's contents list. Sign in to Google,
-then choose **Runtime → Run all**. For the notebook opened from this repository,
-Colab may ask you to confirm **Run anyway**. A standard CPU runtime is enough.
+Use **Open in Colab** on a template page, then save your own copy before editing.
+The [Colab setup guide](colab-setup.qmd) explains running cells, using your own
+files and keeping outputs between sessions.
 
-The setup cell installs JAXCMR from GitHub’s `main` branch and downloads only
-that notebook's supplied inputs, checking their hashes. This route works before
-the PyPI release. Matching files are reused when setup runs again; a conflicting
-file is preserved and reported. If you change a path to your own input, upload
-that file through Colab's **Files** pane and keep the path consistent with the
-parameters cell.
-
-If Colab requests a restart after installation, choose **Runtime → Restart session**,
-then **Run all** again. The first raw cell contains Quarto page metadata; Colab
-labels it “Unsupported Cell Type”, but skips it when running the code cells.
-
-Results are written under the notebook's `output_dir` (for SPC,
-`results/spc/spc.png`). In the **Files** pane, open that folder and use the file's
-menu to **Download** the results. Download anything you want to keep before
-Colab deletes the temporary runtime. Use **File → Download → Download .ipynb**
-to retain an executed notebook, or **Copy to Drive** if you want a saved working
-copy. For local installation, use the [homepage command](index.ipynb#installation).
-
-Colab links and setup follow `main` as it changes. The rendered chapter and download
-are refreshed when the book is rebuilt. Analysis notebooks fetch saved model
-responses; they do not fit or simulate.
+Keep the template’s short installation cell and input-preparation call. The cell
+installs JAXCMR from GitHub’s `main` branch; input preparation copies selected
+examples from that installation. Update the installation when you need newer
+library code or examples. Custom input files remain yours to provide. Colab labels
+the first raw cell “Unsupported Cell Type”; it contains website metadata and is
+skipped during execution.
 
 ## From a template to a run
 
@@ -202,7 +185,7 @@ specified drive path such as `"C:my-study"`. UNC paths are supported on Windows.
 Relative defaults such as `"data/Dupertuys2026.h5"` work on both platforms. An absolute
 path from another computer must be updated there.
 
-Colab downloads recognized relative example names into this same base. Custom files
+The input helper copies recognized relative example names into this same base on every platform. Custom files
 remain your responsibility; selecting an absolute custom path does not download an
 example over it. Path resolution happens after parameter injection and does not
 change the process's working directory.
@@ -231,7 +214,12 @@ Give independent jobs distinct names or directories for every product they write
 an incompatible record is reported. `redo_sims=False` permits matching response reuse;
 when predictions are requested, missing or stale responses are regenerated. Fitting
 is fit-only when both `redo_sims` and `redo_figures` are false. `figure_str=""` disables
-figure saving, but does not disable summary CSVs or provenance capture.
+figure saving, but does not disable summary CSVs.
+
+Reuse checks compare saved settings and, for fits, independently recalculate the
+objective. They do not detect edits to data or code in place. After such changes,
+set `redo_fits=True` and/or `redo_sims=True` for the affected calculations, or use
+a new output location. A matching path is not proof of matching file contents.
 
 Settings are ordinary values: paths, numbers, lists, dictionaries and import
 names. Imports, trial masks and model construction happen afterward, using the
@@ -289,12 +277,12 @@ quarto render templates/pnr.ipynb --execute -P query_recall_position:2 -P output
 
 Quarto normally executes from the notebook's directory; the template's root lookup
 handles that. An injected `project_root` also works for notebooks prepared outside
-the project. The book build itself does not execute notebooks.
+the project. The website build does not execute notebooks.
 
 Output positions are zero-based, so `2` means the third response. Use
 `--execute-params settings.yml` for dictionaries or longer selections.
 The explicit `--execute` runs the notebook; rendering an `.ipynb` without it
-normally displays its stored results. The book itself displays stored examples.
+normally displays its stored results. The website displays saved example outputs.
 
 ### Prepare independent jobs with Papermill
 
@@ -383,7 +371,7 @@ models and scientific questions.
 | [Fitting models](templates/fitting.ipynb) | [Download](downloads/fitting.ipynb) | Observations; produces configured fits and optional responses. |
 | [Simulating from saved fits](templates/simulation.ipynb) | [Download](downloads/simulation.ipynb) | Observations + named fit records. |
 | [Exploring parameter effects](templates/parameter_shifting.ipynb) | [Download](downloads/parameter_shifting.ipynb) | Observations + baseline fit records. |
-| [Comparing pooled model fits](templates/model_comparison.ipynb) | [Download](downloads/model_comparison.ipynb) | Observations + fit records + saved responses and provenance. |
+| [Comparing pooled model fits](templates/model_comparison.ipynb) | [Download](downloads/model_comparison.ipynb) | Observations + fit records + saved responses and simulation settings. |
 
 ## Recall performance
 
@@ -415,7 +403,18 @@ notebook builds its lookup from those fields; no separate feature file is needed
 
 ## Adapting a procedure
 
-Start by changing the settings cell: input paths, trial selection, parameters
+Each published notebook explains its required inputs, common settings, selection
+checks, calculation and saved outputs. Start with its settings cell, then run in
+order. You can read the explanatory text with code folded on the website or beside
+the executable cells in Jupyter and Colab.
+
+In the analysis templates, setting `data_path` overrides `data_paths` and selects
+the single-file comparison layout. Leaving `data_path=None` uses the dataset-list
+layout, even when `data_paths` contains one file. Category-specific curves have
+additional category panels; each notebook explains its layout and label settings.
+
+
+Adapt the settings cell: input paths, trial selection, parameters
 and output folder. Check the meanings of item codes, participant identifiers,
 categories and response padding before interpreting results. Retain the same
 selection for comparisons that are intended to address the same observations.

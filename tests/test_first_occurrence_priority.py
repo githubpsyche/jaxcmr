@@ -42,12 +42,15 @@ def assert_same_memory(left, right):
         )
 
 
-@pytest.mark.parametrize("module", [trace_reinf_positional_cmr, first_bias_positional_cmr])
+@pytest.mark.parametrize("module,setting", [
+    (trace_reinf_positional_cmr, "mcf_first_pres_reinforcement"),
+    (first_bias_positional_cmr, "first_pres_bias"),
+])
 @pytest.mark.parametrize("serial", [False, True])
-def test_zero_mechanisms_match_positional_through_repeated_recall(module, serial):
+def test_zero_mechanisms_match_positional_through_repeated_recall(module, setting, serial):
     """Zero additions preserve baseline study, likelihood, and state updates."""
     base = study(make_model(positional_cmr, allow_repeated_recalls=serial)).start_retrieving()
-    model = study(make_model(module, allow_repeated_recalls=serial)).start_retrieving()
+    model = study(make_model(module, allow_repeated_recalls=serial, **{setting: 0.0})).start_retrieving()
     recalls = [1, 2, 3, 4, 2, 6] if serial else [1, 2, 3, 4, 6]
     for item in recalls:
         assert_same_memory(base, model)
@@ -167,6 +170,11 @@ def test_third_presentation_reinforces_first_not_every_previous_occurrence():
     after = prior.experience(jnp.int32(2))
     np.testing.assert_array_equal(prior.mcf.state[:, 4], after.mcf.state[:, 4])
     assert np.linalg.norm(after.mcf.state[:, 1] - prior.mcf.state[:, 1]) > 0.1
+    baseline = study(make_model(positional_cmr), STUDY[:5] + [2])
+    other_positions = jnp.array([0, 2, 3, 4, 5])
+    np.testing.assert_allclose(
+        after.mcf.state[:, other_positions], baseline.mcf.state[:, other_positions], atol=1e-06
+    )
 
 
 @pytest.mark.parametrize("access", [False, True])

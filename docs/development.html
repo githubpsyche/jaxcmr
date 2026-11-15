@@ -171,10 +171,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#optional-tools" id="toc-optional-tools" class="nav-link active" data-scroll-target="#optional-tools">Optional tools</a></li>
-  <li><a href="#run-the-tests" id="toc-run-the-tests" class="nav-link" data-scroll-target="#run-the-tests">Run the tests</a></li>
-  <li><a href="#add-or-change-a-test" id="toc-add-or-change-a-test" class="nav-link" data-scroll-target="#add-or-change-a-test">Add or change a test</a></li>
-  <li><a href="#edit-the-documentation" id="toc-edit-the-documentation" class="nav-link" data-scroll-target="#edit-the-documentation">Edit the documentation</a></li>
+  <li><a href="#prepare-the-environment" id="toc-prepare-the-environment" class="nav-link active" data-scroll-target="#prepare-the-environment">Prepare the environment</a></li>
+  <li><a href="#edit-and-check-notebooks" id="toc-edit-and-check-notebooks" class="nav-link" data-scroll-target="#edit-and-check-notebooks">Edit and check notebooks</a></li>
+  <li><a href="#test-the-library-and-installation" id="toc-test-the-library-and-installation" class="nav-link" data-scroll-target="#test-the-library-and-installation">Test the library and installation</a></li>
+  <li><a href="#keep-validation-proportionate" id="toc-keep-validation-proportionate" class="nav-link" data-scroll-target="#keep-validation-proportionate">Keep validation proportionate</a></li>
+  <li><a href="#maintain-the-supplied-examples" id="toc-maintain-the-supplied-examples" class="nav-link" data-scroll-target="#maintain-the-supplied-examples">Maintain the supplied examples</a></li>
+  <li><a href="#saved-settings-and-older-notebooks" id="toc-saved-settings-and-older-notebooks" class="nav-link" data-scroll-target="#saved-settings-and-older-notebooks">Saved settings and older notebooks</a></li>
+  <li><a href="#build-and-preview-the-website" id="toc-build-and-preview-the-website" class="nav-link" data-scroll-target="#build-and-preview-the-website">Build and preview the website</a></li>
+  <li><a href="#publication-and-release-handover" id="toc-publication-and-release-handover" class="nav-link" data-scroll-target="#publication-and-release-handover">Publication and release handover</a></li>
   </ul>
 </nav>
     </div>
@@ -200,75 +204,83 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>For changes to JAXCMR itself, start with the <a href="./developer-setup.html">Local setup with VS Code</a> to obtain the checkout and environment. Run the commands below from the repository root.</p>
-<section id="optional-tools" class="level2">
-<h2 class="anchored" data-anchor-id="optional-tools">Optional tools</h2>
-<p>The default <code>uv sync</code> installation includes the tools needed to run the notebooks. For specialized work, add the relevant dependency group or extra:</p>
+<p>For changes to JAXCMR itself, use the optional repository checkout described in <a href="./developer-setup.html">Local setup with VS Code</a>. Run these commands from the repository root.</p>
+<section id="prepare-the-environment" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-the-environment">Prepare the environment</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test <span class="at">--group</span> reader</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This installs the editable library, development tools, and notebook-test dependencies in one environment. The <code>test</code> extra adds only pytest. The default <code>dev</code> group includes the build and notebook tools for optional local checks; library CI does not install that group. Optional groups remain available: <code>--group embeddings</code> for sentence-transformers, <code>--group profiling</code> for line-profiler, and <code>--extra experimental</code> for the experimental Numba helper.</p>
+</section>
+<section id="edit-and-check-notebooks" class="level2">
+<h2 class="anchored" data-anchor-id="edit-and-check-notebooks">Edit and check notebooks</h2>
+<p>Edit original notebooks in <code>templates/</code> or <code>guide/</code>, preserving useful saved outputs. Their short installation cells run only in Colab. Local and Slurm kernels use the environment the reader selected.</p>
+<p>While changing executable code, run the affected cases:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_notebooks.py <span class="at">--select</span> cat_recall_rate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run all 17 cases before publishing changes to shared setup, example inputs, or library functionality:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_notebooks.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The runner uses nbmake and pytest with two workers in the current environment. It executes temporary notebook copies, reduces workloads for testing, and reopens saved results in a separate process. The spreadsheet case uses synthetic inputs. Original notebook parameters and outputs are never rewritten. <code>--jobs 1</code> runs serially; <code>--platform windows</code> selects the representative Windows cases. The report identifies the environment used and separates preparation and execution time.</p>
+<p>Notebook execution is a local maintainer tool; GitHub Actions does not run notebooks or tests that execute notebook cells.</p>
+<p>For prose and saved-output changes, render and check the website; execution is needed when calculations change. Adding a published notebook also requires adding its bounded case to the notebook test runner.</p>
+</section>
+<section id="test-the-library-and-installation" class="level2">
+<h2 class="anchored" data-anchor-id="test-the-library-and-installation">Test the library and installation</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests <span class="at">-m</span> <span class="st">"not audit"</span> <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_distribution.py <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_reader_checks.py <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_template_adaptation.py <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_documentation.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>While editing, select the relevant test file instead of repeating the full suite. Routine checks include scientific calculations, public validation, and complete modeling workflows. Three additional <code>audit</code> cases check compilation reuse in prepared losses and the gradient and evolutionary fitters:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests <span class="at">-m</span> audit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run these checks before releases and when changing loss preparation or fitting compilation. Unfiltered pytest still includes the audit, notebook-related and distribution tests. Routine CI runs only the library selection above, against a normal installation made with <code>python -m pip install ".[test]"</code>. It uses <code>python -P -m pytest</code> so Python does not import the adjacent checkout in place of the installed package. This tests dependency resolution from the package requirements; local editable development still uses <code>uv.lock</code>.</p>
+<p>The optional local distribution tests build a wheel and source archive, rebuild from the archive, and install into a clean environment outside the checkout. They check the installed README example and offline preparation of all bundled inputs. Library tests cover input conflicts and custom paths; notebook checks exercise the current published notebooks. This separate installation check needs internet access for dependencies and does not run in CI:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests/test_distribution.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>New tests should catch incorrect behavior using independently established numerical answers or supported workflows. Put short derivations beside analytic expectations; identify historical regression values as such. Check observable results rather than private object identities, and use small doubles only at necessary boundaries. Required checks must not silently skip because private data is unavailable. When an assertion’s strength is uncertain, temporarily introduce the suspected fault and confirm that it fails for the intended reason. Keep the behavioral assertion, without adding a permanent test that reruns another test. Test our notebook preparation and result validation directly; rely on nbmake and pytest for notebook execution and failure reporting.</p>
+<p>See the <a href="https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md">test fixtures</a> and <a href="https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml">CI workflow</a>.</p>
+</section>
+<section id="keep-validation-proportionate" class="level2">
+<h2 class="anchored" data-anchor-id="keep-validation-proportionate">Keep validation proportionate</h2>
+<p>Check inexpensive structural requirements where data enter an operation, especially when broadcasting or indexing could silently change observation or participant assignments. Keep value-dependent checks outside compiled calculations. Numerical analysis functions remain JIT-compatible and require valid inputs; full distance preflight checking remains optional. Test demonstrated failures through public operations without duplicating every check across wrappers and kernels.</p>
+</section>
+<section id="maintain-the-supplied-examples" class="level2">
+<h2 class="anchored" data-anchor-id="maintain-the-supplied-examples">Maintain the supplied examples</h2>
+<p>The eleven selected files under <code>data/</code> and their fit methods document are the authoritative inputs. Packaging explicitly includes them; other research data and results remain excluded. The library’s <code>fetch_inputs(paths, base_dir=...)</code> copies only requested bundled examples, reuses matching files, and preserves conflicts and custom paths. An explicit <code>revision=</code> downloads reference bytes from GitHub on each call, including when checking an existing file. The default bundled route works offline. Neither route requires maintaining content hashes.</p>
+<p>When changing a supplied input, update its methods or source notes as needed. The filenames are listed in <code>jaxcmr/examples.py</code>; adding an example also requires including it in the package configuration. <code>jaxcmr.examples.fetch_inputs</code> is the current import; <code>jaxcmr.colab.fetch_inputs</code> remains compatible with older notebooks. Reinstall the editable package to refresh its bundled resources, then run the notebook and distribution checks:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test <span class="at">--group</span> reader <span class="at">--reinstall-package</span> jaxcmr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The website stages downloads from those same authoritative files. Notebook explanation and analysis changes can be published without a package release. Library and bundled data changes require readers to update their installation; the Git installation route does not require a PyPI release.</p>
+</section>
+<section id="saved-settings-and-older-notebooks" class="level2">
+<h2 class="anchored" data-anchor-id="saved-settings-and-older-notebooks">Saved settings and older notebooks</h2>
+<p>Fit and simulation records describe the models, parameters, input paths, selected rows and run settings. Reuse checks compare these settings; fitting also recalculates the saved objective. Changes to data or code at an existing location require rerunning the affected calculations. Keep the input files and notebook with results you intend to reproduce.</p>
+<p>Automatic source capture has been removed. Update older notebook copies that import <code>capture_notebook</code> or <code>file_sha256</code> from <code>jaxcmr.provenance</code>; those functions and the <code>provenance_dir</code>, <code>provenance_source_paths</code> and <code>notebook_source</code> controls are no longer used. Existing records can retain obsolete digest fields, which no longer govern reuse.</p>
+</section>
+<section id="build-and-preview-the-website" class="level2">
+<h2 class="anchored" data-anchor-id="build-and-preview-the-website">Build and preview the website</h2>
+<p>Use <a href="https://github.com/quarto-dev/quarto-cli/releases/tag/v1.11.9">Quarto 1.11.9</a>, available on your command path, matching CI:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="fu">bash</span> build-docs.sh</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_site.py docs</span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> http.server 8786 <span class="at">--bind</span> 127.0.0.1 <span class="at">--directory</span> docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Open <code>http://127.0.0.1:8786/</code>. The build stages notebook pages and byte-for-byte source downloads before rendering, without executing notebooks. It removes retired generated files and protects source directories. Do not edit <code>guide/templates/</code>, <code>guide/downloads/</code>, or rendered HTML. Rebuild after edits; the file server serves the rebuilt pages.</p>
+<p>Colab links and installation commands follow <code>main</code>. A local preview’s download includes local changes; its Colab button still opens the last pushed notebook.</p>
+</section>
+<section id="publication-and-release-handover" class="level2">
+<h2 class="anchored" data-anchor-id="publication-and-release-handover">Publication and release handover</h2>
+<p>The routine <strong>Checks and website</strong> workflow runs on pull requests targeting <code>main</code>, pushes to <code>main</code>, and manual requests. It has four testing/build jobs:</p>
 <ul>
-<li><code>uv sync --group embeddings</code> installs sentence-transformers for computing embeddings.</li>
-<li><code>uv sync --group profiling</code> installs line-profiler for inspecting performance.</li>
-<li><code>uv sync --extra experimental</code> installs Numba for the experimental conversion helper.</li>
+<li><strong>Library tests (Linux, macOS and Windows):</strong> one shared job definition runs separately on all three platforms, using Python 3.12 and CPU execution. Each installs JAXCMR normally with <code>pip install ".[test]"</code>, then runs the same library tests and exclusions. A failure on one platform does not cancel the other platform runs.</li>
+<li><strong>Website:</strong> a Quarto build, download/link checks, and a downloadable preview artifact.</li>
 </ul>
-</section>
-<section id="run-the-tests" class="level2">
-<h2 class="anchored" data-anchor-id="run-the-tests">Run the tests</h2>
-<p>Install the test dependencies alongside the default development tools, then run the complete suite:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-code-summary="(1) Install test dependencies and run the suite"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test</span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>While editing, run the relevant test file:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-code-summary="(2) Run a focused test file"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests/test_transitions.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The complete run includes scientific regressions, package installation and notebook execution checks. Installation checks require internet access and create temporary environments. Run the full suite before submitting changes. The <a href="https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml">CI workflow</a> defines the supported check platforms.</p>
-<p>The <a href="https://github.com/githubpsyche/jaxcmr/blob/0fe217a1eb9876b013d2de01d4febfeda9b9765b/testing-audit.json">historical test-suite audit</a> records the earlier suite consolidation.</p>
-</section>
-<section id="add-or-change-a-test" class="level2">
-<h2 class="anchored" data-anchor-id="add-or-change-a-test">Add or change a test</h2>
-<ul>
-<li>Each new scenario must catch an incorrect behavior that existing scenarios do not.</li>
-<li>Prefer independently established numerical answers and supported workflows over checks of shapes or types alone.</li>
-<li>Keep expected answers beside their scenarios. Share fixtures where they reduce duplication; see the <a href="https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md">fixture documentation</a>.</li>
-<li>Expose independent scenarios through parametrization instead of hiding them in loops.</li>
-<li>Required checks must not silently skip because private data is missing.</li>
-</ul>
-</section>
-<section id="edit-the-documentation" class="level2">
-<h2 class="anchored" data-anchor-id="edit-the-documentation">Edit the documentation</h2>
-<p>Edit the sources; the build prepares notebook copies, downloads and HTML:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Material</th>
-<th>Authoritative location</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Published templates</td>
-<td><code>templates/</code></td>
-</tr>
-<tr class="even">
-<td>Website pages and supporting examples</td>
-<td><code>guide/</code></td>
-</tr>
-<tr class="odd">
-<td>Generated notebook copies and downloads</td>
-<td><code>guide/templates/</code>, <code>guide/downloads/</code></td>
-</tr>
-<tr class="even">
-<td>Rendered website</td>
-<td><code>docs/</code></td>
-</tr>
-</tbody>
-</table>
-<p><code>guide/_quarto.yml</code> selects the published pages and defines the site navigation. The render list excludes notebook downloads and supporting examples from the published pages. Install <a href="https://quarto.org/docs/download/">Quarto</a> 1.10.20 or newer, then render the website:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-code-summary="(3) Render the documentation"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="fu">bash</span> build-docs.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This command prepares notebook pages before Quarto discovers the render targets, so it also works in a fresh checkout. It refreshes downloads, removes retired staging files and clears the generated website output without executing notebook cells. Execute changed notebooks separately and retain their useful outputs before rendering. Do not edit the generated copies.</p>
-<p>Open <code>docs/index.html</code>, or start a live preview:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-code-summary="(4) Preview the documentation"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">quarto</span> preview guide</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>After editing an original notebook in <code>templates/</code>, run <code>bash build-docs.sh</code> again: live preview does not watch those files outside the guide project. Review the rendered pages and notebook downloads locally before publication. Colab links and package installation follow <code>main</code>. GitHub Pages publishes the committed <code>docs/</code> directory.</p>
+<p>Feature-branch pushes do not also trigger a second run for an open pull request. Open a draft pull request to get automatic checks while working on a branch. There is no file-based change selection; each routine run performs the four jobs.</p>
+<p>CI does not execute notebooks, test notebook cells or run the separate distribution rehearsal. The website build renders saved outputs and verifies download copies and links without executing notebooks. There is no additional platform-compatibility workflow. Notebook and distribution tools remain available for local use.</p>
+<p>After the one-time Pages handover below, pushing documentation sources to <code>main</code> builds and publishes the website automatically. Local rendering remains useful for previewing changes; publishing no longer depends on committing generated HTML. Pull requests produce downloadable previews without publishing them.</p>
+<p>Deployment waits for the Linux, macOS, Windows and website jobs to pass, then publishes the website artifact from that same run. It also checks that its commit is still the latest <code>main</code>. A manual workflow run can publish <code>main</code> through the same checks. No additional repository variable is required.</p>
+<p>For the one-time handover:</p>
+<ol type="1">
+<li>Push the reviewed workflow and its supporting source changes. In repository <strong>Settings → Pages → Build and deployment</strong>, change <strong>Source</strong> from <strong>Deploy from a branch</strong> to <strong>GitHub Actions</strong>.</li>
+<li>Run or rerun <strong>Checks and website</strong> for the current <code>main</code> commit, and verify that the library, website and deployment jobs all succeed. If branch rules require the previous job names, update those required checks when adopting this workflow.</li>
+<li>Verify the public Setup pages, notebook downloads, example inputs, and Colab links. Check changed notebooks in hosted Colab separately, including a fresh runtime and your own input/output files.</li>
+<li>After the replacement deployment is verified, remove <code>docs/</code> from Git tracking and add <code>/docs/</code> to <code>.gitignore</code>, keeping local rendered files available for previews.</li>
+</ol>
+<p>Until the handover is completed, retain the tracked <code>docs/</code> site and the existing branch-based publishing configuration. If the replacement deployment fails, the previous public site remains available; fix the failure and rerun the workflow.</p>
+<p>PyPI publication remains separate. Before publishing a release, review the library and website checks, run the compilation audits, and select any additional local notebook or distribution checks needed for the changes being released. After publication, verify installation from PyPI in a clean environment before changing the short installation commands. A PyPI release is not required for ordinary notebook improvements or Git-based distribution.</p>
 
 
 </section>

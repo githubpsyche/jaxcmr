@@ -209,7 +209,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
 </li>
         <li class="sidebar-item">
-  <div class="sidebar-item-container">
+  <div class="sidebar-item-container"> 
   <a href="./tutorials/slurm-batch-jobs.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Run batches of notebooks unattended on Slurm</span></a>
   </div>
@@ -300,8 +300,8 @@ Figure&nbsp;2: Choose <strong>Python 3</strong> and <strong>CPU</strong> in the 
 </div>
 <p>In a new notebook, add this as your first code cell and run it:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>pip install <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span> pandas</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>%pip</code> installs packages into this runtime. This installs the JAXCMR version covered by the documentation and its dependencies; <code>pandas</code> provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use <strong>Runtime → Restart session</strong>, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.</p>
-<p>Our Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates also fetch their supplied example inputs when their setup cells run. Those downloads do not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.</p>
+<p><code>%pip</code> installs packages into this runtime. This installs the development version of JAXCMR from GitHub’s main branch and its dependencies; <code>pandas</code> provides the table-reading and writing tools used below. Wait for installation to finish. If Colab requests a restart, use <strong>Runtime → Restart session</strong>, then run your imports and subsequent cells. Repeat installation when you receive a fresh runtime.</p>
+<p>Our Colab-enabled notebooks already contain installation cells; keep and run those instead of adding a duplicate. Templates copy the supplied example inputs from the installed package into the project folder when their input setup runs. This works without another download. It does not provide your own research files. Installing JAXCMR makes the library available; each notebook still needs code to import the tools it uses and load its inputs.</p>
 </section>
 <section id="make-your-files-available" class="level2">
 <h2 class="anchored" data-anchor-id="make-your-files-available">3. Make your files available</h2>
@@ -383,7 +383,7 @@ Figure&nbsp;3: In the <strong>Files</strong> panel, a file’s menu offers <stro
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.read_csv(input_path)</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>table.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The <code>import</code> line makes pandas available under the short name <code>pd</code>. <code>table</code> holds the data in memory; <code>head()</code> displays its first few rows. Reading other formats requires a suitable reader. <a href="./tutorials/data-preparation.html">Preparing data for JAXCMR</a> explains how to turn study and recall records into the dataset format JAXCMR uses.</p>
-<p>When adapting a JAXCMR template, edit its existing configuration cell. Set <code>project_root</code> to your project folder’s full path, <code>data_path</code> to your prepared dataset, and <code>output_dir</code> to a results folder. Relative paths in those templates are resolved against <code>project_root</code>. Check any additional output settings, such as <code>simulation_dir</code> or <code>figure_dir</code>, too. The example-input downloader leaves custom paths alone; you must make those files available yourself.</p>
+<p>When adapting a JAXCMR template, edit its existing configuration cell. Set <code>project_root</code> to your project folder’s full path, <code>data_path</code> to your prepared dataset, and <code>output_dir</code> to a results folder. Relative paths in those templates are resolved against <code>project_root</code>. Check any additional output settings, such as <code>simulation_dir</code> or <code>figure_dir</code>, too. The example-input helper leaves custom paths alone; you must make those files available yourself.</p>
 </section>
 <section id="save-files-and-use-them-again" class="level2">
 <h2 class="anchored" data-anchor-id="save-files-and-use-them-again">5. Save files and use them again</h2>

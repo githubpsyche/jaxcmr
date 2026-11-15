@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 import pytest
-from jaxcmr.helpers import has_repeats_per_row
-from jaxcmr.repetition import make_control_dataset
+from jaxcmr.repetition import has_repeats_per_row, make_control_dataset
 
 
 def _toy_dataset_for_controls():

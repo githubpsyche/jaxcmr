@@ -206,7 +206,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#prepare-semantic-inputs" id="toc-prepare-semantic-inputs" class="nav-link" data-scroll-target="#prepare-semantic-inputs">Prepare semantic inputs</a></li>
   <li><a href="#save-and-reuse-the-inputs" id="toc-save-and-reuse-the-inputs" class="nav-link" data-scroll-target="#save-and-reuse-the-inputs">Save and reuse the inputs</a></li>
   </ul>
-<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/tutorials/data-preparation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li><li><a href="https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/guide/tutorials/data-preparation.ipynb" rel="noopener" target="_blank"><i class="bi bi-box-arrow-up-right"></i>Open in Colab</a></li></ul></div></nav>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/tutorials/data-preparation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -232,28 +232,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <p>Turn scored study and recall records into a dataset and aligned semantic inputs. This small, invented example uses four stimuli and three lists so that every conversion is visible; its feature values are for teaching, not empirical semantic estimates. Run the notebook from top to bottom after <a href="../developer-setup.html">Local setup with VS Code</a>, or use Colab; no input files are needed.</p>
 <div id="8ebb11be" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>1 — Set the output location</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>project_root <span class="op">=</span> <span class="va">None</span>  <span class="co"># Git root locally; the working directory otherwise.</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>output_dir <span class="op">=</span> <span class="st">"results/tutorial/data-preparation"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="16d7b9ed" class="cell" data-execution_count="2">
-<details class="code-fold">
+<div id="16d7b9ed" class="cell">
+<details open="" class="code-fold">
 <summary>2 — Install JAXCMR when running in Colab</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> sys</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="cf">if</span> <span class="st">"google.colab"</span> <span class="kw">in</span> sys.modules:</span>
-<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="im">import</span> subprocess</span>
-<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    subprocess.check_call([</span>
-<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>        sys.executable, <span class="st">"-m"</span>, <span class="st">"pip"</span>, <span class="st">"install"</span>, <span class="st">"--upgrade"</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>        <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>    ])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="op">%</span>pip install <span class="op">--</span>upgrade <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="0e72c1ac" class="cell" data-execution_count="3">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>3 — Import packages</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> json</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -272,7 +267,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="a4ead629" class="cell" data-execution_count="4">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>4 — Resolve the working folder</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
@@ -289,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="start-with-scored-records">Start with scored records</h2>
 <p>Each record is one study–recall trial. Responses have already been matched to stimulus identities, in recall order. These lists contain no repeated presentations or intrusions; deciding how to score those is part of preparing a real experiment, before this conversion.</p>
 <div id="1193a96f" class="cell" data-execution_count="5">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>5 — Describe the study lists and scored recall order</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>records <span class="op">=</span> [</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a>    {<span class="st">"subject"</span>: <span class="dv">1</span>, <span class="st">"condition"</span>: <span class="dv">1</span>,</span>
@@ -313,7 +308,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="align-trials-study-positions-and-item-identities">Align trials, study positions and item identities</h2>
 <p>Positive <code>recalls</code> codes identify <strong>one-based study positions</strong>; zero is padding. <code>pres_itemids</code> holds identities shared across trials, while <code>pres_itemnos</code> holds within-list item codes. With distinct items in each list, the latter equal study positions. An empty recall sequence stays an all-zero row, retaining that trial and participant.</p>
 <div id="94c66289" class="cell" data-execution_count="6">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>6 — Convert stimulus identities into aligned arrays</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>trial_count <span class="op">=</span> <span class="bu">len</span>(records)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>study_width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(record[<span class="st">"studied"</span>]) <span class="cf">for</span> record <span class="kw">in</span> records)</span>
@@ -361,7 +356,7 @@ recalls =
 </div>
 <p>In the first trial, <code>hammer</code> is shared item 3 at study position 3; in the second, it is still shared item 3 but at study position 2. The second trial’s first recall, <code>pear</code>, is therefore stored as position <strong>4</strong>, not its shared item ID <strong>2</strong>. See <a href="../overview/data.html">Data</a> for the field reference and repeated-item conventions.</p>
 <div id="48df43d4" class="cell" data-execution_count="7">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>7 — Check that recall positions recover the scored identities</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a><span class="cf">for</span> trial_index, record <span class="kw">in</span> <span class="bu">enumerate</span>(records):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>    positions <span class="op">=</span> data[<span class="st">"recalls"</span>][trial_index]</span>
@@ -379,7 +374,7 @@ recalls =
 <h2 class="anchored" data-anchor-id="prepare-semantic-inputs">Prepare semantic inputs</h2>
 <p>Rows of an item-feature matrix must follow the shared ID order: item 1 is row 0. Here the features are supplied explicitly; real features could come from a separately chosen embedding model or stimulus descriptors. Human pairwise similarity ratings instead begin with an item-by-item matrix and its row/column labels.</p>
 <div id="2d1c6ddf" class="cell" data-execution_count="8">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>8 — Align item features and calculate cosine similarities</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-label="1"></a>features_by_item <span class="op">=</span> {</span>
 <span id="cb11-2"><a href="#cb11-2" aria-label="2"></a>    <span class="st">"apple"</span>: [<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>],</span>
@@ -411,7 +406,7 @@ Cosine distances:
 </div>
 <p>A larger similarity means a closer pair; a smaller distance means a closer pair. The conversion <code>1 - similarity</code> here is specific to cosine distance, not a general rule for arbitrary rating scales. Features, similarities and distances are separate files, and none belongs in the trial-aligned dataset dictionary.</p>
 <div id="af1add17" class="cell" data-execution_count="9">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>9 — Extract model associations in each trial’s study order</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>trial_connections <span class="op">=</span> build_trial_connections_from_similarity(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    data[<span class="st">"pres_itemids"</span>], similarities</span>
@@ -434,7 +429,7 @@ Cosine distances:
 <section id="save-and-reuse-the-inputs" class="level2">
 <h2 class="anchored" data-anchor-id="save-and-reuse-the-inputs">Save and reuse the inputs</h2>
 <div id="86f6dfef" class="cell" data-execution_count="10">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>10 — Save the dataset, semantic arrays and stimulus lookup</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-label="1"></a>dataset_path <span class="op">=</span> output_path <span class="op">/</span> <span class="st">"teaching_recall.h5"</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-label="2"></a>save_dict_to_hdf5(data, <span class="bu">str</span>(dataset_path))</span>

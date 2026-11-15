@@ -238,7 +238,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Follow the war-photo-recall data through analysis, fitting, simulation and comparison. The first sections identify the settings and outputs in each template; the final section executes the same sequence with Papermill, including a separate fitting run for each model. It reuses the supplied completed fits by default.</p>
 <p>Use the repository and environment from <a href="../developer-setup.html">Local setup with VS Code</a>. Open this notebook in that environment. The repository contains the observations and completed fits; no lab-drive files are needed. For preparing your own inputs, start with <a href="../tutorials/data-preparation.html">Preparing data for JAXCMR</a>.</p>
 <div id="b0a67172" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>1 — Configure the tutorial work units</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>project_root <span class="op">=</span> <span class="va">None</span>  <span class="co"># The JAXCMR checkout; set explicitly when working elsewhere.</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>output_dir <span class="op">=</span> <span class="st">"results/tutorial/model-comparison"</span></span>
@@ -309,7 +309,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="generate-responses-from-the-fits" class="level2">
 <h2 class="anchored" data-anchor-id="generate-responses-from-the-fits">Generate responses from the fits</h2>
 <p>Open <a href="../templates/simulation.html">Simulating from saved fits</a>. Supply fitting’s printed <code>fit_paths</code>, set <code>experiment_count = 10</code> and <code>simulation_seed = 1</code>, and choose a <code>simulation_dir</code>. The sequence below uses a distinct folder for each model and sets <code>redo_sims = False</code>, allowing matching responses to be reused on a later run.</p>
-<p>The first run generates 4,920 response rows per model: ten repetitions of each of the 492 lists, retaining the original 123 participant IDs and list conditions. Each <code>.h5</code> response file has a <code>.json</code> provenance sidecar. These simulations impose observed recall lengths; matching recall counts are not a successful prediction of stopping behavior.</p>
+<p>The first run generates 4,920 response rows per model: ten repetitions of each of the 492 lists, retaining the original 123 participant IDs and list conditions. Each <code>.h5</code> response file has a <code>.json</code> file recording its model parameters, selected rows, seed and repetitions. These simulations impose observed recall lengths; matching recall counts are not a successful prediction of stopping behavior.</p>
 </section>
 <section id="compare-observed-and-simulated-recall" class="level2">
 <h2 class="anchored" data-anchor-id="compare-observed-and-simulated-recall">Compare observed and simulated recall</h2>
@@ -327,7 +327,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://papermill.readthedocs.io/en/latest/usage-execute.html">Papermill</a> executes a notebook with a parameter dictionary and saves the executed copy. Its <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">parameter injection</a> occurs immediately after the tagged <code>parameters</code> cell, before paths, masks and models are constructed. The templates are already tagged, and Papermill is included in <code>uv sync</code>.</p>
 <p>The following cells form an ordinary Python script, kept here in the notebook: import packages, prepare work units, then call <code>pm.execute_notebook</code> in the required order. Each fitting call receives a different one-entry <code>model_configs</code> dictionary. Shared memory between notebooks is unnecessary: paths identify the saved products passed to the next call. The <code>python3</code> kernel must be the project’s environment, as in Local setup with VS Code.</p>
 <div id="31cafedf" class="cell" data-tags="[]" data-execution_count="3">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>2 — Import the sequencing and display tools</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">import</span> csv</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a><span class="im">import</span> json</span>
@@ -341,7 +341,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="152d234f" class="cell" data-tags="[]" data-execution_count="4">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>3 — Resolve templates and the executed-notebook folder</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="cf">if</span> project_root <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a>    root_path <span class="op">=</span> resolve_project_path(project_root, Path.cwd())</span>
@@ -367,7 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 <div id="a7c5352e" class="cell" data-tags="[]" data-execution_count="5">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>4 — Run the observed-data analysis</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>pm.execute_notebook(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"spc.ipynb"</span>), <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"observed_spc.ipynb"</span>),</span>
@@ -390,7 +390,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>The work-unit preparation below reads the exact specifications from the supplied fit records. It copies results into this run’s folder and supplies the cohort metadata omitted by the older records, using their recorded cohort indices. Original inputs are left unchanged; existing working results are not replaced.</p>
 <div id="dd0e2268" class="cell" data-tags="[]" data-execution_count="6">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>5 — Prepare a separate fitting work unit for each model</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>fit_jobs <span class="op">=</span> []</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="cf">for</span> model_name, source <span class="kw">in</span> fit_sources.items():</span>
@@ -433,7 +433,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div id="71d97162" class="cell" data-tags="[]" data-execution_count="7">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>6 — Execute the same fitting template once per model</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>fit_paths <span class="op">=</span> {}</span>
 <span id="cb7-2"><a href="#cb7-2" aria-label="2"></a><span class="cf">for</span> job <span class="kw">in</span> fit_jobs:</span>
@@ -465,7 +465,7 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 </div>
 </div>
 <div id="3d5f3694" class="cell" data-tags="[]" data-execution_count="8">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>7 — Simulate from each completed fitting work unit</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a>simulation_paths <span class="op">=</span> {}</span>
 <span id="cb10-2"><a href="#cb10-2" aria-label="2"></a><span class="cf">for</span> job <span class="kw">in</span> fit_jobs:</span>
@@ -494,7 +494,7 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 </div>
 </div>
 <div id="6908e709" class="cell" data-tags="[]" data-execution_count="9">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>8 — Run SPC on the observations and saved model responses</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>pm.execute_notebook(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"spc.ipynb"</span>), <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"predicted_spc.ipynb"</span>),</span>
@@ -517,7 +517,7 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 </div>
 </div>
 <div id="8a2f59bd" class="cell" data-tags="[]" data-execution_count="10">
-<details class="code-fold">
+<details open="" class="code-fold">
 <summary>9 — Compare the same fits and responses and display their scores</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>pm.execute_notebook(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"model_comparison.ipynb"</span>),</span>

@@ -1,9 +1,14 @@
-# Example fits prepared with the current library
+# Example model fits
 
-All three records were prepared on 2026-11-09 with the existing observation file
-`data/Dupertuys2026.h5`, unchanged. Its SHA-256 is
-`93ac35ad7f17c907ad369438c0899be45d4f6728250eccfe7ae3757d2fe2468a`; it matches the ECMR3 project's copy.
-No dataset extract is maintained.
+This directory contains three pooled fits to the war-photo-recall observations:
+ordinary CMR, source-only eCMR and broader eCMR. Use these records with the
+simulation template to generate responses, the parameter-shifting template to
+study interventions, or the model-comparison template to compare their fits.
+All three use `data/Dupertuys2026.h5`.
+
+The records contain parameter estimates, objective values and the settings needed
+to reconstruct each model. They illustrate the procedures; the comparisons below
+are not a definitive analysis of the experiment.
 
 ## Models and objective
 
@@ -21,7 +26,7 @@ primacy scale and decay; and choice sensitivity.
 
 Both eCMR variants use multiplicative primacy modulation of emotional
 associations, emotional encoding drift of 1 and emotional recall drift tied
-to temporal recall drift. The latter follows the current model's default when
+to temporal recall drift. The latter follows the model's default when
 `emotion_recall_drift_rate` is omitted. The legacy `emotion_drift_rate` is absent.
 `phi_emot_modulates_temporal` distinguishes the two variants;
 `modulate_temporal_emotion_by_primacy` is false in both.
@@ -74,7 +79,7 @@ that a fitted parameter is pinned to its boundary or is well identified.
 | Source-only eCMR | `primacy_scale` | 0.135032 | 2.22045e-16–100 |
 | Broader eCMR | `primacy_scale` | 0.12976 | 2.22045e-16–100 |
 
-## Reproduction and historical records
+## Reproduction
 
 `templates/fitting.ipynb` is the procedure used for all three models.
 Its `model_configs` parameter includes all three complete specifications with their selected
@@ -85,23 +90,16 @@ the paths of its fit records and response files.
 The simulation notebook accepts the three supplied fit paths and produces ten responses per
 selected list using seed 1. The shared response examples in `data/simulations/` were generated
 through that procedure; their JSON sidecars preserve the actual parameters, selected rows,
-model/simulator and implementation identity. Behavioral analysis notebooks read these files.
+model, simulator and software versions. Behavioral analysis notebooks read these files.
 Parameter shifting produces separate intervention responses and leaves these baselines intact.
 
-All three records identify JAXCMR 0.2.0rc1 and source SHA-256
-`b4ecd25b7eedf5a9cbd38c70df4191338444b0b2d27c73702d6d908454b74d81`. This fingerprint hashes sorted package-relative
-Python filenames and their bytes, each followed by a zero byte. Each record
-also stores Python, JAX, NumPy and SciPy versions, precision, input identity,
-selected rows and full configuration. Recorded objectives belong to that
-implementation; the package version alone is insufficient when local source
-changes without a release.
+The fits were prepared on 2026-11-09 using JAXCMR 0.2.0rc1. Each record
+also includes Python, JAX, NumPy and SciPy versions, numerical precision,
+selected rows and fitting settings. The saved objectives describe that model
+implementation. When reusing estimates after changing data or model code,
+rerun fitting and regenerate the affected responses; matching filenames and
+parameter names do not establish that the calculation is unchanged.
 
-The original ECMR3 result files remain unchanged in `emcr3/results/fits/`.
-They used older context updating and an older emotional-drift interpretation.
-Loading their parameter arrays into the current model does not reproduce their
-original likelihoods. Retain their original semantics for historical reproduction,
-or refit under current equations. These new book examples replace the earlier
-copied records; no historical compatibility model is added to JAXCMR.
-
-Download copies are staged for the book build. These research inputs remain
-excluded from package distributions.
+These eleven supplied example files and this methods document are included
+in JAXCMR distributions and staged as website downloads. Other research inputs
+and results remain excluded from package distributions.

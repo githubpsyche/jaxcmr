@@ -1,11 +1,11 @@
 """Factor-mean eligibility, recall coding, aggregation, and LPP compatibility."""
 
-import importlib
 import jax
 import jax.numpy as jnp
 import matplotlib
 import numpy as np
 import pytest
+from matplotlib.container import ErrorbarContainer
 
 matplotlib.use("Agg", force=True)
 from jaxcmr.analyses.cat_factor_by_recall import (
@@ -20,8 +20,15 @@ from jaxcmr.analyses.cat_factor_spc import (
     plot_cat_factor_spc,
     subject_cat_factor_spc,
 )
-from jaxcmr.analyses.cat_lpp_by_recall import expand_categories_by_recall, plot_cat_lpp_by_recall
-from jaxcmr.analyses.cat_lpp_spc import cat_lpp_spc, category_lpp_values, plot_cat_lpp_spc
+from jaxcmr.analyses.cat_lpp_by_recall import (
+    expand_categories_by_recall,
+    plot_cat_lpp_by_recall,
+)
+from jaxcmr.analyses.cat_lpp_spc import (
+    cat_lpp_spc,
+    category_lpp_values,
+    plot_cat_lpp_spc,
+)
 from jaxcmr.typing import RecallDataset
 
 
@@ -157,94 +164,91 @@ def test_subject_summaries_preserve_subject_and_category_order_and_weighting():
     np.testing.assert_array_equal(selected, [[[0]]])
 
 
-def test_hiding_intervals_keeps_real_plot_at_equal_subject_mean_and_does_not_mutate_data(
-    monkeypatch,
-):
-    plotting = importlib.import_module("jaxcmr.plotting")
-    interval_calls = []
-
-    def fixed_errors(values, mean, **kwargs):
-        interval_calls.append(np.asarray(values))
-        return jnp.zeros((2, len(mean)))
-
-    monkeypatch.setattr(plotting, "calculate_errors", fixed_errors)
+def test_hiding_intervals_keeps_real_plot_at_equal_subject_mean_and_does_not_mutate_data():
     data = _unequal_subjects()
     before = {key: np.array(value) for key, value in data.items()}
     for exclude_ci in (False, True):
         axis = plot_cat_lpp_by_recall(
             data, jnp.ones(4, dtype=bool), "category", [2], exclude_ci=exclude_ci
         )
-        np.testing.assert_array_equal(axis.lines[0].get_ydata(), [5])
+        # Participants contribute means 0 and 10, despite having three and one trials.
+        curves = [line for line in axis.lines if line.get_marker() == "o"]
+        assert len(curves) == 1
+        np.testing.assert_array_equal(
+            curves[0].get_ydata(), [5], err_msg="Plot means must weight participants equally"
+        )
         assert axis.get_ylabel() == "LateLPP (uV)"
-    assert len(interval_calls) == 1
-    np.testing.assert_array_equal(interval_calls[0], [[10], [0]])
+        intervals = [item for item in axis.containers if isinstance(item, ErrorbarContainer)]
+        assert len(intervals) == (0 if exclude_ci else 1)
     for key, value in before.items():
         np.testing.assert_array_equal(data[key], value)
 
 
-def test_plots_label_each_dimension_and_allow_different_position_widths(monkeypatch):
-    module = importlib.import_module("jaxcmr.analyses.cat_factor_spc")
-    seen = []
+def _plotted_curves(axis):
+    """Match visible line segments to their legend colour, ignoring empty groups."""
+    result = {}
+    for handle, label in zip(*axis.get_legend_handles_labels(), strict=True):
+        lines = [line for line in axis.lines
+                 if line.get_color() == handle.get_color() and len(line.get_xdata())]
+        if lines:
+            result[label] = (np.concatenate([line.get_xdata() for line in lines]),
+                             np.concatenate([line.get_ydata() for line in lines]))
+    return result
 
-    def capture(axis, x, values, label, color, **kwargs):
-        seen.append((np.asarray(x), np.asarray(values), label, kwargs["draw_ci"]))
-        return axis
 
-    monkeypatch.setattr(module, "plot_data", capture)
+def test_plots_label_each_dimension_and_allow_different_position_widths():
     first, second = (_dataset(), _unequal_subjects())
-    plot_cat_factor_by_recall(
+    axis = plot_cat_factor_by_recall(
         [first, second],
         [jnp.ones(2, dtype=bool), jnp.ones(4, dtype=bool)],
-        "category",
-        [1],
-        "LateLPP",
-        labels=["observed", "model"],
-        category_labels=["A"],
-        recall_labels=["yes", "no"],
-        draw_ci=False,
+        "category", [1], "LateLPP",
+        labels=["observed", "model"], category_labels=["A"],
+        recall_labels=["yes", "no"], draw_ci=False,
     )
-    assert [entry[2] for entry in seen] == [
-        "observed / A / yes",
-        "observed / A / no",
-        "model / A / yes",
-        "model / A / no",
-    ]
-    assert [entry[1].shape for entry in seen] == [(2, 3), (2, 3), (2, 1), (2, 1)]
-    np.testing.assert_array_equal(seen[0][0], [1, 2, 3])
-    np.testing.assert_array_equal(seen[2][0], [1])
-    assert not any((entry[3] for entry in seen))
+    expected = {
+        "observed / A / yes": ([1, 2], [7, 7]),
+        "observed / A / no": ([1, 2, 3], [7, 7, 7]),
+        "model / A / yes": ([1], [5]),
+    }
+    curves = _plotted_curves(axis)
+    assert list(curves) == list(expected)
+    for label, (positions, values) in expected.items():
+        np.testing.assert_array_equal(curves[label][0], positions)
+        np.testing.assert_array_equal(curves[label][1], values)
+    assert not any(isinstance(item, ErrorbarContainer) for item in axis.containers)
 
 
-def test_legacy_defaults_labels_and_expanded_code_sequences_are_preserved(monkeypatch):
-    module = importlib.import_module("jaxcmr.analyses.cat_factor_spc")
-    seen = []
-
-    def capture(axis, x, values, label, color, **kwargs):
-        seen.append((np.asarray(values), label))
-        return axis
-
-    monkeypatch.setattr(module, "plot_data", capture)
+def test_legacy_defaults_labels_and_expanded_code_sequences_are_preserved():
     data = _dataset()
     np.testing.assert_array_equal(cat_lpp_spc(data, "category", 1), [2, 2, 2])
-    axis = plot_cat_lpp_spc(data, jnp.ones(2, dtype=bool), "category", [1], labels=["LPP"])
-    np.testing.assert_array_equal(seen.pop()[0], np.full((2, 3), 7))
-    assert axis.get_ylabel() == "LateLPP (uV)"
-    data["category"] = jnp.array([[2, 1, 1], [2, 1, 1]])
-    plot_cat_lpp_by_recall(
-        data,
-        jnp.ones(2, dtype=bool),
-        "category",
-        (4, 1),
-        lpp_field="score",
-        labels=["category 2 recalled", "category 1 missed"],
+    axis = plot_cat_lpp_spc(
+        data, jnp.ones(2, dtype=bool), "category", [1], labels=["LPP"], draw_ci=False
     )
-    np.testing.assert_allclose(seen[0][0], [[np.nan] * 3, [4, np.nan, np.nan]], equal_nan=True)
-    np.testing.assert_allclose(seen[1][0], [[np.nan, np.nan, 30], [np.nan, 6, 8]], equal_nan=True)
-    assert [entry[1] for entry in seen] == ["category 2 recalled", "category 1 missed"]
-    seen.clear()
-    plot_cat_lpp_by_recall(data, jnp.ones(2, dtype=bool), "category", 2, lpp_field="score")
-    np.testing.assert_allclose(seen[0][0], [[np.nan] * 3, [4, np.nan, np.nan]], equal_nan=True)
-    np.testing.assert_allclose(seen[1][0], [[10, np.nan, np.nan], [np.nan] * 3], equal_nan=True)
+    np.testing.assert_array_equal(axis.lines[0].get_xdata(), [1, 2, 3])
+    np.testing.assert_array_equal(axis.lines[0].get_ydata(), [7, 7, 7])
+    assert axis.get_ylabel() == "LateLPP (uV)"
+    assert axis.get_legend_handles_labels()[1] == ["LPP"]
+    data["category"] = jnp.array([[2, 1, 1], [2, 1, 1]])
+    labels = ["category 2 recalled", "category 1 missed"]
+    axis = plot_cat_lpp_by_recall(
+        data, jnp.ones(2, dtype=bool), "category", (4, 1), lpp_field="score",
+        labels=labels, exclude_ci=True,
+    )
+    assert axis.get_legend_handles_labels()[1] == labels
+    curves = _plotted_curves(axis)
+    assert list(curves) == labels
+    for label, positions, values in zip(labels, [[1], [2, 3]], [[4], [6, 19]], strict=True):
+        np.testing.assert_array_equal(curves[label][0], positions)
+        np.testing.assert_array_equal(curves[label][1], values)
+    axis = plot_cat_lpp_by_recall(
+        data, jnp.ones(2, dtype=bool), "category", 2, lpp_field="score", exclude_ci=True
+    )
+    # Scalar category 2 expands to recalled then missed curves.
+    curves = _plotted_curves(axis)
+    assert len(curves) == 2
+    for (positions, values), value in zip(curves.values(), [4, 10], strict=True):
+        np.testing.assert_array_equal(positions, [1])
+        np.testing.assert_array_equal(values, [value])
 
 
 def test_empty_subject_selections_are_shaped_and_skipped_in_plots():

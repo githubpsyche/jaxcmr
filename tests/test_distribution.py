@@ -1,7 +1,5 @@
-"""Required distribution and documentation checks, including ordinary pip resolution."""
+"""Distribution contents, ordinary pip installation, and bundled example resources."""
 
-import json
-import hashlib
 import os
 from pathlib import Path
 import re
@@ -10,12 +8,12 @@ import sys
 import tarfile
 import tomllib
 import zipfile
-import nbformat
-from nbclient import NotebookClient
+
+from jaxcmr.examples import _EXAMPLE_FILES
 import pytest
 
 SOURCE = Path(os.environ.get("JAXCMR_SOURCE", Path(__file__).resolve().parents[1]))
-VERSION = tomllib.loads((SOURCE / "pyproject.toml").read_text())["project"]["version"]
+VERSION = tomllib.loads((SOURCE / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
 
 def run(*args, cwd, env=None):
@@ -53,7 +51,7 @@ def installed(artifacts):
     work, wheel, sdist = artifacts
     environment = work / "empty-environment"
     run(sys.executable, "-m", "venv", str(environment), cwd=work)
-    python = str(environment / "bin" / "python")
+    python = str(environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)
     env.update(MPLBACKEND="Agg", JAX_PLATFORMS="cpu")
@@ -81,13 +79,15 @@ def test_archives_include_licenses_and_exclude_research(artifacts):
     with zipfile.ZipFile(wheel) as archive:
         names = archive.namelist()
         assert not any(name.startswith(("work/", "data/", "results/", "tests/")) for name in names)
+        examples = {f"jaxcmr/_example_inputs/{name}" for name in [*_EXAMPLE_FILES, "data/fits/README.md"]}
+        assert {name for name in names if name.startswith("jaxcmr/_example_inputs/")} == examples
+        for name in [*_EXAMPLE_FILES, "data/fits/README.md"]:
+            assert archive.read(f"jaxcmr/_example_inputs/{name}") == (SOURCE / name).read_bytes()
         license_text = archive.read("jaxcmr/_vendor/simple_pytree/LICENSE").decode()
-        assert hashlib.sha256(license_text.encode()).hexdigest() == (
-            "9c47aa6538111e11a66d673a056439656b9b07e2bb2b1706038994e15c1cf7c7"
-        )
+        assert license_text == (SOURCE / "jaxcmr/_vendor/simple_pytree/LICENSE").read_text()
+        assert "MIT License" in license_text and "Cristian Garcia" in license_text
         provenance = archive.read("jaxcmr/_vendor/simple_pytree/README.md").decode()
         assert "0.2.2" in provenance and "Cristian Garcia" in provenance
-        assert "3a7a2f66883194ab14875dd01c4306c4f102f31d90e7e2d421366f12a2c49bab" in provenance
         metadata = archive.read(
             next(n for n in names if n.endswith(".dist-info/METADATA"))
         ).decode()
@@ -102,9 +102,14 @@ def test_archives_include_licenses_and_exclude_research(artifacts):
             if member.isfile()
         }
         assert not any(
-            name.split("/")[0] in {"work", "data", "results", ".venv", ".git", "_site"}
+            name.split("/")[0] in {"work", "results", ".venv", ".git", "_site"}
             for name in names
         )
+        assert {name for name in names if name.startswith("data/")} == {*_EXAMPLE_FILES, "data/fits/README.md"}
+        for name in [*_EXAMPLE_FILES, "data/fits/README.md"]:
+            member = next(m for m in archive.getmembers()
+                          if Path(*Path(m.name).parts[1:]).as_posix() == name)
+            assert archive.extractfile(member).read() == (SOURCE / name).read_bytes()
         assert {
             "pyproject.toml",
             "LICENSE",
@@ -117,7 +122,7 @@ def test_archives_include_licenses_and_exclude_research(artifacts):
 
 def test_ordinary_pip_install_and_actual_readme_example(installed):
     work, python, env = installed
-    (block,) = re.findall(r"```python\n(.*?)```", (SOURCE / "README.md").read_text(), flags=re.S)
+    (block,) = re.findall(r"```python\n(.*?)```", (SOURCE / "README.md").read_text(encoding="utf-8"), flags=re.S)
     checks = """
 import importlib.metadata as metadata
 import importlib.util
@@ -135,34 +140,25 @@ assert int(model.study_index) == 16
     run(python, "-c", block + checks, cwd=work, env=env)
 
 
-def test_existing_cmr_tutorial_in_fresh_kernel(installed, monkeypatch):
+def test_installed_examples_are_available_offline(installed):
     work, python, env = installed
-    run(python, "-m", "pip", "install", "ipykernel", cwd=work, env=env)
-    kernel = work / "jupyter" / "kernels" / "jaxcmr-distribution"
-    kernel.mkdir(parents=True)
-    (kernel / "kernel.json").write_text(
-        json.dumps(
-            {
-                "argv": [python, "-m", "ipykernel_launcher", "-f", "{connection_file}"],
-                "display_name": "JAXCMR distribution check",
-                "language": "python",
-                "env": {
-                    "MPLBACKEND": "module://matplotlib_inline.backend_inline",
-                    "JAX_PLATFORMS": "cpu",
-                },
-            }
-        )
-    )
-    monkeypatch.setenv("JUPYTER_PATH", str(work / "jupyter"))
-    notebook = nbformat.read(SOURCE / "templates" / "models" / "cmr.ipynb", as_version=4)
-    client = NotebookClient(
-        notebook,
-        timeout=180,
-        kernel_name="jaxcmr-distribution",
-        resources={"metadata": {"path": str(work)}},
-    )
-    client.execute()
-    cells = [cell for cell in notebook.cells if cell.cell_type == "code" and cell.source.strip()]
-    assert cells and all(cell.execution_count is not None for cell in cells)
-    assert not any(output.output_type == "error" for cell in cells for output in cell.outputs)
-    assert any(output.get("data", {}).get("image/png") for cell in cells for output in cell.outputs)
+    script = """
+from pathlib import Path
+import socket
+import sys
+from jaxcmr.examples import fetch_inputs, _EXAMPLE_FILES
+from importlib.metadata import distribution
+
+def no_network(*args, **kwargs):
+    raise AssertionError("Bundled examples must work offline")
+
+socket.socket.connect = no_network
+project = Path('offline-project')
+fetch_inputs(_EXAMPLE_FILES, base_dir=project)
+from jaxcmr.colab import fetch_inputs as legacy_fetch_inputs
+legacy_fetch_inputs([next(iter(_EXAMPLE_FILES))], base_dir=project)
+for name in _EXAMPLE_FILES:
+    bundled = distribution("jaxcmr").locate_file(f"jaxcmr/_example_inputs/{name}")
+    assert (project / name).read_bytes() == bundled.read_bytes()
+"""
+    run(python, "-c", script, cwd=work, env=env)

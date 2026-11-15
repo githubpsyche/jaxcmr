@@ -60,7 +60,10 @@ def test_likelihood_known_event_products(loss_cls, product):
     )
     loss = loss_cls(FixedFactory, data, None)
     answer = jax.jit(lambda: loss(jnp.array([0, 1]), {}, (), jnp.empty((0, 2))))()
-    np.testing.assert_allclose(answer, [-np.log(product)] * 2, rtol=1e-6)
+    np.testing.assert_allclose(
+        answer, [-np.log(product)] * 2, rtol=1e-6,
+        err_msg="Event likelihood must match the counted product",
+    )
     if loss_cls is bag.IncludeTerminationLikelihoodLoss:
         full = make_dataset(jnp.array([[1, 2, 3]]))
         with pytest.raises(ValueError, match="at least one padding slot"):
@@ -86,7 +89,10 @@ def test_scipy_adapter_preserves_scalar_population_order_and_transform(transform
     inputs = (
         np.array([[0.5, 0.25], [0.25, 0.5]]) if transformed else np.array([[5.0, 3.0], [2.0, 4.0]])
     )
-    np.testing.assert_allclose(function(inputs), [4.0, 20.0], rtol=1e-6)
+    np.testing.assert_allclose(
+        function(inputs), [4.0, 20.0], rtol=1e-6,
+        err_msg="Parameter names must remain aligned",
+    )
     assert function(inputs[:, 0]).shape == ()
     assert function(inputs[:, 0]) == pytest.approx(4.0)
     with pytest.raises(ValueError, match="Expected"):
