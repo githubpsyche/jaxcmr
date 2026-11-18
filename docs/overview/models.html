@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -245,7 +249,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#the-model-interface" id="toc-the-model-interface" class="nav-link active" data-scroll-target="#the-model-interface">The model interface</a></li>
-  <li><a href="#factories-connect-models-to-experiments" id="toc-factories-connect-models-to-experiments" class="nav-link" data-scroll-target="#factories-connect-models-to-experiments">Factories connect models to experiments</a></li>
+  <li><a href="#factories-connect-models-to-experiments" id="toc-factories-connect-models-to-experiments" class="nav-link" data-scroll-target="#factories-connect-models-to-experiments">Factories connect models to experiments</a>
+  <ul class="collapse">
+  <li><a href="#experimental-optimizedcmr" id="toc-experimental-optimizedcmr" class="nav-link" data-scroll-target="#experimental-optimizedcmr">Experimental OptimizedCMR</a></li>
+  </ul></li>
   <li><a href="#following-one-event-through-the-interface" id="toc-following-one-event-through-the-interface" class="nav-link" data-scroll-target="#following-one-event-through-the-interface">Following one event through the interface</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/models.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
@@ -275,24 +282,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A memory-search model exposes study and retrieval operations that losses and simulators can use. The model determines how its internal state changes and how that state supports possible responses. <code>MemorySearch</code> describes the shared interface, while a <strong>model factory</strong> connects an experiment and its parameters to fresh model instances.</p>
 <section id="the-model-interface" class="level2">
 <h2 class="anchored" data-anchor-id="the-model-interface">The model interface</h2>
-<p>A compatible model supplies the attributes and methods in <code>MemorySearch</code>. The selected declaration below shows the event lifecycle and probabilities; the complete protocol also exposes item eligibility and retrieval activations.</p>
-<p>Selected declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<p>A compatible model supplies the attributes and methods in <code>MemorySearch</code>. The declaration below shows the event lifecycle and probabilities. Internal state such as item eligibility and retrieval support belongs to the concrete model; specialized consumers state any additional requirements separately.</p>
+<p>Selected declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="kw">class</span> MemorySearch(Protocol):</span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    item_count: <span class="bu">int</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>    is_active: Bool[Array, <span class="st">""</span>]</span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>    studied: Bool[Array, <span class="st">" item_count"</span>]</span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>    recall_total: Integer[Array, <span class="st">""</span>]</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    study_index: Integer[Array, <span class="st">""</span>]</span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    <span class="kw">def</span> experience(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    <span class="kw">def</span> start_retrieving(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>    <span class="kw">def</span> retrieve(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>    <span class="kw">def</span> outcome_probability(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> Float[Array, <span class="st">""</span>]: ...</span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>    <span class="kw">def</span> outcome_probabilities(<span class="va">self</span>) <span class="op">-&gt;</span> Float[Array, <span class="st">" recall_outcomes"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    is_active: Bool[Array, <span class="st">""</span>]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>    recall_total: Integer[Array, <span class="st">""</span>]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>    <span class="kw">def</span> experience(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    <span class="kw">def</span> start_retrieving(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>    <span class="kw">def</span> retrieve(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> <span class="st">"MemorySearch"</span>: ...</span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>    <span class="kw">def</span> outcome_probability(<span class="va">self</span>, choice: Int_) <span class="op">-&gt;</span> Float[Array, <span class="st">""</span>]: ...</span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>    <span class="kw">def</span> outcome_probabilities(<span class="va">self</span>) <span class="op">-&gt;</span> Float[Array, <span class="st">" recall_outcomes"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -328,7 +332,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="factories-connect-models-to-experiments" class="level2">
 <h2 class="anchored" data-anchor-id="factories-connect-models-to-experiments">Factories connect models to experiments</h2>
-<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<p>Declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="kw">class</span> MemorySearchModelFactory(Protocol):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a>        <span class="va">self</span>,</span>
@@ -336,64 +340,70 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a>        features: Float[Array, <span class="st">" word_pool_items features_count"</span>] <span class="op">|</span> <span class="va">None</span>,</span>
 <span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    ) <span class="op">-&gt;</span> <span class="va">None</span>: ...</span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    <span class="kw">def</span> create_model(</span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>        <span class="va">self</span>, parameters: Mapping[<span class="bu">str</span>, Float_]</span>
-<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>    ) <span class="op">-&gt;</span> MemorySearch: ...</span>
-<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a>    <span class="kw">def</span> create_trial_model(</span>
-<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>        <span class="va">self</span>, trial_index: Integer[Array, <span class="st">""</span>], parameters: Mapping[<span class="bu">str</span>, Float_]</span>
-<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>    ) <span class="op">-&gt;</span> MemorySearch: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    <span class="kw">def</span> create_trial_model(</span>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>        <span class="va">self</span>, trial_index: Integer[Array, <span class="st">""</span>], parameters: Parameters</span>
+<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>    ) <span class="op">-&gt;</span> MemorySearch: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A factory <strong>class</strong> is passed as <code>model_factory_cls</code> to a loss or simulator. Its constructor receives the dataset and optional vocabulary features. The resulting factory <strong>instance</strong> creates fresh models from parameters. <code>create_trial_model()</code> additionally receives a dataset row index, allowing trial-specific stimulus features or conditions to affect construction.</p>
 <p>For ordinary CMR, <code>jaxcmr.models.cmr.make_factory()</code> binds component creators and returns this factory class. Its models use the dataset’s maximum list length; the ordinary factory does not use trial-specific features. Other factories can require fields such as <code>pres_itemids</code> or <code>valence</code>.</p>
 <p>This is the model entry point for existing workflows: supply a compatible factory through <code>model_factory_cls</code>. Matching method names alone does not establish suitable event coding or scientific assumptions.</p>
-<p>Semantic factories check that <code>pres_itemids</code> aligns with study positions and that positive integer IDs are covered by the supplied vocabulary features or similarity matrix. A similarity matrix must be square. These checks occur once during factory preparation, outside the compiled model calculations; they do not impose a similarity scale or symmetry requirement.</p>
+<p>Supply integer <code>pres_itemids</code> aligned with study positions: positive IDs index the vocabulary from one, and zero denotes padding. Feature rows or both axes of a square similarity matrix must cover those IDs. Factories assume this alignment rather than inspecting item values during JAX transformations. Prepare concrete study lengths before constructing a factory.</p>
+<section id="experimental-optimizedcmr" class="level3">
+<h3 class="anchored" data-anchor-id="experimental-optimizedcmr">Experimental OptimizedCMR</h3>
+<p><code>jaxcmr.experimental.optimized_cmr</code> is a fixed temporal CMR specification: learning precedes context integration, repeated recalls are disabled, and termination uses <code>NoStopTermination</code>. Its event and prepared-prediction interfaces accept exactly nine continuous parameters: <code>encoding_drift_rate</code>, <code>start_drift_rate</code>, <code>recall_drift_rate</code>, <code>shared_support</code>, <code>item_support</code>, <code>learning_rate</code>, <code>primacy_scale</code>, <code>primacy_decay</code> and <code>choice_sensitivity</code>.</p>
+<p><code>learn_after_context_update</code>, <code>allow_repeated_recalls</code> and other unsupported parameter names raise <code>TypeError</code>, including when their value is <code>False</code>. This name binding works under JAX transformations without inspecting numerical values. Dataset simulation keeps the <code>subject</code> identity column in the driver rather than passing it to the model.</p>
+<p>Use a parameter mapping for the model you selected. When adapting an existing regular-CMR configuration, first establish that both flags are <code>False</code> and that the termination policy is <code>NoStopTermination</code>; deleting incompatible settings does not make the models equivalent. The library does not silently convert regular-CMR configurations.</p>
+<p>Its prepared sequence calculations are experimental and are not part of the ordinary model-factory or loss protocols. Ordinary fitting uses the selected factory’s event methods. To use accelerated OptimizedCMR fitting, import its adapter explicitly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> jaxcmr.experimental.optimized_cmr_fitting <span class="im">import</span> ScipyLBFGSB</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The experimental fitters take <code>(dataset, base_params, hyperparams=None)</code>; they fix the model to OptimizedCMR and accept the corresponding ordinary optimizer settings. <code>ScipyTrustConstr</code>, <code>EvosaxDE</code>, and <code>ScipyDE</code> are also available there. Their optional <code>prepare_selections(masks)</code> method prepares compatible participant selections together for compilation reuse. It is not needed for ordinary fitting. By default, experimental fitting excludes STOP events from the likelihood; the keyword <code>mask_likelihoods</code> selects another scoring mask without removing observed events from the conditioning history.</p>
+<p>The experimental import paths and preparation interfaces may change as the model is evaluated. They are not re-exported by <code>jaxcmr.models</code> or <code>jaxcmr.fitting</code>.</p>
 <div id="locate-project-inputs" class="cell">
 <details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="cf">try</span>:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="3d534cca" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Create a model through a CMR factory</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">import</span> jax</span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
-<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
-<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
-<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
-<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
-<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
-<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
-<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
-<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
-<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
-<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-label="24"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-label="25"></a>factory <span class="op">=</span> CMRFactory(data, features<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb4-26"><a href="#cb4-26" aria-label="26"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
-<span id="cb4-27"><a href="#cb4-27" aria-label="27"></a>trial_index <span class="op">=</span> <span class="bu">int</span>(jnp.flatnonzero(mixed)[<span class="dv">0</span>])</span>
-<span id="cb4-28"><a href="#cb4-28" aria-label="28"></a>initial <span class="op">=</span> factory.create_trial_model(trial_index, parameters)</span>
-<span id="cb4-29"><a href="#cb4-29" aria-label="29"></a><span class="bu">print</span>(<span class="st">"Model:"</span>, <span class="bu">type</span>(initial).<span class="va">__name__</span>)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Item capacity:"</span>, initial.item_count)</span>
-<span id="cb4-31"><a href="#cb4-31" aria-label="31"></a><span class="bu">print</span>(<span class="st">"Initial study count:"</span>, <span class="bu">int</span>(initial.study_index))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="im">import</span> json</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a><span class="im">import</span> jax</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb5-18"><a href="#cb5-18" aria-label="18"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-label="19"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb5-20"><a href="#cb5-20" aria-label="20"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-label="21"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-label="22"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-label="23"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-label="24"></a>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-label="25"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-label="26"></a>factory <span class="op">=</span> CMRFactory(data, features<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-label="27"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-label="28"></a>trial_index <span class="op">=</span> <span class="bu">int</span>(jnp.flatnonzero(mixed)[<span class="dv">0</span>])</span>
+<span id="cb5-29"><a href="#cb5-29" aria-label="29"></a>initial <span class="op">=</span> factory.create_trial_model(trial_index, parameters)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Model:"</span>, <span class="bu">type</span>(initial).<span class="va">__name__</span>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-label="31"></a><span class="bu">print</span>(<span class="st">"Item capacity:"</span>, initial.item_count)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-label="32"></a><span class="bu">print</span>(<span class="st">"Initial study count:"</span>, <span class="bu">int</span>(initial.study_index))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Model: CMR
@@ -403,28 +413,29 @@ Initial study count: 0</code></pre>
 </div>
 <p>The factory configuration above selects CMR with linear associative memories, temporal context and a no-stop policy. Parameter values come from the supplied demonstration fit, but a model can equally use hand-chosen values. <a href="../overview/components.html">Model Components</a> explains the creator functions.</p>
 </section>
+</section>
 <section id="following-one-event-through-the-interface" class="level2">
 <h2 class="anchored" data-anchor-id="following-one-event-through-the-interface">Following one event through the interface</h2>
 <p>Study events already contain within-list item codes. Recorded recalls contain study positions, so the caller translates the first response through <code>pres_itemnos</code> before passing it to <code>retrieve()</code>.</p>
 <div id="6e0862b9" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Inspect state and probabilities across one retrieval</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>studied <span class="op">=</span> initial</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="cf">for</span> item <span class="kw">in</span> data[<span class="st">"pres_itemnos"</span>][trial_index]:</span>
-<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    studied <span class="op">=</span> studied.experience(item)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>ready <span class="op">=</span> studied.start_retrieving()</span>
-<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>position <span class="op">=</span> <span class="bu">int</span>(data[<span class="st">"recalls"</span>][trial_index, <span class="dv">0</span>])</span>
-<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>first_item <span class="op">=</span> <span class="bu">int</span>(data[<span class="st">"pres_itemnos"</span>][trial_index, position <span class="op">-</span> <span class="dv">1</span>])</span>
-<span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>after <span class="op">=</span> ready.retrieve(first_item)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-label="8"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-label="9"></a><span class="bu">print</span>(<span class="st">"Study counts, original and updated:"</span>,</span>
-<span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>      <span class="bu">int</span>(initial.study_index), <span class="bu">int</span>(studied.study_index))</span>
-<span id="cb6-11"><a href="#cb6-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Recall count after retrieval:"</span>, <span class="bu">int</span>(after.recall_total))</span>
-<span id="cb6-12"><a href="#cb6-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Probability of this item before retrieval:"</span>,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>      <span class="bu">float</span>(ready.outcome_probability(first_item)))</span>
-<span id="cb6-14"><a href="#cb6-14" aria-label="14"></a><span class="bu">print</span>(<span class="st">"Probability of this item after retrieval:"</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" aria-label="15"></a>      <span class="bu">float</span>(after.outcome_probability(first_item)))</span>
-<span id="cb6-16"><a href="#cb6-16" aria-label="16"></a><span class="bu">print</span>(<span class="st">"Next-response vector shape:"</span>, after.outcome_probabilities().shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>studied <span class="op">=</span> initial</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a><span class="cf">for</span> item <span class="kw">in</span> data[<span class="st">"pres_itemnos"</span>][trial_index]:</span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>    studied <span class="op">=</span> studied.experience(item)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>ready <span class="op">=</span> studied.start_retrieving()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>position <span class="op">=</span> <span class="bu">int</span>(data[<span class="st">"recalls"</span>][trial_index, <span class="dv">0</span>])</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>first_item <span class="op">=</span> <span class="bu">int</span>(data[<span class="st">"pres_itemnos"</span>][trial_index, position <span class="op">-</span> <span class="dv">1</span>])</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>after <span class="op">=</span> ready.retrieve(first_item)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a><span class="bu">print</span>(<span class="st">"Study counts, original and updated:"</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>      <span class="bu">int</span>(initial.study_index), <span class="bu">int</span>(studied.study_index))</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a><span class="bu">print</span>(<span class="st">"Recall count after retrieval:"</span>, <span class="bu">int</span>(after.recall_total))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-label="12"></a><span class="bu">print</span>(<span class="st">"Probability of this item before retrieval:"</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>      <span class="bu">float</span>(ready.outcome_probability(first_item)))</span>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a><span class="bu">print</span>(<span class="st">"Probability of this item after retrieval:"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>      <span class="bu">float</span>(after.outcome_probability(first_item)))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a><span class="bu">print</span>(<span class="st">"Next-response vector shape:"</span>, after.outcome_probabilities().shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Study counts, original and updated: 0 12

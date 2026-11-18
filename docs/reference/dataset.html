@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>jaxcmr.dataset – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../reference/loss-sequence.html" rel="next">
+<link href="../reference/index.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="reference.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          toggle.setAttribute("aria-checked", alternate ? "true" : "false");
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455).
+    // Not run on load: stylesheets are set before first paint there, and
+    // scrolling would undo the scroll to a URL fragment (#14973).
+    // The one pixel nudge keeps the reader where they were.
+    const refreshSafariScrollbar = () => {
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY > 0 ? scrollY - 1 : 1);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      refreshSafariScrollbar();
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">JAXCMR</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../installation.html"> 
+<span class="menu-text">Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials/data-preparation.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview/index.html"> 
+<span class="menu-text">Library Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../reference/index.html" aria-current="page"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../templates.html"> 
+<span class="menu-text">Templates</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img" aria-label="Source Code">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <button type="button" role="switch" aria-checked="false" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi"></i></button>
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/dataset.html">Datasets</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/dataset.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-sequence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequential likelihood</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Behavioral MSE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fitting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simulation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/summarize.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model summaries</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/repetition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Repetition</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/math.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mathematical operations</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/typing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Types</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/helpers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Utilities</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Recall analyses</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="false" aria-label="Toggle section: Recall analyses">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Recall and output position</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">pnr</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-nth_item_recall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">nth_item_recall</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">termination_probability</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Serial recall accuracy</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-relative_srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">relative_srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repsrac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repsrac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-intrusion_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">intrusion_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-omission_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">omission_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-order_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">order_error_rate</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Categories and study measurements</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_recall_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-factors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">factors</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-controls="quarto-sidebar-section-5" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-5-label">Co-recall</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-5" aria-labelledby="quarto-sidebar-section-5-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-corecall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">corecall</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-controls="quarto-sidebar-section-6" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-6-label">Transitions and organization</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-6" aria-labelledby="quarto-sidebar-section-6-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cue_centered_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-source_target_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">source_target_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" aria-controls="quarto-sidebar-section-7" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-7-label">Repeated items</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-7" aria-labelledby="quarto-sidebar-section-7-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repaccesscrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repaccesscrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repneighborcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repneighborcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-reproutecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">reproutecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcuecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcuecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-serialrepcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialrepcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-rpl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">rpl</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" aria-controls="quarto-sidebar-section-8" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-8-label">Participant summaries and comparisons</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-8" aria-labelledby="quarto-sidebar-section-8-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-statistics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">statistics</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/experimental.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-9-label">Experimental operations</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" aria-controls="quarto-sidebar-section-9" aria-expanded="false" aria-label="Toggle section: Experimental operations">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-9" aria-labelledby="quarto-sidebar-section-9-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared observations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared-fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared fitting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-permutation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Permutation likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-target_enrichment_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">target_enrichment_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-compound_cueing_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">compound_cueing_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-replagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">replagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-serialreplagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialreplagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-cue_centered_lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-log_odds_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">log_odds_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#constructing-datasets" id="toc-constructing-datasets" class="nav-link active" data-scroll-target="#constructing-datasets">Constructing datasets</a></li>
+  <li><a href="#selecting-trials-and-replacing-responses" id="toc-selecting-trials-and-replacing-responses" class="nav-link" data-scroll-target="#selecting-trials-and-replacing-responses">Selecting trials and replacing responses</a></li>
+  <li><a href="#conditions-and-masks" id="toc-conditions-and-masks" class="nav-link" data-scroll-target="#conditions-and-masks">Conditions and masks</a></li>
+  <li><a href="#participants" id="toc-participants" class="nav-link" data-scroll-target="#participants">Participants</a></li>
+  <li><a href="#study-dimensions" id="toc-study-dimensions" class="nav-link" data-scroll-target="#study-dimensions">Study dimensions</a></li>
+  <li><a href="#recall-representations" id="toc-recall-representations" class="nav-link" data-scroll-target="#recall-representations">Recall representations</a></li>
+  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+  <ul class="collapse">
+  <li><a href="#jaxcmr.dataset.make_dataset" id="toc-jaxcmr.dataset.make_dataset" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_dataset">make_dataset</a></li>
+  <li><a href="#jaxcmr.dataset.select_trials" id="toc-jaxcmr.dataset.select_trials" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_trials">select_trials</a></li>
+  <li><a href="#jaxcmr.dataset.replace_recalls" id="toc-jaxcmr.dataset.replace_recalls" class="nav-link" data-scroll-target="#jaxcmr.dataset.replace_recalls">replace_recalls</a></li>
+  <li><a href="#jaxcmr.dataset.generate_trial_mask" id="toc-jaxcmr.dataset.generate_trial_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_trial_mask">generate_trial_mask</a></li>
+  <li><a href="#jaxcmr.dataset.generate_recall_mask" id="toc-jaxcmr.dataset.generate_recall_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_recall_mask">generate_recall_mask</a></li>
+  <li><a href="#jaxcmr.dataset.select_conditions" id="toc-jaxcmr.dataset.select_conditions" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_conditions">select_conditions</a></li>
+  <li><a href="#jaxcmr.dataset.TrialSelection" id="toc-jaxcmr.dataset.TrialSelection" class="nav-link" data-scroll-target="#jaxcmr.dataset.TrialSelection">TrialSelection</a></li>
+  <li><a href="#jaxcmr.dataset.make_subject_trial_masks" id="toc-jaxcmr.dataset.make_subject_trial_masks" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_subject_trial_masks">make_subject_trial_masks</a></li>
+  <li><a href="#jaxcmr.dataset.apply_by_subject" id="toc-jaxcmr.dataset.apply_by_subject" class="nav-link" data-scroll-target="#jaxcmr.dataset.apply_by_subject">apply_by_subject</a></li>
+  <li><a href="#jaxcmr.dataset.limit_to_first_subjects" id="toc-jaxcmr.dataset.limit_to_first_subjects" class="nav-link" data-scroll-target="#jaxcmr.dataset.limit_to_first_subjects">limit_to_first_subjects</a></li>
+  <li><a href="#jaxcmr.dataset.find_max_list_length" id="toc-jaxcmr.dataset.find_max_list_length" class="nav-link" data-scroll-target="#jaxcmr.dataset.find_max_list_length">find_max_list_length</a></li>
+  <li><a href="#jaxcmr.dataset.recall_positions_to_items" id="toc-jaxcmr.dataset.recall_positions_to_items" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_positions_to_items">recall_positions_to_items</a></li>
+  <li><a href="#jaxcmr.dataset.recall_items_to_positions" id="toc-jaxcmr.dataset.recall_items_to_positions" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_items_to_positions">recall_items_to_positions</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">jaxcmr.dataset</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Construct and transform recall datasets while keeping trial fields aligned.</p>
+<p><code>make_dataset</code> builds a dataset from recall sequences and study information. <code>select_trials</code> selects, reorders or repeats whole trial rows, carrying participant IDs, study lists and custom fields along with the responses. <code>replace_recalls</code> supplies new responses and removes metadata tied to the old recall events.</p>
+<p>A recorded response identifies a one-based study position. Models use the identity of the item presented there. For the study list A, B, A, a response at position 3 becomes A under <code>recall_positions_to_items</code>. Converting A back with <code>recall_items_to_positions</code> gives position 1, its first occurrence.</p>
+<p>Use <code>select_conditions</code> to inspect which trials and participants meet a selection, and <code>select_trials</code> to take those rows. <code>apply_by_subject</code> groups selected trials by participant and calls an analysis on each group. Condition inspection and participant grouping run on the host. Array-based selection and recall replacement support JAX transformations with fixed output shapes.</p>
+<section id="constructing-datasets" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="constructing-datasets">Constructing datasets</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.make_dataset"><code>make_dataset</code></a></td>
+<td>Construct the four core trial arrays, broadcasting singleton inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="selecting-trials-and-replacing-responses" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="selecting-trials-and-replacing-responses">Selecting trials and replacing responses</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.select_trials"><code>select_trials</code></a></td>
+<td>Select, reorder or repeat complete trial rows without changing their fields.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.dataset.replace_recalls"><code>replace_recalls</code></a></td>
+<td>Replace responses and discard metadata belonging to the old recall events.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="conditions-and-masks" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="conditions-and-masks">Conditions and masks</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.generate_trial_mask"><code>generate_trial_mask</code></a></td>
+<td>Evaluate a query selecting whole trials.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.dataset.generate_recall_mask"><code>generate_recall_mask</code></a></td>
+<td>Evaluate a query selecting individual recall events.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.select_conditions"><code>select_conditions</code></a></td>
+<td>Build condition masks and report their trial and participant coverage.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.dataset.TrialSelection"><code>TrialSelection</code></a></td>
+<td>A condition’s mask and participant coverage, computed on the host.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="participants" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="participants">Participants</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.make_subject_trial_masks"><code>make_subject_trial_masks</code></a></td>
+<td>Partition selected trials into nonempty participant groups.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.dataset.apply_by_subject"><code>apply_by_subject</code></a></td>
+<td>Apply an operation to the selected trial rows of each participant.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.limit_to_first_subjects"><code>limit_to_first_subjects</code></a></td>
+<td>Retain trials from the lowest participant IDs without reordering rows.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="study-dimensions" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="study-dimensions">Study dimensions</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.find_max_list_length"><code>find_max_list_length</code></a></td>
+<td>Find the greatest declared study length among selected trials.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="recall-representations" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="recall-representations">Recall representations</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.dataset.recall_positions_to_items"><code>recall_positions_to_items</code></a></td>
+<td>Convert recorded study positions to within-list item codes.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.dataset.recall_items_to_positions"><code>recall_items_to_positions</code></a></td>
+<td>Convert recalled item codes to their first matching study positions.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api-entries" class="level2">
+<h2 class="anchored" data-anchor-id="api-entries">API entries</h2>
+<section id="jaxcmr.dataset.make_dataset" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.make_dataset">make_dataset</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.make_dataset(recalls, pres_itemnos=None, listLength=None, subject=1, *, reps=1)</code>
+</div>
+<p>Construct the four core trial arrays, broadcasting singleton inputs.</p>
+<section id="parameters" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 6%">
+<col style="width: 85%">
+<col style="width: 3%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>recalls</td>
+<td>array - like</td>
+<td>One- or two-dimensional study-position recall codes. A vector denotes one trial; zero marks an unused response slot.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>pres_itemnos</td>
+<td>array - like or None</td>
+<td>One- or two-dimensional within-list item codes. A vector denotes one trial. Omit to generate sequential codes padded to the maximum length.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>listLength</td>
+<td>array - like or None</td>
+<td>Scalar, vector or single-column array of study lengths. With supplied presentations, defaults to their storage width. Supply explicit lengths for padded lists. Without presentations or lengths, the default is max(response width, highest recall code); this cannot establish an experiment’s actual study length.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>subject</td>
+<td>integer or array - like</td>
+<td>Integer participant IDs as a scalar, vector or single column. Defaults to 1. Floating-point and Boolean IDs are outside this interface.</td>
+<td><code>1</code></td>
+</tr>
+<tr class="odd">
+<td>reps</td>
+<td>int</td>
+<td>Positive number of copies of the complete trial sequence. Two trials A and B with reps=2 produce A, B, A, B. Simulation’s <code>replicate_trials</code> instead places copies of each trial together.</td>
+<td><code>1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>RecallDataset</td>
+<td>New int32 arrays for recalls, pres_itemnos, listLength and subject. Singleton rows broadcast to the common trial count before repetition. Input arrays are unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes">Notes</h4>
+<p>Inputs must be integer-valued and representable as int32, with compatible trial counts. Lengths must be nonnegative and agree with presentation padding. These are caller responsibilities, not runtime value checks.</p>
+<p>With explicit presentations, construction supports JIT and vmap; reps must be static. Generating presentations also works with a static integer listLength. Inferring their width from array values requires concrete data and must happen before JIT.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.select_trials" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.select_trials">select_trials</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.select_trials(data, trial_indices)</code>
+</div>
+<p>Select, reorder or repeat complete trial rows without changing their fields.</p>
+<section id="parameters-1" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 14%">
+<col style="width: 74%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Dataset whose fields share a leading trial dimension, including any custom trial, study-event and recall-event arrays.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>trial_indices</td>
+<td>Integer[Array, selected_trials]</td>
+<td>Zero-based row indices in the desired output order. Repeated indices repeat whole trials. To use a Boolean mask, first obtain its indices with <code>jnp.flatnonzero(mask)</code> outside JIT.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>RecallDataset</td>
+<td>New dataset with the same fields and selected rows. An empty index array produces zero trial rows, retaining the remaining dimensions. The input dataset is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes-1" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes-1">Notes</h4>
+<p>This operation supports JAX transformations when the index-array shape is fixed. Vocabulary-wide features and other non-trial metadata belong outside the dataset and are not selected here.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.replace_recalls" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.replace_recalls">replace_recalls</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.replace_recalls(data, recalls, additional_recall_fields=())</code>
+</div>
+<p>Replace responses and discard metadata belonging to the old recall events.</p>
+<section id="parameters-2" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 71%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Dataset supplying trial and study information for the new responses.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>recalls</td>
+<td>Integer[Array, 'n_trials num_recalled']</td>
+<td>New study-position recall codes, with one row per original trial. Response width may differ from the old recalls. Item-code responses must be translated to study positions before calling this operation.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>additional_recall_fields</td>
+<td>collection of str</td>
+<td>Custom fields tied to the previous responses, to remove as well. These must not include required dataset fields or study metadata.</td>
+<td><code>()</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 2%">
+<col style="width: 4%">
+<col style="width: 92%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>RecallDataset</td>
+<td>New mapping with the supplied recalls. The known recall-event fields rec_itemids, irt, cue_clips and _should_tabulate are removed when present, along with additional_recall_fields. Other fields are retained unchanged. No metadata is recalculated and the original mapping is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.dataset.generate_trial_mask" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.generate_trial_mask">generate_trial_mask</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.generate_trial_mask(data, trial_query)</code>
+</div>
+<p>Evaluate a query selecting whole trials.</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 76%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Trial data available to the query as data.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>trial_query</td>
+<td>str or None</td>
+<td>Trusted Python expression producing one Boolean per trial. The names data, np and jnp are available. None selects every trial.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 21%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Bool[Array, trial_count]</td>
+<td>One-dimensional JAX mask. Column-shaped query results are flattened. The dataset is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="examples" class="level4 doc-section doc-section-examples">
+<h4 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> mask <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['subject'] == 3"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="jaxcmr.dataset.generate_recall_mask" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.generate_recall_mask">generate_recall_mask</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.generate_recall_mask(data, recall_query)</code>
+</div>
+<p>Evaluate a query selecting individual recall events.</p>
+<section id="parameters-4" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 83%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Trial data available to the query as data.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>recall_query</td>
+<td>str or None</td>
+<td>Trusted Python expression producing a Boolean array aligned to recalls. The names data, np and jnp are available. None selects every slot, including padding; likelihood-specific stopping rules belong to the loss.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-4" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 37%">
+<col style="width: 55%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Bool[Array, 'trial_count recall_events']</td>
+<td>JAX mask with the same shape as recalls. The dataset is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.dataset.select_conditions" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.select_conditions">select_conditions</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.select_conditions(data, selections, *, complete_lists_only=False, require_nonempty=True)</code>
+</div>
+<p>Build condition masks and report their trial and participant coverage.</p>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 72%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Trial-indexed recall data, including subject identities.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>selections</td>
+<td>sequence of str, Boolean vectors or None</td>
+<td>Ordered conditions. Strings use <code>generate_trial_mask</code>; Boolean vectors have one entry per trial; None selects every trial. Supply an outer sequence even for a single condition: [query] or [mask].</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>complete_lists_only</td>
+<td>bool</td>
+<td>Intersect each condition with rows whose pres_itemnos are positive in every stored position. This excludes any padded row, including a fully observed shorter list stored alongside longer lists.</td>
+<td><code>False</code></td>
+</tr>
+<tr class="even">
+<td>require_nonempty</td>
+<td>bool</td>
+<td>Reject conditions with no eligible trials. False permits a zero count and empty participant IDs.</td>
+<td><code>True</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 15%">
+<col style="width: 79%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>list of TrialSelection</td>
+<td>One record per condition, preserving input order. No dataset fields are modified or sliced. This inspection runs outside JIT.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level4 doc-section doc-section-raises">
+<h4 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 16%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>A condition is empty and require_nonempty is true.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="examples-1" class="level4 doc-section doc-section-examples">
+<h4 class="doc-section doc-section-examples anchored" data-anchor-id="examples-1">Examples</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="op">&gt;&gt;&gt;</span> selection <span class="op">=</span> select_conditions(data, [data[<span class="st">"condition"</span>].ravel() <span class="op">==</span> <span class="dv">1</span>])[<span class="dv">0</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a><span class="op">&gt;&gt;&gt;</span> selected_data <span class="op">=</span> select_trials(data, jnp.flatnonzero(selection.mask))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="jaxcmr.dataset.TrialSelection" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.TrialSelection">TrialSelection</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.TrialSelection: NamedTuple</code>
+</div>
+<p>A condition’s mask and participant coverage, computed on the host.</p>
+<section id="attributes" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 28%">
+<col style="width: 55%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mask</td>
+<td>Bool[Array, trials]</td>
+<td>One-dimensional JAX mask aligned to the original dataset.</td>
+</tr>
+<tr class="even">
+<td>trial_count</td>
+<td>int</td>
+<td>Number of selected trial rows.</td>
+</tr>
+<tr class="odd">
+<td>subject_ids</td>
+<td>Integer[np.ndarray, subjects]</td>
+<td>Sorted unique IDs of selected participants.</td>
+</tr>
+<tr class="even">
+<td>participant_count</td>
+<td>int</td>
+<td>Read-only property giving the number of selected participants.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes-2" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes-2">Notes</h4>
+<p>The record does not contain or copy selected data. Pass its mask to an analysis, or use its nonzero indices with <code>select_trials</code>.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.make_subject_trial_masks" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.make_subject_trial_masks">make_subject_trial_masks</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.make_subject_trial_masks(trial_mask, subject_vector)</code>
+</div>
+<p>Partition selected trials into nonempty participant groups.</p>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 31%">
+<col style="width: 47%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array | np.ndarray, trials]</td>
+<td>Selection aligned to the original trial rows.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_vector</td>
+<td>Integer[Array | np.ndarray, trials]</td>
+<td>Participant ID for each trial, as a one-dimensional vector.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-6" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 20%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>tuple of list of JAX masks and NumPy participant IDs</td>
+<td>One mask per selected participant, ordered by increasing ID. Each mask still indexes the original dataset and includes only selected trials. An empty selection returns an empty mask list and ID array.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes-3" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes-3">Notes</h4>
+<p>Participant discovery reads values on the host and runs outside JIT.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.apply_by_subject" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.apply_by_subject">apply_by_subject</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.apply_by_subject(data, trial_mask, func, *args, **kwargs)</code>
+</div>
+<p>Apply an operation to the selected trial rows of each participant.</p>
+<section id="parameters-7" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 15%">
+<col style="width: 71%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>RecallDataset</td>
+<td>Dataset with aligned trial fields, including any custom arrays.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>trial_mask</td>
+<td>Bool[Array, trial_count]</td>
+<td>Trials to include before grouping by participant.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>func</td>
+<td>callable</td>
+<td>Operation called as func(subject_data, *args, **kwargs). Each subject_data contains only that participant’s selected trial rows.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>*args</td>
+<td>Parameters.args</td>
+<td>Additional positional arguments passed to func.</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>**kwargs</td>
+<td>Parameters.kwargs</td>
+<td>Additional keyword arguments passed to func.</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-7" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 84%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>list of Result</td>
+<td>One result per selected participant, ordered by increasing ID. No empty groups are passed to func; an empty selection returns [].</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes-4" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes-4">Notes</h4>
+<p>Grouping runs on the host. The supplied operation may itself be JIT-compiled; its selected dataset shapes can differ between participants. This function does not aggregate results or change the input dataset.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.limit_to_first_subjects" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.limit_to_first_subjects">limit_to_first_subjects</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.limit_to_first_subjects(data, max_subjects)</code>
+</div>
+<p>Retain trials from the lowest participant IDs without reordering rows.</p>
+<section id="parameters-8" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 10%">
+<col style="width: 76%">
+<col style="width: 5%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td>Mapping[str, Array]</td>
+<td>Trial-indexed arrays with a subject column. This mapping need not contain the other core recall fields.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>max_subjects</td>
+<td>int</td>
+<td>Nonnegative participant limit. Zero retains all participants, matching the convention in <code>load_data</code>. A limit above the participant count also retains everyone.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-8" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-8">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 11%">
+<col style="width: 83%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>dict[str, Array]</td>
+<td>New mapping with selected rows of every field, in their original trial order. Empty input remains empty. The supplied mapping is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.dataset.find_max_list_length" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.find_max_list_length">find_max_list_length</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.find_max_list_length(datasets, trial_masks)</code>
+</div>
+<p>Find the greatest declared study length among selected trials.</p>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 33%">
+<col style="width: 48%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>datasets</td>
+<td>sequence of RecallDataset</td>
+<td>Nonempty collection of datasets containing listLength columns.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>trial_masks</td>
+<td>sequence of Bool[Array, "trial_count"]</td>
+<td>Corresponding nonempty trial selections, in dataset order.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-9" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-9">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 88%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>int</td>
+<td>Maximum selected listLength value. This is the number of declared study events, not the width of a padded presentation array.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="notes-5" class="level4 doc-section doc-section-notes">
+<h4 class="doc-section doc-section-notes anchored" data-anchor-id="notes-5">Notes</h4>
+<p>This inspection reads a scalar value on the host and runs outside JIT.</p>
+</section>
+</section>
+<section id="jaxcmr.dataset.recall_positions_to_items" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.recall_positions_to_items">recall_positions_to_items</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.recall_positions_to_items(recalls, presentations)</code>
+</div>
+<p>Convert recorded study positions to within-list item codes.</p>
+<section id="parameters-10" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 33%">
+<col style="width: 47%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>recalls</td>
+<td>Integer[Array, ' trials recall_events']</td>
+<td>One-based study positions; zero denotes an unused response slot.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>presentations</td>
+<td>Integer[Array, ' trials study_positions']</td>
+<td>Within-list item codes for the same trials.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-10" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-10">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 23%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Integer[Array, ' trials recall_events']</td>
+<td>Presented item codes, preserving zeros, row order and repetitions. Inputs remain unchanged; the operation supports JAX transformations.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.dataset.recall_items_to_positions" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.dataset.recall_items_to_positions">recall_items_to_positions</h3>
+<div class="api-signature">
+<code>jaxcmr.dataset.recall_items_to_positions(recalls, presentations)</code>
+</div>
+<p>Convert recalled item codes to their first matching study positions.</p>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 34%">
+<col style="width: 46%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>recalls</td>
+<td>Integer[Array, ' trials recall_events']</td>
+<td>Within-list item codes; zero denotes an unused response slot.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>presentations</td>
+<td>Integer[Array, ' trials study_positions']</td>
+<td>Within-list item codes for the same trials, with zero padding.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-11" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-11">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 17%">
+<col style="width: 79%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Integer[Array, ' trials recall_events']</td>
+<td>One-based first study positions. Zero and unpresented items map to zero. Repeated presentations share their first position; analyses can recover all presentations from the dataset. Inputs remain unchanged.</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const toggle = window.document.createElement('button');
+      toggle.type = "button";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", "false");
+      toggle.classList.add('top-right');
+      toggle.classList.add('quarto-color-scheme-toggle');
+      toggle.setAttribute("aria-label", "Toggle dark mode");
+      toggle.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      toggle.appendChild(i);
+      // Put the toggle in a landmark of its own, so that landmark navigation
+      // can reach it.
+      //
+      // The container is always a fresh direct child of body, and the toggle is
+      // never moved into page furniture that the theme or the author controls.
+      // The toggle is positioned against the page, so any ancestor that
+      // establishes a containing block captures it: a positioned element or a
+      // grid for position: absolute, and transform, filter, will-change or
+      // contain for position: fixed. A direct child of body has none of these
+      // to inherit, and the shift when one appears is silent and visual.
+      //
+      // ARIA says a document should have at most one banner, and axe reports a
+      // duplicate whether or not the banners carry distinct labels. So use a
+      // header when the page has no banner yet, and a named region otherwise.
+      //
+      // A header is a banner wherever it sits, unless it is inside sectioning
+      // content, so this cannot just look at the children of body: a custom
+      // page layout wraps the title block header in a plain div. An explicit
+      // role="banner" always counts.
+      const sectioning = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+      const hasBanner = Array.from(
+        window.document.querySelectorAll('header:not([role]), [role="banner"]')
+      ).some(function(el) {
+        return el.hasAttribute("role") || el.closest(sectioning) === null;
+      });
+      const container = window.document.createElement(hasBanner ? "div" : "header");
+      if (hasBanner) {
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Toggle dark mode");
+      }
+      container.classList.add('quarto-color-scheme-toggle-container');
+      container.appendChild(toggle);
+      window.document.body.appendChild(container);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../reference/index.html" class="pagination-link" aria-label="Overview">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Overview</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../reference/loss-sequence.html" class="pagination-link" aria-label="Sequential likelihood">
+        <span class="nav-page-text">Sequential likelihood</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -13,13 +13,13 @@ from jaxcmr.components.termination import (
 )
 
 __all__ = [
-    "TemporalContext",
-    "LinearMemory",
     "InstanceMemory",
+    "LinearMemory",
     "NoStopTermination",
     "PositionalTermination",
-    "SupportRatioTermination",
     "RetrievalDependentTermination",
+    "SupportRatioTermination",
+    "TemporalContext",
     "build_trial_connections",
     "build_trial_connections_from_similarity",
 ]

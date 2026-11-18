@@ -1,21 +1,25 @@
 """CMR with additive semantic associations from a similarity matrix."""
 
-from collections.abc import Mapping
 
+
+import jax.numpy as jnp
 import numpy as np
 
-from jaxcmr.components.factory import build_trial_connections_from_similarity
-from jaxcmr.helpers import require_pres_itemids
+from jaxcmr.components.factory import (
+    build_trial_connections_from_similarity,
+    global_item_ids_by_code,
+)
+from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.models.additive_semantic_cmr import CMR
 from jaxcmr.typing import (
     Array,
     ContextCreateFn,
     Float,
-    Float_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -37,18 +41,21 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items word_pool_items"] | None,
-        ):
-            self.present_lists = np.array(require_pres_itemids(dataset))
+        ) -> None:
+            self.present_lists = jnp.asarray(_require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
+            vocabulary_ids = global_item_ids_by_code(
+                dataset["pres_itemnos"], self.present_lists, self.max_list_length
+            )
             self.trial_connections = build_trial_connections_from_similarity(
-                self.present_lists,
+                vocabulary_ids,
                 features,
             )
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
-                connections: Float[Array, "study_events study_events"],
+                parameters: Parameters,
+                connections: Float[Array, "item_count item_count"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -62,7 +69,7 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(
                 self.max_list_length,
                 parameters,
@@ -72,7 +79,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(
                 self.max_list_length,

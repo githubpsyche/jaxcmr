@@ -1,0 +1,3250 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>jaxcmr.typing – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../reference/helpers.html" rel="next">
+<link href="../reference/math.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="reference.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          toggle.setAttribute("aria-checked", alternate ? "true" : "false");
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455).
+    // Not run on load: stylesheets are set before first paint there, and
+    // scrolling would undo the scroll to a URL fragment (#14973).
+    // The one pixel nudge keeps the reader where they were.
+    const refreshSafariScrollbar = () => {
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY > 0 ? scrollY - 1 : 1);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      refreshSafariScrollbar();
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">JAXCMR</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../installation.html"> 
+<span class="menu-text">Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials/data-preparation.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview/index.html"> 
+<span class="menu-text">Library Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../reference/index.html" aria-current="page"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../templates.html"> 
+<span class="menu-text">Templates</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img" aria-label="Source Code">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <button type="button" role="switch" aria-checked="false" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi"></i></button>
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/typing.html">Types</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/dataset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-sequence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequential likelihood</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Behavioral MSE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fitting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simulation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/summarize.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model summaries</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/repetition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Repetition</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/math.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mathematical operations</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/typing.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Types</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/helpers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Utilities</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Recall analyses</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="false" aria-label="Toggle section: Recall analyses">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Recall and output position</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">pnr</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-nth_item_recall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">nth_item_recall</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">termination_probability</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Serial recall accuracy</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-relative_srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">relative_srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repsrac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repsrac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-intrusion_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">intrusion_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-omission_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">omission_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-order_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">order_error_rate</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Categories and study measurements</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_recall_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-factors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">factors</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-controls="quarto-sidebar-section-5" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-5-label">Co-recall</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-5" aria-labelledby="quarto-sidebar-section-5-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-corecall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">corecall</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-controls="quarto-sidebar-section-6" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-6-label">Transitions and organization</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-6" aria-labelledby="quarto-sidebar-section-6-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cue_centered_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-source_target_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">source_target_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" aria-controls="quarto-sidebar-section-7" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-7-label">Repeated items</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-7" aria-labelledby="quarto-sidebar-section-7-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repaccesscrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repaccesscrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repneighborcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repneighborcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-reproutecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">reproutecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcuecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcuecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-serialrepcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialrepcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-rpl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">rpl</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" aria-controls="quarto-sidebar-section-8" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-8-label">Participant summaries and comparisons</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-8" aria-labelledby="quarto-sidebar-section-8-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-statistics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">statistics</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/experimental.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-9-label">Experimental operations</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" aria-controls="quarto-sidebar-section-9" aria-expanded="false" aria-label="Toggle section: Experimental operations">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-9" aria-labelledby="quarto-sidebar-section-9-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared observations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared-fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared fitting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-permutation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Permutation likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-target_enrichment_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">target_enrichment_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-compound_cueing_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">compound_cueing_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-replagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">replagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-serialreplagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialreplagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-cue_centered_lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-log_odds_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">log_odds_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#values-and-trial-data" id="toc-values-and-trial-data" class="nav-link active" data-scroll-target="#values-and-trial-data">Values and trial data</a></li>
+  <li><a href="#model-components" id="toc-model-components" class="nav-link" data-scroll-target="#model-components">Model components</a></li>
+  <li><a href="#models-and-trial-procedures" id="toc-models-and-trial-procedures" class="nav-link" data-scroll-target="#models-and-trial-procedures">Models and trial procedures</a></li>
+  <li><a href="#objectives" id="toc-objectives" class="nav-link" data-scroll-target="#objectives">Objectives</a></li>
+  <li><a href="#fitting-and-results" id="toc-fitting-and-results" class="nav-link" data-scroll-target="#fitting-and-results">Fitting and results</a></li>
+  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+  <ul class="collapse">
+  <li><a href="#jaxcmr.typing.Float_" id="toc-jaxcmr.typing.Float_" class="nav-link" data-scroll-target="#jaxcmr.typing.Float_">Float_</a></li>
+  <li><a href="#jaxcmr.typing.Int_" id="toc-jaxcmr.typing.Int_" class="nav-link" data-scroll-target="#jaxcmr.typing.Int_">Int_</a></li>
+  <li><a href="#jaxcmr.typing.Bool_" id="toc-jaxcmr.typing.Bool_" class="nav-link" data-scroll-target="#jaxcmr.typing.Bool_">Bool_</a></li>
+  <li><a href="#jaxcmr.typing.Parameters" id="toc-jaxcmr.typing.Parameters" class="nav-link" data-scroll-target="#jaxcmr.typing.Parameters">Parameters</a></li>
+  <li><a href="#jaxcmr.typing.RecallDataset" id="toc-jaxcmr.typing.RecallDataset" class="nav-link" data-scroll-target="#jaxcmr.typing.RecallDataset">RecallDataset</a></li>
+  <li><a href="#jaxcmr.typing.Memory" id="toc-jaxcmr.typing.Memory" class="nav-link" data-scroll-target="#jaxcmr.typing.Memory">Memory</a></li>
+  <li><a href="#jaxcmr.typing.MemoryCreateFn" id="toc-jaxcmr.typing.MemoryCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.MemoryCreateFn">MemoryCreateFn</a></li>
+  <li><a href="#jaxcmr.typing.Context" id="toc-jaxcmr.typing.Context" class="nav-link" data-scroll-target="#jaxcmr.typing.Context">Context</a></li>
+  <li><a href="#jaxcmr.typing.ContextCreateFn" id="toc-jaxcmr.typing.ContextCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ContextCreateFn">ContextCreateFn</a></li>
+  <li><a href="#jaxcmr.typing.TerminationPolicy" id="toc-jaxcmr.typing.TerminationPolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicy">TerminationPolicy</a></li>
+  <li><a href="#jaxcmr.typing.TerminationPolicyCreateFn" id="toc-jaxcmr.typing.TerminationPolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicyCreateFn">TerminationPolicyCreateFn</a></li>
+  <li><a href="#jaxcmr.typing.MemorySearch" id="toc-jaxcmr.typing.MemorySearch" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearch">MemorySearch</a></li>
+  <li><a href="#jaxcmr.typing.MemorySearchModelFactory" id="toc-jaxcmr.typing.MemorySearchModelFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearchModelFactory">MemorySearchModelFactory</a></li>
+  <li><a href="#jaxcmr.typing.TrialSimulator" id="toc-jaxcmr.typing.TrialSimulator" class="nav-link" data-scroll-target="#jaxcmr.typing.TrialSimulator">TrialSimulator</a></li>
+  <li><a href="#jaxcmr.typing.LikelihoodMaskFn" id="toc-jaxcmr.typing.LikelihoodMaskFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LikelihoodMaskFn">LikelihoodMaskFn</a></li>
+  <li><a href="#jaxcmr.typing.RecallAnalysisFn" id="toc-jaxcmr.typing.RecallAnalysisFn" class="nav-link" data-scroll-target="#jaxcmr.typing.RecallAnalysisFn">RecallAnalysisFn</a></li>
+  <li><a href="#jaxcmr.typing.LossFn" id="toc-jaxcmr.typing.LossFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFn">LossFn</a></li>
+  <li><a href="#jaxcmr.typing.LossFactory" id="toc-jaxcmr.typing.LossFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFactory">LossFactory</a></li>
+  <li><a href="#jaxcmr.typing.FittingAlgorithm" id="toc-jaxcmr.typing.FittingAlgorithm" class="nav-link" data-scroll-target="#jaxcmr.typing.FittingAlgorithm">FittingAlgorithm</a></li>
+  <li><a href="#jaxcmr.typing.FitResult" id="toc-jaxcmr.typing.FitResult" class="nav-link" data-scroll-target="#jaxcmr.typing.FitResult">FitResult</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">jaxcmr.typing</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Data formats and callable interfaces for recall models, simulation and fitting.</p>
+<p><code>RecallDataset</code> describes the arrays recorded on each trial, and <code>Parameters</code> maps parameter names to scalar model values. Array annotations specify the dtype and dimensions a caller supplies.</p>
+<p><code>Memory</code>, <code>Context</code> and <code>TerminationPolicy</code> describe components used to build a model. <code>MemorySearch</code> describes how a model experiences study items and produces recall responses. A <code>MemorySearchModelFactory</code> constructs that model for a particular trial. A <code>TrialSimulator</code> uses it to carry out a study and recall procedure.</p>
+<p>For fitting, a <code>LossFactory</code> constructs an objective for a dataset. <code>LossFn</code> scores candidate parameter sets, and a <code>FittingAlgorithm</code> returns estimates and objective values in a <code>FitResult</code>. These protocols specify the operations an implementation must supply. A model, loss or fitter can satisfy its protocol without inheriting from it.</p>
+<section id="values-and-trial-data" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="values-and-trial-data">Values and trial data</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Float_"><code>Float_</code></a></td>
+<td>Scalar floating-point JAX array or Python numeric value.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.Int_"><code>Int_</code></a></td>
+<td>Scalar integer JAX array or Python integer.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Bool_"><code>Bool_</code></a></td>
+<td>Scalar Boolean JAX array or Python Boolean.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.Parameters"><code>Parameters</code></a></td>
+<td>Model parameter names mapped to scalar numeric or Boolean values.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.RecallDataset"><code>RecallDataset</code></a></td>
+<td>Trial-indexed arrays for free or serial recall experiments.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="model-components" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="model-components">Model components</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Memory"><code>Memory</code></a></td>
+<td>Associate and retrieve feature patterns through a shared memory interface.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.MemoryCreateFn"><code>MemoryCreateFn</code></a></td>
+<td>Construct one associative memory for a model.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Context"><code>Context</code></a></td>
+<td>Integrate new input into a model’s context representation.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.ContextCreateFn"><code>ContextCreateFn</code></a></td>
+<td>Construct a context representation for the model’s item capacity.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.TerminationPolicy"><code>TerminationPolicy</code></a></td>
+<td>A stopping rule accepting the model or view described by <code>ModelT</code>.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.TerminationPolicyCreateFn"><code>TerminationPolicyCreateFn</code></a></td>
+<td>Create a stopping rule compatible with the supplied model type.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="models-and-trial-procedures" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="models-and-trial-procedures">Models and trial procedures</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemorySearch"><code>MemorySearch</code></a></td>
+<td>Study and retrieval operations used by simulation and likelihood evaluation.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.MemorySearchModelFactory"><code>MemorySearchModelFactory</code></a></td>
+<td>Prepare a dataset once, then construct a model for an individual trial.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.TrialSimulator"><code>TrialSimulator</code></a></td>
+<td>Run a study and retrieval procedure for one trial.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="objectives" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="objectives">Objectives</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.LikelihoodMaskFn"><code>LikelihoodMaskFn</code></a></td>
+<td>Choose which recorded recall events contribute to a likelihood.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.RecallAnalysisFn"><code>RecallAnalysisFn</code></a></td>
+<td>Calculate a fixed-shape behavioral summary from a recall dataset.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.LossFn"><code>LossFn</code></a></td>
+<td>Score candidate parameter vectors on selected observations.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.LossFactory"><code>LossFactory</code></a></td>
+<td>Construct a loss from a model factory, observations and features.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fitting-and-results" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="fitting-and-results">Fitting and results</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.FittingAlgorithm"><code>FittingAlgorithm</code></a></td>
+<td>Fit one pooled parameter set or separate parameter sets by participant.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.FitResult"><code>FitResult</code></a></td>
+<td>Serialized parameter estimates and optimizer results, aligned by fit row.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api-entries" class="level2">
+<h2 class="anchored" data-anchor-id="api-entries">API entries</h2>
+<section id="jaxcmr.typing.Float_" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Float_">Float_</h3>
+<div class="api-signature">
+<code>type Float_ = Float[Array, ''] | float | int</code>
+</div>
+<p>Scalar floating-point JAX array or Python numeric value.</p>
+</section>
+<section id="jaxcmr.typing.Int_" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Int_">Int_</h3>
+<div class="api-signature">
+<code>type Int_ = Integer[Array, ''] | int</code>
+</div>
+<p>Scalar integer JAX array or Python integer.</p>
+</section>
+<section id="jaxcmr.typing.Bool_" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Bool_">Bool_</h3>
+<div class="api-signature">
+<code>type Bool_ = Bool[Array, ''] | bool</code>
+</div>
+<p>Scalar Boolean JAX array or Python Boolean.</p>
+</section>
+<section id="jaxcmr.typing.Parameters" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Parameters">Parameters</h3>
+<div class="api-signature">
+<code>type Parameters = Mapping[str, Float_ | Int_ | Bool_]</code>
+</div>
+<p>Model parameter names mapped to scalar numeric or Boolean values.</p>
+</section>
+<section id="jaxcmr.typing.RecallDataset" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.RecallDataset">RecallDataset</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.RecallDataset: TypedDict</code>
+</div>
+<p>Trial-indexed arrays for free or serial recall experiments.</p>
+<p>The required fields are <code>subject</code>, <code>listLength</code>, <code>pres_itemnos</code>, and <code>recalls</code>. Their annotated shapes and integer dtypes appear below; zeros pad item and recall sequences.</p>
+<p><code>pres_itemids</code> identifies items across lists and is required by semantic models and analyses, but not by every recall dataset. Other named fields are optional. Additional fields may contain arrays of any dtype or shape, such as valence or LPP measurements. Callers must supply the optional or additional fields required by their chosen operation. Every field must have a leading trial dimension; non-trial metadata belongs outside this dict.</p>
+<section id="fields" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="fields">Fields</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>subject</code></td>
+<td>Integer[Array, 'n_trials 1']</td>
+<td>Subject ID for each trial (shape: [n_trials, 1]).</td>
+</tr>
+<tr class="even">
+<td><code>listLength</code></td>
+<td>Integer[Array, 'n_trials 1']</td>
+<td>Number of valid study events per trial, including repeated presentations (shape: [n_trials, 1]).</td>
+</tr>
+<tr class="odd">
+<td><code>pres_itemnos</code></td>
+<td>Integer[Array, 'n_trials num_presented']</td>
+<td>Per-trial within-list item codes (shape: [n_trials, num_presented]). Positive item codes repeat when an item is presented again; 0 pads unused study slots. These codes are distinct from study positions and global IDs.</td>
+</tr>
+<tr class="even">
+<td><code>recalls</code></td>
+<td>Integer[Array, 'n_trials num_recalled']</td>
+<td>Study-position codes for recalled items (shape: [n_trials, num_recalled]). A positive code p identifies the item at pres_itemnos[trial, p - 1]; 0 marks an unused response slot. Model adapters translate positions to within-list item codes, and dataset simulation returns first-occurrence study positions when an item was presented repeatedly.</td>
+</tr>
+<tr class="odd">
+<td><code>pres_itemids</code></td>
+<td>NotRequired[Integer[Array, 'n_trials num_presented']]</td>
+<td>Per-trial cross-list item IDs (shape: [n_trials, num_presented]). These IDs reference a global word pool and may repeat across trials.</td>
+</tr>
+<tr class="even">
+<td><code>rec_itemids</code></td>
+<td>NotRequired[Integer[Array, 'n_trials num_recalled']]</td>
+<td>Cross-list item IDs for recalled items (shape: [n_trials, num_recalled]).</td>
+</tr>
+<tr class="odd">
+<td><code>irt</code></td>
+<td>NotRequired[Integer[Array, 'n_trials num_recalled']]</td>
+<td>Item response times for recalled items (shape: [n_trials, num_recalled]).</td>
+</tr>
+<tr class="even">
+<td><code>session</code></td>
+<td>NotRequired[Integer[Array, 'n_trials 1']]</td>
+<td>Session IDs for each trial (shape: [n_trials, 1]).</td>
+</tr>
+<tr class="odd">
+<td><code>listtype</code></td>
+<td>NotRequired[Integer[Array, 'n_trials 1']]</td>
+<td>List type for each trial (shape: [n_trials, 1]).</td>
+</tr>
+<tr class="even">
+<td><code>list_type</code></td>
+<td>NotRequired[Integer[Array, 'n_trials 1']]</td>
+<td>List type for each trial (shape: [n_trials, 1]).</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.Memory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Memory">Memory</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.Memory: Protocol</code>
+</div>
+<p>Associate and retrieve feature patterns through a shared memory interface.</p>
+<p>Linear memory stores an input-by-output matrix; instance memory stores rows of concatenated input/output patterns. <code>probe</code> and <code>associate</code> provide the same operations without requiring callers to interpret that storage layout.</p>
+<section id="attributes" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 38%">
+<col style="width: 54%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>state</td>
+<td>Float[Array, 'memory_rows memory_columns']</td>
+<td>Stored associations, with layout determined by the implementation.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Memory.associate"><code>associate</code></a></td>
+<td>Return memory after associating the supplied patterns.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.Memory.probe"><code>probe</code></a></td>
+<td>Retrieve the output pattern associated with an input cue.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.Memory.associate" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.Memory.associate">associate</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.Memory.associate(in_pattern, out_pattern, learning_rate)</code>
+</div>
+<p>Return memory after associating the supplied patterns.</p>
+<section id="parameters" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 31%">
+<col style="width: 39%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>in_pattern</td>
+<td>Float[Array, input_size]</td>
+<td>Input feature pattern.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>out_pattern</td>
+<td>Float[Array, output_size]</td>
+<td>Output feature pattern.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>learning_rate</td>
+<td>Float_</td>
+<td>Strength of the association update.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Memory</td>
+<td>Updated memory; the original instance is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.Memory.probe" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.Memory.probe">probe</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.Memory.probe(in_pattern)</code>
+</div>
+<p>Retrieve the output pattern associated with an input cue.</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 29%">
+<col style="width: 44%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>in_pattern</td>
+<td>Float[Array, input_size]</td>
+<td>Input cue in the memory’s feature space.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 32%">
+<col style="width: 58%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, output_size]</td>
+<td>Retrieved output pattern, without updating memory.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.MemoryCreateFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.MemoryCreateFn">MemoryCreateFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.MemoryCreateFn: Protocol</code>
+</div>
+<p>Construct one associative memory for a model.</p>
+<p>The same interface is used separately for item-to-context (MFC) and context-to-item (MCF) memory. The chosen constructor determines the direction and storage representation.</p>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemoryCreateFn.__call__"><code>__call__</code></a></td>
+<td>Create one memory using the experiment and context dimensions.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.MemoryCreateFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemoryCreateFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemoryCreateFn.__call__(list_length, parameters, context)</code>
+</div>
+<p>Create one memory using the experiment and context dimensions.</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 63%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>list_length</td>
+<td>int</td>
+<td>Number of study slots available to the model.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>parameters</td>
+<td>Parameters</td>
+<td>Model parameter values used to configure this memory.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>context</td>
+<td>Context</td>
+<td>Context representation determining the context feature space.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Memory</td>
+<td>A newly initialized associative memory.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.Context" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.Context">Context</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.Context: Protocol</code>
+</div>
+<p>Integrate new input into a model’s context representation.</p>
+<section id="attributes-1" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes-1">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 34%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>state</td>
+<td>Float[Array, context_feature_units]</td>
+<td>Current context vector.</td>
+</tr>
+<tr class="even">
+<td>initial_state</td>
+<td>Float[Array, context_feature_units]</td>
+<td>Initial context, also available as a retrieval-start cue.</td>
+</tr>
+<tr class="odd">
+<td>size</td>
+<td>int</td>
+<td>Number of context feature units.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.Context.integrate"><code>integrate</code></a></td>
+<td>Return context after integrating an input representation.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.Context.integrate" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.Context.integrate">integrate</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.Context.integrate(context_input, drift_rate)</code>
+</div>
+<p>Return context after integrating an input representation.</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 35%">
+<col style="width: 40%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>context_input</td>
+<td>Float[Array, context_feature_units]</td>
+<td>Input in the same feature space as context.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>drift_rate</td>
+<td>Float_</td>
+<td>Rate of context change toward the input.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 12%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Context</td>
+<td>Updated context; the original instance is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.ContextCreateFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.ContextCreateFn">ContextCreateFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.ContextCreateFn: Protocol</code>
+</div>
+<p>Construct a context representation for the model’s item capacity.</p>
+<section id="methods-3" class="level4">
+<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.ContextCreateFn.__call__"><code>__call__</code></a></td>
+<td>Initialize context before study begins.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.ContextCreateFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.ContextCreateFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.ContextCreateFn.__call__(item_count)</code>
+</div>
+<p>Initialize context before study begins.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 80%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>item_count</td>
+<td>int</td>
+<td>Number of item slots reserved by the model. The constructor determines the corresponding context dimensions and any additional units.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-4" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Context</td>
+<td>A newly initialized context representation.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.TerminationPolicy" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.TerminationPolicy">TerminationPolicy</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.TerminationPolicy[ModelT]: Protocol</code>
+</div>
+<p>A stopping rule accepting the model or view described by <code>ModelT</code>.</p>
+<p>Concrete policies declare their own structural input requirements. A policy need not accept every <code>MemorySearch</code> model, and its input need not be a complete memory-search model.</p>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.TerminationPolicy.stop_probability"><code>stop_probability</code></a></td>
+<td>Calculate the probability of stopping in the supplied state.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.TerminationPolicy.stop_probability" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.TerminationPolicy.stop_probability">stop_probability</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.TerminationPolicy.stop_probability(model)</code>
+</div>
+<p>Calculate the probability of stopping in the supplied state.</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 69%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>model</td>
+<td>ModelT</td>
+<td>Model or view exposing the information required by this policy.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 24%">
+<col style="width: 66%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, '']</td>
+<td>Probability of a stop event, without advancing the model.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.TerminationPolicyCreateFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.TerminationPolicyCreateFn">TerminationPolicyCreateFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.TerminationPolicyCreateFn[ModelT]: Protocol</code>
+</div>
+<p>Create a stopping rule compatible with the supplied model type.</p>
+<p>Constructors and factories name the concrete model type their policy must accept. Variants forwarding a policy to a base constructor retain that base model’s contract. Models passing a view to their policy use the view’s type. These annotations check structural compatibility without changing model behavior or performing runtime validation.</p>
+<section id="methods-5" class="level4">
+<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.TerminationPolicyCreateFn.__call__"><code>__call__</code></a></td>
+<td>Construct a stopping rule compatible with the chosen model.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.TerminationPolicyCreateFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.TerminationPolicyCreateFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.TerminationPolicyCreateFn.__call__(list_length, parameters)</code>
+</div>
+<p>Construct a stopping rule compatible with the chosen model.</p>
+<section id="parameters-6" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 13%">
+<col style="width: 59%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>list_length</td>
+<td>int</td>
+<td>Number of study slots available to the model.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>parameters</td>
+<td>Parameters</td>
+<td>Model parameters used to configure the stopping rule.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-6" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 30%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>TerminationPolicy[ModelT]</td>
+<td>Policy accepting the model or view described by ModelT.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearch" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.MemorySearch">MemorySearch</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch: Protocol</code>
+</div>
+<p>Study and retrieval operations used by simulation and likelihood evaluation.</p>
+<p>Item choices are one-indexed within-list codes. Zero is ignored during study and denotes stopping during retrieval. Update methods return the new model state; callers retain the original state until they replace it. Implementations used by the numerical routines must support JAX tracing and carry their changing state in a JAX pytree.</p>
+<p>Internal representations of studied items, context and retrieval support belong to the concrete model. Stopping policies and diagnostic views specify any additional information they require separately.</p>
+<section id="attributes-2" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes-2">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 25%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>is_active</td>
+<td>Bool[Array, '']</td>
+<td>Whether retrieval can continue.</td>
+</tr>
+<tr class="even">
+<td>recall_total</td>
+<td>Integer[Array, '']</td>
+<td>Number of items recalled so far, excluding stop events.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods-6" class="level4">
+<h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemorySearch.experience"><code>experience</code></a></td>
+<td>Advance the model by one study event.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.MemorySearch.start_retrieving"><code>start_retrieving</code></a></td>
+<td>Transition from study to retrieval.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemorySearch.retrieve"><code>retrieve</code></a></td>
+<td>Advance the model by one retrieval event.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.MemorySearch.outcome_probability"><code>outcome_probability</code></a></td>
+<td>Calculate the probability of one retrieval event.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemorySearch.outcome_probabilities"><code>outcome_probabilities</code></a></td>
+<td>Calculate probabilities for every retrieval event.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.MemorySearch.experience" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearch.experience">experience</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch.experience(choice)</code>
+</div>
+<p>Advance the model by one study event.</p>
+<section id="parameters-7" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 71%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>choice</td>
+<td>Int_</td>
+<td>One-indexed within-list item code; zero leaves the model unchanged.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-7" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>MemorySearch</td>
+<td>Model after experiencing this item.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearch.start_retrieving" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearch.start_retrieving">start_retrieving</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch.start_retrieving()</code>
+</div>
+<p>Transition from study to retrieval.</p>
+<section id="returns-8" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-8">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>MemorySearch</td>
+<td>Model ready for its first retrieval event.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearch.retrieve" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearch.retrieve">retrieve</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch.retrieve(choice)</code>
+</div>
+<p>Advance the model by one retrieval event.</p>
+<section id="parameters-8" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 69%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>choice</td>
+<td>Int_</td>
+<td>One-indexed within-list item code, or zero to stop retrieval.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-9" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-9">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>MemorySearch</td>
+<td>Model after recalling the item or stopping.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearch.outcome_probability" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearch.outcome_probability">outcome_probability</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch.outcome_probability(choice)</code>
+</div>
+<p>Calculate the probability of one retrieval event.</p>
+<section id="parameters-9" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 68%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>choice</td>
+<td>Int_</td>
+<td>One-indexed within-list item code, or zero for a stop event.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-10" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-10">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 68%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, '']</td>
+<td>Event probability in the current state, without retrieving it.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearch.outcome_probabilities" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearch.outcome_probabilities">outcome_probabilities</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearch.outcome_probabilities()</code>
+</div>
+<p>Calculate probabilities for every retrieval event.</p>
+<section id="returns-11" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-11">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 19%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, recall_outcomes]</td>
+<td>Stop probability at index zero, followed by probabilities for the corresponding one-indexed item codes. The model is unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearchModelFactory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.MemorySearchModelFactory">MemorySearchModelFactory</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearchModelFactory: Protocol</code>
+</div>
+<p>Prepare a dataset once, then construct a model for an individual trial.</p>
+<p>Simulation and losses receive a factory class, initialize it with their dataset and optional features, and call <code>create_trial_model</code> for each trial and parameter assignment. Trial-specific connections and other prepared inputs are the factory’s responsibility.</p>
+<section id="methods-7" class="level4">
+<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.MemorySearchModelFactory.__init__"><code>__init__</code></a></td>
+<td>Prepare the inputs shared across model constructions.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.MemorySearchModelFactory.create_trial_model"><code>create_trial_model</code></a></td>
+<td>Construct a model ready to study the selected trial.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.MemorySearchModelFactory.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearchModelFactory.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearchModelFactory.__init__(dataset, features)</code>
+</div>
+<p>Prepare the inputs shared across model constructions.</p>
+<section id="parameters-10" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 41%">
+<col style="width: 43%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Trial data, including any fields required by the chosen model.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Float[Array, 'word_pool_items features_count'] or None</td>
+<td>Item features aligned to the model’s vocabulary, when needed.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.MemorySearchModelFactory.create_trial_model" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.MemorySearchModelFactory.create_trial_model">create_trial_model</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.MemorySearchModelFactory.create_trial_model(trial_index, parameters)</code>
+</div>
+<p>Construct a model ready to study the selected trial.</p>
+<section id="parameters-11" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 22%">
+<col style="width: 53%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_index</td>
+<td>Integer[Array, '']</td>
+<td>Zero-based row in the dataset supplied to the factory.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>parameters</td>
+<td>Parameters</td>
+<td>One complete assignment of model parameter values.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-12" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-12">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 18%">
+<col style="width: 70%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>MemorySearch</td>
+<td>New model using the prepared inputs for this trial.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.TrialSimulator" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.TrialSimulator">TrialSimulator</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.TrialSimulator: Protocol</code>
+</div>
+<p>Run a study and retrieval procedure for one trial.</p>
+<p>The procedure determines how observed recalls constrain simulation: it may ignore them, impose the first recall, or use their count or occupied slots. Dataset simulation translates recorded study positions into within-list item codes before calling this interface, and translates generated item codes back to study positions afterward.</p>
+<section id="methods-8" class="level4">
+<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.TrialSimulator.__call__"><code>__call__</code></a></td>
+<td>Simulate one trial under the chosen experimental procedure.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.TrialSimulator.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.TrialSimulator.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.TrialSimulator.__call__(model, present, trial, rng)</code>
+</div>
+<p>Simulate one trial under the chosen experimental procedure.</p>
+<section id="parameters-12" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 17%">
+<col style="width: 70%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>model</td>
+<td>MemorySearch</td>
+<td>Model initialized for the trial, before study begins.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>present</td>
+<td>Integer[Array, study_events]</td>
+<td>One-indexed within-list item codes in study order; zero pads the list.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>trial</td>
+<td>Integer[Array, recalls]</td>
+<td>Observed recalls expressed in the same item codes, with zero for unused slots. Their use depends on the chosen trial procedure.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>rng</td>
+<td>PRNGKeyArray</td>
+<td>Random key for sampling responses.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-13" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-13">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 29%">
+<col style="width: 66%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>tuple of MemorySearch and Integer[Array, "recall_events"]</td>
+<td>Final model and simulated item codes. Zero denotes an unused response slot; the procedure determines the output width and stopping behavior.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.LikelihoodMaskFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.LikelihoodMaskFn">LikelihoodMaskFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.LikelihoodMaskFn: Protocol</code>
+</div>
+<p>Choose which recorded recall events contribute to a likelihood.</p>
+<section id="methods-9" class="level4">
+<h4 class="anchored" data-anchor-id="methods-9">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.LikelihoodMaskFn.__call__"><code>__call__</code></a></td>
+<td>Mark recall events to include in the objective.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.LikelihoodMaskFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.LikelihoodMaskFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.LikelihoodMaskFn.__call__(recalls)</code>
+</div>
+<p>Mark recall events to include in the objective.</p>
+<section id="parameters-13" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 21%">
+<col style="width: 65%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>recalls</td>
+<td>Integer[Array, recall_events]</td>
+<td>Recorded recall sequence. Positive entries denote recalled items and zeros follow the final recall.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-14" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-14">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 18%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Bool[Array, recall_events]</td>
+<td>Keep-mask aligned to the supplied sequence. The chosen rule determines whether the first zero contributes as a stop event.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.RecallAnalysisFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.RecallAnalysisFn">RecallAnalysisFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.RecallAnalysisFn: Protocol</code>
+</div>
+<p>Calculate a fixed-shape behavioral summary from a recall dataset.</p>
+<p>Observations and simulations use the same study-position recall codes. Simulated repetitions are ordinary trial rows with repeated metadata. The analysis defines aggregation and weighting, must support JAX tracing, and may return nonfinite values for undefined observed bins.</p>
+<section id="methods-10" class="level4">
+<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.RecallAnalysisFn.__call__"><code>__call__</code></a></td>
+<td>Return a numerical summary, with the same shape for both datasets.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.RecallAnalysisFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.RecallAnalysisFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.RecallAnalysisFn.__call__(dataset, /)</code>
+</div>
+<p>Return a numerical summary, with the same shape for both datasets.</p>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.LossFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.LossFn">LossFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.LossFn: Protocol</code>
+</div>
+<p>Score candidate parameter vectors on selected observations.</p>
+<p>Fitters initialize a loss with the model factory, dataset and features. Each call supplies selected trial rows, base parameters and a matrix of candidate values for the free parameters. Lower objective values are better; the chosen loss defines the measure, such as negative log likelihood or behavioral mean squared error.</p>
+<section id="methods-11" class="level4">
+<h4 class="anchored" data-anchor-id="methods-11">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.LossFn.__call__"><code>__call__</code></a></td>
+<td>Evaluate each candidate on the selected observations.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.LossFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.LossFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.LossFn.__call__(trial_indices, base_params, free_param_names, x)</code>
+</div>
+<p>Evaluate each candidate on the selected observations.</p>
+<section id="parameters-14" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 23%">
+<col style="width: 60%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_indices</td>
+<td>Integer[Array, trials]</td>
+<td>Zero-based dataset rows contributing to the objective.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Base values, overridden by each candidate’s free-parameter values.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>free_param_names</td>
+<td>Iterable[str]</td>
+<td>Names in the same order as the rows of x.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>x</td>
+<td>Float[Array, 'parameters n_samples']</td>
+<td>Candidate values in physical parameter coordinates, one candidate per column and one free parameter per row.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-15" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-15">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 26%">
+<col style="width: 65%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, n_samples]</td>
+<td>One objective value per candidate, in the supplied column order.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.LossFactory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.LossFactory">LossFactory</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.LossFactory: Protocol</code>
+</div>
+<p>Construct a loss from a model factory, observations and features.</p>
+<p>Classes and configured callables such as functools.partial can implement this interface. The returned object supplies population scoring.</p>
+<section id="methods-12" class="level4">
+<h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.LossFactory.__call__"><code>__call__</code></a></td>
+<td>Prepare an ordinary loss for the supplied model and data.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.LossFactory.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.LossFactory.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.LossFactory.__call__(model_factory_cls, dataset, features)</code>
+</div>
+<p>Prepare an ordinary loss for the supplied model and data.</p>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.FittingAlgorithm" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.FittingAlgorithm">FittingAlgorithm</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.FittingAlgorithm: Protocol</code>
+</div>
+<p>Fit one pooled parameter set or separate parameter sets by participant.</p>
+<p>Construct an implementation with a dataset, model factory, loss class and optimizer settings. <code>fit</code> uses all selected observations in one objective; <code>fit_subjects</code> fits the selected participants separately. Both return a <code>FitResult</code> with parameter columns and optimizer outcomes aligned by row.</p>
+<section id="methods-13" class="level4">
+<h4 class="anchored" data-anchor-id="methods-13">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.FittingAlgorithm.__init__"><code>__init__</code></a></td>
+<td>Configure the fitting algorithm.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.FittingAlgorithm.fit"><code>fit</code></a></td>
+<td>Fit one parameter set to all selected observations.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.FittingAlgorithm.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit each selected participant independently.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.FittingAlgorithm.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.FittingAlgorithm.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.FittingAlgorithm.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure the fitting algorithm.</p>
+<section id="parameters-15" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 27%">
+<col style="width: 58%">
+<col style="width: 5%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Observed trial data, including participant identities.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Float[Array, 'word_pool_items features_count'] or None</td>
+<td>Vocabulary-aligned features passed to the model factory when needed.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Base parameter values. Candidate values override the free parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model_factory_cls</td>
+<td>type[MemorySearchModelFactory]</td>
+<td>Factory class used to prepare trial-specific models.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>loss_fn_cls</td>
+<td>LossFactory</td>
+<td>Loss class used to score candidate parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>hyperparams</td>
+<td>dict[str, Any] or None</td>
+<td>Optimizer-specific settings, including free-parameter bounds. Consult the chosen fitter for its supported settings and defaults.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.FittingAlgorithm.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.FittingAlgorithm.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.FittingAlgorithm.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit one parameter set to all selected observations.</p>
+<section id="parameters-16" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 21%">
+<col style="width: 56%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Trials included in this fit.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Identity recorded for the fit row; -1 denotes a pooled fit.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-16" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-16">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One fit row and its optimizer results.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.typing.FittingAlgorithm.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.FittingAlgorithm.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.FittingAlgorithm.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit each selected participant independently.</p>
+<section id="parameters-17" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 20%">
+<col style="width: 57%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Trials included when forming participant-specific objectives.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-17" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-17">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 11%">
+<col style="width: 79%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Participant parameter columns and optimizer results, aligned by fit row.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.FitResult" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.FitResult">FitResult</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.FitResult: TypedDict</code>
+</div>
+<p>Serialized parameter estimates and optimizer results, aligned by fit row.</p>
+<p><code>fitness</code>, <code>nit</code>, <code>converged</code> and every column in <code>fits</code> refer to the same rows. One fit to pooled observations produces one row; participant-wise fitting produces one row per participant. Optimizer diagnostics are optional. The objective’s meaning comes from the selected loss.</p>
+<section id="fields-1" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="fields-1">Fields</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>fixed</code></td>
+<td>dict[str, float | int | bool]</td>
+<td>Base parameter values preserving numeric and Boolean scalar types. Free-parameter defaults may appear here too; fitted values in fits override them.</td>
+</tr>
+<tr class="even">
+<td><code>free</code></td>
+<td>dict[str, list[float]]</td>
+<td>Free-parameter names mapped to [lower_bound, upper_bound].</td>
+</tr>
+<tr class="odd">
+<td><code>fitness</code></td>
+<td>list[float]</td>
+<td>Objective values, one per fit row. Their meaning is determined by the selected loss; likelihood examples store negative log likelihood.</td>
+</tr>
+<tr class="even">
+<td><code>nit</code></td>
+<td>list[int]</td>
+<td>Number of optimizer iterations or generations run for each selected fit.</td>
+</tr>
+<tr class="odd">
+<td><code>converged</code></td>
+<td>list[bool]</td>
+<td>Whether each fit met the optimizer convergence criterion.</td>
+</tr>
+<tr class="even">
+<td><code>fits</code></td>
+<td>dict[str, list[float | int | bool]]</td>
+<td>Parameter columns aligned by fit row, including integer and Boolean values. The reserved subject column contains integer IDs, never floats or booleans. Participant rows have distinct IDs; a pooled fit has one row with ID -1.</td>
+</tr>
+<tr class="odd">
+<td><code>hyperparameters</code></td>
+<td>dict[str, Any]</td>
+<td>Dictionary of hyperparameter names and their values used during fitting.</td>
+</tr>
+<tr class="even">
+<td><code>fit_time</code></td>
+<td>float</td>
+<td>Total time (in seconds) taken to perform the fitting.</td>
+</tr>
+<tr class="odd">
+<td><code>diagnostics</code></td>
+<td>NotRequired[list[dict[str, Any]]]</td>
+<td>Optional diagnostics aligned with fit rows. Each entry includes subject, selected_restart and restart records, plus solver-specific details.</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const toggle = window.document.createElement('button');
+      toggle.type = "button";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", "false");
+      toggle.classList.add('top-right');
+      toggle.classList.add('quarto-color-scheme-toggle');
+      toggle.setAttribute("aria-label", "Toggle dark mode");
+      toggle.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      toggle.appendChild(i);
+      // Put the toggle in a landmark of its own, so that landmark navigation
+      // can reach it.
+      //
+      // The container is always a fresh direct child of body, and the toggle is
+      // never moved into page furniture that the theme or the author controls.
+      // The toggle is positioned against the page, so any ancestor that
+      // establishes a containing block captures it: a positioned element or a
+      // grid for position: absolute, and transform, filter, will-change or
+      // contain for position: fixed. A direct child of body has none of these
+      // to inherit, and the shift when one appears is silent and visual.
+      //
+      // ARIA says a document should have at most one banner, and axe reports a
+      // duplicate whether or not the banners carry distinct labels. So use a
+      // header when the page has no banner yet, and a named region otherwise.
+      //
+      // A header is a banner wherever it sits, unless it is inside sectioning
+      // content, so this cannot just look at the children of body: a custom
+      // page layout wraps the title block header in a plain div. An explicit
+      // role="banner" always counts.
+      const sectioning = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+      const hasBanner = Array.from(
+        window.document.querySelectorAll('header:not([role]), [role="banner"]')
+      ).some(function(el) {
+        return el.hasAttribute("role") || el.closest(sectioning) === null;
+      });
+      const container = window.document.createElement(hasBanner ? "div" : "header");
+      if (hasBanner) {
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Toggle dark mode");
+      }
+      container.classList.add('quarto-color-scheme-toggle-container');
+      container.appendChild(toggle);
+      window.document.body.appendChild(container);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../reference/math.html" class="pagination-link" aria-label="Mathematical operations">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Mathematical operations</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../reference/helpers.html" class="pagination-link" aria-label="Utilities">
+        <span class="nav-page-text">Utilities</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

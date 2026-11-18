@@ -1,0 +1,3251 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>jaxcmr.fitting – JAXCMR</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../reference/simulation.html" rel="next">
+<link href="../reference/loss-mse.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="reference.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          toggle.setAttribute("aria-checked", alternate ? "true" : "false");
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455).
+    // Not run on load: stylesheets are set before first paint there, and
+    // scrolling would undo the scroll to a URL fragment (#14973).
+    // The one pixel nudge keeps the reader where they were.
+    const refreshSafariScrollbar = () => {
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY > 0 ? scrollY - 1 : 1);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      refreshSafariScrollbar();
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">JAXCMR</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../installation.html"> 
+<span class="menu-text">Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials/data-preparation.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview/index.html"> 
+<span class="menu-text">Library Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../reference/index.html" aria-current="page"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../templates.html"> 
+<span class="menu-text">Templates</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/githubpsyche/jaxcmr"> <i class="bi bi-github" role="img" aria-label="Source Code">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <button type="button" role="switch" aria-checked="false" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi"></i></button>
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../reference/fitting.html">Fitting</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/dataset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Datasets</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-sequence.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Sequential likelihood</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/loss-mse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Behavioral MSE</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/fitting.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Fitting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/simulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simulation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/summarize.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model summaries</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/repetition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Repetition</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/math.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mathematical operations</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/typing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Types</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/helpers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Utilities</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/analyses.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Recall analyses</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="false" aria-label="Toggle section: Recall analyses">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Recall and output position</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-pnr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">pnr</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-nth_item_recall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">nth_item_recall</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-termination_probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">termination_probability</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Serial recall accuracy</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-relative_srac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">relative_srac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repsrac.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repsrac</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-intrusion_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">intrusion_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-omission_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">omission_error_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-order_error_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">order_error_rate</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Categories and study measurements</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_recall_rate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_recall_rate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cat_spc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cat_spc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-factors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">factors</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" aria-controls="quarto-sidebar-section-5" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-5-label">Co-recall</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-5" aria-labelledby="quarto-sidebar-section-5-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-corecall.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">corecall</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" aria-controls="quarto-sidebar-section-6" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-6-label">Transitions and organization</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-6" aria-labelledby="quarto-sidebar-section-6-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-conditional_distcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">conditional_distcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-distrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">distrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-cue_centered_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-source_target_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">source_target_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" aria-controls="quarto-sidebar-section-7" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-7-label">Repeated items</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-7" aria-labelledby="quarto-sidebar-section-7-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repaccesscrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repaccesscrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repneighborcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repneighborcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-reproutecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">reproutecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-repcuecrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">repcuecrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-serialrepcrp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialrepcrp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-rpl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">rpl</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" aria-controls="quarto-sidebar-section-8" aria-expanded="false">
+ <span class="menu-text" id="quarto-sidebar-section-8-label">Participant summaries and comparisons</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-8" aria-labelledby="quarto-sidebar-section-8-label" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/analyses-statistics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">statistics</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../reference/experimental.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text" id="quarto-sidebar-section-9-label">Experimental operations</span></a>
+            <button type="button" class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" aria-controls="quarto-sidebar-section-9" aria-expanded="false" aria-label="Toggle section: Experimental operations">
+              <i class="bi bi-chevron-right ms-2" aria-hidden="true"></i>
+            </button> 
+      </div>
+      <ul id="quarto-sidebar-section-9" aria-labelledby="quarto-sidebar-section-9-label" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared observations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-prepared-fitting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepared fitting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-permutation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Permutation likelihood</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-target_enrichment_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">target_enrichment_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-compound_cueing_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">compound_cueing_crp</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-replagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">replagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-serialreplagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">serialreplagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-cue_centered_lagrank.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">cue_centered_lagrank</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-log_odds_crp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">log_odds_crp</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#optimization" id="toc-optimization" class="nav-link active" data-scroll-target="#optimization">Optimization</a></li>
+  <li><a href="#parameter-coordinates-and-start-selection" id="toc-parameter-coordinates-and-start-selection" class="nav-link" data-scroll-target="#parameter-coordinates-and-start-selection">Parameter coordinates and start selection</a></li>
+  <li><a href="#fitted-parameters" id="toc-fitted-parameters" class="nav-link" data-scroll-target="#fitted-parameters">Fitted parameters</a></li>
+  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+  <ul class="collapse">
+  <li><a href="#jaxcmr.fitting.ScipyDE" id="toc-jaxcmr.fitting.ScipyDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyDE">ScipyDE</a></li>
+  <li><a href="#jaxcmr.fitting.EvosaxDE" id="toc-jaxcmr.fitting.EvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.EvosaxDE">EvosaxDE</a></li>
+  <li><a href="#jaxcmr.fitting.ScanEvosaxDE" id="toc-jaxcmr.fitting.ScanEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScanEvosaxDE">ScanEvosaxDE</a></li>
+  <li><a href="#jaxcmr.fitting.MapEvosaxDE" id="toc-jaxcmr.fitting.MapEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.MapEvosaxDE">MapEvosaxDE</a></li>
+  <li><a href="#jaxcmr.fitting.ScipyLBFGSB" id="toc-jaxcmr.fitting.ScipyLBFGSB" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyLBFGSB">ScipyLBFGSB</a></li>
+  <li><a href="#jaxcmr.fitting.ScipyTrustConstr" id="toc-jaxcmr.fitting.ScipyTrustConstr" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyTrustConstr">ScipyTrustConstr</a></li>
+  <li><a href="#jaxcmr.fitting.ParameterSpace" id="toc-jaxcmr.fitting.ParameterSpace" class="nav-link" data-scroll-target="#jaxcmr.fitting.ParameterSpace">ParameterSpace</a></li>
+  <li><a href="#jaxcmr.fitting.select_starts" id="toc-jaxcmr.fitting.select_starts" class="nav-link" data-scroll-target="#jaxcmr.fitting.select_starts">select_starts</a></li>
+  <li><a href="#jaxcmr.fitting.combine_participant_parameters" id="toc-jaxcmr.fitting.combine_participant_parameters" class="nav-link" data-scroll-target="#jaxcmr.fitting.combine_participant_parameters">combine_participant_parameters</a></li>
+  <li><a href="#jaxcmr.fitting.parameters_for_subjects" id="toc-jaxcmr.fitting.parameters_for_subjects" class="nav-link" data-scroll-target="#jaxcmr.fitting.parameters_for_subjects">parameters_for_subjects</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">jaxcmr.fitting</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Estimate model parameters from a loss evaluated on selected trials.</p>
+<p>The loss determines what counts as a good fit. For example, a likelihood loss scores the observed recall sequence, while an SPC loss compares observed and simulated serial position curves. The fitter searches within the free-parameter bounds for values that minimize the chosen loss.</p>
+<p><code>ScipyDE</code> and the Evosax differential-evolution fitters compare populations of candidates. <code>ScipyLBFGSB</code> and <code>ScipyTrustConstr</code> use loss gradients and can search from several starting points. <code>ParameterSpace</code> translates between search coordinates and physical parameter values. Results report parameters in the units used by the model.</p>
+<p>A pooled fit estimates one parameter set from all selected trials. Participant-wise fitting estimates a set for each participant. In a <code>FitResult</code>, each row links a parameter set to its objective value and optimizer results. <code>parameters_for_subjects</code> uses those rows to assign a pooled estimate or matching participant estimates for simulation.</p>
+<section id="optimization" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="optimization">Optimization</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyDE"><code>ScipyDE</code></a></td>
+<td>Fit bounded parameters with SciPy differential evolution and restarts.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.EvosaxDE"><code>EvosaxDE</code></a></td>
+<td>Fit trial-index losses with differential evolution and independent restarts.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScanEvosaxDE"><code>ScanEvosaxDE</code></a></td>
+<td>Fit equal-length subject selections with an outer compiled JAX scan.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.MapEvosaxDE"><code>MapEvosaxDE</code></a></td>
+<td>Use JAX map for equal-length subject fits, with optional subject batching.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyLBFGSB"><code>ScipyLBFGSB</code></a></td>
+<td>Fit a differentiable loss with box bounds and reproducible restarts.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyTrustConstr"><code>ScipyTrustConstr</code></a></td>
+<td>Bounded trust-constr with JAX gradients and SciPy’s BFGS curvature.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="parameter-coordinates-and-start-selection" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="parameter-coordinates-and-start-selection">Parameter coordinates and start selection</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ParameterSpace"><code>ParameterSpace</code></a></td>
+<td>Map bounded model parameters to unit-interval optimization coordinates.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.select_starts"><code>select_starts</code></a></td>
+<td>Choose low-loss candidates separated in sampling coordinates.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fitted-parameters" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="fitted-parameters">Fitted parameters</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.combine_participant_parameters"><code>combine_participant_parameters</code></a></td>
+<td>Combine participant parameter columns from separate fits, sorted by ID.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.parameters_for_subjects"><code>parameters_for_subjects</code></a></td>
+<td>Assign fitted parameter rows to requested participants, preserving order.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="api-entries" class="level2">
+<h2 class="anchored" data-anchor-id="api-entries">API entries</h2>
+<section id="jaxcmr.fitting.ScipyDE" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.ScipyDE">ScipyDE</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyDE(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Fit bounded parameters with SciPy differential evolution and restarts.</p>
+<p>Bounds, explicit initial populations and returned fits use physical model units. Providing <code>transforms</code> searches in unit coordinates defined by ParameterSpace; omitting it preserves the physical-coordinate search. Random streams depend on the seed, fit-call index and restart index.</p>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyDE.__init__"><code>__init__</code></a></td>
+<td>Configure the objective and bounded search.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyDE.fit"><code>fit</code></a></td>
+<td>Fit selected trials and retain the best usable restart.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyDE.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit participants separately in participant-ID order.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.ScipyDE.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyDE.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyDE.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure the objective and bounded search.</p>
+<section id="parameters" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 12%">
+<col style="width: 75%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Trial data, with participant identifiers used by fit_subjects.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Array or None</td>
+<td>Vocabulary features passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Fixed model values and defaults overridden by fitted values.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model_factory_cls</td>
+<td>type[MemorySearchModelFactory]</td>
+<td>Factory used by the loss to construct trial-specific models.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>loss_fn_cls</td>
+<td>LossFactory</td>
+<td>Loss class or configured callable, such as functools.partial. It accepts the model factory, dataset and features and returns a population scorer.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>hyperparams</td>
+<td>dict or None</td>
+<td>Search settings, including a required bounds mapping in physical units. Bounds order defines the free-parameter order. Transforms are opt-in; losses and returned parameters always use physical units.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyDE.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyDE.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyDE.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials and retain the best usable restart.</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Select at least one dataset row. Selected rows share fitted parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Result label, default -1 for a pooled fit. This label does not select rows.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One row of physical parameters and objective values. Its one-entry diagnostics list retains all attempted restarts and their selected index. Elapsed time includes compilation and every restart.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyDE.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyDE.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyDE.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit participants separately in participant-ID order.</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 61%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Trial selection, partitioned using the dataset’s participant identifiers.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Parameter columns, fitness values and diagnostics in the same participant order. Elapsed time covers the complete collection of fits.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.EvosaxDE" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.EvosaxDE">EvosaxDE</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.EvosaxDE(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Fit trial-index losses with differential evolution and independent restarts.</p>
+<p>Each restart uses a fresh population. The serial, scanned and mapped fitters share the same numerical search and random-key schedule. Scanned and mapped participant fitting require equal selected trial counts across participants.</p>
+<p>The hyperparams mapping sets bounds, pop_size (a multiplier of the number of free parameters), best_of, num_steps and seed. Optional transforms select ParameterSpace search coordinates; omission preserves physical-coordinate search. No observation preparation is discovered or cached by these fitters.</p>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.EvosaxDE.__init__"><code>__init__</code></a></td>
+<td>Configure the objective and bounded search.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.EvosaxDE.fit"><code>fit</code></a></td>
+<td>Fit selected trials and retain the best usable restart.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.EvosaxDE.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit participants separately in participant-ID order.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.EvosaxDE.fit_once"><code>fit_once</code></a></td>
+<td>Fit one restart using an explicit random key.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.EvosaxDE.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.EvosaxDE.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.EvosaxDE.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure the objective and bounded search.</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 12%">
+<col style="width: 75%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Trial data, with participant identifiers used by fit_subjects.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Array or None</td>
+<td>Vocabulary features passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Fixed model values and defaults overridden by fitted values.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model_factory_cls</td>
+<td>type[MemorySearchModelFactory]</td>
+<td>Factory used by the loss to construct trial-specific models.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>loss_fn_cls</td>
+<td>LossFactory</td>
+<td>Loss class or configured callable, such as functools.partial. It accepts the model factory, dataset and features and returns a population scorer.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>hyperparams</td>
+<td>dict or None</td>
+<td>Search settings, including a required bounds mapping in physical units. Bounds order defines the free-parameter order. Transforms are opt-in; losses and returned parameters always use physical units.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.EvosaxDE.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.EvosaxDE.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.EvosaxDE.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials and retain the best usable restart.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Select at least one dataset row. Selected rows share fitted parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Result label, default -1 for a pooled fit. This label does not select rows.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One row of physical parameters and objective values. Its one-entry diagnostics list retains all attempted restarts and their selected index. Elapsed time includes compilation and every restart.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.EvosaxDE.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.EvosaxDE.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.EvosaxDE.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit participants separately in participant-ID order.</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 61%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Trial selection, partitioned using the dataset’s participant identifiers.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Parameter columns, fitness values and diagnostics in the same participant order. Elapsed time covers the complete collection of fits.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.EvosaxDE.fit_once" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.EvosaxDE.fit_once">fit_once</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.EvosaxDE.fit_once(trial_mask, key, subject_id=-1)</code>
+</div>
+<p>Fit one restart using an explicit random key.</p>
+<section id="parameters-6" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 19%">
+<col style="width: 60%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Nonempty trial selection.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>key</td>
+<td>PRNGKeyArray</td>
+<td>Restart key; this call does not advance the fitter’s fit-call sequence.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>subject_id</td>
+<td>int</td>
+<td>Result label, default -1.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-4" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 8%">
+<col style="width: 85%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One fitted row and a one-entry restart history. Reported best_of is one; the fitter’s settings are unchanged.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScanEvosaxDE" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.ScanEvosaxDE">ScanEvosaxDE</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScanEvosaxDE(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Fit equal-length subject selections with an outer compiled JAX scan.</p>
+<p>Subject fitting uses ordinary trial-index losses. Inherited fit and fit_once retain the serial class’s optional preparation support.</p>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScanEvosaxDE.__init__"><code>__init__</code></a></td>
+<td>Configure DE as in EvosaxDE, then create a compiled subject runner.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScanEvosaxDE.fit"><code>fit</code></a></td>
+<td>Fit selected trials and retain the best usable restart.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScanEvosaxDE.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit participants through a compiled scan.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.ScanEvosaxDE.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScanEvosaxDE.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScanEvosaxDE.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure DE as in EvosaxDE, then create a compiled subject runner.</p>
+</section>
+<section id="jaxcmr.fitting.ScanEvosaxDE.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScanEvosaxDE.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScanEvosaxDE.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials and retain the best usable restart.</p>
+<section id="parameters-7" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Select at least one dataset row. Selected rows share fitted parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Result label, default -1 for a pooled fit. This label does not select rows.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One row of physical parameters and objective values. Its one-entry diagnostics list retains all attempted restarts and their selected index. Elapsed time includes compilation and every restart.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScanEvosaxDE.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScanEvosaxDE.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScanEvosaxDE.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit participants through a compiled scan.</p>
+<section id="parameters-8" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Selected trials. Every included participant must have the same trial count.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-6" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 86%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Parameters, fitness and diagnostics in participant-ID order. Restarts use the same keys as serial participant fitting.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.MapEvosaxDE" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.MapEvosaxDE">MapEvosaxDE</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.MapEvosaxDE(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Use JAX map for equal-length subject fits, with optional subject batching.</p>
+<section id="methods-3" class="level4">
+<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.MapEvosaxDE.__init__"><code>__init__</code></a></td>
+<td>Configure DE, optionally setting map_batch_size in the hyperparameters.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.MapEvosaxDE.fit"><code>fit</code></a></td>
+<td>Fit selected trials and retain the best usable restart.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.MapEvosaxDE.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit participants through a compiled scan.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.MapEvosaxDE.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.MapEvosaxDE.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.MapEvosaxDE.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure DE, optionally setting map_batch_size in the hyperparameters.</p>
+<p>None maps subjects sequentially, a positive size batches subjects, and zero requests JAX’s full-vmap path. Other options match EvosaxDE.</p>
+</section>
+<section id="jaxcmr.fitting.MapEvosaxDE.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.MapEvosaxDE.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.MapEvosaxDE.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials and retain the best usable restart.</p>
+<section id="parameters-9" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Select at least one dataset row. Selected rows share fitted parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Result label, default -1 for a pooled fit. This label does not select rows.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-7" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One row of physical parameters and objective values. Its one-entry diagnostics list retains all attempted restarts and their selected index. Elapsed time includes compilation and every restart.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.MapEvosaxDE.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.MapEvosaxDE.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.MapEvosaxDE.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit participants through a compiled scan.</p>
+<section id="parameters-10" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 62%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, trials]</td>
+<td>Selected trials. Every included participant must have the same trial count.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-8" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-8">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 86%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Parameters, fitness and diagnostics in participant-ID order. Restarts use the same keys as serial participant fitting.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyLBFGSB" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.ScipyLBFGSB">ScipyLBFGSB</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyLBFGSB(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Fit a differentiable loss with box bounds and reproducible restarts.</p>
+<p>The constructor accepts the same dataset, model factory and loss factory as the DE fitters, including configured callable loss constructors. Optimization uses explicit unit-interval coordinates for parameter scaling; the loss always receives physical parameter values. SciPy owns the local optimizer. Only loss evaluation and differentiation use JAX.</p>
+<p>Required hyperparameter: <code>bounds</code> (a nonempty name -&gt; [lower, upper] mapping of finite, strictly ordered bounds). Optional controls: <code>transforms</code> (a name -&gt; ‘linear’/‘log’/‘log1p’/‘exp_neg’ mapping), <code>sampling_transforms</code> (same syntax, defaults to <code>transforms</code>), <code>initial_params</code> (one complete physical starting mapping, refined first), <code>best_of</code> (maximum local solves, default 8), <code>screening_size</code> (64), <code>screening_batch_size</code> (16), <code>min_start_distance</code> (0.1), <code>seed</code> (0), <code>num_steps</code> (500), <code>max_fun</code> (15000), <code>relative_tolerance</code> (1e-9), <code>gradient_tolerance</code> (1e-5), <code>max_line_search_steps</code> (30), <code>time_limit_seconds</code> (None), and <code>local_time_limit_seconds</code> (None, an allowance for each restart). These defaults describe L-BFGS-B; the trust-constr subclass documents its solver-specific controls. By default, score a Latin-hypercube bank and refine promising, separated candidates. Distances are RMS differences in those sampling coordinates; optimization uses <code>transforms</code> independently. Set <code>screening_size=0</code> for unscreened uniform restarts; combine this with <code>best_of=1</code> and <code>initial_params</code> for local polishing. Transforms are explicit: CMR can use {‘primacy_decay’: ‘exp_neg’} to fit retention while preserving its physical decay parameter and bounds.</p>
+<p>Time limits include screening and all restarts and are checked between evaluations. One initial value/gradient is always allowed as a fallback, recorded explicitly if late. Later improvements are retained only when evaluated before both deadlines; in-flight work cannot be interrupted. Call <code>warmup(mask)</code> to measure compilation separately. Without warmup, compilation counts toward the time limits. Nonfinite values/gradients end that restart, with diagnostics retained; a finite objective with an invalid gradient is never reported as a good fit.</p>
+<p>Uses the caller’s JAX precision configuration; it never changes global JAX settings. Double precision is recommended for tight tolerances and bounds near singular model limits. The loss must supply meaningful derivatives; differentiability cannot be inferred from the general LossFn protocol.</p>
+<p>Caller requirements: counts are positive integers, except screening_size may be zero. min_start_distance lies in [0, 1]; tolerances are finite and nonnegative; supplied time limits, trust radii and barrier parameters are finite and positive. initial_params must name every free parameter once with finite values inside its bounds. L-BFGS-B-only options must not be passed to trust-constr.</p>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyLBFGSB.__init__"><code>__init__</code></a></td>
+<td>Configure parameter coordinates, solver controls and compiled losses.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyLBFGSB.fit"><code>fit</code></a></td>
+<td>Fit selected trials with screening and independent local restarts.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyLBFGSB.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit selected subjects independently and combine their results.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyLBFGSB.warmup"><code>warmup</code></a></td>
+<td>Compile the configured evaluation paths for a trial selection.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.ScipyLBFGSB.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyLBFGSB.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyLBFGSB.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure parameter coordinates, solver controls and compiled losses.</p>
+<section id="parameters-11" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 25%">
+<col style="width: 51%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Observations with one subject label per trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Array or None</td>
+<td>Optional vocabulary features passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Model defaults and fixed values; free parameters override defaults.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model_factory_cls</td>
+<td>type[MemorySearchModelFactory]</td>
+<td>Factory passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>loss_fn_cls</td>
+<td>LossFactory</td>
+<td>Differentiable population loss.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>hyperparams</td>
+<td>dict[str, Any] or None</td>
+<td>Bounds and fitting controls documented on this class and its solver.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyLBFGSB.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyLBFGSB.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyLBFGSB.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials with screening and independent local restarts.</p>
+<section id="parameters-12" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 24%">
+<col style="width: 54%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection with one Boolean entry per dataset trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Subject label stored in the result, defaulting to -1.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-9" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-9">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Best eligible evaluation, physical parameters, convergence and per-restart diagnostics. Elapsed time includes trial selection, compilation, screening and every restart unless warmed beforehand.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyLBFGSB.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyLBFGSB.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyLBFGSB.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit selected subjects independently and combine their results.</p>
+<section id="parameters-13" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 23%">
+<col style="width: 57%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection to partition using the dataset’s subject labels.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-10" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-10">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One result per selected subject, with per-subject diagnostics and total elapsed time. The configured budget applies to each fit.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyLBFGSB.warmup" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyLBFGSB.warmup">warmup</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyLBFGSB.warmup(trial_mask)</code>
+</div>
+<p>Compile the configured evaluation paths for a trial selection.</p>
+<section id="parameters-14" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 24%">
+<col style="width: 54%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection with one Boolean entry per dataset trial.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-11" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-11">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>float</td>
+<td>Seconds spent warming loss, gradient and coordinate calculations. This does not consume a random restart sequence.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyTrustConstr" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.ScipyTrustConstr">ScipyTrustConstr</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyTrustConstr(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Bounded trust-constr with JAX gradients and SciPy’s BFGS curvature.</p>
+<p>Accepts the same dataset, model, loss and FitResult contract as ScipyLBFGSB. Required option: <code>bounds</code>. Shared controls include <code>transforms</code>, <code>sampling_transforms</code>, <code>initial_params</code>, screening, seed, restart count, and global/per-restart time limits. Sampling defaults to the optimization coordinates; use an explicit mapping to choose a different distribution.</p>
+<p>Defaults: <code>best_of=4</code>, <code>screening_size=64</code>, <code>screening_batch_size=16</code>, <code>min_start_distance=0.1</code>, <code>num_steps=1000</code>, <code>gradient_tolerance=1e-7</code>, <code>step_tolerance=1e-12</code>, <code>barrier_tolerance=1e-10</code>, <code>initial_trust_radius=1.0</code>, <code>initial_barrier_parameter=0.1</code>. L-BFGS-B’s max_fun, relative_tolerance and max_line_search_steps controls are not accepted. No Hessian is differentiated or compiled: SciPy updates its curvature estimate from the gradients.</p>
+<p>Call warmup(mask) before imposing short fitting budgets. Deadlines include screening and restarts and are checked between evaluations. One initial evaluation is guaranteed as a fallback; any late fallback is identified in diagnostics. Successful solver termination is not proof of a global optimum.</p>
+<section id="methods-5" class="level4">
+<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyTrustConstr.__init__"><code>__init__</code></a></td>
+<td>Configure parameter coordinates, solver controls and compiled losses.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyTrustConstr.fit"><code>fit</code></a></td>
+<td>Fit selected trials with screening and independent local restarts.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ScipyTrustConstr.fit_subjects"><code>fit_subjects</code></a></td>
+<td>Fit selected subjects independently and combine their results.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ScipyTrustConstr.warmup"><code>warmup</code></a></td>
+<td>Compile the configured evaluation paths for a trial selection.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.ScipyTrustConstr.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyTrustConstr.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyTrustConstr.__init__(dataset, features, base_params, model_factory_cls, loss_fn_cls, hyperparams=None)</code>
+</div>
+<p>Configure parameter coordinates, solver controls and compiled losses.</p>
+<section id="parameters-15" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 25%">
+<col style="width: 51%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>RecallDataset</td>
+<td>Observations with one subject label per trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>features</td>
+<td>Array or None</td>
+<td>Optional vocabulary features passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>base_params</td>
+<td>Parameters</td>
+<td>Model defaults and fixed values; free parameters override defaults.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>model_factory_cls</td>
+<td>type[MemorySearchModelFactory]</td>
+<td>Factory passed to the loss constructor.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>loss_fn_cls</td>
+<td>LossFactory</td>
+<td>Differentiable population loss.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>hyperparams</td>
+<td>dict[str, Any] or None</td>
+<td>Bounds and fitting controls documented on this class and its solver.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyTrustConstr.fit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyTrustConstr.fit">fit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyTrustConstr.fit(trial_mask, subject_id=-1)</code>
+</div>
+<p>Fit selected trials with screening and independent local restarts.</p>
+<section id="parameters-16" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 24%">
+<col style="width: 54%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection with one Boolean entry per dataset trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_id</td>
+<td>int</td>
+<td>Subject label stored in the result, defaulting to -1.</td>
+<td><code>-1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-12" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-12">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 91%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>Best eligible evaluation, physical parameters, convergence and per-restart diagnostics. Elapsed time includes trial selection, compilation, screening and every restart unless warmed beforehand.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyTrustConstr.fit_subjects" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyTrustConstr.fit_subjects">fit_subjects</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyTrustConstr.fit_subjects(trial_mask)</code>
+</div>
+<p>Fit selected subjects independently and combine their results.</p>
+<section id="parameters-17" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 23%">
+<col style="width: 57%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection to partition using the dataset’s subject labels.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-13" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-13">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>FitResult</td>
+<td>One result per selected subject, with per-subject diagnostics and total elapsed time. The configured budget applies to each fit.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ScipyTrustConstr.warmup" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ScipyTrustConstr.warmup">warmup</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ScipyTrustConstr.warmup(trial_mask)</code>
+</div>
+<p>Compile the configured evaluation paths for a trial selection.</p>
+<section id="parameters-18" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 24%">
+<col style="width: 54%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>trial_mask</td>
+<td>Bool[Array, ' trials']</td>
+<td>Nonempty selection with one Boolean entry per dataset trial.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-14" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-14">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 87%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>float</td>
+<td>Seconds spent warming loss, gradient and coordinate calculations. This does not consume a random restart sequence.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.ParameterSpace" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.ParameterSpace">ParameterSpace</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.ParameterSpace(bounds, transforms=None)</code>
+</div>
+<p>Map bounded model parameters to unit-interval optimization coordinates.</p>
+<p><code>bounds</code> and all model-facing values use physical parameter units. Selected parameters may use log, log1p, or exp(-decay) coordinates before their transformed interval is scaled to [0, 1]. This changes the geometry of optimization and uniform sampling, not the model family.</p>
+<p>Conversion methods use the last array axis for parameters, in <code>names</code> order, and preserve all leading dimensions. They support JIT, vmap and differentiation using the caller’s JAX precision. Construction rejects bounds whose intervals or transforms collapse at that precision; decay bounds up to 100, for example, require x64 for retention coordinates.</p>
+<section id="attributes" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 29%">
+<col style="width: 59%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>names</td>
+<td></td>
+<td>Parameter names in the insertion order of the bounds mapping.</td>
+</tr>
+<tr class="even">
+<td>bounds</td>
+<td></td>
+<td>Original physical bounds, shaped (parameters, 2).</td>
+</tr>
+<tr class="odd">
+<td>transforms</td>
+<td>dict[str, ParameterTransform]</td>
+<td>Explicit transform choices; omitted names use linear scaling.</td>
+</tr>
+<tr class="even">
+<td>lower</td>
+<td></td>
+<td>Representable physical lower bounds, rounded inward if necessary.</td>
+</tr>
+<tr class="odd">
+<td>upper</td>
+<td></td>
+<td>Representable physical upper bounds, rounded inward if necessary.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods-6" class="level4">
+<h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ParameterSpace.__init__"><code>__init__</code></a></td>
+<td>Prepare physical bounds and their transformed intervals.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.fitting.ParameterSpace.to_physical"><code>to_physical</code></a></td>
+<td>Convert optimization coordinates to model parameters.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.fitting.ParameterSpace.to_unit"><code>to_unit</code></a></td>
+<td>Convert physical parameters to optimization coordinates.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.fitting.ParameterSpace.__init__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ParameterSpace.__init__"><code>__init__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ParameterSpace.__init__(bounds, transforms=None)</code>
+</div>
+<p>Prepare physical bounds and their transformed intervals.</p>
+<section id="parameters-19" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 16%">
+<col style="width: 75%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>bounds</td>
+<td>Mapping[str, ArrayLike]</td>
+<td>Nonempty mapping to finite, strictly ordered lower/upper pairs. Insertion order defines the final parameter axis in every conversion.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>transforms</td>
+<td>Mapping[str, ParameterTransform] or None</td>
+<td>Selected names mapped to linear, log (positive bounds), log1p (bounds above -1), or exp_neg (retention). Omitted names use linear coordinates. Retention reverses orientation: unit zero gives maximum decay.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 88%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>The configured JAX precision cannot represent the physical or transformed interval. Increasing precision or changing the bounds may be necessary.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ParameterSpace.to_physical" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ParameterSpace.to_physical">to_physical</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ParameterSpace.to_physical(unit_parameters)</code>
+</div>
+<p>Convert optimization coordinates to model parameters.</p>
+<section id="parameters-20" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 18%">
+<col style="width: 67%">
+<col style="width: 5%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>unit_parameters</td>
+<td>Float[Array, '*batch parameters']</td>
+<td>Final axis follows names; all leading batch axes are preserved. Values normally lie in [0, 1]. Retention coordinates reverse orientation.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-15" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-15">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 20%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, '*batch parameters']</td>
+<td>Values are clipped to representable physical bounds. Exact unit endpoints return the corresponding bound without changing transform derivatives.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.ParameterSpace.to_unit" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.fitting.ParameterSpace.to_unit">to_unit</h5>
+<div class="api-signature">
+<code>jaxcmr.fitting.ParameterSpace.to_unit(physical_parameters)</code>
+</div>
+<p>Convert physical parameters to optimization coordinates.</p>
+<section id="parameters-21" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 19%">
+<col style="width: 64%">
+<col style="width: 5%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>physical_parameters</td>
+<td>Float[Array, '*batch parameters']</td>
+<td>Final axis follows names; all leading batch axes are preserved. Values must lie in the chosen transforms’ mathematical domains.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-16" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-16">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 24%">
+<col style="width: 70%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Float[Array, '*batch parameters']</td>
+<td>Unit coordinates clipped to [0, 1]. No runtime validation is performed inside the compiled numerical calculation.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="jaxcmr.fitting.select_starts" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.select_starts">select_starts</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.select_starts(candidates, scores, count, min_distance=0.1)</code>
+</div>
+<p>Choose low-loss candidates separated in sampling coordinates.</p>
+<p>Stable score ordering resolves ties in input order. Separation is the root mean square coordinate difference; it discourages redundant starts without claiming to identify distinct attraction basins.</p>
+<section id="parameters-22" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-22">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 34%">
+<col style="width: 47%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>candidates</td>
+<td>Float[ArrayLike, 'candidates parameters']</td>
+<td>Finite unit-interval coordinates, one candidate per row.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>scores</td>
+<td>Float[ArrayLike, candidates]</td>
+<td>One objective per candidate; nonfinite scores are excluded.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>count</td>
+<td>int</td>
+<td>Positive maximum number of starts to select.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>min_distance</td>
+<td>float</td>
+<td>Minimum RMS separation, in [0, 1]. Zero selects by score alone.</td>
+<td><code>0.1</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-17" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-17">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 19%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Integer[np.ndarray, selected]</td>
+<td>Candidate indices in score order. Fewer than count may remain after excluding unusable or insufficiently separated candidates.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.fitting.combine_participant_parameters" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.combine_participant_parameters">combine_participant_parameters</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.combine_participant_parameters(parameter_sets)</code>
+</div>
+<p>Combine participant parameter columns from separate fits, sorted by ID.</p>
+<section id="parameters-23" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-23">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 32%">
+<col style="width: 61%">
+<col style="width: 2%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>parameter_sets</td>
+<td>Sequence[Mapping[str, Sequence[float | int | bool] | Real[Array | np.ndarray, ' participants'] | Bool[Array | np.ndarray, ' participants']]]</td>
+<td>Nonempty sequence of parameter-column mappings. Each mapping supplies the same keys, including <code>subject</code>, and nonempty, aligned one-dimensional columns. Subject IDs must be integers, distinct across all mappings; the pooled sentinel -1 is excluded. These are caller preconditions, not runtime checks.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-18" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-18">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 22%">
+<col style="width: 73%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>dict[str, list[float | int | bool]]</td>
+<td>New lists aligned to ascending subject IDs. Boolean parameter values remain boolean. Input mappings and their columns are left unchanged.</td>
+</tr>
+</tbody>
+</table>
+<p>The caller establishes that the fits describe compatible models, parameter definitions and observations. This combines parameter rows only; it does not merge optimizer diagnostics or produce a complete <code>FitResult</code>.</p>
+<p>Example::</p>
+<pre><code>combined = combine_participant_parameters([
+    {"subject": [2], "rate": [0.4], "enabled": [True]},
+    {"subject": [1], "rate": [0.2], "enabled": [False]},
+])
+assert combined["subject"] == [1, 2]
+assert combined["enabled"] == [False, True]</code></pre>
+</section>
+</section>
+<section id="jaxcmr.fitting.parameters_for_subjects" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.fitting.parameters_for_subjects">parameters_for_subjects</h3>
+<div class="api-signature">
+<code>jaxcmr.fitting.parameters_for_subjects(record, subject_ids)</code>
+</div>
+<p>Assign fitted parameter rows to requested participants, preserving order.</p>
+<p>A pooled record (<code>pooled=True</code>, or a sole subject ID of -1 in older records) supplies one parameter set to every requested participant. Other records are matched by subject identity; unused fitted rows are allowed. This prepares inputs to <code>simulate_dataset</code> without loading data, constructing models, or checking the scientific compatibility of a fit and experiment.</p>
+<section id="parameters-24" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-24">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 2%">
+<col style="width: 12%">
+<col style="width: 82%">
+<col style="width: 2%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>record</td>
+<td>Mapping[str, Any]</td>
+<td>A fit record with nonempty, aligned one-dimensional <code>fits</code> columns, including integer <code>subject</code> IDs. Participant rows must have distinct IDs covering the requested participants. A pooled declaration must describe exactly one row with ID -1. Optional <code>fit_configuration.parameters.fixed</code> takes precedence over <code>fixed</code> when restoring Boolean parameter types; each Boolean parameter named there must have a corresponding <code>fits</code> column.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>subject_ids</td>
+<td>Sequence[int] | Integer[Array | np.ndarray, ' participants']</td>
+<td>Nonempty sequence or vector of distinct integer IDs. Floating-point IDs, Boolean IDs and the pooled sentinel -1 are excluded. These and the record requirements are caller preconditions, not runtime checks.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-19" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-19">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 36%">
+<col style="width: 59%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>dict[str, Real[Array, ' participants'] | Bool[Array, ' participants']]</td>
+<td>A new mapping of one-dimensional JAX arrays in the requested order, including <code>subject</code>. Inputs remain unchanged. Runs outside JIT.</td>
+</tr>
+</tbody>
+</table>
+<p>Example::</p>
+<pre><code>parameters = parameters_for_subjects(saved_fit, [12, 5])
+# Every parameter column now corresponds to participant 12, then 5.</code></pre>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const toggle = window.document.createElement('button');
+      toggle.type = "button";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", "false");
+      toggle.classList.add('top-right');
+      toggle.classList.add('quarto-color-scheme-toggle');
+      toggle.setAttribute("aria-label", "Toggle dark mode");
+      toggle.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      toggle.appendChild(i);
+      // Put the toggle in a landmark of its own, so that landmark navigation
+      // can reach it.
+      //
+      // The container is always a fresh direct child of body, and the toggle is
+      // never moved into page furniture that the theme or the author controls.
+      // The toggle is positioned against the page, so any ancestor that
+      // establishes a containing block captures it: a positioned element or a
+      // grid for position: absolute, and transform, filter, will-change or
+      // contain for position: fixed. A direct child of body has none of these
+      // to inherit, and the shift when one appears is silent and visual.
+      //
+      // ARIA says a document should have at most one banner, and axe reports a
+      // duplicate whether or not the banners carry distinct labels. So use a
+      // header when the page has no banner yet, and a named region otherwise.
+      //
+      // A header is a banner wherever it sits, unless it is inside sectioning
+      // content, so this cannot just look at the children of body: a custom
+      // page layout wraps the title block header in a plain div. An explicit
+      // role="banner" always counts.
+      const sectioning = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+      const hasBanner = Array.from(
+        window.document.querySelectorAll('header:not([role]), [role="banner"]')
+      ).some(function(el) {
+        return el.hasAttribute("role") || el.closest(sectioning) === null;
+      });
+      const container = window.document.createElement(hasBanner ? "div" : "header");
+      if (hasBanner) {
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Toggle dark mode");
+      }
+      container.classList.add('quarto-color-scheme-toggle-container');
+      container.appendChild(toggle);
+      window.document.body.appendChild(container);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../reference/loss-mse.html" class="pagination-link" aria-label="Behavioral MSE">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Behavioral MSE</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../reference/simulation.html" class="pagination-link" aria-label="Simulation">
+        <span class="nav-page-text">Simulation</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

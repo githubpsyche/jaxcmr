@@ -1,5 +1,6 @@
+from jaxcmr.dataset import make_dataset
 from jaxcmr.fitting import EvosaxDE, ScipyDE
-from jaxcmr.helpers import load_data, make_dataset
+from jaxcmr.helpers import load_data
 from jaxcmr.simulation import simulate_free_recall
 from jaxcmr.typing import (
     Array,

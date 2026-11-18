@@ -1,9 +1,8 @@
-import pytest
-
 """Regression checks for model-state diagnostic plots."""
 
-from support import CMR_PARAMS
 import matplotlib
+import pytest
+from support import CMR_PARAMS
 
 matplotlib.use("Agg", force=True)
 import jax.numpy as jnp
@@ -11,12 +10,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import to_hex
 from matplotlib.patches import Rectangle
+
 from jaxcmr.components.context import TemporalContext, init
 from jaxcmr.components.instance_memory import init_mcf
-from jaxcmr.experimental.state_analysis import instance_memory_heatmap, plot_model_state
+from jaxcmr.experimental.state_analysis import (
+    instance_memory_heatmap,
+    plot_context_and_outcomes,
+)
 from jaxcmr.models.cmr import CMR
 from jaxcmr.models.positional_cmr import CMR as PositionalCMR
-from jaxcmr.state_analysis import matrix_heatmap
 
 _PARAMETERS = CMR_PARAMS | {
     "stop_probability_scale": 0.05,
@@ -34,8 +36,16 @@ def test_plot_after_transition_handles_expanded_context_without_showing(monkeypa
     monkeypatch.setattr(
         plt, "show", lambda: (_ for _ in ()).throw(AssertionError("unexpected show"))
     )
-    figure, (context_axis, outcome_axis) = plot_model_state(model, context_labels=labels)
+    figure, supplied_axes = plt.subplots(1, 2, figsize=(12, 3))
+    positions = [axis.get_position().bounds for axis in supplied_axes]
+    returned_figure, (context_axis, outcome_axis) = plot_context_and_outcomes(
+        model, context_labels=labels, axes=tuple(supplied_axes)
+    )
     try:
+        assert returned_figure is figure
+        assert context_axis is supplied_axes[0] and outcome_axis is supplied_axes[1]
+        np.testing.assert_allclose([axis.get_position().bounds for axis in supplied_axes], positions)
+        np.testing.assert_allclose([bar.get_height() for bar in context_axis.patches], model.context.state)
         assert len(context_axis.patches) == 9
         assert [tick.get_text() for tick in context_axis.get_xticklabels()] == labels
         assert len(outcome_axis.patches) == 5
@@ -49,7 +59,7 @@ def test_repeated_items_do_not_get_occurrence_based_outcome_colors():
     for item in (1, 2, 1, 3):
         model = model.experience(jnp.int32(item))
     model = model.start_retrieving().retrieve(jnp.int32(1))
-    figure, (_, outcome_axis) = plot_model_state(model)
+    figure, (_, outcome_axis) = plot_context_and_outcomes(model)
     try:
         bars = outcome_axis.patches
         assert len({to_hex(bar.get_facecolor()) for bar in bars[1:]}) == 1
@@ -61,71 +71,39 @@ def test_repeated_items_do_not_get_occurrence_based_outcome_colors():
 
 
 @pytest.mark.parametrize(
-    "include_inputs,include_outputs,include_preexperimental,size,columns",
+    "features,include_preexperimental,size,columns",
     [
-        (True, False, True, 0, slice(None, 4)),
-        (False, True, True, 0, slice(4, None)),
-        (False, True, False, 3, slice(4, None)),
+        ("both", True, 0, slice(None)),
+        ("inputs", True, 0, slice(None, 4)),
+        ("outputs", True, 0, slice(4, None)),
+        ("outputs", False, 3, slice(4, None)),
     ],
 )
 def test_instance_memory_heatmap_respects_input_width_and_trace_selection(
-    include_inputs, include_outputs, include_preexperimental, size, columns
+    features, include_preexperimental, size, columns
 ):
     memory = init_mcf(
         3, {"item_support": 1.0, "shared_support": 0.1, "mcf_trace_sensitivity": 1.0}, init(3)
     )
-    expected = np.asarray(memory.state)[size:, columns]
+    original = np.array(memory.state, copy=True)
+    expected = original[size:, columns]
     figure, axis = instance_memory_heatmap(
         memory,
         pre_experimental_size=size,
-        include_inputs=include_inputs,
-        include_outputs=include_outputs,
+        features=features,
         include_preexperimental=include_preexperimental,
     )
-    np.testing.assert_allclose(np.asarray(axis.collections[0].get_array()), expected)
-    np.testing.assert_allclose(figure.get_size_inches(), (10, 6))
-
-
-@pytest.mark.parametrize(
-    "matrix, expected_annotations",
-    [
-        (
-            jnp.array([-1.0, 0.0, 0.124, 0.25, 1.0]),
-            {(0.5, 0.5): "-1.00", (3.5, 0.5): "0.25", (4.5, 0.5): "1.00"},
-        ),
-        (
-            np.array([[-1.0, -0.125, 0.124], [0.125, 1.0, np.nan]]),
-            {(0.5, 0.5): "-1.00", (1.5, 0.5): "-0.12", (0.5, 1.5): "0.12", (1.5, 1.5): "1.00"},
-        ),
-    ],
-)
-def test_matrix_heatmap_preserves_values_annotations_and_supplied_axes(
-    matrix, expected_annotations
-):
-    original = np.array(matrix, copy=True)
-    figure, axis = plt.subplots(figsize=(7, 4))
     try:
-        returned_figure, returned_axis = matrix_heatmap(
-            matrix, axis=axis, print_threshold=0.125,
-            title="Memory", xlabel="Features", ylabel="Updates",
-            label_font_size=18, annot_font_size=12,
-        )
-        assert returned_figure is figure and returned_axis is axis
-        mesh = axis.collections[0]
-        np.testing.assert_allclose(
-            np.ma.filled(mesh.get_array(), np.nan), np.atleast_2d(original), equal_nan=True
-        )
-        np.testing.assert_allclose(np.asarray(matrix), original, equal_nan=True)
-        assert axis.get_ylim() == (np.atleast_2d(original).shape[0], 0)
-        assert mesh.cmap.name == "magma"
-        assert mesh.colorbar.ax in figure.axes and len(figure.axes) == 2
-        assert {text.get_position(): text.get_text() for text in axis.texts} == expected_annotations
-        assert all(text.get_fontsize() == 12 for text in axis.texts)
-        colours = {text.get_text(): text.get_color() for text in axis.texts}
-        assert colours["-1.00"] == "white" and colours["1.00"] == "black"
-        assert (axis.get_title(), axis.get_xlabel(), axis.get_ylabel()) == (
-            "Memory", "Features", "Updates"
-        )
-        assert axis.xaxis.label.get_fontsize() == 18
+        np.testing.assert_allclose(np.asarray(axis.collections[0].get_array()), expected)
+        np.testing.assert_array_equal(memory.state, original)
+        np.testing.assert_allclose(figure.get_size_inches(), (10, 6))
+        feature_labels = [f"Input {index}" for index in range(4)] + [
+            f"Output {index}" for index in range(3)
+        ]
+        assert [tick.get_text() for tick in axis.get_xticklabels()] == feature_labels[columns]
+        assert [tick.get_text() for tick in axis.get_yticklabels()] == [
+            str(index) for index in range(size, original.shape[0])
+        ]
+        assert axis.get_ylabel() == "Trace Index"
     finally:
         plt.close(figure)

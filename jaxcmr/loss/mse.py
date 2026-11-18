@@ -1,69 +1,86 @@
-"""Fit one or more recall summaries with a configurable squared-error loss.
+"""Fit a model to behavioral measures calculated from observed and simulated recall.
 
-``make_factory`` binds analyses and scoring options into a loss class accepted
-by the existing fitters. All analyses share simulations for each candidate.
+Use ``MemorySearchSpcMseLoss`` when the target is recall probability by study
+position, or ``MemorySearchCatSpcMseLoss`` when the target is a separate
+curve for each category. To fit another measure, give ``MemorySearchMseLoss``
+the analysis you use on observed recall. It applies that function to the
+observed dataset and to a simulated dataset with the same study lists.
+
+Each candidate parameter set generates several recalls per trial. The model
+can stop early, and only response slots up to the observed response count
+are retained. Candidates use the same random keys. With several analyses,
+all predicted summaries come from the same simulated responses.
+``make_factory`` lets you give a fitter that combination of analyses, their
+weights, and the scales used to compare their squared errors. Discrete
+recall sampling makes this loss suitable for derivative-free search.
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Literal
 
-import numpy as np
-from jax import lax, random, vmap
-from jax import numpy as jnp
+import jax.numpy as jnp
+from jax import random, vmap
 
-from jaxcmr.simulation import simulate_free_recall
+from jaxcmr.analyses.cat_spc import cat_spc
+from jaxcmr.analyses.spc import spc
+from jaxcmr.dataset import recall_items_to_positions, replace_recalls, select_trials
+from jaxcmr.simulation import simulate_free_recall, simulate_study
 from jaxcmr.typing import (
     Array,
     ArrayLike,
     Float,
-    Float_,
     Integer,
     MemorySearch,
     MemorySearchModelFactory,
-    PRNGKeyArray,
+    Parameters,
     RecallAnalysisFn,
     RecallDataset,
 )
 
 __all__ = [
+    "MemorySearchCatSpcMseLoss",
     "MemorySearchMseLoss",
+    "MemorySearchSpcMseLoss",
     "make_factory",
-    "simulate_masked_free_recall",
 ]
 
 
-def simulate_masked_free_recall(
-    model: MemorySearch,
-    list_length: int,
-    mask: jnp.ndarray,
-    keys: PRNGKeyArray,
-) -> Integer[Array, "simulation_count recall_length"]:
-    """Simulate recall sequences and zero slots beyond the observed count."""
-
-    def simulate_once(key: PRNGKeyArray) -> Integer[Array, " recall_length"]:
-        _, recalls = simulate_free_recall(model, list_length, key)
-        return recalls * mask
-
-    return vmap(simulate_once)(keys)
-
-
 class MemorySearchMseLoss:
-    """Compare observed and simulated summaries using fixed scoring choices.
+    """Compare observed and predicted summaries with fixed weights and scales.
 
-    Prefer ``make_factory`` when passing this loss to a fitter. Direct
-    construction still accepts a single ``analysis_fn`` for compatibility.
+    Parameters
+    ----------
+    model_factory_cls : type[MemorySearchModelFactory]
+        Factory creating each trial's model, including its specific metadata.
+    dataset : RecallDataset
+        Observations with position-coded recalls and trial-aligned metadata.
+    features : Array or None
+        Vocabulary features passed to the factory.
+    analysis_fn : RecallAnalysisFn or None, optional
+        A single dataset analysis, named ``analysis`` in component scores.
+        Supply this or a nonempty ``analysis_fns`` mapping.
+    simulation_count : int, optional
+        Simulations per trial, default 20.
+    analysis_fns : Mapping[str, RecallAnalysisFn] or None, optional
+        Named JAX-compatible analyses accepting a RecallDataset. Their output
+        shapes must agree for observations and predictions. Simulations become
+        repeated trial rows, so the analysis defines pooling and weighting.
+    weights : Mapping[str, float] or None, optional
+        Nonnegative analysis weights, default one. Zero disables an analysis.
+    scales : Mapping[str, ArrayLike] or None, optional
+        Fixed positive residual divisors, broadcastable to each summary.
+    reduction : {"pooled", "per_analysis"}, optional
+        Pooled divides by the weighted number of valid points. Per-analysis
+        averages each analysis's MSE, then takes their weighted mean.
+    seed : int, optional
+        Fixed simulation seed, default zero. Keys are reused across candidates.
 
-    Analyses must be JAX-compatible and return matching observed/simulated
-    shapes. Observed recalls have one simulation per trial; simulated recalls
-    have ``simulation_count``. Callbacks control aggregation, bin selection,
-    and contrasts. The full dataset and selected trial indices accompany both.
-
-    This loss retains the existing simulation convention: model stopping is
-    active, then responses beyond each trial's observed recall count are
-    masked. It does not convert recall codes: callbacks must receive comparable
-    observed and model item codes. Simulations have study-list width, which may
-    differ from the observed recall width. Discrete sampling does not supply
-    useful pathwise gradients merely because the loss is JAX-compilable.
+    Notes
+    -----
+    Nonfinite observed bins are excluded. Nonfinite predictions at usable bins,
+    or an enabled analysis with no usable observed bins, give infinite loss.
+    Scales are not re-estimated when selecting participants. Configuration must
+    contain at least one positive weight; weights and scales must be finite.
     """
 
     def __init__(
@@ -78,150 +95,91 @@ class MemorySearchMseLoss:
         weights: Mapping[str, float] | None = None,
         scales: Mapping[str, ArrayLike] | None = None,
         reduction: Literal["pooled", "per_analysis"] = "pooled",
+        seed: int = 0,
     ) -> None:
-        """Bind dataset/model inputs; see ``make_factory`` for scoring options.
-
-        Supply either ``analysis_fn`` (named ``"analysis"`` in diagnostics)
-        or a nonempty mapping of named ``analysis_fns``.
-        """
-        if (analysis_fn is None) == (analysis_fns is None):
-            raise ValueError("Supply exactly one of analysis_fn or analysis_fns.")
-        if analysis_fn is not None:
-            analysis_fns = {"analysis": analysis_fn}
-        assert analysis_fns is not None
-        if not analysis_fns:
-            raise ValueError("analysis_fns must contain at least one analysis.")
-        if reduction not in ("pooled", "per_analysis"):
-            raise ValueError("reduction must be 'pooled' or 'per_analysis'.")
-        if (
-            isinstance(simulation_count, bool)
-            or not isinstance(simulation_count, int)
-            or simulation_count < 1
-        ):
-            raise ValueError("simulation_count must be a positive integer.")
-
-        self.analysis_fns = dict(analysis_fns)
-        for option, values in (("weights", weights), ("scales", scales)):
-            if values is not None:
-                unknown = values.keys() - self.analysis_fns.keys()
-                if unknown:
-                    raise ValueError(
-                        f"Unknown analysis names in {option}: {sorted(unknown)}"
-                    )
+        self.analysis_fns = (
+            {"analysis": analysis_fn}
+            if analysis_fn is not None
+            else dict(analysis_fns or {})
+        )
         self.weights = {
-            name: float(weights[name]) if weights is not None and name in weights else 1.0
-            for name in self.analysis_fns
+            name: float((weights or {}).get(name, 1.0)) for name in self.analysis_fns
         }
-        if any(not np.isfinite(w) or w < 0 for w in self.weights.values()):
-            raise ValueError("Analysis weights must be finite and nonnegative.")
-        if not any(self.weights.values()):
-            raise ValueError("At least one analysis must have positive weight.")
         self.scales = {
-            name: (
-                jnp.array(scales[name])
-                if scales is not None and name in scales
-                else jnp.asarray(1.0)
-            )
-            for name in self.analysis_fns
+            name: jnp.array((scales or {}).get(name, 1.0)) for name in self.analysis_fns
         }
-        for name, scale in self.scales.items():
-            if not np.all(np.isfinite(scale) & (np.asarray(scale) > 0)):
-                raise ValueError(f"Scale for {name!r} must be finite and positive.")
         self.reduction = reduction
         self.simulation_count = simulation_count
-
-        factory = model_factory_cls(dataset, features)
-        self.create_model = factory.create_trial_model
-        self.dataset_view = {key: jnp.asarray(value) for key, value in dataset.items()}
-        self.present_lists = jnp.asarray(self.dataset_view["pres_itemnos"], dtype=jnp.int32)
-        self.dataset_view["pres_itemnos"] = self.present_lists
-        self.list_length = int(self.present_lists.shape[1])
-        self.dataset_recalls = jnp.asarray(self.dataset_view["recalls"], dtype=jnp.int32)
-        self.dataset_view["recalls"] = self.dataset_recalls
-
-        # Fixed random numbers across candidates reduce Monte Carlo differences.
-        trial_count = int(self.dataset_recalls.shape[0])
-        shared_key, per_trial_key = random.split(random.PRNGKey(0))
-        self.shared_simulation_keys = random.split(shared_key, simulation_count)
+        self.dataset = dataset.copy()
+        for name, values in dataset.items():
+            self.dataset[name] = jnp.asarray(values)
+        self.present_lists = self.dataset["pres_itemnos"]
+        self.list_length = self.present_lists.shape[1]
+        self.create_model = model_factory_cls(self.dataset, features).create_trial_model
+        trial_count = self.present_lists.shape[0]
+        _, per_trial_key = random.split(random.PRNGKey(seed))
         self.simulation_keys = vmap(lambda key: random.split(key, simulation_count))(
             random.split(per_trial_key, trial_count)
         )
-        recall_totals = jnp.count_nonzero(self.dataset_recalls, axis=1)
-        self.trial_masks = jnp.arange(self.list_length)[None, :] < recall_totals[:, None]
+        totals = jnp.count_nonzero(self.dataset["recalls"], axis=1)
+        self.trial_masks = jnp.arange(self.list_length)[None, :] < totals[:, None]
 
     def init_model_for_retrieval(
-        self,
-        trial_index: Integer[Array, ""],
-        parameters: Mapping[str, Float_],
+        self, trial_index: Integer[Array, ""], parameters: Parameters
     ) -> MemorySearch:
-        """Return the model prepared for retrieval on the specified trial."""
-        present = self.present_lists[trial_index]
+        """Create the trial's model and present its study list before retrieval."""
         model = self.create_model(trial_index, parameters)
-        model = lax.fori_loop(0, present.size, lambda i, m: m.experience(present[i]), model)
-        return model.start_retrieving()
+        return simulate_study(model, self.present_lists[trial_index]).start_retrieving()
 
     def _target_analyses(
         self, trial_indices: Integer[Array, " trials"]
     ) -> dict[str, Array]:
-        """Summarize observed data independently of candidate parameters."""
-        observed = self.dataset_recalls[trial_indices][:, None, :]
+        observed = select_trials(self.dataset, trial_indices)
         return {
-            name: jnp.asarray(
-                fn(
-                    observed,
-                    list_length=self.list_length,
-                    dataset=self.dataset_view,
-                    trial_indices=trial_indices,
-                )
-            )
-            for name, fn in self.analysis_fns.items()
+            name: jnp.asarray(analysis(observed))
+            for name, analysis in self.analysis_fns.items()
             if self.weights[name] > 0
         }
 
+    def _simulate_trials(
+        self, trial_indices: Integer[Array, " trials"], parameters: Parameters
+    ) -> RecallDataset:
+        """Simulate the selected trials, with repetition-matched metadata."""
+
+        def simulate(
+            trial_index: Integer[Array, ""],
+        ) -> Integer[Array, " simulations recall_events"]:
+            model = self.init_model_for_retrieval(trial_index, parameters)
+            recalls = vmap(
+                lambda key: simulate_free_recall(model, self.list_length, key)[1]
+            )(self.simulation_keys[trial_index])
+            return recalls * self.trial_masks[trial_index]
+
+        recalls = vmap(simulate)(trial_indices).reshape(-1, self.list_length)
+        repeated = select_trials(
+            self.dataset, jnp.repeat(trial_indices, self.simulation_count)
+        )
+        positions = recall_items_to_positions(recalls, repeated["pres_itemnos"])
+        return replace_recalls(repeated, positions)
+
     def _score_analyses(
-        self,
-        simulated: Integer[Array, " trials simulations recall_positions"],
-        trial_indices: Integer[Array, " trials"],
-        targets: Mapping[str, Array],
+        self, simulated: RecallDataset, targets: Mapping[str, Array]
     ) -> dict[str, Array]:
-        """Return additive contributions, with masks based only on observations."""
         contributions: dict[str, Array] = {}
         denominator = jnp.asarray(0.0)
-        for name, fn in self.analysis_fns.items():
+        for name, analysis in self.analysis_fns.items():
             weight = self.weights[name]
             if weight == 0:
                 contributions[name] = jnp.asarray(0.0)
                 continue
-            target = targets[name]
-            prediction = jnp.asarray(
-                fn(
-                    simulated,
-                    list_length=self.list_length,
-                    dataset=self.dataset_view,
-                    trial_indices=trial_indices,
-                )
-            )
-            if prediction.shape != target.shape:
-                raise ValueError(
-                    f"Analysis {name!r} returned observed shape {target.shape} "
-                    f"and simulated shape {prediction.shape}."
-                )
-            try:
-                scale = jnp.broadcast_to(self.scales[name], target.shape)
-            except ValueError as exc:
-                raise ValueError(
-                    f"Scale for {name!r} cannot broadcast to analysis shape {target.shape}."
-                ) from exc
-
+            target, prediction = targets[name], jnp.asarray(analysis(simulated))
             valid = jnp.isfinite(target)
             count = jnp.sum(valid)
             residual = (
                 jnp.where(valid, prediction, 0) - jnp.where(valid, target, 0)
-            ) / scale
+            ) / self.scales[name]
             squared = jnp.square(residual)
             error = jnp.sum(jnp.where(jnp.isfinite(squared), squared, jnp.inf))
-            # Missing predictions never remove an observed bin. Entirely missing
-            # targets must not let an active analysis report a perfect fit.
             error = jnp.where(count > 0, error, jnp.inf)
             if self.reduction == "per_analysis":
                 error = error / jnp.maximum(count, 1)
@@ -229,57 +187,15 @@ class MemorySearchMseLoss:
             else:
                 denominator = denominator + weight * count
             contributions[name] = weight * error
-
         denominator = jnp.where(denominator > 0, denominator, 1.0)
         return {name: value / denominator for name, value in contributions.items()}
 
-    def _simulate_trials(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Integer[Array, " trials simulations recall_positions"]:
-        """Simulate every trial's model, including its specific metadata."""
-        models = vmap(self.init_model_for_retrieval, in_axes=(0, None))(
-            trial_indices, parameters
-        )
-        return vmap(simulate_masked_free_recall, in_axes=(0, None, 0, 0))(
-            models,
-            self.list_length,
-            self.trial_masks[trial_indices],
-            self.simulation_keys[trial_indices],
-        )
-
-    def base_analysis_mse(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
-    ) -> Float[Array, ""]:
-        """Score shared simulations when trials have identical prepared models.
-
-        This explicit shortcut requires model equivalence, including metadata.
-        The fitter-facing interface always prepares models separately per trial.
-        """
-        model = self.init_model_for_retrieval(trial_indices[0], parameters)
-        simulated = vmap(simulate_masked_free_recall, in_axes=(None, None, 0, None))(
-            model,
-            self.list_length,
-            self.trial_masks[trial_indices],
-            self.shared_simulation_keys,
-        )
-        scores = self._score_analyses(
-            simulated, trial_indices, self._target_analyses(trial_indices)
-        )
-        return jnp.sum(jnp.stack(tuple(scores.values())))
-
     def present_and_predict_analysis_mse(
-        self,
-        trial_indices: Integer[Array, " trials"],
-        parameters: Mapping[str, Float_],
+        self, trial_indices: Integer[Array, " trials"], parameters: Parameters
     ) -> Float[Array, ""]:
-        """Return combined MSE for one parameter set with per-trial models."""
+        """Return the combined error for one physical parameter mapping."""
         scores = self._score_analyses(
             self._simulate_trials(trial_indices, parameters),
-            trial_indices,
             self._target_analyses(trial_indices),
         )
         return jnp.sum(jnp.stack(tuple(scores.values())))
@@ -287,41 +203,61 @@ class MemorySearchMseLoss:
     def component_scores(
         self,
         trial_indices: Integer[Array, " trials"],
-        base_params: Mapping[str, Float_],
+        base_params: Parameters,
         free_param_names: Iterable[str],
-        x: Float[Array, " parameters n_samples"],
-    ) -> dict[str, Float[Array, " n_samples"]]:
-        """Return named weighted contributions whose sum equals the total loss.
+        x: Float[Array, " parameters samples"],
+    ) -> dict[str, Float[Array, " samples"]]:
+        """Return each analysis's weighted contribution for candidate columns.
 
-        Arguments and candidate orientation match ``__call__``. This method is
-        also JIT/vmap-compatible. Calling it separately runs simulations again
-        with the same fixed random numbers.
+        Contributions add to the total loss. Calling this separately repeats
+        simulation with the same keys; it does not advance a random stream.
         """
-        if trial_indices.size == 0:
-            raise ValueError("Select at least one trial for the loss.")
-        free_param_names = tuple(free_param_names)
+        names = tuple(free_param_names)
         targets = self._target_analyses(trial_indices)
 
-        def score_one(x_row: Array) -> dict[str, Array]:
-            parameters = {
-                **base_params,
-                **{name: x_row[i] for i, name in enumerate(free_param_names)},
-            }
-            simulated = self._simulate_trials(trial_indices, parameters)
-            return self._score_analyses(simulated, trial_indices, targets)
+        def score(values: Float[Array, " parameters"]) -> dict[str, Array]:
+            parameters = dict(base_params) | dict(zip(names, values))
+            return self._score_analyses(
+                self._simulate_trials(trial_indices, parameters), targets
+            )
 
-        return vmap(score_one, in_axes=1)(x)
+        return vmap(score, in_axes=1)(x)
 
     def __call__(
         self,
         trial_indices: Integer[Array, " trials"],
-        base_params: Mapping[str, Float_],
+        base_params: Parameters,
         free_param_names: Iterable[str],
-        x: Float[Array, " parameters n_samples"],
-    ) -> Float[Array, " n_samples"]:
-        """Return one combined loss per candidate parameter vector."""
-        scores = self.component_scores(trial_indices, base_params, free_param_names, x)
-        return jnp.sum(jnp.stack(tuple(scores.values())), axis=0)
+        x: Float[Array, " parameters samples"],
+    ) -> Float[Array, " samples"]:
+        """Score candidate columns using weighted behavioral squared error.
+        
+        Parameters
+        ----------
+        trial_indices : Integer[Array, "trials"]
+            Dataset rows to score, preserving their order and multiplicity.
+        base_params : Parameters
+            Fixed model values and defaults overridden by candidate values.
+        free_param_names : Iterable[str]
+            Names in the order of the candidate matrix's parameter rows.
+        x : Float[Array, "parameters samples"]
+            Candidate columns in physical model units.
+        
+        Returns
+        -------
+        Float[Array, "samples"]
+            One objective value per candidate column, in input order.
+        """
+        return jnp.sum(
+            jnp.stack(
+                tuple(
+                    self.component_scores(
+                        trial_indices, base_params, free_param_names, x
+                    ).values()
+                )
+            ),
+            axis=0,
+        )
 
 
 def make_factory(
@@ -331,48 +267,33 @@ def make_factory(
     weights: Mapping[str, float] | None = None,
     scales: Mapping[str, ArrayLike] | None = None,
     reduction: Literal["pooled", "per_analysis"] = "pooled",
+    seed: int = 0,
 ) -> type[MemorySearchMseLoss]:
-    """Return a configured loss class accepted as a fitter's ``loss_fn_cls``.
+    """Bind dataset analyses and scoring settings into a fitter's loss class.
 
-    Args:
-        analysis_fns: Named ``RecallAnalysisFn`` callbacks. Each receives a
-            trial-by-simulation-by-output recall array, the full dataset, and
-            selected trial indices. Dataset-based analyses need an adapter to
-            align/replicate metadata and aggregate the simulation dimension.
-        simulation_count: Positive number of simulations per trial, shared by
-            all analyses. Random numbers remain fixed across candidates.
-        weights: Optional nonnegative weights by analysis name (default 1).
-            Zero disables an analysis; at least one weight must be positive.
-        scales: Optional positive finite residual divisors, scalar or broadcastable
-            to each analysis's output (default 1). Empirical standard errors
-            yield squared standardized errors. Scales are supplied externally,
-            remain fixed across candidates, and must be appropriate for the
-            trials being fitted; they are not re-estimated for subject subsets.
-        reduction: ``"pooled"`` divides the weighted sum of squared residuals
-            by the weighted count of valid points. ``"per_analysis"`` takes
-            the weighted mean of each analysis's mean squared error, giving
-            equally weighted analyses equal influence regardless of bin count.
+    Parameters
+    ----------
+    analysis_fns : Mapping[str, RecallAnalysisFn]
+        Named analyses accepting RecallDataset, such as ``{"spc": spc}``.
+    simulation_count : int, optional
+        Repetitions per trial, default 20.
+    weights : Mapping[str, float] or None, optional
+        Analysis weights; see MemorySearchMseLoss.
+    scales : Mapping[str, ArrayLike] or None, optional
+        Fixed residual divisors; configuration arrays are copied.
+    reduction : {"pooled", "per_analysis"}, optional
+        Weight valid points or whole analyses, respectively.
+    seed : int, optional
+        Seed for fixed simulation keys, default zero.
 
-    Nonfinite observed bins are excluded using an observation-only mask. A
-    nonfinite prediction on a valid bin, or an active analysis with no valid
-    observed bins, gives infinite loss. Output shapes must match exactly.
-    Configuration mappings are copied; callbacks themselves must be pure.
-    With unit weights and standard-error scales, pooled MSE equals the sum of
-    squared standardized residuals divided by the retained point count.
-
-    Example::
-
-        BehavioralLoss = make_factory(
-            {"spc": spc_summary, "pfr": pfr_summary, "lag_crp": lag_crp_summary},
-            weights={"spc": 1.0, "pfr": 1.0, "lag_crp": 2.0},
-            simulation_count=100,
-        )
-        # Pass loss_fn_cls=BehavioralLoss to ScipyDE or EvosaxDE.
-        loss = BehavioralLoss(model_factory_cls, dataset, features)
-        parts = loss.component_scores(trial_indices, base_params, free_names, x)
-        total = loss(trial_indices, base_params, free_names, x)
+    Returns
+    -------
+    type[MemorySearchMseLoss]
+        Class accepting a model factory, dataset and features. Use it as the
+        fitter's ``loss_fn_cls``. Configuration mappings are copied; analyses
+        themselves must be pure.
     """
-    bound_analyses = dict(analysis_fns)
+    analyses = dict(analysis_fns)
     bound_weights = dict(weights) if weights is not None else None
     bound_scales = (
         {name: jnp.array(value) for name, value in scales.items()}
@@ -392,14 +313,63 @@ def make_factory(
                 dataset,
                 features,
                 simulation_count=simulation_count,
-                analysis_fns=bound_analyses,
+                analysis_fns=analyses,
                 weights=bound_weights,
                 scales=bound_scales,
                 reduction=reduction,
+                seed=seed,
             )
 
     return ConfiguredMseLoss
 
 
-# Compatibility aliases. Do not use in new code.
-MemorySearchMseFnGenerator = MemorySearchMseLoss
+class MemorySearchSpcMseLoss(MemorySearchMseLoss):
+    """Fit serial-position recall probabilities using 20 simulations per trial.
+
+    ``simulation_count`` and ``seed`` are optional keyword arguments. All
+    counting, padding and repeated-presentation rules come from ``spc``.
+    """
+
+    def __init__(
+        self,
+        model_factory_cls: type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Float[Array, " word_pool_items features_count"] | None,
+        *,
+        simulation_count: int = 20,
+        seed: int = 0,
+    ) -> None:
+        super().__init__(
+            model_factory_cls, dataset, features, spc, simulation_count, seed=seed
+        )
+
+
+class MemorySearchCatSpcMseLoss(MemorySearchMseLoss):
+    """Fit stacked category SPCs, excluding undefined category-position bins.
+
+    Defaults are the ``condition`` field, categories (1, 2), ten simulations
+    per trial and seed zero. Category summaries share one scoring denominator;
+    a wholly absent category is ignored if other categories have observations.
+    """
+
+    def __init__(
+        self,
+        model_factory_cls: type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Float[Array, " word_pool_items features_count"] | None,
+        *,
+        category_field: str = "condition",
+        category_values: Sequence[int] = (1, 2),
+        simulation_count: int = 10,
+        seed: int = 0,
+    ) -> None:
+        categories = tuple(category_values)
+
+        def summary(data: RecallDataset) -> Array:
+            return jnp.stack(
+                [cat_spc(data, category_field, category) for category in categories]
+            )
+
+        super().__init__(
+            model_factory_cls, dataset, features, summary, simulation_count, seed=seed
+        )

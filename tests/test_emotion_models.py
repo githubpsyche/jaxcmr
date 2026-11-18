@@ -5,7 +5,9 @@ import numpy as np
 import pytest
 
 from jaxcmr.components.context import TemporalContext
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
+from jaxcmr.simulation import simulate_study
+from jaxcmr.models.additive_semantic_retrieval_bias_ecmr import make_factory as retrieval_bias_ecmr
 from jaxcmr.models.ecmr import eCMR
 from jaxcmr.models.cmr3 import CMR3
 from jaxcmr.models.ecmr_source_switch import make_factory as ecmr_switch
@@ -141,3 +143,44 @@ def test_source_switch_allocation_and_neutral_equivalence(
             reference.start_retrieving().activations(),
             rtol=1e-6,
         )
+
+
+@pytest.mark.parametrize(
+    "factory,expected_switches",
+    [(ecmr_switch, 2), (cmr3_switch, 3), (retrieval_bias_ecmr, None)],
+)
+def test_valence_follows_presented_items_across_relabeling_and_empty_slots(factory, expected_switches):
+    # A, B, C, A. B is negative, C is positive. Only CMR3 distinguishes their signs.
+    params = PARAMS | dict(
+        source_switch_drift_rate=0.35,
+        semantic_scale=0.0,
+        emotional_retrieval_bias=1.0,
+        phi_emot_modulates_temporal=True,
+    )
+
+    def probabilities(codes, item_ids, valence, outcome_order):
+        data = make_dataset([1], pres_itemnos=codes, listLength=4)
+        data.update(pres_itemids=jnp.array([item_ids]), valence=jnp.array([valence]))
+        initial = factory()(data, None).create_trial_model(jnp.int32(0), params)
+        studied = simulate_study(initial, data["pres_itemnos"][0])
+        if expected_switches is not None:
+            assert int(studied.context.next_outlist_unit - initial.context.next_outlist_unit) == expected_switches
+        after_a = studied.start_retrieving().retrieve(jnp.int32(outcome_order[1]))
+        return after_a.outcome_probabilities()[jnp.array(outcome_order)]
+
+    reference = probabilities(
+        [1, 2, 3, 1], [11, 22, 33, 11], [0, -1, 1, 0], [0, 1, 2, 3]
+    )
+    relabeled = probabilities(
+        [0, 2, 1, 0, 5, 2], [0, 11, 22, 0, 33, 11], [0, 0, -1, 0, 1, 0], [0, 2, 1, 5]
+    )
+    np.testing.assert_allclose(relabeled, reference, rtol=1e-6)
+
+
+def test_conflicting_source_categories_of_one_item():
+    data = make_dataset([1], pres_itemnos=[1, 1])
+    data.update(pres_itemids=jnp.array([[11, 11]]), valence=jnp.array([[-1, 1]]))
+    # Both presentations are emotional for eCMR. CMR3 assigns one signed source per item.
+    ecmr_switch()(data, None)
+    with pytest.raises(ValueError, match="conflicting source categories"):
+        cmr3_switch()(data, None)

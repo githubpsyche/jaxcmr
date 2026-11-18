@@ -10,8 +10,8 @@ from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.fitting import ParameterSpace, ScipyDE, select_starts
 from jaxcmr.fitting.gradient import ScipyLBFGSB
-from jaxcmr.helpers import make_dataset
-from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
+from jaxcmr.dataset import make_dataset
+from jaxcmr.loss.sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 
 FACTORY = make_factory(
@@ -99,8 +99,8 @@ def test_one_parameter_fit_is_reproducible_bounded_and_improves_likelihood():
     assert saved_subjects == [2]
     assert type(saved_subjects[0]) is int
     assert "diagnostics" in result
-    assert len(result["diagnostics"]["restarts"]) == 2
-    assert result["diagnostics"]["nfev"] > 0
+    assert len(result["diagnostics"][0]["restarts"]) == 2
+    assert result["diagnostics"][0]["nfev"] > 0
     predicted = ExcludeTerminationLikelihoodLoss(FACTORY, dataset(), None)(
         jnp.array([0]),
         PARAMS,
@@ -117,8 +117,8 @@ def test_time_limit_retains_a_valid_evaluation_without_claiming_convergence():
     assert np.isfinite(result["fitness"][0])
     assert result["converged"] == [False]
     assert "diagnostics" in result
-    assert result["diagnostics"]["nfev"] == 1
-    assert "Time budget" in result["diagnostics"]["restarts"][0]["message"]
+    assert result["diagnostics"][0]["nfev"] == 1
+    assert "Time budget" in result["diagnostics"][0]["restarts"][0]["message"]
 
 
 def test_invalid_gradients_fail_clearly_instead_of_reporting_a_fit():
@@ -143,7 +143,7 @@ def test_single_precision_returns_the_actual_evaluated_parameters():
         assert 0.1 <= fitted <= 5.0
         assert fitted == float(np.float32(fitted))
         assert "diagnostics" in result
-        assert result["diagnostics"]["jax_dtype"] == "float32"
+        assert result["diagnostics"][0]["jax_dtype"] == "float32"
         checked = ExcludeTerminationLikelihoodLoss(FACTORY, dataset(), None)(
             jnp.array([0]), PARAMS, ("choice_sensitivity",), jnp.array([[fitted]])
         )[0]
@@ -207,15 +207,15 @@ def test_screened_fitting_is_reproducible_and_keeps_an_explicit_first_start():
     second = fitter(**config).fit(jnp.array([True]))
     assert first["fits"] == second["fits"]
     assert "diagnostics" in first and "diagnostics" in second
-    screen = first["diagnostics"]["screening"]
+    screen = first["diagnostics"][0]["screening"]
     assert screen["evaluated"] == 8
     assert screen["selected_indices"][0] == 0
-    assert screen["selected_indices"] == second["diagnostics"]["screening"]["selected_indices"]
+    assert screen["selected_indices"] == second["diagnostics"][0]["screening"]["selected_indices"]
     np.testing.assert_allclose(
-        first["diagnostics"]["restarts"][0]["initial_unit"], [(2 - 0.1) / 4.9]
+        first["diagnostics"][0]["restarts"][0]["initial_unit"], [(2 - 0.1) / 4.9]
     )
-    assert len(first["diagnostics"]["restarts"]) <= 3
-    assert first["diagnostics"]["history"][-1]["value"] == first["fitness"][0]
+    assert len(first["diagnostics"][0]["restarts"]) <= 3
+    assert first["diagnostics"][0]["history"][-1]["fitness"] == first["fitness"][0]
 
 
 def test_scipyde_transform_keeps_physical_bounds_and_return_values():
@@ -243,3 +243,23 @@ def test_scipyde_transform_keeps_physical_bounds_and_return_values():
     )[0]
     np.testing.assert_allclose(result["fitness"][0], checked, atol=1e-12)
     assert result["free"]["primacy_decay"] == [0.01, 10.0]
+
+
+@pytest.mark.parametrize("method", ["PreparedScipyLBFGSB", "PreparedScipyTrustConstr"])
+def test_explicit_prepared_fitting_reuses_dynamic_observations(method):
+    from jaxcmr.experimental import prepared_fitting
+    from jaxcmr.experimental.prepared import PreparedLoss
+    def quadratic(observations, base, names, parameters):
+        return jnp.sum((parameters[0][None,:] - observations[:,None])**2, axis=0)
+    first = PreparedLoss(jnp.array([2.,4.]), quadratic)
+    second = PreparedLoss(jnp.array([4.,6.]), quadratic)
+    fitter = getattr(prepared_fitting, method)({"flag": True, "count": 3}, {
+        "bounds": {"x": [.1,8.]}, "best_of": 1, "screening_size": 0, "num_steps": 50})
+    assert fitter.warmup(first) >= 0
+    for subject, loss, expected in [(8,first,3.), (2,second,5.), (8,first,3.)]:
+        result = fitter.fit(loss, subject_id=subject)
+        assert result["fits"]["x"][0] == pytest.approx(expected, abs=1e-3)
+        assert result["fitness"][0] == pytest.approx(2., abs=1e-5)
+        assert result["diagnostics"][0]["subject"] == subject
+        assert type(result["fixed"]["flag"]) is bool
+        assert type(result["fixed"]["count"]) is int

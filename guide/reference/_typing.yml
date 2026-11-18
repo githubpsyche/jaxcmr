@@ -1,0 +1,51 @@
+quartodoc:
+  package: jaxcmr.typing
+  sections:
+  - title: Values and trial data
+    contents:
+    - Float_
+    - Int_
+    - Bool_
+    - Parameters
+    - name: RecallDataset
+      include_empty: true
+      member_order: source
+  - title: Model components
+    contents:
+    - name: Memory
+      members: [input_size, output_size, associate, probe]
+    - name: MemoryCreateFn
+      members: [__call__]
+    - name: Context
+      members: [integrate]
+    - name: ContextCreateFn
+      members: [__call__]
+    - name: TerminationPolicy
+      members: [stop_probability]
+    - name: TerminationPolicyCreateFn
+      members: [__call__]
+  - title: Models and trial procedures
+    contents:
+    - name: MemorySearch
+      members: [experience, start_retrieving, retrieve, outcome_probability, outcome_probabilities]
+    - name: MemorySearchModelFactory
+      members: [__init__, create_trial_model]
+    - name: TrialSimulator
+      members: [__call__]
+  - title: Objectives
+    contents:
+    - name: LikelihoodMaskFn
+      members: [__call__]
+    - name: RecallAnalysisFn
+      members: [__call__]
+    - name: LossFn
+      members: [__call__]
+    - name: LossFactory
+      members: [__call__]
+  - title: Fitting and results
+    contents:
+    - name: FittingAlgorithm
+      members: [__init__, fit, fit_subjects]
+    - name: FitResult
+      include_empty: true
+      member_order: source

@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -250,6 +254,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#additional-fields" id="toc-additional-fields" class="nav-link" data-scroll-target="#additional-fields">Additional fields</a></li>
   <li><a href="#construct-save-and-reload" id="toc-construct-save-and-reload" class="nav-link" data-scroll-target="#construct-save-and-reload">Construct, save and reload</a></li>
   <li><a href="#project-paths-and-condition-selections" id="toc-project-paths-and-condition-selections" class="nav-link" data-scroll-target="#project-paths-and-condition-selections">Project paths and condition selections</a></li>
+  <li><a href="#select-and-group-trial-rows" id="toc-select-and-group-trial-rows" class="nav-link" data-scroll-target="#select-and-group-trial-rows">Select and group trial rows</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/data.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -283,10 +288,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-label="2"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb1-4"><a href="#cb1-4" aria-label="4"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb1-7"><a href="#cb1-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -302,7 +307,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-6"><a href="#cb2-6" aria-label="6"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a><span class="im">from</span> nbdev.showdoc <span class="im">import</span> show_doc</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data, save_dict_to_hdf5</span>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, save_dict_to_hdf5</span>
 <span id="cb2-10"><a href="#cb2-10" aria-label="10"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> make_dataset</span>
 <span id="cb2-11"><a href="#cb2-11" aria-label="11"></a><span class="im">from</span> jaxcmr.typing <span class="im">import</span> RecallDataset</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -484,6 +489,7 @@ Global item IDs: [66 23 25 59 41 22]</code></pre>
 <p>A single trial, participant ID or list length broadcasts to match the other inputs. Participant IDs must be integers, supplied as integer scalars, sequences or arrays; floating-point IDs such as <code>3.0</code> and Boolean IDs are outside the interface. Study codes and lengths must be integer-valued. All core values must be representable as <code>int32</code>. Construction converts supported inputs to arrays without checking these preconditions. Supply compatible trial counts, nonnegative lengths and zero padding beyond each declared length.</p>
 <p>Supply <code>listLength</code> explicitly for padded study lists. Without it, the default is the presentation array width. When presentations are omitted, lengths such as <code>[2, 3]</code> generate sequential item codes, zero-padding the shorter list. If both presentations and lengths are omitted, the constructor uses the response width and highest recall code; this cannot establish the experimental study length.</p>
 <p>With explicit presentations, <code>make_dataset</code> works inside <code>jit</code> and <code>vmap</code>; keep <code>reps</code> static. A static integer <code>listLength</code> also supports generated presentations under JIT. Inferring the presentation width from array values requires concrete data and should happen before compilation.</p>
+<p><code>reps=2</code> repeats the complete trial sequence: trials A and B become A, B, A, B. Simulation’s <code>replicate_trials</code> instead produces A, A, B, B. Choose the operation according to the trial ordering you need.</p>
 <div id="f1ee3da0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T13:29:06.808964Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T13:29:06.808877Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T13:29:06.896352Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T13:29:06.895936Z&quot;}}" data-execution_count="6">
 <details open="" class="code-fold">
 <summary>6 — Construct one trial and save and reload its arrays</summary>
@@ -516,13 +522,13 @@ Arrays preserved: True</code></pre>
 <section id="project-paths-and-condition-selections" class="level2">
 <h2 class="anchored" data-anchor-id="project-paths-and-condition-selections">Project paths and condition selections</h2>
 <p>These operations can be used in an ordinary Python script. Resolve the project directory once, then keep file loading and example preparation explicit:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> resolve_project_root</span>
-<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data</span>
-<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> fetch_inputs</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_root</span>
+<span id="cb12-2"><a href="#cb12-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
+<span id="cb12-3"><a href="#cb12-3" aria-label="3"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> copy_example_inputs</span>
 <span id="cb12-4"><a href="#cb12-4" aria-label="4"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> select_conditions</span>
 <span id="cb12-5"><a href="#cb12-5" aria-label="5"></a></span>
 <span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>root <span class="op">=</span> resolve_project_root(<span class="st">"~/my-research"</span>)</span>
-<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>fetch_inputs([<span class="st">"data/Dupertuys2026.h5"</span>], base_dir<span class="op">=</span>root)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>copy_example_inputs([<span class="st">"data/Dupertuys2026.h5"</span>], base_dir<span class="op">=</span>root)</span>
 <span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(root <span class="op">/</span> <span class="st">"data/Dupertuys2026.h5"</span>))</span>
 <span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>conditions <span class="op">=</span> select_conditions(</span>
 <span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>    data,</span>
@@ -533,6 +539,20 @@ Arrays preserved: True</code></pre>
 <span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>    <span class="bu">print</span>(condition.trial_count, condition.subject_ids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>resolve_project_root(project_root=None)</code> honors an explicit path first. Otherwise, it uses the current directory in Colab, the enclosing Git project elsewhere, or the current directory when no Git project is found. It normalizes paths and applies the existing platform checks; it does not create directories, change the working directory, print, or fetch inputs. An explicit directory is useful for scripts launched outside their research folder.</p>
 <p><code>select_conditions</code> accepts an ordered sequence of boolean trial masks, existing query strings such as <code>"data['list_type'] == 1"</code>, or <code>None</code> for all trials. Each <code>TrialSelection</code> contains a one-dimensional <code>mask</code>, <code>trial_count</code>, sorted unique <code>subject_ids</code>, and a <code>participant_count</code> property. Pass its mask to an analysis; the dataset itself is unchanged. Complete-list filtering excludes any trial with nonpositive padding in <code>pres_itemnos</code>. Supply Boolean masks with one entry per trial. Empty selections raise by default; set <code>require_nonempty=False</code> when empty conditions are expected in your procedure. Query strings execute Python, so use expressions you trust.</p>
+</section>
+<section id="select-and-group-trial-rows" class="level2">
+<h2 class="anchored" data-anchor-id="select-and-group-trial-rows">Select and group trial rows</h2>
+<p><code>select_conditions</code> supplies masks and coverage records. To obtain the selected data, pass integer row indices to <code>select_trials</code>. It applies those indices to every field, including your custom measurements:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> apply_by_subject, select_trials</span>
+<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>selected_data <span class="op">=</span> select_trials(data, jnp.flatnonzero(conditions[<span class="dv">0</span>].mask))</span>
+<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>participant_counts <span class="op">=</span> apply_by_subject(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>    data, conditions[<span class="dv">0</span>].mask, <span class="kw">lambda</span> participant: participant[<span class="st">"recalls"</span>].shape[<span class="dv">0</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Both preserve the input dataset. Repeated indices repeat complete trial rows; <code>apply_by_subject</code> visits only selected participants, in increasing ID order. Its callback receives each participant’s selected rows. When an operation needs masks into the original dataset, use <code>make_subject_trial_masks</code> instead. <code>limit_to_first_subjects</code> retains the lowest participant IDs without reordering trials. Its zero limit means all participants, as in <code>load_data</code>.</p>
+<p><code>replace_recalls(data, new_recalls, additional_recall_fields=...)</code> returns a new mapping with replacement study-position codes and removes metadata tied to old responses. It drops <code>rec_itemids</code>, <code>irt</code>, <code>cue_clips</code> and <code>_should_tabulate</code> when present; name your own response-dependent fields in <code>additional_recall_fields</code>. It retains study information and does not recalculate response metadata.</p>
+<p>See the <a href="../reference/dataset.html">dataset API reference</a> for the complete interfaces, array conventions and JAX limitations.</p>
 
 
 </section>

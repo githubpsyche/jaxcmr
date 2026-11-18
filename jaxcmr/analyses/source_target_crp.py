@@ -1,18 +1,23 @@
-"""Source-target conditional response probability.
+"""Recall transitions between item conditions, adjusted for available targets.
 
-Computes availability-adjusted transition probabilities from source
-item conditions to target item conditions. This supports plots where the
-x-axis is the previous recalled item's condition and separate lines show
-the condition of the next recalled item.
+The source is the item just recalled. The target is a candidate for the
+next recall. Suppose the source is a fruit and two vegetables are still
+available. Recalling either vegetable contributes one actual transition
+and two opportunities to the fruit-to-vegetable cell.
 
+``source_target_crp`` pools these counts across trials, then divides them
+cell by cell. Rows index source conditions and columns index target
+conditions. Cells with no available targets are undefined. Use
+``subject_source_target_crp`` for a separate matrix per participant, or
+``plot_source_target_crp`` to compare their mean probabilities.
 """
 
 __all__ = [
     "SourceTargetTabulation",
-    "tabulate_trial",
+    "plot_source_target_crp",
     "source_target_crp",
     "subject_source_target_crp",
-    "plot_source_target_crp",
+    "tabulate_trial",
 ]
 
 from collections.abc import Sequence
@@ -21,14 +26,15 @@ import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..repetition import all_study_positions
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
+from ._transitions import remove_positions
 from .conditional_crp import base_tabulation_mask
-from .crp import set_false_at_index
 
 
 class SourceTargetTabulation(Pytree):
@@ -43,7 +49,7 @@ class SourceTargetTabulation(Pytree):
         target_values: Integer[Array, " target_conditions"],
         first_recall: Int_,
         size: int = 3,
-    ):
+    ) -> None:
         self.size = size
         self.list_length = presentation.size
         self.presentation = presentation
@@ -56,7 +62,7 @@ class SourceTargetTabulation(Pytree):
         self.target_indices = jnp.arange(target_values.size, dtype=int)
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -74,12 +80,12 @@ class SourceTargetTabulation(Pytree):
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
         """Clear availability for study positions of ``recall``."""
         study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Return True when recall maps to an available position."""
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
             clipped_positions = jnp.clip(
@@ -94,17 +100,20 @@ class SourceTargetTabulation(Pytree):
             lambda: jnp.array(False),
         )
 
-    def source_matches(self, source_value: Int_) -> Bool:
+    def source_matches(self, source_value: Int_) -> Bool[Array, ""]:
         """Return whether the previous recalled item has ``source_value``."""
-        clipped_positions = jnp.clip(self.previous_positions - 1, 0, self.list_length - 1)
+        clipped_positions = jnp.clip(
+            self.previous_positions - 1, 0, self.list_length - 1
+        )
         is_valid_position = self.previous_positions != 0
         return jnp.any(
-            is_valid_position & (self.source_conditions[clipped_positions] == source_value)
+            is_valid_position
+            & (self.source_conditions[clipped_positions] == source_value)
         )
 
     def actual_target_matches(
         self, target_value: Int_, recall_positions: Integer[Array, " size"]
-    ) -> Bool:
+    ) -> Bool[Array, ""]:
         """Return whether current recall has ``target_value``."""
         clipped_positions = jnp.clip(recall_positions - 1, 0, self.list_length - 1)
         is_valid_position = recall_positions != 0
@@ -173,7 +182,9 @@ class SourceTargetTabulation(Pytree):
         )
         return self.actual_counts + actual, self.avail_counts + avail
 
-    def tabulate(self, recall: Int_, should_tabulate: Bool_) -> "SourceTargetTabulation":
+    def tabulate(
+        self, recall: Int_, should_tabulate: Bool_
+    ) -> "SourceTargetTabulation":
         """Update state and optionally count the transition."""
 
         def _update_state() -> "SourceTargetTabulation":
@@ -219,7 +230,10 @@ def tabulate_trial(
     has_recall = jnp.any(trial > 0)
     first_index = jnp.argmax(trial > 0)
 
-    def tabulate_nonempty():
+    def tabulate_nonempty() -> tuple[
+        Integer[Array, " source_conditions target_conditions"],
+        Integer[Array, " source_conditions target_conditions"],
+    ]:
         init = SourceTargetTabulation(
             presentation,
             source_conditions,
@@ -238,7 +252,10 @@ def tabulate_trial(
         )
         return tab.actual_counts, tab.avail_counts
 
-    def tabulate_empty():
+    def tabulate_empty() -> tuple[
+        Integer[Array, " source_conditions target_conditions"],
+        Integer[Array, " source_conditions target_conditions"],
+    ]:
         empty_counts = jnp.zeros((source_values.size, target_values.size), dtype=int)
         return empty_counts, empty_counts
 
@@ -281,9 +298,7 @@ def source_target_crp(
     target_values = jnp.asarray(target_values)
     should_tabulate = base_tabulation_mask(dataset)
 
-    actual, possible = vmap(
-        tabulate_trial, in_axes=(0, 0, 0, 0, 0, None, None, None)
-    )(
+    actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, 0, 0, None, None, None))(
         dataset["recalls"],
         dataset["pres_itemnos"],
         dataset[source_field],  # type: ignore
@@ -306,12 +321,14 @@ def subject_source_target_crp(
     target_field: str,
     target_values: Sequence[int] | Integer[Array, " target_conditions"],
     size: int = 3,
-) -> np.ndarray:
+) -> Float[np.ndarray, "subjects source_conditions target_conditions"]:
     """Compute source-target CRP for each subject."""
     subject_values = apply_by_subject(
         dataset,
         trial_mask,
-        jit(source_target_crp, static_argnames=("source_field", "target_field", "size")),
+        jit(
+            source_target_crp, static_argnames=("source_field", "target_field", "size")
+        ),
         source_field,
         jnp.asarray(source_values),
         target_field,
@@ -330,15 +347,27 @@ def plot_source_target_crp(
     target_values: Sequence[int],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     source_labels: Sequence[str] | None = None,
     xlabel: str = "Source Item",
     ylabel: str = "Avail.-Adjusted Transition Prob.",
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Plot subject-wise source-target CRP with error bounds."""
+    """Plot subject-wise source-target CRP with error bounds.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
     )
@@ -372,17 +401,19 @@ def plot_source_target_crp(
                 if len(labels) > target_count
                 else labels[target_index]
             )
-            plot_data(
+            plot_mean_curve(
                 axis,
                 x_values,
                 subject_values[:, :, target_index],
                 label,
                 color,
                 confidence_level=confidence_level,
+                n_resamples=n_resamples,
+                bootstrap_seed=bootstrap_seed,
             )
 
     axis.set_xticks(x_values)
     if source_labels is not None:
         axis.set_xticklabels(source_labels)
-    set_plot_labels(axis, xlabel, ylabel, contrast_name)
+    format_analysis_axes(axis, xlabel, ylabel, contrast_name)
     return axis

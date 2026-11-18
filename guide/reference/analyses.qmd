@@ -1,0 +1,66 @@
+---
+title: "Recall analyses"
+---
+
+Dataset calculations pool counts or measurements across selected trials.
+Participant-summary functions keep one row per participant; plotters average
+those rows with equal weight. Numerical functions support JAX where their
+docstrings specify it. Plotting and statistical comparisons run outside JIT.
+
+Recall codes identify one-based study positions. For item recall probabilities,
+one response credits every presentation of that item, once per trial. Serial
+accuracy and output-position measures retain their own response-order rules.
+Each entry describes the observations and denominator used by its calculation.
+
+## Recall and output position
+
+- [`spc`](analyses-spc.qmd): Serial position curve analyses.
+- [`pnr`](analyses-pnr.qmd): Probability of nth recall (PNR).
+- [`nth_item_recall`](analyses-nth_item_recall.qmd): Nth-item recall curves.
+- [`termination_probability`](analyses-termination_probability.qmd): Termination probability curves.
+
+## Serial recall accuracy
+
+- [`srac`](analyses-srac.qmd): Serial Recall Accuracy Curve (SRAC).
+- [`relative_srac`](analyses-relative_srac.qmd): Relative Serial Recall Accuracy Curve.
+- [`repsrac`](analyses-repsrac.qmd): Repetition-index serial recall accuracy.
+- [`intrusion_error_rate`](analyses-intrusion_error_rate.qmd): Intrusions at expected serial-recall response positions.
+- [`omission_error_rate`](analyses-omission_error_rate.qmd): Omission error rate analysis.
+- [`order_error_rate`](analyses-order_error_rate.qmd): Order error rate analysis.
+
+## Categories and study measurements
+
+- [`cat_recall_rate`](analyses-cat_recall_rate.qmd): Category-filtered recall-rate analyses.
+- [`cat_spc`](analyses-cat_spc.qmd): Category-filtered serial position curve analyses.
+- [`factors`](analyses-factors.qmd): Measurements associated with study items, and recall probability by measurement.
+
+## Co-recall
+
+- [`corecall`](analyses-corecall.qmd): Joint and conditional recall of pairs of different study items.
+
+## Transitions and organization
+
+- [`crp`](analyses-crp.qmd): Lag-Conditional Response Probability (Lag-CRP).
+- [`conditional_crp`](analyses-conditional_crp.qmd): Lag-CRP with conditional transition filtering.
+- [`distcrp`](analyses-distcrp.qmd): Distance-binned conditional response probabilities.
+- [`conditional_distcrp`](analyses-conditional_distcrp.qmd): Distance-binned CRP with conditional transition filtering.
+- [`lagrank`](analyses-lagrank.qmd): Lag-Rank Temporal Factor Score.
+- [`distrank`](analyses-distrank.qmd): Distance-Rank Semantic Factor Score.
+- [`cue_centered_crp`](analyses-cue_centered_crp.qmd): Cue-centered Lag-CRP.
+- [`source_target_crp`](analyses-source_target_crp.qmd): Source-target conditional response probability.
+
+## Repeated items
+
+- [`repcrp`](analyses-repcrp.qmd): Repetition conditional response probability.
+- [`repaccesscrp`](analyses-repaccesscrp.qmd): Forward repetition access lag-CRP.
+- [`repneighborcrp`](analyses-repneighborcrp.qmd): Repetition-neighbor lag-conditional response probability.
+- [`reproutecrp`](analyses-reproutecrp.qmd): Route-conditioned repetition lag-conditional response probability.
+- [`repcuecrp`](analyses-repcuecrp.qmd): Prior-conditioned repetition cue lag-CRP.
+- [`serialrepcrp`](analyses-serialrepcrp.qmd): Serial repetition CRP conditioned on correct run-up.
+- [`rpl`](analyses-rpl.qmd): Recall probability as a function of repeated-item spacing.
+
+## Participant summaries and comparisons
+
+- [`statistics`](analyses-statistics.qmd): Summarize participant scores and compare paired measurements.
+
+[Experimental analyses](experimental.qmd) are documented separately; their scientific interfaces remain provisional.

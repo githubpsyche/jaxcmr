@@ -1,10 +1,46 @@
-"""Simulation utilities for memory-search models.
+"""Run memory-search models through study and recall.
 
-Provides functions to run forward simulations of memory-search models,
-building from retrieval events and study sequences to trial procedures,
-prepared dataset simulation, and parameter sweeps. Saved-response reuse is
-handled separately at the end of the module.
+A model defines how experiences change memory and how memory determines the
+probabilities of subsequent responses. This module uses those operations to
+present study lists and generate recall sequences. A dataset supplies the study
+lists, participant identities and trial metadata; observed recalls can also
+supply a first response or determine which generated response slots are retained.
 
+Use ``simulate_dataset`` to generate responses for selected trials, optionally
+repeating each trial. Use ``simulate_parameter_sweep`` to run those trials at
+several values of one parameter. Both use ``MemorySearchSimulator``, which can
+also be prepared once and called directly with different parameter sets and
+random keys.
+
+These dataset operations build on smaller operations that can be used directly:
+
+1. Study and retrieval. ``simulate_study`` presents items to an existing model.
+   ``simulate_free_recall`` generates responses with model-controlled stopping;
+   ``simulate_free_recall_count`` requests a specified number of responses.
+   Keeping study separate allows callers to inspect the resulting memory state
+   before retrieval.
+
+2. Trial procedures. The ``simulate_study_*`` functions combine study and recall
+   for one list. They differ in whether the first recall is supplied, generated
+   responses are masked to observed response slots, or the recall count is
+   specified. Masking generated responses does not force the model to produce
+   the observed number of recalls. A custom trial procedure can replace these
+   procedures without replacing the dataset simulation machinery.
+
+3. Dataset simulation. ``MemorySearchSimulator`` prepares trial models, matches
+   participants to parameter rows, and runs the chosen procedure.
+   ``replicate_trials`` selects and repeats trials before preparation.
+   ``simulate_dataset`` performs one dataset run; ``simulate_parameter_sweep``
+   reuses the prepared simulator across parameter values.
+
+During retrieval, response codes identify items within a list. Returned datasets
+express recalls as study positions. When an item appears more than once, its
+recall is recorded at the first matching study position. Study metadata is
+retained; fields describing the original responses are removed.
+
+``load_matching_simulation`` supports reuse of saved responses by checking their
+recorded settings against the requested settings. The caller decides when to
+reuse responses and handles saving, parameter fitting and behavioral analysis.
 """
 
 import json
@@ -16,8 +52,13 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax, random, vmap
 
-from jaxcmr.dataset import _replace_recalls, _select_trials
-from jaxcmr.helpers.io import load_data
+from jaxcmr.dataset import (
+    recall_items_to_positions,
+    recall_positions_to_items,
+    replace_recalls,
+    select_trials,
+)
+from jaxcmr.helpers import load_data
 from jaxcmr.repetition import item_to_study_positions
 from jaxcmr.typing import (
     Array,
@@ -160,9 +201,22 @@ def simulate_study(
 ) -> MemorySearch:
     """Return the model after experiencing each study item in order.
 
-    ``present`` contains the one-indexed item codes used by ``model.experience``.
-    This operation leaves the model in its study phase; callers can inspect the
-    resulting state or explicitly call ``start_retrieving`` to begin recall.
+    Parameters
+    ----------
+    model : MemorySearch
+        Memory search model in its study phase.
+    present : Integer[Array, " study_events"]
+        One-indexed item codes, in the order passed to ``model.experience``.
+
+    Returns
+    -------
+    MemorySearch
+        Model state after experiencing all supplied study items.
+
+    Notes
+    -----
+    Retrieval has not started. Callers can inspect the resulting state or call
+    ``start_retrieving`` to begin recall.
     """
     return lax.fori_loop(
         0,
@@ -310,34 +364,6 @@ def simulate_study_first_recall_and_forced_stop(
     return model, jnp.concatenate((trial[:1], recalls))
 
 
-def _recall_items_to_first_study_positions(
-    recalls: Integer[Array, " trial_count recall_events"],
-    presentations: Integer[Array, " trial_count list_length"],
-    size: int,
-) -> Integer[Array, " trial_count recall_events"]:
-    """Convert recalled item codes to their first study positions.
-
-    Parameters
-    ----------
-    recalls : Integer[Array, " trial_count recall_events"]
-        Simulated within-list item codes per trial; zero denotes no recall.
-    presentations : Integer[Array, " trial_count list_length"]
-        Study sequences aligned with each trial.
-    size : int
-        Maximum number of matching study positions to gather per item.
-        Only the first is used in the returned recall codes.
-
-    Returns
-    -------
-    Integer[Array, " trial_count recall_events"]
-        One-indexed first study positions, with zero for padding or absent items.
-
-    """
-    return vmap(
-        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )(recalls, presentations, size)[:, :, 0]
-
-
 def _parameter_indices_for_subjects(
     subject_ids: Integer[Array, " trial_count"],
     parameters: Mapping[
@@ -398,17 +424,7 @@ class MemorySearchSimulator:
         self.present_lists = jnp.array(dataset["pres_itemnos"])
         self._simulate_trial_fn = simulate_trial_fn
 
-        # Reindex the recalled items so they match the "present_lists" indexing
-        trials = np.array(dataset["recalls"])
-        for trial_index in range(trials.shape[0]):
-            present = self.present_lists[trial_index]
-            recall = trials[trial_index]
-            reindexed = np.array(
-                [(present[item - 1] if item else 0) for item in recall]
-            )
-            trials[trial_index] = reindexed
-
-        self.trials = jnp.array(trials)
+        self.trials = recall_positions_to_items(dataset["recalls"], self.present_lists)
 
     def simulate_trial(
         self,
@@ -486,10 +502,10 @@ class MemorySearchSimulator:
         recalls = vmap(self.simulate_trial, in_axes=(0, 0, None, 0))(
             trial_indices, parameter_row_indices, parameters, trial_keys
         )
-        simulated_recalls = _recall_items_to_first_study_positions(
-            recalls, self._dataset["pres_itemnos"], size
+        simulated_recalls = recall_items_to_positions(
+            recalls, self._dataset["pres_itemnos"]
         )
-        return _replace_recalls(
+        return replace_recalls(
             self._dataset, simulated_recalls, recall_dependent_fields
         )
 
@@ -515,7 +531,7 @@ def replicate_trials(
 
     """
     trial_indices = jnp.repeat(jnp.flatnonzero(trial_mask), experiment_count)
-    return _select_trials(data, trial_indices)
+    return select_trials(data, trial_indices)
 
 
 def simulate_dataset(

@@ -1,7 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
-from jaxcmr.analyses.log_odds_crp import log_odds_crp
-from jaxcmr.helpers import make_dataset
+from jaxcmr.experimental.log_odds_crp import log_odds_crp
+from jaxcmr.dataset import make_dataset
 
 LN2 = float(np.log(2))
 

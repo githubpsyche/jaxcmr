@@ -5,9 +5,12 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from jaxcmr.analyses import lagrank, distrank, replagrank, serialreplagrank
+from jaxcmr.analyses import lagrank
+from jaxcmr.analyses import distrank
+from jaxcmr.experimental import replagrank
+from jaxcmr.experimental import serialreplagrank
 from jaxcmr.analyses.lagrank import item_midrank_trial, tabulate_trial
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
 
 
 @pytest.mark.parametrize(
@@ -113,7 +116,7 @@ def test_distance_rank_counts_nearest_and_furthest_remaining_items(source, secon
     "cue,include,expected", [(1, True, 1.0), (0, True, np.nan), (1, False, np.nan)]
 )
 def test_cue_rank_requires_an_included_valid_cue(cue, include, expected):
-    from jaxcmr.analyses.cue_centered_lagrank import cue_centered_lagrank, plot_cue_centered_lagrank
+    from jaxcmr.experimental.cue_centered_lagrank import cue_centered_lagrank, plot_cue_centered_lagrank
 
     data = make_dataset(jnp.array([[1, 2, 0]]), jnp.array([[1, 2, 3, 4]]))
     data.update(

@@ -173,6 +173,10 @@ window.Quarto = {
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -349,7 +353,7 @@ window.Quarto = {
 <span id="cb1-3"><a href="#cb1-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb1-4"><a href="#cb1-4" aria-label="4"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb1-7"><a href="#cb1-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -384,15 +388,35 @@ Recorded loss: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikel
 </section>
 <section id="compare-summed-negative-log-likelihoods" class="level2">
 <h2 class="anchored" data-anchor-id="compare-summed-negative-log-likelihoods">Compare summed negative log likelihoods</h2>
-<p><code>jaxcmr.summarize.calculate_aic()</code> accepts records containing <code>name</code>, <code>free</code> and <code>fitness</code>, and returns a DataFrame sorted by AIC. Each <code>fitness</code> entry must be a summed negative log likelihood for one fitted parameter set:</p>
+<p><code>jaxcmr.summarize.calculate_aic()</code> accepts comparison records containing a model <code>name</code>, top-level integer <code>subject</code> IDs, <code>free</code> parameter names, and <code>fitness</code>. It returns a DataFrame sorted by AIC. Each <code>fitness</code> entry must be a summed negative log likelihood for one fitted parameter set:</p>
 <p><span class="math display">\[\mathrm{AIC} = 2k + 2\,\mathrm{NLL}.\]</span></p>
-<p>These saved fits already contain NLL and can be supplied directly. A pooled fit incurs one parameter penalty. Independently fitted participant rows incur one penalty each, and their identifiers must match across models.</p>
+<p>The saved fits already contain NLL. Select their scores and IDs explicitly and use <code>list(record["free"])</code> to supply parameter names without optimizer bounds. Keep the original fit records for parameter summaries and simulation.</p>
+<p>A pooled fit has <code>subject=[-1]</code> and incurs one parameter penalty. Independently fitted participant rows incur one penalty each. Supply unique integer IDs in <code>subject</code>, aligned with the scores and identifying the same set across models. Nested <code>fits["subject"]</code>, plural <code>subjects</code>, omitted IDs, and string or floating-point IDs are not alternative comparison inputs. These are caller requirements; comparison functions do not normalize or validate those alternative forms.</p>
+<p>For a custom table or plot, use the numerical operations directly. They return NumPy arrays without sorting, aggregation or fit-record metadata:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> aic_scores, aicc_scores, bic_scores</span>
+<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="co"># One summed NLL and one free-parameter count per pooled fit.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>negative_log_likelihoods <span class="op">=</span> [<span class="fl">33.0</span>, <span class="fl">30.0</span>]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>parameter_counts <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">1</span>]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a>aic <span class="op">=</span> aic_scores(negative_log_likelihoods, parameter_counts)  <span class="co"># [70, 62]</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>aicc <span class="op">=</span> aicc_scores(negative_log_likelihoods, parameter_counts, <span class="dv">60</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>bic <span class="op">=</span> bic_scores(negative_log_likelihoods, parameter_counts, <span class="dv">60</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>These operations use NumPy broadcasting. For a <code>(models, participants)</code> NLL matrix, give parameter counts shape <code>(models, 1)</code> and aligned observation counts shape <code>(participants,)</code>. Each entry receives its own parameter penalty. The record-based functions below handle participant alignment and produce tables using these same calculations.</p>
 <div id="e8fbb429" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
-<summary>Calculate AIC directly from the saved NLL records</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> calculate_aic</span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>calculate_aic(records)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<summary>Prepare comparison records and calculate AIC</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> ModelComparison, calculate_aic</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>comparison_records: <span class="bu">list</span>[ModelComparison] <span class="op">=</span> [</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    {</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>        <span class="st">"name"</span>: record[<span class="st">"name"</span>],</span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>        <span class="st">"subject"</span>: record[<span class="st">"fits"</span>][<span class="st">"subject"</span>],</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>        <span class="st">"fitness"</span>: record[<span class="st">"fitness"</span>],</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>        <span class="st">"free"</span>: <span class="bu">list</span>(record[<span class="st">"free"</span>]),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>    }</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>    <span class="cf">for</span> record <span class="kw">in</span> records</span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>]</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>calculate_aic(comparison_records)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display" data-execution_count="2">
 <div>
@@ -427,12 +451,19 @@ Recorded loss: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikel
 <p>The result is a library-produced table. Lower AIC is preferred within this comparison; it does not establish a unique explanation of the experiment. Each model contributes one pooled parameter set, so <code>len(free)</code> is the parameter count for that row. <code>calculate_aic_weights()</code> uses the same NLL convention and parameter penalties as <code>calculate_aic()</code>.</p>
 <p>Participant-wise comparisons align rows by subject identifier and require finite scores for the same participant set. A pooled row is not a sample of independent participant estimates. Mean-difference helpers return the mean and interval half-width; median-difference helpers return the median and the actual bootstrap lower and upper endpoints.</p>
 <p><code>calculate_bic_scores(results, n_obs)</code> and the AICc helpers require positive observation counts for each fitted parameter row. Counts follow the first record’s original participant order; the library aligns them with the scores. Specify the scientific counting unit and selection explicitly. A scalar count is valid only for one fitted row; AICc requires each count to exceed <code>k + 1</code>.</p>
-<p><code>floor_nested_fitness(raw_results, nesting_pairs)</code> returns separate comparison records and an adjustment table without changing the raw fits. Label adjusted scores and save the adjustment table beside them. Keep raw fits for parameter summaries, simulations and held-out evaluation: an adjusted score is not a newly optimized parameter set. The helper trusts the declared nesting relationships.</p>
-<p>Bayesian model selection uses an AIC/AICc-based evidence approximation over participant fits. A pooled row cannot supply participant-level inference; failure to converge raises an error rather than returning a result.</p>
+<p><code>floor_nested_fitness(comparison_records, nesting_pairs)</code> returns separate comparison records and an adjustment table without changing the raw fits. Label adjusted scores and save the adjustment table beside them. Keep raw fits for parameter summaries, simulations and held-out evaluation: an adjusted score is not a newly optimized parameter set. The helper trusts the declared nesting relationships. Supply pairs of model names, such as <code>[("CMR", "eCMR")]</code>; two-element lists from JSON or YAML also work. Stringified Python expressions are not parsed.</p>
+<p><code>bayesian_model_selection(comparison_records)</code> aligns participant fits and uses the existing AIC/AICc-based log-evidence approximation, <code>-IC / 2</code>. It calls <code>random_effects_model_selection(log_evidence, model_names)</code>, which also accepts log evidence obtained independently of these fit records:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.summarize <span class="im">import</span> random_effects_model_selection</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a><span class="co"># Supply your own log evidence: rows are the same participants in every column;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a><span class="co"># columns are models in the order given by model_names.</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>selection <span class="op">=</span> random_effects_model_selection(log_evidence, model_names)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The direct operation adds no parameter penalty and does not choose an evidence approximation. The caller establishes the evidence’s scientific interpretation and comparability. Both interfaces use the same population inference and return the same table columns. A pooled row cannot supply participant-level inference; failure to converge raises an error rather than returning a result.</p>
 </section>
 <section id="experimental-cross-validation-functionality" class="level2">
 <h2 class="anchored" data-anchor-id="experimental-cross-validation-functionality">Experimental cross-validation functionality</h2>
 <p><code>jaxcmr.experimental.cross_validation</code> contains an experimental driver, with <code>CVResult</code> describing fold-specific fits, participant identifiers, training scores and held-out scores. The current driver mixes pooled fitting with participant-level scoring and can return incorrect held-out scores; it is not ready for scientific use. A held-out comparison requires an appropriate split, fitting only the training observations and evaluating the held-out observations under the chosen objective. It is a different procedure from comparing in-sample AIC values.</p>
+<p>For held-out comparisons, <code>CVComparison</code> uses the same top-level integer <code>subject</code> field and keeps held-out objectives in <code>cv_fitness</code>. Given an independently verified <code>cv_result</code>, the input is <code>{"name": name, "subject": cv_result["subjects"], "cv_fitness": cv_result["cv_fitness"]}</code>. This field selection does not resolve the experimental driver’s scientific limitations.</p>
 <p>See <a href="../overview/fitting.html">Fitting Procedures</a> for result structure and the <a href="../templates/model_comparison.html">model comparison template</a> for the full pooled comparison. These interfaces organize the evidence; selecting a scientifically meaningful comparison remains part of the research design.</p>
 
 

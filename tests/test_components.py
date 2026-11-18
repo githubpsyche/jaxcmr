@@ -85,6 +85,51 @@ def test_stopping_probabilities(policy, recallable, active, total, expected):
     assert result == pytest.approx(expected, rel=1e-6)
 
 
+@pytest.mark.parametrize(
+    "policy",
+    [
+        PositionalTermination,
+        RetrievalDependentTermination,
+        SupportRatioTermination,
+    ],
+)
+@pytest.mark.parametrize("dtype", [None, jnp.float32], ids=["default", "float32"])
+def test_stopping_preserves_precision_and_fixed_probability_margin(policy, dtype):
+    parameters = {
+        "stop_probability_scale": jnp.asarray(1.0, dtype=dtype),
+        "stop_probability_growth": jnp.asarray(0.5, dtype=dtype),
+    }
+    termination = policy(3, parameters)
+    support = jnp.array([2.0, 4.0, 6.0], dtype=dtype)
+    expected_dtype = support.dtype
+
+    def probability(recallable, active):
+        model = SimpleNamespace(
+            item_count=3,
+            outcome_probability=lambda item: jnp.asarray(1.0, dtype=dtype),
+            recallable=recallable,
+            is_active=active,
+            recall_total=jnp.asarray(0),
+            studied=jnp.ones(3, dtype=bool),
+            candidate_activations=lambda mask: support * mask,
+        )
+        return termination.stop_probability(model)
+
+    compiled = jax.jit(probability)
+    # FLOAT32_EPS remains exactly 2**-23, even in float64. Probability one reaches
+    # the existing ceiling; exhausted and inactive models must instead stop.
+    for recallable, active, expected in [
+        ([False, True, True], True, 1.0 - 2 * 2**-23),
+        ([True, True, True], True, 1.0 - 3 * 2**-23),
+        ([False, True, True], False, 1.0),
+        ([False, False, False], True, 1.0),
+    ]:
+        for evaluate in (probability, compiled):
+            result = evaluate(jnp.array(recallable), jnp.asarray(active))
+            assert result.dtype == expected_dtype
+            np.testing.assert_array_equal(result, expected)
+
+
 def test_instance_memory_stores_traces_and_distinguishes_scaled_and_raw_probes():
     memory = instance_memory.InstanceMemory(
         jnp.zeros((3, 5)), jnp.zeros(5), 0, 2.0, 2, 3

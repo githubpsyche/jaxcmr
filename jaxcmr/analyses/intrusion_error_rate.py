@@ -1,15 +1,15 @@
-"""Intrusion error rate analysis.
+"""Intrusions at expected serial-recall response positions.
 
-Computes the proportion of recall attempts that are extra-list
-intrusions (items not on the current study list) as a function of
-output position.
-
+An intrusion is a nonzero response that does not address an item on the study
+list. The curve reports the fraction of trials with an intrusion at each
+expected response position, including trials with a blank response in that
+denominator. It is not conditional on reaching a free-recall output position.
 """
 
 __all__ = [
-    "trial_intrusion_error_rate",
     "intrusion_error_rate",
     "plot_intrusion_error_rate",
+    "trial_intrusion_error_rate",
 ]
 
 from collections.abc import Sequence
@@ -18,8 +18,9 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject, find_max_list_length
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
@@ -42,15 +43,13 @@ def trial_intrusion_error_rate(
         True where the recalled item is not on the study list.
 
     """
-    list_length = presentations.shape[0]
-    study_position_indices = jnp.arange(list_length)
-    recalled_items_at_position = recalls[study_position_indices]
-    item_is_in_study_list = jnp.any(
-        recalled_items_at_position[:, None] == presentations[None, :],
-        axis=1,
+    positions = jnp.arange(presentations.size)
+    responses = jnp.take(recalls, positions, mode="fill", fill_value=0)
+    addressed_items = presentations[jnp.clip(responses - 1, 0, presentations.size - 1)]
+    valid_responses = (
+        (responses > 0) & (responses <= presentations.size) & (addressed_items > 0)
     )
-    is_intrusion = (recalled_items_at_position != 0) & (~item_is_in_study_list)
-    return is_intrusion & (presentations != 0)
+    return (responses != 0) & ~valid_responses & (presentations > 0)
 
 
 def intrusion_error_rate(dataset: RecallDataset) -> Float[Array, " study_positions"]:
@@ -80,9 +79,12 @@ def plot_intrusion_error_rate(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot intrusion error rate curves with confidence intervals.
 
@@ -103,11 +105,16 @@ def plot_intrusion_error_rate(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with intrusion error rate curves.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -133,14 +140,16 @@ def plot_intrusion_error_rate(
         color = color_cycle[data_index % len(color_cycle)]
         subject_values = subject_values[:, :max_list_length]
         xvals = jnp.arange(max_list_length) + 1
-        plot_data(
+        plot_mean_curve(
             axis,
             xvals,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Intrusion Error Rate", contrast_name)
+    format_analysis_axes(axis, "Study Position", "Intrusion Error Rate", contrast_name)
     return axis

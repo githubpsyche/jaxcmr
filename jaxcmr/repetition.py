@@ -1,88 +1,68 @@
-"""Utilities for handling item repetitions in study lists.
+"""Recall data use study positions to identify recalled items.
 
-Provides helpers to map recalled items to all of their valid study
-positions, drop repeated recalls within trials, relabel recalls to
-the first occurrence when items repeat at study, and build a shuffled
-control dataset for mixed/pure-list comparisons.
+When an item appears more than once, several positions refer to the same item.
+For the study list ``[A, B, A]``, a recall recorded as position 3 refers to the
+item presented at positions 1 and 3.
 
-Notes
------
-**Shuffled controls for mixed vs pure lists**
+This module finds those positions, converts recalls to each item’s first study
+position, and identifies repeated responses. Removing a repeated response
+replaces its code with zero; it does not shift later responses.
 
-Goal: estimate the transition rates one would expect absent repeated
-items, under the same serial-position scaffolding used by mixed
-lists. For each subject with both mixed and pure trials, we randomly
-permute that subject's pure-list recall rows and pair them with the
-subject's mixed-list presentation rows. We repeat this pairing many
-times (e.g., 100 shuffles) and aggregate across the shuffles to form
-a baseline expectation.
-
-When a mixed-list item was studied at two positions, the control
-analysis treats recall of either position as recall of the same
-logical item. The null hypothesis is that the two study positions
-are equivalent for that item. Operationally, we collapse positional
-codes to the first occurrence (see ``relabel_trial_to_firstpos``),
-so both study positions map to one code.
-
-Within-trial repeated recalls of the same logical item are
-optionally zeroed (kept only on first mention; see
-``filter_repeated_recalls``). This mirrors the usual gate in
-transition analyses that tabulates only while an item remains "not
-yet recalled" on the current trial.
-
-Counting either position for a repeater in controls avoids
-mechanically depressing the control transition rates relative to the
-mixed analysis. If one were to count only a single, pre-specified
-position, the control baseline will be lower by construction, biasing
-toward "detecting" an effect of repetition. This approach tests the
-stricter null that the two positions are functionally the same item.
-
-**Key helpers**
-
-- ``relabel_trial_to_firstpos``: collapses repeated study positions
-  to a single positional code per item.
-- ``filter_repeated_recalls``: zeros within-trial repeated recalls,
-  keeping first.
-- ``make_control_dataset``: builds the per-subject shuffled control
-  dataset aligned to mixed-list presentations.
-
-**Terminology**: "mixed" lists contain repeated items; "pure" lists
-do not.
-
+``make_control_dataset`` constructs shuffled controls by pairing recall sequences
+from lists without repeated items (“pure” lists) with study layouts containing
+repeats (“mixed” lists). Pairings stay within participants, and each mixed trial
+appears once per shuffle. The recall codes are then interpreted using the paired
+mixed-list layout.
 """
 
-import math
 from collections.abc import Collection
-from functools import partial
+from typing import cast
 
 import jax
 import numpy as np
-from jax import lax, random
+from jax import lax, random, vmap
 from jax import numpy as jnp
 
-from .dataset import _invalidated_recall_fields, _validate_trial_fields
-from .helpers import generate_trial_mask
-from .typing import Array, Int_, Integer, RecallDataset
+from .dataset import generate_trial_mask, replace_recalls, select_trials
+from .typing import Array, Bool, Int_, Integer, PRNGKeyArray, RecallDataset
 
 __all__ = [
-    "all_study_positions",
+    "equivalent_study_positions",
     "filter_repeated_recalls",
+    "has_repeats_per_row",
     "item_to_study_positions",
     "make_control_dataset",
-    "relabel_trial_to_firstpos",
+    "recalls_to_first_study_positions",
 ]
+
 
 def item_to_study_positions(
     item: Int_,
     presentation: Integer[Array, " list_length"],
     size: int,
 ) -> Integer[Array, " size"]:
-    """Returns one-indexed positions where ``item`` appears in ``presentation``.
+    """Find the study positions occupied by an item.
 
-    Args:
-      item: Item identifier; ``0`` is treated as no item.
-      presentation: 1D sequence of item identifiers for the study list. Shape [list_length].
-      size: Maximum number of positions to return; pads with 0 when fewer.
+    Parameters
+    ----------
+    item : Int_
+        Item code to find; zero represents no item.
+    presentation : Integer[Array, " list_length"]
+        Item codes in study order. Equal codes identify the same item.
+    size : int
+        Output capacity. Keep the first ``size`` occurrences and pad unused
+        entries with zero. This argument must be static under JIT.
+
+    Returns
+    -------
+    Integer[Array, " size"]
+        One-based study positions, in increasing order. A missing item or
+        item zero produces all zeros.
+
+    Examples
+    --------
+    >>> item_to_study_positions(10, jnp.array([10, 20, 10, 30]), 3).tolist()
+    [1, 3, 0]
     """
     return lax.cond(
         item == 0,
@@ -91,17 +71,34 @@ def item_to_study_positions(
     )
 
 
-def all_study_positions(
+def equivalent_study_positions(
     study_position: Int_,
     presentation: Integer[Array, " list_length"],
     size: int,
 ) -> Integer[Array, " size"]:
-    """Returns study positions of the item shown at ``study_position``.
+    """Find all study positions of the item at a recalled position.
 
-    Args:
-      study_position: One-indexed study position; ``<=0`` returns all zeros.
-      presentation: 1D sequence of item identifiers for the study list. Shape [list_length].
-      size: Maximum number of positions to return; pads with 0 when fewer.
+    Parameters
+    ----------
+    study_position : Int_
+        One-based position within the study list. Nonpositive values represent
+        no recall and produce zeros.
+    presentation : Integer[Array, " list_length"]
+        Item codes in study order. Equal codes identify the same item.
+    size : int
+        Output capacity, with truncation and zero padding as in
+        ``item_to_study_positions``. Must be static under JIT.
+
+    Returns
+    -------
+    Integer[Array, " size"]
+        One-based positions of the recalled item, including the supplied
+        position if it lies within the retained occurrences.
+
+    Examples
+    --------
+    >>> equivalent_study_positions(3, jnp.array([10, 20, 10, 30]), 3).tolist()
+    [1, 3, 0]
     """
     item = lax.cond(
         study_position > 0,
@@ -111,84 +108,132 @@ def all_study_positions(
     return item_to_study_positions(item, presentation, size)
 
 
-def filter_repeated_recalls(recalls: jnp.ndarray) -> jnp.ndarray:
-    """Returns a copy with within-trial repeats set to 0, keeping first mentions.
+def has_repeats_per_row(
+    arr: Integer[Array, " trials recall_events"],
+) -> Bool[Array, " trials"]:
+    """Identify rows containing repeated positive codes.
 
-    Use this to mirror the analysis gate that only tabulates transitions while an
-    item remains "not yet recalled" on the current trial. In controls, this also
-    prevents double-counting when distinct control items have been merged into the
-    same logical item by positional relabeling.
+    Parameters
+    ----------
+    arr : Integer[Array, " trials recall_events"]
+        Codes to examine independently in each row. These may represent
+        study items or recalled positions. Zero and negative codes are ignored.
 
-    Args:
-      recalls: 2D matrix of recall indices (1-indexed; 0 for no recall).
-        Shape [trials, recall_positions].
+    Returns
+    -------
+    Bool[Array, " trials"]
+        True where a positive code occurs more than once. Different codes
+        referring to the same item are not combined by this operation.
     """
-    n_positions = recalls.shape[1]
+
+    def check_row(row: Integer[Array, " recall_events"]) -> Bool[Array, ""]:
+        valid_positions = row > 0
+        padded_values = lax.select(valid_positions, row, jnp.full_like(row, -1))
+        sorted_values = jnp.sort(padded_values)
+        adjacent_matches = sorted_values[1:] == sorted_values[:-1]
+        valid_repeats = adjacent_matches & (sorted_values[1:] != -1)
+        return jnp.any(valid_repeats)
+
+    return vmap(check_row)(arr)
+
+
+def recalls_to_first_study_positions(
+    rec_row: Integer[Array, " recall_events"],
+    pres_row: Integer[Array, " study_events"],
+) -> Integer[Array, " recall_events"]:
+    """Represent each recalled item by its first study position.
+
+    Parameters
+    ----------
+    rec_row : Integer[Array, " recall_events"]
+        One-based recalled positions within this trial's study list, with zero
+        for no recall. Positive codes must refer to presented items.
+    pres_row : Integer[Array, " study_events"]
+        Study item codes; equal codes identify repeated presentations.
+
+    Returns
+    -------
+    Integer[Array, " recall_events"]
+        Recalls mapped to each item's first study position, preserving zeros
+        and response slots. Repeated recalls remain; use
+        ``filter_repeated_recalls`` separately to zero later occurrences.
+
+    Examples
+    --------
+    >>> recalls_to_first_study_positions(
+    ...     jnp.array([3, 2, 1, 0]), jnp.array([10, 20, 10, 30])
+    ... ).tolist()
+    [1, 2, 1, 0]
+    """
+    study_length = pres_row.shape[0]
+    study_positions = jnp.arange(study_length) + 1
+    same_item = pres_row[:, None] == pres_row[None, :]
+    first_positions = jnp.min(
+        jnp.where(same_item, study_positions[None, :], study_length + 1), axis=1
+    )
+    return jnp.where(rec_row == 0, 0, first_positions[rec_row - 1])
+
+
+def filter_repeated_recalls(
+    recalls: Integer[Array, " trials recall_events"],
+) -> Integer[Array, " trials recall_events"]:
+    """Zero repeated recall codes while preserving response slots.
+
+    Parameters
+    ----------
+    recalls : Integer[Array, " trials recall_events"]
+        Recall codes, with zero for no recall. Equality of codes determines
+        repetition. If different study positions refer to the same item,
+        relabel with ``recalls_to_first_study_positions`` first.
+
+    Returns
+    -------
+    Integer[Array, " trials recall_events"]
+        A new array retaining the first occurrence of each nonzero code and
+        replacing later occurrences with zero. Rows are not compacted; how
+        zero slots affect a measure is determined by that analysis.
+
+    Examples
+    --------
+    >>> filter_repeated_recalls(jnp.array([[1, 2, 1, 3]])).tolist()
+    [[1, 2, 0, 3]]
+    """
+    recall_count = recalls.shape[1]
     matches = recalls[:, None, :] == recalls[:, :, None]
-    lower_tri = jnp.tril(jnp.ones((n_positions, n_positions), bool), k=-1)
-    seen_before = jnp.any(matches & lower_tri[None], axis=2)
+    earlier_positions = jnp.tril(jnp.ones((recall_count, recall_count), bool), k=-1)
+    seen_before = jnp.any(matches & earlier_positions[None], axis=2)
     keep_mask = (recalls != 0) & ~seen_before
     return recalls * keep_mask
 
 
-def relabel_trial_to_firstpos(
-    rec_row: jnp.ndarray, pres_row: jnp.ndarray
-) -> jnp.ndarray:
-    """Returns recalls remapped to the **first** occurrence of their item in ``pres_row``.
-
-    Implements the control-analysis policy that, for items repeated at study,
-    **either** study position should be treated as the same logical item. Collapsing
-    both positions to a single positional code avoids artificially lowering the
-    control baseline relative to the mixed analysis.
-
-    Args:
-      rec_row: 1D recall indices for a single trial (1-indexed; 0 for no recall).
-      pres_row: 1D study sequence of item identifiers for that trial.
-
-    Returns:
-      1D index array (same shape as ``rec_row``) with zeros preserved and all
-      nonzero indices mapped to the first occurrence of that item in ``pres_row``.
-    """
-    L = pres_row.shape[0]
-    idx = jnp.arange(L) + 1
-    eq = pres_row[:, None] == pres_row[None, :]
-    first_idx = jnp.min(jnp.where(eq, idx[None, :], L + 1), axis=1)
-    return jnp.where(rec_row == 0, 0, first_idx[rec_row - 1])
-
-
-@partial(jax.jit, static_argnums=(2,))
-def _shuffle_and_tile_controls(
-    control_recalls: jnp.ndarray,  # [n_pure_trials, n_recalls]
-    mixed_presentations: jnp.ndarray,  # [n_mixed_trials, n_pres]
-    n_permutations: int,  # static
-    prng_key: jnp.ndarray,  # single PRNGKey
-) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Generate shuffled control recalls and align them with mixed-list presentations.
-
-    Each permutation randomly reorders the **rows** of ``control_recalls`` (within
-    subject), then we tile/truncate to match the number of ``mixed_presentations``
-    rows. This produces the row-aligned control recalls used to estimate the null.
-
-    Args:
-      control_recalls: Pure-list recall matrix to permute by trial.
-      mixed_presentations: Mixed-list presentation matrix.
-      n_permutations: Total permutations per pure-trial block.
-      prng_key: PRNG key for shuffling.
-
-    Returns:
-      (shuffled_recalls, tiled_presentations)
-    """
-    keys = random.split(prng_key, n_permutations)
-    batched = jax.vmap(lambda k: random.permutation(k, control_recalls, axis=0))(keys)
-    flat_shuffled = batched.reshape((-1, control_recalls.shape[1]))
-
-    tiled_pres = jnp.repeat(mixed_presentations, repeats=n_permutations, axis=0)[
-        : flat_shuffled.shape[0]
-    ]
-    flat_shuffled = flat_shuffled[: tiled_pres.shape[0]]
-    # assert tiled_pres.shape[0] == flat_shuffled.shape[0]
-    # assert tiled_pres.shape[1] == mixed_presentations.shape[1]
-    return flat_shuffled, tiled_pres
+def _make_subject_control(
+    mixed_data: RecallDataset,
+    pure_recalls: Integer[Array, " pure_trials recall_events"],
+    shuffle_count: int,
+    subject_key: PRNGKeyArray,
+    remove_repeats: bool,
+    recall_dependent_fields: Collection[str],
+) -> RecallDataset:
+    """Pair pure recalls with every mixed trial once per shuffle for one participant."""
+    mixed_count = mixed_data["pres_itemnos"].shape[0]
+    pure_count = pure_recalls.shape[0]
+    permutations_per_shuffle = (mixed_count + pure_count - 1) // pure_count
+    keys = random.split(subject_key, shuffle_count * permutations_per_shuffle)
+    pure_indices = jax.vmap(lambda key: random.permutation(key, pure_count))(keys)
+    # Each shuffle starts fresh; only its final permutation may be truncated.
+    pure_indices = pure_indices.reshape(shuffle_count, -1)[:, :mixed_count].reshape(-1)
+    mixed_indices = jnp.tile(jnp.arange(mixed_count), shuffle_count)
+    control = select_trials(mixed_data, mixed_indices)
+    control_recalls = jax.vmap(recalls_to_first_study_positions)(
+        pure_recalls[pure_indices], control["pres_itemnos"]
+    )
+    if remove_repeats:
+        control_recalls = filter_repeated_recalls(control_recalls)
+    if "listLength" not in control:
+        control["listLength"] = jnp.count_nonzero(
+            control["pres_itemnos"], axis=1, keepdims=True
+        )
+    return replace_recalls(control, control_recalls, recall_dependent_fields)
 
 
 def make_control_dataset(
@@ -200,108 +245,81 @@ def make_control_dataset(
     seed: int = 0,
     recall_dependent_fields: Collection[str] = (),
 ) -> RecallDataset:
-    """Build a shuffled-control dataset aligned to mixed-list presentations.
+    """Pair shuffled pure-list recalls with mixed-list presentations by participant.
 
-    Returns a per-subject control set that matches the **mixed-list serial positions**
-    but uses **pure-list recall rows** permuted within subject. This encodes the null
-    hypothesis that for mixed-list repeaters, **either study position counts as the
-    same logical item** in controls. Operationally, control recalls are relabeled to
-    the first occurrence of each mixed-list item's positional code; optional
-    within-trial repeats are zeroed to mirror the main analysis gate.
+    Parameters
+    ----------
+    data : RecallDataset
+        Trial data containing both conditions. Recall codes are one-based study
+        positions; pure and mixed trials must use compatible position codes.
+        Study metadata is taken from mixed trials, not from the pure trials
+        supplying the recalls. The input is unchanged.
+    mixed_query : str
+        Query selecting lists with repeated study items, evaluated by
+        ``generate_trial_mask``.
+    control_query : str
+        Query selecting pure lists without repeated study items.
+    n_shuffles : int
+        Positive number of shuffles per participant. Each shuffle pairs every
+        mixed trial once with a pure recall row. Pure rows are drawn in random
+        permutation order; use additional independent permutations when there
+        are fewer pure trials, truncating only the last permutation.
+    remove_repeats : bool, optional
+        Whether to zero repeated recalls after relabeling each item to its
+        first mixed-list study position. Default is True.
+    seed : int, optional
+        Random seed for reproducible pairings. Default is zero.
+    recall_dependent_fields : Collection[str], optional
+        Additional response fields to discard when replacing recalls. Known
+        response fields, including ``rec_itemids``, ``irt``, ``cue_clips`` and
+        ``_should_tabulate``, are also removed.
 
-    Args:
-      data: Dataset containing at least ``"subject"``, ``"recalls"``, and ``"pres_itemnos"``.
-      mixed_query: Boolean query string (evaluated by ``generate_trial_mask``) selecting mixed trials.
-      control_query: Boolean query string selecting pure trials.
-      n_shuffles: Number of shuffled control **blocks per subject** (each block permutes that
-        subject’s pure-list recall rows). Total permutations per block is internally
-        expanded to cover mixed rows (``ceil(n_mixed / n_pure)``).
-      remove_repeats: If True, drop repeated recalls within trials in the result (keeps first mention).
-      seed: RNG seed for shuffling reproducibility.
-      recall_dependent_fields: Additional fields tied to the original recall
-        events. These and ``rec_itemids``, ``irt``, ``cue_clips``, and
-        ``_should_tabulate`` are omitted; other fields come from mixed trials.
+    Returns
+    -------
+    RecallDataset
+        Controls grouped by participant, then shuffle, then mixed-trial order.
+        Each included participant contributes ``n_shuffles * mixed_trials``
+        rows. Participants without both conditions are skipped. Study fields
+        remain aligned; list lengths are inferred from nonzero presentations
+        when absent from legacy input data.
 
-    Returns:
-      RecallDataset with rows ``(#mixed_trials_per_subject * n_shuffles)`` per included subject.
-      Shapes match the mixed-list presentations after tiling and truncation.
+    Raises
+    ------
+    ValueError
+        If no participant has both mixed and pure trials.
+
+    Notes
+    -----
+    The control preserves pure-list recall sequences but interprets their
+    position codes under mixed-list presentations. Positions occupied by the
+    same mixed-list item become a single code. This is an explicit control
+    construction; it does not estimate a repetition effect or perform a test.
+    Shuffles are repeated pairings within participants, not new participants.
     """
-
-    # 1) find which subjects actually have mixed trials
-    _validate_trial_fields(data)
-    invalidated_fields = _invalidated_recall_fields(recall_dependent_fields)
-    all_subject_ids = jnp.array(data["subject"]).flatten()
+    all_subject_ids = data["subject"].flatten()
     mixed_mask = generate_trial_mask(data, mixed_query)
     pure_mask = generate_trial_mask(data, control_query)
     subjects = np.unique(all_subject_ids[mixed_mask])
-    prng_keys = random.split(random.PRNGKey(seed), subjects.size)
+    subject_keys = random.split(random.PRNGKey(seed), subjects.size)
+    subject_controls = []
 
-    recalls_blocks = []
-    pres_blocks = []
-    subject_id_blocks = []
-    list_length_blocks = []
-    other_fields_acc = {
-        key: []
-        for key in data
-        if key not in ("recalls", "pres_itemnos", "subject", "listLength")
-        and key not in invalidated_fields
-    }
-
-    for i, subj in enumerate(subjects):
-        sel_pure = (all_subject_ids == subj) & pure_mask
-        sel_mixed = (all_subject_ids == subj) & mixed_mask
-
-        pure_recalls = jnp.array(data["recalls"][sel_pure])
-        mixed_pres = jnp.array(data["pres_itemnos"][sel_mixed])
-        if pure_recalls.shape[0] == 0 or mixed_pres.shape[0] == 0:
+    for subject_index, subject_id in enumerate(subjects):
+        pure_selection = (all_subject_ids == subject_id) & pure_mask
+        mixed_selection = (all_subject_ids == subject_id) & mixed_mask
+        pure_recalls = data["recalls"][pure_selection]
+        if pure_recalls.shape[0] == 0:
             continue
+        mixed_data = select_trials(data, jnp.flatnonzero(mixed_selection))
+        subject_controls.append(_make_subject_control(
+            mixed_data, pure_recalls, n_shuffles, subject_keys[subject_index],
+            remove_repeats, recall_dependent_fields,
+        ))
 
-        n_pure, _ = pure_recalls.shape
-        n_mixed, _ = mixed_pres.shape
-        repeat_factor = math.ceil(n_mixed / n_pure)
-        n_permutations = n_shuffles * repeat_factor
+    if not subject_controls:
+        raise ValueError("No participants have both mixed and pure trials.")
 
-        new_recalls, new_pres = _shuffle_and_tile_controls(
-            pure_recalls, mixed_pres, n_permutations, prng_keys[i]
-        )
-        # Ensure identical items share a single positional code
-        new_recalls = jax.vmap(relabel_trial_to_firstpos, in_axes=(0, 0))(
-            new_recalls, new_pres
-        )
-        if remove_repeats:
-            new_recalls = filter_repeated_recalls(new_recalls)
-
-        recalls_blocks.append(new_recalls)
-        pres_blocks.append(new_pres)
-        subject_id_blocks.append(jnp.full((new_recalls.shape[0], 1), subj, dtype=int))
-        # Legacy callers may omit listLength; infer it from nonpadding positions.
-        mixed_lengths = (
-            jnp.asarray(data["listLength"]).reshape(-1, 1)[sel_mixed]
-            if "listLength" in data
-            else jnp.count_nonzero(mixed_pres, axis=1, keepdims=True)
-        )
-        list_length_blocks.append(
-            jnp.repeat(mixed_lengths, repeats=n_permutations, axis=0)[
-                : new_recalls.shape[0]
-            ]
-        )
-
-        # Carry study/trial fields from the mixed rows, but not old recall metadata.
-        for field, acc in other_fields_acc.items():
-            arr = jnp.array(data[field])[sel_mixed]
-            acc.append(
-                jnp.repeat(arr, repeats=n_permutations, axis=0)[: new_recalls.shape[0]]
-            )
-            assert acc[-1].shape[0] == new_recalls.shape[0]
-            assert acc[-1].shape[0] == new_pres.shape[0]
-
-    control_dataset: RecallDataset = {
-        "subject": jnp.vstack(subject_id_blocks),
-        "listLength": jnp.vstack(list_length_blocks),
-        "recalls": jnp.vstack(recalls_blocks),
-        "pres_itemnos": jnp.vstack(pres_blocks),
-    }
-    for field, blocks in other_fields_acc.items():
-        control_dataset[field] = jnp.vstack(blocks)
-    _validate_trial_fields(control_dataset)
-    return control_dataset
+    # Concatenate trial rows, including one-dimensional custom fields.
+    return cast(RecallDataset, {
+        field: jnp.concatenate([control[field] for control in subject_controls], axis=0)
+        for field in subject_controls[0]
+    })

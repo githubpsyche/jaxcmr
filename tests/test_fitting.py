@@ -10,7 +10,7 @@ from jaxcmr.fitting import EvosaxDE, MapEvosaxDE, ScanEvosaxDE, ScipyDE
 
 @pytest.mark.parametrize("algorithm", [ScipyDE, EvosaxDE, ScanEvosaxDE, MapEvosaxDE])
 def test_fitters_return_the_analytic_minimum_for_each_subject(algorithm):
-    data = {"subject": jnp.array([[11], [5], [11], [5]])}
+    data = {"subject": jnp.array([[11], [5], [2], [11], [5], [2]])}
     arguments = dict(
         dataset=data,
         features=None,
@@ -27,8 +27,10 @@ def test_fitters_return_the_analytic_minimum_for_each_subject(algorithm):
             "progress_bar": False,
         },
     )
-    result = algorithm(**arguments).fit_subjects(jnp.ones(4, dtype=bool))
-    repeated = algorithm(**arguments).fit_subjects(jnp.ones(4, dtype=bool))
+    # Participant 2 remains in the dataset but has no selected observations.
+    selection = jnp.array([True, True, False, True, True, False])
+    result = algorithm(**arguments).fit_subjects(selection)
+    repeated = algorithm(**arguments).fit_subjects(selection)
     np.testing.assert_array_equal(repeated["fitness"], result["fitness"])
     np.testing.assert_array_equal(repeated["fits"]["a"], result["fits"]["a"])
     np.testing.assert_array_equal(repeated["fits"]["b"], result["fits"]["b"])
@@ -208,7 +210,7 @@ def test_evosax_subject_results_override_free_parameter_defaults(fitter_cls):
     fitter = fitter_cls(
         make_minimal_dataset([1, 1, 2, 2]),
         None,
-        {"x": 0.5, "fixed_value": 2.0},
+        {"x": 0.5, "fixed_value": 2.0, "flag": True, "count": 3},
         DummyModelFactory,
         QuadraticLoss,
         hyperparams={
@@ -221,12 +223,16 @@ def test_evosax_subject_results_override_free_parameter_defaults(fitter_cls):
     result = fitter.fit_subjects(jnp.ones(4, dtype=bool))
     assert result["fits"]["subject"] == [1, 2]
     assert result["fits"]["fixed_value"] == [2.0, 2.0]
+    assert type(result["fixed"]["flag"]) is bool
+    assert type(result["fixed"]["count"]) is int
+    assert all(type(value) is bool for value in result["fits"]["flag"])
     assert len(result["fits"]["x"]) == 2
     np.testing.assert_allclose(result["fitness"], (np.asarray(result["fits"]["x"]) - 0.25) ** 2)
 
 
+@pytest.mark.parametrize('transforms', [None, {'x': 'log1p', 'y': 'linear'}])
 @pytest.mark.parametrize('driver,extra', [(ScanEvosaxDE, {}), (MapEvosaxDE, {'map_batch_size': 2})])
-def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra):
+def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra, transforms):
     """Both batched drivers preserve the sequential fitted results."""
     hyperparams = {
         "bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
@@ -236,6 +242,7 @@ def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra):
         "progress_bar": False,
         "seed": 0,
         **extra,
+        **({"transforms": transforms} if transforms else {}),
     }
     sequential = EvosaxDE(
         make_minimal_dataset([1, 1, 2, 2]),
@@ -261,6 +268,16 @@ def test_batched_evosaxde_matches_sequential_on_equal_counts(driver, extra):
     np.testing.assert_allclose(mapped_result["fitness"], sequential_result["fitness"])
     np.testing.assert_allclose(mapped_result["fits"]["x"], sequential_result["fits"]["x"])
     np.testing.assert_allclose(mapped_result["fits"]["y"], sequential_result["fits"]["y"])
+    for result in (sequential_result, mapped_result):
+        np.testing.assert_allclose(result["fitness"],
+            (np.asarray(result["fits"]["x"]) - .25)**2 + (np.asarray(result["fits"]["y"]) - .75)**2,
+            rtol=1e-5, atol=1e-8)
+        assert [row["subject"] for row in result["diagnostics"]] == result["fits"]["subject"]
+        for row in result["diagnostics"]:
+            assert len(row["restarts"]) == 2
+            for restart in row["restarts"]:
+                parameters = restart["parameters"]
+                assert restart["fitness"] == pytest.approx((parameters["x"]-.25)**2 + (parameters["y"]-.75)**2, abs=1e-8)
     if driver is MapEvosaxDE:
         assert mapped_result["hyperparameters"]["map_batch_size"] == 2
 

@@ -10,8 +10,8 @@ from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.experimental.cross_validation import generate_fold_masks
 from jaxcmr.fitting.gradient import ScipyLBFGSB
-from jaxcmr.helpers.io import load_data, save_dict_to_hdf5
-from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
+from jaxcmr.helpers import load_data, save_dict_to_hdf5
+from jaxcmr.loss.sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 from jaxcmr.simulation import simulate_dataset
 from support import recall_fixture

@@ -33,6 +33,8 @@ experimental = ["numba>=0.61.0"]
 test = ["pytest>=8.3.5"]
 
 [dependency-groups]
+# Quartodoc 0.11.1 uses the Griffe 1.x NumPy parser interface.
+docs = ["quartodoc==0.11.1", "griffe==1.15.0"]
 reader = ["nbmake==1.5.5", "pytest-xdist==3.8.0", "pytest>=8.3.5,<10", "openpyxl", "pillow"]
 dev = [
     "build>=1.2",
@@ -65,7 +67,7 @@ profiling = ["line-profiler>=4.2.0"]
 "data/fits/README.md" = "jaxcmr/_example_inputs/data/fits/README.md"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["/guide/templates/**", "/guide/downloads/**", "/guide/.quarto/**"]
+exclude = ["/guide/reference/_generated/**", "/guide/templates/**", "/guide/downloads/**", "/guide/.quarto/**"]
 include = ["/jaxcmr", "/tests", "/templates/models/cmr.ipynb", "/templates/parameter_shifting.ipynb", "/templates/guide/getting-started.qmd", "/guide", "/README.md", "/LICENSE", "/pyproject.toml", "/uv.lock", "/.python-version", "/build-docs.sh", "/data/Dupertuys2026.h5", "/data/Dupertuys2026_semantic_distances.npy", "/data/fits/Dupertuys2026_CMR_demo.json", "/data/fits/Dupertuys2026_eCMR_source_only.json", "/data/fits/Dupertuys2026_eCMR_broad.json", "/data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5", "/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json", "/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5", "/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json", "/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5", "/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json", "/data/fits/README.md"]
 
 [tool.hatch.metadata]

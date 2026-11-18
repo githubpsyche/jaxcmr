@@ -53,7 +53,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install uv
-      - run: uv sync --locked --no-dev --extra test
+      - run: uv sync --locked --no-dev --extra test --group docs
       - uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: '1.11.9'

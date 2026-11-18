@@ -21,7 +21,7 @@ def verify_outputs(project, profile):
     import numpy as np
     import pandas as pd
     from PIL import Image
-    from jaxcmr.helpers.io import load_data
+    from jaxcmr.helpers import load_data
     root = Path(project) / "results"
     files = [p for p in root.rglob("*") if p.is_file()]
     assert files, "Notebook did not save any results"

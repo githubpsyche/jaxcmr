@@ -13,6 +13,9 @@ def test_parameter_conversion_preserves_batch_axes_and_name_order():
             {"retention_decay": [0.01, 10.0], "amplitude": [0.1, 100.0], "drift": [0.1, 0.9]},
             {"retention_decay": "exp_neg", "amplitude": "log"},
         )
+        # Retention reverses endpoint orientation; the other transforms do not.
+        endpoints = jax.jit(space.to_physical)(jnp.array([[0., 0., 0.], [1., 1., 1.]]))
+        np.testing.assert_array_equal(endpoints, [[10., .1, .1], [.01, 100., .9]])
         unit = jnp.linspace(0.1, 0.9, 24).reshape(2, 4, 3)
         physical = jax.jit(space.to_physical)(unit)
         np.testing.assert_allclose(jax.jit(space.to_unit)(physical), unit, atol=1e-12)

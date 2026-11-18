@@ -1,21 +1,26 @@
-"""Lag-CRP with conditional transition filtering.
+"""Lag-conditional response probabilities for selected recall events.
 
-Extends ``crp.Tabulation`` with a per-event ``_should_tabulate`` mask
-so that only a subset of transitions contribute to actual and available
-lag counts, while all recalls still update availability tracking. This
-supports analyses that condition on properties of the transition (e.g.,
-lag direction, item category, or repetition status).
+Suppose the recalls are A, B, C and only the transition into C is selected.
+B still leaves the set of available items and becomes the starting point
+for the transition to C. The event mask controls which transitions add to
+the actual and available lag counts. Removing B from the recall sequence
+would instead create a different transition, from A to C.
 
-The ``Tabulation`` class shares its state layout and update logic with
-``crp.Tabulation``; see that module for conventions and update steps.
-
+Use ``crp`` to pool those counts across trials. A source field can select
+transitions by the previous item's condition. A target field gives each
+target condition its own lag opportunities. When supplying both, request
+one source value at a time. ``plot_crp`` calculates participant curves before
+averaging them.
 """
+
+from typing import cast
+
+from jaxcmr.plotting import iter_condition_curves
 
 __all__ = [
     "Tabulation",
     "crp",
     "plot_crp",
-    "set_false_at_index",
     "tabulate_trial",
 ]
 
@@ -24,37 +29,14 @@ from collections.abc import Sequence
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
+
 from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..repetition import all_study_positions
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
-
-
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
-
-    Parameters
-    ----------
-    vec : Bool[Array, " positions"]
-        Boolean availability vector.
-    i : Int_
-        1-based index to clear; ``0`` is a no-op sentinel.
-
-    Returns
-    -------
-    tuple[Bool[Array, " positions"], None]
-        Updated vector and ``None``.
-
-    """
-
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
-    )
+from ._transitions import lag_counts, remove_positions
 
 
 class Tabulation(Pytree):
@@ -65,14 +47,14 @@ class Tabulation(Pytree):
         presentation: Integer[Array, " study_events"],
         first_recall: Int_,
         size: int = 3,
-    ):
+    ) -> None:
         self.list_length = presentation.size
         self.lag_range = self.list_length - 1
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
         self.base_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
         self.size = size
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -99,7 +81,7 @@ class Tabulation(Pytree):
 
         """
         study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
     # for updating actual_lags: lag-transitions actually made from the previous item
     def lags_from_previous(self, recall_pos: Int_) -> Bool[Array, " positions"]:
@@ -117,14 +99,22 @@ class Tabulation(Pytree):
 
         """
 
-        def f(prev):
+        def lags_from_previous_position(
+            previous_position: Integer[Array, ""],
+        ) -> Integer[Array, " lags"]:
             return lax.cond(
-                (recall_pos * prev) == 0,
+                (recall_pos * previous_position) == 0,
                 lambda: self.base_lags,
-                lambda: self.base_lags.at[recall_pos - prev + self.lag_range].add(1),
+                lambda: self.base_lags.at[
+                    recall_pos - previous_position + self.lag_range
+                ].add(1),
             )
 
-        return lax.map(f, self.previous_positions).sum(0).astype(bool)
+        return (
+            lax.map(lags_from_previous_position, self.previous_positions)
+            .sum(0)
+            .astype(bool)
+        )
 
     def tabulate_actual_lags(self, recall: Int_) -> Integer[Array, " lags"]:
         """Tabulate actual transition lags for a recall event.
@@ -161,12 +151,8 @@ class Tabulation(Pytree):
             Boolean lag vector of available transitions.
 
         """
-        return lax.cond(
-            pos == 0,
-            lambda: self.base_lags,
-            lambda: self.base_lags.at[self.all_positions - pos + self.lag_range].add(
-                self.avail_recalls
-            ),
+        return lag_counts(
+            pos, self.all_positions, self.avail_recalls, self.all_positions.size - 1
         )
 
     def tabulate_available_lags(self) -> Integer[Array, " lags"]:
@@ -186,7 +172,7 @@ class Tabulation(Pytree):
         return self.avail_lags + new_lags
 
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Return True when recall maps to an available position.
 
         Parameters
@@ -201,7 +187,7 @@ class Tabulation(Pytree):
 
         """
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
             is_available_study_position = self.avail_recalls[recall_study_positions - 1]
@@ -263,7 +249,7 @@ class TargetCondTabulation(Pytree):
         target_values: Integer[Array, " target_conditions"],
         first_recall: Int_,
         size: int = 3,
-    ):
+    ) -> None:
         self.size = size
         self.list_length = presentation.size
         self.lag_range = self.list_length - 1
@@ -275,7 +261,7 @@ class TargetCondTabulation(Pytree):
         self.target_values = target_values
         self.condition_indices = jnp.arange(target_values.size, dtype=int)
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -294,12 +280,12 @@ class TargetCondTabulation(Pytree):
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
         """Clear availability for study positions of ``recall``."""
         study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Return True when recall maps to an available position."""
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
             clipped_positions = jnp.clip(
@@ -315,20 +301,26 @@ class TargetCondTabulation(Pytree):
         )
 
     def lags_from_previous_to_target(
-        self, target_pos: Int_, valid_target: Bool
+        self, target_pos: Int_, valid_target: Bool[Array, ""]
     ) -> Bool[Array, " lags"]:
         """Return ordinary transition lags from previous recalls to target."""
 
-        def f(prev):
+        def lags_from_previous_position(
+            previous_position: Integer[Array, ""],
+        ) -> Integer[Array, " lags"]:
             return lax.cond(
-                valid_target & (target_pos > 0) & (prev > 0),
+                valid_target & (target_pos > 0) & (previous_position > 0),
                 lambda: self.base_lags.at[
-                    target_pos - prev + self.lag_range
+                    target_pos - previous_position + self.lag_range
                 ].add(1),
                 lambda: self.base_lags,
             )
 
-        return lax.map(f, self.previous_positions).sum(0).astype(bool)
+        return (
+            lax.map(lags_from_previous_position, self.previous_positions)
+            .sum(0)
+            .astype(bool)
+        )
 
     def tabulate_condition_lags(
         self,
@@ -452,7 +444,10 @@ def tabulate_target_trial(
     has_recall = jnp.any(trial > 0)
     first_index = jnp.argmax(trial > 0)
 
-    def tabulate_nonempty():
+    def tabulate_nonempty() -> tuple[
+        Integer[Array, " target_conditions lags"],
+        Integer[Array, " target_conditions lags"],
+    ]:
         init = TargetCondTabulation(
             presentation,
             target_conditions,
@@ -469,7 +464,10 @@ def tabulate_target_trial(
         )
         return tab.actual_lags, tab.avail_lags
 
-    def tabulate_empty():
+    def tabulate_empty() -> tuple[
+        Integer[Array, " target_conditions lags"],
+        Integer[Array, " target_conditions lags"],
+    ]:
         lag_range = presentation.size - 1
         empty_lags = jnp.zeros((target_values.size, lag_range * 2 + 1), dtype=int)
         return empty_lags, empty_lags
@@ -492,7 +490,7 @@ def source_tabulation_masks(
     transition_indices = jnp.clip(previous_recalls - 1, 0, field.shape[1] - 1)
     transition_values_by_event = jnp.take_along_axis(field, transition_indices, axis=1)
 
-    def mask_for_value(source_value):
+    def mask_for_value(source_value: Int_) -> Bool[Array, " trials recall_events"]:
         mask = jnp.zeros_like(recalls, dtype=bool)
         mask = mask.at[:, 1:].set(
             valid_transitions & (transition_values_by_event == source_value)
@@ -502,7 +500,9 @@ def source_tabulation_masks(
     return vmap(mask_for_value)(source_values)
 
 
-def base_tabulation_mask(dataset: RecallDataset) -> Bool[Array, " trials recall_events"]:
+def base_tabulation_mask(
+    dataset: RecallDataset,
+) -> Bool[Array, " trials recall_events"]:
     """Return the dataset mask, or all True when no mask is supplied."""
     if "_should_tabulate" in dataset:
         return jnp.asarray(dataset["_should_tabulate"], dtype=bool)  # type: ignore
@@ -512,9 +512,9 @@ def base_tabulation_mask(dataset: RecallDataset) -> Bool[Array, " trials recall_
 def crp(
     dataset: RecallDataset,
     size: int = 3,
-    source_field:str | None = None,
+    source_field: str | None = None,
     source_values: Sequence[int] | Integer[Array, " source_conditions"] | None = None,
-    target_field:str | None = None,
+    target_field: str | None = None,
     target_values: Sequence[int] | Integer[Array, " target_conditions"] | None = None,
 ) -> Float[Array, " ... lags"]:
     """Compute conditional Lag-CRP with repeated items.
@@ -522,8 +522,8 @@ def crp(
     Parameters
     ----------
     dataset : RecallDataset
-        Dataset with ``recalls``, ``pres_itemnos``, and
-        ``_should_tabulate``.
+        Dataset with ``recalls``, ``pres_itemnos``, and an optional
+        ``_should_tabulate`` event mask.
     size : int, optional
         Max study positions an item can occupy.
     source_field : str, optional
@@ -538,13 +538,10 @@ def crp(
     Returns
     -------
     Float[Array, " lags"]
-        CRP of length 2*L - 1; NaN where denominator is zero.
+        One probability per lag, with a leading condition dimension when
+        source or target values are requested. Zero opportunities give NaN.
 
     """
-    if (source_field is None) != (source_values is None):
-        raise ValueError("source_field and source_values must be provided together")
-    if (target_field is None) != (target_values is None):
-        raise ValueError("target_field and target_values must be provided together")
 
     should_tabulate = base_tabulation_mask(dataset)
 
@@ -555,8 +552,6 @@ def crp(
 
     if target_field is not None:
         target_values = jnp.asarray(target_values)
-        if source_field is not None and source_values.size != 1:
-            raise ValueError("source_values must have length 1 when target_field is set")
         if source_field is not None:
             should_tabulate = should_tabulate[0]
         actual, possible = vmap(
@@ -573,7 +568,9 @@ def crp(
         possible_sum = possible.sum(0)
         return jnp.where(possible_sum > 0, actual_sum / possible_sum, jnp.nan)
 
-    def _crp_for_mask(mask):
+    def _crp_for_mask(
+        mask: Bool[Array, " trials recall_events"],
+    ) -> Float[Array, " lags"]:
         actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, None))(
             dataset["recalls"],
             dataset["pres_itemnos"],
@@ -595,16 +592,22 @@ def plot_crp(
     max_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
-    source_field:str | None = None,
+    source_field: str | None = None,
     source_values: Sequence[int] | None = None,
-    target_field:str | None = None,
+    target_field: str | None = None,
     target_values: Sequence[int] | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot subject-wise conditional Lag-CRP with error bounds.
+
+    Each supplied source_field or target_field requires its corresponding
+    values. When both are supplied, target values determine the panel labels.
 
     Parameters
     ----------
@@ -635,27 +638,25 @@ def plot_crp(
     confidence_level : float, optional
         Confidence level for the bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the Lag-CRP plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
     )
 
-    if (source_field is None) != (source_values is None):
-        raise ValueError("source_field and source_values must be provided together")
-    if (target_field is None) != (target_values is None):
-        raise ValueError("target_field and target_values must be provided together")
-    if target_field is not None and source_field is not None and len(source_values) != 1:
-        raise ValueError("source_values must have length 1 when target_field is set")
-
     if target_field is not None:
-        condition_count = len(target_values)
+        condition_count = len(cast(Sequence[int], target_values))
     elif source_field is not None:
-        condition_count = len(source_values)
+        condition_count = len(cast(Sequence[int], source_values))
     else:
         condition_count = 0
 
@@ -681,45 +682,22 @@ def plot_crp(
                 jnp.asarray(target_values) if target_values is not None else None
             ),
         )
-        if condition_count:
-            for condition_index in range(condition_count):
-                condition_subject_values = jnp.vstack(
-                    [each[condition_index] for each in subject_values]
-                )[:, lag_range - max_lag : lag_range + max_lag + 1]
-
-                color_idx = data_index * condition_count + condition_index
-                color = color_cycle[color_idx % len(color_cycle)]
-                label = (
-                    labels[color_idx]
-                    if len(labels) > condition_count
-                    else (
-                        labels[condition_index]
-                        if condition_count > 1
-                        else labels[data_index]
-                    )
-                )
-                plot_data(
-                    axis,
-                    lag_interval,
-                    condition_subject_values,
-                    label,
-                    color,
-                    confidence_level=confidence_level,
-                )
-        else:
-            subject_values = jnp.vstack(subject_values)
-            subject_values = subject_values[
+        for curve_values, label, color in iter_condition_curves(
+            subject_values, condition_count, data_index, labels, color_cycle
+        ):
+            selected_lags = curve_values[
                 :, lag_range - max_lag : lag_range + max_lag + 1
             ]
-            color = color_cycle[data_index % len(color_cycle)]
-            plot_data(
+            plot_mean_curve(
                 axis,
                 lag_interval,
-                subject_values,
-                labels[data_index],
+                selected_lags,
+                label,
                 color,
                 confidence_level=confidence_level,
+                n_resamples=n_resamples,
+                bootstrap_seed=bootstrap_seed,
             )
 
-    set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
+    format_analysis_axes(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
     return axis

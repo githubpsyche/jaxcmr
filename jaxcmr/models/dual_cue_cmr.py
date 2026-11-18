@@ -8,30 +8,30 @@ no items are recallable.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.math import (
+    FLOAT32_EPS,
     exponential_primacy_decay,
-    lb,
-    power_scale,
+    relative_power_scale,
 )
 from jaxcmr.typing import (
     Array,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
 )
 
@@ -46,11 +46,11 @@ class CMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-    ):
+    ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
@@ -162,9 +162,9 @@ class CMR(Pytree):
         #! dual cue activations: product of local and global scaled activations
         local_activations = self.mcf.probe(self.context.state) * self.recallable
         global_activations = self.mcf.probe(self.context.initial_state) * self.recallable
-        local_scaled = power_scale(local_activations, self.local_mcf_sensitivity)
-        global_scaled = power_scale(global_activations, self.global_mcf_sensitivity)
-        return ((local_scaled * global_scaled) + lb) * self.recallable
+        local_scaled = relative_power_scale(local_activations, self.local_mcf_sensitivity)
+        global_scaled = relative_power_scale(global_activations, self.global_mcf_sensitivity)
+        return ((local_scaled * global_scaled) + FLOAT32_EPS) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping without explicit stop parameters.
@@ -234,12 +234,12 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
+        ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
+                parameters: Parameters,
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -251,13 +251,13 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 

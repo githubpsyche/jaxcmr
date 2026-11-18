@@ -1,22 +1,30 @@
-"""Probability of nth recall (PNR).
+"""Study positions of the items recalled at a chosen output position.
 
-Computes the probability that each serial position is recalled at
-each output position. Supports both unique-item and repeated-item
-lists, with optional conditioning on a ``_should_tabulate`` mask.
+Where on the study list did the second recall come from? Set
+``query_recall_position=1`` to get one value per study position for the second
+recall. On a trial with study list A, B, C and recalls C, A, the second recall
+credits study position 1. If A appeared more than once, it credits each of its
+study positions.
 
+``pnr`` divides the count at each study position by the total number of trials,
+including trials with no second recall. ``conditional_pnr_with_repeats`` uses a
+separate denominator for each position: the number of trials on which its item
+had yet to be recalled before the chosen output. An item can still count as
+available on a trial that ended early. ``plot_pnr`` averages these conditional
+curves across participants.
 """
 
 __all__ = [
-    "fixed_pres_pnr",
-    "available_recalls",
     "actual_recalls",
-    "conditional_fixed_pres_pnr",
-    "pnr",
-    "available_recalls_with_repeats",
     "actual_recalls_with_repeats",
+    "available_recalls",
+    "available_recalls_with_repeats",
+    "conditional_fixed_pres_pnr",
     "conditional_pnr_with_repeats",
-    "recall_position_label",
+    "fixed_pres_pnr",
     "plot_pnr",
+    "pnr",
+    "recall_position_label",
 ]
 
 from collections.abc import Sequence
@@ -25,10 +33,12 @@ import jax.numpy as jnp
 from jax import jit, lax, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..repetition import all_study_positions
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
+from ._study_positions import last_study_position
 
 
 def recall_position_label(query_recall_position: int) -> str:
@@ -197,7 +207,7 @@ def pnr(
     # expanded_recalls: (trial_count, recall_positions, size) array where each
     # recalled item is mapped to all its possible study positions.
     expanded_recalls = vmap(
-        vmap(all_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
+        vmap(equivalent_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
     )(dataset["recalls"], presentations, size)
     return fixed_pres_pnr(expanded_recalls, list_length, query_recall_position)
 
@@ -230,14 +240,14 @@ def available_recalls_with_repeats(
         True for positions not yet recalled.
 
     """
-    prior = vmap(all_study_positions, in_axes=(0, None, None))(
+    prior = vmap(equivalent_study_positions, in_axes=(0, None, None))(
         recalls[:query_recall_position], presentations, size
     ).reshape(-1)
 
     init = jnp.ones(list_length + 1, dtype=bool)
     final_mask, _ = lax.scan(lambda m, p: (m.at[p].set(False), None), init, prior)
 
-    return final_mask[1:]
+    return final_mask[1:] & (presentations > 0)
 
 
 def actual_recalls_with_repeats(
@@ -269,7 +279,7 @@ def actual_recalls_with_repeats(
 
     """
     item = recalls[query_recall_position]
-    current = all_study_positions(item, presentations, size)  # shape: (size,)
+    current = equivalent_study_positions(item, presentations, size)  # shape: (size,)
 
     init = jnp.zeros(list_length + 1, dtype=bool)
     final_mask, _ = lax.scan(lambda m, p: (m.at[p].set(True), None), init, current)
@@ -320,10 +330,13 @@ def plot_pnr(
     query_recall_position: int = 0,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot probability of nth recall with confidence intervals.
 
@@ -348,11 +361,16 @@ def plot_pnr(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the PNR plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -360,9 +378,9 @@ def plot_pnr(
     if labels is None:
         labels = [""] * len(datasets)
 
-    max_list_length = find_max_list_length(datasets, trial_masks)
 
     for data_index, data in enumerate(datasets):
+        last_position = last_study_position(data, trial_masks[data_index])
         subject_values = jnp.vstack(
             apply_by_subject(
                 data,
@@ -377,16 +395,18 @@ def plot_pnr(
         )
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
-            jnp.arange(max_list_length, dtype=int) + 1,
-            subject_values,
+            jnp.arange(last_position, dtype=int) + 1,
+            subject_values[:, :last_position],
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(
+    format_analysis_axes(
         axis,
         "Study Position",
         recall_position_label(query_recall_position),

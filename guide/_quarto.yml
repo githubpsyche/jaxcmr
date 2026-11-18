@@ -17,6 +17,21 @@ project:
     - templates.qmd
     - templates/*.ipynb
     - development.qmd
+    - reference/index.qmd
+    - reference/plotting.qmd
+    - reference/simulation.qmd
+    - reference/summarize.qmd
+    - reference/repetition.qmd
+    - reference/math.qmd
+    - reference/typing.qmd
+    - reference/dataset.qmd
+    - reference/helpers.qmd
+    - reference/examples.qmd
+    - reference/loss-*.qmd
+    - reference/fitting.qmd
+    - reference/analyses*.qmd
+    - reference/experimental*.qmd
+    - "!reference/_generated/**"
     - "!downloads/**"
     - "!examples/**"
   pre-render: uv run --no-sync python prepare.py
@@ -44,6 +59,8 @@ website:
         text: Tutorials
       - href: overview/index.qmd
         text: Library Guide
+      - href: reference/index.qmd
+        text: API Reference
       - href: templates.qmd
         text: Templates
       - href: development.qmd
@@ -79,6 +96,132 @@ website:
         - overview/fitting.ipynb
         - overview/simulation.ipynb
         - overview/evaluation.ipynb
+    - title: API Reference
+      id: api-reference
+      collapse-level: 1
+      contents:
+        - href: reference/index.qmd
+          text: Overview
+        - href: reference/dataset.qmd
+          text: Datasets
+        - href: reference/loss-sequence.qmd
+          text: Sequential likelihood
+        - href: reference/loss-mse.qmd
+          text: Behavioral MSE
+        - href: reference/fitting.qmd
+          text: Fitting
+        - href: reference/simulation.qmd
+          text: Simulation
+        - href: reference/plotting.qmd
+          text: Plotting
+        - href: reference/summarize.qmd
+          text: Model summaries
+        - href: reference/repetition.qmd
+          text: Repetition
+        - href: reference/math.qmd
+          text: Mathematical operations
+        - href: reference/typing.qmd
+          text: Types
+        - href: reference/helpers.qmd
+          text: Utilities
+        - section: Recall analyses
+          href: reference/analyses.qmd
+          contents:
+            - section: Recall and output position
+              contents:
+                - href: reference/analyses-spc.qmd
+                  text: spc
+                - href: reference/analyses-pnr.qmd
+                  text: pnr
+                - href: reference/analyses-nth_item_recall.qmd
+                  text: nth_item_recall
+                - href: reference/analyses-termination_probability.qmd
+                  text: termination_probability
+            - section: Serial recall accuracy
+              contents:
+                - href: reference/analyses-srac.qmd
+                  text: srac
+                - href: reference/analyses-relative_srac.qmd
+                  text: relative_srac
+                - href: reference/analyses-repsrac.qmd
+                  text: repsrac
+                - href: reference/analyses-intrusion_error_rate.qmd
+                  text: intrusion_error_rate
+                - href: reference/analyses-omission_error_rate.qmd
+                  text: omission_error_rate
+                - href: reference/analyses-order_error_rate.qmd
+                  text: order_error_rate
+            - section: Categories and study measurements
+              contents:
+                - href: reference/analyses-cat_recall_rate.qmd
+                  text: cat_recall_rate
+                - href: reference/analyses-cat_spc.qmd
+                  text: cat_spc
+                - href: reference/analyses-factors.qmd
+                  text: factors
+            - section: Co-recall
+              contents:
+                - href: reference/analyses-corecall.qmd
+                  text: corecall
+            - section: Transitions and organization
+              contents:
+                - href: reference/analyses-crp.qmd
+                  text: crp
+                - href: reference/analyses-conditional_crp.qmd
+                  text: conditional_crp
+                - href: reference/analyses-distcrp.qmd
+                  text: distcrp
+                - href: reference/analyses-conditional_distcrp.qmd
+                  text: conditional_distcrp
+                - href: reference/analyses-lagrank.qmd
+                  text: lagrank
+                - href: reference/analyses-distrank.qmd
+                  text: distrank
+                - href: reference/analyses-cue_centered_crp.qmd
+                  text: cue_centered_crp
+                - href: reference/analyses-source_target_crp.qmd
+                  text: source_target_crp
+            - section: Repeated items
+              contents:
+                - href: reference/analyses-repcrp.qmd
+                  text: repcrp
+                - href: reference/analyses-repaccesscrp.qmd
+                  text: repaccesscrp
+                - href: reference/analyses-repneighborcrp.qmd
+                  text: repneighborcrp
+                - href: reference/analyses-reproutecrp.qmd
+                  text: reproutecrp
+                - href: reference/analyses-repcuecrp.qmd
+                  text: repcuecrp
+                - href: reference/analyses-serialrepcrp.qmd
+                  text: serialrepcrp
+                - href: reference/analyses-rpl.qmd
+                  text: rpl
+            - section: Participant summaries and comparisons
+              contents:
+                - href: reference/analyses-statistics.qmd
+                  text: statistics
+        - section: Experimental operations
+          href: reference/experimental.qmd
+          contents:
+            - href: reference/experimental-prepared.qmd
+              text: Prepared observations
+            - href: reference/experimental-prepared-fitting.qmd
+              text: Prepared fitting
+            - href: reference/experimental-permutation.qmd
+              text: Permutation likelihood
+            - href: reference/experimental-target_enrichment_crp.qmd
+              text: target_enrichment_crp
+            - href: reference/experimental-compound_cueing_crp.qmd
+              text: compound_cueing_crp
+            - href: reference/experimental-replagrank.qmd
+              text: replagrank
+            - href: reference/experimental-serialreplagrank.qmd
+              text: serialreplagrank
+            - href: reference/experimental-cue_centered_lagrank.qmd
+              text: cue_centered_lagrank
+            - href: reference/experimental-log_odds_crp.qmd
+              text: log_odds_crp
     - title: Templates
       contents:
         - templates.qmd
@@ -100,8 +243,7 @@ website:
 format:
   html:
     theme:
-      - default
-      - styles.scss
+      light: [default, styles.scss]
     number-sections: false
     lightbox: true
     toc: true

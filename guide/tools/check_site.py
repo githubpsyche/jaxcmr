@@ -7,8 +7,9 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "guide"))
-import prepare
+from jaxcmr.examples import _EXAMPLE_FILES
 from check_notebooks import CASES
 
 
@@ -39,7 +40,7 @@ def check(site):
             html = (site / Path(name).with_suffix(".html")).read_text(encoding="utf-8")
             url = f"https://colab.research.google.com/github/githubpsyche/jaxcmr/blob/main/{name}"
             assert url in html, f"Missing Colab button: {name}"
-    for name in [*prepare._EXAMPLE_FILES, "data/fits/README.md"]:
+    for name in [*_EXAMPLE_FILES, "data/fits/README.md"]:
         assert (site / "templates" / name).read_bytes() == (ROOT / name).read_bytes(), name
     broken = []
     for path in site.rglob("*.html"):

@@ -4,17 +4,15 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from jaxcmr.analyses import (
-    crp,
-    conditional_crp,
-    repcrp,
-    repaccesscrp,
-    reproutecrp,
-    repcuecrp,
-    target_enrichment_crp,
-    source_target_crp,
-)
-from jaxcmr.helpers import make_dataset
+from jaxcmr.analyses import crp
+from jaxcmr.analyses import conditional_crp
+from jaxcmr.analyses import repcrp
+from jaxcmr.analyses import repaccesscrp
+from jaxcmr.analyses import reproutecrp
+from jaxcmr.analyses import repcuecrp
+from jaxcmr.experimental import target_enrichment_crp
+from jaxcmr.analyses import source_target_crp
+from jaxcmr.dataset import make_dataset
 
 
 @pytest.mark.parametrize(
@@ -98,6 +96,7 @@ def test_transition_plots_preserve_values_and_conditions(kind, measure, plot, op
             if line.get_marker() == "o"
         ]
     )
+    drawn = drawn[np.isfinite(drawn)]
     expected = expected[np.isfinite(expected)]
     assert expected.size > 0
     np.testing.assert_allclose(drawn, expected, atol=1e-7)
@@ -128,7 +127,7 @@ def test_source_target_plot_counts_available_items_and_labels_dataset():
             if line.get_marker() == "o"
         ]
     )
-    np.testing.assert_allclose(drawn, [0.5])
+    np.testing.assert_allclose(drawn[np.isfinite(drawn)], [0.5])
     assert "selected" in axis.get_legend_handles_labels()[1]
     assert axis.get_ylabel()
     plt.close(axis.figure)

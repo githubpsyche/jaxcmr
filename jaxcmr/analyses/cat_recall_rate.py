@@ -1,35 +1,38 @@
-"""Category-filtered recall-rate analyses.
+"""Proportion of eligible presentations recalled within a category.
 
-Computes scalar recall proportions separately for each item category.
-This is the category-level summary analogue of category SPC analyses:
-it is parameterized by a category field and category values rather than
-being tied to any particular experimental contrast.
+Suppose fruit appeared first on two lists and third on eight. If one of the
+first-position fruits and three of the third-position fruits were recalled,
+``cat_recall_rate`` gives 4/10 for fruit. ``cat_spc`` keeps the two rates,
+1/2 and 3/8, separate by study position.
 
+Choose the category field and value to select presentations. An optional
+validity field can restrict them further. Each eligible occurrence of a
+recalled item earns credit once. A category with no eligible presentations
+has an undefined rate. ``subject_cat_recall_rate`` keeps a row per participant
+and a column per requested category.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
 
 import numpy as np
-from jax import jit, vmap
+from jax import jit
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from scipy import stats
-from scipy.stats import bootstrap
 
-from ..helpers import apply_by_subject
-from ..plotting import prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, prepare_plot_inputs
 from ..typing import Array, Bool, Float, Integer, RecallDataset
+from ._study_positions import recall_status, study_position_mask
+from .statistics import mean_interval
 
 __all__ = [
-    "CatRecallRatePairTestResult",
     "cat_recall_rate",
     "category_recall_hits",
     "plot_cat_recall_rate",
     "subject_cat_recall_rate",
-    "test_cat_recall_rate_pair",
 ]
 
 
@@ -50,8 +53,8 @@ def cat_recall_rate(
     dataset: RecallDataset,
     category_field: str,
     category_value: int,
-    valid_field:str | None = None,
-) -> Float:
+    valid_field: str | None = None,
+) -> Float[Array, ""]:
     """Category-filtered scalar recall rate.
 
     Parameters
@@ -59,39 +62,25 @@ def cat_recall_rate(
     dataset : RecallDataset
         Recall dataset with per-item category metadata.
     category_field : str
-        Key providing item categories per study position.
+        Key providing categories aligned with the ``pres_itemnos`` array.
     category_value : int
         Category to filter on.
     valid_field : str, optional
         Key with positive values at valid study positions. If ``None``,
-        all category positions are treated as valid.
+        all actual presentations are eligible. Padding is always excluded.
 
     Returns
     -------
     Float
-        Proportion of valid target-category positions that were recalled.
+        Proportion of eligible target-category presentations whose item was recalled.
+        Every occurrence of a recalled item contributes once; responses are not
+        counted repeatedly. An absent category returns NaN.
 
     """
-    recalls = dataset["recalls"]
-    categories = dataset[category_field]
-    list_length = categories.shape[1]
-    if valid_field is None:
-        valid = jnp.ones_like(categories, dtype=bool)
-    else:
-        valid = dataset[valid_field] > 0
-
-    recall_hits = vmap(
-        category_recall_hits,
-        in_axes=(0, 0, None, 0, None),
-    )(recalls, categories, category_value, valid, list_length)
-
-    denominator = jnp.sum((categories == category_value) & valid)
-    numerator = jnp.sum(recall_hits)
-    return jnp.where(
-        denominator > 0,
-        numerator / denominator,
-        jnp.float32(jnp.nan),
+    eligible = study_position_mask(dataset, valid_field) & (
+        dataset[category_field] == category_value
     )
+    return (recall_status(dataset) & eligible).sum() / eligible.sum()
 
 
 def subject_cat_recall_rate(
@@ -99,8 +88,8 @@ def subject_cat_recall_rate(
     trial_mask: Bool[Array, " trial_count"],
     category_field: str,
     category_values: Sequence[int],
-    valid_field:str | None = None,
-) -> np.ndarray:
+    valid_field: str | None = None,
+) -> Float[np.ndarray, "subjects categories"]:
     """Return subject-level category recall rates.
 
     Parameters
@@ -110,7 +99,7 @@ def subject_cat_recall_rate(
     trial_mask : Bool[Array, " trial_count"]
         Boolean mask selecting trials.
     category_field : str
-        Key providing item categories per study position.
+        Key providing categories aligned with the ``pres_itemnos`` array.
     category_values : Sequence[int]
         Category values to summarize.
     valid_field : str, optional
@@ -140,18 +129,57 @@ def subject_cat_recall_rate(
     return np.stack(columns, axis=1) if columns else np.empty((0, 0), dtype=float)
 
 
+def _category_point_summaries(
+    subject_values: Float[np.ndarray, " subjects categories"],
+    confidence_level: float,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
+) -> list[tuple[int, float, list[list[float]]]]:
+    """Summarize available categories in their original bootstrap order.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
+    summaries = []
+    for category_index in range(subject_values.shape[1]):
+        valid_values = subject_values[:, category_index]
+        valid_values = valid_values[np.isfinite(valid_values)]
+        if not valid_values.size:
+            continue
+        mean = float(np.nanmean(valid_values))
+        interval = mean_interval(
+            valid_values,
+            confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            seed=bootstrap_seed,
+        )
+        mean = interval["mean"]
+        errors = [[mean - interval["low"]], [interval["high"] - mean]]
+        summaries.append((category_index, mean, errors))
+    return summaries
+
+
 def plot_cat_recall_rate(
     datasets: Sequence[RecallDataset] | RecallDataset,
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     category_field: str,
     category_values: Sequence[int],
-    valid_field:str | None = None,
+    valid_field: str | None = None,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
     category_labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot category-filtered recall rates as points with error bars.
 
@@ -162,7 +190,7 @@ def plot_cat_recall_rate(
     trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
         Boolean mask(s) selecting trials.
     category_field : str
-        Key providing item categories per study position.
+        Key providing categories aligned with the ``pres_itemnos`` array.
     category_values : Sequence[int]
         Categories to plot.
     valid_field : str, optional
@@ -180,11 +208,16 @@ def plot_cat_recall_rate(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Axes with the category recall-rate plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -210,37 +243,21 @@ def plot_cat_recall_rate(
     labeled_category_indices = set()
 
     for data_index, subject_values_for_dataset in enumerate(subject_values_by_dataset):
-        present_category_indices = [
-            category_index
-            for category_index in range(len(category_values))
-            if np.any(np.isfinite(subject_values_for_dataset[:, category_index]))
-        ]
-        if not present_category_indices:
+        summaries = _category_point_summaries(
+            subject_values_for_dataset,
+            confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
+        )
+        if not summaries:
             continue
-
         offsets = (
             np.array([0.0])
-            if len(present_category_indices) == 1
-            else np.linspace(
-                -dodge_width / 2,
-                dodge_width / 2,
-                len(present_category_indices),
-            )
+            if len(summaries) == 1
+            else np.linspace(-dodge_width / 2, dodge_width / 2, len(summaries))
         )
-        for present_index, category_index in enumerate(present_category_indices):
+        for present_index, (category_index, mean, yerr) in enumerate(summaries):
             offset = offsets[present_index]
-            valid_values = subject_values_for_dataset[:, category_index]
-            valid_values = valid_values[np.isfinite(valid_values)]
-            mean = float(np.nanmean(valid_values))
-            if len(valid_values) > 1:
-                ci = bootstrap(
-                    (valid_values,),
-                    np.nanmean,
-                    confidence_level=confidence_level,
-                ).confidence_interval
-                yerr = [[mean - ci.low], [ci.high - mean]]
-            else:
-                yerr = [[0], [0]]
 
             color = color_cycle[category_index % len(color_cycle)]
             label = None
@@ -264,68 +281,5 @@ def plot_cat_recall_rate(
 
     axis.set_xticks(x)
     axis.set_xticklabels(labels, fontsize=14)
-    set_plot_labels(axis, "", "Recall Rate", contrast_name)
+    format_analysis_axes(axis, "", "Recall Rate", contrast_name)
     return axis
-
-
-@dataclass
-class CatRecallRatePairTestResult:
-    """Results from a paired category recall-rate comparison."""
-
-    left_label: str
-    right_label: str
-    n: int
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-    mean_diff: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"Comparison: {self.left_label} - {self.right_label}",
-            f"n = {self.n}",
-            f"Mean Diff = {self.mean_diff:.4f}",
-            f"t-stat = {self.t_stat:.3f}, t p-val = {self.t_pval:.4f}",
-            f"W-stat = {self.w_stat:.1f}, W p-val = {self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
-def test_cat_recall_rate_pair(
-    left: np.ndarray,
-    right: np.ndarray,
-    left_label: str = "left",
-    right_label: str = "right",
-) -> CatRecallRatePairTestResult:
-    """Test paired subject-level category recall rates."""
-    left = np.asarray(left, dtype=float)
-    right = np.asarray(right, dtype=float)
-    valid = np.isfinite(left) & np.isfinite(right)
-    left_valid = left[valid]
-    right_valid = right[valid]
-    diff = left_valid - right_valid
-
-    if len(diff) > 1:
-        t_stat, t_pval = stats.ttest_rel(left_valid, right_valid, nan_policy="omit")
-    else:
-        t_stat, t_pval = np.nan, np.nan
-
-    if len(diff) > 0:
-        try:
-            w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
-        except ValueError:
-            w_stat, w_pval = np.nan, np.nan
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return CatRecallRatePairTestResult(
-        left_label=left_label,
-        right_label=right_label,
-        n=len(diff),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat),
-        w_pval=float(w_pval),
-        mean_diff=float(np.nanmean(diff)) if len(diff) > 0 else float("nan"),
-    )

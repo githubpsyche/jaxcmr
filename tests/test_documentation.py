@@ -33,7 +33,7 @@ def staging(tmp_path, monkeypatch):
     (tmp_path / "data/fits/README.md").write_text("Provenance")
     monkeypatch.setattr(prepare, "ROOT", tmp_path)
     monkeypatch.setattr(prepare, "GUIDE", guide)
-    monkeypatch.setattr(prepare, "_EXAMPLE_FILES", ("data/example.txt",))
+    monkeypatch.setattr("jaxcmr.examples._EXAMPLE_FILES", ("data/example.txt",))
     monkeypatch.delenv("QUARTO_PROJECT_RENDER_ALL", raising=False)
     return tmp_path, guide, raw
 

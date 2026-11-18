@@ -16,7 +16,7 @@ from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components.context import TemporalContext
 from jaxcmr.components.instance_memory import InstanceMemory
 from jaxcmr.components.linear_memory import LinearMemory
-from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, lb
+from jaxcmr.math import exponential_primacy_decay, exponential_stop_probability, FLOAT32_EPS
 from jaxcmr.typing import (
     Array,
     Context,
@@ -164,7 +164,7 @@ class InstanceCMR(Pytree):
     def activations(self) -> Float[Array, " trace_count"]:
         """Returns relative support for retrieval of each trace given model state"""
         probe = self.mcf._probe.at[: self.context.state.size].set(self.context.state)
-        trace_activations = self.mcf.trace_activations(probe) + lb
+        trace_activations = self.mcf.trace_activations(probe) + FLOAT32_EPS
         return trace_activations * self.recallable  # mask recalled traces
 
     def item_activation(
@@ -182,7 +182,7 @@ class InstanceCMR(Pytree):
             false_fun=lambda: lax.cond(
                 self.is_active,
                 true_fun=lambda: jnp.minimum(
-                    1.0 - (lb * total_recallable),
+                    1.0 - (FLOAT32_EPS * total_recallable),
                     self._stop_probability[self.recall_total],
                 ),
                 false_fun=lambda: 1.0,

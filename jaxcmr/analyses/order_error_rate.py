@@ -1,12 +1,18 @@
-"""Order error rate analysis.
+"""Recall of a studied item in the wrong output position.
 
-Computes the proportion of recall attempts where the recalled item
-appears at the wrong serial position (transposition errors) as a
-function of output position.
+For the study list A, B, C, D and responses B, C, blank, blank, the first
+two output positions each receive an order error. The last two receive zero.
+``trial_order_error_rate`` flags a response when its item belongs to the list
+but was studied elsewhere. A repeated item is correct in any of its assigned
+positions.
 
+``order_error_rate`` averages these flags over all trials at each position.
+Trials with a blank or an intrusion at that position contribute zero and
+remain in the denominator. ``plot_order_error_rate`` averages participant
+rates.
 """
 
-__all__ = ["trial_order_error_rate", "order_error_rate", "plot_order_error_rate"]
+__all__ = ["order_error_rate", "plot_order_error_rate", "trial_order_error_rate"]
 
 from collections.abc import Sequence
 
@@ -14,9 +20,10 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..repetition import all_study_positions
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject, find_max_list_length
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
@@ -61,8 +68,8 @@ def trial_order_error_rate(
     )
 
     # 3. For each output slot, does its token actually belong here?
-    #    Use all_study_positions to map token -> all study slots of that item.
-    expanded = vmap(all_study_positions, in_axes=(0, None, None))(
+    #    Use equivalent_study_positions to map token -> all study slots of that item.
+    expanded = vmap(equivalent_study_positions, in_axes=(0, None, None))(
         recall_tokens, presentations, size
     )  # shape: (list_len, size)
 
@@ -106,10 +113,13 @@ def plot_order_error_rate(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot order error rate curves with confidence intervals.
 
@@ -132,11 +142,16 @@ def plot_order_error_rate(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with order error rate curves.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -160,14 +175,16 @@ def plot_order_error_rate(
         color = color_cycle[data_index % len(color_cycle)]
         subject_values = subject_values[:, :max_list_length]
         xvals = jnp.arange(max_list_length) + 1
-        plot_data(
+        plot_mean_curve(
             axis,
             xvals,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Order Error Rate", contrast_name)
+    format_analysis_axes(axis, "Study Position", "Order Error Rate", contrast_name)
     return axis

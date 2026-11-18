@@ -6,34 +6,37 @@ association matrix before retrieval.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.factory import build_trial_connections
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.components.factory import (
+    build_trial_connections,
+    global_item_ids_by_code,
+)
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.helpers import require_pres_itemids
+from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.math import (
+    FLOAT32_EPS,
     exponential_primacy_decay,
-    lb,
-    power_scale,
+    relative_power_scale,
 )
 from jaxcmr.typing import (
     Array,
     Bool,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -49,15 +52,15 @@ class CMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
-        connections: Float[Array, " study_events study_events"],
+        parameters: Parameters,
+        connections: Float[Array, " item_count item_count"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn[
             "CMR"
         ] = PositionalTermination,
-    ):
+    ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
@@ -170,11 +173,11 @@ class CMR(Pytree):
             lambda: jnp.zeros_like(self.msem[0]),
             lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
         )
-        merged_support = power_scale(
+        merged_support = relative_power_scale(
             _activations + semantic_support,
             self.mcf_sensitivity,
         )
-        return (merged_support + lb) * candidates
+        return (merged_support + FLOAT32_EPS) * candidates
 
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
@@ -240,17 +243,18 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
-            self.present_lists = np.array(require_pres_itemids(dataset))
+        ) -> None:
+            self.present_lists = jnp.asarray(_require_pres_itemids(dataset))
             self.max_list_length = np.max(dataset["listLength"]).item()
-            self.trial_connections = build_trial_connections(
-                self.present_lists, features
+            vocabulary_ids = global_item_ids_by_code(
+                dataset["pres_itemnos"], self.present_lists, self.max_list_length
             )
+            self.trial_connections = build_trial_connections(vocabulary_ids, features)
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
-                connections: Float[Array, "study_events study_events"],
+                parameters: Parameters,
+                connections: Float[Array, "item_count item_count"],
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -264,7 +268,7 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(
                 self.max_list_length, parameters, self.trial_connections[0]
             )
@@ -272,7 +276,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(
                 self.max_list_length, parameters, self.trial_connections[trial_index]

@@ -1,9 +1,16 @@
-"""Nth-item recall curves.
+"""Output positions at which a chosen study item is recalled.
 
-Computes recall probability at each output position conditioned on
-which serial position is recalled, producing a matrix of serial
-position by output position recall curves.
+When does the first item on a list come back? With ``query_study_position=0``,
+each point on the curve is an output position for that first item. On a trial
+with study list A, B, C and recalls C, A, the first item contributes at output
+position 2. If the item was studied more than once, a recall recorded at any
+of its study positions identifies the same item.
 
+``simple_nth_item_recall_curve`` uses all trials containing the queried study
+position as the denominator at every output. ``conditional_nth_item_recall_curve``
+starts with those trials and, at each later output, counts only trials where
+the item had yet to be recalled and the preceding output was nonzero. The two
+plotters calculate their respective curves per participant before averaging.
 """
 
 from __future__ import annotations
@@ -12,19 +19,36 @@ from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit
-from matplotlib import rcParams  # type: ignore
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
 from ..typing import Array, Bool, Float, RecallDataset
+from ._study_positions import study_position_mask
 
 __all__ = [
-    "simple_nth_item_recall_curve",
     "conditional_nth_item_recall_curve",
-    "plot_simple_nth_item_recall_curve",
     "plot_conditional_nth_item_recall_curve",
+    "plot_simple_nth_item_recall_curve",
+    "simple_nth_item_recall_curve",
 ]
+
+
+def _recalls_of_study_item(
+    dataset: RecallDataset, query_study_position: int
+) -> tuple[Bool[Array, " trials recall_positions"], Bool[Array, " trials"]]:
+    """Locate outputs naming the queried item and trials presenting it."""
+    recalls = dataset["recalls"]
+    eligible = study_position_mask(dataset)
+    items = jnp.where(eligible, dataset["pres_itemnos"], 0)
+    response_items = jnp.take_along_axis(
+        items, jnp.maximum(recalls - 1, 0), axis=1, mode="fill", fill_value=0
+    )
+    queried = items[:, query_study_position]
+    present = queried > 0
+    matches = (recalls > 0) & present[:, None] & (response_items == queried[:, None])
+    return matches, present
 
 
 def simple_nth_item_recall_curve(
@@ -46,47 +70,10 @@ def simple_nth_item_recall_curve(
         Probability at each recall output position.
 
     """
-    recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    queried_items = presentations[:, query_study_position]
-    matches = recalls == queried_items[:, None]
+    matches, queried_present = _recalls_of_study_item(dataset, query_study_position)
     counts = matches.sum(axis=0)
-    denominator = matches.shape[0]
+    denominator = queried_present.sum()
     return counts / denominator
-
-
-def extra_conditional_nth_item_recall_curve(
-    dataset: RecallDataset,
-    query_study_position: int = 0,
-) -> Float[Array, " recall_positions"]:
-    """Nth-item recall conditioned on availability and continuation.
-
-    Parameters
-    ----------
-    dataset : RecallDataset
-        Recall dataset with ``recalls`` and ``pres_itemnos``.
-    query_study_position : int
-        0-based study position to analyze.
-
-    Returns
-    -------
-    Float[Array, " recall_positions"]
-        Conditional probability at each output position.
-
-    """
-    recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    queried_items = presentations[:, query_study_position]
-
-    matches = recalls == queried_items[:, None]
-    prior_recalls = jnp.cumsum(matches, axis=1) - matches
-    availability = prior_recalls == 0
-    continuation = recalls != 0
-
-    valid = jnp.logical_and(availability, continuation)
-    numerator = (matches & valid).sum(axis=0)
-    denominator = valid.sum(axis=0)
-    return numerator / denominator
 
 
 def conditional_nth_item_recall_curve(
@@ -108,11 +95,8 @@ def conditional_nth_item_recall_curve(
         Conditional probability at each output position.
 
     """
+    matches, queried_present = _recalls_of_study_item(dataset, query_study_position)
     recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    queried_items = presentations[:, query_study_position]
-
-    matches = recalls == queried_items[:, None]
     prior_recalls = jnp.cumsum(matches, axis=1) - matches
     availability = prior_recalls == 0
     # Previous recall must be an actual item (True for the first slot by convention).
@@ -124,7 +108,7 @@ def conditional_nth_item_recall_curve(
         axis=1,
     )
 
-    valid = jnp.logical_and(availability, previous_is_item)
+    valid = availability & previous_is_item & queried_present[:, None]
     numerator = (matches & valid).sum(axis=0)
     denominator = valid.sum(axis=0)
     return numerator / denominator
@@ -136,9 +120,12 @@ def plot_conditional_nth_item_recall_curve(
     query_study_position: int = 0,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot conditional nth-item recall curve.
 
@@ -161,11 +148,16 @@ def plot_conditional_nth_item_recall_curve(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the recall curve.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -190,17 +182,19 @@ def plot_conditional_nth_item_recall_curve(
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
         color = color_cycle[index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     item_number = query_study_position + 1
-    set_plot_labels(
+    format_analysis_axes(
         axis,
         "Recall Position",
         f"P(Item {item_number} | Available & Continuing)",
@@ -215,9 +209,12 @@ def plot_simple_nth_item_recall_curve(
     query_study_position: int = 0,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot simple nth-item recall curve.
 
@@ -240,11 +237,16 @@ def plot_simple_nth_item_recall_curve(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the recall curve.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -268,17 +270,19 @@ def plot_simple_nth_item_recall_curve(
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
         color = color_cycle[index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     item_number = query_study_position + 1
-    set_plot_labels(
+    format_analysis_axes(
         axis,
         "Recall Position",
         f"P(Item {item_number})",

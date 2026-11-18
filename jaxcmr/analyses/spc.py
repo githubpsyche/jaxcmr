@@ -1,9 +1,15 @@
-"""Serial position curve analyses.
+"""Recall probability by study position.
 
-Computes recall probability at each study position, producing the
-classic U-shaped serial position curve with primacy and recency
-effects. Supports both unique-item and repeated-item lists.
+The serial position curve (SPC) shows how often participants recall the item
+studied at each position, wherever it appears in the response sequence. On a
+trial with study list A, B, C and recalls C, A, positions 1 and 3 each receive
+one count. If the same item appeared at several study positions, recalling it
+once credits each of those positions. Recalling it again adds no further credit.
 
+``spc`` divides the count at each position by the number of trials with an item
+at that position. ``plot_spc`` calculates this curve separately for each
+participant and plots their mean. For fixed-length lists of distinct items,
+``fixed_pres_spc`` computes the curve directly from position-coded recalls.
 """
 
 from __future__ import annotations
@@ -11,15 +17,21 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import jax.numpy as jnp
-from jax import jit, vmap
+from jax import jit
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
-from ..repetition import all_study_positions
-from ..typing import Array, Bool, Float, Integer, RecallDataset
+from jaxcmr.dataset import apply_by_subject
 
-__all__ = ["fixed_pres_spc", "spc", "plot_spc"]
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..typing import Array, Bool, Float, Integer, RecallDataset
+from ._study_positions import (
+    last_study_position,
+    recall_status,
+    recalled_positions,
+    study_position_mask,
+)
+
+__all__ = ["fixed_pres_spc", "plot_spc", "spc"]
 
 
 def fixed_pres_spc(
@@ -41,38 +53,26 @@ def fixed_pres_spc(
         Recall probability at each serial position.
 
     """
-    return jnp.bincount(recalls.flatten(), length=list_length + 1)[1:] / len(recalls)
+    return recalled_positions(recalls, list_length).mean(axis=0)
 
 
-def spc(
-    dataset: RecallDataset,
-    size: int = 3,
-) -> Float[Array, " study_positions"]:
-    """Compute recall rate by study position, handling repeated items.
+def spc(dataset: RecallDataset) -> Float[Array, " study_positions"]:
+    """Return the probability of recalling the item at each study position.
 
     Parameters
     ----------
     dataset : RecallDataset
-        Recall dataset containing ``recalls`` and ``pres_itemnos``.
-    size : int, optional
-        Maximum study positions an item can occupy (default: 3).
+        Study lists, lengths and position-coded responses. Recalling an item
+        credits all its presentations; duplicate responses count once.
 
     Returns
     -------
-    Float[Array, " study_positions"]
-        Recall probability at each serial position.
-
+    array of shape (study_positions,)
+        Recalled presentations divided by eligible presentations at each
+        position. Padding is excluded; positions with no opportunities are NaN.
+        Trials are pooled here; ``plot_spc`` averages participant probabilities.
     """
-    recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    list_length = presentations.shape[1]
-
-    expanded_recalls = vmap(
-        vmap(all_study_positions, in_axes=(0, None, None)), in_axes=(0, 0, None)
-    )(recalls, presentations, size)
-
-    counts = jnp.bincount(expanded_recalls.flatten(), length=list_length + 1)[1:]
-    return counts / len(expanded_recalls)
+    return recall_status(dataset).sum(axis=0) / study_position_mask(dataset).sum(axis=0)
 
 
 def plot_spc(
@@ -80,10 +80,12 @@ def plot_spc(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
-    size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot serial position curves with confidence intervals.
 
@@ -101,16 +103,19 @@ def plot_spc(
         Legend title.
     axis : Axes, optional
         Existing Axes to plot on.
-    size : int, optional
-        Maximum study positions an item can occupy (default: 3).
     confidence_level : float, optional
         Confidence level for error bounds (default: 0.95).
+
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
 
     Returns
     -------
     Axes
         Matplotlib Axes with serial position curves.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -119,26 +124,27 @@ def plot_spc(
     if labels is None:
         labels = [""] * len(datasets)
 
-    max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
+        last_position = last_study_position(data, trial_masks[data_index])
         subject_values = jnp.vstack(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(spc, static_argnames=("size",)),
-                size=size,
+                jit(spc),
             )
         )
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
-            jnp.arange(max_list_length, dtype=int) + 1,
-            subject_values,
+            jnp.arange(last_position, dtype=int) + 1,
+            subject_values[:, :last_position],
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)
+    format_analysis_axes(axis, "Study Position", "Recall Rate", contrast_name)
     return axis

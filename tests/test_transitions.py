@@ -5,8 +5,11 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from jaxcmr.analyses import crp, conditional_crp, source_target_crp, target_enrichment_crp
-from jaxcmr.helpers import make_dataset
+from jaxcmr.analyses import crp
+from jaxcmr.analyses import conditional_crp
+from jaxcmr.analyses import source_target_crp
+from jaxcmr.experimental import target_enrichment_crp
+from jaxcmr.dataset import make_dataset
 
 
 @pytest.mark.parametrize(

@@ -6,31 +6,31 @@ item's encoding context during retrieval.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.math import (
+    FLOAT32_EPS,
     exponential_primacy_decay,
-    lb,
-    power_scale,
+    relative_power_scale,
 )
 from jaxcmr.typing import (
     Array,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -46,14 +46,14 @@ class CMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn[
             "CMR"
         ] = PositionalTermination,
-    ):
+    ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
@@ -160,7 +160,7 @@ class CMR(Pytree):
     def activations(self) -> Float[Array, " item_count"]:
         """Returns relative support for retrieval of each item given model state"""
         _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
+        return (relative_power_scale(_activations, self.mcf_sensitivity) + FLOAT32_EPS) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Returns probability of stopping retrieval given model state"""
@@ -222,12 +222,12 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
+        ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
+                parameters: Parameters,
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -240,13 +240,13 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 

@@ -23,29 +23,31 @@ This 2-unit localist representation is critical for the
 list-composition effect.
 """
 
-from collections.abc import Mapping
 
-import numpy as np
+
+from typing import Self
+
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.components.factory import source_categories_by_item
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.helpers import require_pres_itemids, require_valence
-from jaxcmr.math import exponential_primacy_decay, lb, power_scale
+from jaxcmr.dataset import _require_pres_itemids
+from jaxcmr.math import FLOAT32_EPS, exponential_primacy_decay, relative_power_scale
 from jaxcmr.typing import (
     Array,
     Bool,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -62,8 +64,8 @@ class eCMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
-        is_emotional: Bool[Array, " study_events"],
+        parameters: Parameters,
+        is_emotional: Bool[Array, " item_count"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -77,9 +79,9 @@ class eCMR(Pytree):
         ----------
         list_length : int
             Number of items in the study list.
-        parameters : Mapping[str, Float_]
+        parameters : Parameters
             Model parameters.
-        is_emotional : Bool[Array, " study_events"]
+        is_emotional : Bool[Array, " item_count"]
             Per-item emotional flag (1 = emotional, 0 = neutral).
         mfc_create_fn : MemoryCreateFn, optional
             Factory for item-to-context memory.
@@ -172,7 +174,7 @@ class eCMR(Pytree):
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
 
-    def experience_item(self, item_index: Int_) -> "eCMR":
+    def experience_item(self, item_index: Int_) -> Self:
         """Encode a single item, updating both context pathways.
 
         Parameters
@@ -208,22 +210,22 @@ class eCMR(Pytree):
             lambda: self.emotion_context.state,
         )
 
-        phi_emot_i = jnp.maximum(0.0, self.phi_emot[self.study_index])
+        phi_emot_i = jnp.maximum(0.0, self.phi_emot[item_index])
         temporal_phi_emot_i = jnp.maximum(
-            0.0, self.temporal_phi_emot[self.study_index]
+            0.0, self.temporal_phi_emot[item_index]
         )
         p = self.primacy[self.study_index]
 
-        def _multiplicative():
+        def _multiplicative() -> Float[Array, ""]:
             return p * phi_emot_i
 
-        def _temporal_multiplicative():
+        def _temporal_multiplicative() -> Float[Array, ""]:
             return p * (1.0 + temporal_phi_emot_i)
 
-        def _additive():
+        def _additive() -> Float[Array, ""]:
             return p + jnp.maximum(-p, phi_emot_i)
 
-        def _temporal_additive():
+        def _temporal_additive() -> Float[Array, ""]:
             return p + jnp.maximum(-p, temporal_phi_emot_i)
 
         # Temporal MCF: primacy only, or broad emotion modulation when enabled.
@@ -348,7 +350,7 @@ class eCMR(Pytree):
         temporal_act = self.mcf.probe(self.context.state) * candidates
         emotional_act = self.emotion_mcf.probe(self.emotion_context.state) * candidates
         combined = temporal_act + emotional_act
-        return (power_scale(combined, self.mcf_sensitivity) + lb) * candidates
+        return (relative_power_scale(combined, self.mcf_sensitivity) + FLOAT32_EPS) * candidates
 
     def activations(self) -> Float[Array, " item_count"]:
         """Compute retrieval activations combining both pathways.
@@ -456,16 +458,15 @@ def make_factory(
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(require_pres_itemids(dataset))
-            self.max_list_length = np.max(dataset["listLength"]).item()
+            self.present_lists = jnp.array(_require_pres_itemids(dataset))
 
-            # 0 for neutral study events, 1 for emotional study events
-            self.trial_emotions = jnp.array(require_valence(dataset) != 0, dtype=bool)
+            self.trial_emotions = source_categories_by_item(dataset, signed=False) != 0
+            self.max_list_length = self.trial_emotions.shape[1]
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
-                is_emotional: Bool[Array, " study_events"],
+                parameters: Parameters,
+                is_emotional: Bool[Array, " item_count"],
             ) -> MemorySearch:
                 return eCMR(
                     list_length,
@@ -479,7 +480,7 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             """Create model from first trial (for shape inference)."""
             return self.model_create_fn(
                 self.max_list_length,
@@ -490,7 +491,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             """Create model for a specific trial."""
             return self.model_create_fn(

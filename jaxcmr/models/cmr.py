@@ -6,19 +6,19 @@ retrieval via context-cued competition with a Luce choice rule.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.math import (
+    FLOAT32_EPS,
     exponential_primacy_decay,
-    lb,
     relative_power_scale,
 )
 from jaxcmr.typing import (
@@ -26,12 +26,12 @@ from jaxcmr.typing import (
     Bool,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -47,21 +47,21 @@ class CMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn[
             "CMR"
         ] = PositionalTermination,
-    ):
+    ) -> None:
         """Context Maintenance and Retrieval model of memory search.
 
         Parameters
         ----------
         list_length : int
             Number of items in the study list.
-        parameters : Mapping[str, Float_]
+        parameters : Parameters
             Model parameters including drift rates, learning rates, and
             sensitivity values.
         mfc_create_fn : MemoryCreateFn, optional
@@ -239,7 +239,7 @@ class CMR(Pytree):
 
         """
         _activations = self.mcf.probe(self.context.state) * candidates
-        return (relative_power_scale(_activations, self.mcf_sensitivity) + lb) * candidates
+        return (relative_power_scale(_activations, self.mcf_sensitivity) + FLOAT32_EPS) * candidates
 
     def activations(self) -> Float[Array, " item_count"]:
         """Compute retrieval activations for all items from context-to-item memory.
@@ -373,12 +373,12 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
+        ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
+                parameters: Parameters,
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -391,12 +391,12 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             """Create a CMR model instance with the given parameters.
 
             Parameters
             ----------
-            parameters : Mapping[str, Float_]
+            parameters : Parameters
                 Model parameters.
 
             Returns
@@ -410,7 +410,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             """Create a CMR model instance for a specific trial.
 
@@ -418,7 +418,7 @@ def make_factory(
             ----------
             trial_index : Integer[Array, ""]
                 Index of the trial (unused in base CMR).
-            parameters : Mapping[str, Float_]
+            parameters : Parameters
                 Model parameters.
 
             Returns

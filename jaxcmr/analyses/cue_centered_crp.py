@@ -1,71 +1,48 @@
-"""Cue-centered Lag-CRP.
+"""Recall probability by study lag from an external retrieval cue.
 
-Computes lag-CRP where lags are measured from a retrieval cue to the
-recalled item, rather than from the previously recalled item. Designed
-for paradigms where participants receive an external cue at each
-recall event (e.g., video-recall tasks with clip cues).
+Suppose A, B, C, D were studied in order. If the previous recall was A,
+the cue is D, and the response is C, the cue-centered lag is −1. The same
+response would have lag +2 measured from the previous recall. The cues in
+``cue_clips`` are supplied separately for each output position.
 
-Notes
------
-- Cue identity is supplied per recall event via ``cue_clips``;
-  each cue is mapped to its study positions the same way recalls
-  are, allowing repeated cue items.
-- A ``_should_tabulate`` mask controls which events contribute to
-  lag counts (e.g., to exclude uncued or practice events).
-
+``cue_centered_crp`` divides observed cue-to-response lag counts by the
+opportunities for each lag among the items still available. Repeated cue or
+response items can correspond to several study positions. The event mask
+selects which responses contribute counts. Each valid response updates
+availability for later recalls, including responses to an unscored cue.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import cast
 
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
 from ..repetition import item_to_study_positions
 from ..typing import Array, Bool, Bool_, Float, Int_, Integer, RecallDataset
+from ._transitions import remove_positions
 
 __all__ = [
     "CueCenteredTabulation",
-    "tabulate_trial",
     "cue_centered_crp",
     "plot_cue_centered_crp",
-    "set_false_at_index",
+    "tabulate_trial",
 ]
-
-
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
-
-    Parameters
-    ----------
-    vec : Bool[Array, " positions"]
-        Boolean availability vector.
-    i : Int_
-        1-based index to clear; ``0`` is a no-op sentinel.
-
-    Returns
-    -------
-    tuple[Bool[Array, " positions"], None]
-        Updated vector and ``None``.
-
-    """
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
-    )
 
 
 class CueCenteredTabulation(Pytree):
     """Per-transition state for cue-centered Lag-CRP."""
 
-    def __init__(self, presentation: Integer[Array, " study_events"], size: int = 3):
+    def __init__(
+        self, presentation: Integer[Array, " study_events"], size: int = 3
+    ) -> None:
         self.list_length = presentation.size
         self.lag_range = self.list_length - 1
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
@@ -117,9 +94,9 @@ class CueCenteredTabulation(Pytree):
 
         """
         study_positions = self.item_positions(recall)
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Return True when recall maps to an available position.
 
         Parameters
@@ -134,7 +111,7 @@ class CueCenteredTabulation(Pytree):
 
         """
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_positions(recall)
             is_valid_study_position = recall_study_positions != 0
             is_available_study_position = self.avail_recalls[recall_study_positions - 1]
@@ -167,14 +144,18 @@ class CueCenteredTabulation(Pytree):
 
         """
 
-        def f(recall_pos):
+        def lags_to_recalled_position(
+            recall_position: Integer[Array, ""],
+        ) -> Integer[Array, " lags"]:
             return lax.cond(
-                (cue_pos * recall_pos) == 0,
+                (cue_pos * recall_position) == 0,
                 lambda: self.base_lags,
-                lambda: self.base_lags.at[recall_pos - cue_pos + self.lag_range].add(1),
+                lambda: self.base_lags.at[
+                    recall_position - cue_pos + self.lag_range
+                ].add(1),
             )
 
-        return lax.map(f, recall_positions).sum(0).astype(bool)
+        return lax.map(lags_to_recalled_position, recall_positions).sum(0).astype(bool)
 
     def tabulate_actual_lags(
         self,
@@ -251,7 +232,7 @@ class CueCenteredTabulation(Pytree):
 
     def tabulate(
         self, recall: Int_, cue: Int_, should_tabulate: Bool_
-    ) -> "CueCenteredTabulation":
+    ) -> CueCenteredTabulation:
         """Update state and optionally count the transition.
 
         Parameters
@@ -270,19 +251,19 @@ class CueCenteredTabulation(Pytree):
 
         """
 
-        def _update_state() -> "CueCenteredTabulation":
+        def _update_state() -> CueCenteredTabulation:
             new_avail_recalls = self.available_recalls_after(recall)
             cue_positions = self.item_positions(cue)
             has_cue = jnp.any(cue_positions != 0)
 
-            def _with_counts() -> "CueCenteredTabulation":
+            def _with_counts() -> CueCenteredTabulation:
                 return self.replace(
                     avail_recalls=new_avail_recalls,
                     actual_lags=self.tabulate_actual_lags(cue_positions, recall),
                     avail_lags=self.tabulate_available_lags(cue_positions),
                 )
 
-            def _without_counts() -> "CueCenteredTabulation":
+            def _without_counts() -> CueCenteredTabulation:
                 return self.replace(
                     avail_recalls=new_avail_recalls,
                 )
@@ -351,20 +332,12 @@ def cue_centered_crp(
         CRP of length 2*L - 1; NaN where denominator is zero.
 
     """
-    if "cue_clips" not in dataset:
-        raise ValueError(
-            "Cue-centered CRP requires dataset['cue_clips'] (recall cues)."
-        )
-    if "_should_tabulate" not in dataset:
-        raise ValueError(
-            "Cue-centered CRP requires dataset['_should_tabulate'] (transition mask)."
-        )
 
     should_tabulate = jnp.asarray(dataset["_should_tabulate"], dtype=bool)  # type: ignore
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, 0, 0, None))(
         dataset["recalls"],
         dataset["pres_itemnos"],
-        dataset["cue_clips"],
+        cast(Mapping[str, Array], dataset)["cue_clips"],
         should_tabulate,
         size,
     )
@@ -382,10 +355,13 @@ def plot_cue_centered_crp(
     exclude_zero_lag: bool = False,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot cue-centered Lag-CRP curves.
 
@@ -414,11 +390,16 @@ def plot_cue_centered_crp(
     confidence_level : float, optional
         Confidence level for the bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with cue-centered Lag-CRP plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -454,14 +435,18 @@ def plot_cue_centered_crp(
             subject_values = subject_values.at[:, center_index].set(jnp.nan)
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Cue-Centered Lag", "Conditional Resp. Prob.", contrast_name)
+    format_analysis_axes(
+        axis, "Cue-Centered Lag", "Conditional Resp. Prob.", contrast_name
+    )
     return axis

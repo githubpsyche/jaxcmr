@@ -1,79 +1,43 @@
-"""Repetition-neighbor lag-conditional response probability.
+"""Recall transitions between the neighborhoods of two presentations of an item.
 
-Measures whether recalling the neighbor of one presentation of a
-repeated item facilitates transition to the neighborhood of the
-other presentation, testing for associative linking across
-repetitions.
+In the list A, B, X, C, D, E, F, G, X, H, C immediately follows the first
+X. When C is recalled, the analysis can measure the next recall relative
+to the *second* X. A transition from C to H then has lag +1 because H
+follows the second X.
 
-Notes
------
-- For a repeated item at study positions i and j, three direction
-  modes are supported:
-
-  - ``j2i``: from j-neighbor to i's neighborhood
-  - ``i2j``: from i-neighbor to j's neighborhood
-  - ``both``: union of both directions
-
-- ``use_lag2`` extends the neighbor definition to include +2
-  offsets in addition to the default +1.
-- ``test_rep_neighbor_crp_vs_control`` compares observed
-  neighbor CRP against a shuffled control to test for
-  above-chance cross-presentation linking.
-
+``repneighborcrp`` divides these observed lags by the lags available from
+the comparison presentation. Choose the direction to start with neighbors
+of the first presentation, start with neighbors of the second, or combine
+both. ``use_lag2`` also admits a starting item two positions after a
+presentation. X itself need never be recalled.
 """
 
 __all__ = [
-    "set_false_at_index",
     "NeighborCRPTabulation",
-    "tabulate_trial",
-    "repneighborcrp",
     "plot_rep_neighbor_crp",
-    "plot_repneighborcrp_j2i",
-    "plot_repneighborcrp_i2j",
     "plot_repneighborcrp_both",
+    "plot_repneighborcrp_i2j",
+    "plot_repneighborcrp_j2i",
+    "repneighborcrp",
     "subject_rep_neighbor_crp",
-    "test_rep_neighbor_crp_vs_control",
-    "RepNeighborCRPTestResult",
+    "tabulate_trial",
 ]
 
-from dataclasses import dataclass
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from scipy import stats
+
 from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
-from ..repetition import all_study_positions
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
-
-
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to False using 1-based indexing.
-
-    Parameters
-    ----------
-    vec : Bool[Array, " positions"]
-        Boolean vector of available positions.
-    i : Int_
-        1-based index to clear; 0 is a no-op sentinel.
-
-    Returns
-    -------
-    tuple
-        Updated vector and ``None`` carry value.
-
-    """
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
-    )
+from ._transitions import remove_positions
 
 
 class NeighborCRPTabulation(Pytree):
@@ -101,14 +65,14 @@ class NeighborCRPTabulation(Pytree):
         min_lag: int = 4,
         direction: Literal["j2i", "i2j", "both"] = "both",
         use_lag2: bool = True,
-    ):
+    ) -> None:
         size = 2
         self.list_length = presentation.size
         self.lag_range = self.list_length - 1
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
         self.base_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -147,7 +111,9 @@ class NeighborCRPTabulation(Pytree):
         self.avail_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
 
         # A leading zero is an empty response, not a lookup of the last item.
-        self.previous_positions = all_study_positions(first_recall, presentation, size)
+        self.previous_positions = equivalent_study_positions(
+            first_recall, presentation, size
+        )
         self.avail_recalls = jnp.ones(self.list_length, dtype=bool)
         self.avail_recalls = self.available_recalls_after(first_recall)
 
@@ -156,10 +122,9 @@ class NeighborCRPTabulation(Pytree):
         "Update the study positions available to retrieve after a transition."
         return lax.cond(
             (recall > 0) & (recall <= self.list_length),
-            lambda: lax.scan(
-                set_false_at_index, self.avail_recalls,
-                self.item_study_positions[recall - 1],
-            )[0],
+            lambda: remove_positions(
+                self.avail_recalls, self.item_study_positions[recall - 1]
+            ),
             lambda: self.avail_recalls,
         )
 
@@ -168,18 +133,32 @@ class NeighborCRPTabulation(Pytree):
     def lags_from_ij(self, pos: Int_) -> Bool[Array, " positions"]:
         """Return lags from mapped ``i``/``j`` positions to ``pos``."""
 
-        def f(prev):
-            def lag_from(ij):
-                return self.base_lags.at[pos - ij + self.lag_range].add(1)
-
-            def maybe_lag(ij):
-                return lax.cond(
-                    (pos * ij) == 0, lambda: self.base_lags, lambda: lag_from(ij)
+        def lags_from_previous_position(
+            previous_position: Integer[Array, ""],
+        ) -> Integer[Array, " lags"]:
+            def lag_from(
+                neighbor_position: Integer[Array, ""],
+            ) -> Integer[Array, " lags"]:
+                return self.base_lags.at[pos - neighbor_position + self.lag_range].add(
+                    1
                 )
 
-            return lax.map(maybe_lag, self.ijplus_12_to_ji[prev]).sum(0)
+            def maybe_lag(
+                neighbor_position: Integer[Array, ""],
+            ) -> Integer[Array, " lags"]:
+                return lax.cond(
+                    (pos * neighbor_position) == 0,
+                    lambda: self.base_lags,
+                    lambda: lag_from(neighbor_position),
+                )
 
-        return lax.map(f, self.previous_positions).sum(0).astype(bool)
+            return lax.map(maybe_lag, self.ijplus_12_to_ji[previous_position]).sum(0)
+
+        return (
+            lax.map(lags_from_previous_position, self.previous_positions)
+            .sum(0)
+            .astype(bool)
+        )
 
     def tabulate_actual_lags(self, recall: Int_) -> Integer[Array, " lags"]:
         """Return cumulative counts of actual lag transitions."""
@@ -194,13 +173,17 @@ class NeighborCRPTabulation(Pytree):
         """Return available lag transitions from a mapped ``i`` to all recallable positions."""
         i_values = self.ijplus_12_to_ji[prev_pos]
 
-        def lag_from(ij):
-            return self.base_lags.at[self.all_positions - ij + self.lag_range].add(
-                self.avail_recalls
-            )
+        def lag_from(neighbor_position: Integer[Array, ""]) -> Integer[Array, " lags"]:
+            return self.base_lags.at[
+                self.all_positions - neighbor_position + self.lag_range
+            ].add(self.avail_recalls)
 
-        def maybe_lag(ij):
-            return lax.cond(ij == 0, lambda: self.base_lags, lambda: lag_from(ij))
+        def maybe_lag(neighbor_position: Integer[Array, ""]) -> Integer[Array, " lags"]:
+            return lax.cond(
+                neighbor_position == 0,
+                lambda: self.base_lags,
+                lambda: lag_from(neighbor_position),
+            )
 
         return lax.map(maybe_lag, i_values).sum(0).astype(bool)
 
@@ -214,7 +197,7 @@ class NeighborCRPTabulation(Pytree):
         return self.avail_lags + new_lags
 
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
-    def should_tabulate(self) -> Bool:
+    def should_tabulate(self) -> Bool[Array, ""]:
         """Return ``True`` when the previous recall enables tabulation."""
         return jnp.any(self.ijplus_12_to_ji[self.previous_positions] > 0)
 
@@ -234,9 +217,10 @@ class NeighborCRPTabulation(Pytree):
             ),
         )
 
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Accept an unrecalled item; zero responses never change the state."""
-        def available_item():
+
+        def available_item() -> Bool[Array, ""]:
             positions = self.item_study_positions[recall - 1]
             available = self.avail_recalls[jnp.maximum(positions - 1, 0)]
             return jnp.any((positions > 0) & available)
@@ -254,6 +238,7 @@ class NeighborCRPTabulation(Pytree):
             lambda: self.conditional_tabulate(recall),
             lambda: self,
         )
+
 
 def tabulate_trial(
     trial: Integer[Array, " recall_events"],
@@ -320,8 +305,11 @@ def repneighborcrp(
     presentations = dataset["pres_itemnos"]
 
     tabulate_trials = vmap(tabulate_trial, in_axes=(0, 0, None, None, None))
-    actual, possible = tabulate_trials(trials, presentations, direction, use_lag2, min_lag)
+    actual, possible = tabulate_trials(
+        trials, presentations, direction, use_lag2, min_lag
+    )
     return actual.sum(0) / possible.sum(0)
+
 
 def plot_rep_neighbor_crp(
     datasets: Sequence[RecallDataset] | RecallDataset,
@@ -332,10 +320,12 @@ def plot_rep_neighbor_crp(
     use_lag2: bool = True,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
-
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot repetition-neighbor lag-CRP with CIs.
 
@@ -364,19 +354,23 @@ def plot_rep_neighbor_crp(
     confidence_level : float, optional
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Axes with the neighbor CRP plot.
-
     """
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-
 
     lag_interval = jnp.arange(-max_lag, max_lag + 1, dtype=int)
 
@@ -387,7 +381,9 @@ def plot_rep_neighbor_crp(
             apply_by_subject(
                 data,
                 trial_masks[data_index],
-                jit(repneighborcrp, static_argnames=("direction", "use_lag2", "min_lag")),
+                jit(
+                    repneighborcrp, static_argnames=("direction", "use_lag2", "min_lag")
+                ),
                 direction,
                 use_lag2,
                 min_lag,
@@ -397,15 +393,16 @@ def plot_rep_neighbor_crp(
             :, lag_range - max_lag : lag_range + max_lag + 1
         ]
 
-
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     # build a dynamic x-axis label
@@ -415,11 +412,12 @@ def plot_rep_neighbor_crp(
         xlabel = "Lag from 2nd Presentation"
     else:
         xlabel = "Lag from 1st/2nd Presentation"
-    set_plot_labels(axis, xlabel, "Conditional Resp. Prob.", contrast_name)
+    format_analysis_axes(axis, xlabel, "Conditional Resp. Prob.", contrast_name)
     return axis
 
 
 # wrapper functions configuring each direction, always using lag2:
+
 
 def plot_repneighborcrp_j2i(
     datasets: Sequence[RecallDataset] | RecallDataset,
@@ -428,11 +426,23 @@ def plot_repneighborcrp_j2i(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for j-neighbor → i transitions."""
+    """Return plot configured for j-neighbor → i transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_neighbor_crp(
         datasets,
         trial_masks,
@@ -445,6 +455,8 @@ def plot_repneighborcrp_j2i(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -455,11 +467,23 @@ def plot_repneighborcrp_i2j(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for i-neighbor → j transitions."""
+    """Return plot configured for i-neighbor → j transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_neighbor_crp(
         datasets,
         trial_masks,
@@ -472,6 +496,8 @@ def plot_repneighborcrp_i2j(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -482,11 +508,23 @@ def plot_repneighborcrp_both(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for both j-neighbor → i and i-neighbor → j transitions."""
+    """Return plot configured for both j-neighbor → i and i-neighbor → j transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_neighbor_crp(
         datasets,
         trial_masks,
@@ -499,6 +537,8 @@ def plot_repneighborcrp_both(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -509,7 +549,7 @@ def subject_rep_neighbor_crp(
     use_lag2: bool = True,
     min_lag: int = 4,
     max_lag: int = 3,
-) -> np.ndarray:
+) -> Float[np.ndarray, " subjects lags"]:
     """Compute subject-level repetition-neighbor CRP.
 
     Parameters
@@ -540,91 +580,3 @@ def subject_rep_neighbor_crp(
         min_lag,
     )
     return np.vstack([s[lag_slice] for s in subject_values])
-
-
-@dataclass
-class RepNeighborCRPTestResult:
-    """Results from a repetition-neighbor CRP statistical test."""
-
-    lags: np.ndarray
-    t_stats: np.ndarray
-    t_pvals: np.ndarray
-    w_stats: np.ndarray
-    w_pvals: np.ndarray
-    mean_diffs: np.ndarray
-    direction: str
-
-    def __str__(self) -> str:
-        lines = [
-            f"Direction: {self.direction}",
-            f"{'Lag':>5} | {'t-stat':>8} {'t p-val':>10} | "
-            f"{'W-stat':>8} {'W p-val':>10} | {'Mean Diff':>10}",
-            f"{'-'*5}-+-{'-'*20}-+-{'-'*20}-+-{'-'*11}",
-        ]
-        for i, lag in enumerate(self.lags):
-            lines.append(
-                f"{lag:>5} | {self.t_stats[i]:>8.3f} {self.t_pvals[i]:>10.4f} | "
-                f"{self.w_stats[i]:>8.1f} {self.w_pvals[i]:>10.4f} | "
-                f"{self.mean_diffs[i]:>10.4f}"
-            )
-        return "\n".join(lines)
-
-
-def test_rep_neighbor_crp_vs_control(
-    observed_crp: np.ndarray,
-    control_crp: np.ndarray,
-    max_lag: int = 3,
-    direction: str = "both",
-) -> RepNeighborCRPTestResult:
-    """Test observed vs control repetition-neighbor CRP.
-
-    Parameters
-    ----------
-    observed_crp : np.ndarray
-        Subject-level CRP from observed data.
-        Shape ``(n_subjects, 2*max_lag+1)``.
-    control_crp : np.ndarray
-        Subject-level CRP from control data.
-        Shape ``(n_subjects, 2*max_lag+1)``.
-    max_lag : int, optional
-        Maximum lag used for labeling.
-    direction : str, optional
-        Direction label for results.
-
-    """
-    lag_labels = np.arange(-max_lag, max_lag + 1)
-    n_lags = len(lag_labels)
-
-    t_stats = np.zeros(n_lags)
-    t_pvals = np.zeros(n_lags)
-    w_stats = np.zeros(n_lags)
-    w_pvals = np.zeros(n_lags)
-    mean_diffs = np.zeros(n_lags)
-
-    for lag_idx in range(n_lags):
-        obs_col = observed_crp[:, lag_idx]
-        ctrl_col = control_crp[:, lag_idx]
-        diff = obs_col - ctrl_col
-
-        t_stat, t_pval = stats.ttest_rel(obs_col, ctrl_col, nan_policy="omit")
-        t_stats[lag_idx] = t_stat
-        t_pvals[lag_idx] = t_pval
-
-        valid = ~(np.isnan(obs_col) | np.isnan(ctrl_col))
-        if valid.sum() > 10:
-            w_stat, w_pval = stats.wilcoxon(diff[valid], alternative="two-sided")
-        else:
-            w_stat, w_pval = np.nan, np.nan
-        w_stats[lag_idx] = w_stat
-        w_pvals[lag_idx] = w_pval
-        mean_diffs[lag_idx] = np.nanmean(diff)
-
-    return RepNeighborCRPTestResult(
-        lags=lag_labels,
-        t_stats=t_stats,
-        t_pvals=t_pvals,
-        w_stats=w_stats,
-        w_pvals=w_pvals,
-        mean_diffs=mean_diffs,
-        direction=direction,
-    )

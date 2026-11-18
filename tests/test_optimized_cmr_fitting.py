@@ -14,7 +14,7 @@ from jaxcmr.experimental.optimized_cmr_fitting import (
     ScipyLBFGSB,
     ScipyDE,
 )
-from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
+from jaxcmr.loss.sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 from jaxcmr.experimental.optimized_cmr import (
     ModelFactory as OptimizedFactory,

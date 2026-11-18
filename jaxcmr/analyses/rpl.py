@@ -1,43 +1,48 @@
-"""Recall Probability by Lag (RPL).
+"""Recall probability as a function of repeated-item spacing.
 
-Computes recall probability as a function of the lag between a
-repeated item's two study presentations. Quantifies how spacing
-between presentations affects subsequent memory.
+``item_lag_counts`` counts one item's opportunity and recall. Dataset operations
+pool these counts across lists; participant operations retain separate rows.
+Spacing is the number of intervening items between the first two presentations.
+Once-presented items occupy a separate leading column.
 
+``recall_probability_by_lag`` reports individual spacings with an overflow
+bucket at its configured maximum. ``binned_recall_probability_by_lag`` instead
+accepts explicit inclusive ranges and divides their pooled recalled-item counts
+by their pooled opportunities. It does not average per-spacing probabilities.
+Plots give each participant equal weight. Slope comparisons use explicit spacing
+coordinates and omit the once-presented column.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Sequence
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
+import pandas as pd
 from jax import jit, vmap
 from matplotlib.axes import Axes
-from scipy import stats
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
 from ..repetition import item_to_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from ._study_positions import study_position_mask
+from .statistics import compare_paired, compare_to_reference
 
 __all__ = [
+    "binned_recall_probability_by_lag",
     "infer_max_lag",
     "item_lag_counts",
-    "recall_probability_by_lag",
-    "binned_recall_probability_by_lag",
-    "bk2024_binned_recall_probability_by_lag",
-    "hk2005_binned_recall_probability_by_lag",
     "plot_full_rpl",
     "plot_rpl",
-    "plot_bk2024_rpl",
-    "plot_hk2005_rpl",
-    "subject_full_rpl",
+    "recall_probability_by_lag",
+    "run_rpl_slope_analysis",
     "subject_binned_rpl",
+    "subject_full_rpl",
     "test_rpl_slope",
     "test_rpl_slope_vs_comparison",
-    "run_rpl_slope_analysis",
 ]
 
 
@@ -45,12 +50,28 @@ def infer_max_lag(
     presentations: Integer[Array, " trials study_events"],
     list_length: int,
 ) -> int:
-    """Return the largest first-to-second-presentation distance observed in ``presentations``."""
-    all_items = jnp.arange(1, list_length + 1)
-    positions = vmap(
-        vmap(item_to_study_positions, in_axes=(0, None, None)), in_axes=(None, 0, None)
-    )(all_items, presentations, 2)
-    return jnp.max(jnp.maximum(positions[..., 1] - positions[..., 0], 0)).item() - 1
+    """Return the largest spacing between first and second presentations.
+
+    Parameters
+    ----------
+    presentations : array of shape (trials, study_events)
+        Positive within-list item identities; zero pads unused positions.
+    list_length : int
+        Number of stored study positions to inspect.
+
+    Returns
+    -------
+    int
+        Largest number of intervening items, or zero if there are no repeats.
+        This host-side operation is used to choose a static array size.
+    """
+    maximum = 0
+    for presentation in np.asarray(presentations)[:, :list_length]:
+        for item in np.unique(presentation[presentation > 0]):
+            positions = np.flatnonzero(presentation == item)
+            if positions.size >= 2:
+                maximum = max(maximum, int(positions[1] - positions[0] - 1))
+    return maximum
 
 
 def item_lag_counts(
@@ -86,7 +107,11 @@ def item_lag_counts(
     bin_index = jnp.clip(lag, 0, max_lag + 1)
 
     presented = (jnp.arange(n_bins) == bin_index) & (first_pos > 0)
-    recalled = presented & jnp.any(recalls == first_pos)
+    response_indices = jnp.clip(recalls - 1, 0, presentation.size - 1)
+    valid = (recalls > 0) & (recalls <= presentation.size)
+    recalled = presented & jnp.any(
+        valid & (presentation[response_indices] == target_item)
+    )
 
     return presented, recalled
 
@@ -103,6 +128,25 @@ def _trial_lag_counts(
         all_items, recalls, presentations, max_lag, n_bins
     )
     return presented.sum(0), recalled.sum(0)
+
+
+def _dataset_lag_counts(
+    dataset: RecallDataset,
+    max_lag: int,
+) -> tuple[Integer[Array, " lag_bins"], Integer[Array, " lag_bins"]]:
+    """Pool eligible item opportunities and recalled items by spacing."""
+    presentations = jnp.where(study_position_mask(dataset), dataset["pres_itemnos"], 0)
+    items = vmap(lambda row: jnp.unique(row, size=row.size, fill_value=0))(
+        presentations
+    )
+    actual, recalled = vmap(_trial_lag_counts, in_axes=(0, 0, 0, None, None))(
+        dataset["recalls"],
+        presentations,
+        items,
+        max_lag,
+        max_lag + 2,
+    )
+    return actual.sum(axis=0), recalled.sum(axis=0)
 
 
 def recall_probability_by_lag(
@@ -124,121 +168,45 @@ def recall_probability_by_lag(
         Recall probability per lag bin.
 
     """
-    recalls = dataset["recalls"]
-    presentations = dataset["pres_itemnos"]
-    list_length = presentations.shape[1]
-    n_bins = max_lag + 2
-    all_items = jnp.arange(1, list_length + 1)
-
-    presented_t, recalled_t = vmap(_trial_lag_counts, in_axes=(0, 0, None, None, None))(
-        recalls, presentations, all_items, max_lag, n_bins
-    )
-    return recalled_t.sum(0) / presented_t.sum(0)
+    presented, recalled = _dataset_lag_counts(dataset, max_lag)
+    return recalled / presented
 
 
 def binned_recall_probability_by_lag(
     dataset: RecallDataset,
-    max_lag: int = 8,
-) -> Float[Array, " lag_bins"]:
-    """Binned recall probability by repetition lag.
+    spacing_bins: Sequence[tuple[int, int]],
+) -> Float[Array, " spacing_bins_plus_singletons"]:
+    """Pool item counts within explicit spacing ranges, then divide.
 
     Parameters
     ----------
     dataset : RecallDataset
-        Recall dataset with ``recalls`` and ``pres_itemnos``.
-    max_lag : int
-        Largest explicit lag bucket.
+        Trials to pool, normally belonging to one participant.
+    spacing_bins : sequence of (lower, upper) pairs
+        Inclusive ranges of intervening items, in output order. For example,
+        ``((0, 0), (1, 2), (3, 5), (6, 8))``. Supply disjoint, nonnegative
+        ranges; spacings outside them are excluded. Bins must be static under JIT.
 
     Returns
     -------
-    Float[Array, " lag_bins"]
-        Recall probability per binned lag.
-
+    array of shape (len(spacing_bins) + 1,)
+        Once-presented recall probability followed by each range's recalled
+        item count divided by eligible item count. Empty groups are NaN.
+        The first two presentations determine spacing for items studied more
+        than twice. There is no equal-spacing averaging or overflow bin here.
     """
-    result = recall_probability_by_lag(dataset, max_lag)
-    return (
-        jnp.zeros(5)
-        .at[0]
-        .set(result[0])
-        .at[1]
-        .set(result[1])
-        .at[2]
-        .set((result[2] + result[3]) / 2)
-        .at[3]
-        .set((result[4] + result[5] + result[6]) / 3)
-        .at[4]
-        .set((result[7] + result[8] + result[9]) / 3)
+    presented, recalled = _dataset_lag_counts(
+        dataset, max(dataset["pres_itemnos"].shape[1] - 2, 0)
     )
-
-
-def bk2024_binned_recall_probability_by_lag(
-    dataset: RecallDataset,
-    max_lag: int = 14,
-) -> Float[Array, " lag_bins"]:
-    """Binned recall probability by lag for BroitmanKahana2024.
-
-    Parameters
-    ----------
-    dataset : RecallDataset
-        Recall dataset with ``recalls`` and ``pres_itemnos``.
-    max_lag : int
-        Largest explicit lag bucket.
-
-    Returns
-    -------
-    Float[Array, " lag_bins"]
-        Recall probability per binned lag.
-
-    """
-    result = recall_probability_by_lag(dataset, max_lag)
-    return (
-        jnp.zeros(5)
-        .at[0]
-        .set(result[0])
-        .at[1]
-        .set((result[4] + result[5] + result[6]) / 3)
-        .at[2]
-        .set((result[7] + result[8] + result[9]) / 3)
-        .at[3]
-        .set((result[10] + result[11] + result[12]) / 3)
-        .at[4]
-        .set((result[13] + result[14] + result[15]) / 3)
-    )
-
-
-def hk2005_binned_recall_probability_by_lag(
-    dataset: RecallDataset,
-    max_lag: int = 19,
-) -> Float[Array, " lag_bins"]:
-    """Binned recall probability by lag for HowardKahana2005.
-
-    Parameters
-    ----------
-    dataset : RecallDataset
-        Recall dataset with ``recalls`` and ``pres_itemnos``.
-    max_lag : int
-        Largest explicit lag bucket.
-
-    Returns
-    -------
-    Float[Array, " lag_bins"]
-        Recall probability per binned lag.
-
-    """
-    result = recall_probability_by_lag(dataset, max_lag)
-    return (
-        jnp.zeros(5)
-        .at[0]
-        .set(result[0])
-        .at[1]
-        .set((result[3] + result[4] + result[5] + result[6]) / 4)
-        .at[2]
-        .set((result[7] + result[8] + result[9] + result[10]) / 4)
-        .at[3]
-        .set((result[11] + result[12] + result[13] + result[14] + result[15]) / 5)
-        .at[4]
-        .set((result[16] + result[17] + result[18] + result[19] + result[20]) / 5)
-    )
+    spacings = jnp.arange(presented.size - 1)
+    probabilities = [recalled[0] / presented[0]]
+    for lower, upper in spacing_bins:
+        selected = (spacings >= lower) & (spacings <= upper)
+        probabilities.append(
+            jnp.sum(jnp.where(selected, recalled[1:], 0))
+            / jnp.sum(jnp.where(selected, presented[1:], 0))
+        )
+    return jnp.stack(probabilities)
 
 
 def plot_full_rpl(
@@ -246,9 +214,12 @@ def plot_full_rpl(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot full-resolution repetition-lag curves.
 
@@ -269,11 +240,16 @@ def plot_full_rpl(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the RPL plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -294,18 +270,20 @@ def plot_full_rpl(
             )
         )
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             jnp.arange(len(xticklabels)),
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     axis.set_xticks(range(len(xticklabels)))
     axis.set_xticklabels(xticklabels)
-    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
+    format_analysis_axes(axis, "Lag", "Recall Rate", contrast_name)
     return axis
 
 
@@ -314,9 +292,13 @@ def plot_rpl(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    spacing_bins: Sequence[tuple[int, int]],
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot binned repetition-lag curves.
 
@@ -337,189 +319,47 @@ def plot_rpl(
     confidence_level : float
         Confidence level for error bounds.
 
+    spacing_bins : sequence of (lower, upper) pairs
+        Inclusive ranges of intervening items. Pool counts within each
+        participant before averaging participant probabilities.
+
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the binned RPL plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
     )
     if labels is None:
         labels = [""] * len(datasets)
-    max_lag = infer_max_lag(
-        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
-    )
-    xticklabels = ["N/A", "0", "1-2", "3-5", "6-8"]
+    xticklabels = ["N/A"] + [
+        str(low) if low == high else f"{low}-{high}" for low, high in spacing_bins
+    ]
     for data_index, data in enumerate(datasets):
-        subject_values = jnp.vstack(
-            apply_by_subject(
-                data,
-                trial_masks[data_index],
-                jit(binned_recall_probability_by_lag, static_argnames=("max_lag",)),
-                max_lag,
-            )
-        )
+        subject_values = subject_binned_rpl(data, trial_masks[data_index], spacing_bins)
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
-            jnp.arange(5),
+            jnp.arange(len(xticklabels)),
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     axis.set_xticks(range(len(xticklabels)))
     axis.set_xticklabels(xticklabels)
-    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
+    format_analysis_axes(axis, "Lag", "Recall Rate", contrast_name)
     return axis
-
-
-def plot_bk2024_rpl(
-    datasets: Sequence[RecallDataset] | RecallDataset,
-    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    color_cycle: list[str] | None = None,
-    labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
-    axis: Axes | None = None,
-    confidence_level: float = 0.95,
-) -> Axes:
-    """Plot binned repetition-lag curves for BroitmanKahana2024.
-
-    Parameters
-    ----------
-    datasets : Sequence[RecallDataset] | RecallDataset
-        One or more datasets to plot.
-    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
-        Boolean mask(s) selecting trials.
-    color_cycle : list[str] or None
-        Colors for each curve.
-    labels : Sequence[str] or None
-        Legend labels for each curve.
-    contrast_name : str or None
-        Legend title.
-    axis : Axes or None
-        Existing Axes to plot on.
-    confidence_level : float
-        Confidence level for error bounds.
-
-    Returns
-    -------
-    Axes
-        Matplotlib Axes with the binned RPL plot.
-
-    """
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
-        datasets, trial_masks, color_cycle, axis
-    )
-    if labels is None:
-        labels = [""] * len(datasets)
-    max_lag = infer_max_lag(
-        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
-    )
-    xticklabels = ["N/A", "3-5", "6-8", "9-11", "12-14"]
-    for data_index, data in enumerate(datasets):
-        subject_values = jnp.vstack(
-            apply_by_subject(
-                data,
-                trial_masks[data_index],
-                jit(
-                    bk2024_binned_recall_probability_by_lag,
-                    static_argnames=("max_lag",),
-                ),
-                max_lag,
-            )
-        )
-        color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
-            axis,
-            jnp.arange(5),
-            subject_values,
-            labels[data_index],
-            color,
-            confidence_level=confidence_level,
-        )
-
-    axis.set_xticks(range(len(xticklabels)))
-    axis.set_xticklabels(xticklabels)
-    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
-    return axis
-
-
-def plot_hk2005_rpl(
-    datasets: Sequence[RecallDataset] | RecallDataset,
-    trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
-    color_cycle: list[str] | None = None,
-    labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
-    axis: Axes | None = None,
-    confidence_level: float = 0.95,
-) -> Axes:
-    """Plot binned repetition-lag curves for HowardKahana2005.
-
-    Parameters
-    ----------
-    datasets : Sequence[RecallDataset] | RecallDataset
-        One or more datasets to plot.
-    trial_masks : Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"]
-        Boolean mask(s) selecting trials.
-    color_cycle : list[str] or None
-        Colors for each curve.
-    labels : Sequence[str] or None
-        Legend labels for each curve.
-    contrast_name : str or None
-        Legend title.
-    axis : Axes or None
-        Existing Axes to plot on.
-    confidence_level : float
-        Confidence level for error bounds.
-
-    Returns
-    -------
-    Axes
-        Matplotlib Axes with the binned RPL plot.
-
-    """
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
-        datasets, trial_masks, color_cycle, axis
-    )
-    if labels is None:
-        labels = [""] * len(datasets)
-    max_lag = infer_max_lag(
-        datasets[0]["pres_itemnos"], datasets[0]["pres_itemnos"].shape[1]
-    )
-    xticklabels = ["N/A", "2-5", "6-9", "10-14", "15-19"]
-    for data_index, data in enumerate(datasets):
-        subject_values = jnp.vstack(
-            apply_by_subject(
-                data,
-                trial_masks[data_index],
-                jit(
-                    hk2005_binned_recall_probability_by_lag,
-                    static_argnames=("max_lag",),
-                ),
-                max_lag,
-            )
-        )
-        color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
-            axis,
-            jnp.arange(5),
-            subject_values,
-            labels[data_index],
-            color,
-            confidence_level=confidence_level,
-        )
-
-    axis.set_xticks(range(len(xticklabels)))
-    axis.set_xticklabels(xticklabels)
-    set_plot_labels(axis, "Lag", "Recall Rate", contrast_name)
-    return axis
-
-
-_BINNED_LAG_VALUES = np.array([0.0, 1.5, 4.0, 7.0])
 
 
 def _resolve_max_lag(
@@ -550,7 +390,7 @@ def subject_full_rpl(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     max_lag: int | None = None,
-) -> np.ndarray:
+) -> Float[np.ndarray, "subjects lags"]:
     """Subject-level recall probability by lag.
 
     Parameters
@@ -581,64 +421,40 @@ def subject_full_rpl(
 def subject_binned_rpl(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
-    max_lag: int | None = None,
-) -> np.ndarray:
-    """Subject-level binned recall probability by lag.
+    spacing_bins: Sequence[tuple[int, int]],
+) -> Float[np.ndarray, " subjects spacing_bins_plus_singletons"]:
+    """Return pooled-bin probabilities for each selected participant.
 
     Parameters
     ----------
     dataset : RecallDataset
-        Recall dataset containing trial data.
-    trial_mask : Bool[Array, " trial_count"]
-        Boolean mask selecting trials.
-    max_lag : int or None
-        Largest explicit lag bucket.
+        Study lists and responses with participant IDs.
+    trial_mask : boolean array of shape (trial_count,)
+        Selected trials.
+    spacing_bins : sequence of (lower, upper) pairs
+        Inclusive spacing ranges as in ``binned_recall_probability_by_lag``.
 
     Returns
     -------
-    np.ndarray
-        Shape [n_subjects, 5].
-
+    numpy.ndarray
+        Participants in sorted ID order; columns are once-presented items,
+        then the supplied spacing ranges. Average rows to weight participants
+        equally, rather than pooling participants' item counts.
     """
-    max_lag = _resolve_max_lag(dataset, max_lag)
-    subject_values = apply_by_subject(
+    bins = tuple(tuple(bounds) for bounds in spacing_bins)
+    values = apply_by_subject(
         dataset,
         trial_mask,
-        jit(binned_recall_probability_by_lag, static_argnames=("max_lag",)),
-        max_lag,
+        jit(binned_recall_probability_by_lag, static_argnames=("spacing_bins",)),
+        bins,
     )
-    return np.vstack(subject_values)
-
-
-def _lag_values_for_mode(mode: str, n_bins: int) -> np.ndarray:
-    """Return lag values for slope fits.
-
-    Parameters
-    ----------
-    mode : str
-        ``"full"`` or ``"binned"``.
-    n_bins : int
-        Number of lag bins excluding single-presentation bin.
-
-    Returns
-    -------
-    np.ndarray
-        Lag values aligned to the slope-fit columns.
-
-    """
-    if mode == "full":
-        return np.arange(n_bins, dtype=float)
-    if mode == "binned":
-        if n_bins != _BINNED_LAG_VALUES.size:
-            raise ValueError("Binned mode expects four lag bins.")
-        return _BINNED_LAG_VALUES.copy()
-    raise ValueError("Mode must be 'full' or 'binned'.")
+    return np.vstack(values) if values else np.empty((0, len(bins) + 1))
 
 
 def _fit_subject_slopes(
-    subject_values: np.ndarray,
-    lag_values: np.ndarray,
-) -> np.ndarray:
+    subject_values: Float[np.ndarray, "subjects lags"],
+    lag_values: Float[np.ndarray, " lags"],
+) -> Float[np.ndarray, " subjects"]:
     """Per-subject slope estimates for recall probability by lag.
 
     Parameters
@@ -655,204 +471,128 @@ def _fit_subject_slopes(
 
     """
     slopes = np.full(subject_values.shape[0], np.nan)
-    for idx, values in enumerate(subject_values):
+    for subject_index, values in enumerate(subject_values):
         valid = np.isfinite(values)
-        if valid.sum() < 2:
+        if np.unique(lag_values[valid]).size < 2:
             continue
-        slopes[idx] = np.polyfit(lag_values[valid], values[valid], 1)[0]
+        slopes[subject_index] = np.polyfit(lag_values[valid], values[valid], 1)[0]
     return slopes
 
 
-@dataclass
-class RPLSlopeTestResult:
-    """Results from a recall-probability-by-lag slope test."""
-
-    n: int
-    mean_slope: float
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"N={self.n}",
-            f"Mean slope: {self.mean_slope:.4f}",
-            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
-            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
-@dataclass
-class RPLSlopeComparisonResult:
-    """Results from a comparison of recall-probability-by-lag slopes."""
-
-    n: int
-    mean_observed: float
-    mean_comparison: float
-    mean_diff: float
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"N={self.n}",
-            f"Mean slope (observed): {self.mean_observed:.4f}",
-            f"Mean slope (comparison): {self.mean_comparison:.4f}",
-            f"Mean difference: {self.mean_diff:.4f}",
-            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
-            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
 def test_rpl_slope(
-    subject_rpl: np.ndarray,
-    mode: str = "full",
-) -> RPLSlopeTestResult:
-    """Test whether recall probability increases with spacing.
+    subject_rpl: Float[np.ndarray, " subjects spacing_bins_plus_singletons"],
+    spacing_values: Float[np.ndarray, " spacing_bins"],
+) -> pd.DataFrame:
+    """Compare participant spacing slopes with zero.
 
     Parameters
     ----------
-    subject_rpl : np.ndarray
-        Subject-level recall probabilities by lag.
-    mode : str
-        ``"full"`` or ``"binned"``.
+    subject_rpl : array of shape (subjects, spacing_bins + 1)
+        Participant probabilities, with once-presented items in the first column.
+    spacing_values : array of shape (spacing_bins,)
+        Explicit coordinates for the remaining columns, such as bin midpoints.
 
     Returns
     -------
-    RPLSlopeTestResult
-        Test statistics for per-subject slopes.
-
+    pandas.DataFrame
+        One ``slope`` row with the columns of ``compare_to_reference``. Each
+        participant needs two finite probabilities at distinct coordinates.
     """
-    values = subject_rpl[:, 1:]
-    lag_values = _lag_values_for_mode(mode, values.shape[1])
-    slopes = _fit_subject_slopes(values, lag_values)
-
-    valid = np.isfinite(slopes)
-    n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_1samp(slopes, 0.0, nan_policy="omit")
-    if n > 10:
-        w_stat, w_pval = stats.wilcoxon(slopes[valid], alternative="two-sided")
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return RPLSlopeTestResult(
-        n=n,
-        mean_slope=float(np.nanmean(slopes)),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
-        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
+    slopes = _fit_subject_slopes(
+        np.asarray(subject_rpl)[:, 1:], np.asarray(spacing_values)
     )
+    return compare_to_reference(slopes, labels=["slope"])
 
 
 def test_rpl_slope_vs_comparison(
-    observed_rpl: np.ndarray,
-    comparison_rpl: np.ndarray,
-    mode: str = "full",
-) -> RPLSlopeComparisonResult:
-    """Test whether observed and comparison slopes differ.
+    observed_rpl: Float[np.ndarray, " subjects spacing_bins_plus_singletons"],
+    comparison_rpl: Float[np.ndarray, " subjects spacing_bins_plus_singletons"],
+    spacing_values: Float[np.ndarray, " spacing_bins"],
+) -> pd.DataFrame:
+    """Compare spacing slopes from aligned participant probabilities.
 
     Parameters
     ----------
-    observed_rpl : np.ndarray
-        Subject-level recall probabilities (observed).
-    comparison_rpl : np.ndarray
-        Subject-level recall probabilities (comparison).
-    mode : str
-        ``"full"`` or ``"binned"``.
+    observed_rpl, comparison_rpl : array of shape (subjects, spacing_bins + 1)
+        Matching participant rows and spacing columns, including the leading
+        once-presented column that is excluded from each slope.
+    spacing_values : array of shape (spacing_bins,)
+        Explicit spacing coordinates shared by both calculations.
 
     Returns
     -------
-    RPLSlopeComparisonResult
-        Test statistics for slope differences.
-
+    pandas.DataFrame
+        One ``slope`` row, using participants with a defined slope on both sides.
     """
-    obs_values = observed_rpl[:, 1:]
-    comparison_values = comparison_rpl[:, 1:]
-    if obs_values.shape != comparison_values.shape:
-        raise ValueError(
-            "Observed and comparison RPL arrays must have the same shape."
-        )
-
-    lag_values = _lag_values_for_mode(mode, obs_values.shape[1])
-    obs_slopes = _fit_subject_slopes(obs_values, lag_values)
-    comparison_slopes = _fit_subject_slopes(comparison_values, lag_values)
-
-    valid = ~(np.isnan(obs_slopes) | np.isnan(comparison_slopes))
-    n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_rel(
-        obs_slopes, comparison_slopes, nan_policy="omit"
-    )
-    if n > 10:
-        diff = obs_slopes[valid] - comparison_slopes[valid]
-        w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return RPLSlopeComparisonResult(
-        n=n,
-        mean_observed=float(np.nanmean(obs_slopes)),
-        mean_comparison=float(np.nanmean(comparison_slopes)),
-        mean_diff=float(np.nanmean(obs_slopes - comparison_slopes)),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
-        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
-    )
+    coordinates = np.asarray(spacing_values)
+    observed = _fit_subject_slopes(np.asarray(observed_rpl)[:, 1:], coordinates)
+    comparison = _fit_subject_slopes(np.asarray(comparison_rpl)[:, 1:], coordinates)
+    return compare_paired(observed, comparison, labels=["slope"])
 
 
 def run_rpl_slope_analysis(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     comparison_dataset: RecallDataset,
-    comparison_mask: Bool[Array, " trial_count"],
-    mode: str = "full",
+    comparison_mask: Bool[Array, " comparison_trials"],
+    spacing_values: Float[np.ndarray, " spacing_bins"],
+    *,
+    spacing_bins: Sequence[tuple[int, int]] | None = None,
     max_lag: int | None = None,
-) -> tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]:
-    """Slope tests for observed and comparison datasets.
+) -> pd.DataFrame:
+    """Calculate and compare participant spacing slopes for two datasets.
 
     Parameters
     ----------
-    dataset : RecallDataset
-        Observed recall dataset.
-    trial_mask : Bool[Array, " trial_count"]
-        Mask selecting observed trials.
-    comparison_dataset : RecallDataset
-        Comparison recall dataset.
-    comparison_mask : Bool[Array, " trial_count"]
-        Mask selecting comparison trials.
-    mode : str
-        ``"full"`` or ``"binned"``.
-    max_lag : int or None
-        Largest explicit lag bucket.
+    dataset, comparison_dataset : RecallDataset
+        Datasets with the same selected participant identities.
+    trial_mask, comparison_mask : boolean arrays
+        Selected trials in their respective datasets.
+    spacing_values : array of shape (spacing_bins,)
+        Explicit coordinates, excluding once-presented items.
+    spacing_bins : sequence of (lower, upper) pairs, optional
+        Use pooled bins when supplied; otherwise use individual spacings.
+    max_lag : int, optional
+        Full-RPL maximum when bins are omitted. Inferred from the first dataset
+        when absent, then used for both datasets.
 
     Returns
     -------
-    tuple[RPLSlopeTestResult, RPLSlopeTestResult, RPLSlopeComparisonResult]
-        Observed, comparison, and difference results.
+    pandas.DataFrame
+        Rows ``observed``, ``comparison`` and ``difference``. The first two test
+        slopes against zero; the last compares paired slopes.
 
+    Raises
+    ------
+    ValueError
+        The selected participant identities differ.
     """
-    max_lag = _resolve_max_lag(dataset, max_lag)
-    if mode == "full":
-        observed_rpl = subject_full_rpl(dataset, trial_mask, max_lag)
-        comparison_rpl = subject_full_rpl(comparison_dataset, comparison_mask, max_lag)
-    elif mode == "binned":
-        observed_rpl = subject_binned_rpl(dataset, trial_mask, max_lag)
-        comparison_rpl = subject_binned_rpl(
-            comparison_dataset, comparison_mask, max_lag
-        )
-    else:
-        raise ValueError("Mode must be 'full' or 'binned'.")
-
-    observed_result = test_rpl_slope(observed_rpl, mode=mode)
-    comparison_result = test_rpl_slope(comparison_rpl, mode=mode)
-    difference_result = test_rpl_slope_vs_comparison(
-        observed_rpl, comparison_rpl, mode=mode
+    observed_ids = np.unique(
+        np.asarray(dataset["subject"]).reshape(-1)[np.asarray(trial_mask)]
     )
-
-    return observed_result, comparison_result, difference_result
+    comparison_ids = np.unique(
+        np.asarray(comparison_dataset["subject"]).reshape(-1)[
+            np.asarray(comparison_mask)
+        ]
+    )
+    if not np.array_equal(observed_ids, comparison_ids):
+        raise ValueError(
+            "Spacing-slope comparisons require the same selected participants."
+        )
+    if spacing_bins is None:
+        limit = _resolve_max_lag(dataset, max_lag)
+        observed = subject_full_rpl(dataset, trial_mask, limit)
+        comparison = subject_full_rpl(comparison_dataset, comparison_mask, limit)
+    else:
+        observed = subject_binned_rpl(dataset, trial_mask, spacing_bins)
+        comparison = subject_binned_rpl(
+            comparison_dataset, comparison_mask, spacing_bins
+        )
+    results = [
+        test_rpl_slope(observed, spacing_values),
+        test_rpl_slope(comparison, spacing_values),
+        test_rpl_slope_vs_comparison(observed, comparison, spacing_values),
+    ]
+    return pd.concat(results, ignore_index=True).set_axis(
+        pd.Index(["observed", "comparison", "difference"], name="comparison")
+    )

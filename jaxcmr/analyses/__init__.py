@@ -1,44 +1,13 @@
-__all__ = [
-    "cat_factor_by_recall",
-    "cat_factor_spc",
-    "cat_lpp_by_recall",
-    "cat_lpp_spc",
-    "cat_recall_by_factor",
-    "cat_recall_by_lpp",
-    "cat_recall_rate",
-    "cat_spc",
-    "compound_cueing_crp",
-    "conditional_corec_by_cat",
-    "conditional_corec_by_lag",
-    "conditional_crp",
-    "conditional_distcrp",
-    "crp",
-    "cue_centered_crp",
-    "cue_centered_lagrank",
-    "distcrp",
-    "distrank",
-    "intrusion_error_rate",
-    "joint_corec_by_lag",
-    "lagrank",
-    "log_odds_crp",
-    "nth_item_recall",
-    "omission_error_rate",
-    "order_error_rate",
-    "pnr",
-    "repaccesscrp",
-    "repcuecrp",
-    "relative_srac",
-    "repcrp",
-    "replagrank",
-    "repneighborcrp",
-    "reproutecrp",
-    "repsrac",
-    "rpl",
-    "serialrepcrp",
-    "serialreplagrank",
-    "spc",
-    "srac",
-    "source_target_crp",
-    "target_enrichment_crp",
-    "termination_probability",
-]
+"""Recall measures, participant summaries, and scientific comparisons.
+
+Import the module for the measure you need. Dataset calculations pool selected
+trials; ``subject_*`` operations retain participant rows; plotters draw their
+means. ``statistics`` supplies common intervals and paired comparisons.
+
+``corecall`` groups joint and conditional co-recall. ``factors`` relates study
+measurements to category and item recall. Transition modules retain their own
+eligibility and history rules, with tabulators available for specialized
+research calculations. Provisional measures live in ``jaxcmr.experimental``.
+"""
+
+__all__ = []

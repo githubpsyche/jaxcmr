@@ -7,19 +7,13 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg", force=True)
-from jaxcmr.analyses.cat_recall_by_factor import (
+from jaxcmr.analyses.factors import (
     binned_recall_counts,
     cat_recall_by_factor,
     category_factor_recall_histogram,
     compute_factor_bin_edges,
     plot_cat_recall_by_factor,
     subject_cat_recall_by_factor,
-)
-from jaxcmr.analyses.cat_recall_by_lpp import (
-    cat_recall_by_lpp,
-    category_lpp_recall_histogram,
-    category_recall_counts,
-    plot_cat_recall_by_lpp,
 )
 from jaxcmr.typing import RecallDataset
 
@@ -67,20 +61,19 @@ def test_duplicate_and_invalid_recall_codes_do_not_inflate_probabilities():
     rates = jax.jit(category_factor_recall_histogram)(recalls, values, categories, 1, edges)
     np.testing.assert_array_equal(rates, [1, 0])
     np.testing.assert_array_equal(
-        category_lpp_recall_histogram(recalls, values, categories, 1, edges, 2), [1, 0]
+        category_factor_recall_histogram(recalls, values, categories, 1, edges), [1, 0]
     )
-    np.testing.assert_array_equal(category_recall_counts(recalls[0], categories[0], 1, 2), [1, 0])
 
 
 def test_lpp_missing_and_outside_values_leave_empty_bins_undefined():
     edges = jnp.array([0.0, 5.0, 10.0])
     categories = jnp.ones((1, 2), dtype=int)
-    missing = category_lpp_recall_histogram(
-        jnp.array([[2, 0]]), jnp.array([[2.0, jnp.nan]]), categories, 1, edges, 2
+    missing = category_factor_recall_histogram(
+        jnp.array([[2, 0]]), jnp.array([[2.0, jnp.nan]]), categories, 1, edges
     )
     np.testing.assert_allclose(missing, [0, np.nan], equal_nan=True)
-    outside = category_lpp_recall_histogram(
-        jnp.array([[1, 2]]), jnp.array([[-10.0, 100.0]]), categories, 1, edges, 2
+    outside = category_factor_recall_histogram(
+        jnp.array([[1, 2]]), jnp.array([[-10.0, 100.0]]), categories, 1, edges
     )
     assert np.all(np.isnan(outside))
 
@@ -165,15 +158,7 @@ def test_subject_rates_and_pooled_rates_retain_distinct_weighting():
     assert empty.shape == (0, 1, 1)
 
 
-def test_lpp_dataset_wrapper_matches_factor_analysis_with_and_without_explicit_edges():
-    data = _dataset()
-    fn = jax.jit(cat_recall_by_lpp, static_argnames=("category_field", "bin_count"))
-    np.testing.assert_allclose(fn(data, "category", 1, bin_edges=jnp.array([0.0, 2.0])), [0.25])
-    np.testing.assert_allclose(
-        fn(data, "category", 1, bin_count=2),
-        cat_recall_by_factor(data, "category", 1, "LateLPP", bin_count=2),
-        equal_nan=True,
-    )
+
 
 
 def test_plot_shares_bins_across_datasets_categories_and_subjects():
@@ -194,16 +179,18 @@ def test_plot_shares_bins_across_datasets_categories_and_subjects():
         lines = [line for line in axis.lines
                  if line.get_color() == handle.get_color() and len(line.get_xdata())]
         assert len(lines) == 1
-        np.testing.assert_array_equal(lines[0].get_xdata(), [centre])
-        np.testing.assert_array_equal(lines[0].get_ydata(), [0])
+        points = lines[0].get_xydata()
+        visible = points[np.all(np.isfinite(points), axis=1)]
+        np.testing.assert_array_equal(visible, [[centre, 0]])
 
 
-def test_real_plot_uses_lpp_units_and_retains_legacy_labels():
-    axis = plot_cat_recall_by_lpp(
+def test_real_plot_uses_explicit_units_and_category_labels():
+    axis = plot_cat_recall_by_factor(
         _dataset(),
         jnp.array([True, False]),
         "category",
         [1],
+        factor_field="LateLPP", factor_label="LateLPP (uV)",
         bin_edges=jnp.array([0.0, 2.0]),
         labels=["observed"],
     )

@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -247,6 +251,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-trial-procedure-is-an-entry-point" id="toc-the-trial-procedure-is-an-entry-point" class="nav-link active" data-scroll-target="#the-trial-procedure-is-an-entry-point">The trial procedure is an entry point</a></li>
   <li><a href="#the-dataset-wrapper" id="toc-the-dataset-wrapper" class="nav-link" data-scroll-target="#the-dataset-wrapper">The dataset wrapper</a></li>
   <li><a href="#the-returned-dataset" id="toc-the-returned-dataset" class="nav-link" data-scroll-target="#the-returned-dataset">The returned dataset</a></li>
+  <li><a href="#reuse-a-prepared-simulator" id="toc-reuse-a-prepared-simulator" class="nav-link" data-scroll-target="#reuse-a-prepared-simulator">Reuse a prepared simulator</a></li>
   <li><a href="#loading-matching-saved-responses" id="toc-loading-matching-saved-responses" class="nav-link" data-scroll-target="#loading-matching-saved-responses">Loading matching saved responses</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/simulation.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
@@ -273,7 +278,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Simulation has two interfaces: a trial procedure advances a model and generates item codes; the dataset wrapper assigns parameters, repeats trials and returns a <code>RecallDataset</code>. Understanding that boundary makes it possible to supply a different trial procedure while retaining dataset handling.</p>
+<p>Simulation builds from study and retrieval operations to trial procedures and then dataset simulation. A trial procedure advances a model and generates item codes. <code>MemorySearchSimulator</code> prepares observations and model construction once and can simulate the dataset repeatedly under different parameters. The dataset convenience functions select and repeat trials before using that simulator.</p>
 <section id="the-trial-procedure-is-an-entry-point" class="level2">
 <h2 class="anchored" data-anchor-id="the-trial-procedure-is-an-entry-point">The trial procedure is an entry point</h2>
 <p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
@@ -286,7 +291,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>        rng: PRNGKeyArray,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    ) <span class="op">-&gt;</span> <span class="bu">tuple</span>[MemorySearch, Integer[Array, <span class="st">" recall_events"</span>]]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The callback receives a fresh model, its study sequence, a recall sequence and a JAX random key. It returns the updated model and generated within-list item codes. <code>present</code> and <code>trial</code> use the same item coding at this boundary; the dataset adapter translates recorded study positions beforehand.</p>
-<p>A compatible function is supplied through <strong><code>simulate_trial_fn</code></strong> to <code>MemorySearchSimulator</code> or <code>simulate_h5_from_h5()</code>. It must preserve the required array shapes and work with the JAX transformations used to run multiple trials. Its use of the supplied recall sequence determines whether the simulation conditions on observed behavior.</p>
+<p>A compatible function is supplied through <strong><code>simulate_trial_fn</code></strong> to <code>MemorySearchSimulator</code> or <code>simulate_dataset()</code>. It must preserve the required array shapes and work with the JAX transformations used to run multiple trials. Its use of the supplied recall sequence determines whether the simulation conditions on observed behavior.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -314,10 +319,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p>The forced-stop procedure, paired with a no-stop model, conditions on the recorded recall length. A matching recall count is imposed, not predicted. Its returned model has processed the sampled sequence before output masking; masking the returned array is not itself a model state update.</p>
+<p>A custom procedure can call <code>simulate_study(model, present)</code> to experience the study sequence and inspect the resulting model. It leaves the model in its study phase; call <code>model.start_retrieving()</code> explicitly before using <code>simulate_free_recall</code>. The existing trial procedures compose these operations without changing their conditioning assumptions.</p>
 </section>
 <section id="the-dataset-wrapper" class="level2">
 <h2 class="anchored" data-anchor-id="the-dataset-wrapper">The dataset wrapper</h2>
-<p><code>simulate_h5_from_h5()</code> accepts and returns in-memory dictionaries despite its name. HDF5 storage is a separate step. Its central arguments are:</p>
+<p><code>simulate_dataset()</code> accepts and returns in-memory datasets. HDF5 storage is a separate step. Its central arguments are:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -364,10 +370,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -379,7 +385,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">import</span> json</span>
 <span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> jax</span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
 <span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
 <span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
 <span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
@@ -402,7 +408,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-25"><a href="#cb3-25" aria-label="25"></a></span>
 <span id="cb3-26"><a href="#cb3-26" aria-label="26"></a><span class="im">from</span> jax <span class="im">import</span> random</span>
 <span id="cb3-27"><a href="#cb3-27" aria-label="27"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> (</span>
-<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>    simulate_h5_from_h5, simulate_study_free_recall_and_forced_stop,</span>
+<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a>    simulate_dataset, simulate_study_free_recall_and_forced_stop,</span>
 <span id="cb3-29"><a href="#cb3-29" aria-label="29"></a>)</span>
 <span id="cb3-30"><a href="#cb3-30" aria-label="30"></a></span>
 <span id="cb3-31"><a href="#cb3-31" aria-label="31"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
@@ -414,7 +420,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-37"><a href="#cb3-37" aria-label="37"></a>}</span>
 <span id="cb3-38"><a href="#cb3-38" aria-label="38"></a>simulation_parameters[<span class="st">"subject"</span>] <span class="op">=</span> participant_ids</span>
 <span id="cb3-39"><a href="#cb3-39" aria-label="39"></a></span>
-<span id="cb3-40"><a href="#cb3-40" aria-label="40"></a>simulated <span class="op">=</span> simulate_h5_from_h5(</span>
+<span id="cb3-40"><a href="#cb3-40" aria-label="40"></a>simulated <span class="op">=</span> simulate_dataset(</span>
 <span id="cb3-41"><a href="#cb3-41" aria-label="41"></a>    model_factory_cls<span class="op">=</span>CMRFactory, dataset<span class="op">=</span>data, features<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb3-42"><a href="#cb3-42" aria-label="42"></a>    parameters<span class="op">=</span>simulation_parameters, trial_mask<span class="op">=</span>trial_mask,</span>
 <span id="cb3-43"><a href="#cb3-43" aria-label="43"></a>    experiment_count<span class="op">=</span><span class="dv">2</span>, rng<span class="op">=</span>random.PRNGKey(<span class="dv">0</span>),</span>
@@ -459,16 +465,31 @@ Omitted response fields: ['rec_itemids']</code></pre>
 <p>Original response measurements cannot describe new responses. The wrapper omits <code>rec_itemids</code>, <code>irt</code>, <code>cue_clips</code> and <code>_should_tabulate</code> when present. Supply additional response-dependent field names through <code>recall_dependent_fields</code>. Study-aligned fields remain attached to their lists.</p>
 <p>Use <a href="../overview/data.html">Data</a> for coding and storage conventions. The <a href="../templates/simulation.html">simulation template</a> handles a complete run, saved outputs and behavioral comparisons; the <a href="../templates/parameter_shifting.html">parameter exploration template</a> repeats that procedure under deliberately changed parameters.</p>
 </section>
+<section id="reuse-a-prepared-simulator" class="level2">
+<h2 class="anchored" data-anchor-id="reuse-a-prepared-simulator">Reuse a prepared simulator</h2>
+<p>For repeated runs on the same selected trials, prepare once and supply new parameters and a key on each call:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> MemorySearchSimulator, replicate_trials</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>prepared <span class="op">=</span> replicate_trials(data, trial_mask, experiment_count<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>simulator <span class="op">=</span> MemorySearchSimulator(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    CMRFactory, prepared, features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>    simulate_trial_fn<span class="op">=</span>simulate_study_free_recall_and_forced_stop,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>first_run <span class="op">=</span> simulator.simulate(simulation_parameters, random.PRNGKey(<span class="dv">1</span>))</span>
+<span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>second_run <span class="op">=</span> simulator.simulate(simulation_parameters, random.PRNGKey(<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each result contains study-position recall codes and the prepared dataset’s trial metadata. Calls preserve the prepared observations and do not accumulate model state. <code>simulate_parameter_sweep</code> uses this same operation: it prepares once, sets the chosen parameter for each value, and supplies a separate key per run.</p>
+<p>The previous names <code>simulate_dataset</code>, <code>simulate_parameter_sweep</code>, and <code>replicate_trials</code> remain direct aliases of <code>simulate_dataset</code>, <code>simulate_parameter_sweep</code>, and <code>replicate_trials</code>, respectively.</p>
+</section>
 <section id="loading-matching-saved-responses" class="level2">
 <h2 class="anchored" data-anchor-id="loading-matching-saved-responses">Loading matching saved responses</h2>
 <p><code>load_matching_simulation</code> reads an HDF5 response file when its accompanying JSON settings match the requested run. Your script decides whether reuse is allowed:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> load_matching_simulation</span>
-<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>responses <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a><span class="cf">if</span> <span class="kw">not</span> force_regeneration <span class="kw">and</span> <span class="kw">not</span> fitted_now:</span>
-<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    responses <span class="op">=</span> load_matching_simulation(response_path, expected_configuration)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a><span class="co"># When responses is None, run the simulation and save its responses and settings.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> load_matching_simulation</span>
+<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>responses <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="cf">if</span> <span class="kw">not</span> force_regeneration <span class="kw">and</span> <span class="kw">not</span> fitted_now:</span>
+<span id="cb8-5"><a href="#cb8-5" aria-label="5"></a>    responses <span class="op">=</span> load_matching_simulation(response_path, expected_configuration)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-label="6"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-label="7"></a><span class="co"># When responses is None, run the simulation and save its responses and settings.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>For <code>responses.h5</code>, settings are read from <code>responses.json</code>. The function returns <code>None</code> if either file is absent or a requested setting differs. Every requested field must be present, even when its expected value is <code>None</code>; extra saved fields are allowed. Older records may place <code>jaxcmr_version</code> and <code>jax_enable_x64</code> inside <code>implementation</code>. Top-level values take precedence.</p>
 <p>The helper does not modify the files or requested settings. Malformed JSON and errors reading matching response files propagate. Forced regeneration skips the loader, so broken old files do not prevent a fresh simulation. The fitting template also regenerates responses after a new fit. Model construction, simulation, output paths, saving and post-processing remain in the caller.</p>
 <p>Matching settings do not detect edits to data or model code at the same location. After those changes, request regeneration explicitly.</p>

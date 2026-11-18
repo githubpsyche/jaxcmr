@@ -4,14 +4,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from jaxcmr.analyses import (
-    repaccesscrp,
-    serialrepcrp,
-    reproutecrp,
-    repneighborcrp,
-    compound_cueing_crp,
-)
-from jaxcmr.helpers import make_dataset
+from jaxcmr.analyses import repaccesscrp
+from jaxcmr.analyses import serialrepcrp
+from jaxcmr.analyses import reproutecrp
+from jaxcmr.analyses import repneighborcrp
+from jaxcmr.experimental import compound_cueing_crp
+from jaxcmr.dataset import make_dataset
 
 
 @pytest.mark.parametrize(

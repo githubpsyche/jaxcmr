@@ -145,6 +145,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="../templates.html" aria-current="page"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -400,7 +404,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="prepare-the-environment-and-inputs" class="level2">
 <h2 class="anchored" data-anchor-id="prepare-the-environment-and-inputs">Prepare the environment and inputs</h2>
 <p>Run the following setup cells once, then continue in order. The short installation cell runs only in Colab; local and Slurm runs use the environment you selected during Setup.</p>
-<p><code>project_root</code> anchors relative paths. When it is unset, Colab uses the current directory; elsewhere the notebook uses the enclosing Git project if present, or the current directory. Check the printed location. <code>fetch_inputs</code> copies requested bundled examples there, reuses matching files, and refuses to overwrite conflicting files. Custom input paths remain your responsibility.</p>
+<p><code>project_root</code> anchors relative paths. When it is unset, Colab uses the current directory; elsewhere the notebook uses the enclosing Git project if present, or the current directory. Check the printed location. <code>copy_example_inputs</code> copies requested bundled examples there, reuses matching files, and refuses to overwrite conflicting files. Custom input paths remain your responsibility.</p>
 <div id="887bbd15" class="cell">
 <details open="" class="code-fold">
 <summary>2 — Prepare the Colab environment</summary>
@@ -410,37 +414,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    <span class="op">%</span>pip install <span class="op">--</span>upgrade <span class="st">"jaxcmr @ git+https://github.com/githubpsyche/jaxcmr.git@main"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="24dbaeaa" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.199548Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.199370Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.779066Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.778536Z&quot;}}" data-execution_count="4">
+<div id="24dbaeaa" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:17.199548Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:17.199370Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.779066Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.778536Z&quot;}}">
 <details open="" class="code-fold">
 <summary>3 — Import packages</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> json</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax</span>
-<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">import</span> jaxcmr</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> (</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a>    resolve_project_root,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a>    resolve_project_path,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a>    generate_trial_mask,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a>    import_from_string,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a>    load_data,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a>    save_dict_to_hdf5,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>    save_figure,</span>
-<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_h5_from_h5</span>
-<span id="cb3-21"><a href="#cb3-21" aria-label="21"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-label="22"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> combine_participant_parameters</span>
-<span id="cb3-24"><a href="#cb3-24" aria-label="24"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-label="25"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> fetch_inputs</span>
-<span id="cb3-26"><a href="#cb3-26" aria-label="26"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span>
-<span id="cb3-27"><a href="#cb3-27" aria-label="27"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> parameters_for_subjects</span>
-<span id="cb3-28"><a href="#cb3-28" aria-label="28"></a><span class="im">from</span> jaxcmr.provenance <span class="im">import</span> simulation_metadata_matches</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">import</span> jax</span>
+<span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> jaxcmr</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
+<span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> copy_example_inputs</span>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> combine_participant_parameters, parameters_for_subjects</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> import_from_string</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, save_dict_to_hdf5</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_path, resolve_project_root</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> save_figure</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> (</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a>    load_matching_simulation,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-label="19"></a>    simulate_dataset,</span>
+<span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>Feature composition stays explicit here. <code>feature_column</code> selects the categorical feature, and <code>concat_features=True</code> combines categorical columns before semantic columns. This simulation loader uses the available feature array when only one is supplied.</p>
@@ -478,17 +474,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>root_path <span class="op">=</span> resolve_project_root(project_root)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="bu">print</span>(<span class="st">"Project directory:"</span>, root_path)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-label="3"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>fetch_inputs([data_path, <span class="op">*</span>fit_paths.values()], base_dir<span class="op">=</span>root_path)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>copy_example_inputs([data_path, <span class="op">*</span>fit_paths.values()], base_dir<span class="op">=</span>root_path)</span>
 <span id="cb5-5"><a href="#cb5-5" aria-label="5"></a></span>
 <span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, enable_x64)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>np.random.seed(plot_seed)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>data_path <span class="op">=</span> resolve_project_path(data_path, root_path)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(data_path))</span>
-<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>data_source <span class="op">=</span> (data_path.relative_to(root_path).as_posix()</span>
-<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>               <span class="cf">if</span> data_path.is_relative_to(root_path) <span class="cf">else</span> <span class="bu">str</span>(data_path))</span>
-<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>data_path <span class="op">=</span> resolve_project_path(data_path, root_path)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>output_dir <span class="op">=</span> resolve_project_path(output_dir, root_path)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>output_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>data <span class="op">=</span> load_data(<span class="bu">str</span>(data_path))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>data_source <span class="op">=</span> (</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>    data_path.relative_to(root_path).as_posix()</span>
+<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>    <span class="cf">if</span> data_path.is_relative_to(root_path)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>    <span class="cf">else</span> <span class="bu">str</span>(data_path)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a>subjects <span class="op">=</span> np.asarray(data[<span class="st">"subject"</span>]).ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="bdedcfcb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:18.815316Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:18.815238Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:18.817731Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:18.817381Z&quot;}}" data-execution_count="8">
@@ -742,52 +740,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-6"><a href="#cb12-6" aria-label="6"></a>    selected_trials <span class="op">=</span> prepared[<span class="st">"trial_mask"</span>]</span>
 <span id="cb12-7"><a href="#cb12-7" aria-label="7"></a>    configuration <span class="op">=</span> prepared[<span class="st">"configuration"</span>]</span>
 <span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>    simulation_path <span class="op">=</span> simulation_paths[model_name]</span>
-<span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>    metadata_path <span class="op">=</span> simulation_path.with_suffix(<span class="st">".json"</span>)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>    saved_metadata <span class="op">=</span> (</span>
-<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a>        json.loads(metadata_path.read_text()) <span class="cf">if</span> metadata_path.exists() <span class="cf">else</span> {}</span>
-<span id="cb12-12"><a href="#cb12-12" aria-label="12"></a>    )</span>
-<span id="cb12-13"><a href="#cb12-13" aria-label="13"></a>    reuse_responses <span class="op">=</span> (</span>
-<span id="cb12-14"><a href="#cb12-14" aria-label="14"></a>        <span class="kw">not</span> redo_sims</span>
-<span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>        <span class="kw">and</span> simulation_path.exists()</span>
-<span id="cb12-16"><a href="#cb12-16" aria-label="16"></a>        <span class="kw">and</span> metadata_path.exists()</span>
-<span id="cb12-17"><a href="#cb12-17" aria-label="17"></a>        <span class="kw">and</span> simulation_metadata_matches(saved_metadata, configuration)</span>
-<span id="cb12-18"><a href="#cb12-18" aria-label="18"></a>    )</span>
-<span id="cb12-19"><a href="#cb12-19" aria-label="19"></a>    <span class="cf">if</span> reuse_responses:</span>
-<span id="cb12-20"><a href="#cb12-20" aria-label="20"></a>        simulated <span class="op">=</span> load_data(<span class="bu">str</span>(simulation_path))</span>
-<span id="cb12-21"><a href="#cb12-21" aria-label="21"></a>        <span class="bu">print</span>(<span class="st">"Loaded matching responses:"</span>, simulation_path)</span>
-<span id="cb12-22"><a href="#cb12-22" aria-label="22"></a>    <span class="cf">else</span>:</span>
-<span id="cb12-23"><a href="#cb12-23" aria-label="23"></a>        simulated <span class="op">=</span> simulate_h5_from_h5(</span>
-<span id="cb12-24"><a href="#cb12-24" aria-label="24"></a>            model_factory,</span>
-<span id="cb12-25"><a href="#cb12-25" aria-label="25"></a>            data,</span>
-<span id="cb12-26"><a href="#cb12-26" aria-label="26"></a>            features,</span>
-<span id="cb12-27"><a href="#cb12-27" aria-label="27"></a>            subject_parameters,</span>
-<span id="cb12-28"><a href="#cb12-28" aria-label="28"></a>            selected_trials,</span>
-<span id="cb12-29"><a href="#cb12-29" aria-label="29"></a>            experiment_count<span class="op">=</span>experiment_count,</span>
-<span id="cb12-30"><a href="#cb12-30" aria-label="30"></a>            rng<span class="op">=</span>jax.random.PRNGKey(simulation_seed),</span>
-<span id="cb12-31"><a href="#cb12-31" aria-label="31"></a>            simulate_trial_fn<span class="op">=</span>import_from_string(configuration[<span class="st">"simulation_function"</span>]),</span>
-<span id="cb12-32"><a href="#cb12-32" aria-label="32"></a>        )</span>
-<span id="cb12-33"><a href="#cb12-33" aria-label="33"></a>        simulation_path.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb12-34"><a href="#cb12-34" aria-label="34"></a>        save_dict_to_hdf5(simulated, <span class="bu">str</span>(simulation_path))</span>
-<span id="cb12-35"><a href="#cb12-35" aria-label="35"></a>        metadata_path.write_text(</span>
-<span id="cb12-36"><a href="#cb12-36" aria-label="36"></a>            json.dumps(</span>
-<span id="cb12-37"><a href="#cb12-37" aria-label="37"></a>                {</span>
-<span id="cb12-38"><a href="#cb12-38" aria-label="38"></a>                    <span class="op">**</span>configuration,</span>
-<span id="cb12-39"><a href="#cb12-39" aria-label="39"></a>                    <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__,</span>
-<span id="cb12-40"><a href="#cb12-40" aria-label="40"></a>                    <span class="st">"jax_version"</span>: jax.__version__,</span>
-<span id="cb12-41"><a href="#cb12-41" aria-label="41"></a>                },</span>
-<span id="cb12-42"><a href="#cb12-42" aria-label="42"></a>                indent<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb12-43"><a href="#cb12-43" aria-label="43"></a>            )</span>
-<span id="cb12-44"><a href="#cb12-44" aria-label="44"></a>            <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span></span>
-<span id="cb12-45"><a href="#cb12-45" aria-label="45"></a>        )</span>
-<span id="cb12-46"><a href="#cb12-46" aria-label="46"></a>        <span class="bu">print</span>(<span class="st">"Saved responses:"</span>, simulation_path)</span>
-<span id="cb12-47"><a href="#cb12-47" aria-label="47"></a>    <span class="cf">if</span> filter_repeated_recalls:</span>
-<span id="cb12-48"><a href="#cb12-48" aria-label="48"></a>        simulated <span class="op">=</span> <span class="bu">dict</span>(simulated)</span>
-<span id="cb12-49"><a href="#cb12-49" aria-label="49"></a>        simulated[<span class="st">"recalls"</span>] <span class="op">=</span> repetition.filter_repeated_recalls(simulated[<span class="st">"recalls"</span>])</span>
-<span id="cb12-50"><a href="#cb12-50" aria-label="50"></a>    simulations[model_name] <span class="op">=</span> simulated</span>
-<span id="cb12-51"><a href="#cb12-51" aria-label="51"></a><span class="bu">print</span>(</span>
-<span id="cb12-52"><a href="#cb12-52" aria-label="52"></a>    <span class="st">"simulation_paths ="</span>,</span>
-<span id="cb12-53"><a href="#cb12-53" aria-label="53"></a>    {model_name: <span class="bu">str</span>(path) <span class="cf">for</span> model_name, path <span class="kw">in</span> simulation_paths.items()},</span>
-<span id="cb12-54"><a href="#cb12-54" aria-label="54"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>    simulated <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>    <span class="cf">if</span> <span class="kw">not</span> redo_sims:</span>
+<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a>        simulated <span class="op">=</span> load_matching_simulation(simulation_path, configuration)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-label="12"></a>    <span class="cf">if</span> simulated <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb12-13"><a href="#cb12-13" aria-label="13"></a>        simulated <span class="op">=</span> simulate_dataset(</span>
+<span id="cb12-14"><a href="#cb12-14" aria-label="14"></a>            model_factory,</span>
+<span id="cb12-15"><a href="#cb12-15" aria-label="15"></a>            data,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-label="16"></a>            features,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-label="17"></a>            subject_parameters,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-label="18"></a>            selected_trials,</span>
+<span id="cb12-19"><a href="#cb12-19" aria-label="19"></a>            experiment_count<span class="op">=</span>experiment_count,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-label="20"></a>            rng<span class="op">=</span>jax.random.PRNGKey(simulation_seed),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-label="21"></a>            simulate_trial_fn<span class="op">=</span>import_from_string(configuration[<span class="st">"simulation_function"</span>]),</span>
+<span id="cb12-22"><a href="#cb12-22" aria-label="22"></a>        )</span>
+<span id="cb12-23"><a href="#cb12-23" aria-label="23"></a>        simulation_path.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-label="24"></a>        save_dict_to_hdf5(simulated, <span class="bu">str</span>(simulation_path))</span>
+<span id="cb12-25"><a href="#cb12-25" aria-label="25"></a>        simulation_path.with_suffix(<span class="st">".json"</span>).write_text(</span>
+<span id="cb12-26"><a href="#cb12-26" aria-label="26"></a>            json.dumps(</span>
+<span id="cb12-27"><a href="#cb12-27" aria-label="27"></a>                {</span>
+<span id="cb12-28"><a href="#cb12-28" aria-label="28"></a>                    <span class="op">**</span>configuration,</span>
+<span id="cb12-29"><a href="#cb12-29" aria-label="29"></a>                    <span class="st">"jaxcmr_version"</span>: jaxcmr.__version__,</span>
+<span id="cb12-30"><a href="#cb12-30" aria-label="30"></a>                    <span class="st">"jax_version"</span>: jax.__version__,</span>
+<span id="cb12-31"><a href="#cb12-31" aria-label="31"></a>                },</span>
+<span id="cb12-32"><a href="#cb12-32" aria-label="32"></a>                indent<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb12-33"><a href="#cb12-33" aria-label="33"></a>            )</span>
+<span id="cb12-34"><a href="#cb12-34" aria-label="34"></a>            <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-label="35"></a>        )</span>
+<span id="cb12-36"><a href="#cb12-36" aria-label="36"></a>        <span class="bu">print</span>(<span class="st">"Saved responses:"</span>, simulation_path)</span>
+<span id="cb12-37"><a href="#cb12-37" aria-label="37"></a>    <span class="cf">else</span>:</span>
+<span id="cb12-38"><a href="#cb12-38" aria-label="38"></a>        <span class="bu">print</span>(<span class="st">"Loaded matching responses:"</span>, simulation_path)</span>
+<span id="cb12-39"><a href="#cb12-39" aria-label="39"></a>    <span class="cf">if</span> filter_repeated_recalls:</span>
+<span id="cb12-40"><a href="#cb12-40" aria-label="40"></a>        simulated <span class="op">=</span> simulated.copy()</span>
+<span id="cb12-41"><a href="#cb12-41" aria-label="41"></a>        simulated[<span class="st">"recalls"</span>] <span class="op">=</span> repetition.filter_repeated_recalls(simulated[<span class="st">"recalls"</span>])</span>
+<span id="cb12-42"><a href="#cb12-42" aria-label="42"></a>    simulations[model_name] <span class="op">=</span> simulated</span>
+<span id="cb12-43"><a href="#cb12-43" aria-label="43"></a><span class="bu">print</span>(</span>
+<span id="cb12-44"><a href="#cb12-44" aria-label="44"></a>    <span class="st">"simulation_paths ="</span>,</span>
+<span id="cb12-45"><a href="#cb12-45" aria-label="45"></a>    {model_name: <span class="bu">str</span>(path) <span class="cf">for</span> model_name, path <span class="kw">in</span> simulation_paths.items()},</span>
+<span id="cb12-46"><a href="#cb12-46" aria-label="46"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -809,7 +799,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>    )</span>
 <span id="cb13-10"><a href="#cb13-10" aria-label="10"></a></span>
 <span id="cb13-11"><a href="#cb13-11" aria-label="11"></a><span class="cf">if</span> redo_figures <span class="kw">and</span> simulations:</span>
-<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>    observed <span class="op">=</span> <span class="bu">dict</span>(data)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>    observed <span class="op">=</span> data.copy()</span>
 <span id="cb13-13"><a href="#cb13-13" aria-label="13"></a>    <span class="cf">if</span> filter_repeated_recalls:</span>
 <span id="cb13-14"><a href="#cb13-14" aria-label="14"></a>        observed[<span class="st">"recalls"</span>] <span class="op">=</span> repetition.filter_repeated_recalls(observed[<span class="st">"recalls"</span>])</span>
 <span id="cb13-15"><a href="#cb13-15" aria-label="15"></a>    datasets <span class="op">=</span> [observed, <span class="op">*</span>simulations.values()]</span>
@@ -837,22 +827,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="d31b08b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:27.103022Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:27.102946Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:36.769421Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:36.768993Z&quot;}}" data-execution_count="17">
 <details open="" class="code-fold">
-<summary>15 — Plot and save the configured benchmarks</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-label="1"></a><span class="cf">for</span> group <span class="kw">in</span> comparison_groups:</span>
-<span id="cb14-2"><a href="#cb14-2" aria-label="2"></a>    panel_data <span class="op">=</span> group[<span class="st">"datasets"</span>]</span>
-<span id="cb14-3"><a href="#cb14-3" aria-label="3"></a>    analysis_configs <span class="op">=</span> group[<span class="st">"analyses"</span>]</span>
-<span id="cb14-4"><a href="#cb14-4" aria-label="4"></a>    curve_labels <span class="op">=</span> group[<span class="st">"labels"</span>]</span>
-<span id="cb14-5"><a href="#cb14-5" aria-label="5"></a>    base_masks <span class="op">=</span> group[<span class="st">"base_masks"</span>]</span>
-<span id="cb14-6"><a href="#cb14-6" aria-label="6"></a>    <span class="cf">for</span> figure, figure_suffix <span class="kw">in</span> iter_analysis_figures(</span>
-<span id="cb14-7"><a href="#cb14-7" aria-label="7"></a>        panel_data, analysis_configs, curve_labels,</span>
-<span id="cb14-8"><a href="#cb14-8" aria-label="8"></a>        base_masks<span class="op">=</span>base_masks, trial_query<span class="op">=</span>analysis_trial_query,</span>
-<span id="cb14-9"><a href="#cb14-9" aria-label="9"></a>        confidence_level<span class="op">=</span>confidence_level, figure_size<span class="op">=</span>figure_size,</span>
-<span id="cb14-10"><a href="#cb14-10" aria-label="10"></a>        suffix<span class="op">=</span>group[<span class="st">"suffix"</span>],</span>
-<span id="cb14-11"><a href="#cb14-11" aria-label="11"></a>    ):</span>
-<span id="cb14-12"><a href="#cb14-12" aria-label="12"></a>        save_figure(</span>
-<span id="cb14-13"><a href="#cb14-13" aria-label="13"></a>            <span class="bu">str</span>(figure_dir), figure_str, suffix<span class="op">=</span>figure_suffix,</span>
-<span id="cb14-14"><a href="#cb14-14" aria-label="14"></a>            formats<span class="op">=</span>figure_formats, figure<span class="op">=</span>figure,</span>
-<span id="cb14-15"><a href="#cb14-15" aria-label="15"></a>        )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-label="1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb14-2"><a href="#cb14-2" aria-label="2"></a><span class="co">#| code-summary: "15 — Plot and save the configured benchmarks"</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-label="3"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-label="4"></a><span class="cf">for</span> group <span class="kw">in</span> comparison_groups:</span>
+<span id="cb14-5"><a href="#cb14-5" aria-label="5"></a>    panel_data <span class="op">=</span> group[<span class="st">"datasets"</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-label="6"></a>    analysis_configs <span class="op">=</span> group[<span class="st">"analyses"</span>]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-label="7"></a>    curve_labels <span class="op">=</span> group[<span class="st">"labels"</span>]</span>
+<span id="cb14-8"><a href="#cb14-8" aria-label="8"></a>    base_masks <span class="op">=</span> group[<span class="st">"base_masks"</span>]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-label="9"></a>    <span class="cf">for</span> figure, figure_suffix <span class="kw">in</span> iter_analysis_figures(</span>
+<span id="cb14-10"><a href="#cb14-10" aria-label="10"></a>        panel_data,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-label="11"></a>        analysis_configs,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-label="12"></a>        curve_labels,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-label="13"></a>        base_masks<span class="op">=</span>base_masks,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-label="14"></a>        trial_query<span class="op">=</span>analysis_trial_query,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-label="15"></a>        confidence_level<span class="op">=</span>confidence_level,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-label="16"></a>        figure_size<span class="op">=</span>figure_size,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-label="17"></a>        suffix<span class="op">=</span>group[<span class="st">"suffix"</span>],</span>
+<span id="cb14-18"><a href="#cb14-18" aria-label="18"></a>        bootstrap_seed<span class="op">=</span>plot_seed,</span>
+<span id="cb14-19"><a href="#cb14-19" aria-label="19"></a>    ):</span>
+<span id="cb14-20"><a href="#cb14-20" aria-label="20"></a>        <span class="cf">if</span> figure_str:</span>
+<span id="cb14-21"><a href="#cb14-21" aria-label="21"></a>            save_figure(</span>
+<span id="cb14-22"><a href="#cb14-22" aria-label="22"></a>                <span class="bu">str</span>(figure_dir),</span>
+<span id="cb14-23"><a href="#cb14-23" aria-label="23"></a>                figure_str,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-label="24"></a>                suffix<span class="op">=</span>figure_suffix,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-label="25"></a>                formats<span class="op">=</span>figure_formats,</span>
+<span id="cb14-26"><a href="#cb14-26" aria-label="26"></a>                figure<span class="op">=</span>figure,</span>
+<span id="cb14-27"><a href="#cb14-27" aria-label="27"></a>            )</span>
+<span id="cb14-28"><a href="#cb14-28" aria-label="28"></a>        <span class="cf">else</span>:</span>
+<span id="cb14-29"><a href="#cb14-29" aria-label="29"></a>            figure.tight_layout()</span>
+<span id="cb14-30"><a href="#cb14-30" aria-label="30"></a>        plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>

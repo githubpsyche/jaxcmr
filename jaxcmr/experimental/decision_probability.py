@@ -11,9 +11,9 @@ import numpy as np
 from jax import lax, vmap
 from jax.scipy.special import ndtr
 from jaxtyping import Array, Bool, Float, Integer
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from jaxcmr.math import lb
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.math import FLOAT32_EPS
 
 __all__ = [
     "Bool_",
@@ -32,14 +32,14 @@ __all__ = [
     "wald_pdf",
 ]
 
-Float_ = Float[Array, ""] | float | int
-Int_ = Integer[Array, ""] | int
-Bool_ = Bool[Array, ""] | bool
+type Float_ = Float[Array, ""] | float | int
+type Int_ = Integer[Array, ""] | int
+type Bool_ = Bool[Array, ""] | bool
 
 theta = 200.0
 tmax = 400.0
 n_steps = 400
-t_vals = np.maximum(np.linspace(0.0, tmax, n_steps), lb)
+t_vals = np.maximum(np.linspace(0.0, tmax, n_steps), FLOAT32_EPS)
 dt = t_vals[1] - t_vals[0]
 
 

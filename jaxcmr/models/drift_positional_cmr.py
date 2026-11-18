@@ -7,32 +7,31 @@ drift rate (``repetition_drift_rate``) for re-presented items.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import PositionalTermination
 from jaxcmr.math import (
     exponential_primacy_decay,
-    lb,
     normalize_magnitude,
-    power_scale,
+    relative_power_scale,
 )
+from jaxcmr.models.positional_cmr import CMR as PositionalCMR
 from jaxcmr.typing import (
     Array,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -42,20 +41,20 @@ __all__ = [
     "make_factory",
 ]
 
-class CMR(Pytree):
+class CMR(PositionalCMR):
     """The Context Maintenance and Retrieval (CMR) model of memory search."""
 
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn[
             "CMR"
         ] = PositionalTermination,
-    ):
+    ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         #! additional repetition_drift_rate parameter for items that have been studied before
         self.repetition_drift_rate = parameters["repetition_drift_rate"]
@@ -155,7 +154,7 @@ class CMR(Pytree):
         #! We don't know which trace was recalled,
         #! so we use relative support from MCF to weight recall
         item_activation = self.position_activations() * (self.studied == item_index + 1)
-        item_activation = power_scale(item_activation, self.mfc_sensitivity)
+        item_activation = relative_power_scale(item_activation, self.mfc_sensitivity)
         mfc_cue = normalize_magnitude(item_activation)
         new_context = self.context.integrate(
             self.mfc.probe(mfc_cue),
@@ -186,76 +185,6 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def position_activations(self) -> Float[Array, " list_length"]:
-        """Returns relative support for retrieval of each study position given model state"""
-        #! refactored to get position activations separately
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (power_scale(_activations, self.mcf_sensitivity) + lb) * self.recallable
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        #! reworked to pool position activations by item
-        position_activations = self.position_activations()
-        return lax.map(
-            lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
-            self.item_ids,
-        )
-
-    def stop_probability(self) -> Float[Array, ""]:
-        """Returns probability of stopping retrieval given model state"""
-        return self.termination_policy.stop_probability(self)
-
-    def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return the probability of retrieval of an item at the specified index.
-
-        Assumes that some items are recallable, with at least the minimum recall probability.
-
-        Args:
-            item_index: the index of the item to retrieve.
-        """
-        #! Since item activations are potentially distributed across position activations,
-        #! instead of indexing by item, we mask position activations by item then sum/normalize
-        position_activations = power_scale(
-            self.position_activations(), self.mcf_sensitivity
-        )
-        item_activation = jnp.sum(
-            position_activations * (self.studied == item_index + 1)
-        )
-        return item_activation / jnp.sum(position_activations)
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
-        """
-        p_stop = self.stop_probability()
-        return lax.cond(
-            choice == 0,
-            lambda: p_stop,
-            lambda: lax.cond(
-                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
-                lambda: 0.0,
-                lambda: (1 - p_stop) * self.item_probability(choice - 1),
-            ),
-        )
-
-    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return the outcome probabilities of all recall events."""
-        p_stop = self.stop_probability()
-        item_activations = self.activations()
-        item_activation_sum = jnp.sum(item_activations)
-        return jnp.hstack(
-            (
-                p_stop,
-                (
-                    (1 - p_stop)
-                    * item_activations
-                    / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
-                ),
-            )
-        )
-
 
 def make_factory(
     mfc_create_fn: MemoryCreateFn,
@@ -268,12 +197,12 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
+        ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
+                parameters: Parameters,
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -286,13 +215,13 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 

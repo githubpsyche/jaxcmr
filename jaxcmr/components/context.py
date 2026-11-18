@@ -7,16 +7,46 @@ and outlist integration for repeated items.
 
 """
 
-__all__ = ["TemporalContext", "integrate_normalized"]
+__all__ = ["OutlistContext", "OutlistContextCreateFn", "TemporalContext", "integrate_normalized"]
 
 import base64
 import io
+from typing import Protocol
 
 from jax import numpy as jnp
+
 from jaxcmr._vendor.simple_pytree import Pytree
 
 from ..math import normalize_magnitude
-from ..typing import Array, Float, Float_
+from ..typing import Array, Context, ContextCreateFn, Float, Float_
+
+
+class OutlistContext(Context, Protocol):
+    """Context supporting fresh out-of-list input during study.
+
+    Outlist CMR and source-switch models require this additional operation;
+    ordinary context integration only requires ``jaxcmr.typing.Context``.
+    """
+
+    def integrate_with_outlist(
+        self,
+        inlist_input: Float[Array, " context_feature_units"],
+        ratio: Float_,
+        drift_rate: Float_,
+    ) -> "OutlistContext":
+        """Integrate in-list input with weight ratio and fresh input with 1-ratio.
+
+        The context must have enough out-of-list capacity for this update.
+        """
+        ...
+
+
+class OutlistContextCreateFn(ContextCreateFn, Protocol):
+    """Construct context with the out-of-list capacity required by the model."""
+
+    def __call__(self, item_count: int) -> OutlistContext:
+        """Return context with fresh units available for out-of-list updates."""
+        ...
 
 
 def integrate_normalized(
@@ -99,18 +129,11 @@ class TemporalContext(Pytree):
         """Returns a markdown ``img`` tag of the current state."""
         import matplotlib.pyplot as plt
 
-        from ..state_analysis import matrix_heatmap
+        from ..plotting import matrix_heatmap
 
-        fig, ax = matrix_heatmap(self.state, figsize=(6, 0.6))
-
-        ax.set_xlabel("")
-        ax.set_ylabel("")
+        fig, ax = plt.subplots(figsize=(6, 0.6))
+        matrix_heatmap(self.state, axis=ax, colorbar=False, xlabel="", ylabel="")
         ax.set_yticks([])
-
-        # Remove colorbar safely if desired:
-        for coll in ax.collections:
-            if hasattr(coll, "colorbar") and coll.colorbar:
-                coll.colorbar.remove()
 
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")

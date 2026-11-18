@@ -1,9 +1,15 @@
-"""Serial Recall Accuracy Curve (SRAC).
+"""Recall of each study item in its assigned output position.
 
-Computes the probability that the item recalled at each output
-position matches the item studied at that position (strict serial
-recall accuracy).
+For the study list A, B, C, D, a participant who recalls B, C and then stops
+receives no credit under strict serial scoring. B and C occurred in study
+order, but each came one response too early. In relative serial scoring,
+the transition from B to C earns credit for C.
 
+``trial_srac`` compares each response with the item studied at the corresponding
+position. If an item was presented twice, it can be correct in either of its
+assigned slots. ``srac`` averages the resulting indicators across trials,
+including trials with a blank at that position. ``plot_srac`` draws the mean
+of the participant curves.
 """
 
 from collections.abc import Sequence
@@ -12,12 +18,13 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..repetition import all_study_positions
+from jaxcmr.dataset import apply_by_subject, find_max_list_length
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
-__all__ = ["trial_srac", "srac", "plot_srac"]
+__all__ = ["plot_srac", "srac", "trial_srac"]
 
 
 def trial_srac(
@@ -44,7 +51,7 @@ def trial_srac(
     """
     list_length = presentations.shape[0]
     recalls = recalls[:list_length]
-    expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
+    expanded_recalls = vmap(equivalent_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
     study_positions = jnp.arange(1, list_length + 1)
@@ -85,10 +92,13 @@ def plot_srac(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot serial recall accuracy with confidence intervals.
 
@@ -111,11 +121,16 @@ def plot_srac(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the SRAC plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -141,14 +156,18 @@ def plot_srac(
         xvals = jnp.arange(max_list_length) + 1
         subject_values = subject_values[:, :max_list_length]
         xvals = jnp.arange(max_list_length) + 1
-        plot_data(
+        plot_mean_curve(
             axis,
             xvals,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Serial Recall Accuracy", contrast_name)
+    format_analysis_axes(
+        axis, "Study Position", "Serial Recall Accuracy", contrast_name
+    )
     return axis

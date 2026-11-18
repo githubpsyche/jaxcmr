@@ -124,25 +124,33 @@ separate from recall classification, including when an item appears repeatedly.
 The operations in `repetition.py` return position indices for individual items;
 the private analysis helpers return Boolean matrices over trials and positions.
 
-The `jaxcmr.helpers` package contains general support modules: `io` reads and
-writes the HDF5 array layout and loads JSON optimization settings, `paths`
-resolves project directories and filenames,
-`general` provides dotted-name imports and number formatting, and `figures`
-implements figure saving. It does not import `plotting`, so plotting can use these
-support functions without a circular import.
+The [`jaxcmr.helpers` reference](reference/helpers.qmd) groups file, path, and
+configuration utilities implemented in `jaxcmr/helpers.py`. Import these functions
+directly from `jaxcmr.helpers`. Dataset operations belong in `jaxcmr.dataset`;
+repeated-item operations belong in `jaxcmr.repetition`.
 
-Library code imports directly from the module responsible for an operation.
-Existing `from jaxcmr.helpers import ...` imports remain supported by explicit
-re-exports in `helpers/__init__.py`; they do not contain separate implementations.
-The package-level `jaxcmr.make_dataset` and `jaxcmr.load_data` imports also remain
-available. `RecallDataset` and shared annotations stay in `jaxcmr.typing`.
+`helpers.load_hdf5_arrays` reads named arrays without requiring recall fields.
+Use `load_data` for a `RecallDataset`, or the generic reader for other observations
+such as temporal judgments. Both read the same transposed `/data` layout written
+by `save_dict_to_hdf5`. For non-recall data, apply `limit_to_first_subjects`
+explicitly when participant selection is needed.
 
+All project-path functions return `Path`. `find_project_root` requires an enclosing
+marker; `resolve_project_root` supplies the documented current-directory fallback.
+Use `str(path)` where another interface requires a string, such as `sys.path`.
+
+`jaxcmr.plotting.save_figure` requires `figure=` and saves without displaying.
+Call `plt.show()` explicitly to display figures. For display-only output, call
+`figure.tight_layout()` and `plt.show()` without saving. The saving implementation
+lives alongside the other figure operations in `jaxcmr/plotting.py`.
+
+The package-level `jaxcmr.make_dataset` and `jaxcmr.load_data` entry points remain
+available. `RecallDataset` and shared annotations live in `jaxcmr.typing`.
 `jaxcmr.fitting.parameters.bound_params` clips parameter columns to their bounds;
-`jaxcmr.helpers.io.load_opt_params` reads fixed values and free-parameter bounds
-from JSON. Their old imports from `jaxcmr.summarize` remain direct re-exports.
-`summarize` owns descriptive parameter tables and statistical model comparisons,
-not parameter preparation or file loading. Its small record types describe the
-fields needed for reporting without requiring a complete optimizer result.
+its existing re-export from `summarize` remains. The unused `load_opt_params`
+loader and `OptimizationParameters` type have been removed. Read JSON settings
+in the caller when needed; this change introduces no replacement configuration
+format. `summarize` owns descriptive parameter tables and statistical comparisons.
 
 Declare type aliases with the Python 3.12 `type` statement. Use `Parameters` for
 a mapping containing one set of scalar model settings; participant columns and
@@ -180,16 +188,15 @@ only the invalid-call portions of tests that also exercise useful behavior.
 
 The eleven selected files under `data/` and their fit methods document are the
 authoritative inputs. Packaging explicitly includes them; other research data and
-results remain excluded. The library’s `fetch_inputs(paths, base_dir=...)` copies
+results remain excluded. The library’s `copy_example_inputs(paths, base_dir=...)` copies
 only requested bundled examples, reuses matching files, and preserves conflicts and
-custom paths. An explicit `revision=` downloads reference bytes from GitHub on each call, including
-when checking an existing file. The default bundled route works offline. Neither
-route requires maintaining content hashes.
+custom paths. Copying works offline; the examples come from the installed
+package. It does not check whether custom inputs exist or are ready to load.
 
 When changing a supplied input, update its methods or source notes as needed.
 The filenames are listed in `jaxcmr/examples.py`; adding an example also requires
-including it in the package configuration. `jaxcmr.examples.fetch_inputs` is the
-current import; `jaxcmr.colab.fetch_inputs` remains compatible with older notebooks.
+including it in the package configuration. Import `copy_example_inputs` from
+`jaxcmr.examples`.
 Reinstall the editable package to refresh its bundled resources, then run the notebook
 and distribution checks:
 
@@ -225,6 +232,7 @@ Use [Quarto 1.11.9](https://github.com/quarto-dev/quarto-cli/releases/tag/v1.11.
 available on your command path, matching CI:
 
 ```bash
+uv sync --locked --group docs
 bash build-docs.sh
 uv run --no-sync python guide/tools/check_site.py docs
 uv run --no-sync python -m http.server 8786 --bind 127.0.0.1 --directory docs
@@ -237,6 +245,52 @@ or rendered HTML. Rebuild after edits; the file server serves the rebuilt pages.
 
 Colab links and installation commands follow `main`. A local preview’s download
 includes local changes; its Colab button still opens the last pushed notebook.
+
+## Maintain API reference pages
+
+API reference pages, including [plotting](reference/plotting.qmd),
+[simulation](reference/simulation.qmd) and [shared types](reference/typing.qmd),
+use the module docstring as their introduction. Each then shows grouped summary
+tables followed by the complete API entries.
+
+Maintain the headings, membership and order in one Quartodoc configuration per
+module, such as `guide/reference/_plotting.yml` or `_typing.yml`.
+The build uses those groups for the tables and entry order. Quarto generates the
+page outline from the resulting headings, with the function links under
+**API entries**. Do not edit the generated content or duplicate the lists in
+the page's `.qmd` file.
+
+Edit explanations, parameter meanings and return descriptions in the Python
+docstrings. Use NumPy-style `Parameters` and `Returns`/`Yields` sections for public
+operations where applicable; existing Google-style sections remain supported.
+The build reads source text without executing the documented functions.
+
+Install the `docs` dependency group and use Quarto 1.11.9. To rebuild one page,
+run this from `guide/`:
+
+```bash
+quarto render reference/simulation.qmd
+```
+
+That command regenerates only the simulation reference and skips notebook
+staging. Run it again after changing a Python docstring or the grouping YAML;
+a running preview does not guarantee detection of those external inputs.
+Use `quarto render reference` to rebuild all reference pages with one preparation
+step after a shared layout change. `quarto render` prepares all references and
+downloads before building the full site. Running `uv run --no-sync python prepare.py` directly also prepares all
+inputs without rendering. No LLM is involved in any of these commands.
+
+Shared page settings live in `guide/reference/_metadata.yml`, styling in
+`reference.css`, and renderer extensions in `guide/_api_renderer.py`. Quartodoc's
+single-page builder and Griffe supply source parsing, groups and API tables;
+our renderer places the overview and index before the entries and adjusts their
+presentation. The preparation step adapts Python 3.12 type aliases for
+Quartodoc 0.11; their definitions and descriptions still come from source.
+The renderer labels protocols as interfaces and includes field descriptions
+for typed dictionaries. Generated files in `guide/reference/_generated/` are ignored
+build inputs. Review the affected page after a documentation edit, and all
+reference pages after a shared layout change. Existing website checks cover
+local links and notebook downloads.
 
 ## Publication and release handover
 
@@ -292,3 +346,34 @@ distribution checks needed for the changes being released.
 After publication, verify installation from
 PyPI in a clean environment before changing the short installation commands. A PyPI
 release is not required for ordinary notebook improvements or Git-based distribution.
+
+## Known padded-list plotting issue
+
+A dataset can store a two-item list in four presentation columns, with trailing
+zeros and `listLength=2`. `spc` returns four positions, while `plot_spc` currently
+builds a two-position axis from `find_max_list_length`, causing a dimension
+mismatch. This needs a separate plotting correction that aligns displayed
+positions with the calculated scores. `find_max_list_length` continues to report
+declared study lengths; changing it to return storage width would change its
+meaning. The dataset refactor does not alter this behavior.
+
+
+## Analysis modules and reference pages
+
+Keep trial calculations, participant summaries and specialized plotters together
+when they describe the same measure. `analyses.statistics` owns finite-pair
+comparisons and bootstrap intervals. Shared study-position and transition array
+operations are internal; eligibility and history decisions remain visible in
+the analysis that owns them. Existing repetition tabulators support research
+subclasses, so preserve their methods when consolidating calculations.
+
+The [analysis reference](reference/analyses.qmd) groups the public modules by
+measure. Provisional measures have a [separate index](reference/experimental.qmd).
+Each module page uses the existing `_analyses-*.yml` or `_experimental-*.yml`
+group definition and the source docstrings. There is no additional generator.
+
+For new scientific conventions, retain a counted example with its denominator.
+Rerun affected summaries when changing an estimator; do not treat preserved
+notebook outputs or saved research reports as regenerated evidence. Item-recall
+deduplication, repeated-presentation credit, pooled RPL bins and finite-pair
+statistics can change those summaries without requiring a model refit.

@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -247,7 +251,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-loss-interface" id="toc-the-loss-interface" class="nav-link active" data-scroll-target="#the-loss-interface">The loss interface</a></li>
   <li><a href="#likelihood-and-event-masks" id="toc-likelihood-and-event-masks" class="nav-link" data-scroll-target="#likelihood-and-event-masks">Likelihood and event masks</a></li>
   <li><a href="#behavioral-summary-objectives" id="toc-behavioral-summary-objectives" class="nav-link" data-scroll-target="#behavioral-summary-objectives">Behavioral-summary objectives</a></li>
-  <li><a href="#preparing-a-fixed-selection" id="toc-preparing-a-fixed-selection" class="nav-link" data-scroll-target="#preparing-a-fixed-selection">Preparing a fixed selection</a></li>
+  <li><a href="#selecting-observations" id="toc-selecting-observations" class="nav-link" data-scroll-target="#selecting-observations">Selecting observations</a></li>
+  <li><a href="#behavioral-summaries-and-unordered-recall" id="toc-behavioral-summaries-and-unordered-recall" class="nav-link" data-scroll-target="#behavioral-summaries-and-unordered-recall">Behavioral summaries and unordered recall</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/losses.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -278,21 +283,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="the-loss-interface">The loss interface</h2>
 <p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="kw">class</span> LossFn(Protocol):</span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
 <span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>        <span class="va">self</span>,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>        model_factory_cls: <span class="bu">type</span>[MemorySearchModelFactory],</span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>        dataset: RecallDataset,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>        features: Float[Array, <span class="st">" word_pool_items features_count"</span>] <span class="op">|</span> <span class="va">None</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>    ) <span class="op">-&gt;</span> <span class="va">None</span>: ...</span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>        <span class="va">self</span>,</span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>        trial_indices: Integer[Array, <span class="st">" trials"</span>],</span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>        base_params: Mapping[<span class="bu">str</span>, Float_],</span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>        free_param_names: Iterable[<span class="bu">str</span>],</span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>        x: Float[Array, <span class="st">" parameters n_samples"</span>],</span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>    ) <span class="op">-&gt;</span> Float[Array, <span class="st">" n_samples"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The constructor binds the dataset, optional features and model factory. A compatible <strong>loss class</strong> is supplied to a fitter as <code>loss_fn_cls</code>; the fitter constructs its callable instance.</p>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>        trial_indices: Integer[Array, <span class="st">" trials"</span>],</span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>        base_params: Parameters,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>        free_param_names: Iterable[<span class="bu">str</span>],</span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>        x: Float[Array, <span class="st">" parameters n_samples"</span>],</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>    ) <span class="op">-&gt;</span> Float[Array, <span class="st">" n_samples"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The constructor binds the dataset, optional features and model factory. A compatible class or configured callable is supplied as <code>loss_fn_cls</code>. The <code>LossFactory</code> protocol describes construction; <code>LossFn</code> describes the resulting population scorer. For example, <code>functools.partial</code> can bind MSE analyses, repetition count and seed before fitting.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -333,7 +331,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a>        <span class="va">self</span>, recalls: Integer[Array, <span class="st">" recall_events"</span>]</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> Bool[Array, <span class="st">" recall_events"</span>]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>In <code>jaxcmr.loss.transform_sequence_likelihood</code>, <code>MemorySearchLikelihoodLoss</code> accepts this callback as <code>mask_likelihoods</code>. It translates recorded study positions to within-list item codes before calling the mask. The existing <code>mask_trailing_terminations()</code> returns <code>recalls != 0</code>.</p>
+<p>In <code>jaxcmr.loss.sequence_likelihood</code>, <code>MemorySearchLikelihoodLoss</code> accepts this callback as <code>mask_likelihoods</code>. It translates recorded study positions to within-list item codes before calling the mask. The existing <code>mask_trailing_terminations()</code> returns <code>recalls != 0</code>.</p>
 <p>The convenient <code>ExcludeTerminationLikelihoodLoss</code> binds that mask and provides the standard three-argument <code>LossFn</code> constructor used by fitters. With the no-stop model used here, the objective scores the recorded item sequence without scoring its length. Zero-coded slots do not contribute. An excluded event does not erase the preceding history that conditions later predictions. A first-recall mask, for example, removes that event’s score while later events still follow it.</p>
 <div id="locate-project-inputs" class="cell">
 <details open="" class="code-fold">
@@ -343,7 +341,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -355,43 +353,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> json</span>
 <span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">import</span> jax</span>
 <span id="cb4-4"><a href="#cb4-4" aria-label="4"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, generate_trial_mask</span>
-<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
-<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
-<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
-<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
-<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
-<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
-<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
-<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>CMRFactory <span class="op">=</span> make_factory(</span>
-<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
-<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-label="24"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-label="25"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> ExcludeTerminationLikelihoodLoss</span>
-<span id="cb4-26"><a href="#cb4-26" aria-label="26"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-label="27"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-label="28"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)[:<span class="dv">1</span>]</span>
-<span id="cb4-29"><a href="#cb4-29" aria-label="29"></a>free_names <span class="op">=</span> (<span class="st">"encoding_drift_rate"</span>, <span class="st">"recall_drift_rate"</span>)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-label="30"></a>base_params <span class="op">=</span> {name: value <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items() <span class="cf">if</span> name <span class="kw">not</span> <span class="kw">in</span> free_names}</span>
-<span id="cb4-31"><a href="#cb4-31" aria-label="31"></a>candidates <span class="op">=</span> jnp.array([</span>
-<span id="cb4-32"><a href="#cb4-32" aria-label="32"></a>    [parameters[<span class="st">"encoding_drift_rate"</span>], <span class="fl">0.2</span>],</span>
-<span id="cb4-33"><a href="#cb4-33" aria-label="33"></a>    [parameters[<span class="st">"recall_drift_rate"</span>], parameters[<span class="st">"recall_drift_rate"</span>]],</span>
-<span id="cb4-34"><a href="#cb4-34" aria-label="34"></a>])</span>
-<span id="cb4-35"><a href="#cb4-35" aria-label="35"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-label="36"></a>loss <span class="op">=</span> ExcludeTerminationLikelihoodLoss(CMRFactory, data, features<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb4-37"><a href="#cb4-37" aria-label="37"></a>values <span class="op">=</span> loss(trial_indices, base_params, free_names, candidates)</span>
-<span id="cb4-38"><a href="#cb4-38" aria-label="38"></a><span class="bu">print</span>(<span class="st">"Parameter order:"</span>, free_names)</span>
-<span id="cb4-39"><a href="#cb4-39" aria-label="39"></a><span class="bu">print</span>(<span class="st">"Candidate matrix shape:"</span>, candidates.shape)</span>
-<span id="cb4-40"><a href="#cb4-40" aria-label="40"></a><span class="bu">print</span>(<span class="st">"Objective shape:"</span>, values.shape)</span>
-<span id="cb4-41"><a href="#cb4-41" aria-label="41"></a><span class="bu">print</span>(<span class="st">"Negative log likelihoods:"</span>, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>data <span class="op">=</span> load_data(resolve_project_path(<span class="st">"data/Dupertuys2026.h5"</span>, root_path))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>record <span class="op">=</span> json.loads(Path(resolve_project_path(<span class="st">"data/fits/Dupertuys2026_CMR_demo.json"</span>, root_path)).read_text())</span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>parameters <span class="op">=</span> {name: values[<span class="dv">0</span>] <span class="cf">for</span> name, values <span class="kw">in</span> record[<span class="st">"fits"</span>].items()</span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a>              <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"subject"</span>}</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a><span class="cf">for</span> name <span class="kw">in</span> (<span class="st">"allow_repeated_recalls"</span>, <span class="st">"learn_after_context_update"</span>):</span>
+<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>    parameters[name] <span class="op">=</span> <span class="bu">bool</span>(parameters[name])</span>
+<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>CMRFactory <span class="op">=</span> make_factory(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>    context_create_fn<span class="op">=</span>context.init,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-label="24"></a>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-label="25"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-label="26"></a><span class="im">from</span> jaxcmr.loss.sequence_likelihood <span class="im">import</span> ExcludeTerminationLikelihoodLoss</span>
+<span id="cb4-27"><a href="#cb4-27" aria-label="27"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-label="28"></a>mixed <span class="op">=</span> generate_trial_mask(data, <span class="st">"data['list_type'] == 1"</span>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-label="29"></a>trial_indices <span class="op">=</span> jnp.flatnonzero(mixed)[:<span class="dv">1</span>]</span>
+<span id="cb4-30"><a href="#cb4-30" aria-label="30"></a>free_names <span class="op">=</span> (<span class="st">"encoding_drift_rate"</span>, <span class="st">"recall_drift_rate"</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-label="31"></a>base_params <span class="op">=</span> {name: value <span class="cf">for</span> name, value <span class="kw">in</span> parameters.items() <span class="cf">if</span> name <span class="kw">not</span> <span class="kw">in</span> free_names}</span>
+<span id="cb4-32"><a href="#cb4-32" aria-label="32"></a>candidates <span class="op">=</span> jnp.array([</span>
+<span id="cb4-33"><a href="#cb4-33" aria-label="33"></a>    [parameters[<span class="st">"encoding_drift_rate"</span>], <span class="fl">0.2</span>],</span>
+<span id="cb4-34"><a href="#cb4-34" aria-label="34"></a>    [parameters[<span class="st">"recall_drift_rate"</span>], parameters[<span class="st">"recall_drift_rate"</span>]],</span>
+<span id="cb4-35"><a href="#cb4-35" aria-label="35"></a>])</span>
+<span id="cb4-36"><a href="#cb4-36" aria-label="36"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-label="37"></a>loss <span class="op">=</span> ExcludeTerminationLikelihoodLoss(CMRFactory, data, features<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb4-38"><a href="#cb4-38" aria-label="38"></a>values <span class="op">=</span> loss(trial_indices, base_params, free_names, candidates)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-label="39"></a><span class="bu">print</span>(<span class="st">"Parameter order:"</span>, free_names)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-label="40"></a><span class="bu">print</span>(<span class="st">"Candidate matrix shape:"</span>, candidates.shape)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-label="41"></a><span class="bu">print</span>(<span class="st">"Objective shape:"</span>, values.shape)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-label="42"></a><span class="bu">print</span>(<span class="st">"Negative log likelihoods:"</span>, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Parameter order: ('encoding_drift_rate', 'recall_drift_rate')
@@ -405,8 +404,8 @@ Negative log likelihoods: [13.62458774 13.05021919]</code></pre>
 <div id="14b25d68" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Connect the event probabilities and mask to the returned NLL</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> log_likelihood</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.loss.transform_sequence_likelihood <span class="im">import</span> (</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="im">from</span> jaxcmr.math <span class="im">import</span> negative_log_likelihood</span>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="im">from</span> jaxcmr.loss.sequence_likelihood <span class="im">import</span> (</span>
 <span id="cb6-3"><a href="#cb6-3" aria-label="3"></a>    MemorySearchLikelihoodLoss, mask_trailing_terminations,</span>
 <span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-label="5"></a></span>
@@ -417,7 +416,7 @@ Negative log likelihoods: [13.62458774 13.05021919]</code></pre>
 <span id="cb6-10"><a href="#cb6-10" aria-label="10"></a>row <span class="op">=</span> trial_indices[<span class="dv">0</span>]</span>
 <span id="cb6-11"><a href="#cb6-11" aria-label="11"></a>probabilities <span class="op">=</span> likelihood.predict_trial(row, parameters)</span>
 <span id="cb6-12"><a href="#cb6-12" aria-label="12"></a>include <span class="op">=</span> mask_trailing_terminations(data[<span class="st">"recalls"</span>][row])</span>
-<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>event_nll <span class="op">=</span> log_likelihood(jnp.where(include, probabilities, <span class="fl">1.0</span>))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-label="13"></a>event_nll <span class="op">=</span> negative_log_likelihood(jnp.where(include, probabilities, <span class="fl">1.0</span>))</span>
 <span id="cb6-14"><a href="#cb6-14" aria-label="14"></a><span class="bu">print</span>(<span class="st">"Included event probabilities:"</span>, probabilities[include])</span>
 <span id="cb6-15"><a href="#cb6-15" aria-label="15"></a><span class="bu">print</span>(<span class="st">"Included events:"</span>, <span class="bu">int</span>(include.<span class="bu">sum</span>()))</span>
 <span id="cb6-16"><a href="#cb6-16" aria-label="16"></a><span class="bu">print</span>(<span class="st">"NLL from event probabilities:"</span>, <span class="bu">float</span>(event_nll))</span>
@@ -430,33 +429,35 @@ NLL from event probabilities: 13.624587741452169
 NLL from the loss call: 13.62458774145214</code></pre>
 </div>
 </div>
-<p>Despite its name, <code>jaxcmr.helpers.log_likelihood()</code> returns <strong>negative summed log likelihood</strong>. The mask selects the positive recall events; it does not define a new response sequence.</p>
+<p><code>jaxcmr.math.negative_log_likelihood()</code> sums the negative log probabilities of the included events. The mask selects the positive recall events; it does not define a new response sequence.</p>
 </section>
 <section id="behavioral-summary-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="behavioral-summary-objectives">Behavioral-summary objectives</h2>
 <p><code>jaxcmr.loss.mse.make_factory()</code> binds named <code>RecallAnalysisFn</code> callbacks into a loss class with the same fitting interface. It compares observed and simulated summaries rather than assigning a likelihood to each recorded response. <a href="../overview/analyses.html#recallanalysisfn">Recall Analyses</a> shows the callback contract and an adapter using the existing SPC calculation.</p>
 <p>Its weights, scales and reduction determine how summary discrepancies contribute to the objective. Such a value is not NLL and cannot be put into an AIC formula. JAX-compatible simulation also does not by itself provide useful pathwise gradients through discrete recall samples.</p>
 </section>
-<section id="preparing-a-fixed-selection" class="level2">
-<h2 class="anchored" data-anchor-id="preparing-a-fixed-selection">Preparing a fixed selection</h2>
-<p><code>PreparableLossFn</code> is an optional capability used by fitting adapters to prepare observations before JIT compilation. An ordinary loss need only implement <code>LossFn</code>.</p>
-<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="kw">class</span> PreparableLossFn(LossFn, Protocol):</span>
-<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a>    <span class="kw">def</span> prepare_trials(</span>
-<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>        <span class="va">self</span>, trial_indices: Integer[Array, <span class="st">" trials"</span>]</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> PreparedLossFn: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The returned <code>PreparedLossFn</code> takes <code>(base_params, free_param_names, x)</code> and returns the same candidate-wise objectives. The selected trials are already bound, including their order and multiplicity. Each prepared callable must retain its own selection. <code>BatchPreparableLossFn</code> extends this to several selections so implementations can share compatible preparation work.</p>
-<div id="9c2bc750" class="cell" data-execution_count="3">
+<section id="selecting-observations" class="level2">
+<h2 class="anchored" data-anchor-id="selecting-observations">Selecting observations</h2>
+<p>Ordinary losses receive the selected trial indices on every call. Row order and repeated indices are retained; selecting another participant does not change a previously supplied selection. Fitters call this same loss interface.</p>
+<p>The ordinary interface is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>loss(trial_indices, base_params, free_param_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It returns one objective value per candidate column.</p>
+<p>There is no preparation call before ordinary fitting. Gradient and evolutionary fitters pass trial indices to stable compiled functions; compatible shapes can reuse compilation while scoring different observations.</p>
+<div id="9c2bc750" class="cell">
 <details open="" class="code-fold">
-<summary>Evaluate the same candidates with the selected trials already bound</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>prepared <span class="op">=</span> loss.prepare_trials(trial_indices)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a>prepared(base_params, free_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<summary>Evaluate the same candidates on the selected trials</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a>loss(trial_indices, base_params, free_names, candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="3">
-<pre><code>Array([13.62458774, 13.05021919], dtype=float64)</code></pre>
 </div>
-</div>
-<p>The prepared call represents the same objective. Preparation is a capability of the implementation, not a change in the scientific quantity being fitted. <a href="../overview/fitting.html">Fitting Procedures</a> explains how fitters consume these losses; the <a href="../templates/fitting.html">fitting template</a> carries out a full run.</p>
+<p><a href="../overview/fitting.html">Fitting Procedures</a> explains how fitters consume these losses; the <a href="../templates/fitting.html">fitting template</a> carries out a full run.</p>
+<p>OptimizedCMR has a separate, experimental prepared-sequence implementation. Its acceleration is selected through explicit experimental fitting imports, described under <a href="../overview/models.html#experimental-optimizedcmr">Experimental OptimizedCMR</a>. It adds no preparation requirements to ordinary losses or model factories.</p>
+</section>
+<section id="behavioral-summaries-and-unordered-recall" class="level2">
+<h2 class="anchored" data-anchor-id="behavioral-summaries-and-unordered-recall">Behavioral summaries and unordered recall</h2>
+<p><code>MemorySearchMseLoss</code> calls the same dataset analyses on observations and simulations. One simulated dataset per candidate is shared across analyses. <code>MemorySearchSpcMseLoss</code> uses <code>spc</code>; <code>MemorySearchCatSpcMseLoss</code> stacks <code>cat_spc</code> results for explicit category values (defaults: field <code>condition</code>, values 1 and 2). Undefined observed bins are omitted. A missing prediction for an observed bin makes the fit invalid. Duplicate responses and repeated presentations follow those analyses’ definitions. Metadata and study-position recall codes stay aligned.</p>
+<p>Simulation defaults are 20 repetitions for general/SPC MSE and 10 for category SPC, with seed zero. Both are configurable. Stopping remains active; responses after the observed response count are masked. This objective uses discrete simulation, so it is not a suitable pathwise-gradient loss.</p>
+<p>Experimental <code>RecallSetLikelihoodLoss</code> sums over unordered item sequences and one final STOP. <code>RecallPrefixLikelihoodLoss</code> omits STOP. Both estimate the sum by sampling permutations and multiplying by the number of distinct orderings, including repeated-item multiplicities. The logarithm is also an approximation. Old permutation and MSE scores do not represent these corrected definitions.</p>
+<p>See <a href="../reference/loss-sequence.html">sequential scoring</a>, <a href="../reference/loss-mse.html">behavioral MSE</a> and <a href="../reference/experimental-permutation.html">permutation likelihood</a>.</p>
 
 
 </section>

@@ -15,7 +15,7 @@ The remaining functions (``init_plot``, ``plot_data``, etc.) duplicate
 """
 
 from collections.abc import Callable, Sequence
-from typing import TypeVar, cast
+from typing import Literal, TypeVar, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +41,12 @@ __all__ = [
 ]
 
 DEFAULT_BOOTSTRAP_RESAMPLES: int = 1000
-DEFAULT_CI_TRANSFORM: str = "arcsin_sqrt"
+type _CIMode = Literal["omit", "hierarchical", "subjectwise", "trialwise"]
+type _CITransform = Literal[
+    "none", "identity", "raw", "arcsin_sqrt", "asin_sqrt", "angular",
+    "arcsin-sqrt", "asin-sqrt",
+]
+DEFAULT_CI_TRANSFORM: _CITransform = "arcsin_sqrt"
 
 T = TypeVar("T")
 
@@ -223,7 +228,7 @@ def plot_data(
     label: str,
     color: str,
     *,
-    ci_mode: str = "subjectwise",
+    ci_mode: _CIMode = "subjectwise",
     confidence_level: float = 0.95,
 ) -> Axes:
     """Plot mean curves with optional bootstrap error bars.
@@ -298,7 +303,7 @@ def _bootstrap_subjectwise_ratio(
     n_resamples: int,
     confidence_level: float,
     rng: np.random.Generator,
-    ci_transform: str,
+    ci_transform: _CITransform,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return confidence bounds from subjectwise bootstrap sampling.
 
@@ -329,7 +334,7 @@ def _bootstrap_trialwise_ratio(
     n_resamples: int,
     confidence_level: float,
     rng: np.random.Generator,
-    ci_transform: str,
+    ci_transform: _CITransform,
     transform: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return confidence bounds from trialwise bootstrap sampling.
@@ -367,7 +372,7 @@ def _bootstrap_hierarchical_ratio(
     n_resamples: int,
     confidence_level: float,
     rng: np.random.Generator,
-    ci_transform: str,
+    ci_transform: _CITransform,
     transform: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return confidence bounds from hierarchical bootstrap sampling.
@@ -417,16 +422,12 @@ def _bootstrap_hierarchical_ratio(
     )
 
 
-def _arcsin_sqrt_forward(proportions: np.ndarray, *, tol: float = 1e-12) -> np.ndarray:
+def _arcsin_sqrt_forward(proportions: np.ndarray) -> np.ndarray:
     """Return arcsin-sqrt transformed proportions.
 
     Args:
         proportions: Proportions in [0, 1]. NaNs are allowed.
-        tol: Allowed numerical tolerance outside [0, 1] before raising.
     """
-    finite = np.isfinite(proportions)
-    if np.any(proportions[finite] < -tol) or np.any(proportions[finite] > 1.0 + tol):
-        raise ValueError("arcsin-sqrt CI requires proportions in [0, 1].")
     clipped = np.clip(proportions, 0.0, 1.0)
     return np.arcsin(np.sqrt(clipped))
 
@@ -440,7 +441,7 @@ def _percentile_ci_bounds(
     bootstrap_statistics: np.ndarray,
     *,
     confidence_level: float,
-    ci_transform: str,
+    ci_transform: _CITransform,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return confidence bounds from bootstrap statistics.
 
@@ -464,13 +465,10 @@ def _percentile_ci_bounds(
         ci_low = np.nanpercentile(bootstrap_statistics, low_pct, axis=0)
         ci_high = np.nanpercentile(bootstrap_statistics, high_pct, axis=0)
         return ci_low, ci_high
-    if normalized in ("arcsin_sqrt", "asin_sqrt", "angular"):
-        transformed = _arcsin_sqrt_forward(bootstrap_statistics)
-        ci_low_t = np.nanpercentile(transformed, low_pct, axis=0)
-        ci_high_t = np.nanpercentile(transformed, high_pct, axis=0)
-        return _arcsin_sqrt_inverse(ci_low_t), _arcsin_sqrt_inverse(ci_high_t)
-
-    raise ValueError(f"Unsupported ci_transform: {ci_transform}")
+    transformed = _arcsin_sqrt_forward(bootstrap_statistics)
+    ci_low_t = np.nanpercentile(transformed, low_pct, axis=0)
+    ci_high_t = np.nanpercentile(transformed, high_pct, axis=0)
+    return _arcsin_sqrt_inverse(ci_low_t), _arcsin_sqrt_inverse(ci_high_t)
 
 
 def _plot_with_confidence_interval(
@@ -515,8 +513,8 @@ def compute_ratio_ci(
     denominator_by_trial: Real[Array, " trial_count values"],
     subject_ids: Integer[Array, " trial_count"],
     *,
-    ci_mode: str = "hierarchical",
-    ci_transform: str = DEFAULT_CI_TRANSFORM,
+    ci_mode: _CIMode = "hierarchical",
+    ci_transform: _CITransform = DEFAULT_CI_TRANSFORM,
     n_resamples: int = DEFAULT_BOOTSTRAP_RESAMPLES,
     confidence_level: float = 0.95,
     rng: np.random.Generator | None = None,
@@ -585,7 +583,7 @@ def compute_ratio_ci(
             rng=rng,
             ci_transform=ci_transform,
         )
-    elif effective_mode == "trialwise":
+    else:
         ci_low, ci_high = _bootstrap_trialwise_ratio(
             num,
             denom,
@@ -595,8 +593,6 @@ def compute_ratio_ci(
             ci_transform=ci_transform,
             transform=transform,
         )
-    else:
-        raise ValueError(f"Unsupported ci_mode: {ci_mode}")
 
     return y_mean, ci_low, ci_high
 
@@ -610,8 +606,8 @@ def plot_ratio_data(
     label: str,
     color: str,
     *,
-    ci_mode: str = "hierarchical",
-    ci_transform: str = DEFAULT_CI_TRANSFORM,
+    ci_mode: _CIMode = "hierarchical",
+    ci_transform: _CITransform = DEFAULT_CI_TRANSFORM,
     n_resamples: int = DEFAULT_BOOTSTRAP_RESAMPLES,
     confidence_level: float = 0.95,
     rng: np.random.Generator | None = None,

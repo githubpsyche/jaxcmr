@@ -11,30 +11,30 @@ episode/position-mediated route.
 
 """
 
-from collections.abc import Mapping
+
 
 import numpy as np
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.math import exponential_primacy_decay, lb, power_scale
+from jaxcmr.math import FLOAT32_EPS, exponential_primacy_decay, relative_power_scale
 from jaxcmr.typing import (
     Array,
     Bool,
     Context,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     Memory,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -71,14 +71,14 @@ class CMR(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
+        parameters: Parameters,
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
         termination_policy_create_fn: TerminationPolicyCreateFn[
             _TerminationProxy
         ] = PositionalTermination,
-    ):
+    ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
@@ -160,11 +160,11 @@ class CMR(Pytree):
 
     def _item_route_activations(self) -> Float[Array, " item_count"]:
         raw = self.item_mcf.probe(self.context.state) * self.item_recallable
-        return (power_scale(raw, self.mcf_sensitivity) + lb) * self.item_recallable
+        return (relative_power_scale(raw, self.mcf_sensitivity) + FLOAT32_EPS) * self.item_recallable
 
     def _position_route_position_activations(self) -> Float[Array, " list_length"]:
         raw = self.position_mcf.probe(self.context.state) * self.position_recallable
-        return (power_scale(raw, self.mcf_sensitivity) + lb) * self.position_recallable
+        return (relative_power_scale(raw, self.mcf_sensitivity) + FLOAT32_EPS) * self.position_recallable
 
     def _position_route_item_activations(self) -> Float[Array, " item_count"]:
         position_activations = self._position_route_position_activations()
@@ -210,7 +210,7 @@ class CMR(Pytree):
             item_index
         )
         normalized = self._normalize(item_support)
-        cue = power_scale(normalized, self.mfc_sensitivity)
+        cue = relative_power_scale(normalized, self.mfc_sensitivity)
         return self.position_mfc.probe(cue)
 
     def experience_item(self, item_index: Int_) -> "CMR":
@@ -370,12 +370,12 @@ def make_factory(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
-        ):
+        ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
+                parameters: Parameters,
             ) -> MemorySearch:
                 return CMR(
                     list_length,
@@ -388,13 +388,13 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             return self.model_create_fn(self.max_list_length, parameters)
 

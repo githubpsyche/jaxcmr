@@ -1,15 +1,18 @@
 """eCMR with additive semantic associations and emotional target bias."""
 
-from collections.abc import Mapping
 
-import numpy as np
+
 from jax import numpy as jnp
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.factory import build_trial_connections_from_similarity
+from jaxcmr.components.factory import (
+    build_trial_connections_from_similarity,
+    global_item_ids_by_code,
+    source_categories_by_item,
+)
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.helpers import require_pres_itemids, require_valence
+from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.models.additive_semantic_ecmr import AdditiveSemanticECMR
 from jaxcmr.models.ecmr import eCMR
 from jaxcmr.typing import (
@@ -17,11 +20,11 @@ from jaxcmr.typing import (
     Bool,
     ContextCreateFn,
     Float,
-    Float_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -38,9 +41,9 @@ class AdditiveSemanticRetrievalBiasECMR(AdditiveSemanticECMR):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
-        is_emotional: Bool[Array, " study_events"],
-        connections: Float[Array, " study_events study_events"],
+        parameters: Parameters,
+        is_emotional: Bool[Array, " item_count"],
+        connections: Float[Array, " item_count item_count"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -92,18 +95,19 @@ def make_factory(
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(require_pres_itemids(dataset))
-            self.max_list_length = np.max(dataset["listLength"]).item()
-            self.trial_emotions = jnp.array(require_valence(dataset) != 0, dtype=bool)
-            self.trial_connections = build_trial_connections_from_similarity(
-                self.present_lists, features
+            self.present_lists = jnp.array(_require_pres_itemids(dataset))
+            self.trial_emotions = source_categories_by_item(dataset, signed=False) != 0
+            self.max_list_length = self.trial_emotions.shape[1]
+            vocabulary_ids = global_item_ids_by_code(
+                dataset["pres_itemnos"], self.present_lists, self.max_list_length
             )
+            self.trial_connections = build_trial_connections_from_similarity(vocabulary_ids, features)
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
-                is_emotional: Bool[Array, " study_events"],
-                connections: Float[Array, " study_events study_events"],
+                parameters: Parameters,
+                is_emotional: Bool[Array, " item_count"],
+                connections: Float[Array, " item_count item_count"],
             ) -> MemorySearch:
                 return AdditiveSemanticRetrievalBiasECMR(
                     list_length,
@@ -118,7 +122,7 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             """Create model from first trial for shape inference."""
             return self.model_create_fn(
                 self.max_list_length,
@@ -130,7 +134,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             """Create model for a specific trial."""
             return self.model_create_fn(

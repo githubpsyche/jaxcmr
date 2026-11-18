@@ -7,12 +7,12 @@ MCF (memory-to-feature/item) association matrices.
 
 """
 
-from collections.abc import Mapping
+
 
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from jaxcmr.typing import Array, Context, Float, Float_, Int_
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.typing import Array, Context, Float, Float_, Int_, Parameters
 
 __all__ = [
     "LinearMemory",
@@ -27,7 +27,7 @@ class LinearMemory(Pytree):
     def __init__(
         self,
         state: Float[Array, " input_size output_size"],
-    ):
+    ) -> None:
         """Initialize memory with an association matrix.
 
         Args:
@@ -78,7 +78,7 @@ class LinearMemory(Pytree):
 
 def init_mfc(
     list_length: int,
-    parameters: Mapping[str, Float_],
+    parameters: Parameters,
     context: Context,
 ) -> "LinearMemory":
     """Returns linear item-to-context memory model.
@@ -100,7 +100,7 @@ def init_mfc(
 
 def init_mcf(
     list_length: int,
-    parameters: Mapping[str, Float_],
+    parameters: Parameters,
     context: Context,
 ) -> "LinearMemory":
     """Returns linear context-to-item memory model.

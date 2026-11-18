@@ -1,3 +1,4 @@
+from jaxcmr.analyses.statistics import compare_paired
 from typing import Any
 import matplotlib
 
@@ -8,10 +9,8 @@ import pytest
 from jax import numpy as jnp
 from matplotlib.axes import Axes
 from jaxcmr.analyses.cat_recall_rate import plot_cat_recall_rate, subject_cat_recall_rate
-from jaxcmr.analyses.cat_recall_rate import (
-    test_cat_recall_rate_pair as run_test_cat_recall_rate_pair,
-)
-from jaxcmr.helpers import make_dataset
+
+from jaxcmr.dataset import make_dataset
 
 
 def _point_x_positions(axis: Axes) -> np.ndarray:
@@ -40,13 +39,13 @@ def test_cat_recall_rate_pair_test_values():
     """paired helper returns valid sample size and mean difference."""
     left = np.array([0.8, 0.7, np.nan, 0.9])
     right = np.array([0.6, 0.5, 0.4, 0.8])
-    result = run_test_cat_recall_rate_pair(left, right, "left", "right")
+    result = compare_paired(left, right, labels=["left vs right"]).iloc[0]
     assert result.n == 3
-    assert result.mean_diff == pytest.approx((0.2 + 0.2 + 0.1) / 3)
+    assert result.mean_difference == pytest.approx((0.2 + 0.2 + 0.1) / 3)
     # Paired differences .2,.2,.1 have mean 1/6 and SEM 1/30: t=5.
     # With df=2, the two-sided p-value is 1 - t/sqrt(t**2 + 2).
     assert result.t_stat == pytest.approx(5)
-    assert result.t_pval == pytest.approx(1 - 5 / np.sqrt(27))
+    assert result.t_pvalue == pytest.approx(1 - 5 / np.sqrt(27))
 
 
 def test_plot_cat_recall_rate_centers_present_category_points():

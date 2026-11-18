@@ -146,7 +146,7 @@ def test_installed_examples_are_available_offline(installed):
 from pathlib import Path
 import socket
 import sys
-from jaxcmr.examples import fetch_inputs, _EXAMPLE_FILES
+from jaxcmr.examples import copy_example_inputs, _EXAMPLE_FILES
 from importlib.metadata import distribution
 
 def no_network(*args, **kwargs):
@@ -154,9 +154,8 @@ def no_network(*args, **kwargs):
 
 socket.socket.connect = no_network
 project = Path('offline-project')
-fetch_inputs(_EXAMPLE_FILES, base_dir=project)
-from jaxcmr.colab import fetch_inputs as legacy_fetch_inputs
-legacy_fetch_inputs([next(iter(_EXAMPLE_FILES))], base_dir=project)
+copy_example_inputs(_EXAMPLE_FILES, base_dir=project)
+copy_example_inputs([next(iter(_EXAMPLE_FILES))], base_dir=project)
 for name in _EXAMPLE_FILES:
     bundled = distribution("jaxcmr").locate_file(f"jaxcmr/_example_inputs/{name}")
     assert (project / name).read_bytes() == bundled.read_bytes()

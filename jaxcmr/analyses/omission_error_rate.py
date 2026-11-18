@@ -1,14 +1,20 @@
-"""Omission error rate analysis.
+"""Study items missing from a serial recall attempt.
 
-Computes the proportion of study positions that are not recalled
-(omissions) as a function of serial position.
+For the study list A, B, C, D and responses B, C, blank, blank, A and D are
+omissions. B and C each appeared in the response sequence, even though both
+were out of order.
 
+``trial_omission_error_rate`` looks for each item within the first list-width
+response slots. Recalling an item credits all its presentations. The function
+flags each missed study position and gives padded study positions zero.
+``omission_error_rate`` averages those flags across all trials at each
+position, including trials with padding there.
 """
 
 __all__ = [
-    "trial_omission_error_rate",
     "omission_error_rate",
     "plot_omission_error_rate",
+    "trial_omission_error_rate",
 ]
 
 from collections.abc import Sequence
@@ -17,9 +23,10 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from matplotlib.axes import Axes
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..repetition import all_study_positions
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject, find_max_list_length
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 
@@ -48,16 +55,16 @@ def trial_omission_error_rate(
     # Expand each recall token into every study position it could refer to
     list_length = presentations.shape[0]
     recalls = recalls[:list_length]
-    expanded_recalls = vmap(all_study_positions, in_axes=(0, None, None))(
+    expanded_recalls = vmap(equivalent_study_positions, in_axes=(0, None, None))(
         recalls, presentations, size
     )
 
     study_positions = jnp.arange(1, list_length + 1)
 
     # For each study position: did it ever appear in any expanded recall list?
-    position_was_recalled = vmap(
-        lambda pos: jnp.any(expanded_recalls == pos)
-    )(study_positions)
+    position_was_recalled = vmap(lambda pos: jnp.any(expanded_recalls == pos))(
+        study_positions
+    )
 
     # Omission = never recalled AND study slot isn't padding (presentation != 0)
     return (~position_was_recalled) & (presentations != 0)
@@ -96,10 +103,13 @@ def plot_omission_error_rate(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot omission error rate curves with confidence intervals.
 
@@ -122,11 +132,16 @@ def plot_omission_error_rate(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with omission error rate curves.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -150,14 +165,16 @@ def plot_omission_error_rate(
         color = color_cycle[data_index % len(color_cycle)]
         xvals = jnp.arange(max_list_length) + 1
         subject_values = subject_values[:, :max_list_length]
-        plot_data(
+        plot_mean_curve(
             axis,
             xvals,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Omission Error Rate", contrast_name)
+    format_analysis_axes(axis, "Study Position", "Omission Error Rate", contrast_name)
     return axis

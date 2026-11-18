@@ -8,7 +8,7 @@ import pytest
 from scipy.optimize import OptimizeResult
 import jaxcmr.fitting.gradient as gradient_module
 from jaxcmr.fitting import ScipyTrustConstr
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +56,7 @@ def test_trust_solver_finds_known_optimum_and_reports_objective_gradient():
         [result["fits"]["amplitude"][0], result["fits"]["drift"][0]], [2.0, 0.3], atol=2e-05
     )
     assert result["fits"]["subject"] == [8]
-    record = result["diagnostics"]["restarts"][0]
+    record = result["diagnostics"][0]["restarts"][0]
     assert record["converged"]
     assert record["constraint_violation"] == 0
     assert np.isfinite(record["projected_gradient_norm"])
@@ -71,13 +71,13 @@ def test_sampling_geometry_does_not_change_optimization_coordinates_or_explicit_
         sampling_transforms={"amplitude": "log1p"},
     )
     result = algorithm.fit(jnp.array([True]))
-    screen = result["diagnostics"]["screening"]
+    screen = result["diagnostics"][0]["screening"]
     bank = np.asarray(screen["candidate_unit"])
     physical = np.asarray(algorithm.sampling_space.to_physical(jnp.asarray(bank)))
     np.testing.assert_allclose(screen["scores"], ((physical - [2.0, 0.3]) ** 2).sum(axis=1))
     np.testing.assert_allclose(physical[0], [9.0, 0.8])
     assert screen["selected_indices"][0] == 0
-    np.testing.assert_allclose(result["diagnostics"]["restarts"][0]["initial_unit"], [0.9, 0.875])
+    np.testing.assert_allclose(result["diagnostics"][0]["restarts"][0]["initial_unit"], [0.9, 0.875])
     assert algorithm.parameter_space.transforms == {}
     assert result["hyperparameters"]["sampling_transforms"] == {"amplitude": "log1p"}
 
@@ -101,10 +101,10 @@ def test_local_deadline_allows_another_restart_and_never_credits_late_improvemen
     monkeypatch.setattr(gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0]))
     monkeypatch.setattr(algorithm, "_value_and_grad", timed_evaluation)
     result = algorithm.fit(jnp.array([True]))
-    records = result["diagnostics"]["restarts"]
+    records = result["diagnostics"][0]["restarts"]
     assert [record["budget"] for record in records] == budgets
     assert all((record["late_evaluations"] == 1 for record in records))
-    assert all((row["seconds"] <= total_limit for row in result["diagnostics"]["history"]))
+    assert all((row["seconds"] <= total_limit for row in result["diagnostics"][0]["history"]))
     assert result["converged"] == [False]
     parameters = jnp.array([[result["fits"]["amplitude"][0]], [result["fits"]["drift"][0]]])
     checked = QuadraticLoss(None, None, None)(None, None, None, parameters)[0]
@@ -146,7 +146,7 @@ def test_restart_callbacks_keep_their_own_record_and_deadline(monkeypatch):
     monkeypatch.setattr(gradient_module, "time", SimpleNamespace(perf_counter=lambda: now[0]))
     monkeypatch.setattr(gradient_module, "minimize", minimize_once)
     result = algorithm.fit(jnp.array([True]))
-    records = result["diagnostics"]["restarts"]
+    records = result["diagnostics"][0]["restarts"]
     assert len(callbacks) == 2
     callbacks[0][1](np.zeros(2))
     assert [record["nit"] for record in records] == [2, 1]
@@ -155,3 +155,21 @@ def test_restart_callbacks_keep_their_own_record_and_deadline(monkeypatch):
         callbacks[0][0](np.array(records[0]["initial_unit"]))
     callbacks[1][0](np.array(records[1]["initial_unit"]))
     assert [record["nfev"] for record in records] == [1, 2]
+
+
+def test_retained_evaluation_is_distinct_from_a_worse_successful_solver_endpoint(monkeypatch):
+    algorithm = fitter(screening_size=0, best_of=1)
+    def finish_at_worse_point(evaluate, initial, **options):
+        value, gradient = evaluate(initial)
+        return OptimizeResult(x=np.full_like(initial, .9), fun=value+1,
+                              grad=gradient, nit=1, success=True, message="Worse final point",
+                              optimality=0., constr_violation=0.)
+    monkeypatch.setattr(gradient_module, "minimize", finish_at_worse_point)
+    result = algorithm.fit(jnp.array([True]))
+    restart = result["diagnostics"][0]["restarts"][0]
+    assert restart["solver_converged"]
+    assert not restart["converged"]
+    assert result["converged"] == [False]
+    assert restart["fitness"] == result["fitness"][0]
+    assert restart["final_fitness"] == restart["fitness"] + 1
+    assert restart["parameters"] != restart["final_parameters"]

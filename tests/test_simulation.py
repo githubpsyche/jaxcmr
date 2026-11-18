@@ -10,7 +10,7 @@ from support import CMR_PARAMS
 from jaxcmr.models.cmr import CMR
 from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.dataset import make_dataset
-from jaxcmr.helpers.io import save_dict_to_hdf5
+from jaxcmr.helpers import save_dict_to_hdf5
 from jaxcmr.simulation import (
     MemorySearchSimulator,
     simulate_study,

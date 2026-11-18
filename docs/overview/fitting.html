@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -251,6 +255,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#selecting-an-optimizer-in-the-template" id="toc-selecting-an-optimizer-in-the-template" class="nav-link" data-scroll-target="#selecting-an-optimizer-in-the-template">Selecting an optimizer in the template</a></li>
   <li><a href="#reusing-fits-and-aligning-participant-parameters" id="toc-reusing-fits-and-aligning-participant-parameters" class="nav-link" data-scroll-target="#reusing-fits-and-aligning-participant-parameters">Reusing fits and aligning participant parameters</a></li>
   <li><a href="#assigning-a-fit-to-the-participants-being-simulated" id="toc-assigning-a-fit-to-the-participants-being-simulated" class="nav-link" data-scroll-target="#assigning-a-fit-to-the-participants-being-simulated">Assigning a fit to the participants being simulated</a></li>
+  <li><a href="#explicit-prepared-fitting" id="toc-explicit-prepared-fitting" class="nav-link" data-scroll-target="#explicit-prepared-fitting">Explicit prepared fitting</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../downloads/overview/fitting.ipynb"><i class="bi bi-download"></i>Download notebook</a></li></ul></div></nav>
     </div>
@@ -279,15 +284,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Fitters search parameter values by repeatedly evaluating a loss. The <code>FittingAlgorithm</code> protocol separates that search from the model factory and objective, and <code>FitResult</code> describes the returned record.</p>
 <section id="the-fitting-interface" class="level2">
 <h2 class="anchored" data-anchor-id="the-fitting-interface">The fitting interface</h2>
-<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<p>Declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="kw">class</span> FittingAlgorithm(Protocol):</span>
 <span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
 <span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>        <span class="va">self</span>,</span>
 <span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>        dataset: RecallDataset,</span>
 <span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>        features: Float[Array, <span class="st">"word_pool_items features_count"</span>] <span class="op">|</span> <span class="va">None</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>        base_params: Mapping[<span class="bu">str</span>, Float_],</span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>        base_params: Parameters,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>        model_factory_cls: <span class="bu">type</span>[MemorySearchModelFactory],</span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>        loss_fn_cls: <span class="bu">type</span>[LossFn],</span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>        loss_fn_cls: LossFactory,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>        hyperparams: <span class="bu">dict</span>[<span class="bu">str</span>, Any] <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>,</span>
 <span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>    ): ...</span>
 <span id="cb1-11"><a href="#cb1-11" aria-label="11"></a></span>
@@ -296,7 +301,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>    ) <span class="op">-&gt;</span> FitResult: ...</span>
 <span id="cb1-15"><a href="#cb1-15" aria-label="15"></a></span>
 <span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>    <span class="kw">def</span> fit_subjects(<span class="va">self</span>, trial_mask: Bool[Array, <span class="st">" trials"</span>]) <span class="op">-&gt;</span> FitResult: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Existing implementations include <code>ScipyDE</code> and <code>EvosaxDE</code> in <code>jaxcmr.fitting</code>. Both take a model factory class and a loss class. These arguments are the entry points for changing the modeled process or fitting objective without rewriting the optimization procedure. A compatible alternative fitter supplies the same constructor and fitting methods; optimizer-specific controls remain in its <code>hyperparams</code> mapping.</p>
+<p>Existing implementations include <code>ScipyDE</code> and <code>EvosaxDE</code> in <code>jaxcmr.fitting</code>. Both take a model factory class and a loss factory (a class or configured callable). These arguments are the entry points for changing the modeled process or fitting objective without rewriting the optimization procedure. A compatible alternative fitter supplies the same constructor and fitting methods; optimizer-specific controls remain in its <code>hyperparams</code> mapping.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -340,28 +345,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="the-returned-record" class="level2">
 <h2 class="anchored" data-anchor-id="the-returned-record">The returned record</h2>
-<p>Declaration from <a href="https://github.com/githubpsyche/jaxcmr/blob/main/jaxcmr/typing.py"><code>jaxcmr.typing</code></a>:</p>
+<p>Declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="kw">class</span> FitResult(TypedDict):</span>
-<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>    fixed: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">float</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-label="2"></a>    fixed: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span> <span class="op">|</span> <span class="bu">int</span> <span class="op">|</span> <span class="bu">float</span>]</span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a>    free: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">list</span>[<span class="bu">float</span>]]</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a>    fitness: <span class="bu">list</span>[<span class="bu">float</span>]</span>
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a>    nit: <span class="bu">list</span>[<span class="bu">int</span>]</span>
 <span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    converged: <span class="bu">list</span>[<span class="bu">bool</span>]</span>
-<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    fits: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">list</span>[<span class="bu">float</span>]]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-label="7"></a>    fits: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">list</span>[<span class="bu">float</span> <span class="op">|</span> <span class="bu">int</span> <span class="op">|</span> <span class="bu">bool</span>]]</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    hyperparameters: <span class="bu">dict</span>[<span class="bu">str</span>, Any]</span>
 <span id="cb2-9"><a href="#cb2-9" aria-label="9"></a>    fit_time: <span class="bu">float</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>    diagnostics: NotRequired[<span class="bu">dict</span>[<span class="bu">str</span>, Any]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a>    diagnostics: NotRequired[<span class="bu">list</span>[<span class="bu">dict</span>[<span class="bu">str</span>, Any]]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Entries at the same index in <code>fitness</code>, <code>nit</code>, <code>converged</code> and every <code>fits</code> array refer to the same fit row. <code>fits['subject']</code> contains integer IDs that identify those rows; they are labels, not positional indices. IDs stay integers when a fit is saved as JSON and loaded again. <code>fits</code> includes fixed and fitted parameter values, while <code>fixed</code> and <code>free</code> preserve their roles.</p>
 <p><code>fitness</code> means the selected loss, not necessarily likelihood. <code>converged</code> reports the optimizer’s stopping criterion. It does not establish parameter recovery, a global optimum or an adequate account of the behavior.</p>
+<p>New records store <code>diagnostics</code> as a list aligned with <code>fitness</code> and <code>fits["subject"]</code>, including pooled fits. Each row records <code>subject</code>, <code>selected_restart</code> and every attempted restart, with its best usable <code>fitness</code> and physical <code>parameters</code>. An unusable restart has no candidate. Gradient solver endpoints and statuses remain separate from a better retained evaluation. Fixed Boolean and integer values keep their types. Older records can have different optional diagnostics; they are not rewritten.</p>
 <div id="locate-project-inputs" class="cell">
 <details open="" class="code-fold">
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb3-2"><a href="#cb3-2" aria-label="2"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb3-6"><a href="#cb3-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb3-8"><a href="#cb3-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -629,9 +635,22 @@ Optimizer criterion met: [True]</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> parameters_for_subjects</span>
 <span id="cb8-2"><a href="#cb8-2" aria-label="2"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-label="3"></a>subject_parameters <span class="op">=</span> parameters_for_subjects(saved_fit, [<span class="dv">12</span>, <span class="dv">5</span>])</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="co"># Pass subject_parameters to simulate_h5_from_h5 with your model and trial mask.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="co"># Pass subject_parameters to simulate_dataset with your model and trial mask.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Every returned column is a new JAX array aligned to participants 12 and 5, in that order. Both fit-record utilities require integer participant IDs; floating-point IDs such as <code>3.0</code> and Boolean IDs are outside the interface. Participant fits are matched by identity, rather than row position. A pooled fit broadcasts its single <code>subject=-1</code> row to the requested participants. Older records without a <code>pooled</code> field are recognized by that sentinel. Boolean parameter types are restored using optional <code>fit_configuration.parameters.fixed</code> metadata, falling back to <code>fixed</code>. These metadata fields are not additional required fields of <code>FitResult</code>.</p>
 <p>Supply a nonempty sequence of distinct requested IDs and aligned fit columns. Participant records must cover those IDs; pooled declarations must describe exactly one <code>subject=-1</code> row. Boolean parameters named in the metadata must have corresponding fit columns. These are caller preconditions, not runtime checks. The original record is unchanged. Unlike <code>combine_participant_parameters</code>, which assembles separate participant fits, this operation assigns one record’s values to a requested participant sequence. It does not load files, construct a model, or validate whether the fitted model and observations are scientifically compatible. Keep those checks and the decision to use pooled or participant fits in your procedure.</p>
+</section>
+<section id="explicit-prepared-fitting" class="level2">
+<h2 class="anchored" data-anchor-id="explicit-prepared-fitting">Explicit prepared fitting</h2>
+<p>Research models can separate observation preparation from optimization:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a><span class="im">from</span> jaxcmr.experimental.prepared_fitting <span class="im">import</span> PreparedScipyTrustConstr</span>
+<span id="cb9-2"><a href="#cb9-2" aria-label="2"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-label="3"></a><span class="co"># prepare_trials is supplied by your model's observation provider.</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-label="4"></a>prepared_loss <span class="op">=</span> observation_provider.prepare_trials(trial_indices)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-label="5"></a>fitter <span class="op">=</span> PreparedScipyTrustConstr(base_params, hyperparams)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-label="6"></a>fitter.warmup(prepared_loss)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-label="7"></a>result <span class="op">=</span> fitter.fit(prepared_loss, subject_id<span class="op">=</span>participant)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <code>PreparedLoss</code> carries dynamic observation arrays and a stable evaluation function. Compatible arrays can reuse compilation. The fitter neither selects participants nor discovers preparation methods; callers prepare and iterate explicitly. Screening, restarts, parameter transforms and deadlines use the same optimizer implementation as ordinary gradient fitting. Preparation is experimental.</p>
+<p><code>EvosaxDE</code>, <code>ScanEvosaxDE</code> and <code>MapEvosaxDE</code> also accept <code>hyperparams["transforms"]</code> using <code>ParameterSpace</code>. Omit it for physical-coordinate search. Bounds, loss inputs, returned parameters and restart candidates remain in physical units. See <a href="../reference/fitting.html">fitting</a> and <a href="../reference/experimental-prepared-fitting.html">prepared fitting</a>.</p>
 
 
 </section>

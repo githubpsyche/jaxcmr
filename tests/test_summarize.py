@@ -183,6 +183,34 @@ def test_information_criteria_known_values(measure, args, column, expected):
     )
 
 
+def test_numerical_criteria_broadcast_without_fit_records():
+    nll = np.array([[10., 12., 11.], [9., 11., 10.]])
+    counts = np.array([[2], [1]])
+    observations = np.array([10, 20, 30])
+    originals = [values.copy() for values in (nll, counts, observations)]
+    # Each column is a participant fit. Penalize each row by 2*k, not by a
+    # combined parameter count; AICc denominators are n-k-1 for that fit.
+    expected_aic = np.array([[24., 28., 26.], [20., 24., 22.]])
+    np.testing.assert_array_equal(summary.aic_scores(nll, counts), expected_aic)
+    np.testing.assert_allclose(
+        summary.aicc_scores(nll, counts, observations),
+        expected_aic + [[12/7, 12/17, 12/27], [4/8, 4/18, 4/28]],
+    )
+    np.testing.assert_allclose(
+        summary.bic_scores(nll, counts, observations),
+        [[20 + 2*np.log(10), 24 + 2*np.log(20), 22 + 2*np.log(30)],
+         [18 + np.log(10), 22 + np.log(20), 20 + np.log(30)]],
+    )
+    for values, original in zip((nll, counts, observations), originals):
+        np.testing.assert_array_equal(values, original)
+    # A custom report can calculate a single pooled fit without constructing a record.
+    scalar = summary.aic_scores(33., 2)
+    assert scalar.shape == ()
+    assert float(scalar) == 70.
+    assert float(summary.aicc_scores(33., 2, 60)) == pytest.approx(70 + 12/57)
+    assert float(summary.bic_scores(33., 2, 60)) == pytest.approx(66 + 2*np.log(60))
+
+
 def test_pooled_fit_has_one_penalty_and_accepts_scalar_observation_count():
     # These are summed NLLs for one shared parameter vector, not three fitted rows.
     records = [
@@ -276,6 +304,8 @@ def test_observation_counts_remain_attached_to_first_records_subjects():
 def test_aicc_reports_undefined_small_sample_correction():
     with pytest.raises(ValueError, match="AICc undefined"):
         summary.calculate_aicc(fits(), [20, 3, 20])
+    with pytest.raises(ValueError, match="AICc undefined"):
+        summary.aicc_scores([10., 12., 11.], 2, [20, 3, 20])
 
 
 @pytest.mark.parametrize(
@@ -393,7 +423,13 @@ def test_bms_reference_posterior_and_protection_are_offset_invariant(
         )
         for i in range(evidence.shape[1])
     ]
-    table = summary.bayesian_model_selection(records, alpha0=prior, n_obs=counts)
+    original_evidence = evidence.copy()
+    table = summary.random_effects_model_selection(
+        evidence, [record["name"] for record in records], alpha0=prior
+    )
+    np.testing.assert_array_equal(evidence, original_evidence)
+    approximated = summary.bayesian_model_selection(records, alpha0=prior, n_obs=counts)
+    pd.testing.assert_frame_equal(approximated, table, atol=1e-8)
     np.testing.assert_allclose(table["Alpha"], alpha, atol=5e-8)
     np.testing.assert_allclose(
         table["Expected Frequency"], np.array(alpha) / sum(alpha), atol=1e-8
@@ -405,6 +441,11 @@ def test_bms_reference_posterior_and_protection_are_offset_invariant(
     if len(alpha) == 2:
         # Independent exact beta-tail exceedance; sampling error at 100,000 draws.
         assert xp[0] == pytest.approx(0.99677633508878, abs=0.001)
+    direct_shifted = summary.random_effects_model_selection(
+        evidence + np.arange(len(evidence))[:, None] * 100,
+        [record["name"] for record in records], alpha0=prior,
+    )
+    np.testing.assert_allclose(direct_shifted.iloc[:, 1:], table.iloc[:, 1:], atol=1e-8)
     for record in records:
         record["fitness"] = (
             np.asarray(record["fitness"]) + np.arange(len(evidence)) * 100

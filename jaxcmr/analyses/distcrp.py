@@ -1,50 +1,49 @@
-"""Distance-binned conditional response probabilities.
+"""Conditional response probability by distance between recalled items.
 
-Replaces the lag axis of standard CRP with semantic (or other)
-distance bins. At each transition, computes pairwise distances from
-the previously recalled item to all unrecalled items, digitizes into
-bins, and tallies actual vs available transitions per bin.
+Given the previous recall, which distances were available for the next
+recall, and which distance did the participant choose? ``tabulate_trial``
+uses the items' global identifiers in ``pres_itemids`` to look up distances
+in a vocabulary matrix. A transition contributes one opportunity to every
+bin containing an available item, even if several items share a bin. The
+chosen item's bin also receives one actual transition.
 
-Notes
------
-- ``DistanceTabulation`` expects a trial-local distance matrix
-  already sliced from the global vocabulary distance matrix.
-- Bin edges can be computed from percentiles
-  (``compute_distance_bins_percentiles``) or by expanding bins
-  until a minimum per-subject transition count is reached
-  (``compute_distance_bins_min_count``).
-- ``plot_cat_crp`` is a convenience wrapper that uses two bins
-  (same-category vs different-category) for categorical analyses.
-
+``dist_crp`` pools these counts across trials and divides within each bin.
+Use common bin edges when comparing curves. Edges can come from percentiles
+of the matrix or from distances to available items on selected trials. For
+the latter, the target bin count is the requested minimum multiplied by the
+number of participants. Counts are pooled, so participants can contribute
+unequally and the final bin can fall short.
 """
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 __all__ = [
-    "compute_distance_bin_edges",
-    "compute_distance_bins_percentiles",
-    "raw_candidate_transitions",
-    "compute_min_count_distance_bins",
-    "compute_distance_bins_min_count",
     "DistanceTabulation",
-    "tabulate_trial",
+    "compute_distance_bins_min_count",
+    "compute_distance_bins_percentiles",
+    "compute_min_count_distance_bins",
     "dist_crp",
-    "plot_dist_crp",
     "plot_cat_crp",
+    "plot_dist_crp",
+    "raw_candidate_transitions",
+    "tabulate_trial",
 ]
 
 from collections.abc import Sequence
 
+import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
-import numpy as np
 from matplotlib.axes import Axes
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from ..helpers import apply_by_subject, require_pres_itemids
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import _require_pres_itemids, apply_by_subject
+
 from ..math import cosine_similarity_matrix
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
 def compute_distance_bins_percentiles(
@@ -89,17 +88,6 @@ def compute_distance_bins_percentiles(
     return interior, centers
 
 
-def compute_distance_bin_edges(
-    distance_matrix: Float[Array, " item_count item_count"],
-    percentiles: Float[Array, " percentiles"],
-) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Deprecated alias for :func:`compute_distance_bins_percentiles`.
-
-    """
-
-    return compute_distance_bins_percentiles(distance_matrix, percentiles)
-
-
 class DistanceTabulation(Pytree):
     """Accumulates per-bin transition counts for a single trial."""
 
@@ -109,7 +97,7 @@ class DistanceTabulation(Pytree):
         first_recall: Int_,
         trial_distances: Float[Array, "study_events study_events"],
         bin_edges: Float[Array, " edges"],
-    ):
+    ) -> None:
         bin_count = bin_edges.shape[0] + 1
         self.bin_edges = bin_edges
         self.trial_distances = trial_distances
@@ -119,7 +107,7 @@ class DistanceTabulation(Pytree):
         self.avail_items = self.avail_items.at[first_recall - 1].set(False)
         self.previous_item = first_recall
 
-    def _update(self, current_item: Int_) -> "DistanceTabulation":
+    def _update(self, current_item: Int_) -> DistanceTabulation:
         """Update transition tallies for the supplied recall choice."""
 
         distances_from_prev = self.trial_distances[self.previous_item - 1]
@@ -139,7 +127,7 @@ class DistanceTabulation(Pytree):
             actual_transitions=self.actual_transitions.at[actual_bin].add(1),
         )
 
-    def tabulate(self, choice: Int_) -> "DistanceTabulation":
+    def tabulate(self, choice: Int_) -> DistanceTabulation:
         "Tabulate a transition if the choice is non-zero (i.e., a valid item)."
         return lax.cond(choice > 0, lambda: self._update(choice), lambda: self)
 
@@ -254,7 +242,7 @@ def compute_min_count_distance_bins(
     min_transitions_per_subject: int,
     step: float = 0.05,
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Distance bins satisfying per-subject availability minimum.
+    """Distance bins targeting a pooled count of available alternatives.
 
     Parameters
     ----------
@@ -313,7 +301,7 @@ def compute_distance_bins_min_count(
     distance_matrix: Float[Array, " item_count item_count"],
     min_transitions_per_subject: int,
     step: float = 0.05,
-    trial_mask: Optional[Bool[Array, " trial_count"]] = None,
+    trial_mask: Bool[Array, " trial_count"] | None = None,
 ) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Distance bins derived from dataset availability counts.
 
@@ -324,7 +312,7 @@ def compute_distance_bins_min_count(
     distance_matrix : Float[Array, " item_count item_count"]
         Pairwise distances indexed by item identifier.
     min_transitions_per_subject : int
-        Minimum available transitions per bin per subject.
+        Target average number of available alternatives per participant per bin.
     step : float
         Distance increment used while expanding each bin.
     trial_mask : Bool[Array, " trial_count"], optional
@@ -341,15 +329,13 @@ def compute_distance_bins_min_count(
     recalls = dataset["recalls"]
     if trial_mask is None:
         trial_mask = jnp.ones(recalls.shape[0], dtype=bool)
-    else:
-        trial_mask = jnp.asarray(trial_mask, dtype=bool)
 
     def gather_subject(
         subject_dataset: RecallDataset, matrix: Float[Array, " item_count item_count"]
     ) -> tuple[jnp.ndarray, jnp.ndarray]:
         distances, masks = vmap(raw_candidate_transitions, in_axes=(0, 0, None))(
             subject_dataset["recalls"],
-            require_pres_itemids(subject_dataset),
+            _require_pres_itemids(subject_dataset),
             matrix,
         )
         distances = distances.reshape(-1)
@@ -383,6 +369,11 @@ def dist_crp(
 ) -> Float[Array, " bins"]:
     """Distance-conditioned response probability.
 
+    This numerical operation is JIT-compatible and requires aligned integer
+    item IDs within matrix coverage. Supply a square matrix with finite distances
+    for the within-list alternatives used by the analysis. Input alignment and
+    distance suitability are the caller's responsibility.
+
     Parameters
     ----------
     dataset : RecallDataset
@@ -400,7 +391,7 @@ def dist_crp(
     """
     actual, possible = vmap(tabulate_trial, in_axes=(0, 0, None, None))(
         dataset["recalls"],
-        require_pres_itemids(dataset),
+        _require_pres_itemids(dataset),
         distance_matrix,
         bin_edges,
     )
@@ -411,7 +402,7 @@ def _resolve_distance_bins(
     datasets: Sequence[RecallDataset],
     trial_masks: Sequence[Bool[Array, " trial_count"]],
     distances: Float[Array, " item_count item_count"],
-    bin_edges: Float[Array, " edges"] | str | None,
+    bin_edges: Float[Array, " edges"] | Literal["min_count", "percentile"] | None,
     bin_centers: Float[Array, " bins"] | None,
     min_transitions_per_subject: int,
     bin_step: float,
@@ -430,12 +421,10 @@ def _resolve_distance_bins(
                 step=bin_step,
                 trial_mask=trial_masks[bin_source_index],
             )
-        if bin_edges == "percentile":
-            return compute_distance_bins_percentiles(
-                distances,
-                jnp.linspace(1, 99, 10),
-            )
-        raise ValueError("bin_edges must be 'min_count', 'percentile', or an array.")
+        return compute_distance_bins_percentiles(
+            distances,
+            jnp.linspace(1, 99, 10),
+        )
 
     bin_edges = jnp.asarray(bin_edges)
     if bin_centers is None:
@@ -461,17 +450,25 @@ def plot_dist_crp(
     features: Float[Array, "word_count features_count"] | None = None,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     min_transitions_per_subject: int = 10,
     bin_step: float = 0.05,
     bin_source_index: int = 0,
-    bin_edges: Float[Array, " edges"] | str | None = "percentile",
+    bin_edges: Float[Array, " edges"]
+    | Literal["min_count", "percentile"]
+    | None = "percentile",
     bin_centers: Float[Array, " bins"] | None = None,
     distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot distance-binned CRP curves aggregated by subject.
+
+    Supply features or a distance matrix. When both are supplied, the distance
+    matrix takes precedence.
 
     Parameters
     ----------
@@ -490,7 +487,7 @@ def plot_dist_crp(
     axis : Axes, optional
         Existing Matplotlib Axes to plot on.
     min_transitions_per_subject : int
-        Minimum available transitions per bin per subject.
+        Target average number of available alternatives per participant per bin.
     bin_step : float
         Distance increment for expanding each bin.
     bin_source_index : int
@@ -505,25 +502,29 @@ def plot_dist_crp(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Axes with distance-binned CRP curves.
-
     """
 
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
 
-
-
-    if (features is None) == (distance_matrix is None):
-        raise ValueError("Exactly one of features or distance_matrix must be provided.")
-
     if distance_matrix is None:
-        distances = 1 - cosine_similarity_matrix(features)
+        # The caller supplies features when no distance matrix is given.
+        feature_matrix = cast(Float[Array, " word_count features_count"], features)
+        distances = 1 - cosine_similarity_matrix(feature_matrix)
     else:
         distances = jnp.asarray(distance_matrix)
 
@@ -549,16 +550,18 @@ def plot_dist_crp(
         subject_values = jnp.vstack(subject_values)
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             bin_centers,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(
+    format_analysis_axes(
         axis, "Distance (bin center)", "Conditional Resp. Prob.", contrast_name
     )
     return axis
@@ -572,9 +575,12 @@ def plot_cat_crp(
     feature_label: str = "Category",
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot category-binned CRP curves from a single feature column.
 
@@ -601,19 +607,24 @@ def plot_cat_crp(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Axes with category-binned CRP curves.
-
     """
 
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-    
-
 
     feature_values = jnp.asarray(
         features if features.ndim == 1 else features[:, feature_column],
@@ -635,19 +646,21 @@ def plot_cat_crp(
         subject_values = jnp.vstack(subject_values)
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             bin_centers,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     axis.set_xticks(np.array(bin_centers))
     axis.set_xticklabels(["Same", "Different"])
 
-    set_plot_labels(
+    format_analysis_axes(
         axis,
         f"{feature_label}",
         "Conditional Resp. Prob.",

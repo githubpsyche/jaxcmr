@@ -34,7 +34,7 @@ from jaxcmr.components.termination import NoStopTermination
 from jaxcmr.experimental import optimized_cmr_fitting
 from jaxcmr.fitting import ScipyLBFGSB, ScipyTrustConstr
 from jaxcmr.helpers import load_data
-from jaxcmr.loss.transform_sequence_likelihood import ExcludeTerminationLikelihoodLoss
+from jaxcmr.loss.sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 from jaxcmr.typing import RecallDataset
 

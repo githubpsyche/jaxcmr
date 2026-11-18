@@ -1,23 +1,34 @@
-"""Relative Serial Recall Accuracy Curve.
+"""Recall of study items immediately after their study predecessors.
 
-Computes the probability of recalling the correct item at each
-output position relative to the expected serial position, accounting
-for items that may repeat across study positions.
+For the study list A, B, C, D, suppose a participant recalls B, then C.
+Relative serial accuracy credits C at study position 3 because B immediately
+preceded C during both study and recall. Strict serial accuracy would require
+C in output position 3. The first study position earns relative credit when
+its item is the first recall.
 
+``tabulate_trial`` marks the study positions that meet this rule. When an item
+appears several times, each occurrence can supply a matching neighbor.
+``relative_srac`` averages those indicators across trials, and
+``plot_relative_srac`` averages the participant curves.
+
+A zero-coded blank currently indexes the last study item during transition
+scoring. For the example above, adding trailing zeros after B, C also
+credits D. This can inflate accuracy at the final study position.
 """
 
-__all__ = ["Tabulation", "tabulate_trial", "relative_srac", "plot_relative_srac"]
+__all__ = ["Tabulation", "plot_relative_srac", "relative_srac", "tabulate_trial"]
 
 from collections.abc import Sequence
 
 import jax.numpy as jnp
 from jax import jit, lax, vmap
 from matplotlib.axes import Axes
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from ..helpers import apply_by_subject, find_max_list_length
-from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
-from ..repetition import all_study_positions
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject, find_max_list_length
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
 
@@ -29,12 +40,12 @@ class Tabulation(Pytree):
         presentation: Integer[Array, " study_events"],
         first_recall: Int_,
         size: int = 3,
-    ):
+    ) -> None:
         self.list_length = presentation.size
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
         self.size = size
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
         self.previous = lax.cond(
@@ -94,7 +105,7 @@ def tabulate_trial(
         True at positions recalled after their neighbor.
 
     """
-    trial = trial[:presentation.size]
+    trial = trial[: presentation.size]
     init = Tabulation(presentation, trial[0], size)
     tab = lax.fori_loop(1, trial.size, lambda i, t: t.tabulate(trial[i]), init)
     return tab.recalled
@@ -132,11 +143,13 @@ def plot_relative_srac(
     trial_masks: Sequence[Bool[Array, " trial_count"]] | Bool[Array, " trial_count"],
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
-
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot relative serial recall accuracy with intervals.
 
@@ -159,19 +172,23 @@ def plot_relative_srac(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the relative SRAC plot.
-
     """
-    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(datasets, trial_masks, color_cycle, axis)
-
+    axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
+        datasets, trial_masks, color_cycle, axis
+    )
 
     if labels is None:
         labels = [""] * len(datasets)
-
-
 
     max_list_length = find_max_list_length(datasets, trial_masks)
     for data_index, data in enumerate(datasets):
@@ -185,14 +202,16 @@ def plot_relative_srac(
         )
 
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             jnp.arange(max_list_length, dtype=int) + 1,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Study Position", "Recall Rate", contrast_name)
+    format_analysis_axes(axis, "Study Position", "Recall Rate", contrast_name)
     return axis

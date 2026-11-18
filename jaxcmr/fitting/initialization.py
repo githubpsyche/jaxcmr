@@ -2,68 +2,60 @@
 
 import numpy as np
 
+from jaxcmr.typing import Float, Integer
+
 __all__ = ["select_starts"]
 
 
 def select_starts(
-    candidates: np.ndarray,
-    scores: np.ndarray,
+    candidates: Float[np.ndarray, " candidates parameters"],
+    scores: Float[np.ndarray, " candidates"],
     count: int,
     min_distance: float = 0.1,
-) -> np.ndarray:
-    """Return up to ``count`` candidate indices, ordered by increasing score.
+) -> Integer[np.ndarray, " selected_candidates"]:
+    """Choose low-loss candidates separated in sampling coordinates.
 
-    Candidates have shape (candidates, parameters) in unit-interval fitting
-    coordinates. Greedy selection keeps a point only if its root-mean-square
-    coordinate distance from every selected point is at least ``min_distance``.
-    This discourages redundant starts; it does not identify attraction basins.
-    Nonfinite scores are excluded. Set ``min_distance=0`` to use score alone.
+    Stable score ordering resolves ties in input order. Separation is the root
+    mean square coordinate difference; it discourages redundant starts without
+    claiming to identify distinct attraction basins.
 
-    Args:
-        candidates: Finite unit-interval coordinates, with one candidate per row.
-        scores: One loss per candidate; lower is better.
-        count: Positive maximum number of starts to select.
-        min_distance: Minimum RMS separation in these coordinates, in [0, 1].
+    Parameters
+    ----------
+    candidates : Float[ArrayLike, "candidates parameters"]
+        Finite unit-interval coordinates, one candidate per row.
+    scores : Float[ArrayLike, "candidates"]
+        One objective per candidate; nonfinite scores are excluded.
+    count : int
+        Positive maximum number of starts to select.
+    min_distance : float
+        Minimum RMS separation, in [0, 1]. Zero selects by score alone.
 
-    Returns:
-        Candidate row indices in score order, resolving equal scores in input
-        order. May contain fewer than count entries if too few finite, separated
-        candidates remain; no finite scores produces an empty array.
-
-    Raises:
-        ValueError: Shapes, coordinates, count or minimum distance are invalid.
+    Returns
+    -------
+    Integer[np.ndarray, "selected"]
+        Candidate indices in score order. Fewer than count may remain after
+        excluding unusable or insufficiently separated candidates.
     """
     candidates, scores = (
         np.asarray(candidates, dtype=float),
         np.asarray(scores, dtype=float),
     )
-    if (
-        candidates.ndim != 2
-        or candidates.shape[1] == 0
-        or scores.shape != (candidates.shape[0],)
-        or not np.all(np.isfinite(candidates))
-        or np.any((candidates < 0) | (candidates > 1))
-    ):
-        raise ValueError(
-            "Provide finite unit-interval candidate rows and one score per row."
-        )
-    if isinstance(count, bool) or not isinstance(count, int) or count < 1:
-        raise ValueError("count must be a positive integer.")
-    if not np.isfinite(min_distance) or not 0 <= min_distance <= 1:
-        raise ValueError("min_distance must lie between zero and one.")
-    selected: list[int] = []
-    for index in np.argsort(
+    selected_indices: list[int] = []
+    for candidate_index in np.argsort(
         np.where(np.isfinite(scores), scores, np.inf), kind="stable"
     ):
-        if not np.isfinite(scores[index]):
+        if not np.isfinite(scores[candidate_index]):
             break
-        if selected:
-            distances = np.sqrt(
-                np.mean((candidates[selected] - candidates[index]) ** 2, axis=1)
+        if selected_indices:
+            selected_distances = np.sqrt(
+                np.mean(
+                    (candidates[selected_indices] - candidates[candidate_index]) ** 2,
+                    axis=1,
+                )
             )
-            if np.any(distances < min_distance):
+            if np.any(selected_distances < min_distance):
                 continue
-        selected.append(int(index))
-        if len(selected) == count:
+        selected_indices.append(int(candidate_index))
+        if len(selected_indices) == count:
             break
-    return np.asarray(selected, dtype=int)
+    return np.asarray(selected_indices, dtype=int)

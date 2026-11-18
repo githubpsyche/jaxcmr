@@ -1,89 +1,53 @@
-"""Route-conditioned repetition lag-conditional response probability.
+"""Where recall goes after reaching a repeated item from one of its neighbors.
 
-Measures whether recalling a repeated item after entering from the
-predecessor side of one occurrence routes the next recall back to that
-same neighborhood or to the other occurrence's neighborhood.
+In the list A, B, X, C, D, E, F, G, X, H, consider the recalls B, X, H.
+B immediately preceded the first X at study, so it identifies the incoming
+route. H lies at lag +7 from the first X and +1 from the second. Both lags
+describe the same outgoing response. The route identifies the neighborhood
+of the incoming recall while leaving open which occurrence of X came to mind.
 
-Notes
------
-- For a repeated item at study positions i and j, seven direction
-  modes are supported:
-
-  - ``i2i``: from i predecessor-side neighbor to i's neighborhood through the repeater
-  - ``i2j``: from i predecessor-side neighbor to j's neighborhood through the repeater
-  - ``j2i``: from j predecessor-side neighbor to i's neighborhood through the repeater
-  - ``j2j``: from j predecessor-side neighbor to j's neighborhood through the repeater
-  - ``same``: union of i2i and j2j
-  - ``switch``: union of i2j and j2i
-  - ``both``: full 2 x 2 route matrix
-
-- ``use_lag2`` extends the incoming-neighbor definition to include -2
-  offsets in addition to the default -1.
-- ``test_rep_route_crp_vs_control`` compares observed route CRP
-  against a shuffled control.
-
+``reproutecrp`` keeps the incoming neighborhood and the presentation used
+to measure outgoing lag as separate dimensions. The same-neighborhood
+curves measure lag from the incoming neighborhood's X. The switch curves
+measure it from the other X. Compare those curves to see whether recalls
+cluster near one or the other presentation.
 """
 
 __all__ = [
-    "set_false_at_index",
     "RepRouteCRPTabulation",
-    "tabulate_trial",
-    "reproutecrp",
     "plot_rep_route_crp",
+    "plot_reproutecrp_both",
     "plot_reproutecrp_i2i",
     "plot_reproutecrp_i2j",
     "plot_reproutecrp_j2i",
     "plot_reproutecrp_j2j",
     "plot_reproutecrp_same",
     "plot_reproutecrp_switch",
-    "plot_reproutecrp_both",
+    "reproutecrp",
     "subject_rep_route_crp",
-    "test_rep_route_crp_vs_control",
+    "tabulate_trial",
     "test_same_switch_bias",
-    "RepRouteCRPTestResult",
 ]
 
-from dataclasses import dataclass
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
+import pandas as pd
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from scipy import stats
+
 from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, set_plot_labels, prepare_plot_inputs
-from ..repetition import all_study_positions
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from ._transitions import remove_positions
+from .statistics import compare_paired
 
-
-Direction = Literal["i2i", "i2j", "j2i", "j2j", "same", "switch", "both"]
-
-
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to False using 1-based indexing.
-
-    Parameters
-    ----------
-    vec : Bool[Array, " positions"]
-        Boolean vector of available positions.
-    i : Int_
-        1-based index to clear; 0 is a no-op sentinel.
-
-    Returns
-    -------
-    tuple
-        Updated vector and ``None`` carry value.
-
-    """
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
-    )
+type Direction = Literal["i2i", "i2j", "j2i", "j2j", "same", "switch", "both"]
 
 
 def select_direction(
@@ -133,7 +97,7 @@ class RepRouteCRPTabulation(Pytree):
         first_recall: Int_,
         min_lag: int = 4,
         use_lag2: bool = True,
-    ):
+    ) -> None:
         size = 2
         self.min_lag = min_lag
         self.use_lag2 = use_lag2
@@ -144,7 +108,7 @@ class RepRouteCRPTabulation(Pytree):
         self.route_indices = jnp.arange(2, dtype=int)
         self.center_indices = jnp.arange(2, dtype=int)
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -161,7 +125,7 @@ class RepRouteCRPTabulation(Pytree):
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
         "Update the study positions available to retrieve after a transition."
         study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
     def route_from_previous(
         self, recall: Int_
@@ -177,17 +141,13 @@ class RepRouteCRPTabulation(Pytree):
         j_minus1_pos = second_pos - 1
         j_minus2_pos = second_pos - 2
 
-        i_minus1 = (i_minus1_pos > 0) & jnp.any(
-            self.previous_positions == i_minus1_pos
-        )
+        i_minus1 = (i_minus1_pos > 0) & jnp.any(self.previous_positions == i_minus1_pos)
         i_minus2 = (
             (i_minus2_pos > 0)
             & jnp.any(self.previous_positions == i_minus2_pos)
             & self.use_lag2
         )
-        j_minus1 = (j_minus1_pos > 0) & jnp.any(
-            self.previous_positions == j_minus1_pos
-        )
+        j_minus1 = (j_minus1_pos > 0) & jnp.any(self.previous_positions == j_minus1_pos)
         j_minus2 = (
             (j_minus2_pos > 0)
             & jnp.any(self.previous_positions == j_minus2_pos)
@@ -206,22 +166,26 @@ class RepRouteCRPTabulation(Pytree):
     def lag_from_pending(self, pos: Int_) -> Integer[Array, " route center lags"]:
         """Return lags from pending occurrence centers to ``pos``."""
 
-        def f(route_idx):
-            def g(center_idx):
-                center = self.pending_centers[center_idx]
+        def lags_for_route(
+            route_index: Integer[Array, ""],
+        ) -> Integer[Array, " centers lags"]:
+            def lags_from_center(
+                center_index: Integer[Array, ""],
+            ) -> Integer[Array, " lags"]:
+                center = self.pending_centers[center_index]
 
-                def lag_from_center():
+                def lag_from_center() -> Integer[Array, " lags"]:
                     return self.base_lags.at[pos - center + self.lag_range].add(1)
 
                 return lax.cond(
-                    self.pending_routes[route_idx] & (center > 0) & (pos > 0),
+                    self.pending_routes[route_index] & (center > 0) & (pos > 0),
                     lag_from_center,
                     lambda: self.base_lags,
                 )
 
-            return lax.map(g, self.center_indices)
+            return lax.map(lags_from_center, self.center_indices)
 
-        return lax.map(f, self.route_indices)
+        return lax.map(lags_for_route, self.route_indices)
 
     def tabulate_actual_lags(self, recall: Int_) -> Integer[Array, " lags"]:
         """Return cumulative counts of actual lag transitions."""
@@ -237,7 +201,7 @@ class RepRouteCRPTabulation(Pytree):
         """Return available lags from a pending occurrence center."""
         center = self.pending_centers[center_idx]
 
-        def lag_from_center():
+        def lag_from_center() -> Integer[Array, " lags"]:
             return self.base_lags.at[self.all_positions - center + self.lag_range].add(
                 self.avail_recalls
             )
@@ -267,7 +231,7 @@ class RepRouteCRPTabulation(Pytree):
         return self.avail_lags + new_lags
 
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
-    def should_tabulate(self) -> Bool:
+    def should_tabulate(self) -> Bool[Array, ""]:
         """Return ``True`` when a previous repeater route is pending."""
         return jnp.any(self.pending_routes)
 
@@ -292,10 +256,10 @@ class RepRouteCRPTabulation(Pytree):
             ),
         )
 
-    def is_valid_recall(self, recall: Int_) -> Bool:
+    def is_valid_recall(self, recall: Int_) -> Bool[Array, ""]:
         """Return ``True`` when recall positions have not been retrieved yet."""
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
             is_available_study_position = self.avail_recalls[recall_study_positions - 1]
@@ -378,7 +342,9 @@ def reproutecrp(
     presentations = dataset["pres_itemnos"]
 
     tabulate_trials = vmap(tabulate_trial, in_axes=(0, 0, None, None, None))
-    actual, possible = tabulate_trials(trials, presentations, direction, use_lag2, min_lag)
+    actual, possible = tabulate_trials(
+        trials, presentations, direction, use_lag2, min_lag
+    )
     return actual.sum(0) / possible.sum(0)
 
 
@@ -391,11 +357,23 @@ def plot_rep_route_crp(
     use_lag2: bool = True,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Plot route-conditioned repetition lag-CRP with CIs."""
+    """Plot route-conditioned repetition lag-CRP with CIs.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
     )
@@ -429,26 +407,30 @@ def plot_rep_route_crp(
                     label = (
                         f"{labels[data_index]} {route_labels[route_idx][center_idx]}"
                     ).strip()
-                    plot_data(
+                    plot_mean_curve(
                         axis,
                         lag_interval,
                         subject_values[:, route_idx, center_idx],
                         label,
                         color,
                         confidence_level=confidence_level,
+                        n_resamples=n_resamples,
+                        bootstrap_seed=bootstrap_seed,
                     )
         else:
             subject_values = jnp.vstack(subject_values)[
                 :, lag_range - max_lag : lag_range + max_lag + 1
             ]
             color = color_cycle[data_index % len(color_cycle)]
-            plot_data(
+            plot_mean_curve(
                 axis,
                 lag_interval,
                 subject_values,
                 labels[data_index],
                 color,
                 confidence_level=confidence_level,
+                n_resamples=n_resamples,
+                bootstrap_seed=bootstrap_seed,
             )
 
     if direction in ("i2i", "j2i"):
@@ -461,7 +443,7 @@ def plot_rep_route_crp(
         xlabel = "Lag from Other Presentation"
     else:
         xlabel = "Lag from 1st/2nd Presentation"
-    set_plot_labels(axis, xlabel, "Conditional Resp. Prob.", contrast_name)
+    format_analysis_axes(axis, xlabel, "Conditional Resp. Prob.", contrast_name)
     return axis
 
 
@@ -472,11 +454,23 @@ def plot_reproutecrp_i2i(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for i predecessor-side neighbor -> repeater -> i."""
+    """Return plot configured for i predecessor-side neighbor -> repeater -> i.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -489,6 +483,8 @@ def plot_reproutecrp_i2i(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -499,11 +495,23 @@ def plot_reproutecrp_i2j(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for i predecessor-side neighbor -> repeater -> j."""
+    """Return plot configured for i predecessor-side neighbor -> repeater -> j.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -516,6 +524,8 @@ def plot_reproutecrp_i2j(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -526,11 +536,23 @@ def plot_reproutecrp_j2i(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for j predecessor-side neighbor -> repeater -> i."""
+    """Return plot configured for j predecessor-side neighbor -> repeater -> i.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -543,6 +565,8 @@ def plot_reproutecrp_j2i(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -553,11 +577,23 @@ def plot_reproutecrp_j2j(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for j predecessor-side neighbor -> repeater -> j."""
+    """Return plot configured for j predecessor-side neighbor -> repeater -> j.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -570,6 +606,8 @@ def plot_reproutecrp_j2j(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -580,11 +618,23 @@ def plot_reproutecrp_same(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for same-route transitions."""
+    """Return plot configured for same-route transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -597,6 +647,8 @@ def plot_reproutecrp_same(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -607,11 +659,23 @@ def plot_reproutecrp_switch(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for switch-route transitions."""
+    """Return plot configured for switch-route transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -624,6 +688,8 @@ def plot_reproutecrp_switch(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -634,11 +700,23 @@ def plot_reproutecrp_both(
     min_lag: int = 4,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
-    """Return plot configured for all route-conditioned transitions."""
+    """Return plot configured for all route-conditioned transitions.
+
+    Other Parameters
+    ----------------
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+    """
     return plot_rep_route_crp(
         datasets,
         trial_masks,
@@ -651,6 +729,8 @@ def plot_reproutecrp_both(
         contrast_name=contrast_name,
         axis=axis,
         confidence_level=confidence_level,
+        n_resamples=n_resamples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 
@@ -661,7 +741,10 @@ def subject_rep_route_crp(
     use_lag2: bool = True,
     min_lag: int = 4,
     max_lag: int = 3,
-) -> np.ndarray:
+) -> (
+    Float[np.ndarray, " subjects lags"]
+    | Float[np.ndarray, " subjects routes centers lags"]
+):
     """Compute subject-level route-conditioned repetition CRP."""
     lag_range = int(np.max(dataset["listLength"][trial_mask])) - 1
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
@@ -679,92 +762,42 @@ def subject_rep_route_crp(
     return np.vstack([s[lag_slice] for s in subject_values])
 
 
-@dataclass
-class RepRouteCRPTestResult:
-    """Results from a route-conditioned repetition CRP statistical test."""
-
-    lags: np.ndarray
-    t_stats: np.ndarray
-    t_pvals: np.ndarray
-    w_stats: np.ndarray
-    w_pvals: np.ndarray
-    mean_diffs: np.ndarray
-    direction: str
-
-    def __str__(self) -> str:
-        lines = [
-            f"Direction: {self.direction}",
-            f"{'Lag':>5} | {'t-stat':>8} {'t p-val':>10} | "
-            f"{'W-stat':>8} {'W p-val':>10} | {'Mean Diff':>10}",
-            f"{'-'*5}-+-{'-'*20}-+-{'-'*20}-+-{'-'*11}",
-        ]
-        for i, lag in enumerate(self.lags):
-            lines.append(
-                f"{lag:>5} | {self.t_stats[i]:>8.3f} {self.t_pvals[i]:>10.4f} | "
-                f"{self.w_stats[i]:>8.1f} {self.w_pvals[i]:>10.4f} | "
-                f"{self.mean_diffs[i]:>10.4f}"
-            )
-        return "\n".join(lines)
-
-
-def test_rep_route_crp_vs_control(
-    observed_crp: np.ndarray,
-    control_crp: np.ndarray,
-    max_lag: int = 3,
-    direction: str = "same",
-) -> RepRouteCRPTestResult:
-    """Test observed vs control route-conditioned repetition CRP."""
-    lag_labels = np.arange(-max_lag, max_lag + 1)
-    n_lags = len(lag_labels)
-
-    t_stats = np.zeros(n_lags)
-    t_pvals = np.zeros(n_lags)
-    w_stats = np.zeros(n_lags)
-    w_pvals = np.zeros(n_lags)
-    mean_diffs = np.zeros(n_lags)
-
-    for lag_idx in range(n_lags):
-        obs_col = observed_crp[:, lag_idx]
-        ctrl_col = control_crp[:, lag_idx]
-        diff = obs_col - ctrl_col
-
-        t_stat, t_pval = stats.ttest_rel(obs_col, ctrl_col, nan_policy="omit")
-        t_stats[lag_idx] = t_stat
-        t_pvals[lag_idx] = t_pval
-
-        valid = ~(np.isnan(obs_col) | np.isnan(ctrl_col))
-        if valid.sum() > 10:
-            w_stat, w_pval = stats.wilcoxon(diff[valid], alternative="two-sided")
-        else:
-            w_stat, w_pval = np.nan, np.nan
-        w_stats[lag_idx] = w_stat
-        w_pvals[lag_idx] = w_pval
-        mean_diffs[lag_idx] = np.nanmean(diff)
-
-    return RepRouteCRPTestResult(
-        lags=lag_labels,
-        t_stats=t_stats,
-        t_pvals=t_pvals,
-        w_stats=w_stats,
-        w_pvals=w_pvals,
-        mean_diffs=mean_diffs,
-        direction=direction,
-    )
-
-
 def test_same_switch_bias(
-    observed_same_crp: np.ndarray,
-    observed_switch_crp: np.ndarray,
-    control_same_crp: np.ndarray,
-    control_switch_crp: np.ndarray,
+    observed_same_crp: Float[np.ndarray, " subjects lags"],
+    observed_switch_crp: Float[np.ndarray, " subjects lags"],
+    control_same_crp: Float[np.ndarray, " subjects lags"],
+    control_switch_crp: Float[np.ndarray, " subjects lags"],
     max_lag: int = 3,
-) -> RepRouteCRPTestResult:
-    """Test whether same-switch bias differs between observed and control."""
+) -> pd.DataFrame:
+    """Compare same-minus-switch route scores between observed and control data.
+
+    Parameters
+    ----------
+    observed_same_crp : array
+        Scores with axes participant and transition lag for the named route. Participant rows must align across inputs.
+    observed_switch_crp : array
+        Scores with axes participant and transition lag for the named route. Participant rows must align across inputs.
+    control_same_crp : array
+        Scores with axes participant and transition lag for the named route. Participant rows must align across inputs.
+    control_switch_crp : array
+        Scores with axes participant and transition lag for the named route. Participant rows must align across inputs.
+    max_lag : int, optional
+        Inclusive transition-lag window; labels run from -max_lag to +max_lag.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per comparison, with the columns documented by ``statistics.compare_paired``. Rows are labeled by transition lag.
+
+    Notes
+    -----
+    Construct differences within each participant before inference. Each row uses
+    complete finite pairs for both its means and two-sided tests. A positive
+    mean difference indicates a larger observed contrast than control. P-values
+    are unadjusted.
+    """
     observed_bias = observed_same_crp - observed_switch_crp
     control_bias = control_same_crp - control_switch_crp
-    return test_rep_route_crp_vs_control(
-        observed_bias,
-        control_bias,
-        max_lag=max_lag,
-        direction="same-switch",
+    return compare_paired(
+        observed_bias, control_bias, labels=np.arange(-max_lag, max_lag + 1)
     )

@@ -3,7 +3,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from jaxcmr.math import normalize_magnitude, relative_power_scale
+from jaxcmr.math import cosine_similarity_matrix, normalize_magnitude, relative_power_scale
 
 
 @pytest.fixture(autouse=True)
@@ -36,3 +36,23 @@ def test_zero_norm_has_finite_explicit_zero_tangent_under_batched_reverse_mode(s
 
 def test_normalization_does_not_hide_nonfinite_inputs():
     assert np.all(np.isnan(normalize_magnitude(jnp.array([np.nan, 1.0]))))
+
+
+@pytest.mark.parametrize("dtype", [jnp.float32, jnp.float64])
+def test_cosine_similarity_preserves_directions_and_zero_row_derivatives(dtype):
+    features = jnp.array([[3e-9, 4e-9], [3, 4], [-3, -4], [4, -3], [0, 0]], dtype=dtype)
+    # The first two rows have the same direction; the next is opposite,
+    # the fourth orthogonal, and the last has the explicit zero convention.
+    expected = [[1, 1, -1, 0, 0], [1, 1, -1, 0, 0], [-1, -1, 1, 0, 0],
+                [0, 0, 0, 1, 0], [0, 0, 0, 0, 0]]
+    compiled = jax.jit(cosine_similarity_matrix)
+    np.testing.assert_allclose(compiled(features), expected, atol=2e-7)
+    derivative = jax.jit(jax.jacrev(cosine_similarity_matrix))(features)
+    assert np.all(np.isfinite(derivative))
+    np.testing.assert_array_equal(derivative[4], 0)
+    np.testing.assert_array_equal(derivative[:, 4], 0)
+    # cos([x, 4], [0, 1]) = 4 / sqrt(x**2 + 16), with derivative -12/125 at x=3.
+    gradient = jax.jit(jax.grad(lambda x: cosine_similarity_matrix(
+        jnp.array([[x, 4], [0, 1]], dtype=dtype)
+    )[0, 1]))(jnp.asarray(3, dtype=dtype))
+    np.testing.assert_allclose(gradient, -12 / 125, rtol=2e-6)

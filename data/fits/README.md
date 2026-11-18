@@ -4,7 +4,11 @@ This directory contains three pooled fits to the war-photo-recall observations:
 ordinary CMR, source-only eCMR and broader eCMR. Use these records with the
 simulation template to generate responses, the parameter-shifting template to
 study interventions, or the model-comparison template to compare their fits.
-All three use `data/Dupertuys2026.h5`.
+These fits and their saved simulations predate the valence-alignment correction
+and the correction to participant 80’s seventh response in `data/Dupertuys2026.h5`.
+The objectives below describe the earlier observations and model. Refit on the
+corrected observations before comparing model fits, and regenerate responses
+for behavioral predictions from those fits.
 
 The records contain parameter estimates, objective values and the settings needed
 to reconstruct each model. They illustrate the procedures; the comparisons below

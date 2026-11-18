@@ -62,12 +62,12 @@ def dataset() -> RecallDataset:
     }
 
 
-def long_summary(recalls, *, list_length, dataset, trial_indices):
-    return jnp.full(3, jnp.mean(recalls[..., 0]))
+def long_summary(dataset):
+    return jnp.full(3, jnp.mean(dataset["recalls"][:, 0]))
 
 
-def short_summary(recalls, *, list_length, dataset, trial_indices):
-    return 3 * jnp.mean(recalls[..., 0])
+def short_summary(dataset):
+    return 3 * jnp.mean(dataset["recalls"][:, 0])
 
 
 def evaluate(loss, indices=None):
@@ -105,8 +105,8 @@ def test_trial_specific_models_are_used_even_for_identical_presentations():
     data["recalls"] = jnp.array([[1, 0, 0], [3, 0, 0]])
     data["choice"] = jnp.array([[1], [3]])
 
-    def by_trial(recalls, *, list_length, dataset, trial_indices):
-        return jnp.mean(recalls[..., 0], axis=1)
+    def by_trial(dataset):
+        return jnp.mean(dataset["recalls"][:, 0])
 
     loss = mse.make_factory({"by_trial": by_trial}, simulation_count=2)(
         FixedRecallFactory, data, None
@@ -124,8 +124,8 @@ def test_analysis_metadata_and_observations_follow_dynamic_subsets():
     data["choice"] = jnp.array([[2], [3]])
     data["condition"] = jnp.array([[1.0], [2.0]])
 
-    def conditioned(recalls, *, list_length, dataset, trial_indices):
-        return jnp.mean(recalls[..., 0] * dataset["condition"][trial_indices])
+    def conditioned(dataset):
+        return jnp.mean(dataset["recalls"][:, 0] * dataset["condition"][:, 0])
 
     loss = mse.make_factory({"conditioned": conditioned}, simulation_count=2)(
         FixedRecallFactory, data, None
@@ -138,11 +138,11 @@ def test_analysis_metadata_and_observations_follow_dynamic_subsets():
 
 def test_observed_missing_bins_are_fixed_and_do_not_hide_missing_predictions():
 
-    def with_missing_bin(recalls, *, list_length, dataset, trial_indices):
-        return jnp.array([jnp.mean(recalls[..., 0]), jnp.nan])
+    def with_missing_bin(dataset):
+        return jnp.array([jnp.mean(dataset["recalls"][:, 0]), jnp.nan])
 
-    def missing_prediction(recalls, *, list_length, dataset, trial_indices):
-        mean = jnp.mean(recalls[..., 0])
+    def missing_prediction(dataset):
+        mean = jnp.mean(dataset["recalls"][:, 0])
         return jnp.array([jnp.where(mean > 1, jnp.nan, mean), jnp.nan])
 
     valid_loss = mse.make_factory({"summary": with_missing_bin}, simulation_count=2)(
@@ -157,7 +157,7 @@ def test_observed_missing_bins_are_fixed_and_do_not_hide_missing_predictions():
 
 def test_no_valid_targets_cannot_report_zero_error_and_zero_weight_disables_analysis():
 
-    def undefined(recalls, *, list_length, dataset, trial_indices):
+    def undefined(dataset):
         return jnp.array([jnp.nan])
 
     Loss = mse.make_factory({"valid": long_summary, "undefined": undefined}, simulation_count=2)
@@ -179,3 +179,18 @@ def test_factory_copies_configuration_mappings_and_scale_arrays():
     weights["summary"] = 0
     scales["summary"][:] = 0
     np.testing.assert_allclose(evaluate(Loss(FixedRecallFactory, dataset(), None)), [0.25, 0.25])
+
+
+@pytest.mark.parametrize("preset", [mse.MemorySearchSpcMseLoss, mse.MemorySearchCatSpcMseLoss])
+def test_presets_use_study_positions_repetition_and_undefined_bins(preset):
+    # Item 2 occurs at positions 1 and 3; duplicate recalls count only once.
+    # The final stored position is padding, and category 2 is wholly absent.
+    data = {
+        "subject": jnp.array([[1]]), "listLength": jnp.array([[3]]),
+        "pres_itemnos": jnp.array([[2, 1, 2, 0]]),
+        "recalls": jnp.array([[1, 1, 0, 0]]),
+        "choice": jnp.array([[2]]), "condition": jnp.array([[1, 1, 1, 0]]),
+    }
+    from functools import partial
+    loss = partial(preset, simulation_count=2, seed=7)(FixedRecallFactory, data, None)
+    np.testing.assert_allclose(evaluate(loss, jnp.array([0])), [0, 0])

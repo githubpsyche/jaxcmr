@@ -145,6 +145,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Library Guide</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API Reference</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
@@ -281,6 +285,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>Recall analyses connect response data to numerical summaries and figures. JAXCMR exposes several interfaces for this work. The appropriate entry point depends on whether a function receives recall arrays, a dataset, or model simulations to compare with observations.</p>
+<p>The <a href="../reference/analyses.html">analysis API reference</a> groups the operations by measure. <a href="../reference/analyses-statistics.html">Statistical summaries</a> report finite participant means and paired comparisons; they do not calculate the underlying recall scores.</p>
+<p>Item recall probabilities credit all presentations of a recalled item, once per trial. For presentations <code>[7, 2, 7]</code>, response code <code>1</code> or <code>3</code> recalls item <code>7</code>; its presentation-based recall rate is <code>2/3</code>. Duplicate responses do not add hits. Padding and positions beyond <code>listLength</code> are excluded. This rule applies to SPC, category recall, factor analyses and co-recall, where pairs of occurrences of the same item are excluded. Serial-accuracy and transition procedures retain their own ordering and eligibility rules.</p>
+<p>Paired comparisons use the same finite participant pairs for their means and tests. Their DataFrames contain unrounded, two-sided t and Wilcoxon results, without a multiple-comparison correction. Arrange participant rows in the same order before comparing them. Plot intervals use finite participant scores and BCa resampling; <code>n_resamples</code> and <code>bootstrap_seed</code> control repeatability.</p>
+<p>RPL spacing bins are explicit inclusive ranges in intervening-item units. Counts are pooled within each participant before calculating a bin probability; the once-presented-item column stays separate. Slope coordinates must be supplied explicitly and exclude that column.</p>
 <section id="the-analysis-interfaces" class="level2">
 <h2 class="anchored" data-anchor-id="the-analysis-interfaces">The analysis interfaces</h2>
 <table class="caption-top table">
@@ -355,10 +363,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>0 — Locate the project inputs</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers.paths <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="cf">try</span>:</span>
-<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> Path(find_project_root())</span>
+<span id="cb2-6"><a href="#cb2-6" aria-label="6"></a>    root_path <span class="op">=</span> find_project_root()</span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a><span class="cf">except</span> <span class="pp">FileNotFoundError</span>:</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a>    root_path <span class="op">=</span> Path.cwd()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -367,7 +375,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details open="" class="code-fold">
 <summary>Select mixed lists and compare the analysis input/output shapes</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data</span>
+<span id="cb3-2"><a href="#cb3-2" aria-label="2"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
 <span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask, apply_by_subject</span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="im">from</span> jaxcmr.analyses.spc <span class="im">import</span> fixed_pres_spc, spc, plot_spc</span>
 <span id="cb3-5"><a href="#cb3-5" aria-label="5"></a></span>
@@ -437,7 +445,7 @@ Participant summary shape: (123, 12)</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb8-2"><a href="#cb8-2" aria-label="2"></a><span class="im">import</span> json</span>
 <span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="im">from</span> jaxcmr.helpers.io <span class="im">import</span> load_data</span>
+<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
 <span id="cb8-5"><a href="#cb8-5" aria-label="5"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
 <span id="cb8-6"><a href="#cb8-6" aria-label="6"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
 <span id="cb8-7"><a href="#cb8-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
@@ -541,7 +549,7 @@ Participant summary shape: (123, 12)</code></pre>
 <p><code>cat_factor_by_recall</code> and the LPP recall-status plot default to position-based classification. Simulation reports first-occurrence positions, so a later presentation can be labelled “Not recalled” even though its item was recalled. Expansion applies the item’s status to every valid occurrence; it does not identify which presentation caused remembering. The plot labels stay “Recalled” and “Not recalled” in both modes. <code>cat_recall_by_factor</code> uses direct positions and has no expansion option. Duplicate responses count once in these analyses.</p>
 <p>Measurement availability stays separate from recall classification. Here the first occurrence’s measurement is missing and fails quality screening, but the item was recalled. Expansion still puts its third-position measurement in the recalled group:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-label="1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb10-2"><a href="#cb10-2" aria-label="2"></a><span class="im">from</span> jaxcmr.analyses.cat_factor_by_recall <span class="im">import</span> cat_factor_by_recall</span>
+<span id="cb10-2"><a href="#cb10-2" aria-label="2"></a><span class="im">from</span> jaxcmr.analyses.factors <span class="im">import</span> cat_factor_by_recall</span>
 <span id="cb10-3"><a href="#cb10-3" aria-label="3"></a></span>
 <span id="cb10-4"><a href="#cb10-4" aria-label="4"></a>example <span class="op">=</span> {</span>
 <span id="cb10-5"><a href="#cb10-5" aria-label="5"></a>    <span class="st">"subject"</span>: jnp.array([[<span class="dv">1</span>]]),</span>

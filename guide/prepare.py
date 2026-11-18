@@ -1,4 +1,4 @@
-"""Stage the website's notebooks and downloads, with Colab links to main."""
+"""Prepare API references and stage notebook pages and downloads for Quarto."""
 
 import json
 import os
@@ -11,9 +11,8 @@ GUIDE = Path(__file__).resolve().parent
 ROOT = GUIDE.parent
 
 
-# Use the authoritative checkout catalog even when another JAXCMR is installed.
+# Resolve source modules and the example catalog from this checkout.
 sys.path.insert(0, str(ROOT))
-from jaxcmr.examples import _EXAMPLE_FILES
 
 
 def check_destination(path):
@@ -23,6 +22,8 @@ def check_destination(path):
 
 
 def stage():
+    from jaxcmr.examples import _EXAMPLE_FILES
+
     guide = (GUIDE / "_quarto.yml").read_text(encoding="utf-8")
     names = re.findall(r"^\s*- (templates/\w+\.ipynb)\s*$", guide, re.M)
     if not names:
@@ -98,5 +99,64 @@ def stage():
     print(f"Staged {len(names)} templates with Colab links to main.")
 
 
+def prepare_references(inputs: set[str] | None = None) -> None:
+    """Build the requested module pages from their Quartodoc group definitions."""
+    import yaml
+    from griffe import Attribute, TypeAlias
+    from quartodoc import Builder, get_object
+    from quartodoc.layout import DocAttribute
+
+    for page in sorted((GUIDE / "reference").glob("*.qmd")):
+        if inputs is not None and page.relative_to(GUIDE).as_posix() not in inputs:
+            continue
+        configuration = page.with_name(f"_{page.stem}.yml")
+        if not configuration.exists():
+            continue
+        specification = yaml.safe_load(configuration.read_text())["quartodoc"]
+        builder = Builder.from_quarto_config({"quartodoc": {
+            **specification,
+            "style": "single-page",
+            "source_dir": str(ROOT),
+            "dir": str(GUIDE / "reference/_generated" / page.stem),
+            "parser": "auto",
+            "renderer": {
+                "style": "_api_renderer.py",
+                "module": specification["package"],
+                "header_level": 2,
+                "show_signature_annotations": False,
+                "display_name": "full",
+                "table_style": "table",
+            },
+        }})
+        # Quartodoc 0.11 predates Griffe's Python 3.12 TypeAlias objects.
+        # Adapt only explicit alias entries, retaining their source and docstrings.
+        module = get_object(specification["package"], parser="auto")
+        for section in builder.layout.sections[0].contents:
+            for index, entry in enumerate(section.contents):
+                obj = module[entry.name]
+                if isinstance(obj, TypeAlias):
+                    attribute = Attribute(
+                        obj.name, value=obj.value, docstring=obj.docstring,
+                        parent=obj.parent, lineno=obj.lineno, endlineno=obj.endlineno,
+                    )
+                    attribute.labels.add("type-alias")
+                    section.contents[index] = DocAttribute(
+                        name=entry.name, obj=attribute, anchor=obj.path,
+                    )
+        # Name the single generated page as an include, rather than a site page.
+        builder.layout.sections[0].path = "_body"
+        builder.out_inventory = str(Path(builder.dir) / "objects.json")
+        builder.build()
+        print(f"Prepared API reference: {page.relative_to(GUIDE)}")
+
+
 if __name__ == "__main__":
-    stage()
+    os.chdir(GUIDE)
+    inputs = set(os.environ.get("QUARTO_PROJECT_INPUT_FILES", "").splitlines())
+    full_render = os.environ.get("QUARTO_PROJECT_RENDER_ALL") == "1"
+    prepare_references(None if full_render or not inputs else inputs)
+    # A reference-only render has no notebook or example-download inputs.
+    if full_render or not inputs or any(
+        not name.startswith("reference/") for name in inputs
+    ):
+        stage()

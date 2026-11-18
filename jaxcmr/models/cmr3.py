@@ -22,29 +22,31 @@ feature and therefore do not inject new valence input into the
 emotional context pathway.
 """
 
-from collections.abc import Mapping
 
-import numpy as np
+
+from typing import Self
+
 from jax import lax
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.components.factory import source_categories_by_item
 from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.helpers import require_pres_itemids, require_valence
-from jaxcmr.math import exponential_primacy_decay, lb, power_scale
+from jaxcmr.dataset import _require_pres_itemids
+from jaxcmr.math import FLOAT32_EPS, exponential_primacy_decay, relative_power_scale
 from jaxcmr.typing import (
     Array,
     Bool,
     ContextCreateFn,
     Float,
-    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
+    Parameters,
     RecallDataset,
     TerminationPolicyCreateFn,
 )
@@ -61,9 +63,9 @@ class CMR3(Pytree):
     def __init__(
         self,
         list_length: int,
-        parameters: Mapping[str, Float_],
-        is_negative: Bool[Array, " study_events"],
-        is_positive: Bool[Array, " study_events"],
+        parameters: Parameters,
+        is_negative: Bool[Array, " item_count"],
+        is_positive: Bool[Array, " item_count"],
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
@@ -154,7 +156,7 @@ class CMR3(Pytree):
         self.recall_total = jnp.array(0, dtype=int)
         self.study_index = jnp.array(0, dtype=int)
 
-    def experience_item(self, item_index: Int_) -> "CMR3":
+    def experience_item(self, item_index: Int_) -> Self:
         """Encode a single item, updating both context pathways."""
         item = self.items[item_index]
 
@@ -178,22 +180,22 @@ class CMR3(Pytree):
             lambda: self.emotion_context.state,
         )
 
-        phi_emot_i = jnp.maximum(0.0, self.phi_emot[self.study_index])
+        phi_emot_i = jnp.maximum(0.0, self.phi_emot[item_index])
         temporal_phi_emot_i = jnp.maximum(
-            0.0, self.temporal_phi_emot[self.study_index]
+            0.0, self.temporal_phi_emot[item_index]
         )
         p = self.primacy[self.study_index]
 
-        def _multiplicative():
+        def _multiplicative() -> Float[Array, ""]:
             return p * phi_emot_i
 
-        def _temporal_multiplicative():
+        def _temporal_multiplicative() -> Float[Array, ""]:
             return p * (1.0 + temporal_phi_emot_i)
 
-        def _additive():
+        def _additive() -> Float[Array, ""]:
             return p + jnp.maximum(-p, phi_emot_i)
 
-        def _temporal_additive():
+        def _temporal_additive() -> Float[Array, ""]:
             return p + jnp.maximum(-p, temporal_phi_emot_i)
 
         # Temporal MCF: primacy only, or broad emotion modulation when enabled.
@@ -282,7 +284,7 @@ class CMR3(Pytree):
         temporal_act = self.mcf.probe(self.context.state) * self.recallable
         emotional_act = self.emotion_mcf.probe(self.emotion_context.state) * self.recallable
         combined = temporal_act + emotional_act
-        return (power_scale(combined, self.mcf_sensitivity) + lb) * self.recallable
+        return (relative_power_scale(combined, self.mcf_sensitivity) + FLOAT32_EPS) * self.recallable
 
     def stop_probability(self) -> Float[Array, ""]:
         """Compute probability of terminating recall."""
@@ -340,18 +342,18 @@ def make_factory(
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
-            self.present_lists = jnp.array(require_pres_itemids(dataset))
-            self.max_list_length = np.max(dataset["listLength"]).item()
+            self.present_lists = jnp.array(_require_pres_itemids(dataset))
 
-            valence = jnp.array(require_valence(dataset))
-            self.trial_negative = jnp.array(valence < 0, dtype=bool)
-            self.trial_positive = jnp.array(valence > 0, dtype=bool)
+            valence = source_categories_by_item(dataset, signed=True)
+            self.max_list_length = valence.shape[1]
+            self.trial_negative = valence < 0
+            self.trial_positive = valence > 0
 
             def model_create_fn(
                 list_length: int,
-                parameters: Mapping[str, Float_],
-                is_negative: Bool[Array, " study_events"],
-                is_positive: Bool[Array, " study_events"],
+                parameters: Parameters,
+                is_negative: Bool[Array, " item_count"],
+                is_positive: Bool[Array, " item_count"],
             ) -> MemorySearch:
                 return CMR3(
                     list_length,
@@ -366,7 +368,7 @@ def make_factory(
 
             self.model_create_fn = model_create_fn
 
-        def create_model(self, parameters: Mapping[str, Float_]) -> MemorySearch:
+        def create_model(self, parameters: Parameters) -> MemorySearch:
             """Create model from first trial (for shape inference)."""
             return self.model_create_fn(
                 self.max_list_length,
@@ -378,7 +380,7 @@ def make_factory(
         def create_trial_model(
             self,
             trial_index: Integer[Array, ""],
-            parameters: Mapping[str, Float_],
+            parameters: Parameters,
         ) -> MemorySearch:
             """Create model for a specific trial."""
             return self.model_create_fn(

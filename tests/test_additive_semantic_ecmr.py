@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.termination import NoStopTermination
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
 from jaxcmr.models.additive_semantic_ecmr import (
     make_factory as make_semantic_ecmr_factory,
 )

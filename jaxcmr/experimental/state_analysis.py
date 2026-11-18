@@ -1,126 +1,182 @@
-"""Experimental visualizations of memory-search models and components."""
+"""Inspect memory traces and the current context and retrieval probabilities.
+
+``instance_memory_heatmap`` selects input/output features and traces from an
+instance memory, then draws them with ``jaxcmr.plotting.matrix_heatmap``.
+``plot_context_and_outcomes`` shows a model's current context activations and
+probabilities for stopping or recalling each item. Both accept existing axes
+for inclusion in larger diagnostic figures.
+
+These views read the supplied state without advancing the model. They remain
+experimental; callers choose the study or retrieval event to inspect. Memory
+heatmaps retain the stored trace indices, including unused zero-filled rows.
+"""
 
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Literal, Protocol, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
-from matplotlib.figure import Figure
+from matplotlib.colors import Normalize
+from matplotlib.figure import Figure, SubFigure
 
 from jaxcmr.components.instance_memory import InstanceMemory
-from jaxcmr.state_analysis import matrix_heatmap
+from jaxcmr.plotting import matrix_heatmap
 from jaxcmr.typing import Context, MemorySearch
 
-__all__ = ["instance_memory_heatmap", "plot_model_state"]
+__all__ = ["instance_memory_heatmap", "plot_context_and_outcomes"]
 
 
 def instance_memory_heatmap(
     memory: InstanceMemory,
     pre_experimental_size: int = 0,
-    include_inputs: bool = True,
-    include_outputs: bool = True,
     include_preexperimental: bool = True,
     title: str = "Memory Traces",
     *,
+    features: Literal["inputs", "outputs", "both"] = "both",
     figsize: tuple[float, float] = (10, 6),
-) -> tuple[Figure, Axes]:
-    """Plot selected input/output columns and traces from an instance memory.
+    axis: Axes | None = None,
+    colorbar: bool = True,
+    norm: Normalize | None = None,
+) -> tuple[Figure | SubFigure, Axes]:
+    """Draw selected memory traces with their original trace and feature identities.
 
-    Args:
-        memory: Memory whose state and input/output widths define the view.
-        pre_experimental_size: Number of initial rows to omit when
-            ``include_preexperimental`` is false.
-        include_inputs: Show the input features.
-        include_outputs: Show the output features.
-        include_preexperimental: Show initial pre-experimental traces.
-        title: Figure title.
-        figsize: Figure size in inches, independent of memory dimensions.
+    Parameters
+    ----------
+    memory : InstanceMemory
+        Memory whose rows concatenate input and output feature values. All
+        selected storage rows are shown, including unused zero-filled rows.
+    pre_experimental_size : int, optional
+        Number of initial rows to omit when include_preexperimental is false.
+    include_preexperimental : bool, optional
+        Include the initial traces as well as experimental traces.
+    title : str, optional
+        Base title, prefixed to describe selected features and traces.
+    features : {"inputs", "outputs", "both"}, optional
+        Which part of each stored trace to display. Input and output feature
+        indices each start at zero and retain those labels in every view.
+    figsize : tuple of float, optional
+        Figure size in inches when axis is omitted.
+    axis : Axes, optional
+        Existing axes for the heatmap, in a figure or subfigure.
+    colorbar : bool, optional
+        Include a colorbar.
+    norm : matplotlib.colors.Normalize, optional
+        Color normalization passed to matrix_heatmap. Use fixed limits shared
+        across views to make their colors comparable.
 
-    Returns:
-        The figure and heatmap axis.
+    Returns
+    -------
+    tuple of Figure or SubFigure and Axes
+        The containing figure or subfigure and heatmap axes. Neither is shown,
+        saved or closed.
+
+    Raises
+    ------
+    ValueError
+        The chosen traces and features form an empty view.
     """
-    if not include_inputs and not include_outputs:
-        raise ValueError("At least one of inputs or outputs must be included")
-
     state = np.asarray(memory.state)
-    if state.ndim != 2:
-        raise ValueError("memory.state must be a two-dimensional matrix")
     input_size = int(memory.input_size)
-    output_size = int(memory.output_size)
-    if state.shape[1] != input_size + output_size:
-        raise ValueError("memory.state width must equal input_size + output_size")
+    input_labels = [f"Input {index}" for index in range(input_size)]
+    output_labels = [f"Output {index}" for index in range(int(memory.output_size))]
 
-    if include_inputs and include_outputs:
+    if features == "both":
         plotted_memory = state
-    elif include_inputs:
+        column_labels = input_labels + output_labels
+    elif features == "inputs":
         plotted_memory = state[:, :input_size]
+        column_labels = input_labels
         title = f"Input {title}"
     else:
         plotted_memory = state[:, input_size:]
+        column_labels = output_labels
         title = f"Output {title}"
 
+    first_trace = 0 if include_preexperimental else pre_experimental_size
+    plotted_memory = plotted_memory[first_trace:]
     if not include_preexperimental:
-        if not 0 <= pre_experimental_size <= state.shape[0]:
-            raise ValueError("pre_experimental_size must be within the trace count")
-        plotted_memory = plotted_memory[pre_experimental_size:]
         title = f"Experimental {title}"
 
     if 0 in plotted_memory.shape:
         raise ValueError("The selected memory view is empty")
 
-    return matrix_heatmap(plotted_memory, figsize=figsize, title=title)
+    return matrix_heatmap(
+        plotted_memory,
+        figsize=figsize,
+        axis=axis,
+        title=title,
+        xlabel="Memory Features",
+        ylabel="Trace Index",
+        row_labels=[str(index) for index in range(first_trace, state.shape[0])],
+        column_labels=column_labels,
+        colorbar=colorbar,
+        norm=norm,
+    )
 
 
 class _ContextualMemorySearch(MemorySearch, Protocol):
     """Memory-search model that exposes a context representation."""
 
     context: Context
+    item_count: int
 
 
-def plot_model_state(
+def plot_context_and_outcomes(
     model: _ContextualMemorySearch,
     title: str | None = None,
     *,
     context_labels: Sequence[str] | None = None,
-) -> tuple[Figure, tuple[Axes, Axes]]:
-    """Plot context state and retrieval outcome probabilities.
+    axes: tuple[Axes, Axes] | None = None,
+    figsize: tuple[float, float] = (10, 4),
+) -> tuple[Figure | SubFigure, tuple[Axes, Axes]]:
+    """Draw current context activations and retrieval-outcome probabilities.
 
-    Context labels default to feature indices. Supply ``context_labels`` when
-    the units have known meanings, such as a start-of-list unit. Probability
-    bars describe outcomes without inferring item availability from the model's
-    internal representation.
+    Parameters
+    ----------
+    model : MemorySearch with context
+        Model at the event to inspect. This view reads context.state and calls
+        outcome_probabilities without advancing study or retrieval.
+    title : str, optional
+        Title for the containing figure, including when axes are supplied.
+    context_labels : sequence of str, optional
+        One label per context feature; defaults to zero-based indices. Supply
+        meaningful labels when known, such as the start-of-list unit.
+    axes : tuple of Axes and Axes, optional
+        Context and outcome axes in the same figure or subfigure. Omit to create two panels.
+        Supplied axes retain their layout; bars are added to existing contents.
+    figsize : tuple of float, optional
+        Figure size in inches when axes are omitted.
 
-    Args:
-        model: A memory-search model with a context state.
-        title: Optional figure title.
-        context_labels: Optional label for each context feature.
+    Returns
+    -------
+    tuple of Figure or SubFigure and tuple of Axes
+        Containing figure or subfigure and the context and outcome axes. The function
+        does not show, save or close the figure.
 
-    Returns:
-        The figure and its context and outcome axes.
+    Notes
+    -----
+    Outcome zero denotes stopping; outcomes 1 through item_count denote item
+    recalls. Item bars share one color. The view does not infer item availability
+    from context units or occurrence slots. Association matrices and other model
+    components are outside this two-panel view.
     """
     context_values = np.asarray(model.context.state)
-    if context_values.ndim != 1 or context_values.size == 0:
-        raise ValueError("context.state must be a nonempty one-dimensional vector")
-
     labels = (
         [str(index) for index in range(context_values.size)]
         if context_labels is None
         else list(context_labels)
     )
-    if len(labels) != context_values.size:
-        raise ValueError("context_labels must match the number of context features")
-
     item_count = int(model.item_count)
     probabilities = np.asarray(model.outcome_probabilities())
-    if probabilities.shape != (item_count + 1,):
-        raise ValueError(
-            "outcome probabilities must contain stop plus one value per item"
-        )
 
-    figure, (context_axis, probability_axis) = plt.subplots(
-        2, 1, figsize=(10, 4), gridspec_kw={"height_ratios": [1, 1.2]}
-    )
+    if axes is None:
+        figure, (context_axis, probability_axis) = plt.subplots(
+            2, 1, figsize=figsize, gridspec_kw={"height_ratios": [1, 1.2]}
+        )
+    else:
+        context_axis, probability_axis = axes
+        figure = context_axis.figure
     if title:
         figure.suptitle(title, fontsize=12, fontweight="bold")
 
@@ -142,5 +198,6 @@ def plot_model_state(
     probability_axis.set_xlabel("Outcome")
     probability_axis.set_ylim(0, max(0.1, float(np.max(probabilities)) * 1.15))
 
-    figure.tight_layout()
+    if axes is None:
+        cast(Figure, figure).tight_layout()
     return figure, (context_axis, probability_axis)

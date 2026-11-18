@@ -1,56 +1,24 @@
-"""Lag-Conditional Response Probability (Lag-CRP).
+"""Conditional response probability by lag between successive recalls.
 
-Provides tabulators and CRP functions for computing lag-conditional
-response probability curves from free recall data. Supports both
-unique-item lists (``SimpleTabulation``) and lists with repeated
-items (``Tabulation``).
+Suppose a participant studies A, B, C, D and recalls B followed by C. That
+transition has lag +1 because C was studied one position after B. From B, the
+participant could also have recalled A (lag −1) or D (lag +2). The trial
+therefore contributes one actual transition at +1 and one opportunity at
+each of −1, +1 and +2.
 
-Notes
------
-**Conventions**
+``tabulate_trial`` counts actual and available lags. ``crp`` sums both across
+trials and divides at each lag. A lag with no opportunities has an undefined
+probability. ``plot_crp`` calculates probabilities per participant before
+averaging them.
 
-- list_length (L): fixed study-list length within a call.
-- trials (recalls): int array ``[n_trials, n_recall_events]`` of
-  serial positions in ``1..L``; ``0`` pads after termination.
-- presentations: int array ``[n_trials, L]`` of item IDs at study
-  positions; required only when items may repeat.
-- size: upper bound on how many distinct study positions a single
-  item can occupy within a list.
-- Lag axis: all CRP outputs are length ``2*L - 1``. Index *i*
-  corresponds to lag ``i - (L - 1)``; the center is lag 0.
+For a list with repeated items, one recall refers to all presentations of
+its item. A transition can then contribute at several lags. Each distinct
+lag counts at most once per transition in each tally. For lists of distinct
+items, ``simple_crp`` needs only the position-coded recalls and list length.
 
-**Design decisions**
-
-- Zeros (pads) and out-of-range recalls are ignored via guards in
-  the tabulators.
-- Lags with zero availability yield NaN.
-- A recall of a repeated item is treated as recalling all of that
-  item's study positions. Actual and available lags are computed as
-  unique lag set unions (boolean one-hot union per lag) to avoid
-  multiplicity inflation.
-- The first non-zero recall marks that item's study positions as
-  unavailable and defines the reference for the next transition.
-
-**SimpleTabulation** (no repeats): assumes ``trial[0] > 0`` (first
-recall exists) and subsequent zeros are pads. Marks the first
-recall's item as unavailable and bounds-checks choices to ``[1..L]``.
-
-**Tabulation** (with repeats): tracks ``previous_positions``,
-``avail_recalls`` (boolean ``[L]``), and ``actual_lags`` /
-``avail_lags`` (int ``[2*L - 1]``). On each valid recall executes
-four ordered steps: (1) update previous positions, (2) update
-availability, (3) accumulate actual lags as the union of unique lags
-from previous to current positions, (4) accumulate available lags
-from each previous position to all currently available positions.
-Zeros in position arrays are padding; indices are 1-based for
-positions, 0-based internally.
-
-**JAX compilation**: all public functions are side-effect-free and
-JIT-safe. Use ``jit(crp, static_argnames=("size",))``; keep shapes
-(L, number of recall events) consistent within a compiled call to
-avoid recompiles. Ensure ``size`` >= the true maximum per-item
-repetition; compute it once outside JIT if needed.
-
+Use complete study lists of the same length in a call. The numerical
+calculations can be JIT-compiled with a fixed list width and occurrence
+capacity (``size``).
 """
 
 __all__ = [
@@ -58,7 +26,6 @@ __all__ = [
     "Tabulation",
     "crp",
     "plot_crp",
-    "set_false_at_index",
     "simple_crp",
     "simple_tabulate_trial",
     "tabulate_trial",
@@ -69,18 +36,20 @@ from collections.abc import Sequence
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
-from ..repetition import all_study_positions
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
+from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
+from ._transitions import lag_counts, remove_positions
 
 
 class SimpleTabulation(Pytree):
     """CRP tabulator for lists without repeated items."""
 
-    def __init__(self, list_length: int, first_recall: Int_):
+    def __init__(self, list_length: int, first_recall: Int_) -> None:
         self.lag_range = list_length - 1
         self.all_items = jnp.arange(1, list_length + 1, dtype=int)
         self.actual_transitions = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
@@ -155,31 +124,6 @@ def simple_crp(
     return total_actual_transitions / total_possible_transitions
 
 
-def set_false_at_index(
-    vec: Bool[Array, " positions"], i: Int_
-) -> tuple[Bool[Array, " positions"], None]:
-    """Set ``vec[i - 1]`` to ``False`` using 1-based indexing.
-
-    Parameters
-    ----------
-    vec : Bool[Array, " positions"]
-        Boolean vector.
-    i : Int_
-        1-based index; 0 is a no-op sentinel.
-
-    Returns
-    -------
-    tuple[Bool[Array, " positions"], None]
-        Updated vector and ``None``.
-
-    """
-
-    should_update = (i > 0) & (i <= vec.size)
-    return lax.cond(
-        should_update, lambda: (vec.at[i - 1].set(False), None), lambda: (vec, None)
-    )
-
-
 class Tabulation(Pytree):
     """CRP tabulator supporting repeated items."""
 
@@ -188,14 +132,14 @@ class Tabulation(Pytree):
         presentation: Integer[Array, " study_events"],
         first_recall: Int_,
         size: int = 3,
-    ):
+    ) -> None:
         self.list_length = presentation.size
         self.lag_range = self.list_length - 1
         self.all_positions = jnp.arange(1, self.list_length + 1, dtype=int)
         self.base_lags = jnp.zeros(self.lag_range * 2 + 1, dtype=int)
         self.size = size
         self.item_study_positions = lax.map(
-            lambda i: all_study_positions(i, presentation, size),
+            lambda i: equivalent_study_positions(i, presentation, size),
             self.all_positions,
         )
 
@@ -210,20 +154,28 @@ class Tabulation(Pytree):
     def available_recalls_after(self, recall: Int_) -> Bool[Array, " positions"]:
         """Clear availability for all study positions of a recall."""
         study_positions = self.item_study_positions[recall - 1]
-        return lax.scan(set_false_at_index, self.avail_recalls, study_positions)[0]
+        return remove_positions(self.avail_recalls, study_positions)
 
     # for updating actual_lags: lag-transitions actually made from the previous item
     def lags_from_previous(self, recall_pos: Int_) -> Bool[Array, " positions"]:
         """Unique lags from previous positions to a recall position."""
 
-        def f(prev):
+        def lags_from_previous_position(
+            previous_position: Integer[Array, ""],
+        ) -> Integer[Array, " lags"]:
             return lax.cond(
-                (recall_pos * prev) == 0,
+                (recall_pos * previous_position) == 0,
                 lambda: self.base_lags,
-                lambda: self.base_lags.at[recall_pos - prev + self.lag_range].add(1),
+                lambda: self.base_lags.at[
+                    recall_pos - previous_position + self.lag_range
+                ].add(1),
             )
 
-        return lax.map(f, self.previous_positions).sum(0).astype(bool)
+        return (
+            lax.map(lags_from_previous_position, self.previous_positions)
+            .sum(0)
+            .astype(bool)
+        )
 
     def tabulate_actual_lags(self, recall: Int_) -> Integer[Array, " lags"]:
         "Tabulates the actual transition after a transition."
@@ -236,12 +188,8 @@ class Tabulation(Pytree):
     # for updating avail_lags: lag-transitions available from the previous item
     def available_lags_from(self, pos: Int_) -> Bool[Array, " lags"]:
         "Identifies recallable lag transitions from the specified study position."
-        return lax.cond(
-            pos == 0,
-            lambda: self.base_lags,
-            lambda: self.base_lags.at[self.all_positions - pos + self.lag_range].add(
-                self.avail_recalls
-            ),
+        return lag_counts(
+            pos, self.all_positions, self.avail_recalls, self.all_positions.size - 1
         )
 
     def tabulate_available_lags(self) -> Integer[Array, " lags"]:
@@ -254,10 +202,10 @@ class Tabulation(Pytree):
         return self.avail_lags + new_lags
 
     # unifying tabulation of actual/avail lags, previous positions, and avail recalls
-    def should_tabulate(self, recall: Int_) -> Bool:
+    def should_tabulate(self, recall: Int_) -> Bool[Array, ""]:
         "Only consider transitions from items with study positions that have not been recalled yet."
 
-        def _for_nonzero():
+        def _for_nonzero() -> Bool[Array, ""]:
             recall_study_positions = self.item_study_positions[recall - 1]
             is_valid_study_position = recall_study_positions != 0
             is_available_study_position = self.avail_recalls[recall_study_positions - 1]
@@ -343,10 +291,13 @@ def plot_crp(
     max_lag: int = 5,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     size: int = 3,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot subject-wise Lag-CRP with confidence intervals.
 
@@ -371,11 +322,16 @@ def plot_crp(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with the Lag-CRP plot.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -398,14 +354,16 @@ def plot_crp(
             :, lag_range - max_lag : lag_range + max_lag + 1
         ]
         color = color_cycle[data_index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             lag_interval,
             subject_values,
             labels[data_index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
-    set_plot_labels(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
+    format_analysis_axes(axis, "Lag", "Conditional Resp. Prob.", contrast_name)
     return axis

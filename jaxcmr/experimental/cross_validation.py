@@ -6,24 +6,62 @@ Its held-out scores can be incorrect; do not use them for analysis yet.
 
 import time
 from collections.abc import Mapping
+from typing import Any
 
 import numpy as np
 from jax import numpy as jnp
+from typing_extensions import TypedDict
 
 from jaxcmr.fitting import ScipyDE
 from jaxcmr.typing import (
     Array,
     Bool,
-    CVResult,
+    FitResult,
     Float_,
     Integer,
 )
 
 __all__ = [
+    "CVResult",
     "cross_validate",
     "evaluate_held_out",
     "generate_fold_masks",
 ]
+
+
+class CVResult(TypedDict):
+    """Typed dict describing leave-one-fold-out cross-validation results."""
+
+    n_folds: int
+    """Number of CV folds."""
+
+    fold_field: str
+    """Dataset field used for fold splitting (e.g. 'list')."""
+
+    fold_values: list[int]
+    """Unique fold identifiers."""
+
+    subjects: list[int]
+    """Subject IDs in the same order as the fitness lists."""
+
+    train_fitness: list[list[float]]
+    """Per-fold list of per-subject training NLL. Shape: [n_folds][n_subjects]."""
+
+    test_fitness: list[list[float]]
+    """Per-fold list of per-subject held-out NLL. Shape: [n_folds][n_subjects]."""
+
+    cv_fitness: list[float]
+    """Aggregated held-out NLL per subject (sum across folds)."""
+
+    fold_fits: list[FitResult]
+    """Per-fold FitResult from training."""
+
+    hyperparameters: dict[str, Any]
+    """Hyperparameters used for fitting."""
+
+    cv_time: float
+    """Total wall-clock time for the CV procedure."""
+
 
 
 def generate_fold_masks(

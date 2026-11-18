@@ -1,0 +1,145 @@
+/* Enclose each function or class and its full documentation as one API entry. */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --api-accent: #28717c;
+  --api-tint: #eef5f6;
+  --api-border: #c5dadd;
+  --api-ink: #203c42;
+}
+
+body.quarto-dark {
+  --api-accent: #8fcbd3;
+  --api-tint: #20363b;
+  --api-border: #4c737b;
+  --api-ink: #e3f0f2;
+}
+
+section.api-entry {
+  margin-block: 2rem;
+  padding: 0 1rem 1rem;
+  border: 1px solid var(--api-border);
+  border-top: 3px solid var(--api-accent);
+  border-radius: 6px;
+  scroll-margin-top: 8rem;
+}
+
+section.api-entry > h3 {
+  background: var(--api-tint);
+  color: var(--api-ink);
+  padding: 0.85rem 1rem;
+  margin: 0 -1rem;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  font-family: var(--bs-font-monospace);
+  font-size: 1.25rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* API declarations have no runnable-cell, copy, or folding controls. */
+.api-signature {
+  border-bottom: 1px solid var(--api-border);
+  padding: 0.75rem 1rem;
+  margin: 0 -1rem 1.2rem;
+  line-height: 1.75;
+}
+.api-signature code {
+  color: inherit;
+  background: none;
+  padding: 0;
+  font-size: 0.87em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+section.doc-section > :is(h4, h6) {
+  margin-top: 1.8rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid var(--api-border);
+  color: var(--api-accent);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+main.content table { font-size: 0.9rem; }
+main.content table :is(th, td),
+main.content table code { overflow-wrap: anywhere; }
+.doc-section table { table-layout: fixed; width: 100%; }
+.doc-section th {
+  overflow-wrap: normal;
+  word-break: normal;
+  background: var(--api-tint);
+  color: var(--api-ink);
+}
+.doc-section td { padding-block: 0.7rem; }
+.doc-section-parameters col:nth-child(1) { width: 22% !important; }
+.doc-section-parameters col:nth-child(2) { width: 22% !important; }
+.doc-section-parameters col:nth-child(3) { width: 40% !important; }
+.doc-section-parameters col:nth-child(4) { width: 16% !important; }
+.doc-section-returns col:nth-child(1),
+.doc-section-yields col:nth-child(1) { width: 12% !important; }
+.doc-section-returns col:nth-child(2),
+.doc-section-yields col:nth-child(2) { width: 25% !important; }
+.doc-section-returns col:nth-child(3),
+.doc-section-yields col:nth-child(3) { width: 63% !important; }
+.doc-section-notes col:nth-child(1) { width: 26% !important; }
+.doc-section-notes col:nth-child(2) { width: 74% !important; }
+.doc-section-notes table:has(th:nth-child(3)) col:nth-child(1) { width: 22% !important; }
+.doc-section-notes table:has(th:nth-child(3)) col:nth-child(2) { width: 28% !important; }
+.doc-section-notes table:has(th:nth-child(3)) col:nth-child(3) { width: 50% !important; }
+
+body.quarto-dark .navbar { background-color: #222 !important; }
+body.quarto-dark .navbar :is(.navbar-brand, .nav-link) { color: #eee; }
+
+/* Compact function summaries link to the complete entries below. */
+.api-function-index { margin-bottom: 2rem; }
+.api-function-index table { table-layout: fixed; width: 100%; }
+.api-function-index thead { display: none; }
+.api-function-index col:first-child { width: 42% !important; }
+.api-function-index col:last-child { width: 58% !important; }
+.api-function-index td { padding: 0.6rem; vertical-align: top; }
+
+/* Methods remain inside their class entry. */
+section.api-entry section.level5 > h5 {
+  border-top: 1px solid var(--api-border);
+  padding-top: 1.2rem;
+  font-family: var(--bs-font-monospace);
+  overflow-wrap: anywhere;
+}
+.doc-section-attributes col:first-child { width: 30% !important; }
+.doc-section-attributes col:last-child { width: 70% !important; }
+.doc-section-attributes table:has(th:nth-child(3)) col:nth-child(1) { width: 22% !important; }
+.doc-section-attributes table:has(th:nth-child(3)) col:nth-child(2) { width: 28% !important; }
+.doc-section-attributes table:has(th:nth-child(3)) col:nth-child(3) { width: 50% !important; }
+
+/* Long procedure names should wrap in the page navigation. */
+#TOC .nav-link { white-space: normal; overflow-wrap: anywhere; }
+
+
+/* Keep module navigation readable when the content columns become narrow. */
+#quarto-sidebar .sidebar-item-container,
+#quarto-sidebar .sidebar-item-text {
+  min-width: 0;
+}
+#quarto-sidebar .sidebar-item-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#quarto-sidebar .sidebar-section {
+  padding-left: 0.65rem;
+}
+h1.title,
+.quarto-page-breadcrumbs .breadcrumb-item {
+  overflow-wrap: anywhere;
+}
+
+/* Preserve scrolling without a horizontal track or bright dark-mode tracks. */
+#quarto-sidebar,
+#quarto-margin-sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--api-border) transparent;
+}
+html:has(body.quarto-light) { color-scheme: light; }
+html:has(body.quarto-dark) { color-scheme: dark; }

@@ -7,13 +7,13 @@ models.
 
 """
 
-from collections.abc import Mapping
+from typing import Self
 
 from jax import numpy as jnp
-from jaxcmr._vendor.simple_pytree import Pytree
 
-from jaxcmr.math import power_scale
-from jaxcmr.typing import Array, Context, Float, Float_, Int_
+from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.math import relative_power_scale
+from jaxcmr.typing import Array, Context, Float, Float_, Int_, Parameters
 
 __all__ = [
     "InstanceMemory",
@@ -23,15 +23,29 @@ __all__ = [
 
 
 class InstanceMemory(Pytree):
-    """Instance-based memory model for CMR.
+    """Associations stored as separate input/output traces.
+
+    Each row of ``state`` concatenates an input pattern and its learned output.
+    ``associate`` writes a new row, multiplying only the output by the learning
+    rate. It returns a new memory and leaves the previous memory unchanged.
+
+    For an input cue, each trace receives its input-pattern dot product as
+    support. ``probe`` weights stored outputs by ``(support / max_support) **
+    trace_activation_scale``; zero-support traces contribute nothing. All-zero
+    support produces a zero output. This normalization applies at sensitivity
+    one too. ``probe_without_scale`` instead uses raw dot-product weights.
+
+    Callers supply finite, nonnegative supports and a positive sensitivity.
+    Unused rows must be zero, and ``study_index`` must leave a free row for
+    each association. The constructors below reserve one row per study event.
 
     Attributes:
-        state: the current state of the memory.
-        _probe: pre-allocated probe array for memory retrieval.
-        study_index: index for the next trace to be stored.
-        trace_activation_scale: the scaling factor for activated traces.
-        output_size: the size of the output representation.
-        input_size: the size of the input representation.
+        state: Rows of concatenated input and learned output patterns.
+        _probe: Cue buffer; its output portion must be zero for input-only probes.
+        study_index: Row to fill with the next association.
+        trace_activation_scale: Positive power applied to relative trace support.
+        output_size: Number of output features.
+        input_size: Number of input features.
     """
 
     def __init__(
@@ -42,7 +56,7 @@ class InstanceMemory(Pytree):
         trace_activation_scale: Float_,
         input_size: int,
         output_size: int,
-    ):
+    ) -> None:
         self.state = state
         self.input_size = input_size
         self.output_size = output_size
@@ -55,7 +69,7 @@ class InstanceMemory(Pytree):
         in_pattern: Float[Array, " input_size"],
         out_pattern: Float[Array, " output_size"],
         learning_rate: Float_,
-    ) -> "InstanceMemory":
+    ) -> Self:
         """Return the updated memory after associating input and output patterns.
 
         Args:
@@ -76,11 +90,14 @@ class InstanceMemory(Pytree):
         """Return the activations of each trace based on the input pattern.
 
         Args:
-            input_pattern: the input feature pattern.
-            trace_activation_scale: the scaling factor for activated traces.
+            input_pattern: Full input/output cue. Use zeros in its output
+                portion to probe only the stored inputs.
+
+        The largest positive support has weight one at every sensitivity;
+        unsupported traces, including unused rows, have weight zero.
         """
         activation = jnp.dot(self.state, input_pattern)
-        return power_scale(activation, self.trace_activation_scale)
+        return relative_power_scale(activation, self.trace_activation_scale)
 
     def probe(
         self,
@@ -89,29 +106,35 @@ class InstanceMemory(Pytree):
         """Return the output pattern associated with the input pattern in memory.
 
         Args:
-            input_pattern: the input feature pattern.
+            in_pattern: Input cue, with one value per input feature.
         """
-        t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
-        return jnp.dot(t, self.state)[in_pattern.size :]
+        cue = self._probe.at[: in_pattern.size].set(in_pattern)
+        trace_weights = self.trace_activations(cue)
+        return jnp.dot(trace_weights, self.state)[in_pattern.size :]
 
     def probe_without_scale(
         self,
         in_pattern: Float[Array, " input_size"],
     ) -> Float[Array, " output_size"]:
-        """Return the output pattern associated with the input pattern in memory.
+        """Sum stored outputs weighted by raw input-cue dot products.
+
+        This bypasses both normalization and the sensitivity power. It equals
+        probing the summed outer-product association matrix represented by
+        the stored traces.
 
         Args:
-            input_pattern: the input feature pattern.
+            in_pattern: Input cue, with one value per input feature.
         """
-        t = self.trace_activations(self._probe.at[: in_pattern.size].set(in_pattern))
-        return jnp.dot(t, self.state)[in_pattern.size :]
+        cue = self._probe.at[: in_pattern.size].set(in_pattern)
+        trace_weights = jnp.dot(self.state, cue)
+        return jnp.dot(trace_weights, self.state)[in_pattern.size :]
 
 
 def init_mfc(
     list_length: int,
-    parameters: Mapping[str, Float_],
+    parameters: Parameters,
     context: Context,
-) -> "InstanceMemory":
+) -> InstanceMemory:
     """Return a new instance-based item-to-context memory model.
 
     Initially, all items are associated with a unique context unit by
@@ -124,7 +147,6 @@ def init_mfc(
         context: context instance supplying feature dimension.
     """
     context_feature_count = context.size
-    size = list_length
     learning_rate = parameters["learning_rate"]
     trace_activation_scale = parameters.get("mfc_trace_sensitivity", 1.0)
 
@@ -132,7 +154,7 @@ def init_mfc(
     items = jnp.eye(list_length)
     contexts = jnp.eye(list_length, context_feature_count, 1) * (1 - learning_rate)
     presentations = (
-        jnp.zeros((list_length + size, item_feature_count + context_feature_count))
+        jnp.zeros((2 * list_length, item_feature_count + context_feature_count))
         .at[:list_length, :item_feature_count]
         .set(items)
     )
@@ -149,9 +171,9 @@ def init_mfc(
 
 def init_mcf(
     list_length: int,
-    parameters: Mapping[str, Float_],
+    parameters: Parameters,
     context: Context,
-) -> "InstanceMemory":
+) -> InstanceMemory:
     """Return a new instance-based context-to-item memory model.
 
     Initially, in-list context units are associated with all items according to shared_support.
@@ -165,7 +187,6 @@ def init_mcf(
         context: context instance supplying feature dimension.
     """
     context_feature_count = context.size
-    size = list_length
     item_support = parameters["item_support"]
     shared_support = parameters["shared_support"]
     trace_activation_scale = parameters["mcf_trace_sensitivity"]
@@ -174,7 +195,7 @@ def init_mcf(
     contexts = jnp.eye(list_length, context_feature_count, 1)
     items = (jnp.eye(list_length) * (item_support - shared_support)) + shared_support
     presentations = (
-        jnp.zeros((size + list_length, context_feature_count + item_feature_count))
+        jnp.zeros((2 * list_length, context_feature_count + item_feature_count))
         .at[:list_length, :context_feature_count]
         .set(contexts)
     )

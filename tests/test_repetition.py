@@ -1,6 +1,16 @@
+import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
-from jaxcmr.repetition import has_repeats_per_row, make_control_dataset
+
+from jaxcmr.repetition import (
+    equivalent_study_positions,
+    filter_repeated_recalls,
+    has_repeats_per_row,
+    item_to_study_positions,
+    make_control_dataset,
+    recalls_to_first_study_positions,
+)
 
 
 def _toy_dataset_for_controls():
@@ -70,3 +80,76 @@ def test_control_infers_list_length_for_legacy_dataset():
         n_shuffles=1,
     )
     assert jnp.array_equal(control["listLength"], jnp.array([[4], [4]]))
+
+
+def test_occurrence_operations_compose_without_compacting_recalls():
+    presentation = jnp.array([10, 20, 10, 30])
+    np.testing.assert_array_equal(
+        jax.jit(item_to_study_positions, static_argnames='size')(10, presentation, 3),
+        [1, 3, 0],
+    )
+    np.testing.assert_array_equal(item_to_study_positions(10, presentation, 1), [1])
+    positions = jax.jit(jax.vmap(equivalent_study_positions, in_axes=(0, None, None)),
+                        static_argnums=2)(jnp.array([3, 2, 0]), presentation, 3)
+    np.testing.assert_array_equal(positions, [[1, 3, 0], [2, 0, 0], [0, 0, 0]])
+    recalls = jnp.array([3, 2, 1, 4, 0])
+    canonical = jax.jit(recalls_to_first_study_positions)(recalls, presentation)
+    np.testing.assert_array_equal(canonical, [1, 2, 1, 4, 0])
+    np.testing.assert_array_equal(filter_repeated_recalls(recalls[None]), recalls[None])
+    np.testing.assert_array_equal(
+        jax.jit(filter_repeated_recalls)(canonical[None]), [[1, 2, 0, 4, 0]]
+    )
+    np.testing.assert_array_equal(
+        has_repeats_per_row(jnp.array([[0, 0, -1, -1], [3, 2, 3, 0]])), [False, True]
+    )
+    np.testing.assert_array_equal(recalls, [3, 2, 1, 4, 0])
+
+
+@pytest.mark.parametrize('pure_count,mixed_count', [(3, 5), (5, 3), (3, 3)])
+def test_each_shuffle_covers_every_mixed_trial_with_participant_specific_pure_rows(
+    pure_count, mixed_count
+):
+    trial_count = pure_count + mixed_count
+    shuffle_count = 3
+    data = {
+        'subject': jnp.repeat(jnp.array([7, 19]), trial_count)[:, None],
+        'listLength': jnp.full((2 * trial_count, 1), 12),
+        'pres_itemnos': jnp.array(
+            ([list(range(1, 13))] * pure_count + [list(range(1, 12)) + [11]] * mixed_count) * 2
+        ),
+        'recalls': jnp.array([
+            [position, 0, 0]
+            for offset in (0, 5)
+            for position in list(range(1 + offset, pure_count + 1 + offset)) + [0] * mixed_count
+        ]),
+        'condition': jnp.array(([0] * pure_count + [1] * mixed_count) * 2),
+        'layout_id': jnp.arange(2 * trial_count),
+        'study_measure': jnp.arange(4 * trial_count).reshape(2 * trial_count, 2),
+    }
+    before = {name: np.asarray(values).copy() for name, values in data.items()}
+    controls = make_control_dataset(
+        data, "data['condition'] == 1", "data['condition'] == 0", shuffle_count, seed=9
+    )
+    again = make_control_dataset(
+        data, "data['condition'] == 1", "data['condition'] == 0", shuffle_count, seed=9
+    )
+    for participant_index, offset in enumerate((0, 5)):
+        block_start = participant_index * mixed_count * shuffle_count
+        for shuffle in range(shuffle_count):
+            rows = slice(block_start + shuffle * mixed_count, block_start + (shuffle + 1) * mixed_count)
+            expected_indices = np.arange(pure_count, trial_count) + participant_index * trial_count
+            for field in ('subject', 'listLength', 'pres_itemnos', 'condition', 'layout_id', 'study_measure'):
+                np.testing.assert_array_equal(controls[field][rows], before[field][expected_indices])
+            selected = np.asarray(controls['recalls'][rows, 0])
+            available = set(range(1 + offset, pure_count + 1 + offset))
+            for start in range(0, mixed_count, pure_count):
+                permutation = selected[start:start + pure_count]
+                assert len(set(permutation)) == len(permutation)
+                assert set(permutation) <= available
+                if len(permutation) == pure_count:
+                    assert set(permutation) == available
+    assert controls['recalls'].shape == (2 * shuffle_count * mixed_count, 3)
+    for field in controls:
+        np.testing.assert_array_equal(controls[field], again[field])
+    for field, values in data.items():
+        np.testing.assert_array_equal(values, before[field])

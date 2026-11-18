@@ -1,34 +1,39 @@
-"""Termination probability curves.
+"""Where recall stops in the sequence of responses.
 
-Computes the probability of stopping recall at each output position,
-measuring how termination likelihood changes across successive
-retrieval attempts.
+After studying A, B, C, a participant who recalls C, then A, then stops has an
+output length of two and a stop at output position 3. The first zero in the
+recorded sequence marks that stop. A sequence that fills every recorded slot
+also counts in the final bin, so that bin includes trials whose stopping time
+was never observed.
 
+``simple_termination_probability`` gives the fraction of all trials that stop
+at each position. ``conditional_termination_probability`` divides the same stop
+counts by the number of trials that reached each position. ``plot_termination_probability``
+averages participant curves and shows the conditional probability by default.
+For a single length summary per participant, ``subject_output_length_mean`` and
+``subject_output_length_median`` summarize the number of responses per trial.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Sequence
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax import jit
 from matplotlib.axes import Axes
-from scipy import stats
 
-from ..helpers import apply_by_subject
-from ..plotting import plot_data, prepare_plot_inputs, set_plot_labels
+from jaxcmr.dataset import apply_by_subject
+
+from ..plotting import format_analysis_axes, plot_mean_curve, prepare_plot_inputs
 from ..typing import Array, Bool, Float, Integer, RecallDataset
 
 __all__ = [
-    "simple_termination_probability",
     "conditional_termination_probability",
     "plot_termination_probability",
+    "simple_termination_probability",
     "subject_output_length_mean",
     "subject_output_length_median",
-    "test_output_length_mean_vs_control",
-    "test_output_length_median_vs_control",
 ]
 
 
@@ -93,9 +98,12 @@ def plot_termination_probability(
     mode: str = "conditional",
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     confidence_level: float = 0.95,
+    *,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot termination probability curves.
 
@@ -118,11 +126,16 @@ def plot_termination_probability(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with termination curves.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -155,17 +168,19 @@ def plot_termination_probability(
         recall_positions = jnp.arange(max_recall_length, dtype=jnp.int32) + 1
 
         color = color_cycle[index % len(color_cycle)]
-        plot_data(
+        plot_mean_curve(
             axis,
             recall_positions,
             subject_curves,
             labels[index],
             color,
             confidence_level=confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
         )
 
     ylabel = "P(Terminate | Reach)" if mode == "conditional" else "P(Terminate)"
-    set_plot_labels(axis, "Recall Position", ylabel, contrast_name)
+    format_analysis_axes(axis, "Recall Position", ylabel, contrast_name)
     return axis
 
 
@@ -194,7 +209,7 @@ def _median_output_length(
 def subject_output_length_mean(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
-) -> np.ndarray:
+) -> Float[np.ndarray, " subjects"]:
     """Mean output lengths per subject.
 
     Parameters
@@ -217,7 +232,7 @@ def subject_output_length_mean(
 def subject_output_length_median(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
-) -> np.ndarray:
+) -> Float[np.ndarray, " subjects"]:
     """Median output lengths per subject.
 
     Parameters
@@ -235,101 +250,3 @@ def subject_output_length_median(
     """
     subject_values = apply_by_subject(dataset, trial_mask, _median_output_length)
     return np.asarray(subject_values, dtype=float)
-
-
-@dataclass
-class OutputLengthTestResult:
-    """Results from an output-length statistical test."""
-
-    n: int
-    mean_observed: float
-    mean_control: float
-    mean_diff: float
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"N={self.n}",
-            f"Mean (observed): {self.mean_observed:.4f}",
-            f"Mean (control): {self.mean_control:.4f}",
-            f"Mean difference: {self.mean_diff:.4f}",
-            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
-            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
-def _test_output_lengths(
-    observed: np.ndarray,
-    control: np.ndarray,
-) -> OutputLengthTestResult:
-    """Return paired tests for per-subject output length summaries."""
-    if observed.shape != control.shape:
-        raise ValueError("Observed and control arrays must have the same shape.")
-
-    valid = ~(np.isnan(observed) | np.isnan(control))
-    n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_rel(observed, control, nan_policy="omit")
-    if n > 10:
-        diff = observed[valid] - control[valid]
-        w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return OutputLengthTestResult(
-        n=n,
-        mean_observed=float(np.nanmean(observed)),
-        mean_control=float(np.nanmean(control)),
-        mean_diff=float(np.nanmean(observed - control)),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
-        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
-    )
-
-
-def test_output_length_mean_vs_control(
-    observed_means: np.ndarray,
-    control_means: np.ndarray,
-) -> OutputLengthTestResult:
-    """Test mean output length: observed vs control.
-
-    Parameters
-    ----------
-    observed_means : np.ndarray
-        Per-subject mean output lengths (observed).
-    control_means : np.ndarray
-        Per-subject mean output lengths (control).
-
-    Returns
-    -------
-    OutputLengthTestResult
-        Paired test statistics.
-
-    """
-    return _test_output_lengths(observed_means, control_means)
-
-
-def test_output_length_median_vs_control(
-    observed_medians: np.ndarray,
-    control_medians: np.ndarray,
-) -> OutputLengthTestResult:
-    """Test median output length: observed vs control.
-
-    Parameters
-    ----------
-    observed_medians : np.ndarray
-        Per-subject median output lengths (observed).
-    control_medians : np.ndarray
-        Per-subject median output lengths (control).
-
-    Returns
-    -------
-    OutputLengthTestResult
-        Paired test statistics.
-
-    """
-    return _test_output_lengths(observed_medians, control_medians)

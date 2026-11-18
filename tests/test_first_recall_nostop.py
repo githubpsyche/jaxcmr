@@ -8,8 +8,8 @@ from support import CMR_PARAMS, OPTIMIZED_CMR_PARAMS
 
 from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination
-from jaxcmr.helpers import make_dataset
-from jaxcmr.loss.transform_sequence_likelihood import (
+from jaxcmr.dataset import make_dataset
+from jaxcmr.loss.sequence_likelihood import (
     ExcludeFirstRecallAndTerminationLikelihoodLoss,
     ExcludeTerminationLikelihoodLoss,
     mask_first_recall_and_terminations,

@@ -8,9 +8,8 @@ import pytest
 from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components import context, linear_memory
 from jaxcmr.components.termination import NoStopTermination, PositionalTermination
-from jaxcmr.helpers import make_dataset
-from jaxcmr.loss.cmr_likelihood import FastCMRLikelihoodLoss
-from jaxcmr.loss.transform_sequence_likelihood import (
+from jaxcmr.dataset import make_dataset
+from jaxcmr.loss.sequence_likelihood import (
     ExcludeTerminationLikelihoodLoss,
     MemorySearchLikelihoodLoss,
     mask_trailing_terminations,
@@ -171,7 +170,7 @@ def test_compatibility_loss_honors_a_different_model_factory():
         "stop_probability_growth": jnp.array(0.2, dtype=jnp.float64),
     }
     indices = jnp.array([0])
-    loss = FastCMRLikelihoodLoss(positional_stop, data, None)
+    loss = ExcludeTerminationLikelihoodLoss(positional_stop, data, None)
     direct = loss(indices, params, (), jnp.empty((0, 1)))
     ordinary = ExcludeTerminationLikelihoodLoss(REFERENCE, data, None)(
         indices, PARAMS, (), jnp.empty((0, 1))
@@ -270,3 +269,22 @@ def test_dataset_simulation_maps_parameter_sets_for_optimized_and_regular_cmr():
     actual = jax.vmap(lambda value: simulate(optimized_cmr.ModelFactory, OPTIMIZED_PARAMS, value))(drift)
     np.testing.assert_array_equal(actual, expected)
     np.testing.assert_array_equal(simulate(optimized_cmr.ModelFactory, OPTIMIZED_PARAMS, drift[0]), expected[0])
+
+
+@pytest.mark.parametrize("double", [False, True])
+def test_prepared_probability_masks_and_gradients(double):
+    from jaxcmr.experimental.prepared import PreparedLoss, PreparedPrediction, prediction_likelihood
+    with jax.enable_x64(double):
+        def probabilities(data, parameters):
+            rate = parameters["rate"]
+            # The impossible last event must be masked before taking logarithms.
+            return (jnp.stack([rate * data, jnp.zeros_like(data)], axis=1),)
+        prediction = PreparedPrediction(jnp.array([.5,.75]), (jnp.array([[True,False],[True,False]]),), probabilities)
+        loss = PreparedLoss(prediction, prediction_likelihood)
+        score = jax.jit(jax.value_and_grad(lambda rate, loss: loss({}, ("rate",), rate.reshape(1,1))[0]))
+        value, gradient = score(jnp.array(.4), loss)
+        np.testing.assert_allclose(value, -np.log(.2*.3), rtol=1e-6)
+        np.testing.assert_allclose(gradient, -2/.4, rtol=1e-6)
+        changed = PreparedLoss(PreparedPrediction(jnp.array([.25,.5]), prediction.masks, probabilities), prediction_likelihood)
+        np.testing.assert_allclose(score(jnp.array(.4), changed)[0], -np.log(.1*.2), rtol=1e-6)
+        np.testing.assert_allclose(score(jnp.array(.4), loss)[0], value)

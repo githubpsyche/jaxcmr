@@ -1,34 +1,45 @@
-"""Type definitions and protocols for the jaxcmr package.
+"""Data formats and callable interfaces for recall models, simulation and fitting.
 
-Defines array type aliases (via jaxtyping), model protocols
-(``MemorySearch``, ``TrialSimulator``), dataset type dictionaries
-(``RecallDataset``), and callable type aliases used throughout the
-package.
+``RecallDataset`` describes the arrays recorded on each trial, and
+``Parameters`` maps parameter names to scalar model values. Array annotations
+specify the dtype and dimensions a caller supplies.
 
+``Memory``, ``Context`` and ``TerminationPolicy`` describe components used to
+build a model. ``MemorySearch`` describes how a model experiences study
+items and produces recall responses. A ``MemorySearchModelFactory``
+constructs that model for a particular trial. A ``TrialSimulator`` uses it
+to carry out a study and recall procedure.
+
+For fitting, a ``LossFactory`` constructs an objective for a dataset.
+``LossFn`` scores candidate parameter sets, and a ``FittingAlgorithm``
+returns estimates and objective values in a ``FitResult``. These protocols
+specify the operations an implementation must supply. A model, loss or
+fitter can satisfy its protocol without inheriting from it.
 """
 
 from collections.abc import Iterable, Mapping
-from typing import (
-    Any,
-    NotRequired,
-    Protocol,
-    runtime_checkable,
-)
+from typing import Any, NotRequired, Protocol, runtime_checkable
 
 from jaxtyping import Array, ArrayLike, Bool, Float, Integer, PRNGKeyArray, Real, Shaped
 from typing_extensions import TypedDict
 
 type Float_ = Float[Array, ""] | float | int
+"""Scalar floating-point JAX array or Python numeric value."""
+
 type Int_ = Integer[Array, ""] | int
+"""Scalar integer JAX array or Python integer."""
+
 type Bool_ = Bool[Array, ""] | bool
+"""Scalar Boolean JAX array or Python Boolean."""
+
 type Parameters = Mapping[str, Float_ | Int_ | Bool_]
+"""Model parameter names mapped to scalar numeric or Boolean values."""
 
 __all__ = [
     "Array",
     "ArrayLike",
     "Bool",
     "Bool_",
-    "CVResult",
     "Context",
     "ContextCreateFn",
     "FitResult",
@@ -38,11 +49,11 @@ __all__ = [
     "Int_",
     "Integer",
     "LikelihoodMaskFn",
+    "LossFactory",
     "LossFn",
     "Memory",
     "MemoryCreateFn",
     "MemorySearch",
-    "MemorySearchCreateFn",
     "MemorySearchModelFactory",
     "PRNGKeyArray",
     "Parameters",
@@ -66,8 +77,8 @@ class RecallDataset(TypedDict, extra_items=Array):
     ``pres_itemids`` identifies items across lists and is required by semantic
     models and analyses, but not by every recall dataset. Other named fields
     are optional. Additional fields may contain arrays of any dtype or shape,
-    such as valence or LPP measurements. A consumer that needs an optional or
-    additional field must check that the dataset contains it. Every field must
+    such as valence or LPP measurements. Callers must supply the optional or
+    additional fields required by their chosen operation. Every field must
     have a leading trial dimension; non-trial metadata belongs outside this dict.
     """
 
@@ -115,31 +126,21 @@ class RecallDataset(TypedDict, extra_items=Array):
     """List type for each trial (shape: [n_trials, 1])."""
 
 
-class RecallAnalysisFn(Protocol):
-    """Summarize observed or simulated recalls for selected trials.
-
-    ``recalls`` already contains only the selected trials. Observations have
-    one simulation per trial; model predictions can have many. ``dataset`` is
-    the full dataset, so align any trial metadata with ``trial_indices``.
-    Implementations aggregate the simulation dimension and return matching,
-    fixed-shape arrays for observations and predictions. They must support
-    JAX tracing; aggregation and recall-code interpretation are their explicit
-    responsibility. Nonfinite observed bins can mark unavailable targets.
-    """
-
-    def __call__(
-        self,
-        recalls: Integer[Array, " trials simulations recall_positions"],
-        *,
-        list_length: int,
-        dataset: Mapping[str, Array],
-        trial_indices: Integer[Array, " trials"],
-    ) -> Array: ...
-
-
 @runtime_checkable
 class Memory(Protocol):
-    state: Float[Array, " input_size output_size"]
+    """Associate and retrieve feature patterns through a shared memory interface.
+
+    Linear memory stores an input-by-output matrix; instance memory stores
+    rows of concatenated input/output patterns. ``probe`` and ``associate``
+    provide the same operations without requiring callers to interpret that
+    storage layout.
+
+    Attributes
+    ----------
+    state : Float[Array, "memory_rows memory_columns"]
+        Stored associations, with layout determined by the implementation."""
+
+    state: Float[Array, " memory_rows memory_columns"]
 
     @property
     def input_size(self) -> int:
@@ -157,35 +158,84 @@ class Memory(Protocol):
         out_pattern: Float[Array, " output_size"],
         learning_rate: Float_,
     ) -> "Memory":
-        """Return the updated memory after associating input and output patterns.
+        """Return memory after associating the supplied patterns.
 
-        Args:
-            in_pattern: a feature pattern for an input.
-            out_pattern: a feature pattern for an output.
-            learning_rate: the learning rate parameter.
-        """
+        Parameters
+        ----------
+        in_pattern : Float[Array, "input_size"]
+            Input feature pattern.
+        out_pattern : Float[Array, "output_size"]
+            Output feature pattern.
+        learning_rate : Float_
+            Strength of the association update.
+
+        Returns
+        -------
+        Memory
+            Updated memory; the original instance is unchanged."""
         ...
 
     def probe(
         self,
         in_pattern: Float[Array, " input_size"],
     ) -> Float[Array, " output_size"]:
-        """Return the output pattern associated with the input pattern in memory.
+        """Retrieve the output pattern associated with an input cue.
 
-        Args:
-            in_pattern: the input feature pattern.
-        """
+        Parameters
+        ----------
+        in_pattern : Float[Array, "input_size"]
+            Input cue in the memory's feature space.
+
+        Returns
+        -------
+        Float[Array, "output_size"]
+            Retrieved output pattern, without updating memory."""
+        ...
+
+
+class MemoryCreateFn(Protocol):
+    """Construct one associative memory for a model.
+
+    The same interface is used separately for item-to-context (MFC) and
+    context-to-item (MCF) memory. The chosen constructor determines the
+    direction and storage representation."""
+
+    def __call__(
+        self,
+        list_length: int,
+        parameters: Parameters,
+        context: "Context",
+    ) -> Memory:
+        """Create one memory using the experiment and context dimensions.
+
+        Parameters
+        ----------
+        list_length : int
+            Number of study slots available to the model.
+        parameters : Parameters
+            Model parameter values used to configure this memory.
+        context : Context
+            Context representation determining the context feature space.
+
+        Returns
+        -------
+        Memory
+            A newly initialized associative memory."""
         ...
 
 
 @runtime_checkable
 class Context(Protocol):
-    """Context representation for memory search models.
+    """Integrate new input into a model's context representation.
 
-    Attributes:
-        state: the current state of the context.
-        initial_state: the initial state of the context.
-    """
+    Attributes
+    ----------
+    state : Float[Array, "context_feature_units"]
+        Current context vector.
+    initial_state : Float[Array, "context_feature_units"]
+        Initial context, also available as a retrieval-start cue.
+    size : int
+        Number of context feature units."""
 
     state: Float[Array, " context_feature_units"]
     initial_state: Float[Array, " context_feature_units"]
@@ -196,29 +246,38 @@ class Context(Protocol):
         context_input: Float[Array, " context_feature_units"],
         drift_rate: Float_,
     ) -> "Context":
-        """Returns context after integrating input representation.
+        """Return context after integrating an input representation.
 
-        Args:
-            context_input: the input representation to be integrated into the contextual state.
-            drift_rate: The drift rate parameter.
-        """
+        Parameters
+        ----------
+        context_input : Float[Array, "context_feature_units"]
+            Input in the same feature space as context.
+        drift_rate : Float_
+            Rate of context change toward the input.
+
+        Returns
+        -------
+        Context
+            Updated context; the original instance is unchanged."""
         ...
 
-    def integrate_with_outlist(
-        self,
-        inlist_input: Float[Array, " context_feature_units"],
-        ratio: Float_,
-        drift_rate: Float_,
-    ) -> "Context":
-        """Return context after mixing in-list input with fresh out-of-list input.
 
-        Requires sufficient out-of-list capacity for this update.
+class ContextCreateFn(Protocol):
+    """Construct a context representation for the model's item capacity."""
 
-        Args:
-            inlist_input: Input representation, normalized before mixing.
-            ratio: Weight on the in-list input; out-of-list input receives 1 - ratio.
-            drift_rate: Drift rate for integrating the mixed input.
-        """
+    def __call__(self, item_count: int) -> Context:
+        """Initialize context before study begins.
+
+        Parameters
+        ----------
+        item_count : int
+            Number of item slots reserved by the model. The constructor determines
+            the corresponding context dimensions and any additional units.
+
+        Returns
+        -------
+        Context
+            A newly initialized context representation."""
         ...
 
 
@@ -232,90 +291,17 @@ class TerminationPolicy[ModelT](Protocol):
     """
 
     def stop_probability(self, model: ModelT) -> Float[Array, ""]:
-        """Return stop probability for an object satisfying this rule's needs."""
-        ...
+        """Calculate the probability of stopping in the supplied state.
 
+        Parameters
+        ----------
+        model : ModelT
+            Model or view exposing the information required by this policy.
 
-@runtime_checkable
-class MemorySearch(Protocol):
-    """A model of memory search.
-
-    Attributes:
-        item_count: the number of item slots reserved in the model.
-        is_active: indicates whether the model is active or not.
-        studied: indicates whether each item has been studied.
-        recallable: indicates whether each item can currently be recalled.
-        recall_total: the number of recalled items so far.
-        study_index: the number of items studied so far.
-    """
-
-    item_count: int
-    is_active: Bool[Array, ""]
-    studied: Bool[Array, " item_count"]
-    recall_total: Integer[Array, ""]
-    study_index: Integer[Array, ""]
-
-    @property
-    def recallable(self) -> Bool[Array, " item_count"]:
-        """Indicate which candidates can currently be recalled."""
-        ...
-
-    def experience(self, choice: Int_) -> "MemorySearch":
-        """Returns model after experiencing the specified study item.
-
-        Args:
-            choice: the index of the item to experience (1-indexed). 0 is ignored.
-        """
-        ...
-
-    def start_retrieving(self) -> "MemorySearch":
-        """Returns model after transitioning from study to retrieval mode."""
-        ...
-
-    def retrieve(self, choice: Int_) -> "MemorySearch":
-        """Return model after simulating retrieval of the specified item or stopping.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed). 0 terminates retrieval.
-
-        """
-        ...
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        ...
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
-        """
-        ...
-
-    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return probabilities of all possible retrieval events."""
-        ...
-
-
-class ContextCreateFn(Protocol):
-    """Callable that returns a context instance."""
-
-    def __call__(self, item_count: int) -> Context:
-        """Return a context instance for the given configuration."""
-        ...
-
-
-class MemoryCreateFn(Protocol):
-    """Callable that returns the MFC and MCF memories."""
-
-    def __call__(
-        self,
-        list_length: int,
-        parameters: Parameters,
-        context: Context,
-    ) -> Memory:
-        """Return the memories for the given configuration."""
+        Returns
+        -------
+        Float[Array, ""]
+            Probability of a stop event, without advancing the model."""
         ...
 
 
@@ -334,54 +320,137 @@ class TerminationPolicyCreateFn[ModelT](Protocol):
         list_length: int,
         parameters: Parameters,
     ) -> TerminationPolicy[ModelT]:
-        """Return a termination policy that can accept ``ModelT``."""
+        """Construct a stopping rule compatible with the chosen model.
+
+        Parameters
+        ----------
+        list_length : int
+            Number of study slots available to the model.
+        parameters : Parameters
+            Model parameters used to configure the stopping rule.
+
+        Returns
+        -------
+        TerminationPolicy[ModelT]
+            Policy accepting the model or view described by ModelT."""
         ...
 
 
 @runtime_checkable
-class MemorySearchCreateFn(Protocol):
-    """A factory for creating memory search models."""
+class MemorySearch(Protocol):
+    """Study and retrieval operations used by simulation and likelihood evaluation.
 
-    def __call__(
-        self,
-        list_length: int,
-        parameters: Parameters,
-        connections: Float[Array, " study_events study_events"] | None,
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters."""
+    Item choices are one-indexed within-list codes. Zero is ignored during
+    study and denotes stopping during retrieval. Update methods return the
+    new model state; callers retain the original state until they replace it.
+    Implementations used by the numerical routines must support JAX tracing
+    and carry their changing state in a JAX pytree.
+
+    Internal representations of studied items, context and retrieval support
+    belong to the concrete model. Stopping policies and diagnostic views
+    specify any additional information they require separately.
+
+    Attributes
+    ----------
+    is_active : Bool[Array, ""]
+        Whether retrieval can continue.
+    recall_total : Integer[Array, ""]
+        Number of items recalled so far, excluding stop events.
+    """
+
+    is_active: Bool[Array, ""]
+    recall_total: Integer[Array, ""]
+
+    def experience(self, choice: Int_) -> "MemorySearch":
+        """Advance the model by one study event.
+
+        Parameters
+        ----------
+        choice : Int_
+            One-indexed within-list item code; zero leaves the model unchanged.
+
+        Returns
+        -------
+        MemorySearch
+            Model after experiencing this item.
+        """
         ...
 
+    def start_retrieving(self) -> "MemorySearch":
+        """Transition from study to retrieval.
 
-@runtime_checkable
-class LikelihoodMaskFn(Protocol):
-    """Defines the callable signature for recall likelihood masking."""
+        Returns
+        -------
+        MemorySearch
+            Model ready for its first retrieval event.
+        """
+        ...
 
-    def __call__(
-        self, recalls: Integer[Array, " recall_events"]
-    ) -> Bool[Array, " recall_events"]:
-        """Returns a keep-mask over recall events.
+    def retrieve(self, choice: Int_) -> "MemorySearch":
+        """Advance the model by one retrieval event.
 
-        Args:
-          recalls: One-indexed recall events with zeros representing padding.
+        Parameters
+        ----------
+        choice : Int_
+            One-indexed within-list item code, or zero to stop retrieval.
+
+        Returns
+        -------
+        MemorySearch
+            Model after recalling the item or stopping.
+        """
+        ...
+
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Calculate the probability of one retrieval event.
+
+        Parameters
+        ----------
+        choice : Int_
+            One-indexed within-list item code, or zero for a stop event.
+
+        Returns
+        -------
+        Float[Array, ""]
+            Event probability in the current state, without retrieving it.
+        """
+        ...
+
+    def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
+        """Calculate probabilities for every retrieval event.
+
+        Returns
+        -------
+        Float[Array, "recall_outcomes"]
+            Stop probability at index zero, followed by probabilities for
+            the corresponding one-indexed item codes. The model is unchanged.
         """
         ...
 
 
 @runtime_checkable
 class MemorySearchModelFactory(Protocol):
+    """Prepare a dataset once, then construct a model for an individual trial.
+
+    Simulation and losses receive a factory class, initialize it with their
+    dataset and optional features, and call ``create_trial_model`` for each
+    trial and parameter assignment. Trial-specific connections and other
+    prepared inputs are the factory's responsibility.
+    """
+
     def __init__(
         self,
         dataset: RecallDataset,
         features: Float[Array, " word_pool_items features_count"] | None,
     ) -> None:
-        """Initialize the factory with the specified trials and trial data."""
-        ...
+        """Prepare the inputs shared across model constructions.
 
-    def create_model(
-        self,
-        parameters: Parameters,
-    ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
+        Parameters
+        ----------
+        dataset : RecallDataset
+            Trial data, including any fields required by the chosen model.
+        features : Float[Array, "word_pool_items features_count"] or None
+            Item features aligned to the model's vocabulary, when needed."""
         ...
 
     def create_trial_model(
@@ -389,21 +458,107 @@ class MemorySearchModelFactory(Protocol):
         trial_index: Integer[Array, ""],
         parameters: Parameters,
     ) -> MemorySearch:
-        """Create a new memory search model with the specified parameters for the specified trial."""
+        """Construct a model ready to study the selected trial.
+
+        Parameters
+        ----------
+        trial_index : Integer[Array, ""]
+            Zero-based row in the dataset supplied to the factory.
+        parameters : Parameters
+            One complete assignment of model parameter values.
+
+        Returns
+        -------
+        MemorySearch
+            New model using the prepared inputs for this trial."""
+        ...
+
+
+@runtime_checkable
+class TrialSimulator(Protocol):
+    """Run a study and retrieval procedure for one trial.
+
+    The procedure determines how observed recalls constrain simulation: it may
+    ignore them, impose the first recall, or use their count or occupied slots.
+    Dataset simulation translates recorded study positions into within-list
+    item codes before calling this interface, and translates generated item
+    codes back to study positions afterward."""
+
+    def __call__(
+        self,
+        model: MemorySearch,
+        present: Integer[Array, " study_events"],
+        trial: Integer[Array, " recalls"],
+        rng: PRNGKeyArray,
+    ) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
+        """Simulate one trial under the chosen experimental procedure.
+
+        Parameters
+        ----------
+        model : MemorySearch
+            Model initialized for the trial, before study begins.
+        present : Integer[Array, "study_events"]
+            One-indexed within-list item codes in study order; zero pads the list.
+        trial : Integer[Array, "recalls"]
+            Observed recalls expressed in the same item codes, with zero for unused
+            slots. Their use depends on the chosen trial procedure.
+        rng : PRNGKeyArray
+            Random key for sampling responses.
+
+        Returns
+        -------
+        tuple of MemorySearch and Integer[Array, "recall_events"]
+            Final model and simulated item codes. Zero denotes an unused response
+            slot; the procedure determines the output width and stopping behavior."""
+        ...
+
+
+@runtime_checkable
+class LikelihoodMaskFn(Protocol):
+    """Choose which recorded recall events contribute to a likelihood."""
+
+    def __call__(
+        self, recalls: Integer[Array, " recall_events"]
+    ) -> Bool[Array, " recall_events"]:
+        """Mark recall events to include in the objective.
+
+        Parameters
+        ----------
+        recalls : Integer[Array, "recall_events"]
+            Recorded recall sequence. Positive entries denote recalled items and
+            zeros follow the final recall.
+
+        Returns
+        -------
+        Bool[Array, "recall_events"]
+            Keep-mask aligned to the supplied sequence. The chosen rule determines
+            whether the first zero contributes as a stop event."""
+        ...
+
+
+class RecallAnalysisFn(Protocol):
+    """Calculate a fixed-shape behavioral summary from a recall dataset.
+
+    Observations and simulations use the same study-position recall codes.
+    Simulated repetitions are ordinary trial rows with repeated metadata.
+    The analysis defines aggregation and weighting, must support JAX tracing,
+    and may return nonfinite values for undefined observed bins.
+    """
+
+    def __call__(self, dataset: RecallDataset, /) -> Array:
+        """Return a numerical summary, with the same shape for both datasets."""
         ...
 
 
 @runtime_checkable
 class LossFn(Protocol):
-    """Loss function for model fitting."""
+    """Score candidate parameter vectors on selected observations.
 
-    def __init__(
-        self,
-        model_factory_cls: type[MemorySearchModelFactory],
-        dataset: RecallDataset,
-        features: Float[Array, " word_pool_items features_count"] | None,
-    ) -> None:
-        """Initialize with the specified trials and trial data."""
+    Fitters initialize a loss with the model factory, dataset and features.
+    Each call supplies selected trial rows, base parameters and a matrix of
+    candidate values for the free parameters. Lower objective values are better;
+    the chosen loss defines the measure, such as negative log likelihood or
+    behavioral mean squared error."""
 
     def __call__(
         self,
@@ -412,18 +567,58 @@ class LossFn(Protocol):
         free_param_names: Iterable[str],
         x: Float[Array, " parameters n_samples"],
     ) -> Float[Array, " n_samples"]:
-        """Return one loss per parameter vector."""
+        """Evaluate each candidate on the selected observations.
+
+        Parameters
+        ----------
+        trial_indices : Integer[Array, "trials"]
+            Zero-based dataset rows contributing to the objective.
+        base_params : Parameters
+            Base values, overridden by each candidate's free-parameter values.
+        free_param_names : Iterable[str]
+            Names in the same order as the rows of x.
+        x : Float[Array, "parameters n_samples"]
+            Candidate values in physical parameter coordinates, one candidate per
+            column and one free parameter per row.
+
+        Returns
+        -------
+        Float[Array, "n_samples"]
+            One objective value per candidate, in the supplied column order."""
+        ...
+
+
+class LossFactory(Protocol):
+    """Construct a loss from a model factory, observations and features.
+
+    Classes and configured callables such as functools.partial can implement
+    this interface. The returned object supplies population scoring.
+    """
+
+    def __call__(
+        self,
+        model_factory_cls: type[MemorySearchModelFactory],
+        dataset: RecallDataset,
+        features: Float[Array, " word_pool_items features_count"] | None,
+    ) -> LossFn:
+        """Prepare an ordinary loss for the supplied model and data."""
         ...
 
 
 class FitResult(TypedDict):
-    """Typed dict describing the results of a fitting procedure."""
+    """Serialized parameter estimates and optimizer results, aligned by fit row.
 
-    fixed: dict[str, float]
-    """Dictionary of fixed parameters and their values."""
+    ``fitness``, ``nit``, ``converged`` and every column in ``fits`` refer to the
+    same rows. One fit to pooled observations produces one row; participant-wise
+    fitting produces one row per participant. Optimizer diagnostics are optional.
+    The objective's meaning comes from the selected loss."""
+
+    fixed: dict[str, float | int | bool]
+    """Base parameter values preserving numeric and Boolean scalar types. Free-parameter defaults may
+    appear here too; fitted values in fits override them."""
 
     free: dict[str, list[float]]
-    """Dictionary of free parameters and their [lower_bound, upper_bound] or similar spec."""
+    """Free-parameter names mapped to [lower_bound, upper_bound]."""
 
     fitness: list[float]
     """Objective values, one per fit row. Their meaning is determined by the
@@ -435,9 +630,10 @@ class FitResult(TypedDict):
     converged: list[bool]
     """Whether each fit met the optimizer convergence criterion."""
 
-    fits: dict[str, list[float]]
-    """Dictionary of parameter names -> fitted/fixed values, aligned by fit row.
-    The subject entry identifies each row; pooled fits conventionally use -1."""
+    fits: dict[str, list[float | int | bool]]
+    """Parameter columns aligned by fit row, including integer and Boolean values.
+    The reserved subject column contains integer IDs, never floats or booleans.
+    Participant rows have distinct IDs; a pooled fit has one row with ID -1."""
 
     hyperparameters: dict[str, Any]
     """Dictionary of hyperparameter names and their values used during fitting."""
@@ -445,56 +641,19 @@ class FitResult(TypedDict):
     fit_time: float
     """Total time (in seconds) taken to perform the fitting."""
 
-    diagnostics: NotRequired[dict[str, Any]]
-    """Optional optimizer diagnostics, such as per-restart evaluations and status."""
-
-
-class CVResult(TypedDict):
-    """Typed dict describing leave-one-fold-out cross-validation results."""
-
-    n_folds: int
-    """Number of CV folds."""
-
-    fold_field: str
-    """Dataset field used for fold splitting (e.g. 'list')."""
-
-    fold_values: list[int]
-    """Unique fold identifiers."""
-
-    subjects: list[int]
-    """Subject IDs in the same order as the fitness lists."""
-
-    train_fitness: list[list[float]]
-    """Per-fold list of per-subject training NLL. Shape: [n_folds][n_subjects]."""
-
-    test_fitness: list[list[float]]
-    """Per-fold list of per-subject held-out NLL. Shape: [n_folds][n_subjects]."""
-
-    cv_fitness: list[float]
-    """Aggregated held-out NLL per subject (sum across folds)."""
-
-    fold_fits: list[FitResult]
-    """Per-fold FitResult from training."""
-
-    hyperparameters: dict[str, Any]
-    """Hyperparameters used for fitting."""
-
-    cv_time: float
-    """Total wall-clock time for the CV procedure."""
+    diagnostics: NotRequired[list[dict[str, Any]]]
+    """Optional diagnostics aligned with fit rows. Each entry includes subject,
+    selected_restart and restart records, plus solver-specific details."""
 
 
 @runtime_checkable
 class FittingAlgorithm(Protocol):
-    """Protocol describing a fitting algorithm for memory search models.
+    """Fit one pooled parameter set or separate parameter sets by participant.
 
-    Returned dicts should contain the following keys:
-        - 'fixed': dict of fixed parameters and their values
-        - 'free': dict of free parameters and their parameter bounds
-        - 'fitness': fitness value(s) of the optimized parameters
-        - 'nit': optimizer generations run for each fit
-        - 'converged': convergence status for each fit
-        - 'fits': dictionary of free parameters and their optimized value(s)
-    """
+    Construct an implementation with a dataset, model factory, loss class and
+    optimizer settings. ``fit`` uses all selected observations in one objective;
+    ``fit_subjects`` fits the selected participants separately. Both return a
+    ``FitResult`` with parameter columns and optimizer outcomes aligned by row."""
 
     def __init__(
         self,
@@ -502,22 +661,26 @@ class FittingAlgorithm(Protocol):
         features: Float[Array, "word_pool_items features_count"] | None,
         base_params: Parameters,
         model_factory_cls: type[MemorySearchModelFactory],
-        loss_fn_cls: type[LossFn],
+        loss_fn_cls: LossFactory,
         hyperparams: dict[str, Any] | None = None,
     ) -> None:
-        """
-        Configure the fitting algorithm.
+        """Configure the fitting algorithm.
 
-        Args:
-            dataset: The dataset containing trial data (including 'subject').
-            features: Optional feature matrix aligned to the vocabulary.
-            base_params: A dictionary of parameters that are held fixed.
-            model_factory_cls: Class implementing MemorySearchModelFactory.
-            loss_fn_cls: Class implementing LossFn.
-            hyperparams: Optional dictionary of hyperparameters for the fitting routine.
-                May include 'bounds' (dict[str, list[float]]) and other keys
-                like 'num_steps', 'pop_size', etc.
-        """
+        Parameters
+        ----------
+        dataset : RecallDataset
+            Observed trial data, including participant identities.
+        features : Float[Array, "word_pool_items features_count"] or None
+            Vocabulary-aligned features passed to the model factory when needed.
+        base_params : Parameters
+            Base parameter values. Candidate values override the free parameters.
+        model_factory_cls : type[MemorySearchModelFactory]
+            Factory class used to prepare trial-specific models.
+        loss_fn_cls : LossFactory
+            Loss class used to score candidate parameters.
+        hyperparams : dict[str, Any] or None
+            Optimizer-specific settings, including free-parameter bounds. Consult
+            the chosen fitter for its supported settings and defaults."""
         ...
 
     def fit(
@@ -525,43 +688,34 @@ class FittingAlgorithm(Protocol):
         trial_mask: Bool[Array, " trials"],
         subject_id: int = -1,
     ) -> FitResult:
-        """Fit one parameter set to the trials selected by the mask."""
+        """Fit one parameter set to all selected observations.
+
+        Parameters
+        ----------
+        trial_mask : Bool[Array, "trials"]
+            Trials included in this fit.
+        subject_id : int, optional
+            Identity recorded for the fit row; -1 denotes a pooled fit.
+
+        Returns
+        -------
+        FitResult
+            One fit row and its optimizer results."""
         ...
 
     def fit_subjects(
         self,
         trial_mask: Bool[Array, " trials"],
     ) -> FitResult:
-        """Fit each subject independently and accumulate results."""
+        """Fit each selected participant independently.
+
+        Parameters
+        ----------
+        trial_mask : Bool[Array, "trials"]
+            Trials included when forming participant-specific objectives.
+
+        Returns
+        -------
+        FitResult
+            Participant parameter columns and optimizer results, aligned by fit row."""
         ...
-
-
-@runtime_checkable
-class TrialSimulator(Protocol):
-    """Returns model and recalled sequence for a single trial.
-
-    Encapsulates a trial-level simulation step that consumes a study sequence
-    and an initial recalls buffer, and produces the updated model alongside
-    the simulated recall events.
-    """
-
-    def __call__(
-        self,
-        model: MemorySearch,
-        present: Integer[Array, " study_events"],
-        trial: Integer[Array, " recalls"],
-        rng: PRNGKeyArray,
-    ) -> tuple[MemorySearch, Integer[Array, " recall_events"]]:
-        """Returns model and simulated recall sequence.
-
-        Args:
-          model: Memory search model to update during the trial.
-          present: One-indexed study sequence for the trial.
-          trial: One-indexed recall sequence for the trial (same indexing as present).
-          rng: Random key.
-        """
-        ...
-
-
-# Compatibility aliases. Do not use in new code.
-LossFnGenerator = LossFn

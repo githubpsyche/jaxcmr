@@ -1,49 +1,43 @@
-"""Distance-Rank Semantic Factor Score.
+"""Proximity of each recalled item to the previous recall in a distance matrix.
 
-Condenses semantic organization into a single scalar by computing the
-percentile rank of each transition's distance among all currently
-available item distances. A score of 0.5 indicates chance; scores above
-0.5 mean transitions favor closer available items.
+For each transition, the previous item's row of the matrix supplies a
+distance to every available study item. The chosen distance is ranked among
+those alternatives. The closest scores 1 and the farthest 0 when distances
+are distinct. Tied items share their mean rank. Uniform choice among the
+available items gives an expected score of 0.5.
 
-Notes
------
-Distance-rank scores parallel lag-rank temporal factor scores, but use
-pairwise item distances instead of serial-position lags. The supplied
-``distance_matrix`` is indexed by item identifier, following the
-Distance-CRP convention that ``pres_itemids - 1`` selects rows and
-columns from the matrix.
-
+Use ``distrank`` for one mean rank per trial and ``subject_distrank`` for the
+mean of the defined trial scores per participant. Transitions with fewer
+than two available items contribute no rank. The global item identifiers
+in ``pres_itemids`` are one-based, so item 1 corresponds to the first row
+and column of the matrix.
 """
 
 __all__ = [
-    "percentile_rank",
     "DistanceRankTabulation",
-    "tabulate_trial",
     "distrank",
-    "subject_distrank",
-    "DistRankTestResult",
-    "DistRankComparisonResult",
-    "test_distrank",
-    "test_distrank_vs_comparison",
+    "percentile_rank",
     "plot_distrank",
+    "subject_distrank",
+    "tabulate_trial",
 ]
 
-from dataclasses import dataclass
 from collections.abc import Sequence
+from typing import cast
 
 import numpy as np
 from jax import jit, lax, vmap
 from jax import numpy as jnp
 from matplotlib.axes import Axes
-from scipy import stats
-from .uncertainty import mean_interval
+
 from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.dataset import _require_pres_itemids, apply_by_subject
 
-from ..helpers import apply_by_subject, require_pres_itemids
 from ..math import cosine_similarity_matrix
-from ..plotting import prepare_plot_inputs, set_plot_labels
+from ..plotting import format_analysis_axes, prepare_plot_inputs
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
-
+from ._transitions import masked_midrank
+from .statistics import mean_interval
 
 # ---------------------------------------------------------------------------
 # Core utility
@@ -53,7 +47,7 @@ from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 def percentile_rank(
     target: Float[Array, ""],
     pool: Float[Array, " candidates"],
-) -> Float:
+) -> Float[Array, ""]:
     """Compute midpoint percentile rank of *target* in *pool*.
 
     Parameters
@@ -70,15 +64,7 @@ def percentile_rank(
         Returns NaN when fewer than 2 available entries.
 
     """
-    valid = pool != jnp.inf
-    n = jnp.sum(valid)
-    n_smaller = jnp.sum(valid & (pool < target))
-    n_equal = jnp.sum(valid & (pool == target))
-    return jnp.where(
-        n > 1,
-        (n - 1 - n_smaller - 0.5 * (n_equal - 1)) / (n - 1),
-        jnp.float32(jnp.nan),
-    )
+    return masked_midrank(target, pool, pool != jnp.inf)
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +80,7 @@ class DistanceRankTabulation(Pytree):
         availability_mask: Bool[Array, " study_events"],
         first_recall: Int_,
         trial_distances: Float[Array, "study_events study_events"],
-    ):
+    ) -> None:
         self.trial_distances = trial_distances
         self.avail_items = availability_mask
         self.avail_items = self.avail_items.at[first_recall - 1].set(False)
@@ -126,7 +112,7 @@ def tabulate_trial(
     trial: Integer[Array, " recall_events"],
     present_ids: Integer[Array, " study_item_ids"],
     distance_matrix: Float[Array, " item_count item_count"],
-) -> Float:
+) -> Float[Array, ""]:
     """Tabulate distance-rank factor for a single trial.
 
     Parameters
@@ -164,6 +150,11 @@ def distrank(
 ) -> Float[Array, " trials"]:
     """Compute per-trial distance-rank factors.
 
+    This numerical operation is JIT-compatible and requires aligned integer
+    item IDs within matrix coverage. Supply a square matrix with finite distances
+    for the within-list alternatives used by the analysis. Input alignment and
+    distance suitability are the caller's responsibility.
+
     Parameters
     ----------
     dataset : RecallDataset
@@ -178,7 +169,7 @@ def distrank(
 
     """
     return vmap(tabulate_trial, in_axes=(0, 0, None))(
-        dataset["recalls"], require_pres_itemids(dataset), distance_matrix
+        dataset["recalls"], _require_pres_itemids(dataset), distance_matrix
     )
 
 
@@ -191,7 +182,7 @@ def subject_distrank(
     dataset: RecallDataset,
     trial_mask: Bool[Array, " trial_count"],
     distance_matrix: Float[Array, " item_count item_count"],
-) -> np.ndarray:
+) -> Float[np.ndarray, " subjects"]:
     """Compute per-subject mean distance-rank factor.
 
     Parameters
@@ -220,128 +211,6 @@ def subject_distrank(
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class DistRankTestResult:
-    """Results from a one-sample distance-rank test against chance."""
-
-    n: int
-    mean_factor: float
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"N={self.n}",
-            f"Mean factor: {self.mean_factor:.4f}",
-            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
-            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
-@dataclass
-class DistRankComparisonResult:
-    """Results from a paired distance-rank comparison."""
-
-    n: int
-    mean_observed: float
-    mean_comparison: float
-    mean_diff: float
-    t_stat: float
-    t_pval: float
-    w_stat: float
-    w_pval: float
-
-    def __str__(self) -> str:
-        lines = [
-            f"N={self.n}",
-            f"Mean factor (observed): {self.mean_observed:.4f}",
-            f"Mean factor (comparison): {self.mean_comparison:.4f}",
-            f"Mean difference: {self.mean_diff:.4f}",
-            f"t-stat: {self.t_stat:.3f} p={self.t_pval:.4f}",
-            f"W-stat: {self.w_stat:.1f} p={self.w_pval:.4f}",
-        ]
-        return "\n".join(lines)
-
-
-def test_distrank(
-    subject_factors: np.ndarray,
-) -> DistRankTestResult:
-    """Test whether distance-rank factors differ from chance (0.5).
-
-    Parameters
-    ----------
-    subject_factors : np.ndarray
-        Per-subject mean semantic distance factors.
-
-    Returns
-    -------
-    DistRankTestResult
-        One-sample t-test and Wilcoxon results.
-
-    """
-    valid = np.isfinite(subject_factors)
-    n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_1samp(subject_factors, 0.5, nan_policy="omit")
-    if n > 10:
-        w_stat, w_pval = stats.wilcoxon(
-            subject_factors[valid] - 0.5, alternative="two-sided"
-        )
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return DistRankTestResult(
-        n=n,
-        mean_factor=float(np.nanmean(subject_factors)),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
-        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
-    )
-
-
-def test_distrank_vs_comparison(
-    observed: np.ndarray,
-    comparison: np.ndarray,
-) -> DistRankComparisonResult:
-    """Test whether observed and comparison distance-rank factors differ.
-
-    Parameters
-    ----------
-    observed : np.ndarray
-        Per-subject factors.
-    comparison : np.ndarray
-        Per-subject comparison factors.
-
-    Returns
-    -------
-    DistRankComparisonResult
-        Paired t-test and Wilcoxon results.
-
-    """
-    valid = ~(np.isnan(observed) | np.isnan(comparison))
-    n = int(valid.sum())
-    t_stat, t_pval = stats.ttest_rel(observed, comparison, nan_policy="omit")
-    if n > 10:
-        diff = observed[valid] - comparison[valid]
-        w_stat, w_pval = stats.wilcoxon(diff, alternative="two-sided")
-    else:
-        w_stat, w_pval = np.nan, np.nan
-
-    return DistRankComparisonResult(
-        n=n,
-        mean_observed=float(np.nanmean(observed)),
-        mean_comparison=float(np.nanmean(comparison)),
-        mean_diff=float(np.nanmean(observed - comparison)),
-        t_stat=float(t_stat),
-        t_pval=float(t_pval),
-        w_stat=float(w_stat) if np.isfinite(w_stat) else np.nan,
-        w_pval=float(w_pval) if np.isfinite(w_pval) else np.nan,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
@@ -353,7 +222,7 @@ def plot_distrank(
     features: Float[Array, "word_count features_count"] | None = None,
     color_cycle: list[str] | None = None,
     labels: Sequence[str] | None = None,
-    contrast_name:str | None = None,
+    contrast_name: str | None = None,
     axis: Axes | None = None,
     distance_matrix: Float[Array, " item_count item_count"] | None = None,
     confidence_level: float = 0.95,
@@ -362,6 +231,9 @@ def plot_distrank(
     bootstrap_seed: int | None = None,
 ) -> Axes:
     """Plot subject-wise distance-rank factors as points with error bars.
+
+    Supply features or a distance matrix. When both are supplied, the distance
+    matrix takes precedence.
 
     Parameters
     ----------
@@ -384,11 +256,16 @@ def plot_distrank(
     confidence_level : float
         Confidence level for error bounds.
 
+    n_resamples : int, optional
+        Number of BCa bootstrap resamples for participant means, default 9999.
+    bootstrap_seed : int, optional
+        Seed for reproducible intervals. Fewer than two finite participant scores
+        gives no interval; a constant sample gives a point interval.
+
     Returns
     -------
     Axes
         Matplotlib Axes with distance-rank points and error bars.
-
     """
     axis, datasets, trial_masks, color_cycle = prepare_plot_inputs(
         datasets, trial_masks, color_cycle, axis
@@ -396,11 +273,10 @@ def plot_distrank(
     if labels is None:
         labels = [""] * len(datasets)
 
-    if (features is None) == (distance_matrix is None):
-        raise ValueError("Exactly one of features or distance_matrix must be provided.")
-
     if distance_matrix is None:
-        distances = 1 - cosine_similarity_matrix(features)
+        # The caller supplies features when no distance matrix is given.
+        feature_matrix = cast(Float[Array, " word_count features_count"], features)
+        distances = 1 - cosine_similarity_matrix(feature_matrix)
     else:
         distances = jnp.asarray(distance_matrix)
 
@@ -408,18 +284,17 @@ def plot_distrank(
     for i, data in enumerate(datasets):
         factors = subject_distrank(data, trial_masks[i], distances)
         valid = factors[np.isfinite(factors)]
-        mean = float(np.nanmean(factors))
         color = color_cycle[i % len(color_cycle)]
 
-        if len(valid) > 1:
-            interval = mean_interval(
-                valid, confidence_level=confidence_level, method=bootstrap_method,
-                n_resamples=n_resamples,
-                seed=None if bootstrap_seed is None else bootstrap_seed + i,
-            )
-            yerr = [[mean - interval["low"]], [interval["high"] - mean]]
-        else:
-            yerr = [[0], [0]]
+        interval = mean_interval(
+            valid,
+            confidence_level=confidence_level,
+            method=bootstrap_method,
+            n_resamples=n_resamples,
+            seed=bootstrap_seed,
+        )
+        mean = interval["mean"]
+        yerr = [[mean - interval["low"]], [interval["high"] - mean]]
 
         axis.errorbar(
             x[i],
@@ -438,5 +313,5 @@ def plot_distrank(
     axis.set_xticks(x)
     axis.set_xticklabels(labels, fontsize=14)
     axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
-    set_plot_labels(axis, "", "Organization Score", contrast_name)
+    format_analysis_axes(axis, "", "Organization Score", contrast_name)
     return axis

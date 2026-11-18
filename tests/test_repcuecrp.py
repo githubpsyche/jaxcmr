@@ -7,11 +7,9 @@ import pytest
 from scipy import stats
 from jaxcmr.analyses.repcuecrp import (
     tabulate_trial,
-    RepCueCRPTestResult,
-    _access_band,
-    _access_diagonal,
+    rep_cue_access_band,
+    rep_cue_access,
     _previous_next_surface,
-    _repcuecrp_window,
     plot_first_rep_cue_access_crp,
     plot_rep_cue_access_crp,
     plot_second_rep_cue_access_crp,
@@ -21,7 +19,7 @@ from jaxcmr.analyses.repcuecrp import (
     test_rep_cue_access_band_vs_control as compare_rep_cue_access_band,
 )
 from jaxcmr.analyses.repaccesscrp import subject_rep_access_crp
-from jaxcmr.helpers import make_dataset
+from jaxcmr.dataset import make_dataset
 
 
 def cue_dataset():
@@ -49,7 +47,7 @@ def test_repcuecrp_window_matches_full_slice():
     offset_slice = slice(lag_range - max_offset, lag_range + max_offset + 1)
     lag_slice = slice(lag_range - max_lag, lag_range + max_lag + 1)
     full = repcuecrp(dataset, min_lag=4, size=2)
-    window = _repcuecrp_window(dataset, min_lag=4, max_lag=max_lag, max_offset=max_offset, size=2)
+    window = repcuecrp(dataset, min_lag=4, max_lag=max_lag, max_offset=max_offset, size=2)
     np.testing.assert_allclose(
         np.array(full[:, offset_slice, lag_slice]), np.array(window), equal_nan=True
     )
@@ -85,7 +83,7 @@ def test_subject_rep_cue_crp_matches_jax_window_multi_subject_ambiguous():
         subject_mask = subject_indices == subject
         subject_dataset = {key: value[subject_mask] for key, value in dataset.items()}
         expected.append(
-            _repcuecrp_window(subject_dataset, min_lag=0, max_lag=3, max_offset=3, size=2)
+            repcuecrp(subject_dataset, min_lag=0, max_lag=3, max_offset=3, size=2)
         )
     expected = np.stack(expected)
     np.testing.assert_allclose(expected, result, equal_nan=True)
@@ -96,19 +94,19 @@ def test_access_band_averages_selected_offsets():
     crp = np.full((3, 2, 5, 5), np.nan)
     crp[:, 0, 1, 3] = [0.2, 0.4, 0.6]
     crp[:, 0, 3, 1] = [0.8, 0.6, 0.4]
-    offsets, band = _access_band(crp, cue_offsets=(-1, 1), max_offset=2, max_lag=2)
+    offsets, band = rep_cue_access_band(crp, cue_offsets=(-1, 1), max_offset=2, max_lag=2)
     np.testing.assert_array_equal(offsets, np.array([-1, 1]))
     np.testing.assert_allclose(band[:, 0], np.array([0.5, 0.5, 0.5]))
     assert np.isnan(band[:, 1]).all()
 
 
-def test_repcue_access_diagonal_matches_repaccesscrp_nonzero_offsets():
+def test_rep_cue_access_matches_repaccesscrp_nonzero_offsets():
     """cue access diagonal matches the older access CRP module."""
     dataset = cue_dataset()
     mask = jnp.ones(4, dtype=bool)
     access = subject_rep_access_crp(dataset, mask, min_lag=4, max_lag=3, size=2)
     cue = subject_rep_cue_crp(dataset, mask, min_lag=4, max_lag=3, max_offset=3, size=2)
-    offsets, cue_access = _access_diagonal(cue, max_offset=3, max_lag=3)
+    offsets, cue_access = rep_cue_access(cue, max_offset=3, max_lag=3)
     nonzero = offsets != 0
     np.testing.assert_allclose(access[:, :, nonzero], cue_access[:, :, nonzero], equal_nan=True)
 
@@ -155,13 +153,11 @@ def test_rep_cue_access_band_vs_control_exact_t_stat():
     results = compare_rep_cue_access_band(
         observed, control, cue_offsets=(-1, 1), max_offset=2, max_lag=2
     )
-    first = results["First Presentation"]
-    assert isinstance(first, RepCueCRPTestResult)
-    assert first.label_name == "Offsets"
-    assert first.lags[0] == "-1,+1"
-    assert np.isclose(first.mean_diffs[0], 0.4666666666666667, atol=1e-10)
-    assert np.isclose(first.t_stats[0], expected_t, atol=1e-06)
-    assert np.isclose(first.t_pvals[0], expected_p, atol=1e-06)
+    first = results.loc[(1, "-1,+1")]
+    assert results.index.names == ["occurrence", "comparison"]
+    assert np.isclose(first["mean_difference"], 0.4666666666666667, atol=1e-10)
+    assert np.isclose(first["t_stat"], expected_t, atol=1e-06)
+    assert np.isclose(first["t_pvalue"], expected_p, atol=1e-06)
 
 
 def test_first_second_access_band_bias_exact_difference():
@@ -179,14 +175,13 @@ def test_first_second_access_band_bias_exact_difference():
     result = compare_first_second_access_band_bias(
         observed, control, cue_offsets=(-1, 1), max_offset=2, max_lag=2
     )
-    assert isinstance(result, RepCueCRPTestResult)
-    assert result.label_name == "Offsets"
-    assert result.lags[0] == "-1,+1"
-    assert np.isclose(result.mean_diffs[0], 0.4666666666666667, atol=1e-10)
+    assert result.index.tolist() == ["-1,+1"]
+    result = result.iloc[0]
+    assert np.isclose(result["mean_difference"], 0.4666666666666667, atol=1e-10)
     # Differences .5,.5,.4 have mean 7/15 and SEM 1/30: t=14.
     # With df=2, the two-sided p-value is 1 - t/sqrt(t**2 + 2).
-    assert result.t_stats[0] == pytest.approx(14)
-    assert result.t_pvals[0] == pytest.approx(1 - 14 / np.sqrt(198))
+    assert result["t_stat"] == pytest.approx(14)
+    assert result["t_pvalue"] == pytest.approx(1 - 14 / np.sqrt(198))
 
 
 def test_access_wrapper_lines_match_repetition_index_argument():
