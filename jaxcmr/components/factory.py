@@ -1,8 +1,13 @@
-"""Trial-specific source categories and pre-experimental semantic connections.
+"""A trial records items in study order. A model looks up a recalled item
+by its within-list code. A word pool uses a third index, the item's
+vocabulary ID.
 
-Model factories align study metadata with local item codes before constructing
-source associations and semantic connection matrices.
-
+For example, study codes `[2, 0, 1, 2]` and vocabulary IDs
+`[17, 0, 42, 17]` describe three presentations and one empty slot.
+With three item slots, `global_item_ids_by_code` returns `[42, 17, 0]`.
+Pass that row to a connection builder to get a matrix whose first row and
+column belong to local item 1. The source-category lookup uses the same
+local item order for emotional context.
 """
 
 from collections.abc import Mapping
@@ -26,14 +31,28 @@ __all__ = [
 def source_categories_by_item(
     dataset: RecallDataset, *, signed: bool
 ) -> Integer[Array, "trials item_count"]:
-    """Return the source category of each local item, in model code order.
+    """Gather the valence category of each item in local code order.
 
-    eCMR groups positive and negative items together (1). CMR3 keeps their
-    signs. A presented item may be neutral (0). Empty study slots contribute
-    nothing. All presentations of an item must agree on its category because
-    retrieval assigns that item a single source association. The row width
-    accommodates both the largest local code and all study events (including
-    repeated presentations) used to index primacy.
+    Parameters
+    ----------
+    dataset : RecallDataset
+        `pres_itemnos` and `valence` align by study position. Only positive item
+        codes contribute.
+    signed : bool
+        Use valence signs (−1, 0, +1) for CMR3. With `False`, eCMR groups both
+        nonzero signs into category 1.
+
+    Returns
+    -------
+    integer array, shape (trials, item_count)
+        Column `c - 1` holds the category for local code `c`. Neutral and absent
+        items both have value zero. The width is the larger of the maximum list
+        length and the largest code.
+
+    Raises
+    ------
+    ValueError
+        Presentations of the same item within a trial disagree after category coding.
     """
     codes = np.asarray(dataset["pres_itemnos"])
     trials, slots = np.nonzero(codes > 0)
@@ -53,12 +72,23 @@ def global_item_ids_by_code(
     global_ids: Integer[Array, "trials study_events"],
     item_count: int,
 ) -> Integer[Array, "trials item_count"]:
-    """Look up each model item's vocabulary ID in its trial's study list.
+    """Look up each local item's vocabulary ID at its first presentation.
 
-    Column `c - 1` holds the global ID at the first presentation of local
-    code `c`, or zero if the item was never presented. Repeated presentations
-    of one item share a vocabulary ID. Pass these rows to a trial connection
-    builder when the model indexes semantic support by local item code.
+    Parameters
+    ----------
+    item_codes : integer array, shape (trials, study_events)
+        One-based within-list codes in study order. Zero marks an empty position.
+    global_ids : integer array, shape (trials, study_events)
+        Vocabulary IDs aligned with the same positions. Repeated presentations of
+        one local item should carry the same ID.
+    item_count : int
+        Number of local item codes represented in each output row.
+
+    Returns
+    -------
+    integer array, shape (trials, item_count)
+        Column `c - 1` holds the first vocabulary ID for local code `c`, or zero
+        if that code was absent.
     """
     codes = jnp.arange(1, item_count + 1)[None, :]
     positions = recall_items_to_positions(codes, item_codes)
@@ -70,12 +100,21 @@ def build_trial_connections(
     present_lists: Integer[ArrayLike, "trials study_events"],
     features: Float[Array, " word_pool_items features_count"] | None,
 ) -> Float[Array, " trials study_events study_events"]:
-    """Returns per-trial connection matrices aligned to study lists.
+    """Build one trial matrix from cosine similarities between vocabulary feature rows.
 
-    Args:
-      present_lists: Integer study lists with 1-indexed global item IDs; zero
-          denotes padding. Positive IDs must be covered by the supplied vocabulary.
-      features: Wordpool-wide feature matrix or ``None`` to disable semantics.
+    Parameters
+    ----------
+    present_lists : integer array, shape (trials, slots)
+        One-based vocabulary IDs in the desired output order. Zero denotes padding.
+    features : floating array, shape (vocabulary_size, features_count), or None
+        Row `g - 1` describes vocabulary item `g`. `None` produces all-zero matrices.
+
+    Returns
+    -------
+    floating array, shape (trials, slots, slots)
+        Both axes follow the input row, including repeats. For finite features,
+        equal IDs and padding have zero connections. Connections between distinct
+        IDs have a floor of `FLOAT32_EPS`.
     """
 
     present_lists = jnp.asarray(present_lists)
@@ -109,13 +148,22 @@ def build_trial_connections_from_similarity(
     present_lists: Integer[ArrayLike, "trials study_events"],
     similarity_matrix: Float[Array, " word_pool_items word_pool_items"] | None,
 ) -> Float[Array, " trials study_events study_events"]:
-    """Returns per-trial connection matrices from a precomputed similarity matrix.
+    """Gather one trial matrix from a supplied vocabulary similarity matrix.
 
-    Args:
-      present_lists: Integer study lists with 1-indexed global item IDs; zero
-          denotes padding. Positive IDs must be covered by the supplied vocabulary.
-      similarity_matrix: Square wordpool-wide similarity matrix or ``None``
-          to disable semantics. Item IDs must be within its row/column coverage.
+    Parameters
+    ----------
+    present_lists : integer array, shape (trials, slots)
+        One-based vocabulary IDs in the desired output order. Zero denotes padding.
+    similarity_matrix : floating array, shape (vocabulary_size, vocabulary_size), or None
+        Entry `[g - 1, h - 1]` gives the supplied similarity from item `g` to item
+        `h`. `None` produces all-zero matrices.
+
+    Returns
+    -------
+    floating array, shape (trials, slots, slots)
+        Both axes follow the input row. Padding and same-ID pairs are zero.
+        Remaining finite entries have a floor of `FLOAT32_EPS`. The orientation of
+        the supplied matrix is preserved.
     """
 
     present_lists = jnp.asarray(present_lists)

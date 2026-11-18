@@ -1075,7 +1075,7 @@
     "href": "reference/analyses-factors.html#api-entries",
     "title": "jaxcmr.analyses.factors",
     "section": "API entries",
-    "text": "API entries\n\nfactor_sums_and_counts\n\njaxcmr.analyses.factors.factor_sums_and_counts(values, include)\n\nSum finite included measurements and count them at each study position.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nvalues\narray of shape (trials, study_positions)\nNumeric measurements. Integer values are promoted to floating point.\nrequired\n\n\ninclude\nboolean array of shape (trials, study_positions)\nObservations to include; nonfinite measurements are additionally excluded.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntuple of arrays of shape (study_positions,)\nMeasurement sums and observation counts. Empty positions have zero counts and sums; callers report their means as undefined. Supports JIT.\n\n\n\n\n\n\ncategory_factor_values\n\njaxcmr.analyses.factors.category_factor_values(factor, categories, category_value, *, valid=None)\n\nAverage finite measurements for one category at each study position.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nfactor\narray of shape (trials, study_positions)\nMeasurements to average across trials.\nrequired\n\n\ncategories\ninteger array of shape (trials, study_positions)\nCategory at each presentation.\nrequired\n\n\ncategory_value\nint\nCategory to include, including zero if it is a meaningful category code.\nrequired\n\n\nvalid\nboolean array of shape (trials, study_positions)\nAdditional inclusion mask. Omit to use all finite values in the category.\nNone\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\narray of shape (study_positions,)\nMeans, with NaN for positions without eligible observations. Each included trial contributes equally. Supports JIT.\n\n\n\n\n\n\ncat_factor_spc\n\njaxcmr.analyses.factors.cat_factor_spc(dataset, category_field, category_value, factor_field, *, valid_field=None)\n\nReturn mean measurements by study position within one category.\nA “factor” is a numeric measurement attached to each presentation, such as LPP amplitude. factor_field and category_field name arrays shaped (trials, study_positions), aligned with pres_itemnos. Recalls are not used.\nAt each position, average finite measurements from the selected category across trials. Exclude padding, positions beyond listLength, and any nonfinite or nonpositive flags in the optional valid_field. Return one value per study position; positions with no eligible measurements are NaN.\nThis pools observations. Use subject_cat_factor_spc for separate participant means and its plotting wrapper for equal-participant weighting. JIT requires field names static; the category value may vary dynamically.\n\n\ncat_factor_by_recall\n\njaxcmr.analyses.factors.cat_factor_by_recall(dataset, category_field, category_value, factor_field, *, valid_field=None)\n\nReturn measurement means with axes (recall_status, study_position).\nfactor_field selects a numeric measurement per presentation, such as LPP amplitude; it and category_field align with pres_itemnos. Rows are [recalled, not recalled], with means pooled across eligible trials.\nAll eligible presentations of a recalled item enter the recalled group. A response position identifies the item, not which occurrence was remembered. Duplicate responses count once; invalid codes and padding add no hits.\nWithin each category/status/position group, average finite measurements at actual presentations. Optional valid_field flags must be finite and positive. Missing measurements and quality failures exclude observations from means without changing whether the item was recalled. Empty groups are NaN. Use subject_cat_factor_by_recall for separate participant means rather than pooling trials.\nField names must be static under JIT.\n\n\ncompute_factor_bin_edges\n\njaxcmr.analyses.factors.compute_factor_bin_edges(values, valid, bin_count=10)\n\nReturn equal-width edges from finite, included reference values.\nvalid must match values. No eligible values gives all-NaN edges. Constant values get a symmetric interval with half-width max(0.5, abs(value) * 0.01) so the edges remain distinct at large scales. This helper supports JIT with a positive, static integer bin_count. It does not inspect recall outcomes or infer which datasets/categories should define the bins.\n\n\nbinned_recall_counts\n\njaxcmr.analyses.factors.binned_recall_counts(recalled, values, include, bin_edges)\n\nReturn recalled and eligible counts for fixed bins, in that order.\nInputs share a shape, with one Boolean recall indicator per observation. Missing/nonfinite and out-of-range values contribute to neither count. Bins are left-closed/right-open, except the final bin includes its right edge. Empty bins have zero counts; rates derived from them are undefined.\nSupply a one-dimensional array of at least two finite, strictly increasing edges. Numerical calls assume aligned inputs and valid edges. All-NaN edges from an empty reference set yield zero counts.\n\n\ncategory_factor_recall_histogram\n\njaxcmr.analyses.factors.category_factor_recall_histogram(recalls, factor, categories, category_value, bin_edges, *, valid=None)\n\nPool recalled-position indicators within a category and fixed bins.\nThis array interface identifies recalled positions directly; it has no item identities with which to expand repeated presentations. Use the dataset operation cat_recall_by_factor for repeated-item experiments.\nRepeated responses count once; zero, negative and out-of-range recall codes do not mark any position. valid excludes unusable study positions from both numerator and denominator. Empty bins return NaN, never zero.\n\n\ncat_recall_by_factor\n\njaxcmr.analyses.factors.cat_recall_by_factor(dataset, category_field, category_value, factor_field, bin_edges=None, bin_count=10, *, valid_field=None)\n\nReturn recall probabilities within bins of a presentation measurement.\nA “factor” is a numeric measurement per presentation, such as LPP amplitude. factor_field and category_field select trial-by-study-position arrays aligned with pres_itemnos. The output has one recall probability per bin, not a mean measurement as in cat_factor_by_recall.\nFor the chosen category, divide recalled-position counts by eligible-position counts in each bin. Recall codes name study positions; duplicate responses count once. All eligible presentations of a recalled item contribute to recall counts. Exclude padding, positions beyond listLength, nonfinite measurements, and values outside the bins from both counts. Optional valid_field flags must be finite and positive. Empty bins return NaN. Bins include their left edge; only the final bin also includes its right edge.\nAutomatic edges use finite, eligible measurements across all categories in this dataset. For comparisons, compute reference edges once with compute_factor_bin_edges and pass them to each call. This function pools positions; subject_cat_recall_by_factor returns participant rates that can be averaged with equal participant weight in each available bin.\nJIT requires field names and bin_count static. The category and explicit bin-edge values may vary dynamically at a fixed shape.\n\n\nsubject_cat_factor_spc\n\njaxcmr.analyses.factors.subject_cat_factor_spc(dataset, trial_mask, category_field, category_values, factor_field, *, valid_field=None)\n\nReturn separate subject means, sorted by ID and in requested category order.\nSubjects without selected trials are omitted. Empty selections return a zero-length subject axis. Averaging this axis with jnp.nanmean gives equal weight to subjects with data in each cell. Grouping runs outside JIT; the within-subject calculation is compiled.\n\n\nsubject_cat_factor_by_recall\n\njaxcmr.analyses.factors.subject_cat_factor_by_recall(dataset, trial_mask, category_field, category_values, factor_field, *, valid_field=None)\n\nReturn subject-by-category-by-status-by-position factor means.\nSubject IDs are sorted; category order follows the caller; statuses are [recalled, not recalled]. Subjects without selected trials are omitted. Empty selections return a zero-length subject axis. Grouping runs outside JIT; each subject calculation is compiled. Averaging the subject axis with jnp.nanmean weights available subjects equally in each cell.\n\n\nsubject_cat_recall_by_factor\n\njaxcmr.analyses.factors.subject_cat_recall_by_factor(dataset, trial_mask, category_field, category_values, factor_field, bin_edges, *, valid_field=None)\n\nReturn subject rates using caller-supplied common edges.\nSubjects occur in ascending ID order, omitting those without selected trials. Category order follows category_values. An empty selection returns shape (0, n_categories, n_bins). Each subject pools its own eligible positions; jnp.nanmean(result, axis=0) then weights subjects equally within each available bin. This grouping wrapper runs outside JIT; each subject’s numerical calculation is compiled.\n\n\nplot_cat_factor_spc\n\njaxcmr.analyses.factors.plot_cat_factor_spc(datasets, trial_masks, category_field, category_values, factor_field, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, category_labels=None, factor_label=None, draw_ci=True, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted measurement means by study position.\nEach curve first averages the finite eligible measurements within each participant, following cat_factor_spc, then weights available participant means equally. This displays measurement values, not recall probabilities.\nlabels names datasets; category_labels names categories. Axis text defaults to factor_field; factor_label can add a description/units. draw_ci controls interval display without changing the subject means.\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone\n\n\n\n\n\n\nplot_cat_factor_by_recall\n\njaxcmr.analyses.factors.plot_cat_factor_by_recall(datasets, trial_masks, category_field, category_values, factor_field, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, category_labels=None, recall_labels=('Recalled', 'Not recalled'), factor_label=None, draw_ci=True, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted measurement means split by recall status.\nRecall classification and observation inclusion follow cat_factor_by_recall. The default labels “Recalled” and “Not recalled” refer to items: every eligible presentation of a recalled item enters its recalled group. recall_labels changes the displayed labels, not this classification.\nlabels names datasets. Category and recall labels identify each curve. Participant means receive equal weight wherever available. Hiding confidence intervals never changes the averaging or input dataset. Measurement units can be supplied through factor_label.\nSupply nonempty categories, one category label per category, and two recall-status labels (recalled, not recalled).\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone\n\n\n\n\n\n\nplot_cat_recall_by_factor\n\njaxcmr.analyses.factors.plot_cat_recall_by_factor(datasets, trial_masks, category_field, category_values, factor_field, bin_edges=None, bin_count=10, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, factor_label=None, category_labels=None, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted recall rates using common measurement bins.\nRecall classification and counts follow cat_recall_by_factor: response codes identify positions, without expansion across repeated presentations. Each curve averages the available participant rates in each bin.\nlabels names datasets; category_labels names categories. When both vary, curve labels combine the two. The x-axis defaults to factor_field; factor_label can supply descriptive text and units. Other styling and confidence-interval arguments follow the shared plotting functions.\nAutomatic edges come from finite, eligible study positions in the selected trials of all supplied datasets, regardless of category. Explicit edges must be finite and strictly increasing. Empty trial selections are skipped; automatic binning without any eligible reference values raises ValueError.\nSupply nonempty datasets, categories and colors, one mask and label per dataset, and one category label per category.\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone",
+    "text": "API entries\n\nfactor_sums_and_counts\n\njaxcmr.analyses.factors.factor_sums_and_counts(values, include)\n\nSum finite included measurements and count them at each study position.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nvalues\narray of shape (trials, study_positions)\nNumeric measurements. Integer values are promoted to floating point.\nrequired\n\n\ninclude\nboolean array of shape (trials, study_positions)\nObservations to include; nonfinite measurements are additionally excluded.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntuple of arrays of shape (study_positions,)\nMeasurement sums and observation counts. Empty positions have zero counts and sums; callers report their means as undefined. Supports JIT.\n\n\n\n\n\n\ncategory_factor_values\n\njaxcmr.analyses.factors.category_factor_values(factor, categories, category_value, *, valid=None)\n\nAverage finite measurements for one category at each study position.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nfactor\narray of shape (trials, study_positions)\nMeasurements to average across trials.\nrequired\n\n\ncategories\ninteger array of shape (trials, study_positions)\nCategory at each presentation.\nrequired\n\n\ncategory_value\nint\nCategory to include, including zero if it is a meaningful category code.\nrequired\n\n\nvalid\nboolean array of shape (trials, study_positions)\nAdditional inclusion mask. Omit to use all finite values in the category.\nNone\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\narray of shape (study_positions,)\nMeans, with NaN for positions without eligible observations. Each included trial contributes equally. Supports JIT.\n\n\n\n\n\n\ncat_factor_spc\n\njaxcmr.analyses.factors.cat_factor_spc(dataset, category_field, category_value, factor_field, *, valid_field=None)\n\nReturn mean measurements by study position within one category.\nA “factor” is a numeric measurement attached to each presentation, such as LPP amplitude. factor_field and category_field name arrays shaped (trials, study_positions), aligned with pres_itemnos. Recalls are not used.\nAt each position, average finite measurements from the selected category across trials. Exclude padding, presentations after the declared event count, and any nonfinite or nonpositive flags in the optional valid_field. Return one value per study position; positions with no eligible measurements are NaN.\nThis pools observations. Use subject_cat_factor_spc for separate participant means and its plotting wrapper for equal-participant weighting. JIT requires field names static; the category value may vary dynamically.\n\n\ncat_factor_by_recall\n\njaxcmr.analyses.factors.cat_factor_by_recall(dataset, category_field, category_value, factor_field, *, valid_field=None)\n\nReturn measurement means with axes (recall_status, study_position).\nfactor_field selects a numeric measurement per presentation, such as LPP amplitude; it and category_field align with pres_itemnos. Rows are [recalled, not recalled], with means pooled across eligible trials.\nAll eligible presentations of a recalled item enter the recalled group. A response position identifies the item, not which occurrence was remembered. Duplicate responses count once; invalid codes and padding add no hits.\nWithin each category/status/position group, average finite measurements at actual presentations. Optional valid_field flags must be finite and positive. Missing measurements and quality failures exclude observations from means without changing whether the item was recalled. Empty groups are NaN. Use subject_cat_factor_by_recall for separate participant means rather than pooling trials.\nField names must be static under JIT.\n\n\ncompute_factor_bin_edges\n\njaxcmr.analyses.factors.compute_factor_bin_edges(values, valid, bin_count=10)\n\nReturn equal-width edges from finite, included reference values.\nvalid must match values. No eligible values gives all-NaN edges. Constant values get a symmetric interval with half-width max(0.5, abs(value) * 0.01) so the edges remain distinct at large scales. This helper supports JIT with a positive, static integer bin_count. It does not inspect recall outcomes or infer which datasets/categories should define the bins.\n\n\nbinned_recall_counts\n\njaxcmr.analyses.factors.binned_recall_counts(recalled, values, include, bin_edges)\n\nReturn recalled and eligible counts for fixed bins, in that order.\nInputs share a shape, with one Boolean recall indicator per observation. Missing/nonfinite and out-of-range values contribute to neither count. Bins are left-closed/right-open, except the final bin includes its right edge. Empty bins have zero counts; rates derived from them are undefined.\nSupply a one-dimensional array of at least two finite, strictly increasing edges. Numerical calls assume aligned inputs and valid edges. All-NaN edges from an empty reference set yield zero counts.\n\n\ncategory_factor_recall_histogram\n\njaxcmr.analyses.factors.category_factor_recall_histogram(recalls, factor, categories, category_value, bin_edges, *, valid=None)\n\nPool recalled-position indicators within a category and fixed bins.\nThis array interface identifies recalled positions directly; it has no item identities with which to expand repeated presentations. Use the dataset operation cat_recall_by_factor for repeated-item experiments.\nRepeated responses count once; zero, negative and out-of-range recall codes do not mark any position. valid excludes unusable study positions from both numerator and denominator. Empty bins return NaN, never zero.\n\n\ncat_recall_by_factor\n\njaxcmr.analyses.factors.cat_recall_by_factor(dataset, category_field, category_value, factor_field, bin_edges=None, bin_count=10, *, valid_field=None)\n\nReturn recall probabilities within bins of a presentation measurement.\nA “factor” is a numeric measurement per presentation, such as LPP amplitude. factor_field and category_field select trial-by-study-position arrays aligned with pres_itemnos. The output has one recall probability per bin, not a mean measurement as in cat_factor_by_recall.\nFor the chosen category, divide recalled-position counts by eligible-position counts in each bin. Recall codes name study positions; duplicate responses count once. All eligible presentations of a recalled item contribute to recall counts. Exclude padding, presentations after the declared event count, nonfinite measurements, and values outside the bins from both counts. Optional valid_field flags must be finite and positive. Empty bins return NaN. Bins include their left edge; only the final bin also includes its right edge.\nAutomatic edges use finite, eligible measurements across all categories in this dataset. For comparisons, compute reference edges once with compute_factor_bin_edges and pass them to each call. This function pools positions; subject_cat_recall_by_factor returns participant rates that can be averaged with equal participant weight in each available bin.\nJIT requires field names and bin_count static. The category and explicit bin-edge values may vary dynamically at a fixed shape.\n\n\nsubject_cat_factor_spc\n\njaxcmr.analyses.factors.subject_cat_factor_spc(dataset, trial_mask, category_field, category_values, factor_field, *, valid_field=None)\n\nReturn separate subject means, sorted by ID and in requested category order.\nSubjects without selected trials are omitted. Empty selections return a zero-length subject axis. Averaging this axis with jnp.nanmean gives equal weight to subjects with data in each cell. Grouping runs outside JIT; the within-subject calculation is compiled.\n\n\nsubject_cat_factor_by_recall\n\njaxcmr.analyses.factors.subject_cat_factor_by_recall(dataset, trial_mask, category_field, category_values, factor_field, *, valid_field=None)\n\nReturn subject-by-category-by-status-by-position factor means.\nSubject IDs are sorted; category order follows the caller; statuses are [recalled, not recalled]. Subjects without selected trials are omitted. Empty selections return a zero-length subject axis. Grouping runs outside JIT; each subject calculation is compiled. Averaging the subject axis with jnp.nanmean weights available subjects equally in each cell.\n\n\nsubject_cat_recall_by_factor\n\njaxcmr.analyses.factors.subject_cat_recall_by_factor(dataset, trial_mask, category_field, category_values, factor_field, bin_edges, *, valid_field=None)\n\nReturn subject rates using caller-supplied common edges.\nSubjects occur in ascending ID order, omitting those without selected trials. Category order follows category_values. An empty selection returns shape (0, n_categories, n_bins). Each subject pools its own eligible positions; jnp.nanmean(result, axis=0) then weights subjects equally within each available bin. This grouping wrapper runs outside JIT; each subject’s numerical calculation is compiled.\n\n\nplot_cat_factor_spc\n\njaxcmr.analyses.factors.plot_cat_factor_spc(datasets, trial_masks, category_field, category_values, factor_field, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, category_labels=None, factor_label=None, draw_ci=True, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted measurement means by study position.\nEach curve first averages the finite eligible measurements within each participant, following cat_factor_spc, then weights available participant means equally. This displays measurement values, not recall probabilities.\nlabels names datasets; category_labels names categories. Axis text defaults to factor_field; factor_label can add a description/units. draw_ci controls interval display without changing the subject means.\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone\n\n\n\n\n\n\nplot_cat_factor_by_recall\n\njaxcmr.analyses.factors.plot_cat_factor_by_recall(datasets, trial_masks, category_field, category_values, factor_field, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, category_labels=None, recall_labels=('Recalled', 'Not recalled'), factor_label=None, draw_ci=True, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted measurement means split by recall status.\nRecall classification and observation inclusion follow cat_factor_by_recall. The default labels “Recalled” and “Not recalled” refer to items: every eligible presentation of a recalled item enters its recalled group. recall_labels changes the displayed labels, not this classification.\nlabels names datasets. Category and recall labels identify each curve. Participant means receive equal weight wherever available. Hiding confidence intervals never changes the averaging or input dataset. Measurement units can be supplied through factor_label.\nSupply nonempty categories, one category label per category, and two recall-status labels (recalled, not recalled).\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone\n\n\n\n\n\n\nplot_cat_recall_by_factor\n\njaxcmr.analyses.factors.plot_cat_recall_by_factor(datasets, trial_masks, category_field, category_values, factor_field, bin_edges=None, bin_count=10, color_cycle=None, labels=None, contrast_name=None, axis=None, confidence_level=0.95, *, valid_field=None, factor_label=None, category_labels=None, n_resamples=9999, bootstrap_seed=None)\n\nPlot equal-participant-weighted recall rates using common measurement bins.\nRecall classification and counts follow cat_recall_by_factor: response codes identify positions, without expansion across repeated presentations. Each curve averages the available participant rates in each bin.\nlabels names datasets; category_labels names categories. When both vary, curve labels combine the two. The x-axis defaults to factor_field; factor_label can supply descriptive text and units. Other styling and confidence-interval arguments follow the shared plotting functions.\nAutomatic edges come from finite, eligible study positions in the selected trials of all supplied datasets, regardless of category. Explicit edges must be finite and strictly increasing. Empty trial selections are skipped; automatic binning without any eligible reference values raises ValueError.\nSupply nonempty datasets, categories and colors, one mask and label per dataset, and one category label per category.\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone",
     "crumbs": [
       "API Reference",
       "Recall analyses",
@@ -2507,7 +2507,7 @@
     "href": "overview/components.html#context-memory-and-termination-interfaces",
     "title": "Model Components",
     "section": "Context, memory and termination interfaces",
-    "text": "Context, memory and termination interfaces\nContext stores the current and initial context and returns updated context after integration. Models that also integrate fresh out-of-list input use OutlistContext and OutlistContextCreateFn from jaxcmr.components.context. That additional operation is required by Outlist CMR and the source-switch variants, rather than by every context implementation.\nSelected declaration from jaxcmr.typing:\nclass Context(Protocol):\n    state: Float[Array, \" context_feature_units\"]\n    initial_state: Float[Array, \" context_feature_units\"]\n    size: int\n\n    def integrate(\n        self,\n        context_input: Float[Array, \" context_feature_units\"],\n        drift_rate: Float_,\n    ) -&gt; \"Context\": ...\nMemory maps input patterns to output patterns through probe(), and returns updated associative state through associate(). Its full interface also exposes input and output sizes.\nSelected declaration from jaxcmr.typing:\nclass Memory(Protocol):\n    state: Float[Array, \" memory_rows memory_columns\"]\n\n    def associate(\n        self,\n        in_pattern: Float[Array, \" input_size\"],\n        out_pattern: Float[Array, \" output_size\"],\n        learning_rate: Float_,\n    ) -&gt; \"Memory\": ...\n\n    def probe(\n        self, in_pattern: Float[Array, \" input_size\"]\n    ) -&gt; Float[Array, \" output_size\"]: ...\nA termination policy consumes a compatible model or model view and returns a scalar stopping probability. ModelT records the kind of object that a particular policy needs; policies need not accept every memory-search model.\nDeclaration from jaxcmr.typing:\nclass TerminationPolicy[ModelT](Protocol):\n    def stop_probability(self, model: ModelT) -&gt; Float[Array, \"\"]: ...\nThese protocols describe extension points for compatible implementations. They do not prescribe a context equation, association rule or stopping rule, and do not require inheritance from a common implementation class.",
+    "text": "Context, memory and termination interfaces\nContext stores the current and initial context and returns updated context after integration. Models that also integrate fresh out-of-list input use OutlistContext and OutlistContextCreateFn from jaxcmr.components.context. That additional operation is required by Outlist CMR and the source-switch variants. The temporal context reference describes both constructors and their update methods.\nSelected declaration from jaxcmr.typing:\nclass Context(Protocol):\n    state: Float[Array, \" context_feature_units\"]\n    initial_state: Float[Array, \" context_feature_units\"]\n    size: int\n\n    def integrate(\n        self,\n        context_input: Float[Array, \" context_feature_units\"],\n        drift_rate: Float_,\n    ) -&gt; \"Context\": ...\nMemory maps input patterns to output patterns through probe(), and returns updated associative state through associate(). Its full interface also exposes input and output sizes.\nSelected declaration from jaxcmr.typing:\nclass Memory(Protocol):\n    state: Float[Array, \" memory_rows memory_columns\"]\n\n    def associate(\n        self,\n        in_pattern: Float[Array, \" input_size\"],\n        out_pattern: Float[Array, \" output_size\"],\n        learning_rate: Float_,\n    ) -&gt; \"Memory\": ...\n\n    def probe(\n        self, in_pattern: Float[Array, \" input_size\"]\n    ) -&gt; Float[Array, \" output_size\"]: ...\nDual-cue CMR has a fixed rule. Its stop_probability method counts available items and calls the calculation directly:\nfrom jaxcmr.components.termination import stop_when_exhausted\n\n# Inside dual-cue CMR\ndef stop_probability(self):\n    return stop_when_exhausted(self.is_active, self.recallable.sum())\nOrdinary CMR lets the researcher choose a rule. Its factory accepts a class or function that takes the list length and parameters and returns an object with a stop_probability(model) method. Each stopping rule specifies what it reads from the model.\nFor example, this project-defined rule allows at most two recalls. SupportsPositional describes the three inputs it uses: the active flag, the available candidates, and the number of items recalled. The rule stores no trial data or parameters, so JAX can treat the instance as static.\nimport jax\nimport jax.numpy as jnp\nfrom jaxcmr.components import context, linear_memory\nfrom jaxcmr.components.termination import SupportsPositional, stop_when_exhausted\nfrom jaxcmr.models.cmr import make_factory\nfrom jaxcmr.typing import Array, Float, Parameters\n\n@jax.tree_util.register_static\nclass TwoRecallLimit:\n    def __init__(self, list_length: int, parameters: Parameters) -&gt; None:\n        pass\n\n    def stop_probability(self, model: SupportsPositional) -&gt; Float[Array, \"\"]:\n        exhausted = stop_when_exhausted(model.is_active, model.recallable.sum())\n        return jnp.where(model.recall_total &gt;= 2, 1.0, exhausted)\n\nTwoRecallCMR = make_factory(\n    linear_memory.init_mfc, linear_memory.init_mcf, context.init,\n    termination_policy_create_fn=TwoRecallLimit,\n)\nThese protocols describe extension points for compatible implementations. They do not prescribe a context equation, association rule or stopping rule, and do not require inheritance from a common implementation class.",
     "crumbs": [
       "Library Guide",
       "Model Components"
@@ -2529,7 +2529,7 @@
     "href": "overview/components.html#what-the-model-does-with-them",
     "title": "Model Components",
     "section": "What the model does with them",
-    "text": "What the model does with them\nFor a CMR study event, item-to-context memory is probed with the item pattern. Context integrates that input using encoding drift. The model then updates both associative memories; learn_after_context_update determines which context state is used for learning. During retrieval, context-to-item memory supplies item activations and the termination policy supplies stopping support. Those steps belong to CMR’s composition, not to Context or Memory on their own.\n\n\nDisplay the context after CMR processes one study event\nfrom IPython.display import display\n\nupdated = initial.experience(data[\"pres_itemnos\"][trial_index, 0])\nprint(\"Original study count:\", int(initial.study_index))\nprint(\"Updated study count:\", int(updated.study_index))\nprint(\"Context changed:\", not bool(jnp.allclose(\n    initial.context.state, updated.context.state\n)))\ndisplay(updated.context)\n\n\nOriginal study count: 0\nUpdated study count: 1\nContext changed: True\n\n\n\n\n\nThe figure uses the context object’s built-in notebook display. It shows the representation after one update; the original model retains its earlier state. A compatible replacement must satisfy the required dimensions, functional update behavior and JAX operations, as well as the protocol’s named methods. A termination policy additionally needs the attributes of the model or view passed to it.\nSee Memory Search Models for the enclosing lifecycle and the parameter exploration template for changing parameters within a fixed model configuration.",
+    "text": "What the model does with them\nFor a CMR study event, item-to-context memory is probed with the item pattern. Context integrates that input using encoding drift. The model then updates both associative memories; learn_after_context_update determines which context state is used for learning. During retrieval, context-to-item memory supplies item activations and the termination policy supplies the probability of stopping. Those steps belong to CMR’s composition, not to Context or Memory on their own.\n\n\nDisplay the context after CMR processes one study event\nfrom IPython.display import display\n\nupdated = initial.experience(data[\"pres_itemnos\"][trial_index, 0])\nprint(\"Original study count:\", int(initial.study_index))\nprint(\"Updated study count:\", int(updated.study_index))\nprint(\"Context changed:\", not bool(jnp.allclose(\n    initial.context.state, updated.context.state\n)))\ndisplay(updated.context)\n\n\nOriginal study count: 0\nUpdated study count: 1\nContext changed: True\n\n\n\n\n\nThe figure uses the context object’s built-in notebook display. It shows the representation after one update; the original model retains its earlier state. A compatible replacement must satisfy the required dimensions, functional update behavior and JAX operations, as well as the protocol’s named methods. A termination policy additionally needs the attributes of the model or view passed to it.\nSee Memory Search Models for the enclosing lifecycle and the parameter exploration template for changing parameters within a fixed model configuration.",
     "crumbs": [
       "Library Guide",
       "Model Components"
@@ -2540,7 +2540,7 @@
     "href": "overview/components.html#instance-memory-as-an-ordinary-cmr-component",
     "title": "Model Components",
     "section": "Instance memory as an ordinary CMR component",
-    "text": "Instance memory as an ordinary CMR component\ninstance_memory.init_mfc and instance_memory.init_mcf can replace the linear-memory creators above. They store each learned association in a separate row instead of adding it to a shared association matrix. The model still controls study, recall and stopping; this does not use the unfinished experimental.instance_cmr model.\nfrom jaxcmr.components import instance_memory\n\nInstanceMemoryCMR = make_factory(\n    mfc_create_fn=instance_memory.init_mfc,\n    mcf_create_fn=instance_memory.init_mcf,\n    context_create_fn=context.init,\n    termination_policy_create_fn=NoStopTermination,\n)\ninstance_parameters = parameters | {\n    \"mfc_trace_sensitivity\": 1.0,\n    \"mcf_trace_sensitivity\": 1.0,\n}\ninstance_model = InstanceMemoryCMR(data, features=None).create_trial_model(\n    trial_index, instance_parameters\n)\nA trace contains its input pattern followed by its output pattern multiplied by the learning rate. Probing computes the cue’s dot product with each stored input, divides those supports by their positive maximum, raises them to the trace sensitivity, and sums the correspondingly weighted outputs. Unsupported traces contribute zero. Sensitivity one uses the same normalization; higher sensitivities favor better-matching traces more strongly. This differs from older versions, which skipped normalization at exactly one.\nprobe_without_scale(cue) bypasses normalization and the sensitivity power. It returns the result of probing the summed outer-product association matrix represented by the traces. probe(cue) can differ in magnitude even at sensitivity one. Trace sensitivity is separate from CMR’s choice_sensitivity, which acts on item support after the memory probe.\nBoth creators reserve space for list_length new study associations in addition to the initial associations. Clients supplying their own traces provide sufficient capacity, zero unused rows, nonnegative finite cue supports and positive sensitivity. Memory state layouts differ: use the common probe/associate operations unless you specifically need the stored traces.",
+    "text": "Instance memory as an ordinary CMR component\nThe instance-memory creators can replace the linear-memory creators above. They store each learned association in a separate row instead of adding it to a shared association matrix. The model still controls study, recall and stopping; this does not use the unfinished experimental.instance_cmr model.\nfrom jaxcmr.components import instance_memory\n\nInstanceMemoryCMR = make_factory(\n    mfc_create_fn=instance_memory.init_mfc,\n    mcf_create_fn=instance_memory.init_mcf,\n    context_create_fn=context.init,\n    termination_policy_create_fn=NoStopTermination,\n)\ninstance_parameters = parameters | {\n    \"mfc_trace_sensitivity\": 1.0,\n    \"mcf_trace_sensitivity\": 1.0,\n}\ninstance_model = InstanceMemoryCMR(data, features=None).create_trial_model(\n    trial_index, instance_parameters\n)\nA trace contains its input pattern followed by its output pattern multiplied by the learning rate. Probing computes the cue’s dot product with each stored input, divides those supports by their positive maximum, raises them to the trace sensitivity, and sums the correspondingly weighted outputs. Unsupported traces contribute zero. Sensitivity one uses the same normalization; higher sensitivities favor better-matching traces more strongly. This differs from older versions, which skipped normalization at exactly one.\nprobe_without_scale(cue) bypasses normalization and the sensitivity power. It returns the result of probing the summed outer-product association matrix represented by the traces. probe(cue) can differ in magnitude even at sensitivity one. Trace sensitivity is separate from CMR’s choice_sensitivity, which acts on item support after the memory probe.\nBoth creators reserve space for list_length new study associations in addition to the initial associations. Clients supplying their own traces provide sufficient capacity, zero unused rows, nonnegative finite cue supports and positive sensitivity. Memory state layouts differ: use the common probe/associate operations unless you specifically need the stored traces.",
     "crumbs": [
       "Library Guide",
       "Model Components"
@@ -3506,7 +3506,7 @@
     "href": "overview/models.html#factories-connect-models-to-experiments",
     "title": "Memory Search Models",
     "section": "Factories connect models to experiments",
-    "text": "Factories connect models to experiments\nDeclaration from jaxcmr.typing:\nclass MemorySearchModelFactory(Protocol):\n    def __init__(\n        self,\n        dataset: RecallDataset,\n        features: Float[Array, \" word_pool_items features_count\"] | None,\n    ) -&gt; None: ...\n\n    def create_trial_model(\n        self, trial_index: Integer[Array, \"\"], parameters: Parameters\n    ) -&gt; MemorySearch: ...\nA factory class is passed as model_factory_cls to a loss or simulator. Its constructor receives the dataset and optional vocabulary features. The resulting factory instance creates fresh models from parameters. create_trial_model() additionally receives a dataset row index, allowing trial-specific stimulus features or conditions to affect construction.\nFor ordinary CMR, jaxcmr.models.cmr.make_factory() binds component creators and returns this factory class. Its models use the dataset’s maximum list length; the ordinary factory does not use trial-specific features. Other factories can require fields such as pres_itemids or valence.\nThis is the model entry point for existing workflows: supply a compatible factory through model_factory_cls. Matching method names alone does not establish suitable event coding or scientific assumptions.\nSupply integer pres_itemids aligned with study positions: positive IDs index the vocabulary from one, and zero denotes padding. Feature rows or both axes of a square similarity matrix must cover those IDs. Factories assume this alignment rather than inspecting item values during JAX transformations. Prepare concrete study lengths before constructing a factory.\n\nExperimental OptimizedCMR\njaxcmr.experimental.optimized_cmr is a fixed temporal CMR specification: learning precedes context integration, repeated recalls are disabled, and termination uses NoStopTermination. Its event and prepared-prediction interfaces accept exactly nine continuous parameters: encoding_drift_rate, start_drift_rate, recall_drift_rate, shared_support, item_support, learning_rate, primacy_scale, primacy_decay and choice_sensitivity.\nlearn_after_context_update, allow_repeated_recalls and other unsupported parameter names raise TypeError, including when their value is False. This name binding works under JAX transformations without inspecting numerical values. Dataset simulation keeps the subject identity column in the driver rather than passing it to the model.\nUse a parameter mapping for the model you selected. When adapting an existing regular-CMR configuration, first establish that both flags are False and that the termination policy is NoStopTermination; deleting incompatible settings does not make the models equivalent. The library does not silently convert regular-CMR configurations.\nIts prepared sequence calculations are experimental and are not part of the ordinary model-factory or loss protocols. Ordinary fitting uses the selected factory’s event methods. To use accelerated OptimizedCMR fitting, import its adapter explicitly:\nfrom jaxcmr.experimental.optimized_cmr_fitting import ScipyLBFGSB\nThe experimental fitters take (dataset, base_params, hyperparams=None); they fix the model to OptimizedCMR and accept the corresponding ordinary optimizer settings. ScipyTrustConstr, EvosaxDE, and ScipyDE are also available there. Their optional prepare_selections(masks) method prepares compatible participant selections together for compilation reuse. It is not needed for ordinary fitting. By default, experimental fitting excludes STOP events from the likelihood; the keyword mask_likelihoods selects another scoring mask without removing observed events from the conditioning history.\nThe experimental import paths and preparation interfaces may change as the model is evaluated. They are not re-exported by jaxcmr.models or jaxcmr.fitting.\n\n\n0 — Locate the project inputs\nfrom pathlib import Path\n\nfrom jaxcmr.helpers import find_project_root, resolve_project_path\n\ntry:\n    root_path = find_project_root()\nexcept FileNotFoundError:\n    root_path = Path.cwd()\n\n\n\n\nCreate a model through a CMR factory\nfrom pathlib import Path\nimport json\nimport jax\nimport jax.numpy as jnp\nfrom jaxcmr.helpers import load_data\nfrom jaxcmr.dataset import generate_trial_mask\nfrom jaxcmr.components import context, linear_memory\nfrom jaxcmr.components.termination import NoStopTermination\nfrom jaxcmr.models.cmr import make_factory\n\njax.config.update(\"jax_enable_x64\", True)\ndata = load_data(resolve_project_path(\"data/Dupertuys2026.h5\", root_path))\nrecord = json.loads(Path(resolve_project_path(\"data/fits/Dupertuys2026_CMR_demo.json\", root_path)).read_text())\nparameters = {name: values[0] for name, values in record[\"fits\"].items()\n              if name != \"subject\"}\nfor name in (\"allow_repeated_recalls\", \"learn_after_context_update\"):\n    parameters[name] = bool(parameters[name])\n\nCMRFactory = make_factory(\n    mfc_create_fn=linear_memory.init_mfc,\n    mcf_create_fn=linear_memory.init_mcf,\n    context_create_fn=context.init,\n    termination_policy_create_fn=NoStopTermination,\n)\n\nfactory = CMRFactory(data, features=None)\nmixed = generate_trial_mask(data, \"data['list_type'] == 1\")\ntrial_index = int(jnp.flatnonzero(mixed)[0])\ninitial = factory.create_trial_model(trial_index, parameters)\nprint(\"Model:\", type(initial).__name__)\nprint(\"Item capacity:\", initial.item_count)\nprint(\"Initial study count:\", int(initial.study_index))\n\n\nModel: CMR\nItem capacity: 12\nInitial study count: 0\n\n\nThe factory configuration above selects CMR with linear associative memories, temporal context and a no-stop policy. Parameter values come from the supplied demonstration fit, but a model can equally use hand-chosen values. Model Components explains the creator functions.",
+    "text": "Factories connect models to experiments\nDeclaration from jaxcmr.typing:\nclass MemorySearchModelFactory(Protocol):\n    def __init__(\n        self,\n        dataset: RecallDataset,\n        features: Float[Array, \" word_pool_items features_count\"] | None,\n    ) -&gt; None: ...\n\n    def create_trial_model(\n        self, trial_index: Integer[Array, \"\"], parameters: Parameters\n    ) -&gt; MemorySearch: ...\nA factory class is passed as model_factory_cls to a loss or simulator. Its constructor receives the dataset and optional vocabulary features. The resulting factory instance creates fresh models from parameters. create_trial_model() additionally receives a dataset row index, allowing trial-specific stimulus features or conditions to affect construction.\nFor ordinary CMR, jaxcmr.models.cmr.make_factory() binds component creators and returns this factory class. Its models use the dataset’s maximum list length; the ordinary factory does not use trial-specific features. Other factories can require fields such as pres_itemids or valence.\nThis is the model entry point for existing workflows: supply a compatible factory through model_factory_cls. Matching method names alone does not establish suitable event coding or scientific assumptions.\nSupply integer pres_itemids aligned with study positions: positive IDs index the vocabulary from one, and zero denotes padding. Feature rows or both axes of a square similarity matrix must cover those IDs. Factories assume this alignment rather than inspecting item values during JAX transformations. Prepare concrete study lengths before constructing a factory. The trial-input reference shows how study positions map to local item codes and vocabulary IDs.\n\nExperimental OptimizedCMR\njaxcmr.experimental.optimized_cmr is a fixed temporal CMR specification: learning precedes context integration, repeated recalls are disabled, and termination uses NoStopTermination. Its event and prepared-prediction interfaces accept exactly nine continuous parameters: encoding_drift_rate, start_drift_rate, recall_drift_rate, shared_support, item_support, learning_rate, primacy_scale, primacy_decay and choice_sensitivity.\nlearn_after_context_update, allow_repeated_recalls and other unsupported parameter names raise TypeError, including when their value is False. This name binding works under JAX transformations without inspecting numerical values. Dataset simulation keeps the subject identity column in the driver rather than passing it to the model.\nUse a parameter mapping for the model you selected. When adapting an existing regular-CMR configuration, first establish that both flags are False and that the termination policy is NoStopTermination; deleting incompatible settings does not make the models equivalent. The library does not silently convert regular-CMR configurations.\nIts prepared sequence calculations are experimental and are not part of the ordinary model-factory or loss protocols. Ordinary fitting uses the selected factory’s event methods. To use accelerated OptimizedCMR fitting, import its adapter explicitly:\nfrom jaxcmr.experimental.optimized_cmr_fitting import ScipyLBFGSB\nThe experimental fitters take (dataset, base_params, hyperparams=None); they fix the model to OptimizedCMR and accept the corresponding ordinary optimizer settings. ScipyTrustConstr, EvosaxDE, and ScipyDE are also available there. Their optional prepare_selections(masks) method prepares compatible participant selections together for compilation reuse. It is not needed for ordinary fitting. By default, experimental fitting excludes STOP events from the likelihood; the keyword mask_likelihoods selects another scoring mask without removing observed events from the conditioning history.\nThe experimental import paths and preparation interfaces may change as the model is evaluated. They are not re-exported by jaxcmr.models or jaxcmr.fitting.\n\n\n0 — Locate the project inputs\nfrom pathlib import Path\n\nfrom jaxcmr.helpers import find_project_root, resolve_project_path\n\ntry:\n    root_path = find_project_root()\nexcept FileNotFoundError:\n    root_path = Path.cwd()\n\n\n\n\nCreate a model through a CMR factory\nfrom pathlib import Path\nimport json\nimport jax\nimport jax.numpy as jnp\nfrom jaxcmr.helpers import load_data\nfrom jaxcmr.dataset import generate_trial_mask\nfrom jaxcmr.components import context, linear_memory\nfrom jaxcmr.components.termination import NoStopTermination\nfrom jaxcmr.models.cmr import make_factory\n\njax.config.update(\"jax_enable_x64\", True)\ndata = load_data(resolve_project_path(\"data/Dupertuys2026.h5\", root_path))\nrecord = json.loads(Path(resolve_project_path(\"data/fits/Dupertuys2026_CMR_demo.json\", root_path)).read_text())\nparameters = {name: values[0] for name, values in record[\"fits\"].items()\n              if name != \"subject\"}\nfor name in (\"allow_repeated_recalls\", \"learn_after_context_update\"):\n    parameters[name] = bool(parameters[name])\n\nCMRFactory = make_factory(\n    mfc_create_fn=linear_memory.init_mfc,\n    mcf_create_fn=linear_memory.init_mcf,\n    context_create_fn=context.init,\n    termination_policy_create_fn=NoStopTermination,\n)\n\nfactory = CMRFactory(data, features=None)\nmixed = generate_trial_mask(data, \"data['list_type'] == 1\")\ntrial_index = int(jnp.flatnonzero(mixed)[0])\ninitial = factory.create_trial_model(trial_index, parameters)\nprint(\"Model:\", type(initial).__name__)\nprint(\"Item capacity:\", initial.item_count)\nprint(\"Initial study count:\", int(initial.study_index))\n\n\nModel: CMR\nItem capacity: 12\nInitial study count: 0\n\n\nThe factory configuration above selects CMR with linear associative memories, temporal context and a no-stop policy. Parameter values come from the supplied demonstration fit, but a model can equally use hand-chosen values. Model Components explains the creator functions. The CMR reference lists the model parameters. The model family index compares semantic, emotional and positional models.",
     "crumbs": [
       "Library Guide",
       "Memory Search Models"
@@ -4155,7 +4155,7 @@
     "href": "reference/index.html",
     "title": "API Reference",
     "section": "",
-    "text": "Look up interfaces, array conventions and return values by responsibility. Each reference page identifies the Python module and groups related operations.\n\n\n\nArea\nContents\n\n\n\n\nDatasets\nConstruct, select and group trial data.\n\n\nSequential likelihood\nScore recall sequences and choose event masks.\n\n\nBehavioral MSE\nCompare dataset analyses using shared simulations.\n\n\nFitting\nOptimize parameters, select starts and align fitted rows.\n\n\nSimulation\nSimulate study and recall, datasets and parameter sweeps.\n\n\nPlotting\nDraw summary curves, arrange comparisons and save figures.\n\n\nModel summaries\nSummarize fitted parameters and compare model objectives.\n\n\nRepetition\nWork with repeated study items and their occurrences.\n\n\nMathematical operations\nTransform support, normalize vectors and score probabilities.\n\n\nTypes\nShared array annotations, records and protocols.\n\n\nUtilities\nResolve paths, read and write arrays, and format values.\n\n\nRecall analyses\nRecall, serial accuracy, co-recall, transitions, repeated items and participant comparisons.\n\n\nExperimental operations\nProvisional measures whose interfaces and interpretation may change.",
+    "text": "Look up interfaces, array conventions and return values by responsibility. Each reference page identifies the Python module and groups related operations.\n\n\n\nArea\nContents\n\n\n\n\nDatasets\nConstruct, select and group trial data.\n\n\nMemory-search models\nOrdinary CMR, semantic associations, emotional context and repeated presentations.\n\n\nModel components\nContext, associative memory, stopping rules and trial inputs.\n\n\nSequential likelihood\nScore recall sequences and choose event masks.\n\n\nBehavioral MSE\nCompare dataset analyses using shared simulations.\n\n\nFitting\nOptimize parameters, select starts and align fitted rows.\n\n\nSimulation\nSimulate study and recall, datasets and parameter sweeps.\n\n\nPlotting\nDraw summary curves, arrange comparisons and save figures.\n\n\nModel summaries\nSummarize fitted parameters and compare model objectives.\n\n\nRepetition\nWork with repeated study items and their occurrences.\n\n\nMathematical operations\nTransform support, normalize vectors and score probabilities.\n\n\nTypes\nShared array annotations, records and protocols.\n\n\nUtilities\nResolve paths, read and write arrays, and format values.\n\n\nRecall analyses\nRecall, serial accuracy, co-recall, transitions, repeated items and participant comparisons.\n\n\nExperimental operations\nProvisional measures whose interfaces and interpretation may change.",
     "crumbs": [
       "API Reference",
       "Overview"
@@ -5702,7 +5702,7 @@
     "text": "Lag-CRP target enrichment.\nComputes whether recalled targets at each lag are enriched for a target condition relative to the available targets at that same lag. This is a CRP-like diagnostic with a zero baseline: positive values mean the actual transitions at a lag select the target value more often than expected from lag-specific availability.\nExperimental analysis; its interface and interpretation may change.",
     "crumbs": [
       "API Reference",
-      "Experimental analyses",
+      "Experimental operations",
       "target_enrichment_crp"
     ]
   },
@@ -5714,7 +5714,7 @@
     "text": "Calculations\n\n\n\ntabulate_trial\nTabulate target and total actual/available lags for one trial.\n\n\ntarget_enrichment_crp\nCompute lag-specific target enrichment relative to availability.",
     "crumbs": [
       "API Reference",
-      "Experimental analyses",
+      "Experimental operations",
       "target_enrichment_crp"
     ]
   },
@@ -5726,7 +5726,7 @@
     "text": "Figures\n\n\n\nplot_target_enrichment_crp\nPlot subject-wise lag-specific target enrichment.",
     "crumbs": [
       "API Reference",
-      "Experimental analyses",
+      "Experimental operations",
       "target_enrichment_crp"
     ]
   },
@@ -5738,7 +5738,7 @@
     "text": "Transition tabulators\n\n\n\nTargetEnrichmentTabulation\nPer-transition state for lag-specific target enrichment.",
     "crumbs": [
       "API Reference",
-      "Experimental analyses",
+      "Experimental operations",
       "target_enrichment_crp"
     ]
   },
@@ -5750,7 +5750,7 @@
     "text": "API entries\n\ntabulate_trial\n\njaxcmr.experimental.target_enrichment_crp.tabulate_trial(trial, presentation, target_conditions, should_tabulate, target_value, target_values, size=3)\n\nTabulate target and total actual/available lags for one trial.\n\n\ntarget_enrichment_crp\n\njaxcmr.experimental.target_enrichment_crp.target_enrichment_crp(dataset, target_field, target_value, target_values, size=3, source_field=None, source_values=None)\n\nCompute lag-specific target enrichment relative to availability.\nPositive values mean actual transitions at a lag select target_value more often than expected from the lag-specific available targets in target_values.\n\n\nplot_target_enrichment_crp\n\njaxcmr.experimental.target_enrichment_crp.plot_target_enrichment_crp(datasets, trial_masks, target_field, target_value, target_values, max_lag=4, color_cycle=None, labels=None, contrast_name=None, axis=None, size=3, source_field=None, source_values=None, confidence_level=0.95, *, n_resamples=9999, bootstrap_seed=None)\n\nPlot subject-wise lag-specific target enrichment.\nSupply source_values whenever source_field is given.\n\nOther Parameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nn_resamples\nint\nNumber of BCa bootstrap resamples for participant means, default 9999.\n9999\n\n\nbootstrap_seed\nint\nSeed for reproducible intervals. Fewer than two finite participant scores gives no interval; a constant sample gives a point interval.\nNone\n\n\n\n\n\n\nTargetEnrichmentTabulation\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation(presentation, target_conditions, target_value, target_values, first_recall, size=3)\n\nPer-transition state for lag-specific target enrichment.\n\nMethods\n\n\n\nName\nDescription\n\n\n\n\n__init__\n\n\n\navailable_recalls_after\nClear availability for study positions of recall.\n\n\nis_valid_recall\nReturn True when recall maps to an available position.\n\n\ncondition_in_pool\nReturn whether a target condition is in the comparison pool.\n\n\nlags_from_previous_to_target\nReturn ordinary transition lags from previous recalls to target.\n\n\ntabulate_target_lags\nReturn target and total actual/available counts for one position.\n\n\ntabulate_lags\nReturn cumulative target and total actual/available lag counts.\n\n\ntabulate\nUpdate state and optionally count the transition.\n\n\n\n\n__init__\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.__init__(presentation, target_conditions, target_value, target_values, first_recall, size=3)\n\n\n\navailable_recalls_after\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.available_recalls_after(recall)\n\nClear availability for study positions of recall.\n\n\nis_valid_recall\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.is_valid_recall(recall)\n\nReturn True when recall maps to an available position.\n\n\ncondition_in_pool\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.condition_in_pool(position_index)\n\nReturn whether a target condition is in the comparison pool.\n\n\nlags_from_previous_to_target\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.lags_from_previous_to_target(target_pos, valid_target)\n\nReturn ordinary transition lags from previous recalls to target.\n\n\ntabulate_target_lags\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.tabulate_target_lags(target_pos, recall_positions)\n\nReturn target and total actual/available counts for one position.\n\n\ntabulate_lags\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.tabulate_lags(recall)\n\nReturn cumulative target and total actual/available lag counts.\n\n\ntabulate\n\njaxcmr.experimental.target_enrichment_crp.TargetEnrichmentTabulation.tabulate(recall, should_tabulate)\n\nUpdate state and optionally count the transition.",
     "crumbs": [
       "API Reference",
-      "Experimental analyses",
+      "Experimental operations",
       "target_enrichment_crp"
     ]
   },
@@ -6048,6 +6048,560 @@
     "crumbs": [
       "Library Guide",
       "Fitting Procedures"
+    ]
+  },
+  {
+    "objectID": "reference/components.html",
+    "href": "reference/components.html",
+    "title": "Model components",
+    "section": "",
+    "text": "Temporal context updates the current context from an input pattern and a drift rate. Models that introduce fresh out-of-list units also require a context initialized with room for those units. Context interface",
+    "crumbs": [
+      "API Reference",
+      "Model components"
+    ]
+  },
+  {
+    "objectID": "reference/components.html#context",
+    "href": "reference/components.html#context",
+    "title": "Model components",
+    "section": "",
+    "text": "Temporal context updates the current context from an input pattern and a drift rate. Models that introduce fresh out-of-list units also require a context initialized with room for those units. Context interface",
+    "crumbs": [
+      "API Reference",
+      "Model components"
+    ]
+  },
+  {
+    "objectID": "reference/components.html#associative-memory",
+    "href": "reference/components.html#associative-memory",
+    "title": "Model components",
+    "section": "Associative memory",
+    "text": "Associative memory\nLinear memory adds associations to a matrix. Instance memory keeps a trace for each association. Suppose a cue matches two stored inputs with strengths 2 and 1. Linear retrieval weights their outputs by 2 and 1. Instance retrieval at sensitivity one weights them by 1 and 0.5. Its probe_without_scale method recovers the raw weights.\nBoth modules supply init_mfc for item-to-context memory and init_mcf for context-to-item memory. Memory interface",
+    "crumbs": [
+      "API Reference",
+      "Model components"
+    ]
+  },
+  {
+    "objectID": "reference/components.html#stopping-rules",
+    "href": "reference/components.html#stopping-rules",
+    "title": "Model components",
+    "section": "Stopping rules",
+    "text": "Stopping rules\nThe stopping rules use candidate availability, output position, support for recalled items, or an explicit STOP candidate. Each entry identifies the information its rule needs from a model.",
+    "crumbs": [
+      "API Reference",
+      "Model components"
+    ]
+  },
+  {
+    "objectID": "reference/components.html#preparing-trial-inputs",
+    "href": "reference/components.html#preparing-trial-inputs",
+    "title": "Model components",
+    "section": "Preparing trial inputs",
+    "text": "Preparing trial inputs\nThe trial-input operations match local item codes to vocabulary IDs and valence categories. Semantic and emotional model factories use these rows to look up the recalled item even when it appeared more than once.",
+    "crumbs": [
+      "API Reference",
+      "Model components"
+    ]
+  },
+  {
+    "objectID": "reference/models.html",
+    "href": "reference/models.html",
+    "title": "Memory-search models",
+    "section": "",
+    "text": "Ordinary CMR learns associations between items and temporal context. Its factory combines two associative memories, a context, and a stopping rule. The model interface describes the events that simulators and losses use.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#context-maintenance-and-retrieval",
+    "href": "reference/models.html#context-maintenance-and-retrieval",
+    "title": "Memory-search models",
+    "section": "",
+    "text": "Ordinary CMR learns associations between items and temporal context. Its factory combines two associative memories, a context, and a stopping rule. The model interface describes the events that simulators and losses use.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#semantic-associations",
+    "href": "reference/models.html#semantic-associations",
+    "title": "Memory-search models",
+    "section": "Semantic associations",
+    "text": "Semantic associations\nThe first recall uses temporal support. After that, the last recalled item cues semantic support for the next response. Two choices determine which factory to use.\n\n\n\nCombination at retrieval\nVocabulary input\nFactory\n\n\n\n\nAdd semantic support to temporal support, then apply choice sensitivity\nOne feature vector per item\nAdditive, from features\n\n\nSame additive calculation\nPairwise similarity matrix\nAdditive, from similarities\n\n\nScale the two sources separately, then multiply\nOne feature vector per item\nMultiplicative, from features",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#emotional-source-context",
+    "href": "reference/models.html#emotional-source-context",
+    "title": "Memory-search models",
+    "section": "Emotional source context",
+    "text": "Emotional source context\nBoth models add support from temporal and emotional context when choosing the next item. They differ in what a studied item’s valence initially cues.\n\n\n\nModel\nNegative item\nNeutral item\nPositive item\n\n\n\n\neCMR\nEmotional feature\nNeutral feature\nEmotional feature\n\n\nCMR3\nNegative feature\nNo initial valence association\nPositive feature\n\n\n\nThe trial-input reference shows how valence and vocabulary IDs are matched to the model’s item codes.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models"
+    ]
+  },
+  {
+    "objectID": "reference/models.html#repeated-presentations",
+    "href": "reference/models.html#repeated-presentations",
+    "title": "Memory-search models",
+    "section": "Repeated presentations",
+    "text": "Repeated presentations\nPositional CMR learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The RepFR model configurations identify the reinforcement and reinstatement variants used in that project’s comparisons.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models"
+    ]
+  },
+  {
+    "objectID": "reference/models-cmr.html",
+    "href": "reference/models-cmr.html",
+    "title": "jaxcmr.models.cmr",
+    "section": "",
+    "text": "Context Maintenance and Retrieval (CMR) represents each item once per trial. Studying an item moves temporal context toward that item’s associated context and strengthens the associations in both directions. A second presentation updates the same item’s associations.\nAt recall, the current context cues the available items. The stopping policy gives the probability of ending recall. Conditional on continuing, each item’s probability is proportional to its retrieval support. Recalling an item reinstates its associated context, changing the cue for the next response.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Ordinary CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-cmr.html#trial-model",
+    "href": "reference/models-cmr.html#trial-model",
+    "title": "jaxcmr.models.cmr",
+    "section": "Trial model",
+    "text": "Trial model\n\n\n\nCMR\nMaintain item associations and temporal context for one recall trial.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Ordinary CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-cmr.html#model-factory",
+    "href": "reference/models-cmr.html#model-factory",
+    "title": "jaxcmr.models.cmr",
+    "section": "Model factory",
+    "text": "Model factory\n\n\n\nmake_factory\nCreate a CMR model factory with specified component functions.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Ordinary CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-cmr.html#api-entries",
+    "href": "reference/models-cmr.html#api-entries",
+    "title": "jaxcmr.models.cmr",
+    "section": "API entries",
+    "text": "API entries\n\nCMR\n\njaxcmr.models.cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)\n\nMaintain item associations and temporal context for one recall trial.\n\nMethods\n\n\n\nName\nDescription\n\n\n\n\n__init__\nContext Maintenance and Retrieval model of memory search.\n\n\ncandidate_activations\nScore a specified set of items against the current context.\n\n\nitem_probability\nCompute probability of retrieving a specific item, assuming recall continues.\n\n\n\n\n__init__\n\njaxcmr.models.cmr.CMR.__init__(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)\n\nContext Maintenance and Retrieval model of memory search.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nCapacity for within-list item codes 1 through list_length.\nrequired\n\n\nparameters\nParameters\nValues governing study, retrieval and the selected components. See the parameter names below.\nrequired\n\n\nmfc_create_fn\nMemoryCreateFn\nFactory function for item-to-context memory (M_FC).\nLinearMemory.init_mfc\n\n\nmcf_create_fn\nMemoryCreateFn\nFactory function for context-to-item memory (M_CF).\nLinearMemory.init_mcf\n\n\ncontext_create_fn\nContextCreateFn\nFactory function for temporal context representation.\nTemporalContext.init\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nBuild the stopping rule. The default is PositionalTermination.\nPositionalTermination\n\n\n\n\n\nNotes\n\nContext drift. encoding_drift_rate, start_drift_rate, and recall_drift_rate govern context change during study, at the start of retrieval, and after each recalled item, respectively.\nLearning. learn_after_context_update selects the context after the study update when true and before it when false. learning_rate sets item-to-context learning. primacy_scale and primacy_decay set context-to-item learning by study position.\nRecall. choice_sensitivity is the exponent applied to retrieval support. allow_repeated_recalls keeps a recalled item available when true.\nDefault components. Linear memory uses shared_support and item_support for initial context-to-item associations. Positional stopping uses stop_probability_scale and stop_probability_growth.\n\n\n\n\ncandidate_activations\n\njaxcmr.models.cmr.CMR.candidate_activations(candidates)\n\nScore a specified set of items against the current context.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncandidates\nBoolean array\nOne entry per item. The largest support among the selected items sets the scale before applying choice_sensitivity. A caller can include previously recalled items in this mask.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nFloat[Array, ' item_count']\nRelative retrieval support for each item.\n\n\n\n\n\n\nitem_probability\n\njaxcmr.models.cmr.CMR.item_probability(item_index)\n\nCompute probability of retrieving a specific item, assuming recall continues.\n\nParameters\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_index\nInt_\nIndex of the item (0-indexed).\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nFloat[Array, '']\nProbability of retrieving the specified item.\n\n\n\n\n\n\n\n\nmake_factory\n\njaxcmr.models.cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)\n\nCreate a CMR model factory with specified component functions.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nFactory function for item-to-context memory (M_FC).\nrequired\n\n\nmcf_create_fn\nMemoryCreateFn\nFactory function for context-to-item memory (M_CF).\nrequired\n\n\ncontext_create_fn\nContextCreateFn\nFactory function for temporal context representation.\nrequired\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nFactory function for recall termination policy.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nA factory class for a loss or simulator. Instantiate it with a dataset and optional features. Each call to create_trial_model creates a fresh model with the dataset’s maximum list length. Ordinary CMR uses the same initialization for every trial and ignores vocabulary features.\n\n\n\nStudy and retrieval interface · Stopping rules · Worked CMR example",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Ordinary CMR"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html",
+    "href": "reference/components-termination.html",
+    "title": "jaxcmr.components.termination",
+    "section": "",
+    "text": "The probability of stopping depends on which candidates remain available. A model can stop only on exhaustion, use a schedule indexed by recall count, or compare support for available and unavailable studied candidates. Each calculation returns one if retrieval has ended or no candidates remain.\nA model with a fixed stopping rule can call the corresponding function directly. To select a rule when configuring CMR, pass its class to the model factory. Each class specifies what it reads from the model. The legacy STOP-item rule requires a model that scores STOP as a separate candidate.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#stopping-rules",
+    "href": "reference/components-termination.html#stopping-rules",
+    "title": "jaxcmr.components.termination",
+    "section": "Stopping rules",
+    "text": "Stopping rules\n\n\n\nNoStopTermination\nContinue until the model becomes inactive or exhausts its available candidates.\n\n\nPositionalTermination\nSet stopping probability from the number of items recalled so far.\n\n\nSupportRatioTermination\nCompare support for still-available items with support for recalled items.\n\n\nRetrievalDependentTermination\nUse a dedicated STOP candidate’s independently calculated probability.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#model-requirements",
+    "href": "reference/components-termination.html#model-requirements",
+    "title": "jaxcmr.components.termination",
+    "section": "Model requirements",
+    "text": "Model requirements\n\n\n\nSupportsNoStop\nAvailability information needed to stop when retrieval is exhausted.\n\n\nSupportsPositional\nAvailability and recall count needed for positional stopping.\n\n\nSupportsSupportRatio\nCandidate information needed by the existing support-ratio rule.\n\n\nSupportsRetrievalDependent\nInput requirements of the legacy STOP-item policy.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#api-entries",
+    "href": "reference/components-termination.html#api-entries",
+    "title": "jaxcmr.components.termination",
+    "section": "API entries",
+    "text": "API entries\n\nstop_when_exhausted\n\njaxcmr.components.termination.stop_when_exhausted(is_active, available_count)\n\nStop when retrieval has ended or there are no available candidates.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nis_active\nbool\nWhether the trial is still in retrieval.\nrequired\n\n\navailable_count\nint\nNumber of candidates that the model can still recall.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nFloat[Array, '']\nOne if retrieval has ended or the count is zero, otherwise zero.\n\n\n\n\n\n\nNoStopTermination\n\njaxcmr.components.termination.NoStopTermination(list_length, parameters)\n\nContinue until the model becomes inactive or exhausts its available candidates.\nRequires is_active and a Boolean recallable mask. The constructor accepts the standard list length and parameter mapping and reads no values from them. Model requirements\n\n\nSupportsNoStop\n\njaxcmr.components.termination.SupportsNoStop: Protocol\n\nAvailability information needed to stop when retrieval is exhausted.\nis_active indicates whether retrieval is in progress. Each true entry in recallable marks a candidate the model can still retrieve.\n\n\npositional_stop_probability\n\njaxcmr.components.termination.positional_stop_probability(schedule, recall_total, *, is_active, available_count)\n\nLook up the probability of stopping after the given number of recalls.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nschedule\nfloating array\nNonempty sequence of stopping probabilities. Entry zero applies before the first recall. Counts beyond the schedule use the last entry.\nrequired\n\n\nrecall_total\nint\nNumber of items already recalled.\nrequired\n\n\nis_active\nbool\nWhether the trial is still in retrieval.\nrequired\n\n\navailable_count\nint\nNumber of candidates that the model can still recall.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nFloat[Array, '']\nOne if retrieval has ended or no candidates remain. Otherwise the scheduled value capped at 1 - FLOAT32_EPS * available_count, in the schedule’s floating-point precision.\n\n\n\n\n\n\nPositionalTermination\n\njaxcmr.components.termination.PositionalTermination(list_length, parameters)\n\nSet stopping probability from the number of items recalled so far.\nAt recall count r, the probability is stop_probability_scale * exp(r * stop_probability_growth), capped at 1 - FLOAT32_EPS * number_available. The first decision uses r = 0. The schedule ends at r = list_length - 1. Higher counts use its last value. The model supplies is_active, the candidate mask recallable, and the recall count recall_total. Ordinary CMR uses this rule by default. Model requirements\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nNumber of positions in the stopping schedule, starting at count zero.\nrequired\n\n\nparameters\nParameters\nstop_probability_scale gives the initial value before the cap. stop_probability_growth controls its change per recall.\nrequired\n\n\n\n\n\n\nSupportsPositional\n\njaxcmr.components.termination.SupportsPositional: Protocol\n\nAvailability and recall count needed for positional stopping.\nIn addition to is_active and recallable, the model supplies recall_total, the number of recall events so far.\n\n\nsupport_ratio_stop_probability\n\njaxcmr.components.termination.support_ratio_stop_probability(available_support, unavailable_support, *, scale, growth, is_active, available_count)\n\nCalculate stopping probability from two totals of retrieval support.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\navailable_support\nfloat\nTotal support for studied candidates that are available for recall.\nrequired\n\n\nunavailable_support\nfloat\nTotal support for studied candidates that are unavailable for recall.\nrequired\n\n\nscale\nfloat\nAdditive term in scale + exp(-growth * ratio). The ratio is available support divided by unavailable support, or infinity when the latter is zero.\nrequired\n\n\ngrowth\nfloat\nCoefficient of the support ratio in the exponential.\nrequired\n\n\nis_active\nbool\nWhether the trial is still in retrieval.\nrequired\n\n\navailable_count\nint\nNumber of candidates that the model can still recall.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nFloat[Array, '']\nOne if retrieval has ended or no candidates remain. Otherwise the result of the support-ratio equation, capped at 1 - FLOAT32_EPS * available_count. The ceiling uses float32 machine epsilon even for float64 probabilities.\n\n\n\n\n\n\nSupportRatioTermination\n\njaxcmr.components.termination.SupportRatioTermination(list_length, parameters)\n\nCompare support for available and unavailable studied candidates.\nThe model supplies is_active, the masks studied and recallable, and candidate_activations(mask). Both masks and the returned scores refer to the same candidates. The model must be able to score unavailable candidates too. The rule scores each group separately and sums its support.\nIn ordinary CMR, recalling an item makes it unavailable when repeated recalls are disabled. When repeats are enabled, a recalled item stays in the available group and contributes to its support. Model requirements\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nAccepted as part of the stopping-rule constructor interface.\nrequired\n\n\nparameters\nParameters\nstop_probability_scale sets the additive term. stop_probability_growth sets the coefficient of the support ratio.\nrequired\n\n\n\n\n\n\nSupportsSupportRatio\n\njaxcmr.components.termination.SupportsSupportRatio: Protocol\n\nCandidate information needed by the existing support-ratio rule.\nstudied, recallable, and candidate activations must refer to the same candidate space. The rule scores the available and unavailable subsets of studied candidates separately. A recalled item can still belong to the available subset if the model permits repeated recall.\n\nMethods\n\n\n\nName\nDescription\n\n\n\n\ncandidate_activations\nReturn support for the selected candidates, including unavailable ones.\n\n\n\n\ncandidate_activations\n\njaxcmr.components.termination.SupportsSupportRatio.candidate_activations(candidates)\n\nReturn support for the selected candidates, including unavailable ones.\nApply the model’s retrieval-support calculation to this mask without additionally suppressing candidates using recallable.\n\n\n\n\nRetrievalDependentTermination\n\njaxcmr.components.termination.RetrievalDependentTermination(list_length, parameters)\n\nUse a dedicated STOP candidate’s independently calculated probability.\nThe model supplies is_active and a Boolean recallable mask. It must score outcome_probability(item_count) as STOP without calling this policy. In ordinary CMR, item_count is the highest local item code and scoring an outcome calls the stopping rule again.\nThe rule reads no stopping parameters. While recall can continue, the returned probability is capped at 1 - FLOAT32_EPS * number_available. Model requirements\n\n\nSupportsRetrievalDependent\n\njaxcmr.components.termination.SupportsRetrievalDependent: Protocol\n\nInput requirements of the legacy STOP-item policy.\nitem_count must identify an explicit STOP candidate, and evaluating its outcome probability must not call this termination policy again. Structural typing cannot establish either condition. Ordinary CMR models use item_count as the highest local item code.\n\nMethods\n\n\n\nName\nDescription\n\n\n\n\noutcome_probability\nEvaluate the requested outcome independently of this stopping rule.\n\n\n\n\noutcome_probability\n\njaxcmr.components.termination.SupportsRetrievalDependent.outcome_probability(choice)\n\nEvaluate the requested outcome independently of this stopping rule.\nStopping-policy interface · Ordinary CMR · Using and writing stopping rules",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#stopping-on-exhaustion",
+    "href": "reference/components-termination.html#stopping-on-exhaustion",
+    "title": "jaxcmr.components.termination",
+    "section": "Stopping on exhaustion",
+    "text": "Stopping on exhaustion\n\n\n\nstop_when_exhausted\nStop when retrieval has ended or there are no available candidates.\n\n\nNoStopTermination\nContinue until the model becomes inactive or exhausts its available candidates.\n\n\nSupportsNoStop\nAvailability information needed to stop when retrieval is exhausted.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#stopping-by-output-position",
+    "href": "reference/components-termination.html#stopping-by-output-position",
+    "title": "jaxcmr.components.termination",
+    "section": "Stopping by output position",
+    "text": "Stopping by output position\n\n\n\npositional_stop_probability\nLook up the probability of stopping after the given number of recalls.\n\n\nPositionalTermination\nSet stopping probability from the number of items recalled so far.\n\n\nSupportsPositional\nAvailability and recall count needed for positional stopping.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#stopping-by-support-ratio",
+    "href": "reference/components-termination.html#stopping-by-support-ratio",
+    "title": "jaxcmr.components.termination",
+    "section": "Stopping by support ratio",
+    "text": "Stopping by support ratio\n\n\n\nsupport_ratio_stop_probability\nCalculate stopping probability from two totals of retrieval support.\n\n\nSupportRatioTermination\nCompare support for available and unavailable studied candidates.\n\n\nSupportsSupportRatio\nCandidate information needed by the existing support-ratio rule.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-termination.html#legacy-stop-candidate-scoring",
+    "href": "reference/components-termination.html#legacy-stop-candidate-scoring",
+    "title": "jaxcmr.components.termination",
+    "section": "Legacy STOP-candidate scoring",
+    "text": "Legacy STOP-candidate scoring\n\n\n\nRetrievalDependentTermination\nUse a dedicated STOP candidate’s independently calculated probability.\n\n\nSupportsRetrievalDependent\nInput requirements of the legacy STOP-item policy.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Stopping rules"
+    ]
+  },
+  {
+    "objectID": "reference/components-context.html",
+    "href": "reference/components-context.html",
+    "title": "jaxcmr.components.context",
+    "section": "",
+    "text": "Temporal context is the cue a CMR model uses to retrieve items. At the start of a list, only the start-of-list unit is active. Studying or recalling an item can move context toward the pattern associated with that item.\nUse context.init when the model supplies only start-of-list and item cues. TemporalContext.init_expanded also reserves one fresh unit per item. Outlist CMR uses a fresh unit when it studies an item again. Source-switch models use one when a change of source triggers drift. Each call to integrate_with_outlist consumes one of these units.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Temporal context"
+    ]
+  },
+  {
+    "objectID": "reference/components-context.html#creating-context",
+    "href": "reference/components-context.html#creating-context",
+    "title": "jaxcmr.components.context",
+    "section": "Creating context",
+    "text": "Creating context\n\n\n\ninit\nCreate context with one start-of-list unit and one unit per item.\n\n\nTemporalContext.init_expanded\nCreate context with one fresh out-of-list unit per item.\n\n\nTemporalContext\nTemporal context for a single trial.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Temporal context"
+    ]
+  },
+  {
+    "objectID": "reference/components-context.html#updating-context",
+    "href": "reference/components-context.html#updating-context",
+    "title": "jaxcmr.components.context",
+    "section": "Updating context",
+    "text": "Updating context\n\n\n\nTemporalContext.integrate\nMove the current state toward an input pattern.\n\n\nTemporalContext.integrate_with_outlist\nMix an item cue with a fresh out-of-list cue and update context.\n\n\nTemporalContext.outlist_input\nOne-hot cue for the next unused out-of-list unit.\n\n\nintegrate_normalized\nUpdate a context vector from a unit-length or zero input.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Temporal context"
+    ]
+  },
+  {
+    "objectID": "reference/components-context.html#interfaces-for-out-of-list-input",
+    "href": "reference/components-context.html#interfaces-for-out-of-list-input",
+    "title": "jaxcmr.components.context",
+    "section": "Interfaces for out-of-list input",
+    "text": "Interfaces for out-of-list input\n\n\n\nOutlistContext\nContext that can mix in a fresh out-of-list cue during study.\n\n\nOutlistContextCreateFn\nCreate an OutlistContext from an item count.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Temporal context"
+    ]
+  },
+  {
+    "objectID": "reference/components-context.html#api-entries",
+    "href": "reference/components-context.html#api-entries",
+    "title": "jaxcmr.components.context",
+    "section": "API entries",
+    "text": "API entries\n\ninit\n\njaxcmr.components.context.init(item_count)\n\nCreate context with one start-of-list unit and one unit per item.\n\nParameters\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_count\nint\nNumber of item units.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTemporalContext\nContext with 1 + item_count units. Use this constructor for models that call only integrate.\n\n\n\n\n\n\nTemporalContext.init_expanded\n\njaxcmr.components.context.TemporalContext.init_expanded(item_count)\n\nCreate context with one fresh out-of-list unit per item.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_count\nint\nNumber of item units and number of available out-of-list updates.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTemporalContext\nContext with 1 + 2 * item_count units. The first fresh unit has index item_count + 1.\n\n\n\n\n\n\nTemporalContext\n\njaxcmr.components.context.TemporalContext(item_count, size)\n\nTemporal context for a single trial.\nUnit zero represents the start of the list. Units 1 through item_count represent the items. Any remaining units are available for out-of-list input, in the order in which the model uses them. An update returns a new context. Its initial_state still holds the start-of-list pattern.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_count\nint\nNumber of item units.\nrequired\n\n\nsize\nint\nTotal number of units, including the start and any out-of-list units.\nrequired\n\n\n\n\n\n\nTemporalContext.integrate\n\njaxcmr.components.context.TemporalContext.integrate(context_input, drift_rate)\n\nMove the current state toward an input pattern.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ncontext_input\nfloating array, shape (context_feature_units,)\nInput in context coordinates. A nonzero pattern is scaled to unit length before integration.\nrequired\n\n\ndrift_rate\nfloat\nWeight given to the input, between zero and one.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTemporalContext\nUpdated context with the same next out-of-list unit. A zero input scales the current state by sqrt(1 - drift_rate**2).\n\n\n\n\n\n\nTemporalContext.integrate_with_outlist\n\njaxcmr.components.context.TemporalContext.integrate_with_outlist(inlist_input, ratio, drift_rate)\n\nMix an item cue with a fresh out-of-list cue and update context.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninlist_input\nfloating array, shape (context_feature_units,)\nIn-list input in context coordinates. A nonzero input is scaled to unit length before mixing.\nrequired\n\n\nratio\nfloat\nWeight on the in-list cue. The fresh unit receives weight 1 - ratio. The mixture is normalized before integration.\nrequired\n\n\ndrift_rate\nfloat\nWeight given to the mixed cue, between zero and one.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nTemporalContext\nUpdated context with the next out-of-list index advanced by one. Each call requires one unused unit, even when ratio is one or drift_rate is zero.\n\n\n\n\n\n\nTemporalContext.outlist_input\ncomponents.context.TemporalContext.outlist_input\nOne-hot cue for the next unused out-of-list unit.\nReading the cue leaves it available for the next update. The context must have an out-of-list unit remaining.\n\n\nintegrate_normalized\n\njaxcmr.components.context.integrate_normalized(state, context_input, drift_rate)\n\nUpdate a context vector from a unit-length or zero input.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nstate\nfloating array, shape (units,)\nCurrent context.\nrequired\n\n\ncontext_input\nfloating array, shape (units,)\nUnit-length input pattern or an all-zero vector.\nrequired\n\n\ndrift_rate\nfloat\nWeight given to the input, between zero and one.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\nupdated_state\nfloating array, shape (units,)\nWith unit-length state and input, the result has unit length. A zero input scales the state by sqrt(1 - drift_rate**2).\n\n\n\n\n\n\nOutlistContext\n\njaxcmr.components.context.OutlistContext: Protocol\n\nContext that can mix in a fresh out-of-list cue during study.\nOutlist CMR and the source-switch models call integrate_with_outlist in addition to the ordinary Context.integrate operation.\n\n\nOutlistContextCreateFn\n\njaxcmr.components.context.OutlistContextCreateFn: Protocol\n\nCreate an OutlistContext from an item count.\n\nMethods\n\n\n\nName\nDescription\n\n\n\n\n__call__\nReturn context with fresh units available for out-of-list updates.\n\n\n\n\n__call__\n\njaxcmr.components.context.OutlistContextCreateFn.__call__(item_count)\n\nReturn context with fresh units available for out-of-list updates.\nContext interface · Using context in CMR",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Temporal context"
+    ]
+  },
+  {
+    "objectID": "reference/components-linear-memory.html",
+    "href": "reference/components-linear-memory.html",
+    "title": "jaxcmr.components.linear_memory",
+    "section": "",
+    "text": "Linear memory sums learned associations in a matrix. Studying the same input twice adds both output patterns to the same associations. Probing with a cue multiplies the cue by that matrix.\nCMR uses a separate memory for each direction. init_mfc lets an item cue its context. init_mcf lets context cue the items.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Linear memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-linear-memory.html#creating-memory",
+    "href": "reference/components-linear-memory.html#creating-memory",
+    "title": "jaxcmr.components.linear_memory",
+    "section": "Creating memory",
+    "text": "Creating memory\n\n\n\ninit_mfc\nCreate item-to-context memory with one initial context association per item.\n\n\ninit_mcf\nCreate context-to-item memory with item-specific and shared initial support.\n\n\nLinearMemory\nAn association matrix with one row per input feature and one column per output feature.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Linear memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-linear-memory.html#learning-and-retrieval",
+    "href": "reference/components-linear-memory.html#learning-and-retrieval",
+    "title": "jaxcmr.components.linear_memory",
+    "section": "Learning and retrieval",
+    "text": "Learning and retrieval\n\n\n\nLinearMemory.associate\nAdd the weighted outer product of the input and output patterns.\n\n\nLinearMemory.probe\nRetrieve the weighted sum of the rows selected by an input cue.\n\n\nLinearMemory.zero_out\nClear all outgoing associations of one input feature.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Linear memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-linear-memory.html#api-entries",
+    "href": "reference/components-linear-memory.html#api-entries",
+    "title": "jaxcmr.components.linear_memory",
+    "section": "API entries",
+    "text": "API entries\n\ninit_mfc\n\njaxcmr.components.linear_memory.init_mfc(list_length, parameters, context)\n\nCreate item-to-context memory with one initial context association per item.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nNumber of item slots in the trial.\nrequired\n\n\nparameters\nParameters\nThe initial association to the corresponding item unit is 1 - learning_rate.\nrequired\n\n\ncontext\nContext\nContext whose size sets the number of context units.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nLinearMemory\nProbing with an item cue returns a pattern of length context.size.\n\n\n\n\n\n\ninit_mcf\n\njaxcmr.components.linear_memory.init_mcf(list_length, parameters, context)\n\nCreate context-to-item memory with item-specific and shared initial support.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nNumber of item slots in the trial.\nrequired\n\n\nparameters\nParameters\nAn in-list context unit gives its matching item item_support and every other item shared_support.\nrequired\n\n\ncontext\nContext\nContext whose size sets the number of context units.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nLinearMemory\nProbing with a context cue returns one value per item slot. Start-of-list and out-of-list units initially give every item zero support.\n\n\n\n\n\n\nLinearMemory\n\njaxcmr.components.linear_memory.LinearMemory(state)\n\nAn association matrix with one row per input feature and one column per output feature.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nstate\nfloating array, shape (input_size, output_size)\nInitial association weights.\nrequired\n\n\n\n\n\n\nLinearMemory.associate\n\njaxcmr.components.linear_memory.LinearMemory.associate(in_pattern, out_pattern, learning_rate)\n\nAdd the weighted outer product of the input and output patterns.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nin_pattern\nfloating array, shape (input_size,)\nInput pattern.\nrequired\n\n\nout_pattern\nfloating array, shape (output_size,)\nOutput pattern to associate with the input.\nrequired\n\n\nlearning_rate\nfloat\nWeight given to this association.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nLinearMemory\nUpdated memory. The original matrix retains its weights.\n\n\n\n\n\n\nLinearMemory.probe\n\njaxcmr.components.linear_memory.LinearMemory.probe(in_pattern)\n\nRetrieve the weighted sum of the rows selected by an input cue.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nin_pattern\nfloating array, shape (input_size,)\nInput pattern.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (output_size,)\nThe product of the input row vector and the association matrix.\n\n\n\n\n\n\nLinearMemory.zero_out\n\njaxcmr.components.linear_memory.LinearMemory.zero_out(index)\n\nClear all outgoing associations of one input feature.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nindex\nint\nZero-based row index in the association matrix.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nLinearMemory\nUpdated memory with the selected row set to zero.\n\n\n\nMemory interface · Instance memory · Memory in a CMR trial",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Linear memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-factory.html",
+    "href": "reference/components-factory.html",
+    "title": "jaxcmr.components.factory",
+    "section": "",
+    "text": "A trial records items in study order. A model looks up a recalled item by its within-list code. A word pool uses a third index, the item’s vocabulary ID.\nFor example, study codes [2, 0, 1, 2] and vocabulary IDs [17, 0, 42, 17] describe three presentations and one empty slot. With three item slots, global_item_ids_by_code returns [42, 17, 0]. Pass that row to a connection builder to get a matrix whose first row and column belong to local item 1. The source-category lookup uses the same local item order for emotional context.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Preparing trial inputs"
+    ]
+  },
+  {
+    "objectID": "reference/components-factory.html#looking-up-items",
+    "href": "reference/components-factory.html#looking-up-items",
+    "title": "jaxcmr.components.factory",
+    "section": "Looking up items",
+    "text": "Looking up items\n\n\n\nglobal_item_ids_by_code\nLook up each local item’s vocabulary ID at its first presentation.\n\n\nsource_categories_by_item\nGather the valence category of each item in local code order.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Preparing trial inputs"
+    ]
+  },
+  {
+    "objectID": "reference/components-factory.html#building-trial-connection-matrices",
+    "href": "reference/components-factory.html#building-trial-connection-matrices",
+    "title": "jaxcmr.components.factory",
+    "section": "Building trial connection matrices",
+    "text": "Building trial connection matrices\n\n\n\nbuild_trial_connections\nBuild one trial matrix from cosine similarities between vocabulary feature rows.\n\n\nbuild_trial_connections_from_similarity\nGather one trial matrix from a supplied vocabulary similarity matrix.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Preparing trial inputs"
+    ]
+  },
+  {
+    "objectID": "reference/components-factory.html#api-entries",
+    "href": "reference/components-factory.html#api-entries",
+    "title": "jaxcmr.components.factory",
+    "section": "API entries",
+    "text": "API entries\n\nglobal_item_ids_by_code\n\njaxcmr.components.factory.global_item_ids_by_code(item_codes, global_ids, item_count)\n\nLook up each local item’s vocabulary ID at its first presentation.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_codes\ninteger array, shape (trials, study_events)\nOne-based within-list codes in study order. Zero marks an empty position.\nrequired\n\n\nglobal_ids\ninteger array, shape (trials, study_events)\nVocabulary IDs aligned with the same positions. Repeated presentations of one local item should carry the same ID.\nrequired\n\n\nitem_count\nint\nNumber of local item codes represented in each output row.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ninteger array, shape (trials, item_count)\nColumn c - 1 holds the first vocabulary ID for local code c, or zero if that code was absent.\n\n\n\n\n\n\nsource_categories_by_item\n\njaxcmr.components.factory.source_categories_by_item(dataset, *, signed)\n\nGather the valence category of each item in local code order.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ndataset\nRecallDataset\npres_itemnos and valence align by study position. Only positive item codes contribute.\nrequired\n\n\nsigned\nbool\nUse valence signs (−1, 0, +1) for CMR3. With False, eCMR groups both nonzero signs into category 1.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ninteger array, shape (trials, item_count)\nColumn c - 1 holds the category for local code c. Neutral and absent items both have value zero. The width is the larger of the maximum list length and the largest code.\n\n\n\n\n\nRaises\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nValueError\nPresentations of the same item within a trial disagree after category coding.\n\n\n\n\n\n\nbuild_trial_connections\n\njaxcmr.components.factory.build_trial_connections(present_lists, features)\n\nBuild one trial matrix from cosine similarities between vocabulary feature rows.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\npresent_lists\ninteger array, shape (trials, slots)\nOne-based vocabulary IDs in the desired output order. Zero denotes padding.\nrequired\n\n\nfeatures\nfloating array, shape (vocabulary_size, features_count), or None\nRow g - 1 describes vocabulary item g. None produces all-zero matrices.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (trials, slots, slots)\nBoth axes follow the input row, including repeats. For finite features, equal IDs and padding have zero connections. Connections between distinct IDs have a floor of FLOAT32_EPS.\n\n\n\n\n\n\nbuild_trial_connections_from_similarity\n\njaxcmr.components.factory.build_trial_connections_from_similarity(present_lists, similarity_matrix)\n\nGather one trial matrix from a supplied vocabulary similarity matrix.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\npresent_lists\ninteger array, shape (trials, slots)\nOne-based vocabulary IDs in the desired output order. Zero denotes padding.\nrequired\n\n\nsimilarity_matrix\nfloating array, shape (vocabulary_size, vocabulary_size), or None\nEntry [g - 1, h - 1] gives the supplied similarity from item g to item h. None produces all-zero matrices.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (trials, slots, slots)\nBoth axes follow the input row. Padding and same-ID pairs are zero. Remaining finite entries have a floor of FLOAT32_EPS. The orientation of the supplied matrix is preserved.\n\n\n\nSemantic and emotional model factories · Trial datasets",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Preparing trial inputs"
+    ]
+  },
+  {
+    "objectID": "reference/models-factories.html",
+    "href": "reference/models-factories.html",
+    "title": "Semantic and emotional model factories",
+    "section": "",
+    "text": "Each model module supplies a make_factory function. It binds the component creators and returns a factory class. Construct that class with the dataset and any vocabulary features or similarities. Its create_trial_model method takes a trial index and a parameter mapping.\nThe semantic factories prepare a connection matrix for each trial. The emotional-source factories prepare a category for each local item. Both use the selected trial’s item codes when constructing its model.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Semantic and emotional models"
+    ]
+  },
+  {
+    "objectID": "reference/models-factories.html#semantic-associations",
+    "href": "reference/models-factories.html#semantic-associations",
+    "title": "Semantic and emotional model factories",
+    "section": "Semantic associations",
+    "text": "Semantic associations\n\n\n\nadditive_semantic_cmr.make_factory\nBuild additive semantic CMR from vocabulary feature vectors.\n\n\nadditive_semantic_matrix_cmr.make_factory\nBuild the same additive semantic model from a supplied similarity matrix.\n\n\nmultiplicative_semantic_cmr.make_factory\nBuild multiplicative semantic CMR from vocabulary feature vectors.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Semantic and emotional models"
+    ]
+  },
+  {
+    "objectID": "reference/models-factories.html#emotional-source-context",
+    "href": "reference/models-factories.html#emotional-source-context",
+    "title": "Semantic and emotional model factories",
+    "section": "Emotional source context",
+    "text": "Emotional source context\n\n\n\necmr.make_factory\nBuild eCMR with separate source features for emotional and neutral items.\n\n\ncmr3.make_factory\nBuild CMR3 with separate source features for negative and positive items.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Semantic and emotional models"
+    ]
+  },
+  {
+    "objectID": "reference/models-factories.html#api-entries",
+    "href": "reference/models-factories.html#api-entries",
+    "title": "Semantic and emotional model factories",
+    "section": "API entries",
+    "text": "API entries\n\nadditive_semantic_cmr.make_factory\n\njaxcmr.models.additive_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)\n\nBuild additive semantic CMR from vocabulary feature vectors.\nThe factory uses pres_itemnos to put vocabulary IDs from pres_itemids in local item-code order. Each row of features describes one vocabulary item. None gives zero semantic support. The trial model’s semantic_scale weights the similarity row added after a recall.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct item-to-context memory.\nrequired\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct context-to-item memory.\nrequired\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nrequired\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nConstruct a stopping rule that accepts this trial model.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features) and call create_trial_model(trial_index, parameters) to use that trial’s connections.\n\n\n\n\n\n\nadditive_semantic_matrix_cmr.make_factory\n\njaxcmr.models.additive_semantic_matrix_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)\n\nBuild the same additive semantic model from a supplied similarity matrix.\nThe factory uses pres_itemnos to put vocabulary IDs from pres_itemids in local item-code order. Supply a square matrix with the same vocabulary along both axes. None gives zero semantic support. The trial model uses the same semantic_scale as the feature-based additive model.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct item-to-context memory.\nrequired\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct context-to-item memory.\nrequired\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nrequired\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nConstruct a stopping rule that accepts this trial model.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features), passing the square matrix as features. create_trial_model selects the corresponding trial matrix.\n\n\n\n\n\n\nmultiplicative_semantic_cmr.make_factory\n\njaxcmr.models.multiplicative_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)\n\nBuild multiplicative semantic CMR from vocabulary feature vectors.\nThe factory uses pres_itemnos to put vocabulary IDs from pres_itemids in local item-code order. The model uses choice_sensitivity for temporal support and semantic_scale for semantic support. With positive semantic_scale, the strongest positive semantic match among available items has weight one. If features is None, all semantic connections are zero. After the first recall only the common support floor remains among available items.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct item-to-context memory.\nrequired\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct context-to-item memory.\nrequired\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nrequired\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nConstruct a stopping rule that accepts this trial model.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features) and use create_trial_model to select the trial’s connections.\n\n\n\n\n\n\necmr.make_factory\n\njaxcmr.models.ecmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)\n\nBuild eCMR with separate source features for emotional and neutral items.\nThe dataset supplies pres_itemids and study-position valence. Both positive and negative values cue the emotional feature. Zero cues the neutral feature. The model sums support from temporal and emotional context before applying choice sensitivity.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct temporal item-to-context memory.\nLinearMemory.init_mfc\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct temporal context-to-item memory.\nLinearMemory.init_mcf\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nTemporalContext.init\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[eCMR]\nConstruct a stopping rule that accepts this trial model.\nPositionalTermination\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features=None). Each trial model receives an emotional-item mask in local item-code order.\n\n\n\n\n\n\ncmr3.make_factory\n\njaxcmr.models.cmr3.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)\n\nBuild CMR3 with separate source features for negative and positive items.\nThe dataset supplies pres_itemids and study-position valence. Negative and positive items begin with associations to their respective source features. Neutral items begin with neither association. Temporal and emotional context both contribute to item support at retrieval.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct temporal item-to-context memory.\nLinearMemory.init_mfc\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct temporal context-to-item memory.\nLinearMemory.init_mcf\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nTemporalContext.init\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR3]\nConstruct a stopping rule that accepts this trial model.\nPositionalTermination\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features=None). Each trial model receives negative- and positive-item masks in local item-code order.\n\n\n\nCompare model families · Preparing trial inputs · Trial-model interface",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Semantic and emotional models"
+    ]
+  },
+  {
+    "objectID": "reference/models-positional.html",
+    "href": "reference/models-positional.html",
+    "title": "jaxcmr.models.positional_cmr",
+    "section": "",
+    "text": "Positional CMR learns an association at each study position. On a list [A, B, A], context can cue both the first and third positions. Their supports add to give the support for recalling A.\nA recall identifies the item. To reinstate context, the model weights that item’s positions by their current support. If repeated recalls are disabled, recalling A makes both of its positions unavailable.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Positional CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-positional.html#trial-model",
+    "href": "reference/models-positional.html#trial-model",
+    "title": "jaxcmr.models.positional_cmr",
+    "section": "Trial model",
+    "text": "Trial model\n\n\n\nCMR\nA trial model with one associative cue for each study position.\n\n\nmake_factory\nBuild a factory for trials that associate temporal context with study positions.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Positional CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-positional.html#retrieval-by-position-and-item",
+    "href": "reference/models-positional.html#retrieval-by-position-and-item",
+    "title": "jaxcmr.models.positional_cmr",
+    "section": "Retrieval by position and item",
+    "text": "Retrieval by position and item\n\n\n\nCMR.position_activations\nCalculate retrieval support at each study position.\n\n\nCMR.activations\nSum available position supports for each local item.\n\n\nCMR.item_probability\nCalculate an item’s recall probability conditional on continuing retrieval.",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Positional CMR"
+    ]
+  },
+  {
+    "objectID": "reference/models-positional.html#api-entries",
+    "href": "reference/models-positional.html#api-entries",
+    "title": "jaxcmr.models.positional_cmr",
+    "section": "API entries",
+    "text": "API entries\n\nCMR\n\njaxcmr.models.positional_cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)\n\nA trial model with one associative cue for each study position.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nCapacity for study positions and local item codes.\nrequired\n\n\nparameters\nParameters\nThe temporal learning, drift, primacy and recall parameters used by ordinary CMR. choice_sensitivity weights positions for item choice. mfc_sensitivity weights the recalled item’s positions for context reinstatement.\nrequired\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct position-to-context memory.\nLinearMemory.init_mfc\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct context-to-position memory.\nLinearMemory.init_mcf\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context.\nTemporalContext.init\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nConstruct a stopping rule that accepts the positional trial model.\nPositionalTermination\n\n\n\n\n\n\nmake_factory\n\njaxcmr.models.positional_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)\n\nBuild a factory for trials that associate temporal context with study positions.\nThe model receives within-list item codes during study. Successive presentations occupy successive positions, including repeat presentations of the same item.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nmfc_create_fn\nMemoryCreateFn\nConstruct item-to-context memory.\nrequired\n\n\nmcf_create_fn\nMemoryCreateFn\nConstruct context-to-item memory.\nrequired\n\n\ncontext_create_fn\nContextCreateFn\nConstruct temporal context for the trial.\nrequired\n\n\ntermination_policy_create_fn\nTerminationPolicyCreateFn[CMR]\nConstruct a stopping rule that accepts this trial model.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\ntype[MemorySearchModelFactory]\nInstantiate with (dataset, features=None). create_trial_model returns a fresh positional model sized to the dataset’s maximum list length.\n\n\n\n\n\n\nCMR.position_activations\n\njaxcmr.models.positional_cmr.CMR.position_activations()\n\nCalculate retrieval support at each study position.\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (list_length,)\nAvailable positions receive relative-power-scaled context-to-position support plus the support floor. Unavailable positions receive zero.\n\n\n\n\n\n\nCMR.activations\n\njaxcmr.models.positional_cmr.CMR.activations()\n\nSum available position supports for each local item.\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (item_count,)\nEntry c - 1 sums the support for all positions occupied by item code c.\n\n\n\n\n\n\nCMR.item_probability\n\njaxcmr.models.positional_cmr.CMR.item_probability(item_index)\n\nCalculate an item’s recall probability conditional on continuing retrieval.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nitem_index\nint\nZero-based local item index. At least one position must be available.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nscalar floating array\nSum of support at this item’s positions divided by the total support at all positions.\n\n\n\nOrdinary CMR · Study and retrieval interface · RepFR model configurations",
+    "crumbs": [
+      "API Reference",
+      "Memory-search models",
+      "Positional CMR"
+    ]
+  },
+  {
+    "objectID": "reference/components-instance-memory.html",
+    "href": "reference/components-instance-memory.html",
+    "title": "jaxcmr.components.instance_memory",
+    "section": "",
+    "text": "Instance memory stores each association as a separate trace. A retrieval cue gives each trace a weight based on its match to the stored input. The response is the sum of the stored outputs multiplied by those weights.\nprobe scales the strongest positive match to one and raises each relative match to the trace sensitivity. probe_without_scale uses the raw matches, giving the same result as a linear memory built from those traces.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Instance memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-instance-memory.html#creating-memory",
+    "href": "reference/components-instance-memory.html#creating-memory",
+    "title": "jaxcmr.components.instance_memory",
+    "section": "Creating memory",
+    "text": "Creating memory\n\n\n\ninit_mfc\nCreate item-to-context traces with one initial trace per item.\n\n\ninit_mcf\nCreate context-to-item traces with one initial trace per in-list context unit.\n\n\nInstanceMemory\nA table of input patterns and their learned outputs.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Instance memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-instance-memory.html#learning-and-retrieval",
+    "href": "reference/components-instance-memory.html#learning-and-retrieval",
+    "title": "jaxcmr.components.instance_memory",
+    "section": "Learning and retrieval",
+    "text": "Learning and retrieval\n\n\n\nInstanceMemory.associate\nStore one input pattern and its weighted output in the next free trace.\n\n\nInstanceMemory.probe\nRetrieve outputs using relative trace weights.\n\n\nInstanceMemory.probe_without_scale\nRetrieve outputs using raw cue-to-input dot products.\n\n\nInstanceMemory.trace_activations\nCalculate the weight of each trace for a full cue.",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Instance memory"
+    ]
+  },
+  {
+    "objectID": "reference/components-instance-memory.html#api-entries",
+    "href": "reference/components-instance-memory.html#api-entries",
+    "title": "jaxcmr.components.instance_memory",
+    "section": "API entries",
+    "text": "API entries\n\ninit_mfc\n\njaxcmr.components.instance_memory.init_mfc(list_length, parameters, context)\n\nCreate item-to-context traces with one initial trace per item.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nNumber of item slots in the trial.\nrequired\n\n\nparameters\nParameters\nThe matching context unit has weight 1 - learning_rate. mfc_trace_sensitivity defaults to one.\nrequired\n\n\ncontext\nContext\nContext whose size sets the number of context units.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nInstanceMemory\nMemory with room for list_length further associations. Each probe returns a pattern of length context.size.\n\n\n\n\n\n\ninit_mcf\n\njaxcmr.components.instance_memory.init_mcf(list_length, parameters, context)\n\nCreate context-to-item traces with one initial trace per in-list context unit.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nlist_length\nint\nNumber of item slots in the trial.\nrequired\n\n\nparameters\nParameters\nThe matching item has weight item_support and the other items have shared_support. mcf_trace_sensitivity sets the exponent for this direction.\nrequired\n\n\ncontext\nContext\nContext whose size sets the number of context units.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nInstanceMemory\nMemory with room for list_length further associations. Start-of-list and fresh out-of-list cues initially give every item zero support.\n\n\n\n\n\n\nInstanceMemory\n\njaxcmr.components.instance_memory.InstanceMemory(state, probe, study_index, trace_activation_scale, input_size, output_size)\n\nA table of input patterns and their learned outputs.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nstate\nfloating array, shape (trace_count, input_size + output_size)\nEach row contains the input followed by its learning-rate-weighted output. Unused rows must be zero.\nrequired\n\n\nprobe\nfloating array, shape (input_size + output_size,)\nCue buffer. Its output portion must be zero for an input-only probe.\nrequired\n\n\nstudy_index\nint\nNext row to fill. Each association needs one free row.\nrequired\n\n\ntrace_activation_scale\nfloat\nPositive exponent for relative trace supports. Cue supports must be finite and nonnegative.\nrequired\n\n\ninput_size\nint\nNumber of input features at the start of each row.\nrequired\n\n\noutput_size\nint\nNumber of output features following the input.\nrequired\n\n\n\n\n\n\nInstanceMemory.associate\n\njaxcmr.components.instance_memory.InstanceMemory.associate(in_pattern, out_pattern, learning_rate)\n\nStore one input pattern and its weighted output in the next free trace.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nin_pattern\nfloating array, shape (input_size,)\nInput pattern.\nrequired\n\n\nout_pattern\nfloating array, shape (output_size,)\nOutput pattern to associate with the input.\nrequired\n\n\nlearning_rate\nfloat\nWeight given to this association.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nInstanceMemory\nUpdated memory with the next free row advanced by one.\n\n\n\n\n\n\nInstanceMemory.probe\n\njaxcmr.components.instance_memory.InstanceMemory.probe(in_pattern)\n\nRetrieve outputs using relative trace weights.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nin_pattern\nfloating array, shape (input_size,)\nInput pattern.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (output_size,)\nSum of stored outputs weighted by trace_activations for the input cue.\n\n\n\n\n\n\nInstanceMemory.probe_without_scale\n\njaxcmr.components.instance_memory.InstanceMemory.probe_without_scale(in_pattern)\n\nRetrieve outputs using raw cue-to-input dot products.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\nin_pattern\nfloating array, shape (input_size,)\nInput pattern.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (output_size,)\nSum of stored outputs weighted by their raw matches. This equals a probe of the summed outer-product matrix for the same traces.\n\n\n\n\n\n\nInstanceMemory.trace_activations\n\njaxcmr.components.instance_memory.InstanceMemory.trace_activations(input_pattern)\n\nCalculate the weight of each trace for a full cue.\n\nParameters\n\n\n\n\n\n\n\n\n\nName\nType\nDescription\nDefault\n\n\n\n\ninput_pattern\nfloating array, shape (input_size + output_size,)\nCue for a dot product with each stored row. Set its output features to zero to match only the stored inputs.\nrequired\n\n\n\n\n\nReturns\n\n\n\n\n\n\n\n\nName\nType\nDescription\n\n\n\n\n\nfloating array, shape (trace_count,)\nPositive supports receive (support / max_support) ** trace_activation_scale. Zero supports receive zero, including when every support is zero.\n\n\n\nMemory interface · Linear memory · Using instance memory in ordinary CMR",
+    "crumbs": [
+      "API Reference",
+      "Model components",
+      "Instance memory"
     ]
   }
 ]

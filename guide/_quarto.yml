@@ -28,6 +28,8 @@ project:
     - reference/helpers.qmd
     - reference/examples.qmd
     - reference/loss-*.qmd
+    - reference/models*.qmd
+    - reference/components*.qmd
     - reference/fitting.qmd
     - reference/analyses*.qmd
     - reference/experimental*.qmd
@@ -104,6 +106,28 @@ website:
           text: Overview
         - href: reference/dataset.qmd
           text: Datasets
+        - section: Memory-search models
+          href: reference/models.qmd
+          contents:
+            - href: reference/models-cmr.qmd
+              text: Ordinary CMR
+            - href: reference/models-factories.qmd
+              text: Semantic and emotional models
+            - href: reference/models-positional.qmd
+              text: Positional CMR
+        - section: Model components
+          href: reference/components.qmd
+          contents:
+            - href: reference/components-context.qmd
+              text: Temporal context
+            - href: reference/components-linear-memory.qmd
+              text: Linear memory
+            - href: reference/components-instance-memory.qmd
+              text: Instance memory
+            - href: reference/components-termination.qmd
+              text: Stopping rules
+            - href: reference/components-factory.qmd
+              text: Preparing trial inputs
         - href: reference/loss-sequence.qmd
           text: Sequential likelihood
         - href: reference/loss-mse.qmd

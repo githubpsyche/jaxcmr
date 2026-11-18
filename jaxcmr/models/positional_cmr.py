@@ -1,10 +1,10 @@
-"""Positional CMR.
+"""Positional CMR learns an association at each study position. On a list
+`[A, B, A]`, context can cue both the first and third positions. Their
+supports add to give the support for recalling A.
 
-Items are encoded using positional representations rather than item
-representations. This allows repeated items to have distinct
-contextual associations for each presentation. Recallability is
-tracked at the position level (not item level).
-
+A recall identifies the item. To reinstate context, the model weights
+that item's positions by their current support. If repeated recalls are
+disabled, recalling A makes both of its positions unavailable.
 """
 
 
@@ -42,7 +42,26 @@ __all__ = [
 ]
 
 class CMR(Pytree):
-    """The Context Maintenance and Retrieval (CMR) model of memory search."""
+    """A trial model with one associative cue for each study position.
+
+    Parameters
+    ----------
+    list_length : int
+        Capacity for study positions and local item codes.
+    parameters : Parameters
+        The temporal learning, drift, primacy and recall parameters used by
+        ordinary CMR. `choice_sensitivity` weights positions for item choice.
+        `mfc_sensitivity` weights the recalled item's positions for context
+        reinstatement.
+    mfc_create_fn : MemoryCreateFn, optional
+        Construct position-to-context memory.
+    mcf_create_fn : MemoryCreateFn, optional
+        Construct context-to-position memory.
+    context_create_fn : ContextCreateFn, optional
+        Construct temporal context.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR], optional
+        Construct a stopping rule that accepts the positional trial model.
+    """
 
     def __init__(
         self,
@@ -177,13 +196,26 @@ class CMR(Pytree):
         )
     
     def position_activations(self) -> Float[Array, " list_length"]:
-        """Returns relative support for retrieval of each study position given model state"""
+        """Calculate retrieval support at each study position.
+
+        Returns
+        -------
+        floating array, shape (list_length,)
+            Available positions receive relative-power-scaled context-to-position
+            support plus the support floor. Unavailable positions receive zero.
+        """
         #! refactored to get position activations separately
         _activations = self.mcf.probe(self.context.state) * self.recallable
         return (relative_power_scale(_activations, self.mcf_sensitivity) + FLOAT32_EPS) * self.recallable
 
     def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
+        """Sum available position supports for each local item.
+
+        Returns
+        -------
+        floating array, shape (item_count,)
+            Entry `c - 1` sums the support for all positions occupied by item code `c`.
+        """
         #! reworked to pool position activations by item
         position_activations = self.position_activations()
         return lax.map(
@@ -196,12 +228,18 @@ class CMR(Pytree):
         return self.termination_policy.stop_probability(self)
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return the probability of retrieval of an item at the specified index.
+        """Calculate an item's recall probability conditional on continuing retrieval.
 
-        Assumes that some items are recallable, with at least the minimum recall probability.
+        Parameters
+        ----------
+        item_index : int
+            Zero-based local item index. At least one position must be available.
 
-        Args:
-            item_index: the index of the item to retrieve.
+        Returns
+        -------
+        scalar floating array
+            Sum of support at this item's positions divided by the total support
+            at all positions.
         """
         #! Since item activations are potentially distributed across position activations,
         #! instead of indexing by item, we mask position activations by item then sum/normalize
@@ -254,6 +292,30 @@ def make_factory(
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
+    """Build a factory for trials that associate temporal context with study positions.
+
+    The model receives within-list item codes during study. Successive
+    presentations occupy successive positions, including repeat presentations
+    of the same item.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct item-to-context memory.
+    mcf_create_fn : MemoryCreateFn
+        Construct context-to-item memory.
+    context_create_fn : ContextCreateFn
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
+        Construct a stopping rule that accepts this trial model.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        Instantiate with `(dataset, features=None)`. `create_trial_model` returns
+        a fresh positional model sized to the dataset's maximum list length.
+    """
+
     class CMRModelFactory:
         def __init__(
             self,

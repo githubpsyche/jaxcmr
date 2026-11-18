@@ -332,7 +332,30 @@ def make_factory(
         CMR3
     ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
-    """Build a CMR3 factory for the CK2022 fitting pipeline."""
+    """Build CMR3 with separate source features for negative and positive items.
+
+    The dataset supplies `pres_itemids` and study-position `valence`. Negative
+    and positive items begin with associations to their respective source
+    features. Neutral items begin with neither association. Temporal and
+    emotional context both contribute to item support at retrieval.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn, optional
+        Construct temporal item-to-context memory.
+    mcf_create_fn : MemoryCreateFn, optional
+        Construct temporal context-to-item memory.
+    context_create_fn : ContextCreateFn, optional
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR3], optional
+        Construct a stopping rule that accepts this trial model.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        Instantiate with `(dataset, features=None)`. Each trial model receives
+        negative- and positive-item masks in local item-code order.
+    """
 
     class CMR3ModelFactory:
         """Factory creating trial-specific CMR3 instances from CK2022 data."""

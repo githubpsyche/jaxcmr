@@ -1,9 +1,8 @@
-"""CMR with additive semantic associations.
-
-Extends the base CMR model by adding pre-experimental semantic
-associations (from a feature similarity matrix) to the MCF
-association matrix before retrieval.
-
+"""Additive semantic CMR uses the last recalled item to cue related items.
+For the first recall, the model uses temporal support alone. For later
+recalls it adds the last item's scaled similarity row to temporal support
+before applying choice sensitivity. The factory computes cosine
+similarities from vocabulary feature vectors.
 """
 
 
@@ -238,6 +237,32 @@ def make_factory(
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
+    """Build additive semantic CMR from vocabulary feature vectors.
+
+    The factory uses `pres_itemnos` to put vocabulary IDs from `pres_itemids`
+    in local item-code order. Each row of `features` describes one
+    vocabulary item. `None` gives zero semantic support. The trial model's
+    `semantic_scale` weights the similarity row added after a recall.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct item-to-context memory.
+    mcf_create_fn : MemoryCreateFn
+        Construct context-to-item memory.
+    context_create_fn : ContextCreateFn
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
+        Construct a stopping rule that accepts this trial model.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        Instantiate with `(dataset, features)` and call
+        `create_trial_model(trial_index, parameters)` to use that trial's
+        connections.
+    """
+
     class CMRModelFactory:
         def __init__(
             self,

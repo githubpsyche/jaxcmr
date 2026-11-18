@@ -272,24 +272,43 @@ def test_blended_reinstatement_is_continuous_at_sensitivity_one():
 
 
 def test_support_ratio_stopping_is_continuous_at_sensitivity_one():
-    from jaxcmr.models.ecmr import eCMR
     from jaxcmr.components.termination import SupportRatioTermination
+    from jaxcmr.models.ecmr import eCMR
 
     with jax.enable_x64(True):
         parameters = _BASE_PARAMS | {"choice_sensitivity": 1., "emotion_scale": 0.,
                                     "modulate_emotion_by_primacy": False, "stop_probability_growth": 2.}
-        model = eCMR(3, parameters, jnp.zeros(3, dtype=bool),
+        model = eCMR(4, parameters, jnp.zeros(4, dtype=bool),
                      termination_policy_create_fn=SupportRatioTermination)
         model = model.replace(
-            studied=jnp.ones(3, dtype=bool), recallable=jnp.array([False, True, True]),
-            recall_total=jnp.array(1),
-            mcf=model.mcf.replace(state=jnp.zeros_like(model.mcf.state).at[0].set(jnp.array([8., 2., 1.]))),
+            studied=jnp.ones(4, dtype=bool), recallable=jnp.array([False, False, True, True]),
+            recall_total=jnp.array(2),
+            mcf=model.mcf.replace(state=jnp.zeros_like(model.mcf.state).at[0].set(jnp.array([8., 2., 2., 1.]))),
             emotion_mcf=model.emotion_mcf.replace(state=jnp.zeros_like(model.emotion_mcf.state)),
         )
         stop = jax.jit(lambda scale: model.replace(mcf_sensitivity=scale).stop_probability())
-        # Recalled support [8] becomes [1+e]; remaining [2,1] becomes [1+e,1/2+e].
+        # Each group is scaled by its own maximum. At exponent s the two
+        # totals are 1 + (1/2)**s + 2*eps and 1 + (1/4)**s + 2*eps.
         epsilon = 2**-23
-        ratio = (1.5 + 2 * epsilon) / (1 + epsilon)
+        available = 1.5 + 2 * epsilon
+        unavailable = 1.25 + 2 * epsilon
+        ratio = available / unavailable
+        ratio_derivative = (0.5 * np.log(0.5) - ratio * 0.25 * np.log(0.25)) / unavailable
         np.testing.assert_allclose(stop(1.), 0.05 + np.exp(-2 * ratio))
         np.testing.assert_allclose(stop(1.), (stop(1 - 1e-5) + stop(1 + 1e-5)) / 2, atol=1e-10)
-        np.testing.assert_allclose(jax.grad(stop)(1.), np.exp(-2 * ratio) * np.log(2) / (1 + epsilon))
+        np.testing.assert_allclose(jax.grad(stop)(1.), -2 * np.exp(-2 * ratio) * ratio_derivative)
+
+
+def test_support_ratio_keeps_a_recalled_item_available_when_repeats_are_allowed():
+    from jaxcmr.components.termination import SupportRatioTermination
+    from jaxcmr.models.cmr import CMR
+
+    model = CMR(3, _BASE_PARAMS | {"allow_repeated_recalls": True},
+                termination_policy_create_fn=SupportRatioTermination)
+    after_recall = _run_sequence(model, [1, 2, 3], [2])
+    # All three candidates, including item 2, remain available. With zero
+    # unavailable support and positive growth, only the additive term remains.
+    assert after_recall.recall_total == 1
+    assert jax.jit(lambda state: state.stop_probability())(after_recall) == pytest.approx(
+        _BASE_PARAMS["stop_probability_scale"]
+    )

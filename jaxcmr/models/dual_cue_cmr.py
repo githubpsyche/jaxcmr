@@ -17,6 +17,7 @@ from jax import numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr._vendor.simple_pytree import Pytree
+from jaxcmr.components.termination import stop_when_exhausted
 from jaxcmr.math import (
     FLOAT32_EPS,
     exponential_primacy_decay,
@@ -171,13 +172,7 @@ class CMR(Pytree):
 
         Stops only when no items are recallable.
         """
-        #! no explicit stop probability - stops when nothing is recallable
-        total_recallable = jnp.sum(self.recallable)
-        return lax.cond(
-            jnp.logical_or(total_recallable == 0, ~self.is_active),
-            lambda: 1.0,
-            lambda: 0.0,
-        )
+        return stop_when_exhausted(self.is_active, jnp.sum(self.recallable))
 
     def item_probability(self, item_index: Int_) -> Float[Array, ""]:
         """Return the probability of retrieval of an item at the specified index.

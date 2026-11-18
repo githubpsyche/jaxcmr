@@ -1,4 +1,7 @@
-"""CMR with additive semantic associations from a similarity matrix."""
+"""This factory constructs the additive semantic CMR trial model from a
+precomputed vocabulary similarity matrix. Rows index the previously
+recalled item and columns index candidate items.
+"""
 
 
 
@@ -36,6 +39,31 @@ def make_factory(
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
+    """Build the same additive semantic model from a supplied similarity matrix.
+
+    The factory uses `pres_itemnos` to put vocabulary IDs from `pres_itemids`
+    in local item-code order. Supply a square matrix with the same
+    vocabulary along both axes. `None` gives zero semantic support. The trial
+    model uses the same `semantic_scale` as the feature-based additive model.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct item-to-context memory.
+    mcf_create_fn : MemoryCreateFn
+        Construct context-to-item memory.
+    context_create_fn : ContextCreateFn
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
+        Construct a stopping rule that accepts this trial model.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        Instantiate with `(dataset, features)`, passing the square matrix as
+        `features`. `create_trial_model` selects the corresponding trial matrix.
+    """
+
     class CMRModelFactory:
         def __init__(
             self,

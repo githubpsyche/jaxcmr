@@ -1,9 +1,7 @@
-"""CMR with multiplicative semantic associations.
-
-Extends the base CMR model by scaling item activations with
-pre-experimental semantic similarity before the retrieval
-competition, amplifying recall of semantically related items.
-
+"""Multiplicative semantic CMR combines temporal support with a semantic
+cue from the last recalled item. On the first recall the semantic factor
+is one for each available item. On later recalls the model scales the
+temporal and semantic support separately and multiplies them.
 """
 
 
@@ -233,6 +231,34 @@ def make_factory(
     context_create_fn: ContextCreateFn,
     termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
+    """Build multiplicative semantic CMR from vocabulary feature vectors.
+
+    The factory uses `pres_itemnos` to put vocabulary IDs from `pres_itemids`
+    in local item-code order. The model uses `choice_sensitivity`
+    for temporal support and `semantic_scale` for semantic support. With
+    positive `semantic_scale`, the strongest positive semantic match among
+    available items has weight one. If `features` is `None`, all semantic
+    connections are zero. After the first recall only the common support floor
+    remains among available items.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct item-to-context memory.
+    mcf_create_fn : MemoryCreateFn
+        Construct context-to-item memory.
+    context_create_fn : ContextCreateFn
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
+        Construct a stopping rule that accepts this trial model.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        Instantiate with `(dataset, features)` and use `create_trial_model` to
+        select the trial's connections.
+    """
+
     class CMRModelFactory:
         def __init__(
             self,

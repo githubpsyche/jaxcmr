@@ -1,10 +1,12 @@
-"""Temporal context utilities for memory search models.
+"""Temporal context is the cue a CMR model uses to retrieve items. At the start
+of a list, only the start-of-list unit is active. Studying or recalling an
+item can move context toward the pattern associated with that item.
 
-Implements the ``TemporalContext`` state object that maintains and
-updates the drifting temporal context vector central to CMR-family
-models. Supports standard integration, expanded representations,
-and outlist integration for repeated items.
-
+Use `context.init` when the model supplies only start-of-list and item cues.
+`TemporalContext.init_expanded` also reserves one fresh unit per item.
+Outlist CMR uses a fresh unit when it studies an item again. Source-switch
+models use one when a change of source triggers drift. Each call to
+`integrate_with_outlist` consumes one of these units.
 """
 
 __all__ = ["OutlistContext", "OutlistContextCreateFn", "TemporalContext", "integrate_normalized"]
@@ -22,10 +24,10 @@ from ..typing import Array, Context, ContextCreateFn, Float, Float_
 
 
 class OutlistContext(Context, Protocol):
-    """Context supporting fresh out-of-list input during study.
+    """Context that can mix in a fresh out-of-list cue during study.
 
-    Outlist CMR and source-switch models require this additional operation;
-    ordinary context integration only requires ``jaxcmr.typing.Context``.
+    Outlist CMR and the source-switch models call `integrate_with_outlist`
+    in addition to the ordinary `Context.integrate` operation.
     """
 
     def integrate_with_outlist(
@@ -42,7 +44,7 @@ class OutlistContext(Context, Protocol):
 
 
 class OutlistContextCreateFn(ContextCreateFn, Protocol):
-    """Construct context with the out-of-list capacity required by the model."""
+    """Create an `OutlistContext` from an item count."""
 
     def __call__(self, item_count: int) -> OutlistContext:
         """Return context with fresh units available for out-of-list updates."""
@@ -54,21 +56,22 @@ def integrate_normalized(
     context_input: Float[Array, " units"],
     drift_rate: Float_,
 ) -> Float[Array, " units"]:
-    """Integrate an already normalized input, including the exact-zero input.
+    """Update a context vector from a unit-length or zero input.
 
-    Shared by the event model and prepared sequence computations. Normalizing
-    inputs can happen outside a scan when they do not depend on its state.
+    Parameters
+    ----------
+    state : floating array, shape (units,)
+        Current context.
+    context_input : floating array, shape (units,)
+        Unit-length input pattern or an all-zero vector.
+    drift_rate : float
+        Weight given to the input, between zero and one.
 
-    Args:
-        state: Current context vector. Unit length is required for the usual
-            unit-length preservation guarantee with nonzero input.
-        context_input: Unit-length input, or an exactly zero vector, with the
-            same shape as state. This helper does not normalize its arguments.
-        drift_rate: Integration weight in [0, 1].
-
-    Returns:
-        Updated context. An exactly zero input multiplies state by
-        sqrt(1 - drift_rate**2), allowing contraction rather than renormalizing.
+    Returns
+    -------
+    updated_state : floating array, shape (units,)
+        With unit-length state and input, the result has unit length.
+        A zero input scales the state by `sqrt(1 - drift_rate**2)`.
     """
     overlap = jnp.dot(state, context_input)
     rho = jnp.sqrt(1 + drift_rate**2 * (overlap**2 - 1)) - drift_rate * overlap
@@ -76,28 +79,23 @@ def integrate_normalized(
 
 
 class TemporalContext(Pytree):
-    """Drifting, unit-length context representation.
+    """Temporal context for a single trial.
 
-    The vector starts with a *start-of-list* unit (index ``0``) set to ``1`` and
-    one unit per study item initialised to ``0``. For every nonzero input,
-    :meth:`integrate` drifts context toward the normalised input while preserving
-    unit length analytically. An exactly zero input instead contracts context
-    without renormalising it. The initial state is preserved to enable drift
-    back to the start-of-list context unit.
+    Unit zero represents the start of the list. Units 1 through `item_count`
+    represent the items. Any remaining units are available for out-of-list
+    input, in the order in which the model uses them. An update returns a
+    new context. Its `initial_state` still holds the start-of-list pattern.
 
-    An optional out-of-list context unit (index ``item_count + 1``) can be used
-    to simulate post-study drift, but unless the drift rate is near ``1``, it
-    does not affect behavior because CMR relies on relative differences between
-    context units.
+    Parameters
+    ----------
+    item_count : int
+        Number of item units.
+    size : int
+        Total number of units, including the start and any out-of-list units.
     """
 
     def __init__(self, item_count: int, size: int) -> None:
-        """Create a new temporal context model.
-
-        Args:
-            item_count: Number of items in the context model.
-            size: Size of the context representation.
-        """
+        """Set the start-of-list unit to one and all other units to zero."""
         self.size = size
         self.zeros = jnp.zeros(size)
         self.state = self.zeros.at[0].set(1)
@@ -109,16 +107,21 @@ class TemporalContext(Pytree):
         context_input: Float[Array, " context_feature_units"],
         drift_rate: Float_,
     ) -> "TemporalContext":
-        """Return context after analytically integrating a normalized input.
+        """Move the current state toward an input pattern.
 
-        Nonzero input is normalized before integration. If the current state is
-        unit length, the CMR retention factor ``rho`` keeps the updated state
-        unit length without another normalization step. Exactly zero input is
-        left at zero, allowing the state magnitude to contract.
+        Parameters
+        ----------
+        context_input : floating array, shape (context_feature_units,)
+            Input in context coordinates. A nonzero pattern is scaled to unit
+            length before integration.
+        drift_rate : float
+            Weight given to the input, between zero and one.
 
-        Args:
-            context_input: Input representation to integrate.
-            drift_rate: Drift rate parameter.
+        Returns
+        -------
+        TemporalContext
+            Updated context with the same next out-of-list unit. A zero input
+            scales the current state by `sqrt(1 - drift_rate**2)`.
         """
         context_input = normalize_magnitude(context_input)
         return self.replace(
@@ -144,7 +147,11 @@ class TemporalContext(Pytree):
 
     @property
     def outlist_input(self) -> Float[Array, " context_feature_units"]:
-        """Returns the out-of-list context input."""
+        """One-hot cue for the next unused out-of-list unit.
+
+        Reading the cue leaves it available for the next update. The context
+        must have an out-of-list unit remaining.
+        """
         return self.zeros.at[self.next_outlist_unit].set(1)
 
     def integrate_with_outlist(
@@ -153,42 +160,66 @@ class TemporalContext(Pytree):
         ratio: Float_,
         drift_rate: Float_,
     ) -> "TemporalContext":
-        """Integrate in-list input mixed with out-of-list context.
+        """Mix an item cue with a fresh out-of-list cue and update context.
 
-        Will produce errors if no out-of-list context units are available.
+        Parameters
+        ----------
+        inlist_input : floating array, shape (context_feature_units,)
+            In-list input in context coordinates. A nonzero input is scaled
+            to unit length before mixing.
+        ratio : float
+            Weight on the in-list cue. The fresh unit receives weight
+            `1 - ratio`. The mixture is normalized before integration.
+        drift_rate : float
+            Weight given to the mixed cue, between zero and one.
 
-        Args:
-            inlist_input: Input representation to integrate.
-            ratio: Weight on the in-list input; out-of-list input receives 1 - ratio.
-            drift_rate: Drift rate parameter.
+        Returns
+        -------
+        TemporalContext
+            Updated context with the next out-of-list index advanced by one.
+            Each call requires one unused unit, even when `ratio` is one or
+            `drift_rate` is zero.
         """
         context_input = normalize_magnitude(
             (normalize_magnitude(inlist_input) * ratio)
             + (self.outlist_input * (1 - ratio))
         )
-        overlap = jnp.dot(self.state, context_input)
-        rho = jnp.sqrt(1 + jnp.square(drift_rate) * (jnp.square(overlap) - 1)) - (
-            drift_rate * overlap
-        )
+        # Square Python scalar rates at JAX precision, as for array rates.
         return self.replace(
-            state=(rho * self.state) + (drift_rate * context_input),
+            state=integrate_normalized(self.state, context_input, jnp.asarray(drift_rate)),
             next_outlist_unit=self.next_outlist_unit + 1,
         )
 
     @classmethod
     def init_expanded(cls, item_count: int) -> "TemporalContext":
-        """Returns context with additional out-of-list capacity.
+        """Create context with one fresh out-of-list unit per item.
 
-        Args:
-            item_count: Number of items in the context model.
+        Parameters
+        ----------
+        item_count : int
+            Number of item units and number of available out-of-list updates.
+
+        Returns
+        -------
+        TemporalContext
+            Context with `1 + 2 * item_count` units. The first fresh unit has
+            index `item_count + 1`.
         """
         return cls(item_count, item_count + item_count + 1)
 
 
 def init(item_count: int) -> "TemporalContext":
-    """Returns context sized for ``item_count`` items.
+    """Create context with one start-of-list unit and one unit per item.
 
-    Args:
-        item_count: Number of items in the context model.
+    Parameters
+    ----------
+    item_count : int
+        Number of item units.
+
+    Returns
+    -------
+    TemporalContext
+        Context with `1 + item_count` units. Use this constructor for models
+        that call only `integrate`.
     """
     return TemporalContext(item_count, item_count + 1)

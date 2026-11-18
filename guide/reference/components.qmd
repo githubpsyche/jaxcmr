@@ -1,0 +1,21 @@
+---
+title: "Model components"
+---
+
+## Context
+
+[Temporal context](components-context.qmd) updates the current context from an input pattern and a drift rate. Models that introduce fresh out-of-list units also require a context initialized with room for those units. [Context interface](typing.qmd#jaxcmr.typing.Context)
+
+## Associative memory
+
+[Linear memory](components-linear-memory.qmd) adds associations to a matrix. [Instance memory](components-instance-memory.qmd) keeps a trace for each association. Suppose a cue matches two stored inputs with strengths 2 and 1. Linear retrieval weights their outputs by 2 and 1. Instance retrieval at sensitivity one weights them by 1 and 0.5. Its `probe_without_scale` method recovers the raw weights.
+
+Both modules supply `init_mfc` for item-to-context memory and `init_mcf` for context-to-item memory. [Memory interface](typing.qmd#jaxcmr.typing.Memory)
+
+## Stopping rules
+
+The [stopping rules](components-termination.qmd) use candidate availability, output position, support for recalled items, or an explicit STOP candidate. Each entry identifies the information its rule needs from a model.
+
+## Preparing trial inputs
+
+The [trial-input operations](components-factory.qmd) match local item codes to vocabulary IDs and valence categories. Semantic and emotional model factories use these rows to look up the recalled item even when it appeared more than once.

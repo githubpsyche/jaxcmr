@@ -431,23 +431,29 @@ def make_factory(
         eCMR
     ] = PositionalTermination,
 ) -> type[MemorySearchModelFactory]:
-    """Build an eCMR factory for the CK2022 fitting pipeline.
+    """Build eCMR with separate source features for emotional and neutral items.
+
+    The dataset supplies `pres_itemids` and study-position `valence`. Both
+    positive and negative values cue the emotional feature. Zero cues the
+    neutral feature. The model sums support from temporal and emotional
+    context before applying choice sensitivity.
 
     Parameters
     ----------
     mfc_create_fn : MemoryCreateFn, optional
-        Factory for item-to-context memory.
+        Construct temporal item-to-context memory.
     mcf_create_fn : MemoryCreateFn, optional
-        Factory for context-to-item memory.
+        Construct temporal context-to-item memory.
     context_create_fn : ContextCreateFn, optional
-        Factory for temporal context.
-    termination_policy_create_fn : TerminationPolicyCreateFn, optional
-        Factory for recall termination policy.
+        Construct temporal context for the trial.
+    termination_policy_create_fn : TerminationPolicyCreateFn[eCMR], optional
+        Construct a stopping rule that accepts this trial model.
 
     Returns
     -------
     type[MemorySearchModelFactory]
-
+        Instantiate with `(dataset, features=None)`. Each trial model receives an
+        emotional-item mask in local item-code order.
     """
 
     class eCMRModelFactory:

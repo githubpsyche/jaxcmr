@@ -1,16 +1,21 @@
 """Numerical boundaries of context drift, memory updates, and stopping."""
 
 from types import SimpleNamespace
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
+
 from jaxcmr.components import context, instance_memory, linear_memory
 from jaxcmr.components.termination import (
     NoStopTermination,
-    RetrievalDependentTermination,
     PositionalTermination,
+    RetrievalDependentTermination,
     SupportRatioTermination,
+    positional_stop_probability,
+    stop_when_exhausted,
+    support_ratio_stop_probability,
 )
 
 
@@ -65,6 +70,7 @@ def test_linear_memory_association_probe_and_erasure():
         (PositionalTermination, [True] * 3, True, 0, 0.01),
         (PositionalTermination, [True] * 3, True, 2, 0.01 * np.exp(1.0)),
         (PositionalTermination, [True] * 3, False, 0, 1.0),
+        (PositionalTermination, [True] * 3, True, 5, 0.01 * np.exp(1.0)),
         (SupportRatioTermination, [False] * 3, True, 0, 1.0),
         (SupportRatioTermination, [False, True, True], True, 1, 0.01 + np.exp(-2.5)),
     ],
@@ -83,6 +89,18 @@ def test_stopping_probabilities(policy, recallable, active, total, expected):
         3, {"stop_probability_scale": 0.01, "stop_probability_growth": 0.5}
     ).stop_probability(model)
     assert result == pytest.approx(expected, rel=1e-6)
+    inputs = {"is_active": active, "available_count": sum(recallable)}
+    if policy is NoStopTermination:
+        assert jax.jit(stop_when_exhausted)(**inputs) == result
+    elif policy is PositionalTermination:
+        schedule = 0.01 * jnp.exp(0.5 * jnp.arange(3))
+        assert jax.jit(positional_stop_probability)(schedule, total, **inputs) == result
+    elif policy is SupportRatioTermination:
+        support = np.array([2.0, 4.0, 6.0])
+        assert jax.jit(support_ratio_stop_probability)(
+            support[recallable].sum(), support[~np.array(recallable)].sum(),
+            scale=0.01, growth=0.5, **inputs,
+        ) == pytest.approx(expected, rel=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -172,6 +190,7 @@ def test_instance_memory_stores_traces_and_distinguishes_scaled_and_raw_probes()
     )
 
 
+@pytest.mark.parametrize("memory_module", [linear_memory, instance_memory], ids=["linear", "instance"])
 @pytest.mark.parametrize(
     "direction,expected",
     [
@@ -179,8 +198,8 @@ def test_instance_memory_stores_traces_and_distinguishes_scaled_and_raw_probes()
         ("mcf", [[0, 0], [1.5, 0.2], [0.2, 1.5], [0, 0], [0, 0]]),
     ],
 )
-def test_instance_memory_creators_preserve_item_alignment_and_spare_context(
-    direction, expected
+def test_memory_creators_align_items_in_expanded_context(
+    memory_module, direction, expected
 ):
     parameters = {
         "learning_rate": 0.4,
@@ -189,10 +208,11 @@ def test_instance_memory_creators_preserve_item_alignment_and_spare_context(
         "mcf_trace_sensitivity": 1.0,
     }
     creator = (
-        instance_memory.init_mfc if direction == "mfc" else instance_memory.init_mcf
+        memory_module.init_mfc if direction == "mfc" else memory_module.init_mcf
     )
     memory = creator(2, parameters, context.TemporalContext.init_expanded(2))
-    np.testing.assert_array_equal(memory.state[2:], np.zeros((2, 7)))
+    if memory_module is instance_memory:
+        np.testing.assert_array_equal(memory.state[2:], np.zeros((2, 7)))
     # Basis probes expose item/context alignment, including start and outlist units.
     responses = jax.jit(jax.vmap(memory.probe))(jnp.eye(memory.input_size))
     np.testing.assert_allclose(responses, expected, rtol=1e-6)

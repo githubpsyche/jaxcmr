@@ -1,9 +1,12 @@
-"""Context Maintenance and Retrieval (CMR) model of memory search.
+"""Context Maintenance and Retrieval (CMR) represents each item once per trial.
+Studying an item moves temporal context toward that item's associated context
+and strengthens the associations in both directions. A second presentation
+updates the same item's associations.
 
-Implements the core CMR architecture: study-phase context
-integration, associative encoding via outer-product learning, and
-retrieval via context-cued competition with a Luce choice rule.
-
+At recall, the current context cues the available items. The stopping policy
+gives the probability of ending recall. Conditional on continuing, each item's
+probability is proportional to its retrieval support. Recalling an item
+reinstates its associated context, changing the cue for the next response.
 """
 
 
@@ -43,6 +46,7 @@ __all__ = [
 
 
 class CMR(Pytree):
+    """Maintain item associations and temporal context for one recall trial."""
 
     def __init__(
         self,
@@ -60,10 +64,10 @@ class CMR(Pytree):
         Parameters
         ----------
         list_length : int
-            Number of items in the study list.
+            Capacity for within-list item codes 1 through ``list_length``.
         parameters : Parameters
-            Model parameters including drift rates, learning rates, and
-            sensitivity values.
+            Values governing study, retrieval and the selected components.
+            See the parameter names below.
         mfc_create_fn : MemoryCreateFn, optional
             Factory function for item-to-context memory (M_FC).
         mcf_create_fn : MemoryCreateFn, optional
@@ -71,7 +75,23 @@ class CMR(Pytree):
         context_create_fn : ContextCreateFn, optional
             Factory function for temporal context representation.
         termination_policy_create_fn : TerminationPolicyCreateFn[CMR], optional
-            Factory for a compatible stopping rule; defaults to PositionalTermination.
+            Build the stopping rule. The default is ``PositionalTermination``.
+
+        Notes
+        -----
+        - Context drift. ``encoding_drift_rate``, ``start_drift_rate``, and
+          ``recall_drift_rate`` govern context change during study, at the start
+          of retrieval, and after each recalled item, respectively.
+        - Learning. ``learn_after_context_update`` selects the context after
+          the study update when true and before it when false. ``learning_rate``
+          sets item-to-context learning. ``primacy_scale`` and ``primacy_decay``
+          set context-to-item learning by study position.
+        - Recall. ``choice_sensitivity`` is the exponent applied to retrieval
+          support. ``allow_repeated_recalls`` keeps a recalled item available
+          when true.
+        - Default components. Linear memory uses ``shared_support`` and
+          ``item_support`` for initial context-to-item associations. Positional
+          stopping uses ``stop_probability_scale`` and ``stop_probability_growth``.
 
         """
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
@@ -230,7 +250,14 @@ class CMR(Pytree):
     def candidate_activations(
         self, candidates: Bool[Array, " item_count"]
     ) -> Float[Array, " item_count"]:
-        """Compute retrieval activations for candidate items.
+        """Score a specified set of items against the current context.
+
+        Parameters
+        ----------
+        candidates : Boolean array
+            One entry per item. The largest support among the selected items
+            sets the scale before applying ``choice_sensitivity``. A caller can
+            include previously recalled items in this mask.
 
         Returns
         -------
@@ -347,13 +374,16 @@ def make_factory(
         Factory function for context-to-item memory (M_CF).
     context_create_fn : ContextCreateFn
         Factory function for temporal context representation.
-    termination_policy_create_fn : TerminationPolicyCreateFn
+    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
         Factory function for recall termination policy.
 
     Returns
     -------
     type[MemorySearchModelFactory]
-        A factory class that creates CMR model instances.
+        A factory class for a loss or simulator. Instantiate it with a dataset
+        and optional features. Each call to ``create_trial_model`` creates a
+        fresh model with the dataset's maximum list length. Ordinary CMR uses
+        the same initialization for every trial and ignores vocabulary features.
 
     """
 
@@ -365,7 +395,7 @@ def make_factory(
         dataset : RecallDataset
             Dataset containing recall trials with list length information.
         features : Float[Array, " word_pool_items features_count"] or None
-            Optional semantic feature vectors for items in the word pool.
+            Accepted for the shared factory interface and unused by ordinary CMR.
 
         """
 

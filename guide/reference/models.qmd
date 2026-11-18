@@ -1,0 +1,32 @@
+---
+title: "Memory-search models"
+---
+
+## Context Maintenance and Retrieval
+
+[Ordinary CMR](models-cmr.qmd) learns associations between items and temporal context. Its factory combines two associative memories, a context, and a stopping rule. The [model interface](typing.qmd#jaxcmr.typing.MemorySearch) describes the events that simulators and losses use.
+
+## Semantic associations
+
+The first recall uses temporal support. After that, the last recalled item cues semantic support for the next response. Two choices determine which factory to use.
+
+| Combination at retrieval | Vocabulary input | Factory |
+|---|---|---|
+| Add semantic support to temporal support, then apply choice sensitivity | One feature vector per item | [Additive, from features](models-factories.qmd#jaxcmr.models.additive_semantic_cmr.make_factory) |
+| Same additive calculation | Pairwise similarity matrix | [Additive, from similarities](models-factories.qmd#jaxcmr.models.additive_semantic_matrix_cmr.make_factory) |
+| Scale the two sources separately, then multiply | One feature vector per item | [Multiplicative, from features](models-factories.qmd#jaxcmr.models.multiplicative_semantic_cmr.make_factory) |
+
+## Emotional source context
+
+Both models add support from temporal and emotional context when choosing the next item. They differ in what a studied item's valence initially cues.
+
+| Model | Negative item | Neutral item | Positive item |
+|---|---|---|---|
+| [eCMR](models-factories.qmd#jaxcmr.models.ecmr.make_factory) | Emotional feature | Neutral feature | Emotional feature |
+| [CMR3](models-factories.qmd#jaxcmr.models.cmr3.make_factory) | Negative feature | No initial valence association | Positive feature |
+
+The [trial-input reference](components-factory.qmd) shows how valence and vocabulary IDs are matched to the model's item codes.
+
+## Repeated presentations
+
+[Positional CMR](models-positional.qmd) learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The [RepFR model configurations](https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py) identify the reinforcement and reinstatement variants used in that project's comparisons.
