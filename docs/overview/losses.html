@@ -149,10 +149,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="../development.html"> 
-<span class="menu-text">Development</span></a>
-  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -433,7 +429,7 @@ NLL from the loss call: 13.62458774145214</code></pre>
 </section>
 <section id="behavioral-summary-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="behavioral-summary-objectives">Behavioral-summary objectives</h2>
-<p><code>jaxcmr.loss.mse.make_factory()</code> binds named <code>RecallAnalysisFn</code> callbacks into a loss class with the same fitting interface. It compares observed and simulated summaries rather than assigning a likelihood to each recorded response. <a href="../overview/analyses.html#recallanalysisfn">Recall Analyses</a> shows the callback contract and an adapter using the existing SPC calculation.</p>
+<p><code>jaxcmr.loss.mse.make_factory()</code> binds named <code>RecallAnalysisFn</code> callbacks into a loss class with the same fitting interface. It compares observed and simulated summaries rather than assigning a likelihood to each recorded response. <a href="../overview/analyses.html#recallanalysisfn">Recall Analyses</a> shows the callback contract and uses the existing SPC calculation directly.</p>
 <p>Its weights, scales and reduction determine how summary discrepancies contribute to the objective. Such a value is not NLL and cannot be put into an AIC formula. JAX-compatible simulation also does not by itself provide useful pathwise gradients through discrete recall samples.</p>
 </section>
 <section id="selecting-observations" class="level2">

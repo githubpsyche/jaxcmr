@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Development – JAXCMR</title>
+<title>Contributing to JAXCMR – JAXCMR</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -147,10 +147,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link" href="./templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link active" href="./development.html" aria-current="page"> 
-<span class="menu-text">Development</span></a>
-  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -175,18 +171,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#prepare-the-environment" id="toc-prepare-the-environment" class="nav-link active" data-scroll-target="#prepare-the-environment">Prepare the environment</a></li>
-  <li><a href="#edit-and-check-notebooks" id="toc-edit-and-check-notebooks" class="nav-link" data-scroll-target="#edit-and-check-notebooks">Edit and check notebooks</a></li>
-  <li><a href="#test-the-library-and-installation" id="toc-test-the-library-and-installation" class="nav-link" data-scroll-target="#test-the-library-and-installation">Test the library and installation</a></li>
-  <li><a href="#where-shared-operations-live" id="toc-where-shared-operations-live" class="nav-link" data-scroll-target="#where-shared-operations-live">Where shared operations live</a></li>
-  <li><a href="#keep-validation-proportionate" id="toc-keep-validation-proportionate" class="nav-link" data-scroll-target="#keep-validation-proportionate">Keep validation proportionate</a></li>
-  <li><a href="#maintain-the-supplied-examples" id="toc-maintain-the-supplied-examples" class="nav-link" data-scroll-target="#maintain-the-supplied-examples">Maintain the supplied examples</a></li>
-  <li><a href="#saved-settings-and-older-notebooks" id="toc-saved-settings-and-older-notebooks" class="nav-link" data-scroll-target="#saved-settings-and-older-notebooks">Saved settings and older notebooks</a></li>
-  <li><a href="#build-and-preview-the-website" id="toc-build-and-preview-the-website" class="nav-link" data-scroll-target="#build-and-preview-the-website">Build and preview the website</a></li>
-  <li><a href="#maintain-api-reference-pages" id="toc-maintain-api-reference-pages" class="nav-link" data-scroll-target="#maintain-api-reference-pages">Maintain API reference pages</a></li>
-  <li><a href="#publication-and-release-handover" id="toc-publication-and-release-handover" class="nav-link" data-scroll-target="#publication-and-release-handover">Publication and release handover</a></li>
-  <li><a href="#known-padded-list-plotting-issue" id="toc-known-padded-list-plotting-issue" class="nav-link" data-scroll-target="#known-padded-list-plotting-issue">Known padded-list plotting issue</a></li>
-  <li><a href="#analysis-modules-and-reference-pages" id="toc-analysis-modules-and-reference-pages" class="nav-link" data-scroll-target="#analysis-modules-and-reference-pages">Analysis modules and reference pages</a></li>
+  <li><a href="#prepare-the-environment" id="toc-prepare-the-environment" class="nav-link active" data-scroll-target="#prepare-the-environment">Set up a checkout</a></li>
+  <li><a href="#change-and-test-the-library" id="toc-change-and-test-the-library" class="nav-link" data-scroll-target="#change-and-test-the-library">Change and test the library</a></li>
+  <li><a href="#edit-notebooks-and-documentation" id="toc-edit-notebooks-and-documentation" class="nav-link" data-scroll-target="#edit-notebooks-and-documentation">Edit notebooks and documentation</a>
+  <ul class="collapse">
+  <li><a href="#change-a-notebook" id="toc-change-a-notebook" class="nav-link" data-scroll-target="#change-a-notebook">Change a notebook</a></li>
+  <li><a href="#change-an-api-reference-entry" id="toc-change-an-api-reference-entry" class="nav-link" data-scroll-target="#change-an-api-reference-entry">Change an API reference entry</a></li>
+  <li><a href="#change-an-input-supplied-with-the-package" id="toc-change-an-input-supplied-with-the-package" class="nav-link" data-scroll-target="#change-an-input-supplied-with-the-package">Change an input supplied with the package</a></li>
+  <li><a href="#preview-and-share-your-change" id="toc-preview-and-share-your-change" class="nav-link" data-scroll-target="#preview-and-share-your-change">Preview and share your change</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -195,7 +188,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Development</h1>
+<h1 class="title">Contributing to JAXCMR</h1>
 </div>
 
 
@@ -212,122 +205,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>For changes to JAXCMR itself, use the optional repository checkout described in <a href="./developer-setup.html">Local setup with VS Code</a>. Run these commands from the repository root.</p>
+<p>The Python source lives in <code>jaxcmr/</code> and the tests in <code>tests/</code>. If you’re editing something readers see on the website, your starting point might be a Python docstring, a guide page, or a template notebook.</p>
 <section id="prepare-the-environment" class="level2">
-<h2 class="anchored" data-anchor-id="prepare-the-environment">Prepare the environment</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test <span class="at">--group</span> reader</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This installs the editable library, development tools, and notebook-test dependencies in one environment. The <code>test</code> extra adds only pytest. The default <code>dev</code> group includes the build and notebook tools for optional local checks; library CI does not install that group. Optional groups remain available: <code>--group embeddings</code> for sentence-transformers, <code>--group profiling</code> for line-profiler, and <code>--extra experimental</code> for the experimental Numba helper.</p>
-</section>
-<section id="edit-and-check-notebooks" class="level2">
-<h2 class="anchored" data-anchor-id="edit-and-check-notebooks">Edit and check notebooks</h2>
-<p>Edit original notebooks in <code>templates/</code> or <code>guide/</code>, preserving useful saved outputs. Their short installation cells run only in Colab. Local and Slurm kernels use the environment the reader selected.</p>
-<p>While changing executable code, run the affected cases:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_notebooks.py <span class="at">--select</span> cat_recall_rate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run all 17 cases before publishing changes to shared setup, example inputs, or library functionality:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_notebooks.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The runner uses nbmake and pytest with two workers in the current environment. It executes temporary notebook copies, reduces workloads for testing, and reopens saved results in a separate process. The spreadsheet case uses synthetic inputs. Original notebook parameters and outputs are never rewritten. <code>--jobs 1</code> runs serially; <code>--platform windows</code> selects the representative Windows cases. The report identifies the environment used and separates preparation and execution time.</p>
-<p>Notebook execution is a local maintainer tool; GitHub Actions does not run notebooks or tests that execute notebook cells.</p>
-<p>For prose and saved-output changes, render and check the website; execution is needed when calculations change. Adding a published notebook also requires adding its bounded case to the notebook test runner.</p>
-</section>
-<section id="test-the-library-and-installation" class="level2">
-<h2 class="anchored" data-anchor-id="test-the-library-and-installation">Test the library and installation</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests <span class="at">-m</span> <span class="st">"not audit"</span> <span class="dt">\</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_distribution.py <span class="dt">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_reader_checks.py <span class="dt">\</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_template_adaptation.py <span class="dt">\</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a>  <span class="at">--ignore</span><span class="op">=</span>tests/test_documentation.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>While editing, select the relevant test file instead of repeating the full suite. Routine checks include scientific calculations, public validation, and complete modeling workflows. Two additional <code>audit</code> cases check compilation reuse across prepared participant selections in the experimental gradient and evolutionary CMR fitters:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests <span class="at">-m</span> audit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run these checks before releases and when changing experimental CMR preparation or fitting compilation.</p>
-<p>Ordinary fitting uses <code>LossFn</code> with explicit trial indices. OptimizedCMR’s prepared observations and selection cache belong in <code>jaxcmr/experimental/optimized_cmr.py</code>; its fitting adapters belong in <code>jaxcmr/experimental/optimized_cmr_fitting.py</code>. Keep their types and preparation methods out of the ordinary model/loss protocols. The ordinary optimizer routines accept numerical objectives and are shared without importing the experimental implementation. Unfiltered pytest still includes the audit, notebook-related and distribution tests. Routine CI runs only the library selection above, against a normal installation made with <code>python -m pip install ".[test]"</code>. It uses <code>python -P -m pytest</code> so Python does not import the adjacent checkout in place of the installed package. This tests dependency resolution from the package requirements; local editable development still uses <code>uv.lock</code>.</p>
-<p>The optional local distribution tests build a wheel and source archive, rebuild from the archive, and install into a clean environment outside the checkout. They check the installed README example and offline preparation of all bundled inputs. Library tests cover input conflicts and custom paths; notebook checks exercise the current published notebooks. This separate installation check needs internet access for dependencies and does not run in CI:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests/test_distribution.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>New tests should catch incorrect behavior using independently established numerical answers or supported workflows. Put short derivations beside analytic expectations; identify historical regression values as such. Check observable results rather than private object identities, and use small doubles only at necessary boundaries. Required checks must not silently skip because private data is unavailable. When an assertion’s strength is uncertain, temporarily introduce the suspected fault and confirm that it fails for the intended reason. Keep the behavioral assertion, without adding a permanent test that reruns another test. Test our notebook preparation and result validation directly; rely on nbmake and pytest for notebook execution and failure reporting.</p>
-<p>See the <a href="https://github.com/githubpsyche/jaxcmr/blob/main/tests/fixtures/README.md">test fixtures</a> and <a href="https://github.com/githubpsyche/jaxcmr/blob/main/.github/workflows/tests.yml">CI workflow</a>.</p>
-</section>
-<section id="where-shared-operations-live" class="level2">
-<h2 class="anchored" data-anchor-id="where-shared-operations-live">Where shared operations live</h2>
-<p>Use <code>jaxcmr.dataset</code> for dataset construction, trial and recall selections, and participant grouping. <code>jaxcmr.repetition</code> handles repeated items and shuffled controls; <code>jaxcmr.math</code> contains numerical primitives. Shared figure creation and the <code>save_figure</code> interface live in <code>jaxcmr.plotting</code>; analysis-specific plots stay with their analyses.</p>
-<p><code>jaxcmr.analyses._study_positions</code> is private to the measurement analyses. It computes presentation-inclusion masks and recall indicators; public analyses own aggregation, weighting and interpretation. Keep measurement availability separate from recall classification, including when an item appears repeatedly. The operations in <code>repetition.py</code> return position indices for individual items; the private analysis helpers return Boolean matrices over trials and positions.</p>
-<p>The <a href="./reference/helpers.html"><code>jaxcmr.helpers</code> reference</a> groups file, path, and configuration utilities implemented in <code>jaxcmr/helpers.py</code>. Import these functions directly from <code>jaxcmr.helpers</code>. Dataset operations belong in <code>jaxcmr.dataset</code>; repeated-item operations belong in <code>jaxcmr.repetition</code>.</p>
-<p><code>helpers.load_hdf5_arrays</code> reads named arrays without requiring recall fields. Use <code>load_data</code> for a <code>RecallDataset</code>, or the generic reader for other observations such as temporal judgments. Both read the same transposed <code>/data</code> layout written by <code>save_dict_to_hdf5</code>. For non-recall data, apply <code>limit_to_first_subjects</code> explicitly when participant selection is needed.</p>
-<p>All project-path functions return <code>Path</code>. <code>find_project_root</code> requires an enclosing marker; <code>resolve_project_root</code> supplies the documented current-directory fallback. Use <code>str(path)</code> where another interface requires a string, such as <code>sys.path</code>.</p>
-<p><code>jaxcmr.plotting.save_figure</code> requires <code>figure=</code> and saves without displaying. Call <code>plt.show()</code> explicitly to display figures. For display-only output, call <code>figure.tight_layout()</code> and <code>plt.show()</code> without saving. The saving implementation lives alongside the other figure operations in <code>jaxcmr/plotting.py</code>.</p>
-<p>The package-level <code>jaxcmr.make_dataset</code> and <code>jaxcmr.load_data</code> entry points remain available. <code>RecallDataset</code> and shared annotations live in <code>jaxcmr.typing</code>. <code>jaxcmr.fitting.parameters.bound_params</code> clips parameter columns to their bounds; its existing re-export from <code>summarize</code> remains. The unused <code>load_opt_params</code> loader and <code>OptimizationParameters</code> type have been removed. Read JSON settings in the caller when needed; this change introduces no replacement configuration format. <code>summarize</code> owns descriptive parameter tables and statistical comparisons.</p>
-<p>Declare type aliases with the Python 3.12 <code>type</code> statement. Use <code>Parameters</code> for a mapping containing one set of scalar model settings; participant columns and optimizer populations retain their explicitly shaped array annotations.</p>
-</section>
-<section id="keep-validation-proportionate" class="level2">
-<h2 class="anchored" data-anchor-id="keep-validation-proportionate">Keep validation proportionate</h2>
-<p>Treat annotations and documented preconditions as caller responsibilities. This includes array shapes, matching labels and masks, supported model inputs, and valid option values. Do not add guards or negative tests solely to police those requirements. Explain them beside the operation; use precise annotations where practical. Broad annotations such as <code>Any</code> do not justify extra guards.</p>
-<p>Keep numerical functions focused on their calculations. Document valid input shapes, codes and configuration; rely on ordinary array errors instead of repeating shape, dtype and key checks in kernels. Valid inputs must compose with JAX transformations, including numerical parameters passed through <code>vmap</code>.</p>
-<p>Preparation is not an exception: ordinary fitting and analysis calls trust their documented inputs. Keep normalization, participant alignment and observation preparation themselves. Do not add equivalent checks through a wrapper or a strict zip over caller-supplied collections.</p>
-<p>Clients own input validity and saved-fit reuse, including checks they choose to perform explicitly. Do not add standalone validators or move their implementation into notebooks. Document the required inputs and reuse decisions beside the calls.</p>
-<p>Keep external-file protections, internal invariants, and failures encountered during computation (including nonconvergence, precision collapse and undefined AICc). Scientific eligibility masks, padding and missing-observation rules remain part of the calculation. Preserve supported numerical tests; remove only the invalid-call portions of tests that also exercise useful behavior.</p>
-</section>
-<section id="maintain-the-supplied-examples" class="level2">
-<h2 class="anchored" data-anchor-id="maintain-the-supplied-examples">Maintain the supplied examples</h2>
-<p>The eleven selected files under <code>data/</code> and their fit methods document are the authoritative inputs. Packaging explicitly includes them; other research data and results remain excluded. The library’s <code>copy_example_inputs(paths, base_dir=...)</code> copies only requested bundled examples, reuses matching files, and preserves conflicts and custom paths. Copying works offline; the examples come from the installed package. It does not check whether custom inputs exist or are ready to load.</p>
-<p>When changing a supplied input, update its methods or source notes as needed. The filenames are listed in <code>jaxcmr/examples.py</code>; adding an example also requires including it in the package configuration. Import <code>copy_example_inputs</code> from <code>jaxcmr.examples</code>. Reinstall the editable package to refresh its bundled resources, then run the notebook and distribution checks:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test <span class="at">--group</span> reader <span class="at">--reinstall-package</span> jaxcmr</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The website stages downloads from those same authoritative files. Notebook explanation and analysis changes can be published without a package release. Library and bundled data changes require readers to update their installation; the Git installation route does not require a PyPI release.</p>
-</section>
-<section id="saved-settings-and-older-notebooks" class="level2">
-<h2 class="anchored" data-anchor-id="saved-settings-and-older-notebooks">Saved settings and older notebooks</h2>
-<p>Fit and simulation records describe the models, parameters, input paths, selected rows and run settings. Reuse checks compare these settings; fitting also recalculates the saved objective. Changes to data or code at an existing location require rerunning the affected calculations. Keep the input files and notebook with results you intend to reproduce.</p>
-<p>Automatic source capture and the former <code>jaxcmr.provenance</code> module have been removed. Use <code>load_matching_simulation</code> from <code>jaxcmr.simulation</code> to load responses whose saved settings match a requested run. Keep regeneration decisions in the caller; the settings comparison is private. Update older notebook copies that import <code>capture_notebook</code> or <code>file_sha256</code> from <code>jaxcmr.provenance</code>; those functions and the <code>provenance_dir</code>, <code>provenance_source_paths</code> and <code>notebook_source</code> controls are no longer used. Existing records can retain obsolete digest fields, which no longer govern reuse.</p>
-</section>
-<section id="build-and-preview-the-website" class="level2">
-<h2 class="anchored" data-anchor-id="build-and-preview-the-website">Build and preview the website</h2>
-<p>Use <a href="https://github.com/quarto-dev/quarto-cli/releases/tag/v1.11.9">Quarto 1.11.9</a>, available on your command path, matching CI:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--group</span> docs</span>
-<span id="cb8-2"><a href="#cb8-2" aria-label="2"></a><span class="fu">bash</span> build-docs.sh</span>
-<span id="cb8-3"><a href="#cb8-3" aria-label="3"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_site.py docs</span>
-<span id="cb8-4"><a href="#cb8-4" aria-label="4"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> http.server 8786 <span class="at">--bind</span> 127.0.0.1 <span class="at">--directory</span> docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Open <code>http://127.0.0.1:8786/</code>. The build stages notebook pages and byte-for-byte source downloads before rendering, without executing notebooks. It removes retired generated files and protects source directories. Do not edit <code>guide/templates/</code>, <code>guide/downloads/</code>, or rendered HTML. Rebuild after edits; the file server serves the rebuilt pages.</p>
-<p>Colab links and installation commands follow <code>main</code>. A local preview’s download includes local changes; its Colab button still opens the last pushed notebook.</p>
-</section>
-<section id="maintain-api-reference-pages" class="level2">
-<h2 class="anchored" data-anchor-id="maintain-api-reference-pages">Maintain API reference pages</h2>
-<p>API reference pages, including <a href="./reference/plotting.html">plotting</a>, <a href="./reference/simulation.html">simulation</a> and <a href="./reference/typing.html">shared types</a>, use the module docstring as their introduction. Each then shows grouped summary tables followed by the complete API entries.</p>
-<p>Maintain the headings, membership and order in one Quartodoc configuration per module, such as <code>guide/reference/_plotting.yml</code> or <code>_typing.yml</code>. The build uses those groups for the tables and entry order. Quarto generates the page outline from the resulting headings, with the function links under <strong>API entries</strong>. Do not edit the generated content or duplicate the lists in the page’s <code>.qmd</code> file.</p>
-<p>Edit explanations, parameter meanings and return descriptions in the Python docstrings. Use NumPy-style <code>Parameters</code> and <code>Returns</code>/<code>Yields</code> sections for public operations where applicable; existing Google-style sections remain supported. The build reads source text without executing the documented functions.</p>
-<p>Install the <code>docs</code> dependency group and use Quarto 1.11.9. To rebuild one page, run this from <code>guide/</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-label="1"></a><span class="ex">quarto</span> render reference/simulation.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>That command regenerates only the simulation reference and skips notebook staging. Run it again after changing a Python docstring or the grouping YAML; a running preview does not guarantee detection of those external inputs. Use <code>quarto render reference</code> to rebuild all reference pages with one preparation step after a shared layout change. <code>quarto render</code> prepares all references and downloads before building the full site. Running <code>uv run --no-sync python prepare.py</code> directly also prepares all inputs without rendering. No LLM is involved in any of these commands.</p>
-<p>Shared page settings live in <code>guide/reference/_metadata.yml</code>, styling in <code>reference.css</code>, and renderer extensions in <code>guide/_api_renderer.py</code>. Quartodoc’s single-page builder and Griffe supply source parsing, groups and API tables; our renderer places the overview and index before the entries and adjusts their presentation. The preparation step adapts Python 3.12 type aliases for Quartodoc 0.11; their definitions and descriptions still come from source. The renderer labels protocols as interfaces and includes field descriptions for typed dictionaries. Generated files in <code>guide/reference/_generated/</code> are ignored build inputs. Review the affected page after a documentation edit, and all reference pages after a shared layout change. Existing website checks cover local links and notebook downloads.</p>
-</section>
-<section id="publication-and-release-handover" class="level2">
-<h2 class="anchored" data-anchor-id="publication-and-release-handover">Publication and release handover</h2>
-<p>The routine <strong>Checks and website</strong> workflow runs on pull requests targeting <code>main</code>, pushes to <code>main</code>, and manual requests. It has four testing/build jobs:</p>
+<h2 class="anchored" data-anchor-id="prepare-the-environment">Set up a checkout</h2>
+<p>A checkout is your local copy of the repository. Open a terminal in its top-level folder, the one containing <code>pyproject.toml</code> and <code>uv.lock</code>. If you still need a copy, follow the <a href="./developer-setup.html#optional-repository-checkout">checkout instructions</a>. Run the commands on this page from that folder.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="ex">uv</span> sync <span class="at">--locked</span> <span class="at">--extra</span> test <span class="at">--group</span> reader <span class="at">--group</span> docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>uv sync</code> prepares a Python environment in <code>.venv</code> and installs JAXCMR from your checkout. The next time you start Python in that environment, it uses your edited source. Syncing can remove packages outside the selection from an existing environment.</p>
 <ul>
-<li><strong>Library tests (Linux, macOS and Windows):</strong> one shared job definition runs separately on all three platforms, using Python 3.12 and CPU execution. Each installs JAXCMR normally with <code>pip install ".[test]"</code>, then runs the same library tests and exclusions. A failure on one platform does not cancel the other platform runs.</li>
-<li><strong>Website:</strong> a Quarto build, download/link checks, and a downloadable preview artifact.</li>
+<li><code>--locked</code> uses the package versions recorded in <code>uv.lock</code>. If the lockfile needs updating, uv stops and tells you.</li>
+<li><code>--extra test</code> includes pytest, the program that runs the library tests.</li>
+<li><code>--group reader</code> adds tools for running and checking notebooks.</li>
+<li><code>--group docs</code> adds the Python tools for generating the API reference. To render web pages, also install <a href="https://github.com/quarto-dev/quarto-cli/releases/tag/v1.11.9">Quarto 1.11.9</a>.</li>
 </ul>
-<p>Feature-branch pushes do not also trigger a second run for an open pull request. Open a draft pull request to get automatic checks while working on a branch. There is no file-based change selection; each routine run performs the four jobs.</p>
-<p>CI does not execute notebooks, test notebook cells or run the separate distribution rehearsal. The website build renders saved outputs and verifies download copies and links without executing notebooks. There is no additional platform-compatibility workflow. Notebook and distribution tools remain available for local use.</p>
-<p>After the one-time Pages handover below, pushing documentation sources to <code>main</code> builds and publishes the website automatically. Local rendering remains useful for previewing changes; publishing no longer depends on committing generated HTML. Pull requests produce downloadable previews without publishing them.</p>
-<p>Deployment waits for the Linux, macOS, Windows and website jobs to pass, then publishes the website artifact from that same run. It also checks that its commit is still the latest <code>main</code>. A manual workflow run can publish <code>main</code> through the same checks. No additional repository variable is required.</p>
-<p>For the one-time handover:</p>
-<ol type="1">
-<li>Push the reviewed workflow and its supporting source changes. In repository <strong>Settings → Pages → Build and deployment</strong>, change <strong>Source</strong> from <strong>Deploy from a branch</strong> to <strong>GitHub Actions</strong>.</li>
-<li>Run or rerun <strong>Checks and website</strong> for the current <code>main</code> commit, and verify that the library, website and deployment jobs all succeed. If branch rules require the previous job names, update those required checks when adopting this workflow.</li>
-<li>Verify the public Setup pages, notebook downloads, example inputs, and Colab links. Check changed notebooks in hosted Colab separately, including a fresh runtime and your own input/output files.</li>
-<li>After the replacement deployment is verified, remove <code>docs/</code> from Git tracking and add <code>/docs/</code> to <code>.gitignore</code>, keeping local rendered files available for previews.</li>
-</ol>
-<p>Until the handover is completed, retain the tracked <code>docs/</code> site and the existing branch-based publishing configuration. If the replacement deployment fails, the previous public site remains available; fix the failure and rerun the workflow.</p>
-<p>PyPI publication remains separate. Before publishing a release, review the library and website checks, run the compilation audits, and select any additional local notebook or distribution checks needed for the changes being released. After publication, verify installation from PyPI in a clean environment before changing the short installation commands. A PyPI release is not required for ordinary notebook improvements or Git-based distribution.</p>
 </section>
-<section id="known-padded-list-plotting-issue" class="level2">
-<h2 class="anchored" data-anchor-id="known-padded-list-plotting-issue">Known padded-list plotting issue</h2>
-<p>A dataset can store a two-item list in four presentation columns, with trailing zeros and <code>listLength=2</code>. <code>spc</code> returns four positions, while <code>plot_spc</code> currently builds a two-position axis from <code>find_max_list_length</code>, causing a dimension mismatch. This needs a separate plotting correction that aligns displayed positions with the calculated scores. <code>find_max_list_length</code> continues to report declared study lengths; changing it to return storage width would change its meaning. The dataset refactor does not alter this behavior.</p>
+<section id="change-and-test-the-library" class="level2">
+<h2 class="anchored" data-anchor-id="change-and-test-the-library">Change and test the library</h2>
+<p>The serial position curve answers a question about each study position. What fraction of the items presented there were recalled? The calculation is <code>spc</code> in <code>jaxcmr/analyses/spc.py</code>. Its tests are in <code>tests/test_recall_measures.py</code>. Run them once before editing so you know which checks already pass.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> pytest tests/test_recall_measures.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>uv run --no-sync</code> uses the environment you just prepared and skips the installation step. <code>python -m pytest</code> starts pytest with that environment’s Python. The path selects one test file. At the end, pytest reports how many tests passed or failed. For a failure, it shows the test name and the comparison that failed.</p>
+<p>Give your change a test whose expected result you can work out by hand. Suppose the study lists are <code>[A, B, A]</code> and <code>[C, D]</code>. The participant recalls A twice on the first trial and nothing on the second. Each position where A was studied gets credit once. The recall fractions for positions 1, 2, and 3 are <strong>1/2, 0/2, and 1/1</strong>. Only the first list contributes to the third denominator. In the test file, look for <code>test_position_codes_recall_all_presentations_without_double_counting</code> to see how a similar list and its expected scores are written in Python. Run the same test command after editing the function and its test.</p>
+<p>If you change how the experimental CMR fitters prepare observations, run <code>uv run --no-sync python -m pytest -m audit</code>. Here <code>-m audit</code> selects the tests that check whether JAX can reuse a compiled calculation when the selected trials change.</p>
 </section>
-<section id="analysis-modules-and-reference-pages" class="level2">
-<h2 class="anchored" data-anchor-id="analysis-modules-and-reference-pages">Analysis modules and reference pages</h2>
-<p>Keep trial calculations, participant summaries and specialized plotters together when they describe the same measure. <code>analyses.statistics</code> owns finite-pair comparisons and bootstrap intervals. Shared study-position and transition array operations are internal; eligibility and history decisions remain visible in the analysis that owns them. Existing repetition tabulators support research subclasses, so preserve their methods when consolidating calculations.</p>
-<p>The <a href="./reference/analyses.html">analysis reference</a> groups the public modules by measure. Provisional measures have a <a href="./reference/experimental.html">separate index</a>. Each module page uses the existing <code>_analyses-*.yml</code> or <code>_experimental-*.yml</code> group definition and the source docstrings. There is no additional generator.</p>
-<p>For new scientific conventions, retain a counted example with its denominator. Rerun affected summaries when changing an estimator; do not treat preserved notebook outputs or saved research reports as regenerated evidence. Item-recall deduplication, repeated-presentation credit, pooled RPL bins and finite-pair statistics can change those summaries without requiring a model refit.</p>
+<section id="edit-notebooks-and-documentation" class="level2">
+<h2 class="anchored" data-anchor-id="edit-notebooks-and-documentation">Edit notebooks and documentation</h2>
+<section id="change-a-notebook" class="level3">
+<h3 class="anchored" data-anchor-id="change-a-notebook">Change a notebook</h3>
+<p>To change the category recall rate template, open <code>templates/cat_recall_rate.ipynb</code>. Tutorial and Library Guide notebooks live in <code>guide/tutorials/</code> and <code>guide/overview/</code>. If you change a calculation, select the checkout’s Python environment as the notebook kernel, run the cells, and save the output you want readers to see. For a text-only edit, the existing output can stay.</p>
+<p>You can then test the saved template from the terminal.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-label="1"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_notebooks.py <span class="at">--select</span> cat_recall_rate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The script runs a temporary copy with a small workload and checks its results. Your original keeps the settings and output you saved. The script prints the path to a report showing which notebooks passed. <code>--select</code> picks one notebook by its name, such as <code>cat_recall_rate</code>. Omit it to run the whole collection.</p>
+</section>
+<section id="change-an-api-reference-entry" class="level3">
+<h3 class="anchored" data-anchor-id="change-an-api-reference-entry">Change an API reference entry</h3>
+<p>Suppose you’re clarifying the entry for <code>simulate_dataset</code>. Edit the description inside that function in <code>jaxcmr/simulation.py</code> (its <em>docstring</em>). The docstring at the top of the module supplies the page introduction. To add an entry or move it under a different heading, edit the list in <code>guide/reference/_simulation.yml</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">quarto</span> render guide/reference/simulation.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This rebuilds the simulation reference page. Open <code>docs/reference/simulation.html</code> and follow the function’s link in the summary table to check the description a reader will see.</p>
+</section>
+<section id="change-an-input-supplied-with-the-package" class="level3">
+<h3 class="anchored" data-anchor-id="change-an-input-supplied-with-the-package">Change an input supplied with the package</h3>
+<p>If a notebook uses one of JAXCMR’s bundled datasets or saved fits, edit the source file under <code>data/</code>. For a new file, also add its path to <code>_EXAMPLE_FILES</code> in <code>jaxcmr/examples.py</code>, so <code>copy_example_inputs</code> recognizes it, and to the wheel and source-archive file lists in <code>pyproject.toml</code>, so it ships with the package.</p>
+<p>Add <code>--reinstall-package jaxcmr</code> to the setup command above to refresh the installed copy of the data. Rerun the notebook that reads it. To check that someone installing the package also receives the file, run <code>uv run --no-sync python -m pytest tests/test_distribution.py</code>. These tests build and install the package in a fresh environment and need internet access for dependencies.</p>
+</section>
+<section id="preview-and-share-your-change" class="level3">
+<h3 class="anchored" data-anchor-id="preview-and-share-your-change">Preview and share your change</h3>
+<p>Build a local copy of the website to review a change to the guide or templates.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="fu">bash</span> build-docs.sh</span>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_site.py docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first command builds the site in <code>docs/</code> using the outputs already saved in the notebooks. The second checks local links, notebook downloads, and example files. Open <code>docs/index.html</code> and follow the link to the page you changed. To inspect a revised notebook, use its download link. <strong>Open in Colab</strong> opens the version on GitHub’s <code>main</code> branch.</p>
+<p>To propose a code or documentation change, open a pull request asking to merge the edits on your branch into JAXCMR. If you’re working in your own copy on GitHub, follow <a href="https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork">GitHub’s instructions for submitting from a fork</a>. Describe what will change for readers or researchers and how you checked it. GitHub runs the routine library tests on Linux, macOS, and Windows and checks the website build. The notebook runner and the clean-install tests run locally, so include their results if you ran them.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

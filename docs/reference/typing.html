@@ -289,10 +289,6 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="../development.html"> 
-<span class="menu-text">Development</span></a>
-  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -811,7 +807,6 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#jaxcmr.typing.MemorySearchModelFactory" id="toc-jaxcmr.typing.MemorySearchModelFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearchModelFactory">MemorySearchModelFactory</a></li>
   <li><a href="#jaxcmr.typing.TrialSimulator" id="toc-jaxcmr.typing.TrialSimulator" class="nav-link" data-scroll-target="#jaxcmr.typing.TrialSimulator">TrialSimulator</a></li>
   <li><a href="#jaxcmr.typing.LikelihoodMaskFn" id="toc-jaxcmr.typing.LikelihoodMaskFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LikelihoodMaskFn">LikelihoodMaskFn</a></li>
-  <li><a href="#jaxcmr.typing.RecallAnalysisFn" id="toc-jaxcmr.typing.RecallAnalysisFn" class="nav-link" data-scroll-target="#jaxcmr.typing.RecallAnalysisFn">RecallAnalysisFn</a></li>
   <li><a href="#jaxcmr.typing.LossFn" id="toc-jaxcmr.typing.LossFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFn">LossFn</a></li>
   <li><a href="#jaxcmr.typing.LossFactory" id="toc-jaxcmr.typing.LossFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFactory">LossFactory</a></li>
   <li><a href="#jaxcmr.typing.FittingAlgorithm" id="toc-jaxcmr.typing.FittingAlgorithm" class="nav-link" data-scroll-target="#jaxcmr.typing.FittingAlgorithm">FittingAlgorithm</a></li>
@@ -933,14 +928,10 @@ ul.task-list li input[type="checkbox"] {
 <td>Choose which recorded recall events contribute to a likelihood.</td>
 </tr>
 <tr class="even">
-<td><a href="#jaxcmr.typing.RecallAnalysisFn"><code>RecallAnalysisFn</code></a></td>
-<td>Calculate a fixed-shape behavioral summary from a recall dataset.</td>
-</tr>
-<tr class="odd">
 <td><a href="#jaxcmr.typing.LossFn"><code>LossFn</code></a></td>
 <td>Score candidate parameter vectors on selected observations.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#jaxcmr.typing.LossFactory"><code>LossFactory</code></a></td>
 <td>Construct a loss from a model factory, observations and features.</td>
 </tr>
@@ -2320,38 +2311,6 @@ ul.task-list li input[type="checkbox"] {
 </section>
 </section>
 </section>
-<section id="jaxcmr.typing.RecallAnalysisFn" class="level3 api-entry">
-<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.RecallAnalysisFn">RecallAnalysisFn</h3>
-<div class="api-signature">
-<code>jaxcmr.typing.RecallAnalysisFn: Protocol</code>
-</div>
-<p>Calculate a fixed-shape behavioral summary from a recall dataset.</p>
-<p>Observations and simulations use the same study-position recall codes. Simulated repetitions are ordinary trial rows with repeated metadata. The analysis defines aggregation and weighting, must support JAX tracing, and may return nonfinite values for undefined observed bins.</p>
-<section id="methods-10" class="level4">
-<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#jaxcmr.typing.RecallAnalysisFn.__call__"><code>__call__</code></a></td>
-<td>Return a numerical summary, with the same shape for both datasets.</td>
-</tr>
-</tbody>
-</table>
-<section id="jaxcmr.typing.RecallAnalysisFn.__call__" class="level5">
-<h5 class="anchored" data-anchor-id="jaxcmr.typing.RecallAnalysisFn.__call__"><code>__call__</code></h5>
-<div class="api-signature">
-<code>jaxcmr.typing.RecallAnalysisFn.__call__(dataset, /)</code>
-</div>
-<p>Return a numerical summary, with the same shape for both datasets.</p>
-</section>
-</section>
-</section>
 <section id="jaxcmr.typing.LossFn" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.LossFn">LossFn</h3>
 <div class="api-signature">
@@ -2359,8 +2318,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Score candidate parameter vectors on selected observations.</p>
 <p>Fitters initialize a loss with the model factory, dataset and features. Each call supplies selected trial rows, base parameters and a matrix of candidate values for the free parameters. Lower objective values are better; the chosen loss defines the measure, such as negative log likelihood or behavioral mean squared error.</p>
-<section id="methods-11" class="level4">
-<h4 class="anchored" data-anchor-id="methods-11">Methods</h4>
+<section id="methods-10" class="level4">
+<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2460,8 +2419,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Construct a loss from a model factory, observations and features.</p>
 <p>Classes and configured callables such as functools.partial can implement this interface. The returned object supplies population scoring.</p>
-<section id="methods-12" class="level4">
-<h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
+<section id="methods-11" class="level4">
+<h4 class="anchored" data-anchor-id="methods-11">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2492,8 +2451,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Fit one pooled parameter set or separate parameter sets by participant.</p>
 <p>Construct an implementation with a dataset, model factory, loss class and optimizer settings. <code>fit</code> uses all selected observations in one objective; <code>fit_subjects</code> fits the selected participants separately. Both return a <code>FitResult</code> with parameter columns and optimizer outcomes aligned by row.</p>
-<section id="methods-13" class="level4">
-<h4 class="anchored" data-anchor-id="methods-13">Methods</h4>
+<section id="methods-12" class="level4">
+<h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">

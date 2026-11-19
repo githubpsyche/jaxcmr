@@ -16,7 +16,7 @@ recall sampling makes this loss suitable for derivative-free search.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Literal
+from typing import Literal, Protocol
 
 import jax.numpy as jnp
 from jax import random, vmap
@@ -33,7 +33,6 @@ from jaxcmr.typing import (
     MemorySearch,
     MemorySearchModelFactory,
     Parameters,
-    RecallAnalysisFn,
     RecallDataset,
 )
 
@@ -41,8 +40,23 @@ __all__ = [
     "MemorySearchCatSpcMseLoss",
     "MemorySearchMseLoss",
     "MemorySearchSpcMseLoss",
+    "RecallAnalysisFn",
     "make_factory",
 ]
+
+
+class RecallAnalysisFn(Protocol):
+    """Calculate a fixed-shape behavioral summary from a recall dataset.
+
+    Observations and simulations use the same study-position recall codes.
+    Simulated repetitions are ordinary trial rows with repeated metadata.
+    The analysis defines aggregation and weighting, must support JAX tracing,
+    and may return nonfinite values for undefined observed bins.
+    """
+
+    def __call__(self, dataset: RecallDataset, /) -> Array:
+        """Return a numerical summary, with the same shape for both datasets."""
+        ...
 
 
 class MemorySearchMseLoss:

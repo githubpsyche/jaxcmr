@@ -289,10 +289,6 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link" href="../templates.html"> 
 <span class="menu-text">Templates</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="../development.html"> 
-<span class="menu-text">Development</span></a>
-  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item compact">
@@ -795,6 +791,7 @@ ul.task-list li input[type="checkbox"] {
   <ul class="collapse">
   <li><a href="#jaxcmr.loss.mse.MemorySearchMseLoss" id="toc-jaxcmr.loss.mse.MemorySearchMseLoss" class="nav-link" data-scroll-target="#jaxcmr.loss.mse.MemorySearchMseLoss">MemorySearchMseLoss</a></li>
   <li><a href="#jaxcmr.loss.mse.make_factory" id="toc-jaxcmr.loss.mse.make_factory" class="nav-link" data-scroll-target="#jaxcmr.loss.mse.make_factory">make_factory</a></li>
+  <li><a href="#jaxcmr.loss.mse.RecallAnalysisFn" id="toc-jaxcmr.loss.mse.RecallAnalysisFn" class="nav-link" data-scroll-target="#jaxcmr.loss.mse.RecallAnalysisFn">RecallAnalysisFn</a></li>
   <li><a href="#jaxcmr.loss.mse.MemorySearchSpcMseLoss" id="toc-jaxcmr.loss.mse.MemorySearchSpcMseLoss" class="nav-link" data-scroll-target="#jaxcmr.loss.mse.MemorySearchSpcMseLoss">MemorySearchSpcMseLoss</a></li>
   <li><a href="#jaxcmr.loss.mse.MemorySearchCatSpcMseLoss" id="toc-jaxcmr.loss.mse.MemorySearchCatSpcMseLoss" class="nav-link" data-scroll-target="#jaxcmr.loss.mse.MemorySearchCatSpcMseLoss">MemorySearchCatSpcMseLoss</a></li>
   </ul></li>
@@ -838,6 +835,10 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td><a href="#jaxcmr.loss.mse.make_factory"><code>make_factory</code></a></td>
 <td>Bind dataset analyses and scoring settings into a fitter’s loss class.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.loss.mse.RecallAnalysisFn"><code>RecallAnalysisFn</code></a></td>
+<td>Calculate a fixed-shape behavioral summary from a recall dataset.</td>
 </tr>
 </tbody>
 </table>
@@ -1142,6 +1143,38 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
+</section>
+</section>
+<section id="jaxcmr.loss.mse.RecallAnalysisFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.loss.mse.RecallAnalysisFn">RecallAnalysisFn</h3>
+<div class="api-signature">
+<code>jaxcmr.loss.mse.RecallAnalysisFn: Protocol</code>
+</div>
+<p>Calculate a fixed-shape behavioral summary from a recall dataset.</p>
+<p>Observations and simulations use the same study-position recall codes. Simulated repetitions are ordinary trial rows with repeated metadata. The analysis defines aggregation and weighting, must support JAX tracing, and may return nonfinite values for undefined observed bins.</p>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.loss.mse.RecallAnalysisFn.__call__"><code>__call__</code></a></td>
+<td>Return a numerical summary, with the same shape for both datasets.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.loss.mse.RecallAnalysisFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.loss.mse.RecallAnalysisFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.loss.mse.RecallAnalysisFn.__call__(dataset, /)</code>
+</div>
+<p>Return a numerical summary, with the same shape for both datasets.</p>
+</section>
 </section>
 </section>
 <section id="jaxcmr.loss.mse.MemorySearchSpcMseLoss" class="level3 api-entry">

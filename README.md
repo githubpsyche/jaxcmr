@@ -33,20 +33,10 @@ The authoritative notebooks remain in [templates/](templates/). Other notebooks
 in that collection are research examples with varying dependencies and
 maintenance status; they are not part of the fourteen published templates.
 
-## Development and testing
+## Contributing
 
-From the repository root:
-
-```sh
-uv sync
-```
-
-The repository selects Python 3.12 and installs the default notebook and development
-tools. Follow the [Local setup with VS Code](guide/developer-setup.ipynb) for VS Code and kernel
-selection. See [Development](guide/development.qmd) for running tests, adding
-regressions and editing the documentation. Embeddings, profiling and
-Numba tooling are opt-in dependency groups or extras described in the
-[development guide](guide/development.qmd#prepare-the-environment).
+See [Contributing to JAXCMR](guide/development.qmd) to set up a checkout, test a
+change to a recall measure, or edit the notebooks and API reference.
 
 ## Paper draft
 

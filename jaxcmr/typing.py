@@ -58,7 +58,6 @@ __all__ = [
     "PRNGKeyArray",
     "Parameters",
     "Real",
-    "RecallAnalysisFn",
     "RecallDataset",
     "Shaped",
     "TerminationPolicy",
@@ -533,20 +532,6 @@ class LikelihoodMaskFn(Protocol):
         Bool[Array, "recall_events"]
             Keep-mask aligned to the supplied sequence. The chosen rule determines
             whether the first zero contributes as a stop event."""
-        ...
-
-
-class RecallAnalysisFn(Protocol):
-    """Calculate a fixed-shape behavioral summary from a recall dataset.
-
-    Observations and simulations use the same study-position recall codes.
-    Simulated repetitions are ordinary trial rows with repeated metadata.
-    The analysis defines aggregation and weighting, must support JAX tracing,
-    and may return nonfinite values for undefined observed bins.
-    """
-
-    def __call__(self, dataset: RecallDataset, /) -> Array:
-        """Return a numerical summary, with the same shape for both datasets."""
         ...
 
 
