@@ -49,9 +49,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -405,6 +405,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -801,39 +807,38 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#values-and-trial-data" id="toc-values-and-trial-data" class="nav-link active" data-scroll-target="#values-and-trial-data">Values and trial data</a></li>
-  <li><a href="#model-components" id="toc-model-components" class="nav-link" data-scroll-target="#model-components">Model components</a></li>
-  <li><a href="#models-and-trial-procedures" id="toc-models-and-trial-procedures" class="nav-link" data-scroll-target="#models-and-trial-procedures">Models and trial procedures</a></li>
-  <li><a href="#objectives" id="toc-objectives" class="nav-link" data-scroll-target="#objectives">Objectives</a></li>
-  <li><a href="#fitting-and-results" id="toc-fitting-and-results" class="nav-link" data-scroll-target="#fitting-and-results">Fitting and results</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.typing.Float_" id="toc-jaxcmr.typing.Float_" class="nav-link" data-scroll-target="#jaxcmr.typing.Float_">Float_</a></li>
-  <li><a href="#jaxcmr.typing.Int_" id="toc-jaxcmr.typing.Int_" class="nav-link" data-scroll-target="#jaxcmr.typing.Int_">Int_</a></li>
-  <li><a href="#jaxcmr.typing.Bool_" id="toc-jaxcmr.typing.Bool_" class="nav-link" data-scroll-target="#jaxcmr.typing.Bool_">Bool_</a></li>
-  <li><a href="#jaxcmr.typing.Parameters" id="toc-jaxcmr.typing.Parameters" class="nav-link" data-scroll-target="#jaxcmr.typing.Parameters">Parameters</a></li>
-  <li><a href="#jaxcmr.typing.RecallDataset" id="toc-jaxcmr.typing.RecallDataset" class="nav-link" data-scroll-target="#jaxcmr.typing.RecallDataset">RecallDataset</a></li>
-  <li><a href="#jaxcmr.typing.Memory" id="toc-jaxcmr.typing.Memory" class="nav-link" data-scroll-target="#jaxcmr.typing.Memory">Memory</a></li>
-  <li><a href="#jaxcmr.typing.MemoryCreateFn" id="toc-jaxcmr.typing.MemoryCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.MemoryCreateFn">MemoryCreateFn</a></li>
-  <li><a href="#jaxcmr.typing.Context" id="toc-jaxcmr.typing.Context" class="nav-link" data-scroll-target="#jaxcmr.typing.Context">Context</a></li>
-  <li><a href="#jaxcmr.typing.ContextCreateFn" id="toc-jaxcmr.typing.ContextCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ContextCreateFn">ContextCreateFn</a></li>
-  <li><a href="#jaxcmr.typing.ResponsePolicy" id="toc-jaxcmr.typing.ResponsePolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicy">ResponsePolicy</a></li>
-  <li><a href="#jaxcmr.typing.ResponsePolicyCreateFn" id="toc-jaxcmr.typing.ResponsePolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicyCreateFn">ResponsePolicyCreateFn</a></li>
-  <li><a href="#jaxcmr.typing.TerminationPolicy" id="toc-jaxcmr.typing.TerminationPolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicy">TerminationPolicy</a></li>
-  <li><a href="#jaxcmr.typing.TerminationPolicyCreateFn" id="toc-jaxcmr.typing.TerminationPolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicyCreateFn">TerminationPolicyCreateFn</a></li>
-  <li><a href="#jaxcmr.typing.MemorySearch" id="toc-jaxcmr.typing.MemorySearch" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearch">MemorySearch</a></li>
-  <li><a href="#jaxcmr.typing.MemorySearchModelFactory" id="toc-jaxcmr.typing.MemorySearchModelFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearchModelFactory">MemorySearchModelFactory</a></li>
-  <li><a href="#jaxcmr.typing.TrialSimulator" id="toc-jaxcmr.typing.TrialSimulator" class="nav-link" data-scroll-target="#jaxcmr.typing.TrialSimulator">TrialSimulator</a></li>
-  <li><a href="#jaxcmr.typing.LikelihoodMaskFn" id="toc-jaxcmr.typing.LikelihoodMaskFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LikelihoodMaskFn">LikelihoodMaskFn</a></li>
-  <li><a href="#jaxcmr.typing.LossFn" id="toc-jaxcmr.typing.LossFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFn">LossFn</a></li>
-  <li><a href="#jaxcmr.typing.LossFactory" id="toc-jaxcmr.typing.LossFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFactory">LossFactory</a></li>
-  <li><a href="#jaxcmr.typing.FittingAlgorithm" id="toc-jaxcmr.typing.FittingAlgorithm" class="nav-link" data-scroll-target="#jaxcmr.typing.FittingAlgorithm">FittingAlgorithm</a></li>
-  <li><a href="#jaxcmr.typing.FitResult" id="toc-jaxcmr.typing.FitResult" class="nav-link" data-scroll-target="#jaxcmr.typing.FitResult">FitResult</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#values-and-trial-data" id="toc-values-and-trial-data" class="nav-link active" data-scroll-target="#values-and-trial-data">Values and trial data</a></li>
+    <li><a href="#model-components" id="toc-model-components" class="nav-link" data-scroll-target="#model-components">Model components</a></li>
+    <li><a href="#models-and-trial-procedures" id="toc-models-and-trial-procedures" class="nav-link" data-scroll-target="#models-and-trial-procedures">Models and trial procedures</a></li>
+    <li><a href="#objectives" id="toc-objectives" class="nav-link" data-scroll-target="#objectives">Objectives</a></li>
+    <li><a href="#fitting-and-results" id="toc-fitting-and-results" class="nav-link" data-scroll-target="#fitting-and-results">Fitting and results</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.typing.Float_" id="toc-jaxcmr.typing.Float_" class="nav-link" data-scroll-target="#jaxcmr.typing.Float_">Float_</a></li>
+    <li><a href="#jaxcmr.typing.Int_" id="toc-jaxcmr.typing.Int_" class="nav-link" data-scroll-target="#jaxcmr.typing.Int_">Int_</a></li>
+    <li><a href="#jaxcmr.typing.Bool_" id="toc-jaxcmr.typing.Bool_" class="nav-link" data-scroll-target="#jaxcmr.typing.Bool_">Bool_</a></li>
+    <li><a href="#jaxcmr.typing.Parameters" id="toc-jaxcmr.typing.Parameters" class="nav-link" data-scroll-target="#jaxcmr.typing.Parameters">Parameters</a></li>
+    <li><a href="#jaxcmr.typing.RecallDataset" id="toc-jaxcmr.typing.RecallDataset" class="nav-link" data-scroll-target="#jaxcmr.typing.RecallDataset">RecallDataset</a></li>
+    <li><a href="#jaxcmr.typing.Memory" id="toc-jaxcmr.typing.Memory" class="nav-link" data-scroll-target="#jaxcmr.typing.Memory">Memory</a></li>
+    <li><a href="#jaxcmr.typing.MemoryCreateFn" id="toc-jaxcmr.typing.MemoryCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.MemoryCreateFn">MemoryCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.Context" id="toc-jaxcmr.typing.Context" class="nav-link" data-scroll-target="#jaxcmr.typing.Context">Context</a></li>
+    <li><a href="#jaxcmr.typing.ContextCreateFn" id="toc-jaxcmr.typing.ContextCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ContextCreateFn">ContextCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.ResponsePolicy" id="toc-jaxcmr.typing.ResponsePolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicy">ResponsePolicy</a></li>
+    <li><a href="#jaxcmr.typing.ResponsePolicyCreateFn" id="toc-jaxcmr.typing.ResponsePolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicyCreateFn">ResponsePolicyCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.TerminationPolicy" id="toc-jaxcmr.typing.TerminationPolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicy">TerminationPolicy</a></li>
+    <li><a href="#jaxcmr.typing.TerminationPolicyCreateFn" id="toc-jaxcmr.typing.TerminationPolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicyCreateFn">TerminationPolicyCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.MemorySearch" id="toc-jaxcmr.typing.MemorySearch" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearch">MemorySearch</a></li>
+    <li><a href="#jaxcmr.typing.MemorySearchModelFactory" id="toc-jaxcmr.typing.MemorySearchModelFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearchModelFactory">MemorySearchModelFactory</a></li>
+    <li><a href="#jaxcmr.typing.TrialSimulator" id="toc-jaxcmr.typing.TrialSimulator" class="nav-link" data-scroll-target="#jaxcmr.typing.TrialSimulator">TrialSimulator</a></li>
+    <li><a href="#jaxcmr.typing.LikelihoodMaskFn" id="toc-jaxcmr.typing.LikelihoodMaskFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LikelihoodMaskFn">LikelihoodMaskFn</a></li>
+    <li><a href="#jaxcmr.typing.LossFn" id="toc-jaxcmr.typing.LossFn" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFn">LossFn</a></li>
+    <li><a href="#jaxcmr.typing.LossFactory" id="toc-jaxcmr.typing.LossFactory" class="nav-link" data-scroll-target="#jaxcmr.typing.LossFactory">LossFactory</a></li>
+    <li><a href="#jaxcmr.typing.FittingAlgorithm" id="toc-jaxcmr.typing.FittingAlgorithm" class="nav-link" data-scroll-target="#jaxcmr.typing.FittingAlgorithm">FittingAlgorithm</a></li>
+    <li><a href="#jaxcmr.typing.FitResult" id="toc-jaxcmr.typing.FitResult" class="nav-link" data-scroll-target="#jaxcmr.typing.FitResult">FitResult</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -857,7 +862,43 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#values-and-trial-data" id="toc-values-and-trial-data-body">Values and trial data</a></li>
+    <li><a href="#model-components" id="toc-model-components-body">Model components</a></li>
+    <li><a href="#models-and-trial-procedures" id="toc-models-and-trial-procedures-body">Models and trial procedures</a></li>
+    <li><a href="#objectives" id="toc-objectives-body">Objectives</a></li>
+    <li><a href="#fitting-and-results" id="toc-fitting-and-results-body">Fitting and results</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.typing.Float_" id="toc-jaxcmr.typing.Float_-body">Float_</a></li>
+    <li><a href="#jaxcmr.typing.Int_" id="toc-jaxcmr.typing.Int_-body">Int_</a></li>
+    <li><a href="#jaxcmr.typing.Bool_" id="toc-jaxcmr.typing.Bool_-body">Bool_</a></li>
+    <li><a href="#jaxcmr.typing.Parameters" id="toc-jaxcmr.typing.Parameters-body">Parameters</a></li>
+    <li><a href="#jaxcmr.typing.RecallDataset" id="toc-jaxcmr.typing.RecallDataset-body">RecallDataset</a></li>
+    <li><a href="#jaxcmr.typing.Memory" id="toc-jaxcmr.typing.Memory-body">Memory</a></li>
+    <li><a href="#jaxcmr.typing.MemoryCreateFn" id="toc-jaxcmr.typing.MemoryCreateFn-body">MemoryCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.Context" id="toc-jaxcmr.typing.Context-body">Context</a></li>
+    <li><a href="#jaxcmr.typing.ContextCreateFn" id="toc-jaxcmr.typing.ContextCreateFn-body">ContextCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.ResponsePolicy" id="toc-jaxcmr.typing.ResponsePolicy-body">ResponsePolicy</a></li>
+    <li><a href="#jaxcmr.typing.ResponsePolicyCreateFn" id="toc-jaxcmr.typing.ResponsePolicyCreateFn-body">ResponsePolicyCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.TerminationPolicy" id="toc-jaxcmr.typing.TerminationPolicy-body">TerminationPolicy</a></li>
+    <li><a href="#jaxcmr.typing.TerminationPolicyCreateFn" id="toc-jaxcmr.typing.TerminationPolicyCreateFn-body">TerminationPolicyCreateFn</a></li>
+    <li><a href="#jaxcmr.typing.MemorySearch" id="toc-jaxcmr.typing.MemorySearch-body">MemorySearch</a></li>
+    <li><a href="#jaxcmr.typing.MemorySearchModelFactory" id="toc-jaxcmr.typing.MemorySearchModelFactory-body">MemorySearchModelFactory</a></li>
+    <li><a href="#jaxcmr.typing.TrialSimulator" id="toc-jaxcmr.typing.TrialSimulator-body">TrialSimulator</a></li>
+    <li><a href="#jaxcmr.typing.LikelihoodMaskFn" id="toc-jaxcmr.typing.LikelihoodMaskFn-body">LikelihoodMaskFn</a></li>
+    <li><a href="#jaxcmr.typing.LossFn" id="toc-jaxcmr.typing.LossFn-body">LossFn</a></li>
+    <li><a href="#jaxcmr.typing.LossFactory" id="toc-jaxcmr.typing.LossFactory-body">LossFactory</a></li>
+    <li><a href="#jaxcmr.typing.FittingAlgorithm" id="toc-jaxcmr.typing.FittingAlgorithm-body">FittingAlgorithm</a></li>
+    <li><a href="#jaxcmr.typing.FitResult" id="toc-jaxcmr.typing.FitResult-body">FitResult</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Data formats and callable interfaces for recall models, simulation and fitting.</p>
 <p><code>RecallDataset</code> describes the arrays recorded on each trial, and <code>Parameters</code> maps parameter names to scalar model values. Array annotations specify the dtype and dimensions a caller supplies.</p>
 <p><code>Memory</code>, <code>Context</code>, <code>TerminationPolicy</code> and <code>ResponsePolicy</code> describe components used to build a model. <code>MemorySearch</code> describes how a model experiences study items and produces recall responses. A <code>MemorySearchModelFactory</code> constructs that model for a particular trial. A <code>TrialSimulator</code> uses it to carry out a study and recall procedure.</p>
@@ -2942,6 +2983,57 @@ ul.task-list li input[type="checkbox"] {
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

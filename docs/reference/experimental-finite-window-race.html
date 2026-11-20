@@ -49,9 +49,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -399,6 +405,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -795,17 +807,16 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#first-passage-probabilities" id="toc-first-passage-probabilities" class="nav-link active" data-scroll-target="#first-passage-probabilities">First-passage probabilities</a></li>
-  <li><a href="#cmr-response-policy" id="toc-cmr-response-policy" class="nav-link" data-scroll-target="#cmr-response-policy">CMR response policy</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.experimental.finite_window_race.finite_window_probabilities" id="toc-jaxcmr.experimental.finite_window_race.finite_window_probabilities" class="nav-link" data-scroll-target="#jaxcmr.experimental.finite_window_race.finite_window_probabilities">finite_window_probabilities</a></li>
-  <li><a href="#jaxcmr.experimental.finite_window_race.FiniteWindowRace" id="toc-jaxcmr.experimental.finite_window_race.FiniteWindowRace" class="nav-link" data-scroll-target="#jaxcmr.experimental.finite_window_race.FiniteWindowRace">FiniteWindowRace</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#first-passage-probabilities" id="toc-first-passage-probabilities" class="nav-link active" data-scroll-target="#first-passage-probabilities">First-passage probabilities</a></li>
+    <li><a href="#cmr-response-policy" id="toc-cmr-response-policy" class="nav-link" data-scroll-target="#cmr-response-policy">CMR response policy</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.experimental.finite_window_race.finite_window_probabilities" id="toc-jaxcmr.experimental.finite_window_race.finite_window_probabilities" class="nav-link" data-scroll-target="#jaxcmr.experimental.finite_window_race.finite_window_probabilities">finite_window_probabilities</a></li>
+    <li><a href="#jaxcmr.experimental.finite_window_race.FiniteWindowRace" id="toc-jaxcmr.experimental.finite_window_race.FiniteWindowRace" class="nav-link" data-scroll-target="#jaxcmr.experimental.finite_window_race.FiniteWindowRace">FiniteWindowRace</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -829,7 +840,21 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#first-passage-probabilities" id="toc-first-passage-probabilities-body">First-passage probabilities</a></li>
+    <li><a href="#cmr-response-policy" id="toc-cmr-response-policy-body">CMR response policy</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.experimental.finite_window_race.finite_window_probabilities" id="toc-jaxcmr.experimental.finite_window_race.finite_window_probabilities-body">finite_window_probabilities</a></li>
+    <li><a href="#jaxcmr.experimental.finite_window_race.FiniteWindowRace" id="toc-jaxcmr.experimental.finite_window_race.FiniteWindowRace-body">FiniteWindowRace</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Independent diffusion accumulators race to a common boundary at each recall.</p>
 <p>A new unit-duration window starts at every retrieval attempt. STOP means that all eligible accumulators survived to the deadline. Each item gets the probability that its accumulator was the first to finish in that window.</p>
 <section id="first-passage-probabilities" class="level2 api-function-index">
@@ -1059,6 +1084,57 @@ ul.task-list li input[type="checkbox"] {
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

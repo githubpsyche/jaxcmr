@@ -84,9 +84,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -440,6 +440,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -836,31 +842,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#study-and-retrieval" id="toc-study-and-retrieval" class="nav-link active" data-scroll-target="#study-and-retrieval">Study and retrieval</a></li>
-  <li><a href="#trial-procedures" id="toc-trial-procedures" class="nav-link" data-scroll-target="#trial-procedures">Trial procedures</a></li>
-  <li><a href="#trial-data" id="toc-trial-data" class="nav-link" data-scroll-target="#trial-data">Trial data</a></li>
-  <li><a href="#dataset-simulation" id="toc-dataset-simulation" class="nav-link" data-scroll-target="#dataset-simulation">Dataset simulation</a></li>
-  <li><a href="#saved-responses" id="toc-saved-responses" class="nav-link" data-scroll-target="#saved-responses">Saved responses</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.simulation.simulate_study" id="toc-jaxcmr.simulation.simulate_study" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study">simulate_study</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_free_recall" id="toc-jaxcmr.simulation.simulate_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_free_recall">simulate_free_recall</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_free_recall_count" id="toc-jaxcmr.simulation.simulate_free_recall_count" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_free_recall_count">simulate_free_recall_count</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_study_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_and_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_and_free_recall">simulate_study_and_free_recall</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_first_recall_and_free_recall">simulate_study_first_recall_and_free_recall</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_study_free_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_free_recall_and_forced_stop" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_free_recall_and_forced_stop">simulate_study_free_recall_and_forced_stop</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_forced_stop" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_first_recall_and_forced_stop">simulate_study_first_recall_and_forced_stop</a></li>
-  <li><a href="#jaxcmr.simulation.replicate_trials" id="toc-jaxcmr.simulation.replicate_trials" class="nav-link" data-scroll-target="#jaxcmr.simulation.replicate_trials">replicate_trials</a></li>
-  <li><a href="#jaxcmr.simulation.item_to_study_positions" id="toc-jaxcmr.simulation.item_to_study_positions" class="nav-link" data-scroll-target="#jaxcmr.simulation.item_to_study_positions">item_to_study_positions</a></li>
-  <li><a href="#jaxcmr.simulation.MemorySearchSimulator" id="toc-jaxcmr.simulation.MemorySearchSimulator" class="nav-link" data-scroll-target="#jaxcmr.simulation.MemorySearchSimulator">MemorySearchSimulator</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_dataset" id="toc-jaxcmr.simulation.simulate_dataset" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_dataset">simulate_dataset</a></li>
-  <li><a href="#jaxcmr.simulation.simulate_parameter_sweep" id="toc-jaxcmr.simulation.simulate_parameter_sweep" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_parameter_sweep">simulate_parameter_sweep</a></li>
-  <li><a href="#jaxcmr.simulation.load_matching_simulation" id="toc-jaxcmr.simulation.load_matching_simulation" class="nav-link" data-scroll-target="#jaxcmr.simulation.load_matching_simulation">load_matching_simulation</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#study-and-retrieval" id="toc-study-and-retrieval" class="nav-link active" data-scroll-target="#study-and-retrieval">Study and retrieval</a></li>
+    <li><a href="#trial-procedures" id="toc-trial-procedures" class="nav-link" data-scroll-target="#trial-procedures">Trial procedures</a></li>
+    <li><a href="#trial-data" id="toc-trial-data" class="nav-link" data-scroll-target="#trial-data">Trial data</a></li>
+    <li><a href="#dataset-simulation" id="toc-dataset-simulation" class="nav-link" data-scroll-target="#dataset-simulation">Dataset simulation</a></li>
+    <li><a href="#saved-responses" id="toc-saved-responses" class="nav-link" data-scroll-target="#saved-responses">Saved responses</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.simulation.simulate_study" id="toc-jaxcmr.simulation.simulate_study" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study">simulate_study</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_free_recall" id="toc-jaxcmr.simulation.simulate_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_free_recall">simulate_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_free_recall_count" id="toc-jaxcmr.simulation.simulate_free_recall_count" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_free_recall_count">simulate_free_recall_count</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_and_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_and_free_recall">simulate_study_and_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_free_recall" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_first_recall_and_free_recall">simulate_study_first_recall_and_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_free_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_free_recall_and_forced_stop" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_free_recall_and_forced_stop">simulate_study_free_recall_and_forced_stop</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_forced_stop" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_study_first_recall_and_forced_stop">simulate_study_first_recall_and_forced_stop</a></li>
+    <li><a href="#jaxcmr.simulation.replicate_trials" id="toc-jaxcmr.simulation.replicate_trials" class="nav-link" data-scroll-target="#jaxcmr.simulation.replicate_trials">replicate_trials</a></li>
+    <li><a href="#jaxcmr.simulation.item_to_study_positions" id="toc-jaxcmr.simulation.item_to_study_positions" class="nav-link" data-scroll-target="#jaxcmr.simulation.item_to_study_positions">item_to_study_positions</a></li>
+    <li><a href="#jaxcmr.simulation.MemorySearchSimulator" id="toc-jaxcmr.simulation.MemorySearchSimulator" class="nav-link" data-scroll-target="#jaxcmr.simulation.MemorySearchSimulator">MemorySearchSimulator</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_dataset" id="toc-jaxcmr.simulation.simulate_dataset" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_dataset">simulate_dataset</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_parameter_sweep" id="toc-jaxcmr.simulation.simulate_parameter_sweep" class="nav-link" data-scroll-target="#jaxcmr.simulation.simulate_parameter_sweep">simulate_parameter_sweep</a></li>
+    <li><a href="#jaxcmr.simulation.load_matching_simulation" id="toc-jaxcmr.simulation.load_matching_simulation" class="nav-link" data-scroll-target="#jaxcmr.simulation.load_matching_simulation">load_matching_simulation</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -884,7 +889,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#study-and-retrieval" id="toc-study-and-retrieval-body">Study and retrieval</a></li>
+    <li><a href="#trial-procedures" id="toc-trial-procedures-body">Trial procedures</a></li>
+    <li><a href="#trial-data" id="toc-trial-data-body">Trial data</a></li>
+    <li><a href="#dataset-simulation" id="toc-dataset-simulation-body">Dataset simulation</a></li>
+    <li><a href="#saved-responses" id="toc-saved-responses-body">Saved responses</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.simulation.simulate_study" id="toc-jaxcmr.simulation.simulate_study-body">simulate_study</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_free_recall" id="toc-jaxcmr.simulation.simulate_free_recall-body">simulate_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_free_recall_count" id="toc-jaxcmr.simulation.simulate_free_recall_count-body">simulate_free_recall_count</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_and_free_recall-body">simulate_study_and_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_free_recall" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_free_recall-body">simulate_study_first_recall_and_free_recall</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_free_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_free_recall_and_forced_stop-body">simulate_study_free_recall_and_forced_stop</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_study_first_recall_and_forced_stop" id="toc-jaxcmr.simulation.simulate_study_first_recall_and_forced_stop-body">simulate_study_first_recall_and_forced_stop</a></li>
+    <li><a href="#jaxcmr.simulation.replicate_trials" id="toc-jaxcmr.simulation.replicate_trials-body">replicate_trials</a></li>
+    <li><a href="#jaxcmr.simulation.item_to_study_positions" id="toc-jaxcmr.simulation.item_to_study_positions-body">item_to_study_positions</a></li>
+    <li><a href="#jaxcmr.simulation.MemorySearchSimulator" id="toc-jaxcmr.simulation.MemorySearchSimulator-body">MemorySearchSimulator</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_dataset" id="toc-jaxcmr.simulation.simulate_dataset-body">simulate_dataset</a></li>
+    <li><a href="#jaxcmr.simulation.simulate_parameter_sweep" id="toc-jaxcmr.simulation.simulate_parameter_sweep-body">simulate_parameter_sweep</a></li>
+    <li><a href="#jaxcmr.simulation.load_matching_simulation" id="toc-jaxcmr.simulation.load_matching_simulation-body">load_matching_simulation</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Run memory-search models through study and recall.</p>
 <p>A model defines how experiences change memory and how memory determines the probabilities of subsequent responses. This module uses those operations to present study lists and generate recall sequences. A dataset supplies the study lists, participant identities and trial metadata; observed recalls can also supply a first response or determine which generated response slots are retained.</p>
 <p>Use <code>simulate_dataset</code> to generate responses for selected trials, optionally repeating each trial. Use <code>simulate_parameter_sweep</code> to run those trials at several values of one parameter. Both use <code>MemorySearchSimulator</code>, which can also be prepared once and called directly with different parameter sets and random keys.</p>
@@ -2277,6 +2310,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

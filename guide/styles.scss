@@ -1,20 +1,14 @@
 /*-- scss:defaults --*/
 $font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 $font-size-root: 16px;
-$body-color: #262b30;
 $headings-font-weight: 600;
 $h1-font-size: 2.625rem;
 $h2-font-size: 1.75rem;
 $h3-font-size: 1.375rem;
-$link-color: #28717c;
-$navbar-bg: #fff;
-$navbar-fg: #343a40;
-$navbar-hl: $link-color;
-$code-block-bg: #f7f8f9;
 
 /*-- scss:rules --*/
 .navbar {
-  border-bottom: 1px solid #e5e8eb;
+  border-bottom: 1px solid var(--bs-border-color);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   padding-block: 0.75rem;
 }
@@ -34,6 +28,7 @@ $code-block-bg: #f7f8f9;
 }
 
 h1.title {
+  overflow-wrap: anywhere;
   letter-spacing: -0.03em;
   line-height: 1.15;
 }
@@ -54,6 +49,37 @@ main.content table code {
 
 .sidebar-navigation .sidebar-item {
   padding-block: 0.15rem;
+}
+
+#quarto-sidebar .sidebar-item-container, #quarto-sidebar .sidebar-item-text { min-width: 0; }
+#quarto-sidebar .sidebar-item-text, #TOC a, #TOC-body a {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.quarto-page-breadcrumbs .breadcrumb-item { overflow-wrap: anywhere; }
+#quarto-sidebar .sidebar-section { padding-left: 0.65rem; }
+#quarto-sidebar, #quarto-margin-sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bs-border-color) transparent;
+}
+
+html:has(body.quarto-light) { color-scheme: light; }
+html:has(body.quarto-dark) { color-scheme: dark; }
+
+// Section links are usable before Quarto initializes, including under file://.
+#TOC > ul.collapse { display: block; }
+
+// Quarto generates a second, ordinary list in the body for narrow screens.
+@include media-breakpoint-up(lg) {
+  .inline-page-contents { display: none; }
+}
+@include media-breakpoint-down(lg) {
+  #quarto-margin-sidebar #TOC { display: none; }
+  .inline-page-contents { margin-block: 1rem; }
+  .inline-page-contents #TOC-body { display: block; }
+  #TOC-body > h2 { display: none; }
 }
 
 .homepage-contents ul {

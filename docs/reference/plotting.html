@@ -84,9 +84,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -385,6 +385,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -426,8 +432,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -756,6 +774,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -818,28 +842,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#preparing-a-plot" id="toc-preparing-a-plot" class="nav-link active" data-scroll-target="#preparing-a-plot">Preparing a plot</a></li>
-  <li><a href="#drawing-summaries" id="toc-drawing-summaries" class="nav-link" data-scroll-target="#drawing-summaries">Drawing summaries</a></li>
-  <li><a href="#drawing-matrices" id="toc-drawing-matrices" class="nav-link" data-scroll-target="#drawing-matrices">Drawing matrices</a></li>
-  <li><a href="#arranging-comparisons" id="toc-arranging-comparisons" class="nav-link" data-scroll-target="#arranging-comparisons">Arranging comparisons</a></li>
-  <li><a href="#producing-and-saving-figures" id="toc-producing-and-saving-figures" class="nav-link" data-scroll-target="#producing-and-saving-figures">Producing and saving figures</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.plotting.init_plot" id="toc-jaxcmr.plotting.init_plot" class="nav-link" data-scroll-target="#jaxcmr.plotting.init_plot">init_plot</a></li>
-  <li><a href="#jaxcmr.plotting.prepare_plot_inputs" id="toc-jaxcmr.plotting.prepare_plot_inputs" class="nav-link" data-scroll-target="#jaxcmr.plotting.prepare_plot_inputs">prepare_plot_inputs</a></li>
-  <li><a href="#jaxcmr.plotting.plot_mean_curve" id="toc-jaxcmr.plotting.plot_mean_curve" class="nav-link" data-scroll-target="#jaxcmr.plotting.plot_mean_curve">plot_mean_curve</a></li>
-  <li><a href="#jaxcmr.plotting.bootstrap_mean_errors" id="toc-jaxcmr.plotting.bootstrap_mean_errors" class="nav-link" data-scroll-target="#jaxcmr.plotting.bootstrap_mean_errors">bootstrap_mean_errors</a></li>
-  <li><a href="#jaxcmr.plotting.format_analysis_axes" id="toc-jaxcmr.plotting.format_analysis_axes" class="nav-link" data-scroll-target="#jaxcmr.plotting.format_analysis_axes">format_analysis_axes</a></li>
-  <li><a href="#jaxcmr.plotting.matrix_heatmap" id="toc-jaxcmr.plotting.matrix_heatmap" class="nav-link" data-scroll-target="#jaxcmr.plotting.matrix_heatmap">matrix_heatmap</a></li>
-  <li><a href="#jaxcmr.plotting.comparison_panels" id="toc-jaxcmr.plotting.comparison_panels" class="nav-link" data-scroll-target="#jaxcmr.plotting.comparison_panels">comparison_panels</a></li>
-  <li><a href="#jaxcmr.plotting.iter_condition_curves" id="toc-jaxcmr.plotting.iter_condition_curves" class="nav-link" data-scroll-target="#jaxcmr.plotting.iter_condition_curves">iter_condition_curves</a></li>
-  <li><a href="#jaxcmr.plotting.iter_analysis_figures" id="toc-jaxcmr.plotting.iter_analysis_figures" class="nav-link" data-scroll-target="#jaxcmr.plotting.iter_analysis_figures">iter_analysis_figures</a></li>
-  <li><a href="#jaxcmr.plotting.save_figure" id="toc-jaxcmr.plotting.save_figure" class="nav-link" data-scroll-target="#jaxcmr.plotting.save_figure">save_figure</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#preparing-a-plot" id="toc-preparing-a-plot" class="nav-link active" data-scroll-target="#preparing-a-plot">Preparing a plot</a></li>
+    <li><a href="#drawing-summaries" id="toc-drawing-summaries" class="nav-link" data-scroll-target="#drawing-summaries">Drawing summaries</a></li>
+    <li><a href="#drawing-matrices" id="toc-drawing-matrices" class="nav-link" data-scroll-target="#drawing-matrices">Drawing matrices</a></li>
+    <li><a href="#arranging-comparisons" id="toc-arranging-comparisons" class="nav-link" data-scroll-target="#arranging-comparisons">Arranging comparisons</a></li>
+    <li><a href="#producing-and-saving-figures" id="toc-producing-and-saving-figures" class="nav-link" data-scroll-target="#producing-and-saving-figures">Producing and saving figures</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.plotting.init_plot" id="toc-jaxcmr.plotting.init_plot" class="nav-link" data-scroll-target="#jaxcmr.plotting.init_plot">init_plot</a></li>
+    <li><a href="#jaxcmr.plotting.prepare_plot_inputs" id="toc-jaxcmr.plotting.prepare_plot_inputs" class="nav-link" data-scroll-target="#jaxcmr.plotting.prepare_plot_inputs">prepare_plot_inputs</a></li>
+    <li><a href="#jaxcmr.plotting.plot_mean_curve" id="toc-jaxcmr.plotting.plot_mean_curve" class="nav-link" data-scroll-target="#jaxcmr.plotting.plot_mean_curve">plot_mean_curve</a></li>
+    <li><a href="#jaxcmr.plotting.bootstrap_mean_errors" id="toc-jaxcmr.plotting.bootstrap_mean_errors" class="nav-link" data-scroll-target="#jaxcmr.plotting.bootstrap_mean_errors">bootstrap_mean_errors</a></li>
+    <li><a href="#jaxcmr.plotting.format_analysis_axes" id="toc-jaxcmr.plotting.format_analysis_axes" class="nav-link" data-scroll-target="#jaxcmr.plotting.format_analysis_axes">format_analysis_axes</a></li>
+    <li><a href="#jaxcmr.plotting.matrix_heatmap" id="toc-jaxcmr.plotting.matrix_heatmap" class="nav-link" data-scroll-target="#jaxcmr.plotting.matrix_heatmap">matrix_heatmap</a></li>
+    <li><a href="#jaxcmr.plotting.comparison_panels" id="toc-jaxcmr.plotting.comparison_panels" class="nav-link" data-scroll-target="#jaxcmr.plotting.comparison_panels">comparison_panels</a></li>
+    <li><a href="#jaxcmr.plotting.iter_condition_curves" id="toc-jaxcmr.plotting.iter_condition_curves" class="nav-link" data-scroll-target="#jaxcmr.plotting.iter_condition_curves">iter_condition_curves</a></li>
+    <li><a href="#jaxcmr.plotting.iter_analysis_figures" id="toc-jaxcmr.plotting.iter_analysis_figures" class="nav-link" data-scroll-target="#jaxcmr.plotting.iter_analysis_figures">iter_analysis_figures</a></li>
+    <li><a href="#jaxcmr.plotting.save_figure" id="toc-jaxcmr.plotting.save_figure" class="nav-link" data-scroll-target="#jaxcmr.plotting.save_figure">save_figure</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -863,7 +886,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#preparing-a-plot" id="toc-preparing-a-plot-body">Preparing a plot</a></li>
+    <li><a href="#drawing-summaries" id="toc-drawing-summaries-body">Drawing summaries</a></li>
+    <li><a href="#drawing-matrices" id="toc-drawing-matrices-body">Drawing matrices</a></li>
+    <li><a href="#arranging-comparisons" id="toc-arranging-comparisons-body">Arranging comparisons</a></li>
+    <li><a href="#producing-and-saving-figures" id="toc-producing-and-saving-figures-body">Producing and saving figures</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.plotting.init_plot" id="toc-jaxcmr.plotting.init_plot-body">init_plot</a></li>
+    <li><a href="#jaxcmr.plotting.prepare_plot_inputs" id="toc-jaxcmr.plotting.prepare_plot_inputs-body">prepare_plot_inputs</a></li>
+    <li><a href="#jaxcmr.plotting.plot_mean_curve" id="toc-jaxcmr.plotting.plot_mean_curve-body">plot_mean_curve</a></li>
+    <li><a href="#jaxcmr.plotting.bootstrap_mean_errors" id="toc-jaxcmr.plotting.bootstrap_mean_errors-body">bootstrap_mean_errors</a></li>
+    <li><a href="#jaxcmr.plotting.format_analysis_axes" id="toc-jaxcmr.plotting.format_analysis_axes-body">format_analysis_axes</a></li>
+    <li><a href="#jaxcmr.plotting.matrix_heatmap" id="toc-jaxcmr.plotting.matrix_heatmap-body">matrix_heatmap</a></li>
+    <li><a href="#jaxcmr.plotting.comparison_panels" id="toc-jaxcmr.plotting.comparison_panels-body">comparison_panels</a></li>
+    <li><a href="#jaxcmr.plotting.iter_condition_curves" id="toc-jaxcmr.plotting.iter_condition_curves-body">iter_condition_curves</a></li>
+    <li><a href="#jaxcmr.plotting.iter_analysis_figures" id="toc-jaxcmr.plotting.iter_analysis_figures-body">iter_analysis_figures</a></li>
+    <li><a href="#jaxcmr.plotting.save_figure" id="toc-jaxcmr.plotting.save_figure-body">save_figure</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Draw behavioral summaries and arrange comparisons across datasets and conditions.</p>
 <p>If you have a recall dataset, start with the plotter for the measure you want, such as <code>jaxcmr.analyses.spc.plot_spc</code>. It selects trials, calculates a serial position curve for each participant, and passes those curves to <code>plot_mean_curve</code>. If you already have participant scores, you can call <code>plot_mean_curve</code> directly. Each row is an observation and each column a position or bin. The mean and optional bootstrap interval therefore give each participant with a finite score equal weight in that column.</p>
 <p>When writing an analysis plotter, use <code>prepare_plot_inputs</code> to obtain axes, trial selections and colors. Several mean curves can share those axes. <code>format_analysis_axes</code> labels them after the curves are drawn. For a matrix of values, <code>matrix_heatmap</code> displays the cells on a common color scale.</p>
@@ -2126,6 +2174,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

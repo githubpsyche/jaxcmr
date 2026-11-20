@@ -1,6 +1,5 @@
 /* Enclose each function or class and its full documentation as one API entry. */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --api-accent: #28717c;
   --api-tint: #eef5f6;
   --api-border: #c5dadd;
@@ -61,9 +60,7 @@ section.doc-section > :is(h4, h6) {
   font-weight: 700;
 }
 
-main.content table { font-size: 0.9rem; }
-main.content table :is(th, td),
-main.content table code { overflow-wrap: anywhere; }
+.api-function-index table, section.api-entry table { font-size: 0.9rem; }
 .doc-section table { table-layout: fixed; width: 100%; }
 .doc-section th {
   overflow-wrap: normal;
@@ -88,9 +85,6 @@ main.content table code { overflow-wrap: anywhere; }
 .doc-section-notes table:has(th:nth-child(3)) col:nth-child(2) { width: 28% !important; }
 .doc-section-notes table:has(th:nth-child(3)) col:nth-child(3) { width: 50% !important; }
 
-body.quarto-dark .navbar { background-color: #222 !important; }
-body.quarto-dark .navbar :is(.navbar-brand, .nav-link) { color: #eee; }
-
 /* Compact function summaries link to the complete entries below. */
 .api-function-index { margin-bottom: 2rem; }
 .api-function-index table { table-layout: fixed; width: 100%; }
@@ -111,35 +105,3 @@ section.api-entry section.level5 > h5 {
 .doc-section-attributes table:has(th:nth-child(3)) col:nth-child(1) { width: 22% !important; }
 .doc-section-attributes table:has(th:nth-child(3)) col:nth-child(2) { width: 28% !important; }
 .doc-section-attributes table:has(th:nth-child(3)) col:nth-child(3) { width: 50% !important; }
-
-/* Long procedure names should wrap in the page navigation. */
-#TOC .nav-link { white-space: normal; overflow-wrap: anywhere; }
-
-
-/* Keep module navigation readable when the content columns become narrow. */
-#quarto-sidebar .sidebar-item-container,
-#quarto-sidebar .sidebar-item-text {
-  min-width: 0;
-}
-#quarto-sidebar .sidebar-item-text {
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-#quarto-sidebar .sidebar-section {
-  padding-left: 0.65rem;
-}
-h1.title,
-.quarto-page-breadcrumbs .breadcrumb-item {
-  overflow-wrap: anywhere;
-}
-
-/* Preserve scrolling without a horizontal track or bright dark-mode tracks. */
-#quarto-sidebar,
-#quarto-margin-sidebar {
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--api-border) transparent;
-}
-html:has(body.quarto-light) { color-scheme: light; }
-html:has(body.quarto-dark) { color-scheme: dark; }

@@ -77,10 +77,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -111,7 +115,177 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          toggle.setAttribute("aria-checked", alternate ? "true" : "false");
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455).
+    // Not run on load: stylesheets are set before first paint there, and
+    // scrolling would undo the scroll to a URL fragment (#14973).
+    // The one pixel nudge keeps the reader where they were.
+    const refreshSafariScrollbar = () => {
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY > 0 ? scrollY - 1 : 1);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      refreshSafariScrollbar();
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -157,6 +331,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
+  <button type="button" role="switch" aria-checked="false" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi"></i></button>
 </div>
             <div id="quarto-search" class="" title="Search"></div>
       </div> <!-- /container-fluid -->
@@ -167,24 +342,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#prepare-the-environment" id="toc-prepare-the-environment" class="nav-link active" data-scroll-target="#prepare-the-environment">Set up a checkout</a></li>
-  <li><a href="#change-and-test-the-library" id="toc-change-and-test-the-library" class="nav-link" data-scroll-target="#change-and-test-the-library">Change and test the library</a></li>
-  <li><a href="#edit-notebooks-and-documentation" id="toc-edit-notebooks-and-documentation" class="nav-link" data-scroll-target="#edit-notebooks-and-documentation">Edit notebooks and documentation</a>
-  <ul class="collapse">
-  <li><a href="#change-a-notebook" id="toc-change-a-notebook" class="nav-link" data-scroll-target="#change-a-notebook">Change a notebook</a></li>
-  <li><a href="#change-an-api-reference-entry" id="toc-change-an-api-reference-entry" class="nav-link" data-scroll-target="#change-an-api-reference-entry">Change an API reference entry</a></li>
-  <li><a href="#change-an-input-supplied-with-the-package" id="toc-change-an-input-supplied-with-the-package" class="nav-link" data-scroll-target="#change-an-input-supplied-with-the-package">Change an input supplied with the package</a></li>
-  <li><a href="#preview-and-share-your-change" id="toc-preview-and-share-your-change" class="nav-link" data-scroll-target="#preview-and-share-your-change">Preview and share your change</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#prepare-the-environment" id="toc-prepare-the-environment" class="nav-link active" data-scroll-target="#prepare-the-environment">Set up a checkout</a></li>
+    <li><a href="#change-and-test-the-library" id="toc-change-and-test-the-library" class="nav-link" data-scroll-target="#change-and-test-the-library">Change and test the library</a></li>
+    <li><a href="#edit-notebooks-and-documentation" id="toc-edit-notebooks-and-documentation" class="nav-link" data-scroll-target="#edit-notebooks-and-documentation">Edit notebooks and documentation</a>
+    <ul class="collapse">
+    <li><a href="#change-a-notebook" id="toc-change-a-notebook" class="nav-link" data-scroll-target="#change-a-notebook">Change a notebook</a></li>
+    <li><a href="#change-an-api-reference-entry" id="toc-change-an-api-reference-entry" class="nav-link" data-scroll-target="#change-an-api-reference-entry">Change an API reference entry</a></li>
+    <li><a href="#change-an-input-supplied-with-the-package" id="toc-change-an-input-supplied-with-the-package" class="nav-link" data-scroll-target="#change-an-input-supplied-with-the-package">Change an input supplied with the package</a></li>
+    <li><a href="#preview-and-share-your-change" id="toc-preview-and-share-your-change" class="nav-link" data-scroll-target="#preview-and-share-your-change">Preview and share your change</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
+
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -204,7 +379,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#prepare-the-environment" id="toc-prepare-the-environment-body">Set up a checkout</a></li>
+    <li><a href="#change-and-test-the-library" id="toc-change-and-test-the-library-body">Change and test the library</a></li>
+    <li><a href="#edit-notebooks-and-documentation" id="toc-edit-notebooks-and-documentation-body">Edit notebooks and documentation</a>
+    <ul>
+    <li><a href="#change-a-notebook" id="toc-change-a-notebook-body">Change a notebook</a></li>
+    <li><a href="#change-an-api-reference-entry" id="toc-change-an-api-reference-entry-body">Change an API reference entry</a></li>
+    <li><a href="#change-an-input-supplied-with-the-package" id="toc-change-an-input-supplied-with-the-package-body">Change an input supplied with the package</a></li>
+    <li><a href="#preview-and-share-your-change" id="toc-preview-and-share-your-change-body">Preview and share your change</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>The Python source lives in <code>jaxcmr/</code> and the tests in <code>tests/</code>. If you’re editing something readers see on the website, your starting point might be a Python docstring, a guide page, or a template notebook.</p>
 <section id="prepare-the-environment" class="level2">
 <h2 class="anchored" data-anchor-id="prepare-the-environment">Set up a checkout</h2>
@@ -239,7 +430,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="change-an-api-reference-entry">Change an API reference entry</h3>
 <p>Suppose you’re clarifying the entry for <code>simulate_dataset</code>. Edit the description inside that function in <code>jaxcmr/simulation.py</code> (its <em>docstring</em>). The docstring at the top of the module supplies the page introduction. To add an entry or move it under a different heading, edit the list in <code>guide/reference/_simulation.yml</code>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">quarto</span> render guide/reference/simulation.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This rebuilds the simulation reference page. Open <code>docs/reference/simulation.html</code> and follow the function’s link in the summary table to check the description a reader will see.</p>
+<p>This rebuilds the simulation reference page. In the local website preview, open <strong>API Reference → Simulation</strong> and follow the function’s link in the summary table.</p>
 </section>
 <section id="change-an-input-supplied-with-the-package" class="level3">
 <h3 class="anchored" data-anchor-id="change-an-input-supplied-with-the-package">Change an input supplied with the package</h3>
@@ -248,10 +439,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="preview-and-share-your-change" class="level3">
 <h3 class="anchored" data-anchor-id="preview-and-share-your-change">Preview and share your change</h3>
-<p>Build a local copy of the website to review a change to the guide or templates.</p>
+<p>The website’s theme, navigation, and default code controls are set in <code>guide/_quarto.yml</code>. Edit <code>guide/styles.scss</code> for layout shared by light and dark mode. The palette files supply colors. Command-oriented pages use <code>guide/_commands.yml</code> to show commands without line numbers. Formatting specific to API entries lives in <code>guide/reference/reference.css</code>.</p>
+<p>Published notebooks carry a copy of their code controls so readers can render a download on its own. After changing those defaults, run <code>uv run --no-sync python guide/prepare.py --sync-notebook-format</code> to refresh those settings in the notebook sources.</p>
+<p>After changing shared styling or navigation, build the whole site. Quarto embeds the sidebar in each page, so a single-page render updates only one copy.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="fu">bash</span> build-docs.sh</span>
-<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_site.py docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The first command builds the site in <code>docs/</code> using the outputs already saved in the notebooks. The second checks local links, notebook downloads, and example files. Open <code>docs/index.html</code> and follow the link to the page you changed. To inspect a revised notebook, use its download link. <strong>Open in Colab</strong> opens the version on GitHub’s <code>main</code> branch.</p>
+<span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python guide/tools/check_site.py docs</span>
+<span id="cb5-3"><a href="#cb5-3" aria-label="3"></a><span class="ex">uv</span> run <span class="at">--no-sync</span> python <span class="at">-m</span> http.server 8000 <span class="at">--bind</span> 127.0.0.1 <span class="at">--directory</span> docs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first command builds the site in <code>docs/</code> using the outputs already saved in the notebooks. The second checks local links, notebook downloads, and example files. The third serves the built pages at <a href="http://127.0.0.1:8000/"><code>http://127.0.0.1:8000/</code></a>, where the browser can load Quarto’s navigation scripts. Press <strong>Ctrl+C</strong> in the terminal to stop the server. To inspect a revised notebook, use its download link. <strong>Open in Colab</strong> opens the version on GitHub’s <code>main</code> branch.</p>
 <p>To propose a code or documentation change, open a pull request asking to merge the edits on your branch into JAXCMR. If you’re working in your own copy on GitHub, follow <a href="https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork">GitHub’s instructions for submitting from a fork</a>. Describe what will change for readers or researchers and how you checked it. GitHub runs the routine library tests on Linux, macOS, and Windows and checks the website build. The notebook runner and the clean-install tests run locally, so include their results if you ran them.</p>
 
 
@@ -261,6 +455,54 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const toggle = window.document.createElement('button');
+      toggle.type = "button";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", "false");
+      toggle.classList.add('top-right');
+      toggle.classList.add('quarto-color-scheme-toggle');
+      toggle.setAttribute("aria-label", "Toggle dark mode");
+      toggle.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      toggle.appendChild(i);
+      // Put the toggle in a landmark of its own, so that landmark navigation
+      // can reach it.
+      //
+      // The container is always a fresh direct child of body, and the toggle is
+      // never moved into page furniture that the theme or the author controls.
+      // The toggle is positioned against the page, so any ancestor that
+      // establishes a containing block captures it: a positioned element or a
+      // grid for position: absolute, and transform, filter, will-change or
+      // contain for position: fixed. A direct child of body has none of these
+      // to inherit, and the shift when one appears is silent and visual.
+      //
+      // ARIA says a document should have at most one banner, and axe reports a
+      // duplicate whether or not the banners carry distinct labels. So use a
+      // header when the page has no banner yet, and a named region otherwise.
+      //
+      // A header is a banner wherever it sits, unless it is inside sectioning
+      // content, so this cannot just look at the children of body: a custom
+      // page layout wraps the title block header in a plain div. An explicit
+      // role="banner" always counts.
+      const sectioning = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+      const hasBanner = Array.from(
+        window.document.querySelectorAll('header:not([role]), [role="banner"]')
+      ).some(function(el) {
+        return el.hasAttribute("role") || el.closest(sectioning) === null;
+      });
+      const container = window.document.createElement(hasBanner ? "div" : "header");
+      if (hasBanner) {
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Toggle dark mode");
+      }
+      container.classList.add('quarto-color-scheme-toggle-container');
+      container.appendChild(toggle);
+      window.document.body.appendChild(container);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
     const icon = "";
     const anchorJS = new window.AnchorJS();
     anchorJS.options = {
@@ -329,6 +571,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

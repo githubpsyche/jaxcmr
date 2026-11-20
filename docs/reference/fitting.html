@@ -49,9 +49,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -391,8 +397,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +739,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -783,26 +807,25 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#optimization" id="toc-optimization" class="nav-link active" data-scroll-target="#optimization">Optimization</a></li>
-  <li><a href="#parameter-coordinates-and-start-selection" id="toc-parameter-coordinates-and-start-selection" class="nav-link" data-scroll-target="#parameter-coordinates-and-start-selection">Parameter coordinates and start selection</a></li>
-  <li><a href="#fitted-parameters" id="toc-fitted-parameters" class="nav-link" data-scroll-target="#fitted-parameters">Fitted parameters</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.fitting.ScipyDE" id="toc-jaxcmr.fitting.ScipyDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyDE">ScipyDE</a></li>
-  <li><a href="#jaxcmr.fitting.EvosaxDE" id="toc-jaxcmr.fitting.EvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.EvosaxDE">EvosaxDE</a></li>
-  <li><a href="#jaxcmr.fitting.ScanEvosaxDE" id="toc-jaxcmr.fitting.ScanEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScanEvosaxDE">ScanEvosaxDE</a></li>
-  <li><a href="#jaxcmr.fitting.MapEvosaxDE" id="toc-jaxcmr.fitting.MapEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.MapEvosaxDE">MapEvosaxDE</a></li>
-  <li><a href="#jaxcmr.fitting.ScipyLBFGSB" id="toc-jaxcmr.fitting.ScipyLBFGSB" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyLBFGSB">ScipyLBFGSB</a></li>
-  <li><a href="#jaxcmr.fitting.ScipyTrustConstr" id="toc-jaxcmr.fitting.ScipyTrustConstr" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyTrustConstr">ScipyTrustConstr</a></li>
-  <li><a href="#jaxcmr.fitting.ParameterSpace" id="toc-jaxcmr.fitting.ParameterSpace" class="nav-link" data-scroll-target="#jaxcmr.fitting.ParameterSpace">ParameterSpace</a></li>
-  <li><a href="#jaxcmr.fitting.select_starts" id="toc-jaxcmr.fitting.select_starts" class="nav-link" data-scroll-target="#jaxcmr.fitting.select_starts">select_starts</a></li>
-  <li><a href="#jaxcmr.fitting.combine_participant_parameters" id="toc-jaxcmr.fitting.combine_participant_parameters" class="nav-link" data-scroll-target="#jaxcmr.fitting.combine_participant_parameters">combine_participant_parameters</a></li>
-  <li><a href="#jaxcmr.fitting.parameters_for_subjects" id="toc-jaxcmr.fitting.parameters_for_subjects" class="nav-link" data-scroll-target="#jaxcmr.fitting.parameters_for_subjects">parameters_for_subjects</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#optimization" id="toc-optimization" class="nav-link active" data-scroll-target="#optimization">Optimization</a></li>
+    <li><a href="#parameter-coordinates-and-start-selection" id="toc-parameter-coordinates-and-start-selection" class="nav-link" data-scroll-target="#parameter-coordinates-and-start-selection">Parameter coordinates and start selection</a></li>
+    <li><a href="#fitted-parameters" id="toc-fitted-parameters" class="nav-link" data-scroll-target="#fitted-parameters">Fitted parameters</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.fitting.ScipyDE" id="toc-jaxcmr.fitting.ScipyDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyDE">ScipyDE</a></li>
+    <li><a href="#jaxcmr.fitting.EvosaxDE" id="toc-jaxcmr.fitting.EvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.EvosaxDE">EvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.ScanEvosaxDE" id="toc-jaxcmr.fitting.ScanEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScanEvosaxDE">ScanEvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.MapEvosaxDE" id="toc-jaxcmr.fitting.MapEvosaxDE" class="nav-link" data-scroll-target="#jaxcmr.fitting.MapEvosaxDE">MapEvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.ScipyLBFGSB" id="toc-jaxcmr.fitting.ScipyLBFGSB" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyLBFGSB">ScipyLBFGSB</a></li>
+    <li><a href="#jaxcmr.fitting.ScipyTrustConstr" id="toc-jaxcmr.fitting.ScipyTrustConstr" class="nav-link" data-scroll-target="#jaxcmr.fitting.ScipyTrustConstr">ScipyTrustConstr</a></li>
+    <li><a href="#jaxcmr.fitting.ParameterSpace" id="toc-jaxcmr.fitting.ParameterSpace" class="nav-link" data-scroll-target="#jaxcmr.fitting.ParameterSpace">ParameterSpace</a></li>
+    <li><a href="#jaxcmr.fitting.select_starts" id="toc-jaxcmr.fitting.select_starts" class="nav-link" data-scroll-target="#jaxcmr.fitting.select_starts">select_starts</a></li>
+    <li><a href="#jaxcmr.fitting.combine_participant_parameters" id="toc-jaxcmr.fitting.combine_participant_parameters" class="nav-link" data-scroll-target="#jaxcmr.fitting.combine_participant_parameters">combine_participant_parameters</a></li>
+    <li><a href="#jaxcmr.fitting.parameters_for_subjects" id="toc-jaxcmr.fitting.parameters_for_subjects" class="nav-link" data-scroll-target="#jaxcmr.fitting.parameters_for_subjects">parameters_for_subjects</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -826,7 +849,30 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#optimization" id="toc-optimization-body">Optimization</a></li>
+    <li><a href="#parameter-coordinates-and-start-selection" id="toc-parameter-coordinates-and-start-selection-body">Parameter coordinates and start selection</a></li>
+    <li><a href="#fitted-parameters" id="toc-fitted-parameters-body">Fitted parameters</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.fitting.ScipyDE" id="toc-jaxcmr.fitting.ScipyDE-body">ScipyDE</a></li>
+    <li><a href="#jaxcmr.fitting.EvosaxDE" id="toc-jaxcmr.fitting.EvosaxDE-body">EvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.ScanEvosaxDE" id="toc-jaxcmr.fitting.ScanEvosaxDE-body">ScanEvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.MapEvosaxDE" id="toc-jaxcmr.fitting.MapEvosaxDE-body">MapEvosaxDE</a></li>
+    <li><a href="#jaxcmr.fitting.ScipyLBFGSB" id="toc-jaxcmr.fitting.ScipyLBFGSB-body">ScipyLBFGSB</a></li>
+    <li><a href="#jaxcmr.fitting.ScipyTrustConstr" id="toc-jaxcmr.fitting.ScipyTrustConstr-body">ScipyTrustConstr</a></li>
+    <li><a href="#jaxcmr.fitting.ParameterSpace" id="toc-jaxcmr.fitting.ParameterSpace-body">ParameterSpace</a></li>
+    <li><a href="#jaxcmr.fitting.select_starts" id="toc-jaxcmr.fitting.select_starts-body">select_starts</a></li>
+    <li><a href="#jaxcmr.fitting.combine_participant_parameters" id="toc-jaxcmr.fitting.combine_participant_parameters-body">combine_participant_parameters</a></li>
+    <li><a href="#jaxcmr.fitting.parameters_for_subjects" id="toc-jaxcmr.fitting.parameters_for_subjects-body">parameters_for_subjects</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Estimate model parameters from a loss evaluated on selected trials.</p>
 <p>The loss determines what counts as a good fit. For example, a likelihood loss scores the observed recall sequence, while an SPC loss compares observed and simulated serial position curves. The fitter searches within the free-parameter bounds for values that minimize the chosen loss.</p>
 <p><code>ScipyDE</code> and the Evosax differential-evolution fitters compare populations of candidates. <code>ScipyLBFGSB</code> and <code>ScipyTrustConstr</code> use loss gradients and can search from several starting points. <code>ParameterSpace</code> translates between search coordinates and physical parameter values. Results report parameters in the units used by the model.</p>
@@ -2891,6 +2937,57 @@ assert combined["enabled"] == [False, True]</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

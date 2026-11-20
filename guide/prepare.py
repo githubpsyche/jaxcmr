@@ -21,6 +21,41 @@ def check_destination(path):
         raise ValueError(f"Generated output must not use a symlink: {path}")
 
 
+def notebook_code_options(*, update=False):
+    """Check or refresh the portable code settings embedded in published notebooks."""
+    from textwrap import indent
+
+    import yaml
+
+    project = (GUIDE / "_quarto.yml").read_text()
+    defaults = yaml.safe_load(project)["format"]["html"]
+    commands = yaml.safe_load((GUIDE / "_commands.yml").read_text())["format"]["html"]
+    names = re.findall(r"^\s*- ((?:templates|overview|tutorials)/[\w-]+\.ipynb)\s*$", project, re.M)
+    for name in ["developer-setup.ipynb", *names]:
+        path = (ROOT if name.startswith("templates/") else GUIDE) / name
+        notebook = json.loads(path.read_bytes())
+        cell = notebook["cells"][0]
+        front = "".join(cell["source"])
+        html = yaml.safe_load(front.split("---", 2)[1])["format"]["html"]
+        expected = commands if name == "developer-setup.ipynb" else defaults
+        # Preserve each notebook's standalone options and its content-specific links.
+        for key in ("code-fold", "code-tools", "code-line-numbers", "code-overflow"):
+            if key not in html or html[key] == expected[key]:
+                continue
+            if not update:
+                raise ValueError(f"{path}: refresh {key} with guide/prepare.py --sync-notebook-format")
+            block = yaml.safe_dump({key: expected[key]}, sort_keys=False)
+            front, replaced = re.subn(
+                rf"^    {key}:[^\n]*\n(?:^      [^\n]*\n)*",
+                lambda _: indent(block, "    "), front, flags=re.M,
+            )
+            if replaced != 1:
+                raise ValueError(f"Could not update {key} in {path}")
+        if front != "".join(cell["source"]):
+            cell["source"] = front.splitlines(keepends=True)
+            path.write_text(json.dumps(notebook, indent=1, ensure_ascii=False) + "\n")
+
+
 def stage():
     from jaxcmr.examples import _EXAMPLE_FILES
 
@@ -151,6 +186,9 @@ def prepare_references(inputs: set[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--sync-notebook-format"]:
+        notebook_code_options(update=True)
+        sys.exit()
     os.chdir(GUIDE)
     inputs = set(os.environ.get("QUARTO_PROJECT_INPUT_FILES", "").splitlines())
     full_render = os.environ.get("QUARTO_PROJECT_RENDER_ALL") == "1"

@@ -49,9 +49,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -807,15 +807,14 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
-  <li><a href="#associative-memory" id="toc-associative-memory" class="nav-link" data-scroll-target="#associative-memory">Associative memory</a></li>
-  <li><a href="#choosing-the-next-response" id="toc-choosing-the-next-response" class="nav-link" data-scroll-target="#choosing-the-next-response">Choosing the next response</a></li>
-  <li><a href="#stopping-rules" id="toc-stopping-rules" class="nav-link" data-scroll-target="#stopping-rules">Stopping rules</a></li>
-  <li><a href="#preparing-trial-inputs" id="toc-preparing-trial-inputs" class="nav-link" data-scroll-target="#preparing-trial-inputs">Preparing trial inputs</a></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
+    <li><a href="#associative-memory" id="toc-associative-memory" class="nav-link" data-scroll-target="#associative-memory">Associative memory</a></li>
+    <li><a href="#choosing-the-next-response" id="toc-choosing-the-next-response" class="nav-link" data-scroll-target="#choosing-the-next-response">Choosing the next response</a></li>
+    <li><a href="#stopping-rules" id="toc-stopping-rules" class="nav-link" data-scroll-target="#stopping-rules">Stopping rules</a></li>
+    <li><a href="#preparing-trial-inputs" id="toc-preparing-trial-inputs" class="nav-link" data-scroll-target="#preparing-trial-inputs">Preparing trial inputs</a></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -839,7 +838,19 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#context" id="toc-context-body">Context</a></li>
+    <li><a href="#associative-memory" id="toc-associative-memory-body">Associative memory</a></li>
+    <li><a href="#choosing-the-next-response" id="toc-choosing-the-next-response-body">Choosing the next response</a></li>
+    <li><a href="#stopping-rules" id="toc-stopping-rules-body">Stopping rules</a></li>
+    <li><a href="#preparing-trial-inputs" id="toc-preparing-trial-inputs-body">Preparing trial inputs</a></li>
+    </ul>
+  </nav>
+</details>
 <section id="context" class="level2">
 <h2 class="anchored" data-anchor-id="context">Context</h2>
 <p><a href="../reference/components-context.html">Temporal context</a> updates the current context from an input pattern and a drift rate. Models that introduce fresh out-of-list units also require a context initialized with room for those units. <a href="../reference/typing.html#jaxcmr.typing.Context">Context interface</a></p>
@@ -983,6 +994,57 @@ ul.task-list li input[type="checkbox"] {
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

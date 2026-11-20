@@ -52,7 +52,6 @@ website:
     location: navbar
     type: overlay
   navbar:
-    background: white
     pinned: true
     left:
       - href: installation.qmd
@@ -273,16 +272,24 @@ website:
 format:
   html:
     theme:
-      light: [default, styles.scss]
+      light: [default, styles.scss, light.scss]
+      dark: [darkly, styles.scss, dark.scss]
     number-sections: false
     lightbox: true
     toc: true
-    toc-location: right
+    toc-title: On this page
+    toc-location: right-body
+    toc-depth: 3
+    toc-expand: 1
+    template-partials: [toc.html]
     grid:
       sidebar-width: 230px
       body-width: 900px
       margin-width: 220px
       gutter-width: 1.5rem
+    code-tools:
+      source: false
+      toggle: true
     code-copy: true
     code-line-numbers: true
     code-fold: show

@@ -35,7 +35,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../reference/components-factory.html" rel="next">
+<link href="../reference/components-support-ratio.html" rel="next">
 <link href="../reference/components-response.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -49,9 +49,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -405,6 +405,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -801,28 +807,27 @@ ul.task-list li input[type="checkbox"] {
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#stopping-on-exhaustion" id="toc-stopping-on-exhaustion" class="nav-link active" data-scroll-target="#stopping-on-exhaustion">Stopping on exhaustion</a></li>
-  <li><a href="#stopping-by-output-position" id="toc-stopping-by-output-position" class="nav-link" data-scroll-target="#stopping-by-output-position">Stopping by output position</a></li>
-  <li><a href="#stopping-by-support-ratio" id="toc-stopping-by-support-ratio" class="nav-link" data-scroll-target="#stopping-by-support-ratio">Stopping by support ratio</a></li>
-  <li><a href="#legacy-stop-candidate-scoring" id="toc-legacy-stop-candidate-scoring" class="nav-link" data-scroll-target="#legacy-stop-candidate-scoring">Legacy STOP-candidate scoring</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.components.termination.stop_when_exhausted" id="toc-jaxcmr.components.termination.stop_when_exhausted" class="nav-link" data-scroll-target="#jaxcmr.components.termination.stop_when_exhausted">stop_when_exhausted</a></li>
-  <li><a href="#jaxcmr.components.termination.NoStopTermination" id="toc-jaxcmr.components.termination.NoStopTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.NoStopTermination">NoStopTermination</a></li>
-  <li><a href="#jaxcmr.components.termination.SupportsNoStop" id="toc-jaxcmr.components.termination.SupportsNoStop" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsNoStop">SupportsNoStop</a></li>
-  <li><a href="#jaxcmr.components.termination.positional_stop_probability" id="toc-jaxcmr.components.termination.positional_stop_probability" class="nav-link" data-scroll-target="#jaxcmr.components.termination.positional_stop_probability">positional_stop_probability</a></li>
-  <li><a href="#jaxcmr.components.termination.PositionalTermination" id="toc-jaxcmr.components.termination.PositionalTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.PositionalTermination">PositionalTermination</a></li>
-  <li><a href="#jaxcmr.components.termination.SupportsPositional" id="toc-jaxcmr.components.termination.SupportsPositional" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsPositional">SupportsPositional</a></li>
-  <li><a href="#jaxcmr.components.termination.support_ratio_stop_probability" id="toc-jaxcmr.components.termination.support_ratio_stop_probability" class="nav-link" data-scroll-target="#jaxcmr.components.termination.support_ratio_stop_probability">support_ratio_stop_probability</a></li>
-  <li><a href="#jaxcmr.components.termination.SupportRatioTermination" id="toc-jaxcmr.components.termination.SupportRatioTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportRatioTermination">SupportRatioTermination</a></li>
-  <li><a href="#jaxcmr.components.termination.SupportsSupportRatio" id="toc-jaxcmr.components.termination.SupportsSupportRatio" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsSupportRatio">SupportsSupportRatio</a></li>
-  <li><a href="#jaxcmr.components.termination.RetrievalDependentTermination" id="toc-jaxcmr.components.termination.RetrievalDependentTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.RetrievalDependentTermination">RetrievalDependentTermination</a></li>
-  <li><a href="#jaxcmr.components.termination.SupportsRetrievalDependent" id="toc-jaxcmr.components.termination.SupportsRetrievalDependent" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsRetrievalDependent">SupportsRetrievalDependent</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#stopping-on-exhaustion" id="toc-stopping-on-exhaustion" class="nav-link active" data-scroll-target="#stopping-on-exhaustion">Stopping on exhaustion</a></li>
+    <li><a href="#stopping-by-output-position" id="toc-stopping-by-output-position" class="nav-link" data-scroll-target="#stopping-by-output-position">Stopping by output position</a></li>
+    <li><a href="#stopping-by-support-ratio" id="toc-stopping-by-support-ratio" class="nav-link" data-scroll-target="#stopping-by-support-ratio">Stopping by support ratio</a></li>
+    <li><a href="#legacy-stop-candidate-scoring" id="toc-legacy-stop-candidate-scoring" class="nav-link" data-scroll-target="#legacy-stop-candidate-scoring">Legacy STOP-candidate scoring</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.components.termination.stop_when_exhausted" id="toc-jaxcmr.components.termination.stop_when_exhausted" class="nav-link" data-scroll-target="#jaxcmr.components.termination.stop_when_exhausted">stop_when_exhausted</a></li>
+    <li><a href="#jaxcmr.components.termination.NoStopTermination" id="toc-jaxcmr.components.termination.NoStopTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.NoStopTermination">NoStopTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsNoStop" id="toc-jaxcmr.components.termination.SupportsNoStop" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsNoStop">SupportsNoStop</a></li>
+    <li><a href="#jaxcmr.components.termination.positional_stop_probability" id="toc-jaxcmr.components.termination.positional_stop_probability" class="nav-link" data-scroll-target="#jaxcmr.components.termination.positional_stop_probability">positional_stop_probability</a></li>
+    <li><a href="#jaxcmr.components.termination.PositionalTermination" id="toc-jaxcmr.components.termination.PositionalTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.PositionalTermination">PositionalTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsPositional" id="toc-jaxcmr.components.termination.SupportsPositional" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsPositional">SupportsPositional</a></li>
+    <li><a href="#jaxcmr.components.termination.support_ratio_stop_probability" id="toc-jaxcmr.components.termination.support_ratio_stop_probability" class="nav-link" data-scroll-target="#jaxcmr.components.termination.support_ratio_stop_probability">support_ratio_stop_probability</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportRatioTermination" id="toc-jaxcmr.components.termination.SupportRatioTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportRatioTermination">SupportRatioTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsSupportRatio" id="toc-jaxcmr.components.termination.SupportsSupportRatio" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsSupportRatio">SupportsSupportRatio</a></li>
+    <li><a href="#jaxcmr.components.termination.RetrievalDependentTermination" id="toc-jaxcmr.components.termination.RetrievalDependentTermination" class="nav-link" data-scroll-target="#jaxcmr.components.termination.RetrievalDependentTermination">RetrievalDependentTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsRetrievalDependent" id="toc-jaxcmr.components.termination.SupportsRetrievalDependent" class="nav-link" data-scroll-target="#jaxcmr.components.termination.SupportsRetrievalDependent">SupportsRetrievalDependent</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -846,7 +851,32 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#stopping-on-exhaustion" id="toc-stopping-on-exhaustion-body">Stopping on exhaustion</a></li>
+    <li><a href="#stopping-by-output-position" id="toc-stopping-by-output-position-body">Stopping by output position</a></li>
+    <li><a href="#stopping-by-support-ratio" id="toc-stopping-by-support-ratio-body">Stopping by support ratio</a></li>
+    <li><a href="#legacy-stop-candidate-scoring" id="toc-legacy-stop-candidate-scoring-body">Legacy STOP-candidate scoring</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.components.termination.stop_when_exhausted" id="toc-jaxcmr.components.termination.stop_when_exhausted-body">stop_when_exhausted</a></li>
+    <li><a href="#jaxcmr.components.termination.NoStopTermination" id="toc-jaxcmr.components.termination.NoStopTermination-body">NoStopTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsNoStop" id="toc-jaxcmr.components.termination.SupportsNoStop-body">SupportsNoStop</a></li>
+    <li><a href="#jaxcmr.components.termination.positional_stop_probability" id="toc-jaxcmr.components.termination.positional_stop_probability-body">positional_stop_probability</a></li>
+    <li><a href="#jaxcmr.components.termination.PositionalTermination" id="toc-jaxcmr.components.termination.PositionalTermination-body">PositionalTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsPositional" id="toc-jaxcmr.components.termination.SupportsPositional-body">SupportsPositional</a></li>
+    <li><a href="#jaxcmr.components.termination.support_ratio_stop_probability" id="toc-jaxcmr.components.termination.support_ratio_stop_probability-body">support_ratio_stop_probability</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportRatioTermination" id="toc-jaxcmr.components.termination.SupportRatioTermination-body">SupportRatioTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsSupportRatio" id="toc-jaxcmr.components.termination.SupportsSupportRatio-body">SupportsSupportRatio</a></li>
+    <li><a href="#jaxcmr.components.termination.RetrievalDependentTermination" id="toc-jaxcmr.components.termination.RetrievalDependentTermination-body">RetrievalDependentTermination</a></li>
+    <li><a href="#jaxcmr.components.termination.SupportsRetrievalDependent" id="toc-jaxcmr.components.termination.SupportsRetrievalDependent-body">SupportsRetrievalDependent</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>The probability of stopping depends on which candidates remain available. A model can stop only on exhaustion, use a schedule indexed by recall count, or compare support for available and unavailable studied candidates. Each calculation returns one if retrieval has ended or no candidates remain.</p>
 <p>A model with a fixed stopping rule can call the corresponding function directly. Configurable CMR variants use these calculations through the response policy that assigns probabilities to STOP and each item.</p>
 <section id="stopping-on-exhaustion" class="level2 api-function-index">
@@ -1457,6 +1487,57 @@ ul.task-list li input[type="checkbox"] {
       });
       clipboardModal.on('success', onCopySuccess);
     }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
         var filterRegex = new RegExp("https:\/\/githubpsyche\.github\.io\/jaxcmr\/");
@@ -1869,8 +1950,8 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../reference/components-factory.html" class="pagination-link" aria-label="Preparing trial inputs">
-        <span class="nav-page-text">Preparing trial inputs</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../reference/components-support-ratio.html" class="pagination-link" aria-label="Raw support-ratio policies">
+        <span class="nav-page-text">Raw support-ratio policies</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

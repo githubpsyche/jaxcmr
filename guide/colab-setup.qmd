@@ -1,10 +1,9 @@
 ---
 title: "Remote setup in your browser with Google Colab"
+metadata-files: [_commands.yml]
 format:
   html:
     css: images/setup/screenshots.css
-    code-fold: false
-    code-line-numbers: false
 ---
 
 Use [Google Colab](https://colab.research.google.com/) to write and run notebooks, work with your own data, and keep results for later. Colab runs Python on Google's computers through your web browser. You need a Google account and an internet connection; you do not need to install Python or an editor on your computer.
@@ -19,7 +18,7 @@ A **Jupyter notebook** is a document ending in `.ipynb`. It combines **text cell
 - **Adapt a supplied notebook:** open its **Open in Colab** link, then choose **File → Save a copy in Drive**. Work in your copy; the original on GitHub stays unchanged.
 - **Continue an existing notebook:** open it from Google Drive, or choose **File → Open notebook**. Use **File → Upload notebook** for an `.ipynb` file on your computer.
 
-![The **File** menu lets you create a new notebook or keep your own copy of a supplied one.](images/setup/colab-copy-dark.jpg){#fig-colab-copy-dark fig-alt="Colab File menu with New notebook in Drive and Save a copy in Drive outlined in red." width=100%}
+![The **File** menu lets you create a new notebook or keep your own copy of a supplied one.](images/setup/colab-copy-dark.jpg){#fig-colab-copy-dark fig-alt="Colab File menu with New notebook in Drive and Save a copy in Drive outlined in red."}
 
 Use **+ Code** or **+ Text** in the toolbar to add a cell below the selected one. Click inside a code cell to edit it; double-click a text cell to edit its explanation. Run a code cell with its triangle button or **Shift+Enter**. **Runtime → Run all** runs the notebook from top to bottom.
 
@@ -31,7 +30,7 @@ The **runtime** is the remote computer running your code. Your notebook can be s
 
 Choose **Runtime → Change runtime type**, select **Python 3** and **CPU**, and save. CPU is sufficient to get started with JAXCMR. Click **Connect** if the notebook is not already connected. JAXCMR requires Python **3.12 or later**; use the latest runtime version if installation reports an older Python.
 
-![Choose **Python 3** and **CPU** in the runtime settings.](images/setup/colab-runtime-dark.jpg){#fig-colab-runtime-dark fig-alt="Colab runtime settings with Python 3 and CPU outlined in red." width=100%}
+![Choose **Python 3** and **CPU** in the runtime settings.](images/setup/colab-runtime-dark.jpg){#fig-colab-runtime-dark fig-alt="Colab runtime settings with Python 3 and CPU outlined in red."}
 
 In a new notebook, add this as your first code cell and run it:
 
@@ -69,7 +68,7 @@ Follow Colab's prompts to connect your Google account. This makes your Drive fil
 
 Open the **Files** panel using the folder icon on the left. Expand `drive`, then `MyDrive`, to find your project. Use the panel's refresh button if a new file has not appeared. Right-click a file and choose **Copy path** to obtain the location you can use in Python.
 
-![In the **Files** panel, a file's menu offers **Copy path** and **Download**. Colab's built-in sample files are shown here; your project appears under `drive/MyDrive` after you connect Drive.](images/setup/colab-file-actions-dark.jpg){#fig-colab-file-actions fig-alt="Colab Files panel in dark mode with Copy path and Download outlined in red in a file's menu." width=100%}
+![In the **Files** panel, a file's menu offers **Copy path** and **Download**. Colab's built-in sample files are shown here; your project appears under `drive/MyDrive` after you connect Drive.](images/setup/colab-file-actions-dark.jpg){#fig-colab-file-actions fig-alt="Colab Files panel in dark mode with Copy path and Download outlined in red in a file's menu."}
 
 ### Upload directly for occasional work
 
@@ -128,7 +127,7 @@ Choose a new filename or results folder for runs you want to keep separately. Wr
 
 For Drive outputs, wait for writing to finish and check that the files appear in Google Drive before ending the session. For temporary outputs, right-click each file in Colab's **Files** panel and choose **Download**. This downloads the data or result file. **File → Download → Download .ipynb** downloads the notebook itself.
 
-![**File → Save** saves the notebook. Its **Download** submenu exports the notebook; use the **Files** panel to download separate result files.](images/setup/colab-save-dark.jpg){#fig-colab-save-dark fig-alt="Colab File menu with Save and Download outlined in red." width=100%}
+![**File → Save** saves the notebook. Its **Download** submenu exports the notebook; use the **Files** panel to download separate result files.](images/setup/colab-save-dark.jpg){#fig-colab-save-dark fig-alt="Colab File menu with Save and Download outlined in red."}
 
 A later notebook can reuse the saved CSV without repeating the calculations that created it. After connecting Drive and defining the same `project` location, load it with:
 
@@ -167,7 +166,7 @@ Study order: [1 2 3 4 5]
 Simulated recalls: [1 5 2 4 3]
 ```
 
-![**Run all** executes the cells in order. This screenshot shows saved output; running the notebook produces it in your current session.](images/setup/colab-run-dark.jpg){#fig-colab-notebook-controls fig-alt="Colab notebook with Run all and the simulation output outlined in red." width=100%}
+![**Run all** executes the cells in order. This screenshot shows saved output; running the notebook produces it in your current session.](images/setup/colab-run-dark.jpg){#fig-colab-notebook-controls fig-alt="Colab notebook with Run all and the simulation output outlined in red."}
 
 The notebook's **Read the output** section explains the simulation. Completing this check verifies installation; use the earlier sections to work with your own notebooks and files.
 

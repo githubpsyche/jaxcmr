@@ -84,9 +84,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -385,6 +385,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -426,8 +432,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -756,6 +774,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -818,50 +842,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#input-records" id="toc-input-records" class="nav-link active" data-scroll-target="#input-records">Input records</a></li>
-  <li><a href="#parameter-summaries" id="toc-parameter-summaries" class="nav-link" data-scroll-target="#parameter-summaries">Parameter summaries</a></li>
-  <li><a href="#information-criteria" id="toc-information-criteria" class="nav-link" data-scroll-target="#information-criteria">Information criteria</a></li>
-  <li><a href="#paired-comparisons" id="toc-paired-comparisons" class="nav-link" data-scroll-target="#paired-comparisons">Paired comparisons</a></li>
-  <li><a href="#model-wins" id="toc-model-wins" class="nav-link" data-scroll-target="#model-wins">Model wins</a></li>
-  <li><a href="#nested-model-adjustment" id="toc-nested-model-adjustment" class="nav-link" data-scroll-target="#nested-model-adjustment">Nested model adjustment</a></li>
-  <li><a href="#population-model-selection" id="toc-population-model-selection" class="nav-link" data-scroll-target="#population-model-selection">Population model selection</a></li>
-  <li><a href="#compatibility-imports" id="toc-compatibility-imports" class="nav-link" data-scroll-target="#compatibility-imports">Compatibility imports</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.summarize.ObjectiveSummary" id="toc-jaxcmr.summarize.ObjectiveSummary" class="nav-link" data-scroll-target="#jaxcmr.summarize.ObjectiveSummary">ObjectiveSummary</a></li>
-  <li><a href="#jaxcmr.summarize.ParameterSummary" id="toc-jaxcmr.summarize.ParameterSummary" class="nav-link" data-scroll-target="#jaxcmr.summarize.ParameterSummary">ParameterSummary</a></li>
-  <li><a href="#jaxcmr.summarize.ModelComparison" id="toc-jaxcmr.summarize.ModelComparison" class="nav-link" data-scroll-target="#jaxcmr.summarize.ModelComparison">ModelComparison</a></li>
-  <li><a href="#jaxcmr.summarize.CVComparison" id="toc-jaxcmr.summarize.CVComparison" class="nav-link" data-scroll-target="#jaxcmr.summarize.CVComparison">CVComparison</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_ci" id="toc-jaxcmr.summarize.calculate_ci" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_ci">calculate_ci</a></li>
-  <li><a href="#jaxcmr.summarize.add_summary_lines" id="toc-jaxcmr.summarize.add_summary_lines" class="nav-link" data-scroll-target="#jaxcmr.summarize.add_summary_lines">add_summary_lines</a></li>
-  <li><a href="#jaxcmr.summarize.summarize_parameters" id="toc-jaxcmr.summarize.summarize_parameters" class="nav-link" data-scroll-target="#jaxcmr.summarize.summarize_parameters">summarize_parameters</a></li>
-  <li><a href="#jaxcmr.summarize.aic_scores" id="toc-jaxcmr.summarize.aic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.aic_scores">aic_scores</a></li>
-  <li><a href="#jaxcmr.summarize.aicc_scores" id="toc-jaxcmr.summarize.aicc_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.aicc_scores">aicc_scores</a></li>
-  <li><a href="#jaxcmr.summarize.bic_scores" id="toc-jaxcmr.summarize.bic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.bic_scores">bic_scores</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_aic" id="toc-jaxcmr.summarize.calculate_aic" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aic">calculate_aic</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_aicc" id="toc-jaxcmr.summarize.calculate_aicc" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aicc">calculate_aicc</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_bic_scores" id="toc-jaxcmr.summarize.calculate_bic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_bic_scores">calculate_bic_scores</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_aic_weights" id="toc-jaxcmr.summarize.calculate_aic_weights" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aic_weights">calculate_aic_weights</a></li>
-  <li><a href="#jaxcmr.summarize.calculate_aicc_weights" id="toc-jaxcmr.summarize.calculate_aicc_weights" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aicc_weights">calculate_aicc_weights</a></li>
-  <li><a href="#jaxcmr.summarize.pairwise_aic_differences" id="toc-jaxcmr.summarize.pairwise_aic_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_aic_differences">pairwise_aic_differences</a></li>
-  <li><a href="#jaxcmr.summarize.pairwise_aicc_differences" id="toc-jaxcmr.summarize.pairwise_aicc_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_aicc_differences">pairwise_aicc_differences</a></li>
-  <li><a href="#jaxcmr.summarize.pairwise_cv_differences" id="toc-jaxcmr.summarize.pairwise_cv_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_cv_differences">pairwise_cv_differences</a></li>
-  <li><a href="#jaxcmr.summarize.pairwise_median_aic_differences" id="toc-jaxcmr.summarize.pairwise_median_aic_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_median_aic_differences">pairwise_median_aic_differences</a></li>
-  <li><a href="#jaxcmr.summarize.pairwise_median_aicc_differences" id="toc-jaxcmr.summarize.pairwise_median_aicc_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_median_aicc_differences">pairwise_median_aicc_differences</a></li>
-  <li><a href="#jaxcmr.summarize.generate_t_p_matrices" id="toc-jaxcmr.summarize.generate_t_p_matrices" class="nav-link" data-scroll-target="#jaxcmr.summarize.generate_t_p_matrices">generate_t_p_matrices</a></li>
-  <li><a href="#jaxcmr.summarize.winner_comparison_matrix" id="toc-jaxcmr.summarize.winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.winner_comparison_matrix">winner_comparison_matrix</a></li>
-  <li><a href="#jaxcmr.summarize.aicc_winner_comparison_matrix" id="toc-jaxcmr.summarize.aicc_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.aicc_winner_comparison_matrix">aicc_winner_comparison_matrix</a></li>
-  <li><a href="#jaxcmr.summarize.raw_winner_comparison_matrix" id="toc-jaxcmr.summarize.raw_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.raw_winner_comparison_matrix">raw_winner_comparison_matrix</a></li>
-  <li><a href="#jaxcmr.summarize.cv_winner_comparison_matrix" id="toc-jaxcmr.summarize.cv_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.cv_winner_comparison_matrix">cv_winner_comparison_matrix</a></li>
-  <li><a href="#jaxcmr.summarize.floor_nested_fitness" id="toc-jaxcmr.summarize.floor_nested_fitness" class="nav-link" data-scroll-target="#jaxcmr.summarize.floor_nested_fitness">floor_nested_fitness</a></li>
-  <li><a href="#jaxcmr.summarize.random_effects_model_selection" id="toc-jaxcmr.summarize.random_effects_model_selection" class="nav-link" data-scroll-target="#jaxcmr.summarize.random_effects_model_selection">random_effects_model_selection</a></li>
-  <li><a href="#jaxcmr.summarize.bayesian_model_selection" id="toc-jaxcmr.summarize.bayesian_model_selection" class="nav-link" data-scroll-target="#jaxcmr.summarize.bayesian_model_selection">bayesian_model_selection</a></li>
-  <li><a href="#jaxcmr.summarize.bound_params" id="toc-jaxcmr.summarize.bound_params" class="nav-link" data-scroll-target="#jaxcmr.summarize.bound_params">bound_params</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#input-records" id="toc-input-records" class="nav-link active" data-scroll-target="#input-records">Input records</a></li>
+    <li><a href="#parameter-summaries" id="toc-parameter-summaries" class="nav-link" data-scroll-target="#parameter-summaries">Parameter summaries</a></li>
+    <li><a href="#information-criteria" id="toc-information-criteria" class="nav-link" data-scroll-target="#information-criteria">Information criteria</a></li>
+    <li><a href="#paired-comparisons" id="toc-paired-comparisons" class="nav-link" data-scroll-target="#paired-comparisons">Paired comparisons</a></li>
+    <li><a href="#model-wins" id="toc-model-wins" class="nav-link" data-scroll-target="#model-wins">Model wins</a></li>
+    <li><a href="#nested-model-adjustment" id="toc-nested-model-adjustment" class="nav-link" data-scroll-target="#nested-model-adjustment">Nested model adjustment</a></li>
+    <li><a href="#population-model-selection" id="toc-population-model-selection" class="nav-link" data-scroll-target="#population-model-selection">Population model selection</a></li>
+    <li><a href="#compatibility-imports" id="toc-compatibility-imports" class="nav-link" data-scroll-target="#compatibility-imports">Compatibility imports</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.summarize.ObjectiveSummary" id="toc-jaxcmr.summarize.ObjectiveSummary" class="nav-link" data-scroll-target="#jaxcmr.summarize.ObjectiveSummary">ObjectiveSummary</a></li>
+    <li><a href="#jaxcmr.summarize.ParameterSummary" id="toc-jaxcmr.summarize.ParameterSummary" class="nav-link" data-scroll-target="#jaxcmr.summarize.ParameterSummary">ParameterSummary</a></li>
+    <li><a href="#jaxcmr.summarize.ModelComparison" id="toc-jaxcmr.summarize.ModelComparison" class="nav-link" data-scroll-target="#jaxcmr.summarize.ModelComparison">ModelComparison</a></li>
+    <li><a href="#jaxcmr.summarize.CVComparison" id="toc-jaxcmr.summarize.CVComparison" class="nav-link" data-scroll-target="#jaxcmr.summarize.CVComparison">CVComparison</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_ci" id="toc-jaxcmr.summarize.calculate_ci" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_ci">calculate_ci</a></li>
+    <li><a href="#jaxcmr.summarize.add_summary_lines" id="toc-jaxcmr.summarize.add_summary_lines" class="nav-link" data-scroll-target="#jaxcmr.summarize.add_summary_lines">add_summary_lines</a></li>
+    <li><a href="#jaxcmr.summarize.summarize_parameters" id="toc-jaxcmr.summarize.summarize_parameters" class="nav-link" data-scroll-target="#jaxcmr.summarize.summarize_parameters">summarize_parameters</a></li>
+    <li><a href="#jaxcmr.summarize.aic_scores" id="toc-jaxcmr.summarize.aic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.aic_scores">aic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.aicc_scores" id="toc-jaxcmr.summarize.aicc_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.aicc_scores">aicc_scores</a></li>
+    <li><a href="#jaxcmr.summarize.bic_scores" id="toc-jaxcmr.summarize.bic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.bic_scores">bic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aic" id="toc-jaxcmr.summarize.calculate_aic" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aic">calculate_aic</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aicc" id="toc-jaxcmr.summarize.calculate_aicc" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aicc">calculate_aicc</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_bic_scores" id="toc-jaxcmr.summarize.calculate_bic_scores" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_bic_scores">calculate_bic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aic_weights" id="toc-jaxcmr.summarize.calculate_aic_weights" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aic_weights">calculate_aic_weights</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aicc_weights" id="toc-jaxcmr.summarize.calculate_aicc_weights" class="nav-link" data-scroll-target="#jaxcmr.summarize.calculate_aicc_weights">calculate_aicc_weights</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_aic_differences" id="toc-jaxcmr.summarize.pairwise_aic_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_aic_differences">pairwise_aic_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_aicc_differences" id="toc-jaxcmr.summarize.pairwise_aicc_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_aicc_differences">pairwise_aicc_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_cv_differences" id="toc-jaxcmr.summarize.pairwise_cv_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_cv_differences">pairwise_cv_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_median_aic_differences" id="toc-jaxcmr.summarize.pairwise_median_aic_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_median_aic_differences">pairwise_median_aic_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_median_aicc_differences" id="toc-jaxcmr.summarize.pairwise_median_aicc_differences" class="nav-link" data-scroll-target="#jaxcmr.summarize.pairwise_median_aicc_differences">pairwise_median_aicc_differences</a></li>
+    <li><a href="#jaxcmr.summarize.generate_t_p_matrices" id="toc-jaxcmr.summarize.generate_t_p_matrices" class="nav-link" data-scroll-target="#jaxcmr.summarize.generate_t_p_matrices">generate_t_p_matrices</a></li>
+    <li><a href="#jaxcmr.summarize.winner_comparison_matrix" id="toc-jaxcmr.summarize.winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.winner_comparison_matrix">winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.aicc_winner_comparison_matrix" id="toc-jaxcmr.summarize.aicc_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.aicc_winner_comparison_matrix">aicc_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.raw_winner_comparison_matrix" id="toc-jaxcmr.summarize.raw_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.raw_winner_comparison_matrix">raw_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.cv_winner_comparison_matrix" id="toc-jaxcmr.summarize.cv_winner_comparison_matrix" class="nav-link" data-scroll-target="#jaxcmr.summarize.cv_winner_comparison_matrix">cv_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.floor_nested_fitness" id="toc-jaxcmr.summarize.floor_nested_fitness" class="nav-link" data-scroll-target="#jaxcmr.summarize.floor_nested_fitness">floor_nested_fitness</a></li>
+    <li><a href="#jaxcmr.summarize.random_effects_model_selection" id="toc-jaxcmr.summarize.random_effects_model_selection" class="nav-link" data-scroll-target="#jaxcmr.summarize.random_effects_model_selection">random_effects_model_selection</a></li>
+    <li><a href="#jaxcmr.summarize.bayesian_model_selection" id="toc-jaxcmr.summarize.bayesian_model_selection" class="nav-link" data-scroll-target="#jaxcmr.summarize.bayesian_model_selection">bayesian_model_selection</a></li>
+    <li><a href="#jaxcmr.summarize.bound_params" id="toc-jaxcmr.summarize.bound_params" class="nav-link" data-scroll-target="#jaxcmr.summarize.bound_params">bound_params</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -885,7 +908,54 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#input-records" id="toc-input-records-body">Input records</a></li>
+    <li><a href="#parameter-summaries" id="toc-parameter-summaries-body">Parameter summaries</a></li>
+    <li><a href="#information-criteria" id="toc-information-criteria-body">Information criteria</a></li>
+    <li><a href="#paired-comparisons" id="toc-paired-comparisons-body">Paired comparisons</a></li>
+    <li><a href="#model-wins" id="toc-model-wins-body">Model wins</a></li>
+    <li><a href="#nested-model-adjustment" id="toc-nested-model-adjustment-body">Nested model adjustment</a></li>
+    <li><a href="#population-model-selection" id="toc-population-model-selection-body">Population model selection</a></li>
+    <li><a href="#compatibility-imports" id="toc-compatibility-imports-body">Compatibility imports</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.summarize.ObjectiveSummary" id="toc-jaxcmr.summarize.ObjectiveSummary-body">ObjectiveSummary</a></li>
+    <li><a href="#jaxcmr.summarize.ParameterSummary" id="toc-jaxcmr.summarize.ParameterSummary-body">ParameterSummary</a></li>
+    <li><a href="#jaxcmr.summarize.ModelComparison" id="toc-jaxcmr.summarize.ModelComparison-body">ModelComparison</a></li>
+    <li><a href="#jaxcmr.summarize.CVComparison" id="toc-jaxcmr.summarize.CVComparison-body">CVComparison</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_ci" id="toc-jaxcmr.summarize.calculate_ci-body">calculate_ci</a></li>
+    <li><a href="#jaxcmr.summarize.add_summary_lines" id="toc-jaxcmr.summarize.add_summary_lines-body">add_summary_lines</a></li>
+    <li><a href="#jaxcmr.summarize.summarize_parameters" id="toc-jaxcmr.summarize.summarize_parameters-body">summarize_parameters</a></li>
+    <li><a href="#jaxcmr.summarize.aic_scores" id="toc-jaxcmr.summarize.aic_scores-body">aic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.aicc_scores" id="toc-jaxcmr.summarize.aicc_scores-body">aicc_scores</a></li>
+    <li><a href="#jaxcmr.summarize.bic_scores" id="toc-jaxcmr.summarize.bic_scores-body">bic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aic" id="toc-jaxcmr.summarize.calculate_aic-body">calculate_aic</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aicc" id="toc-jaxcmr.summarize.calculate_aicc-body">calculate_aicc</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_bic_scores" id="toc-jaxcmr.summarize.calculate_bic_scores-body">calculate_bic_scores</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aic_weights" id="toc-jaxcmr.summarize.calculate_aic_weights-body">calculate_aic_weights</a></li>
+    <li><a href="#jaxcmr.summarize.calculate_aicc_weights" id="toc-jaxcmr.summarize.calculate_aicc_weights-body">calculate_aicc_weights</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_aic_differences" id="toc-jaxcmr.summarize.pairwise_aic_differences-body">pairwise_aic_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_aicc_differences" id="toc-jaxcmr.summarize.pairwise_aicc_differences-body">pairwise_aicc_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_cv_differences" id="toc-jaxcmr.summarize.pairwise_cv_differences-body">pairwise_cv_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_median_aic_differences" id="toc-jaxcmr.summarize.pairwise_median_aic_differences-body">pairwise_median_aic_differences</a></li>
+    <li><a href="#jaxcmr.summarize.pairwise_median_aicc_differences" id="toc-jaxcmr.summarize.pairwise_median_aicc_differences-body">pairwise_median_aicc_differences</a></li>
+    <li><a href="#jaxcmr.summarize.generate_t_p_matrices" id="toc-jaxcmr.summarize.generate_t_p_matrices-body">generate_t_p_matrices</a></li>
+    <li><a href="#jaxcmr.summarize.winner_comparison_matrix" id="toc-jaxcmr.summarize.winner_comparison_matrix-body">winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.aicc_winner_comparison_matrix" id="toc-jaxcmr.summarize.aicc_winner_comparison_matrix-body">aicc_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.raw_winner_comparison_matrix" id="toc-jaxcmr.summarize.raw_winner_comparison_matrix-body">raw_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.cv_winner_comparison_matrix" id="toc-jaxcmr.summarize.cv_winner_comparison_matrix-body">cv_winner_comparison_matrix</a></li>
+    <li><a href="#jaxcmr.summarize.floor_nested_fitness" id="toc-jaxcmr.summarize.floor_nested_fitness-body">floor_nested_fitness</a></li>
+    <li><a href="#jaxcmr.summarize.random_effects_model_selection" id="toc-jaxcmr.summarize.random_effects_model_selection-body">random_effects_model_selection</a></li>
+    <li><a href="#jaxcmr.summarize.bayesian_model_selection" id="toc-jaxcmr.summarize.bayesian_model_selection-body">bayesian_model_selection</a></li>
+    <li><a href="#jaxcmr.summarize.bound_params" id="toc-jaxcmr.summarize.bound_params-body">bound_params</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Summarize fitted parameters and compare models using their scores.</p>
 <p>Use the numerical functions, such as <code>aic_scores</code>, when you have arrays of scores and want to work with the results directly. When you have named model records, the comparison functions align rows by participant ID and produce labelled tables. Which observations were fitted and what a score measures must agree across the models in a comparison.</p>
 <p><code>summarize_parameters</code> describes the distribution of parameter estimates across fitted rows. For comparing models, information criteria start with summed negative log likelihoods and penalize the number of free parameters. Paired differences and win fractions describe how the models compare for the same participants. Held-out comparisons use the supplied test scores. For declared nested models, <code>floor_nested_fitness</code> makes a reporting adjustment and records which scores it changed.</p>
@@ -3271,6 +3341,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

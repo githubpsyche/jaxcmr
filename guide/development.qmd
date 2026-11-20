@@ -95,9 +95,8 @@ To add an entry or move it under a different heading, edit the list in
 quarto render guide/reference/simulation.qmd
 ```
 
-This rebuilds the simulation reference page. Open
-`docs/reference/simulation.html` and follow the function’s link in the
-summary table to check the description a reader will see.
+This rebuilds the simulation reference page. In the local website preview,
+open **API Reference → Simulation** and follow the function’s link in the summary table.
 
 ### Change an input supplied with the package
 
@@ -116,17 +115,31 @@ for dependencies.
 
 ### Preview and share your change
 
-Build a local copy of the website to review a change to the guide or templates.
+The website’s theme, navigation, and default code controls are set in
+`guide/_quarto.yml`. Edit `guide/styles.scss` for layout shared by light and
+dark mode. The palette files supply colors. Command-oriented pages use
+`guide/_commands.yml` to show commands without line numbers. Formatting
+specific to API entries lives in `guide/reference/reference.css`.
+
+Published notebooks carry a copy of their code controls so readers can render a
+download on its own. After changing those defaults, run
+`uv run --no-sync python guide/prepare.py --sync-notebook-format` to refresh
+those settings in the notebook sources.
+
+After changing shared styling or navigation, build the whole site. Quarto embeds
+the sidebar in each page, so a single-page render updates only one copy.
 
 ```bash
 bash build-docs.sh
 uv run --no-sync python guide/tools/check_site.py docs
+uv run --no-sync python -m http.server 8000 --bind 127.0.0.1 --directory docs
 ```
 
 The first command builds the site in `docs/` using the outputs already
 saved in the notebooks. The second checks local links, notebook downloads,
-and example files. Open `docs/index.html` and follow the link to the page
-you changed. To inspect a revised notebook, use its download link.
+and example files. The third serves the built pages at
+[`http://127.0.0.1:8000/`](http://127.0.0.1:8000/), where the browser can
+load Quarto’s navigation scripts. Press **Ctrl+C** in the terminal to stop the server. To inspect a revised notebook, use its download link.
 **Open in Colab** opens the version on GitHub’s `main` branch.
 
 To propose a code or documentation change, open a pull request asking to

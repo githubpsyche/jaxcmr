@@ -84,9 +84,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-686d553dd5cb0a770c0bea7984992e14.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-67eda9c5aaa67c98134954a64ce9520e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-783a6b840786ce46c98f19c2221b36a5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2717f5f6840cf2555d580ba773d6015b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -385,6 +385,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -426,8 +432,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -756,6 +774,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -818,32 +842,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active" data-toc-expanded="1">
     <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#constructing-datasets" id="toc-constructing-datasets" class="nav-link active" data-scroll-target="#constructing-datasets">Constructing datasets</a></li>
-  <li><a href="#selecting-trials-and-replacing-responses" id="toc-selecting-trials-and-replacing-responses" class="nav-link" data-scroll-target="#selecting-trials-and-replacing-responses">Selecting trials and replacing responses</a></li>
-  <li><a href="#conditions-and-masks" id="toc-conditions-and-masks" class="nav-link" data-scroll-target="#conditions-and-masks">Conditions and masks</a></li>
-  <li><a href="#participants" id="toc-participants" class="nav-link" data-scroll-target="#participants">Participants</a></li>
-  <li><a href="#study-dimensions" id="toc-study-dimensions" class="nav-link" data-scroll-target="#study-dimensions">Study dimensions</a></li>
-  <li><a href="#recall-representations" id="toc-recall-representations" class="nav-link" data-scroll-target="#recall-representations">Recall representations</a></li>
-  <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
-  <ul class="collapse">
-  <li><a href="#jaxcmr.dataset.make_dataset" id="toc-jaxcmr.dataset.make_dataset" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_dataset">make_dataset</a></li>
-  <li><a href="#jaxcmr.dataset.select_trials" id="toc-jaxcmr.dataset.select_trials" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_trials">select_trials</a></li>
-  <li><a href="#jaxcmr.dataset.replace_recalls" id="toc-jaxcmr.dataset.replace_recalls" class="nav-link" data-scroll-target="#jaxcmr.dataset.replace_recalls">replace_recalls</a></li>
-  <li><a href="#jaxcmr.dataset.generate_trial_mask" id="toc-jaxcmr.dataset.generate_trial_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_trial_mask">generate_trial_mask</a></li>
-  <li><a href="#jaxcmr.dataset.generate_recall_mask" id="toc-jaxcmr.dataset.generate_recall_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_recall_mask">generate_recall_mask</a></li>
-  <li><a href="#jaxcmr.dataset.select_conditions" id="toc-jaxcmr.dataset.select_conditions" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_conditions">select_conditions</a></li>
-  <li><a href="#jaxcmr.dataset.TrialSelection" id="toc-jaxcmr.dataset.TrialSelection" class="nav-link" data-scroll-target="#jaxcmr.dataset.TrialSelection">TrialSelection</a></li>
-  <li><a href="#jaxcmr.dataset.make_subject_trial_masks" id="toc-jaxcmr.dataset.make_subject_trial_masks" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_subject_trial_masks">make_subject_trial_masks</a></li>
-  <li><a href="#jaxcmr.dataset.apply_by_subject" id="toc-jaxcmr.dataset.apply_by_subject" class="nav-link" data-scroll-target="#jaxcmr.dataset.apply_by_subject">apply_by_subject</a></li>
-  <li><a href="#jaxcmr.dataset.limit_to_first_subjects" id="toc-jaxcmr.dataset.limit_to_first_subjects" class="nav-link" data-scroll-target="#jaxcmr.dataset.limit_to_first_subjects">limit_to_first_subjects</a></li>
-  <li><a href="#jaxcmr.dataset.find_max_list_length" id="toc-jaxcmr.dataset.find_max_list_length" class="nav-link" data-scroll-target="#jaxcmr.dataset.find_max_list_length">find_max_list_length</a></li>
-  <li><a href="#jaxcmr.dataset.recall_positions_to_items" id="toc-jaxcmr.dataset.recall_positions_to_items" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_positions_to_items">recall_positions_to_items</a></li>
-  <li><a href="#jaxcmr.dataset.recall_items_to_positions" id="toc-jaxcmr.dataset.recall_items_to_positions" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_items_to_positions">recall_items_to_positions</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <ul>
+    <li><a href="#constructing-datasets" id="toc-constructing-datasets" class="nav-link active" data-scroll-target="#constructing-datasets">Constructing datasets</a></li>
+    <li><a href="#selecting-trials-and-replacing-responses" id="toc-selecting-trials-and-replacing-responses" class="nav-link" data-scroll-target="#selecting-trials-and-replacing-responses">Selecting trials and replacing responses</a></li>
+    <li><a href="#conditions-and-masks" id="toc-conditions-and-masks" class="nav-link" data-scroll-target="#conditions-and-masks">Conditions and masks</a></li>
+    <li><a href="#participants" id="toc-participants" class="nav-link" data-scroll-target="#participants">Participants</a></li>
+    <li><a href="#study-dimensions" id="toc-study-dimensions" class="nav-link" data-scroll-target="#study-dimensions">Study dimensions</a></li>
+    <li><a href="#recall-representations" id="toc-recall-representations" class="nav-link" data-scroll-target="#recall-representations">Recall representations</a></li>
+    <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
+    <ul class="collapse">
+    <li><a href="#jaxcmr.dataset.make_dataset" id="toc-jaxcmr.dataset.make_dataset" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_dataset">make_dataset</a></li>
+    <li><a href="#jaxcmr.dataset.select_trials" id="toc-jaxcmr.dataset.select_trials" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_trials">select_trials</a></li>
+    <li><a href="#jaxcmr.dataset.replace_recalls" id="toc-jaxcmr.dataset.replace_recalls" class="nav-link" data-scroll-target="#jaxcmr.dataset.replace_recalls">replace_recalls</a></li>
+    <li><a href="#jaxcmr.dataset.generate_trial_mask" id="toc-jaxcmr.dataset.generate_trial_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_trial_mask">generate_trial_mask</a></li>
+    <li><a href="#jaxcmr.dataset.generate_recall_mask" id="toc-jaxcmr.dataset.generate_recall_mask" class="nav-link" data-scroll-target="#jaxcmr.dataset.generate_recall_mask">generate_recall_mask</a></li>
+    <li><a href="#jaxcmr.dataset.select_conditions" id="toc-jaxcmr.dataset.select_conditions" class="nav-link" data-scroll-target="#jaxcmr.dataset.select_conditions">select_conditions</a></li>
+    <li><a href="#jaxcmr.dataset.TrialSelection" id="toc-jaxcmr.dataset.TrialSelection" class="nav-link" data-scroll-target="#jaxcmr.dataset.TrialSelection">TrialSelection</a></li>
+    <li><a href="#jaxcmr.dataset.make_subject_trial_masks" id="toc-jaxcmr.dataset.make_subject_trial_masks" class="nav-link" data-scroll-target="#jaxcmr.dataset.make_subject_trial_masks">make_subject_trial_masks</a></li>
+    <li><a href="#jaxcmr.dataset.apply_by_subject" id="toc-jaxcmr.dataset.apply_by_subject" class="nav-link" data-scroll-target="#jaxcmr.dataset.apply_by_subject">apply_by_subject</a></li>
+    <li><a href="#jaxcmr.dataset.limit_to_first_subjects" id="toc-jaxcmr.dataset.limit_to_first_subjects" class="nav-link" data-scroll-target="#jaxcmr.dataset.limit_to_first_subjects">limit_to_first_subjects</a></li>
+    <li><a href="#jaxcmr.dataset.find_max_list_length" id="toc-jaxcmr.dataset.find_max_list_length" class="nav-link" data-scroll-target="#jaxcmr.dataset.find_max_list_length">find_max_list_length</a></li>
+    <li><a href="#jaxcmr.dataset.recall_positions_to_items" id="toc-jaxcmr.dataset.recall_positions_to_items" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_positions_to_items">recall_positions_to_items</a></li>
+    <li><a href="#jaxcmr.dataset.recall_items_to_positions" id="toc-jaxcmr.dataset.recall_items_to_positions" class="nav-link" data-scroll-target="#jaxcmr.dataset.recall_items_to_positions">recall_items_to_positions</a></li>
+    </ul></li>
+    </ul>
+  </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content" tabindex="-1">
@@ -867,7 +890,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-
+<details class="inline-page-contents">
+  <summary>On this page</summary>
+  <nav id="TOC-body" role="doc-toc" aria-labelledby="toc-title-body">
+    <h2 id="toc-title-body">On this page</h2>
+    <ul>
+    <li><a href="#constructing-datasets" id="toc-constructing-datasets-body">Constructing datasets</a></li>
+    <li><a href="#selecting-trials-and-replacing-responses" id="toc-selecting-trials-and-replacing-responses-body">Selecting trials and replacing responses</a></li>
+    <li><a href="#conditions-and-masks" id="toc-conditions-and-masks-body">Conditions and masks</a></li>
+    <li><a href="#participants" id="toc-participants-body">Participants</a></li>
+    <li><a href="#study-dimensions" id="toc-study-dimensions-body">Study dimensions</a></li>
+    <li><a href="#recall-representations" id="toc-recall-representations-body">Recall representations</a></li>
+    <li><a href="#api-entries" id="toc-api-entries-body">API entries</a>
+    <ul>
+    <li><a href="#jaxcmr.dataset.make_dataset" id="toc-jaxcmr.dataset.make_dataset-body">make_dataset</a></li>
+    <li><a href="#jaxcmr.dataset.select_trials" id="toc-jaxcmr.dataset.select_trials-body">select_trials</a></li>
+    <li><a href="#jaxcmr.dataset.replace_recalls" id="toc-jaxcmr.dataset.replace_recalls-body">replace_recalls</a></li>
+    <li><a href="#jaxcmr.dataset.generate_trial_mask" id="toc-jaxcmr.dataset.generate_trial_mask-body">generate_trial_mask</a></li>
+    <li><a href="#jaxcmr.dataset.generate_recall_mask" id="toc-jaxcmr.dataset.generate_recall_mask-body">generate_recall_mask</a></li>
+    <li><a href="#jaxcmr.dataset.select_conditions" id="toc-jaxcmr.dataset.select_conditions-body">select_conditions</a></li>
+    <li><a href="#jaxcmr.dataset.TrialSelection" id="toc-jaxcmr.dataset.TrialSelection-body">TrialSelection</a></li>
+    <li><a href="#jaxcmr.dataset.make_subject_trial_masks" id="toc-jaxcmr.dataset.make_subject_trial_masks-body">make_subject_trial_masks</a></li>
+    <li><a href="#jaxcmr.dataset.apply_by_subject" id="toc-jaxcmr.dataset.apply_by_subject-body">apply_by_subject</a></li>
+    <li><a href="#jaxcmr.dataset.limit_to_first_subjects" id="toc-jaxcmr.dataset.limit_to_first_subjects-body">limit_to_first_subjects</a></li>
+    <li><a href="#jaxcmr.dataset.find_max_list_length" id="toc-jaxcmr.dataset.find_max_list_length-body">find_max_list_length</a></li>
+    <li><a href="#jaxcmr.dataset.recall_positions_to_items" id="toc-jaxcmr.dataset.recall_positions_to_items-body">recall_positions_to_items</a></li>
+    <li><a href="#jaxcmr.dataset.recall_items_to_positions" id="toc-jaxcmr.dataset.recall_items_to_positions-body">recall_items_to_positions</a></li>
+    </ul></li>
+    </ul>
+  </nav>
+</details>
 <p>Construct and transform recall datasets while keeping trial fields aligned.</p>
 <p><code>make_dataset</code> builds a dataset from recall sequences and study information. <code>select_trials</code> selects, reorders or repeats whole trial rows, carrying participant IDs, study lists and custom fields along with the responses. <code>replace_recalls</code> supplies new responses and removes metadata tied to the old recall events.</p>
 <p>A recorded response identifies a one-based study position. Models use the identity of the item presented there. For the study list A, B, A, a response at position 3 becomes A under <code>recall_positions_to_items</code>. Converting A back with <code>recall_items_to_positions</code> gives position 1, its first occurrence.</p>
@@ -2017,6 +2069,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
