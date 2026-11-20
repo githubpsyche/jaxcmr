@@ -17,6 +17,7 @@ project:
     - templates.qmd
     - templates/*.ipynb
     - development.qmd
+    - references.qmd
     - reference/index.qmd
     - reference/plotting.qmd
     - reference/simulation.qmd
@@ -101,133 +102,146 @@ website:
       contents:
         - href: reference/index.qmd
           text: Overview
-        - href: reference/dataset.qmd
-          text: Datasets
-        - section: Memory-search models
-          href: reference/models.qmd
+        # Quarto uses these fragment URLs verbatim for rel=prev and rel=next.
+        - section: Recall data
+          href: reference/index.html#recall-data
           contents:
-            - href: reference/models-cmr.qmd
-              text: Ordinary CMR
-            - href: reference/models-terminal-item.qmd
-              text: Terminal-item CMR
-            - href: reference/models-factories.qmd
-              text: Semantic and emotional models
-            - href: reference/models-positional.qmd
-              text: Positional CMR
-        - section: Model components
-          href: reference/components.qmd
+            - href: reference/dataset.qmd
+              text: Datasets
+            - section: Recall analyses
+              href: reference/analyses.qmd
+              contents:
+                - section: Recall and output position
+                  contents:
+                    - href: reference/analyses-spc.qmd
+                      text: spc
+                    - href: reference/analyses-pnr.qmd
+                      text: pnr
+                    - href: reference/analyses-nth_item_recall.qmd
+                      text: nth_item_recall
+                    - href: reference/analyses-termination_probability.qmd
+                      text: termination_probability
+                - section: Serial recall accuracy
+                  contents:
+                    - href: reference/analyses-srac.qmd
+                      text: srac
+                    - href: reference/analyses-relative_srac.qmd
+                      text: relative_srac
+                    - href: reference/analyses-repsrac.qmd
+                      text: repsrac
+                    - href: reference/analyses-intrusion_error_rate.qmd
+                      text: intrusion_error_rate
+                    - href: reference/analyses-omission_error_rate.qmd
+                      text: omission_error_rate
+                    - href: reference/analyses-order_error_rate.qmd
+                      text: order_error_rate
+                - section: Categories and study measurements
+                  contents:
+                    - href: reference/analyses-cat_recall_rate.qmd
+                      text: cat_recall_rate
+                    - href: reference/analyses-cat_spc.qmd
+                      text: cat_spc
+                    - href: reference/analyses-factors.qmd
+                      text: factors
+                - section: Co-recall
+                  contents:
+                    - href: reference/analyses-corecall.qmd
+                      text: corecall
+                - section: Transitions and organization
+                  contents:
+                    - href: reference/analyses-crp.qmd
+                      text: crp
+                    - href: reference/analyses-conditional_crp.qmd
+                      text: conditional_crp
+                    - href: reference/analyses-distcrp.qmd
+                      text: distcrp
+                    - href: reference/analyses-conditional_distcrp.qmd
+                      text: conditional_distcrp
+                    - href: reference/analyses-lagrank.qmd
+                      text: lagrank
+                    - href: reference/analyses-distrank.qmd
+                      text: distrank
+                    - href: reference/analyses-cue_centered_crp.qmd
+                      text: cue_centered_crp
+                    - href: reference/analyses-source_target_crp.qmd
+                      text: source_target_crp
+                - section: Repeated items
+                  contents:
+                    - href: reference/analyses-repcrp.qmd
+                      text: repcrp
+                    - href: reference/analyses-repaccesscrp.qmd
+                      text: repaccesscrp
+                    - href: reference/analyses-repneighborcrp.qmd
+                      text: repneighborcrp
+                    - href: reference/analyses-reproutecrp.qmd
+                      text: reproutecrp
+                    - href: reference/analyses-repcuecrp.qmd
+                      text: repcuecrp
+                    - href: reference/analyses-serialrepcrp.qmd
+                      text: serialrepcrp
+                    - href: reference/analyses-rpl.qmd
+                      text: rpl
+                - section: Participant summaries and comparisons
+                  contents:
+                    - href: reference/analyses-statistics.qmd
+                      text: statistics
+            - href: reference/repetition.qmd
+              text: Repetition
+            - href: reference/plotting.qmd
+              text: Plotting
+        - section: Memory models
+          href: reference/index.html#memory-models
           contents:
-            - href: reference/components-context.qmd
-              text: Temporal context
-            - href: reference/components-linear-memory.qmd
-              text: Linear memory
-            - href: reference/components-instance-memory.qmd
-              text: Instance memory
-            - href: reference/components-response.qmd
-              text: Response policies
-            - href: reference/components-termination.qmd
-              text: Stopping rules
-            - href: reference/components-support-ratio.qmd
-              text: Raw support-ratio policies
-            - href: reference/components-factory.qmd
-              text: Preparing trial inputs
-        - href: reference/loss-sequence.qmd
-          text: Sequential likelihood
-        - href: reference/loss-mse.qmd
-          text: Behavioral MSE
-        - href: reference/fitting.qmd
-          text: Fitting
-        - href: reference/simulation.qmd
-          text: Simulation
-        - href: reference/plotting.qmd
-          text: Plotting
-        - href: reference/summarize.qmd
-          text: Model summaries
-        - href: reference/repetition.qmd
-          text: Repetition
-        - href: reference/math.qmd
-          text: Mathematical operations
-        - href: reference/typing.qmd
-          text: Types
-        - href: reference/helpers.qmd
-          text: Utilities
-        - section: Recall analyses
-          href: reference/analyses.qmd
+            - section: Memory-search models
+              href: reference/models.qmd
+              contents:
+                - href: reference/models-cmr.qmd
+                  text: Ordinary CMR
+                - href: reference/models-terminal-item.qmd
+                  text: Terminal-item CMR
+                - href: reference/models-factories.qmd
+                  text: Semantic and emotional models
+                - href: reference/models-positional.qmd
+                  text: Positional CMR
+            - section: Model components
+              href: reference/components.qmd
+              contents:
+                - href: reference/components-context.qmd
+                  text: Temporal context
+                - href: reference/components-linear-memory.qmd
+                  text: Linear memory
+                - href: reference/components-instance-memory.qmd
+                  text: Instance memory
+                - href: reference/components-response.qmd
+                  text: Response policies
+                - href: reference/components-termination.qmd
+                  text: Stopping rules
+                - href: reference/components-support-ratio.qmd
+                  text: Raw support-ratio policies
+                - href: reference/components-factory.qmd
+                  text: Preparing trial inputs
+            - href: reference/simulation.qmd
+              text: Simulation
+        - section: Model evaluation
+          href: reference/index.html#model-evaluation
           contents:
-            - section: Recall and output position
-              contents:
-                - href: reference/analyses-spc.qmd
-                  text: spc
-                - href: reference/analyses-pnr.qmd
-                  text: pnr
-                - href: reference/analyses-nth_item_recall.qmd
-                  text: nth_item_recall
-                - href: reference/analyses-termination_probability.qmd
-                  text: termination_probability
-            - section: Serial recall accuracy
-              contents:
-                - href: reference/analyses-srac.qmd
-                  text: srac
-                - href: reference/analyses-relative_srac.qmd
-                  text: relative_srac
-                - href: reference/analyses-repsrac.qmd
-                  text: repsrac
-                - href: reference/analyses-intrusion_error_rate.qmd
-                  text: intrusion_error_rate
-                - href: reference/analyses-omission_error_rate.qmd
-                  text: omission_error_rate
-                - href: reference/analyses-order_error_rate.qmd
-                  text: order_error_rate
-            - section: Categories and study measurements
-              contents:
-                - href: reference/analyses-cat_recall_rate.qmd
-                  text: cat_recall_rate
-                - href: reference/analyses-cat_spc.qmd
-                  text: cat_spc
-                - href: reference/analyses-factors.qmd
-                  text: factors
-            - section: Co-recall
-              contents:
-                - href: reference/analyses-corecall.qmd
-                  text: corecall
-            - section: Transitions and organization
-              contents:
-                - href: reference/analyses-crp.qmd
-                  text: crp
-                - href: reference/analyses-conditional_crp.qmd
-                  text: conditional_crp
-                - href: reference/analyses-distcrp.qmd
-                  text: distcrp
-                - href: reference/analyses-conditional_distcrp.qmd
-                  text: conditional_distcrp
-                - href: reference/analyses-lagrank.qmd
-                  text: lagrank
-                - href: reference/analyses-distrank.qmd
-                  text: distrank
-                - href: reference/analyses-cue_centered_crp.qmd
-                  text: cue_centered_crp
-                - href: reference/analyses-source_target_crp.qmd
-                  text: source_target_crp
-            - section: Repeated items
-              contents:
-                - href: reference/analyses-repcrp.qmd
-                  text: repcrp
-                - href: reference/analyses-repaccesscrp.qmd
-                  text: repaccesscrp
-                - href: reference/analyses-repneighborcrp.qmd
-                  text: repneighborcrp
-                - href: reference/analyses-reproutecrp.qmd
-                  text: reproutecrp
-                - href: reference/analyses-repcuecrp.qmd
-                  text: repcuecrp
-                - href: reference/analyses-serialrepcrp.qmd
-                  text: serialrepcrp
-                - href: reference/analyses-rpl.qmd
-                  text: rpl
-            - section: Participant summaries and comparisons
-              contents:
-                - href: reference/analyses-statistics.qmd
-                  text: statistics
+            - href: reference/loss-sequence.qmd
+              text: Sequential likelihood
+            - href: reference/loss-mse.qmd
+              text: Behavioral MSE
+            - href: reference/fitting.qmd
+              text: Fitting
+            - href: reference/summarize.qmd
+              text: Model summaries
+        - section: Utilities
+          href: reference/index.html#utilities
+          contents:
+            - href: reference/math.qmd
+              text: Mathematical operations
+            - href: reference/typing.qmd
+              text: Types
+            - href: reference/helpers.qmd
+              text: File and path utilities
         - section: Experimental operations
           href: reference/experimental.qmd
           contents:

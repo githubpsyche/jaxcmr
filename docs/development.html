@@ -430,7 +430,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="change-an-api-reference-entry">Change an API reference entry</h3>
 <p>Suppose you’re clarifying the entry for <code>simulate_dataset</code>. Edit the description inside that function in <code>jaxcmr/simulation.py</code> (its <em>docstring</em>). The docstring at the top of the module supplies the page introduction. To add an entry or move it under a different heading, edit the list in <code>guide/reference/_simulation.yml</code>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="ex">quarto</span> render guide/reference/simulation.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This rebuilds the simulation reference page. In the local website preview, open <strong>API Reference → Simulation</strong> and follow the function’s link in the summary table.</p>
+<p>This rebuilds the simulation reference page. In the local website preview, open <strong>API Reference → Memory models → Simulation</strong> and follow the function’s link in the summary table.</p>
 </section>
 <section id="change-an-input-supplied-with-the-package" class="level3">
 <h3 class="anchored" data-anchor-id="change-an-input-supplied-with-the-package">Change an input supplied with the package</h3>
@@ -440,6 +440,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="preview-and-share-your-change" class="level3">
 <h3 class="anchored" data-anchor-id="preview-and-share-your-change">Preview and share your change</h3>
 <p>The website’s theme, navigation, and default code controls are set in <code>guide/_quarto.yml</code>. Edit <code>guide/styles.scss</code> for layout shared by light and dark mode. The palette files supply colors. Command-oriented pages use <code>guide/_commands.yml</code> to show commands without line numbers. Formatting specific to API entries lives in <code>guide/reference/reference.css</code>.</p>
+<p>The API sidebar also supplies the group names and links for the homepage and reference index. Edit the page descriptions in <code>guide/reference/index.qmd</code>.</p>
 <p>Published notebooks carry a copy of their code controls so readers can render a download on its own. After changing those defaults, run <code>uv run --no-sync python guide/prepare.py --sync-notebook-format</code> to refresh those settings in the notebook sources.</p>
 <p>After changing shared styling or navigation, build the whole site. Quarto embeds the sidebar in each page, so a single-page render updates only one copy.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="fu">bash</span> build-docs.sh</span>

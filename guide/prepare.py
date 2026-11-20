@@ -134,6 +134,41 @@ def stage():
     print(f"Staged {len(names)} templates with Colab links to main.")
 
 
+def prepare_reference_navigation() -> None:
+    """Use the API sidebar's groups and links for the homepage and reference index."""
+    import yaml
+
+    project = yaml.safe_load((GUIDE / "_quarto.yml").read_text())
+    sidebar = next(bar for bar in project["website"]["sidebar"] if bar.get("id") == "api-reference")
+    overview = GUIDE / "reference/index.qmd"
+    front_matter = overview.read_text().split("---", 2)[1]
+    summaries = yaml.safe_load(front_matter)["page-summaries"]
+
+    home = [f"- [{sidebar['title']}]({overview.relative_to(GUIDE).as_posix()})"]
+    index = []
+    for group in sidebar["contents"]:
+        if "section" not in group:
+            continue
+        title, link = group["section"], group["href"]
+        home.append(f"  - [{title}]({link})")
+        page, _, anchor = link.partition("#")
+        if anchor:
+            index.extend([f"## {title} {{#{anchor}}}", "", "| Area | Contents |", "|---|---|"])
+            for entry in group["contents"]:
+                filename = Path(entry["href"]).name
+                label = entry.get("section") or entry["text"]
+                index.append(f"| [{label}]({filename}) | {summaries[filename]} |")
+        else:
+            filename = Path(page).name
+            index.extend([f"## [{title}]({filename})", "", summaries[filename]])
+        index.append("")
+
+    output = overview.parent / "_generated"
+    output.mkdir(exist_ok=True)
+    (output / "_homepage-api.qmd").write_text("\n".join(home) + "\n")
+    (output / "_reference-sections.qmd").write_text("\n".join(index))
+
+
 def prepare_references(inputs: set[str] | None = None) -> None:
     """Build the requested module pages from their Quartodoc group definitions."""
     import yaml
@@ -192,6 +227,8 @@ if __name__ == "__main__":
     os.chdir(GUIDE)
     inputs = set(os.environ.get("QUARTO_PROJECT_INPUT_FILES", "").splitlines())
     full_render = os.environ.get("QUARTO_PROJECT_RENDER_ALL") == "1"
+    if full_render or not inputs or inputs & {"index.ipynb", "reference/index.qmd"}:
+        prepare_reference_navigation()
     prepare_references(None if full_render or not inputs else inputs)
     # A reference-only render has no notebook or example-download inputs.
     if full_render or not inputs or any(
