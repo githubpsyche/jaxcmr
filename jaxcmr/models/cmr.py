@@ -3,13 +3,16 @@ Studying an item moves temporal context toward that item's associated context
 and strengthens the associations in both directions. A second presentation
 updates the same item's associations.
 
-At recall, the current context cues the available items. The stopping policy
-gives the probability of ending recall. Conditional on continuing, each item's
-probability is proportional to its retrieval support. Recalling an item
-reinstates its associated context, changing the cue for the next response.
+At recall, the current context cues the available items. By default CMR
+chooses whether to stop, then selects an item in proportion to its support.
+Each policy returns the probabilities of STOP and the individual items.
+Simulation samples from them and likelihood reads the observed entry. Recalling
+an item reinstates its associated context, changing the cue for the next response.
 """
 
-
+from collections.abc import Callable
+from functools import partial
+from typing import Self
 
 import numpy as np
 from jax import lax
@@ -18,17 +21,14 @@ from jax import numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr._vendor.simple_pytree import Pytree
-from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.math import (
-    FLOAT32_EPS,
-    exponential_primacy_decay,
-    relative_power_scale,
-)
+from jaxcmr.components.response import PositionalStop, relative_choice_weights
+from jaxcmr.math import exponential_primacy_decay
 from jaxcmr.typing import (
     Array,
     Bool,
     ContextCreateFn,
     Float,
+    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
@@ -36,7 +36,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -55,9 +55,8 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            "CMR"
-        ] = PositionalTermination,
+        *,
+        response_policy_create_fn: ResponsePolicyCreateFn["CMR"] = PositionalStop,
     ) -> None:
         """Context Maintenance and Retrieval model of memory search.
 
@@ -74,8 +73,8 @@ class CMR(Pytree):
             Factory function for context-to-item memory (M_CF).
         context_create_fn : ContextCreateFn, optional
             Factory function for temporal context representation.
-        termination_policy_create_fn : TerminationPolicyCreateFn[CMR], optional
-            Build the stopping rule. The default is ``PositionalTermination``.
+        response_policy_create_fn : ResponsePolicyCreateFn[CMR], optional
+            Score STOP and every item. The default is ``PositionalStop``.
 
         Notes
         -----
@@ -86,33 +85,31 @@ class CMR(Pytree):
           the study update when true and before it when false. ``learning_rate``
           sets item-to-context learning. ``primacy_scale`` and ``primacy_decay``
           set context-to-item learning by study position.
-        - Recall. ``choice_sensitivity`` is the exponent applied to retrieval
-          support. ``allow_repeated_recalls`` keeps a recalled item available
-          when true.
+        - Recall. ``allow_repeated_recalls`` keeps a recalled item available.
+          The default response rule uses ``choice_sensitivity`` to weight the
+          eligible items. Other rules read their own response parameters.
         - Default components. Linear memory uses ``shared_support`` and
           ``item_support`` for initial context-to-item associations. Positional
           stopping uses ``stop_probability_scale`` and ``stop_probability_growth``.
 
         """
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
-        # self.delay_drift_rate = parameters["delay_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
         self.recall_drift_rate = parameters["recall_drift_rate"]
         self.primacy_scale = parameters["primacy_scale"]
         self.primacy_decay = parameters["primacy_decay"]
         self.mfc_learning_rate = parameters["learning_rate"]
-        self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.learn_after_context_update = parameters["learn_after_context_update"]
         self.allow_repeated_recalls = parameters["allow_repeated_recalls"]
         self.item_count = list_length
-        self.items = jnp.eye(self.item_count)
+        self.items = jnp.eye(list_length)
         self._mcf_learning_rate = exponential_primacy_decay(
             jnp.arange(list_length), self.primacy_scale, self.primacy_decay
         )
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.termination_policy = termination_policy_create_fn(list_length, parameters)
+        self.response_policy = response_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.studied = jnp.zeros(self.item_count, dtype=bool)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -132,7 +129,7 @@ class CMR(Pytree):
         """
         return self._mcf_learning_rate[self.study_index]
 
-    def experience_item(self, item_index: Int_) -> "CMR":
+    def experience_item(self, item_index: Int_) -> Self:
         """Simulate encoding of an item during study, updating context and memories.
 
         Parameters
@@ -163,7 +160,7 @@ class CMR(Pytree):
             study_index=self.study_index + 1,
         )
 
-    def experience(self, choice: Int_) -> "CMR":
+    def experience(self, choice: Int_) -> Self:
         """Simulate a study event.
 
         Parameters
@@ -184,7 +181,7 @@ class CMR(Pytree):
             lambda: self.experience_item(choice - 1),
         )
 
-    def start_retrieving(self) -> "CMR":
+    def start_retrieving(self) -> Self:
         """Transition from study to retrieval mode by reinstating start context.
 
         Returns
@@ -193,15 +190,11 @@ class CMR(Pytree):
             Model state ready to begin retrieval.
 
         """
-        # delay_input = jnp.mean(self.mcf.state, axis=1)
         start_input = self.context.initial_state
-        # start_context = self.context.integrate(
-        #     delay_input, self.delay_drift_rate
-        # ).integrate(start_input, self.start_drift_rate)
         start_context = self.context.integrate(start_input, self.start_drift_rate)
         return self.replace(context=start_context)
 
-    def retrieve_item(self, item_index: Int_) -> "CMR":
+    def retrieve_item(self, item_index: Int_) -> Self:
         """Simulate retrieval of a specific item, updating context and records.
 
         Parameters
@@ -226,7 +219,7 @@ class CMR(Pytree):
             recall_total=self.recall_total + 1,
         )
 
-    def retrieve(self, choice: Int_) -> "CMR":
+    def retrieve(self, choice: Int_) -> Self:
         """Simulate a retrieval event.
 
         Parameters
@@ -247,122 +240,33 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def candidate_activations(
-        self, candidates: Bool[Array, " item_count"]
-    ) -> Float[Array, " item_count"]:
-        """Score a specified set of items against the current context.
+    def item_evidence(self) -> Float[Array, " items"]:
+        """Return the memory probe, in item-code order, before any choice transform."""
+        return self.mcf.probe(self.context.state)
 
-        Parameters
-        ----------
-        candidates : Boolean array
-            One entry per item. The largest support among the selected items
-            sets the scale before applying ``choice_sensitivity``. A caller can
-            include previously recalled items in this mask.
-
-        Returns
-        -------
-        Float[Array, " item_count"]
-            Relative retrieval support for each item.
-
-        """
-        _activations = self.mcf.probe(self.context.state) * candidates
-        return (relative_power_scale(_activations, self.mcf_sensitivity) + FLOAT32_EPS) * candidates
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Compute retrieval activations for all items from context-to-item memory.
-
-        Returns
-        -------
-        Float[Array, " item_count"]
-            Relative retrieval support for each item.
-
-        """
-        return self.candidate_activations(self.recallable)
-
-    def stop_probability(self) -> Float[Array, ""]:
-        """Compute probability of terminating recall.
-
-        Returns
-        -------
-        Float[Array, ""]
-            Probability of stopping retrieval given current state.
-
-        """
-        return self.termination_policy.stop_probability(self)
-
-    def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Compute probability of retrieving a specific item, assuming recall continues.
-
-        Parameters
-        ----------
-        item_index : Int_
-            Index of the item (0-indexed).
-
-        Returns
-        -------
-        Float[Array, ""]
-            Probability of retrieving the specified item.
-
-        """
-        item_activations = self.activations()
-        return item_activations[item_index] / jnp.sum(item_activations)
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Compute probability of a specific retrieval outcome.
-
-        Parameters
-        ----------
-        choice : Int_
-            Index of item to retrieve (1-indexed), or 0 for recall
-            termination.
-
-        Returns
-        -------
-        Float[Array, ""]
-            Probability of the specified outcome.
-
-        """
-        p_stop = self.stop_probability()
-        return lax.cond(
-            choice == 0,
-            lambda: p_stop,
-            lambda: lax.cond(
-                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
-                lambda: 0.0,
-                lambda: (1 - p_stop) * self.item_probability(choice - 1),
-            ),
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Weight the selected studied items by their relative memory evidence."""
+        return relative_choice_weights(
+            self.item_evidence(), candidates & self.studied, sensitivity
         )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Compute probabilities for all possible retrieval outcomes.
+        """Return the policy's distribution in the order STOP, item 1, item 2, …."""
+        return self.response_policy.outcome_probabilities(self)
 
-        Returns
-        -------
-        Float[Array, " recall_outcomes"]
-            Probability distribution over outcomes, where index 0 is
-            termination and indices 1 to item_count are item recalls.
-
-        """
-        p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
-        return jnp.hstack(
-            (
-                p_stop,
-                (
-                    (1 - p_stop)
-                    * item_activation
-                    / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
-                ),
-            )
-        )
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Score the observed outcome. Zero denotes STOP, positive codes denote items."""
+        return self.outcome_probabilities()[choice]
 
 
 def make_factory(
-    mfc_create_fn: MemoryCreateFn,
-    mcf_create_fn: MemoryCreateFn,
-    context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
+    mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
+    mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
+    context_create_fn: ContextCreateFn = TemporalContext.init,
+    *,
+    response_policy_create_fn: ResponsePolicyCreateFn[CMR] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
     """Create a CMR model factory with specified component functions.
 
@@ -374,8 +278,9 @@ def make_factory(
         Factory function for context-to-item memory (M_CF).
     context_create_fn : ContextCreateFn
         Factory function for temporal context representation.
-    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
-        Factory function for recall termination policy.
+    response_policy_create_fn : ResponsePolicyCreateFn[CMR], optional
+        Build the complete response rule. For example, pass
+        ``PowerLawStopCompetition`` or ``RawSupportRatioSoftmaxChoice``.
 
     Returns
     -------
@@ -387,76 +292,37 @@ def make_factory(
 
     """
 
+    return _trial_factory(
+        partial(
+            CMR,
+            mfc_create_fn=mfc_create_fn,
+            mcf_create_fn=mcf_create_fn,
+            context_create_fn=context_create_fn,
+            response_policy_create_fn=response_policy_create_fn,
+        )
+    )
+
+
+def _trial_factory(
+    create: Callable[[int, Parameters], MemorySearch],
+) -> type[MemorySearchModelFactory]:
+    """Use one item capacity for every trial in a dataset."""
+
     class CMRModelFactory:
-        """Factory for creating CMR model instances; sets `max_list_length` from dataset.
-
-        Parameters
-        ----------
-        dataset : RecallDataset
-            Dataset containing recall trials with list length information.
-        features : Float[Array, " word_pool_items features_count"] or None
-            Accepted for the shared factory interface and unused by ordinary CMR.
-
-        """
-
         def __init__(
             self,
             dataset: RecallDataset,
             features: Float[Array, " word_pool_items features_count"] | None,
         ) -> None:
             self.max_list_length = np.max(dataset["listLength"]).item()
-
-            def model_create_fn(
-                list_length: int,
-                parameters: Parameters,
-            ) -> MemorySearch:
-                return CMR(
-                    list_length,
-                    parameters,
-                    mfc_create_fn,
-                    mcf_create_fn,
-                    context_create_fn,
-                    termination_policy_create_fn,
-                )
-
-            self.model_create_fn = model_create_fn
+            self.model_create_fn = create
 
         def create_model(self, parameters: Parameters) -> MemorySearch:
-            """Create a CMR model instance with the given parameters.
-
-            Parameters
-            ----------
-            parameters : Parameters
-                Model parameters.
-
-            Returns
-            -------
-            MemorySearch
-                Initialized CMR model instance.
-
-            """
             return self.model_create_fn(self.max_list_length, parameters)
 
         def create_trial_model(
-            self,
-            trial_index: Integer[Array, ""],
-            parameters: Parameters,
+            self, trial_index: Integer[Array, ""], parameters: Parameters
         ) -> MemorySearch:
-            """Create a CMR model instance for a specific trial.
-
-            Parameters
-            ----------
-            trial_index : Integer[Array, ""]
-                Index of the trial (unused in base CMR).
-            parameters : Parameters
-                Model parameters.
-
-            Returns
-            -------
-            MemorySearch
-                Initialized CMR model instance.
-
-            """
-            return self.model_create_fn(self.max_list_length, parameters)
+            return self.create_model(parameters)
 
     return CMRModelFactory

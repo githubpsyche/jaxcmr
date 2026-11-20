@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -387,6 +393,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-instance-memory.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Instance memory</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +733,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -801,6 +819,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#jaxcmr.typing.MemoryCreateFn" id="toc-jaxcmr.typing.MemoryCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.MemoryCreateFn">MemoryCreateFn</a></li>
   <li><a href="#jaxcmr.typing.Context" id="toc-jaxcmr.typing.Context" class="nav-link" data-scroll-target="#jaxcmr.typing.Context">Context</a></li>
   <li><a href="#jaxcmr.typing.ContextCreateFn" id="toc-jaxcmr.typing.ContextCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ContextCreateFn">ContextCreateFn</a></li>
+  <li><a href="#jaxcmr.typing.ResponsePolicy" id="toc-jaxcmr.typing.ResponsePolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicy">ResponsePolicy</a></li>
+  <li><a href="#jaxcmr.typing.ResponsePolicyCreateFn" id="toc-jaxcmr.typing.ResponsePolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.ResponsePolicyCreateFn">ResponsePolicyCreateFn</a></li>
   <li><a href="#jaxcmr.typing.TerminationPolicy" id="toc-jaxcmr.typing.TerminationPolicy" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicy">TerminationPolicy</a></li>
   <li><a href="#jaxcmr.typing.TerminationPolicyCreateFn" id="toc-jaxcmr.typing.TerminationPolicyCreateFn" class="nav-link" data-scroll-target="#jaxcmr.typing.TerminationPolicyCreateFn">TerminationPolicyCreateFn</a></li>
   <li><a href="#jaxcmr.typing.MemorySearch" id="toc-jaxcmr.typing.MemorySearch" class="nav-link" data-scroll-target="#jaxcmr.typing.MemorySearch">MemorySearch</a></li>
@@ -840,7 +860,7 @@ ul.task-list li input[type="checkbox"] {
 
 <p>Data formats and callable interfaces for recall models, simulation and fitting.</p>
 <p><code>RecallDataset</code> describes the arrays recorded on each trial, and <code>Parameters</code> maps parameter names to scalar model values. Array annotations specify the dtype and dimensions a caller supplies.</p>
-<p><code>Memory</code>, <code>Context</code> and <code>TerminationPolicy</code> describe components used to build a model. <code>MemorySearch</code> describes how a model experiences study items and produces recall responses. A <code>MemorySearchModelFactory</code> constructs that model for a particular trial. A <code>TrialSimulator</code> uses it to carry out a study and recall procedure.</p>
+<p><code>Memory</code>, <code>Context</code>, <code>TerminationPolicy</code> and <code>ResponsePolicy</code> describe components used to build a model. <code>MemorySearch</code> describes how a model experiences study items and produces recall responses. A <code>MemorySearchModelFactory</code> constructs that model for a particular trial. A <code>TrialSimulator</code> uses it to carry out a study and recall procedure.</p>
 <p>For fitting, a <code>LossFactory</code> constructs an objective for a dataset. <code>LossFn</code> scores candidate parameter sets, and a <code>FittingAlgorithm</code> returns estimates and objective values in a <code>FitResult</code>. These protocols specify the operations an implementation must supply. A model, loss or fitter can satisfy its protocol without inheriting from it.</p>
 <section id="values-and-trial-data" class="level2 api-function-index">
 <h2 class="api-function-index anchored" data-anchor-id="values-and-trial-data">Values and trial data</h2>
@@ -888,6 +908,14 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td><a href="#jaxcmr.typing.ContextCreateFn"><code>ContextCreateFn</code></a></td>
 <td>Construct a context representation for the model’s item capacity.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.ResponsePolicy"><code>ResponsePolicy</code></a></td>
+<td>Score one retrieval attempt without advancing the model.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.typing.ResponsePolicyCreateFn"><code>ResponsePolicyCreateFn</code></a></td>
+<td>Construct a response policy whose evidence requirements the model supplies.</td>
 </tr>
 <tr class="odd">
 <td><a href="#jaxcmr.typing.TerminationPolicy"><code>TerminationPolicy</code></a></td>
@@ -1531,6 +1559,67 @@ ul.task-list li input[type="checkbox"] {
 </section>
 </section>
 </section>
+<section id="jaxcmr.typing.ResponsePolicy" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.ResponsePolicy">ResponsePolicy</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.ResponsePolicy[ModelT]: Protocol</code>
+</div>
+<p>Score one retrieval attempt without advancing the model.</p>
+<p>Entry zero is STOP. Remaining entries correspond to one-indexed item codes. Inactive and exhausted models place all probability on STOP.</p>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.ResponsePolicy.outcome_probabilities"><code>outcome_probabilities</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.ResponsePolicy.outcome_probabilities" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.ResponsePolicy.outcome_probabilities">outcome_probabilities</h5>
+<div class="api-signature">
+<code>jaxcmr.typing.ResponsePolicy.outcome_probabilities(model)</code>
+</div>
+</section>
+</section>
+</section>
+<section id="jaxcmr.typing.ResponsePolicyCreateFn" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.ResponsePolicyCreateFn">ResponsePolicyCreateFn</h3>
+<div class="api-signature">
+<code>jaxcmr.typing.ResponsePolicyCreateFn[ModelT]: Protocol</code>
+</div>
+<p>Construct a response policy whose evidence requirements the model supplies.</p>
+<section id="methods-5" class="level4">
+<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.typing.ResponsePolicyCreateFn.__call__"><code>__call__</code></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.typing.ResponsePolicyCreateFn.__call__" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.typing.ResponsePolicyCreateFn.__call__"><code>__call__</code></h5>
+<div class="api-signature">
+<code>jaxcmr.typing.ResponsePolicyCreateFn.__call__(list_length, parameters)</code>
+</div>
+</section>
+</section>
+</section>
 <section id="jaxcmr.typing.TerminationPolicy" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.typing.TerminationPolicy">TerminationPolicy</h3>
 <div class="api-signature">
@@ -1538,8 +1627,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>A stopping rule accepting the model or view described by <code>ModelT</code>.</p>
 <p>Concrete policies declare their own structural input requirements. A policy need not accept every <code>MemorySearch</code> model, and its input need not be a complete memory-search model.</p>
-<section id="methods-4" class="level4">
-<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
+<section id="methods-6" class="level4">
+<h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1621,8 +1710,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Create a stopping rule compatible with the supplied model type.</p>
 <p>Constructors and factories name the concrete model type their policy must accept. Variants forwarding a policy to a base constructor retain that base model’s contract. Models passing a view to their policy use the view’s type. These annotations check structural compatibility without changing model behavior or performing runtime validation.</p>
-<section id="methods-5" class="level4">
-<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<section id="methods-7" class="level4">
+<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1710,7 +1799,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Study and retrieval operations used by simulation and likelihood evaluation.</p>
 <p>Item choices are one-indexed within-list codes. Zero is ignored during study and denotes stopping during retrieval. Update methods return the new model state; callers retain the original state until they replace it. Implementations used by the numerical routines must support JAX tracing and carry their changing state in a JAX pytree.</p>
-<p>Internal representations of studied items, context and retrieval support belong to the concrete model. Stopping policies and diagnostic views specify any additional information they require separately.</p>
+<p>Internal representations of studied items, context and retrieval support belong to the concrete model. Response policies and diagnostic views specify any additional information they require separately.</p>
 <section id="attributes-2" class="level4 doc-section doc-section-attributes">
 <h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes-2">Attributes</h4>
 <table class="caption-top table">
@@ -1740,8 +1829,8 @@ ul.task-list li input[type="checkbox"] {
 </tbody>
 </table>
 </section>
-<section id="methods-6" class="level4">
-<h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
+<section id="methods-8" class="level4">
+<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2002,8 +2091,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Prepare a dataset once, then construct a model for an individual trial.</p>
 <p>Simulation and losses receive a factory class, initialize it with their dataset and optional features, and call <code>create_trial_model</code> for each trial and parameter assignment. Trial-specific connections and other prepared inputs are the factory’s responsibility.</p>
-<section id="methods-7" class="level4">
-<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
+<section id="methods-9" class="level4">
+<h4 class="anchored" data-anchor-id="methods-9">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2135,8 +2224,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Run a study and retrieval procedure for one trial.</p>
 <p>The procedure determines how observed recalls constrain simulation: it may ignore them, impose the first recall, or use their count or occupied slots. Dataset simulation translates recorded study positions into within-list item codes before calling this interface, and translates generated item codes back to study positions afterward.</p>
-<section id="methods-8" class="level4">
-<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
+<section id="methods-10" class="level4">
+<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2235,8 +2324,8 @@ ul.task-list li input[type="checkbox"] {
 <code>jaxcmr.typing.LikelihoodMaskFn: Protocol</code>
 </div>
 <p>Choose which recorded recall events contribute to a likelihood.</p>
-<section id="methods-9" class="level4">
-<h4 class="anchored" data-anchor-id="methods-9">Methods</h4>
+<section id="methods-11" class="level4">
+<h4 class="anchored" data-anchor-id="methods-11">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2318,8 +2407,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Score candidate parameter vectors on selected observations.</p>
 <p>Fitters initialize a loss with the model factory, dataset and features. Each call supplies selected trial rows, base parameters and a matrix of candidate values for the free parameters. Lower objective values are better; the chosen loss defines the measure, such as negative log likelihood or behavioral mean squared error.</p>
-<section id="methods-10" class="level4">
-<h4 class="anchored" data-anchor-id="methods-10">Methods</h4>
+<section id="methods-12" class="level4">
+<h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2419,8 +2508,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Construct a loss from a model factory, observations and features.</p>
 <p>Classes and configured callables such as functools.partial can implement this interface. The returned object supplies population scoring.</p>
-<section id="methods-11" class="level4">
-<h4 class="anchored" data-anchor-id="methods-11">Methods</h4>
+<section id="methods-13" class="level4">
+<h4 class="anchored" data-anchor-id="methods-13">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2451,8 +2540,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Fit one pooled parameter set or separate parameter sets by participant.</p>
 <p>Construct an implementation with a dataset, model factory, loss class and optimizer settings. <code>fit</code> uses all selected observations in one objective; <code>fit_subjects</code> fits the selected participants separately. Both return a <code>FitResult</code> with parameter columns and optimizer outcomes aligned by row.</p>
-<section id="methods-12" class="level4">
-<h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
+<section id="methods-14" class="level4">
+<h4 class="anchored" data-anchor-id="methods-14">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">

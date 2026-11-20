@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -387,6 +393,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-instance-memory.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Instance memory</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +733,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -817,7 +835,7 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="context-maintenance-and-retrieval" class="level2">
 <h2 class="anchored" data-anchor-id="context-maintenance-and-retrieval">Context Maintenance and Retrieval</h2>
-<p><a href="../reference/models-cmr.html">Ordinary CMR</a> learns associations between items and temporal context. Its factory combines two associative memories, a context, and a stopping rule. The <a href="../reference/typing.html#jaxcmr.typing.MemorySearch">model interface</a> describes the events that simulators and losses use.</p>
+<p><a href="../reference/models-cmr.html">Ordinary CMR</a> learns associations between items and temporal context. Its factory combines two associative memories, a context, and a <a href="../reference/components-response.html">response policy</a>. The <a href="../reference/typing.html#jaxcmr.typing.MemorySearch">model interface</a> describes the events that simulators and losses use.</p>
 </section>
 <section id="semantic-associations" class="level2">
 <h2 class="anchored" data-anchor-id="semantic-associations">Semantic associations</h2>
@@ -880,7 +898,8 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="repeated-presentations" class="level2">
 <h2 class="anchored" data-anchor-id="repeated-presentations">Repeated presentations</h2>
-<p><a href="../reference/models-positional.html">Positional CMR</a> learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The <a href="https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py">RepFR model configurations</a> identify the reinforcement and reinstatement variants used in that project’s comparisons.</p>
+<p><a href="../reference/models-positional.html">Positional CMR</a> learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The response policy evaluates the available study positions. Positional CMR sums their weights by item code before assigning item probabilities. In the <a href="../reference/models-factories.html#jaxcmr.models.blend_positional_cmr.make_factory">blended model</a> each route first gives its own probability to STOP and each item. When an item is recalled, those route probabilities also determine how much each route contributes to reinstatement.</p>
+<p>The <a href="https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py">RepFR model configurations</a> identify the reinforcement and reinstatement variants used in that project’s comparisons.</p>
 
 
 </section>

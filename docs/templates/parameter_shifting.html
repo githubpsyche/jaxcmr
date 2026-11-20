@@ -444,14 +444,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">import</span> jaxcmr</span>
 <span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
 <span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> copy_example_inputs</span>
-<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> parameters_for_subjects</span>
-<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> import_from_string</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, save_dict_to_hdf5</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_path, resolve_project_root</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> save_figure</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_dataset</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr.models <span class="im">import</span> model_factory_from_paths</span>
+<span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> parameters_for_subjects</span>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> import_from_string</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data, save_dict_to_hdf5</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_path, resolve_project_root</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> save_figure</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a><span class="im">from</span> jaxcmr.simulation <span class="im">import</span> simulate_dataset</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>Feature composition stays explicit here. <code>feature_column</code> selects the categorical feature, and <code>concat_features=True</code> combines categorical columns before semantic columns. When concatenation is requested, supply both feature arrays; otherwise the configured concatenation fails rather than substituting a different feature set.</p>
@@ -478,9 +479,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-18"><a href="#cb4-18" aria-label="18"></a></span>
 <span id="cb4-19"><a href="#cb4-19" aria-label="19"></a></span>
 <span id="cb4-20"><a href="#cb4-20" aria-label="20"></a><span class="kw">def</span> construct_model(spec):</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    <span class="cf">return</span> import_from_string(spec[<span class="st">"model_factory"</span>])(</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>        <span class="op">**</span>{name: import_from_string(path) <span class="cf">for</span> name, path <span class="kw">in</span> spec[<span class="st">"components"</span>].items()}</span>
-<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    <span class="cf">return</span> model_factory_from_paths(spec[<span class="st">"model_factory"</span>], spec[<span class="st">"components"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="9436509c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:47:38.925277Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:47:38.925195Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:47:38.945257Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:47:38.944837Z&quot;}}" data-execution_count="6">

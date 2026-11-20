@@ -15,7 +15,7 @@ from jax import numpy as jnp
 
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.math import (
     exponential_primacy_decay,
     normalize_magnitude,
@@ -33,7 +33,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -51,9 +51,7 @@ class CMR(PositionalCMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            "CMR"
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn["CMR"] = PositionalStop,
     ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         #! additional repetition_drift_rate parameter for items that have been studied before
@@ -81,7 +79,7 @@ class CMR(PositionalCMR):
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.termination_policy = termination_policy_create_fn(list_length, parameters)
+        self.response_policy = response_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         #! recallable is per-position, not per-item
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -190,7 +188,7 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
+    response_policy_create_fn: ResponsePolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
@@ -210,7 +208,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

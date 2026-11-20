@@ -17,7 +17,7 @@ from jaxcmr.components.factory import (
     global_item_ids_by_code,
     source_categories_by_item,
 )
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.math import FLOAT32_EPS, relative_power_scale
 from jaxcmr.models.ecmr import eCMR
@@ -26,13 +26,14 @@ from jaxcmr.typing import (
     Bool,
     ContextCreateFn,
     Float,
+    Float_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -53,9 +54,7 @@ class AdditiveSemanticECMR(eCMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            eCMR
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
     ) -> None:
         """Initialize additive semantic eCMR."""
         super().__init__(
@@ -65,39 +64,56 @@ class AdditiveSemanticECMR(eCMR):
             mfc_create_fn,
             mcf_create_fn,
             context_create_fn,
-            termination_policy_create_fn,
+            response_policy_create_fn,
         )
         self.semantic_scale = parameters["semantic_scale"]
         self.msem = connections * self.semantic_scale
 
-    def candidate_activations(
-        self, candidates: Bool[Array, " item_count"]
-    ) -> Float[Array, " item_count"]:
-        """Compute retrieval activations with temporal, emotional, and semantic support."""
-        temporal_act = self.mcf.probe(self.context.state) * candidates
-        emotional_act = self.emotion_mcf.probe(self.emotion_context.state) * candidates
-        semantic_support = lax.cond(
+    def _semantic_evidence(self) -> Float[Array, " items"]:
+        return lax.cond(
             self.recall_total == 0,
-            lambda: jnp.zeros_like(candidates, dtype=jnp.float32),
+            lambda: jnp.zeros_like(self.msem[0]),
             lambda: self.msem[self.recalls[self.recall_total - 1] - 1],
         )
-        combined = temporal_act + emotional_act + semantic_support
-        return (relative_power_scale(combined, self.mcf_sensitivity) + FLOAT32_EPS) * candidates
 
-    def activations(self) -> Float[Array, " item_count"]:
-        """Compute retrieval activations with temporal, emotional, and semantic support."""
-        return self.candidate_activations(self.recallable)
+    def item_evidence(self) -> Float[Array, " items"]:
+        """Add the last recall's semantic cue to absolute memory evidence."""
+        return super().item_evidence() + self._semantic_evidence()
+
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Compute item weights for the selected studied candidates."""
+        candidates = candidates & self.studied
+        # Historical relative-power choice masks memory before adding semantics.
+        combined = super().item_evidence() * candidates + self._semantic_evidence()
+        return (relative_power_scale(combined, sensitivity) + FLOAT32_EPS) * candidates
 
 
 def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn[
-        eCMR
-    ] = PositionalTermination,
+    response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
-    """Build an additive semantic eCMR factory."""
+    """Add semantic support to emotional and temporal support before weighting candidates.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct the memory probed to reinstate context.
+    mcf_create_fn : MemoryCreateFn
+        Construct the memory probed for candidate support.
+    context_create_fn : ContextCreateFn
+        Construct the temporal context for a trial.
+    response_policy_create_fn : ResponsePolicyCreateFn[eCMR]
+        The policy assigns probability to STOP and each recorded item.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        A factory class initialized with the dataset and any semantic inputs.
+    """
 
     class AdditiveSemanticECMRModelFactory:
         """Factory creating trial-specific additive semantic eCMR instances."""
@@ -129,7 +145,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

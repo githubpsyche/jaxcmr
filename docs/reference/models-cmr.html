@@ -35,7 +35,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../reference/models-factories.html" rel="next">
+<link href="../reference/models-terminal-item.html" rel="next">
 <link href="../reference/models.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -391,8 +397,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +739,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -819,7 +843,7 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>Context Maintenance and Retrieval (CMR) represents each item once per trial. Studying an item moves temporal context toward that item’s associated context and strengthens the associations in both directions. A second presentation updates the same item’s associations.</p>
-<p>At recall, the current context cues the available items. The stopping policy gives the probability of ending recall. Conditional on continuing, each item’s probability is proportional to its retrieval support. Recalling an item reinstates its associated context, changing the cue for the next response.</p>
+<p>At recall, the current context cues the available items. By default CMR chooses whether to stop, then selects an item in proportion to its support. Each policy returns the probabilities of STOP and the individual items. Simulation samples from them and likelihood reads the observed entry. Recalling an item reinstates its associated context, changing the cue for the next response.</p>
 <section id="trial-model" class="level2 api-function-index">
 <h2 class="api-function-index anchored" data-anchor-id="trial-model">Trial model</h2>
 <table class="caption-top table">
@@ -847,7 +871,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.cmr.CMR" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.cmr.CMR">CMR</h3>
 <div class="api-signature">
-<code>jaxcmr.models.cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)</code>
+<code>jaxcmr.models.cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, *, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>Maintain item associations and temporal context for one recall trial.</p>
 <section id="methods" class="level4">
@@ -865,29 +889,37 @@ ul.task-list li input[type="checkbox"] {
 <td>Context Maintenance and Retrieval model of memory search.</td>
 </tr>
 <tr class="even">
-<td><a href="#jaxcmr.models.cmr.CMR.candidate_activations"><code>candidate_activations</code></a></td>
-<td>Score a specified set of items against the current context.</td>
+<td><a href="#jaxcmr.models.cmr.CMR.item_evidence"><code>item_evidence</code></a></td>
+<td>Return the memory probe, in item-code order, before any choice transform.</td>
 </tr>
 <tr class="odd">
-<td><a href="#jaxcmr.models.cmr.CMR.item_probability"><code>item_probability</code></a></td>
-<td>Compute probability of retrieving a specific item, assuming recall continues.</td>
+<td><a href="#jaxcmr.models.cmr.CMR.candidate_weights"><code>candidate_weights</code></a></td>
+<td>Weight the selected studied items by their relative memory evidence.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.cmr.CMR.outcome_probabilities"><code>outcome_probabilities</code></a></td>
+<td>Return the policy’s distribution in the order STOP, item 1, item 2, ….</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.models.cmr.CMR.outcome_probability"><code>outcome_probability</code></a></td>
+<td>Score the observed outcome. Zero denotes STOP, positive codes denote items.</td>
 </tr>
 </tbody>
 </table>
 <section id="jaxcmr.models.cmr.CMR.__init__" class="level5">
 <h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.__init__"><code>__init__</code></h5>
 <div class="api-signature">
-<code>jaxcmr.models.cmr.CMR.__init__(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)</code>
+<code>jaxcmr.models.cmr.CMR.__init__(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, *, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>Context Maintenance and Retrieval model of memory search.</p>
 <section id="parameters" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h6>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 16%">
-<col style="width: 18%">
-<col style="width: 51%">
-<col style="width: 13%">
+<col style="width: 15%">
+<col style="width: 17%">
+<col style="width: 53%">
+<col style="width: 14%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -929,10 +961,10 @@ ul.task-list li input[type="checkbox"] {
 <td><code>TemporalContext.init</code></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Build the stopping rule. The default is <code>PositionalTermination</code>.</td>
-<td><code>PositionalTermination</code></td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Score STOP and every item. The default is <code>PositionalStop</code>.</td>
+<td><code>PositionalStop</code></td>
 </tr>
 </tbody>
 </table>
@@ -942,137 +974,55 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li>Context drift. <code>encoding_drift_rate</code>, <code>start_drift_rate</code>, and <code>recall_drift_rate</code> govern context change during study, at the start of retrieval, and after each recalled item, respectively.</li>
 <li>Learning. <code>learn_after_context_update</code> selects the context after the study update when true and before it when false. <code>learning_rate</code> sets item-to-context learning. <code>primacy_scale</code> and <code>primacy_decay</code> set context-to-item learning by study position.</li>
-<li>Recall. <code>choice_sensitivity</code> is the exponent applied to retrieval support. <code>allow_repeated_recalls</code> keeps a recalled item available when true.</li>
+<li>Recall. <code>allow_repeated_recalls</code> keeps a recalled item available. The default response rule uses <code>choice_sensitivity</code> to weight the eligible items. Other rules read their own response parameters.</li>
 <li>Default components. Linear memory uses <code>shared_support</code> and <code>item_support</code> for initial context-to-item associations. Positional stopping uses <code>stop_probability_scale</code> and <code>stop_probability_growth</code>.</li>
 </ul>
 </section>
 </section>
-<section id="jaxcmr.models.cmr.CMR.candidate_activations" class="level5">
-<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.candidate_activations">candidate_activations</h5>
+<section id="jaxcmr.models.cmr.CMR.item_evidence" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.item_evidence">item_evidence</h5>
 <div class="api-signature">
-<code>jaxcmr.models.cmr.CMR.candidate_activations(candidates)</code>
+<code>jaxcmr.models.cmr.CMR.item_evidence()</code>
 </div>
-<p>Score a specified set of items against the current context.</p>
-<section id="parameters-1" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 5%">
-<col style="width: 6%">
-<col style="width: 82%">
-<col style="width: 5%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>candidates</td>
-<td>Boolean array</td>
-<td>One entry per item. The largest support among the selected items sets the scale before applying <code>choice_sensitivity</code>. A caller can include previously recalled items in this mask.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+<p>Return the memory probe, in item-code order, before any choice transform.</p>
 </section>
-<section id="returns" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 39%">
-<col style="width: 51%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>Float[Array, ' item_count']</td>
-<td>Relative retrieval support for each item.</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="jaxcmr.models.cmr.CMR.item_probability" class="level5">
-<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.item_probability">item_probability</h5>
+<section id="jaxcmr.models.cmr.CMR.candidate_weights" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.candidate_weights">candidate_weights</h5>
 <div class="api-signature">
-<code>jaxcmr.models.cmr.CMR.item_probability(item_index)</code>
+<code>jaxcmr.models.cmr.CMR.candidate_weights(candidates, sensitivity)</code>
 </div>
-<p>Compute probability of retrieving a specific item, assuming recall continues.</p>
-<section id="parameters-2" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>item_index</td>
-<td>Int_</td>
-<td>Index of the item (0-indexed).</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+<p>Weight the selected studied items by their relative memory evidence.</p>
 </section>
-<section id="returns-1" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 10%">
-<col style="width: 28%">
-<col style="width: 61%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>Float[Array, '']</td>
-<td>Probability of retrieving the specified item.</td>
-</tr>
-</tbody>
-</table>
+<section id="jaxcmr.models.cmr.CMR.outcome_probabilities" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.outcome_probabilities">outcome_probabilities</h5>
+<div class="api-signature">
+<code>jaxcmr.models.cmr.CMR.outcome_probabilities()</code>
+</div>
+<p>Return the policy’s distribution in the order STOP, item 1, item 2, ….</p>
 </section>
+<section id="jaxcmr.models.cmr.CMR.outcome_probability" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.cmr.CMR.outcome_probability">outcome_probability</h5>
+<div class="api-signature">
+<code>jaxcmr.models.cmr.CMR.outcome_probability(choice)</code>
+</div>
+<p>Score the observed outcome. Zero denotes STOP, positive codes denote items.</p>
 </section>
 </section>
 </section>
 <section id="jaxcmr.models.cmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.cmr.make_factory">make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)</code>
+<code>jaxcmr.models.cmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, *, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>Create a CMR model factory with specified component functions.</p>
-<section id="parameters-3" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<section id="parameters-1" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 25%">
-<col style="width: 41%">
-<col style="width: 9%">
+<col style="width: 13%">
+<col style="width: 15%">
+<col style="width: 58%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1087,31 +1037,31 @@ ul.task-list li input[type="checkbox"] {
 <td>mfc_create_fn</td>
 <td>MemoryCreateFn</td>
 <td>Factory function for item-to-context memory (M_FC).</td>
-<td><em>required</em></td>
+<td><code>LinearMemory.init_mfc</code></td>
 </tr>
 <tr class="even">
 <td>mcf_create_fn</td>
 <td>MemoryCreateFn</td>
 <td>Factory function for context-to-item memory (M_CF).</td>
-<td><em>required</em></td>
+<td><code>LinearMemory.init_mcf</code></td>
 </tr>
 <tr class="odd">
 <td>context_create_fn</td>
 <td>ContextCreateFn</td>
 <td>Factory function for temporal context representation.</td>
-<td><em>required</em></td>
+<td><code>TemporalContext.init</code></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Factory function for recall termination policy.</td>
-<td><em>required</em></td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Build the complete response rule. For example, pass <code>PowerLawStopCompetition</code> or <code>RawSupportRatioSoftmaxChoice</code>.</td>
+<td><code>PositionalStop</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns-2" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 2%">
@@ -1133,7 +1083,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
-<p><a href="../reference/typing.html#jaxcmr.typing.MemorySearch">Study and retrieval interface</a> · <a href="../reference/components-termination.html">Stopping rules</a> · <a href="../overview/models.html">Worked CMR example</a></p>
+<p><a href="../reference/typing.html#jaxcmr.typing.MemorySearch">Study and retrieval interface</a> · <a href="../reference/components-response.html">Response policies</a> · <a href="../reference/models-terminal-item.html">Terminal-item CMR</a> · <a href="../reference/components-termination.html">Stopping rules</a> · <a href="../overview/models.html">Worked CMR example</a></p>
 
 
 </section>
@@ -1672,8 +1622,8 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../reference/models-factories.html" class="pagination-link" aria-label="Semantic and emotional models">
-        <span class="nav-page-text">Semantic and emotional models</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../reference/models-terminal-item.html" class="pagination-link" aria-label="Terminal-item CMR">
+        <span class="nav-page-text">Terminal-item CMR</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

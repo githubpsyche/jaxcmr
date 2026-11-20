@@ -330,7 +330,7 @@ def simulate_study_first_recall_and_forced_stop(
     Parameters
     ----------
     model : MemorySearch
-        Memory search model in study mode. Use NoStopTermination to prevent
+        Memory search model in study mode. Use a response rule that continues until exhaustion to prevent
         early stopping, and disable repeated recalls for first-mention data.
     present : Integer[Array, " study_events"]
         One-indexed study sequence for the trial.

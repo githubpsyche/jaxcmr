@@ -20,49 +20,67 @@ from jax import numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr._vendor.simple_pytree import Pytree
-from jaxcmr.components.termination import PositionalTermination
-from jaxcmr.math import FLOAT32_EPS, exponential_primacy_decay, relative_power_scale
+from jaxcmr.components.response import (
+    PositionalStop,
+    pool_position_weights,
+    relative_choice_weights,
+)
+from jaxcmr.math import exponential_primacy_decay, relative_power_scale
 from jaxcmr.typing import (
     Array,
     Bool,
-    Context,
     ContextCreateFn,
     Float,
+    Float_,
     Int_,
     Integer,
-    Memory,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
     "CMR",
+    "RouteCandidates",
     "make_factory",
 ]
 
 
-class _TerminationProxy(Pytree):
-    """Minimal model-like object for route-specific termination queries."""
+class RouteCandidates(Pytree):
+    """Evidence for a single route in blended positional CMR.
+
+    On the item route each candidate identifies an item. On the positional
+    route each identifies a study position. The response policy chooses among
+    that route's candidates and STOP. The positional route then adds together
+    probabilities for positions that contained the same item."""
 
     def __init__(
         self,
+        evidence: Float[Array, " candidates"],
         recallable: Bool[Array, " candidates"],
-        recall_total: Integer[Array, ""],
-        is_active: Bool[Array, ""],
-        context: Context,
-        mcf: Memory,
         studied: Bool[Array, " candidates"],
-    ) -> None:
+        recall_total: Int_,
+        is_active: Bool[Array, ""],
+    ):
+        self.evidence = evidence
         self.recallable = recallable
-        self.recall_total = recall_total
-        self.is_active = is_active
-        self.context = context
-        self.mcf = mcf
         self.studied = studied
+        self.recall_total = jnp.asarray(recall_total)
+        self.is_active = is_active
+
+    def item_evidence(self) -> Float[Array, " candidates"]:
+        return self.evidence
+
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Weight the selected studied items by their relative memory evidence."""
+        return relative_choice_weights(
+            self.evidence, candidates & self.studied, sensitivity
+        )
 
 
 class CMR(Pytree):
@@ -75,9 +93,9 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            _TerminationProxy
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn[
+            RouteCandidates
+        ] = PositionalStop,
     ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -110,7 +128,7 @@ class CMR(Pytree):
         self.position_mfc = mfc_create_fn(list_length, parameters, self.context)
         self.position_mcf = mcf_create_fn(list_length, parameters, self.context)
 
-        self.termination_policy = termination_policy_create_fn(list_length, parameters)
+        self.response_policy = response_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(list_length, dtype=int)
 
         # Item-route bookkeeping.
@@ -142,67 +160,34 @@ class CMR(Pytree):
     def _item_mask(self, item_index: Int_) -> Bool[Array, " list_length"]:
         return self.studied == (item_index + 1)
 
-    def _route_stop_probability(
-        self,
-        recallable: Bool[Array, " list_length"],
-        mcf: Memory,
-        studied: Bool[Array, " list_length"],
-    ) -> Float[Array, ""]:
-        proxy = _TerminationProxy(
-            recallable=recallable,
-            recall_total=self.recall_total,
-            is_active=self.is_active,
-            context=self.context,
-            mcf=mcf,
-            studied=studied,
-        )
-        return self.termination_policy.stop_probability(proxy)
-
-    def _item_route_activations(self) -> Float[Array, " item_count"]:
-        raw = self.item_mcf.probe(self.context.state) * self.item_recallable
-        return (relative_power_scale(raw, self.mcf_sensitivity) + FLOAT32_EPS) * self.item_recallable
-
     def _position_route_position_activations(self) -> Float[Array, " list_length"]:
-        raw = self.position_mcf.probe(self.context.state) * self.position_recallable
-        return (relative_power_scale(raw, self.mcf_sensitivity) + FLOAT32_EPS) * self.position_recallable
-
-    def _position_route_item_activations(self) -> Float[Array, " item_count"]:
-        position_activations = self._position_route_position_activations()
-        return lax.map(
-            lambda i: jnp.sum(position_activations * (self.studied == (i + 1))),
-            self.item_ids,
+        return relative_choice_weights(
+            self.position_mcf.probe(self.context.state),
+            self.position_recallable,
+            self.mcf_sensitivity,
         )
 
     def _item_route_outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        p_stop = self._route_stop_probability(
+        route = RouteCandidates(
+            self.item_mcf.probe(self.context.state),
             self.item_recallable,
-            self.item_mcf,
             self.item_studied,
+            self.recall_total,
+            self.is_active,
         )
-        activations = self._item_route_activations()
-        total = jnp.sum(activations)
-        return jnp.hstack(
-            (
-                p_stop,
-                (1 - p_stop) * activations / lax.select(total == 0, 1.0, total),
-            )
-        )
+        return self.response_policy.outcome_probabilities(route)
 
-    def _position_route_outcome_probabilities(
-        self,
-    ) -> Float[Array, " recall_outcomes"]:
-        p_stop = self._route_stop_probability(
+    def _position_route_outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
+        route = RouteCandidates(
+            self.position_mcf.probe(self.context.state),
             self.position_recallable,
-            self.position_mcf,
             self.studied > 0,
+            self.recall_total,
+            self.is_active,
         )
-        activations = self._position_route_item_activations()
-        total = jnp.sum(activations)
-        return jnp.hstack(
-            (
-                p_stop,
-                (1 - p_stop) * activations / lax.select(total == 0, 1.0, total),
-            )
+        probabilities = self.response_policy.outcome_probabilities(route)
+        return jnp.append(
+            probabilities[0], pool_position_weights(probabilities[1:], self.studied)
         )
 
     def _position_route_reinstatement(self, item_index: Int_) -> Float[Array, " n"]:
@@ -324,26 +309,7 @@ class CMR(Pytree):
         """Return positional-route support over study positions."""
         return self._position_route_position_activations()
 
-    def activations(self) -> Float[Array, " item_count"]:
-        """Return blended item support from the two route laws."""
-        return (
-            self.blend_weight * self._item_route_activations()
-            + (1 - self.blend_weight) * self._position_route_item_activations()
-        )
 
-    def stop_probability(self) -> Float[Array, ""]:
-        """Return the mixed termination probability."""
-        return self.outcome_probabilities()[0]
-
-    def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return mixed conditional probability of recalling the specified item."""
-        outcomes = self.outcome_probabilities()
-        p_continue = 1 - outcomes[0]
-        return lax.cond(
-            p_continue == 0,
-            lambda: 0.0,
-            lambda: outcomes[item_index + 1] / p_continue,
-        )
 
     def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
         """Return probability of the specified recall outcome."""
@@ -363,8 +329,27 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn[_TerminationProxy],
+    response_policy_create_fn: ResponsePolicyCreateFn[RouteCandidates],
 ) -> type[MemorySearchModelFactory]:
+    """Mix item and positional response distributions before reinstating the recalled item.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct the memory probed to reinstate context.
+    mcf_create_fn : MemoryCreateFn
+        Construct the memory probed for candidate support.
+    context_create_fn : ContextCreateFn
+        Construct the temporal context for a trial.
+    response_policy_create_fn : ResponsePolicyCreateFn[RouteCandidates]
+        The policy scores the item and position routes separately.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        A factory class initialized with the dataset and any semantic inputs.
+    """
+
     class CMRModelFactory:
         def __init__(
             self,
@@ -383,7 +368,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

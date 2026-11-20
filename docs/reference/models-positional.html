@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -387,6 +393,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-instance-memory.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Instance memory</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +733,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -792,8 +810,10 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#jaxcmr.models.positional_cmr.CMR" id="toc-jaxcmr.models.positional_cmr.CMR" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR">CMR</a></li>
   <li><a href="#jaxcmr.models.positional_cmr.make_factory" id="toc-jaxcmr.models.positional_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.make_factory">make_factory</a></li>
   <li><a href="#jaxcmr.models.positional_cmr.CMR.position_activations" id="toc-jaxcmr.models.positional_cmr.CMR.position_activations" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.position_activations">CMR.position_activations</a></li>
-  <li><a href="#jaxcmr.models.positional_cmr.CMR.activations" id="toc-jaxcmr.models.positional_cmr.CMR.activations" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.activations">CMR.activations</a></li>
-  <li><a href="#jaxcmr.models.positional_cmr.CMR.item_probability" id="toc-jaxcmr.models.positional_cmr.CMR.item_probability" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.item_probability">CMR.item_probability</a></li>
+  <li><a href="#jaxcmr.models.positional_cmr.CMR.position_weights" id="toc-jaxcmr.models.positional_cmr.CMR.position_weights" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.position_weights">CMR.position_weights</a></li>
+  <li><a href="#jaxcmr.models.positional_cmr.CMR.candidate_weights" id="toc-jaxcmr.models.positional_cmr.CMR.candidate_weights" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.candidate_weights">CMR.candidate_weights</a></li>
+  <li><a href="#jaxcmr.models.positional_cmr.CMR.outcome_probabilities" id="toc-jaxcmr.models.positional_cmr.CMR.outcome_probabilities" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.outcome_probabilities">CMR.outcome_probabilities</a></li>
+  <li><a href="#jaxcmr.models.positional_cmr.CMR.outcome_probability" id="toc-jaxcmr.models.positional_cmr.CMR.outcome_probability" class="nav-link" data-scroll-target="#jaxcmr.models.positional_cmr.CMR.outcome_probability">CMR.outcome_probability</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -844,15 +864,23 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><a href="#jaxcmr.models.positional_cmr.CMR.position_activations"><code>CMR.position_activations</code></a></td>
-<td>Calculate retrieval support at each study position.</td>
+<td>Return the available position weights at the model’s choice sensitivity.</td>
 </tr>
 <tr class="even">
-<td><a href="#jaxcmr.models.positional_cmr.CMR.activations"><code>CMR.activations</code></a></td>
-<td>Sum available position supports for each local item.</td>
+<td><a href="#jaxcmr.models.positional_cmr.CMR.position_weights"><code>CMR.position_weights</code></a></td>
+<td>Weight the selected study positions before combining occurrences of an item.</td>
 </tr>
 <tr class="odd">
-<td><a href="#jaxcmr.models.positional_cmr.CMR.item_probability"><code>CMR.item_probability</code></a></td>
-<td>Calculate an item’s recall probability conditional on continuing retrieval.</td>
+<td><a href="#jaxcmr.models.positional_cmr.CMR.candidate_weights"><code>CMR.candidate_weights</code></a></td>
+<td>Sum the selected occurrence weights for each recorded item.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.positional_cmr.CMR.outcome_probabilities"><code>CMR.outcome_probabilities</code></a></td>
+<td>Return probabilities in recorded order: STOP, then each local item.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.models.positional_cmr.CMR.outcome_probability"><code>CMR.outcome_probability</code></a></td>
+<td>Score the recorded STOP or item using the same distribution as simulation.</td>
 </tr>
 </tbody>
 </table>
@@ -862,16 +890,16 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.positional_cmr.CMR" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR">CMR</h3>
 <div class="api-signature">
-<code>jaxcmr.models.positional_cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)</code>
+<code>jaxcmr.models.positional_cmr.CMR(list_length, parameters, mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>A trial model with one associative cue for each study position.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
+<col style="width: 8%">
 <col style="width: 10%">
-<col style="width: 71%">
+<col style="width: 72%">
 <col style="width: 8%">
 </colgroup>
 <thead>
@@ -914,10 +942,10 @@ ul.task-list li input[type="checkbox"] {
 <td><code>TemporalContext.init</code></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Construct a stopping rule that accepts the positional trial model.</td>
-<td><code>PositionalTermination</code></td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Choose STOP and the next item. The default schedules STOP by recall count.</td>
+<td><code>PositionalStop</code></td>
 </tr>
 </tbody>
 </table>
@@ -926,7 +954,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.positional_cmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.make_factory">make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.positional_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)</code>
+<code>jaxcmr.models.positional_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
 </div>
 <p>Build a factory for trials that associate temporal context with study positions.</p>
 <p>The model receives within-list item codes during study. Successive presentations occupy successive positions, including repeat presentations of the same item.</p>
@@ -934,10 +962,10 @@ ul.task-list li input[type="checkbox"] {
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 25%">
-<col style="width: 43%">
-<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 26%">
+<col style="width: 39%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -967,9 +995,9 @@ ul.task-list li input[type="checkbox"] {
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Assign probabilities to STOP and each item.</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
@@ -1005,123 +1033,38 @@ ul.task-list li input[type="checkbox"] {
 <div class="api-signature">
 <code>jaxcmr.models.positional_cmr.CMR.position_activations()</code>
 </div>
-<p>Calculate retrieval support at each study position.</p>
-<section id="returns-1" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 4%">
-<col style="width: 20%">
-<col style="width: 75%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>floating array, shape (list_length,)</td>
-<td>Available positions receive relative-power-scaled context-to-position support plus the support floor. Unavailable positions receive zero.</td>
-</tr>
-</tbody>
-</table>
+<p>Return the available position weights at the model’s choice sensitivity.</p>
 </section>
-</section>
-<section id="jaxcmr.models.positional_cmr.CMR.activations" class="level3 api-entry">
-<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.activations">CMR.activations</h3>
+<section id="jaxcmr.models.positional_cmr.CMR.position_weights" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.position_weights">CMR.position_weights</h3>
 <div class="api-signature">
-<code>jaxcmr.models.positional_cmr.CMR.activations()</code>
+<code>jaxcmr.models.positional_cmr.CMR.position_weights(candidates, sensitivity)</code>
 </div>
-<p>Sum available position supports for each local item.</p>
-<section id="returns-2" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 6%">
-<col style="width: 30%">
-<col style="width: 63%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>floating array, shape (item_count,)</td>
-<td>Entry <code>c - 1</code> sums the support for all positions occupied by item code <code>c</code>.</td>
-</tr>
-</tbody>
-</table>
+<p>Weight the selected study positions before combining occurrences of an item.</p>
 </section>
-</section>
-<section id="jaxcmr.models.positional_cmr.CMR.item_probability" class="level3 api-entry">
-<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.item_probability">CMR.item_probability</h3>
+<section id="jaxcmr.models.positional_cmr.CMR.candidate_weights" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.candidate_weights">CMR.candidate_weights</h3>
 <div class="api-signature">
-<code>jaxcmr.models.positional_cmr.CMR.item_probability(item_index)</code>
+<code>jaxcmr.models.positional_cmr.CMR.candidate_weights(candidates, sensitivity)</code>
 </div>
-<p>Calculate an item’s recall probability conditional on continuing retrieval.</p>
-<section id="parameters-2" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 11%">
-<col style="width: 7%">
-<col style="width: 68%">
-<col style="width: 11%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>item_index</td>
-<td>int</td>
-<td>Zero-based local item index. At least one position must be available.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
+<p>Sum the selected occurrence weights for each recorded item.</p>
 </section>
-<section id="returns-3" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 6%">
-<col style="width: 19%">
-<col style="width: 73%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>scalar floating array</td>
-<td>Sum of support at this item’s positions divided by the total support at all positions.</td>
-</tr>
-</tbody>
-</table>
+<section id="jaxcmr.models.positional_cmr.CMR.outcome_probabilities" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.outcome_probabilities">CMR.outcome_probabilities</h3>
+<div class="api-signature">
+<code>jaxcmr.models.positional_cmr.CMR.outcome_probabilities()</code>
+</div>
+<p>Return probabilities in recorded order: STOP, then each local item.</p>
+</section>
+<section id="jaxcmr.models.positional_cmr.CMR.outcome_probability" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.positional_cmr.CMR.outcome_probability">CMR.outcome_probability</h3>
+<div class="api-signature">
+<code>jaxcmr.models.positional_cmr.CMR.outcome_probability(choice)</code>
+</div>
+<p>Score the recorded STOP or item using the same distribution as simulation.</p>
 <p><a href="../reference/models-cmr.html">Ordinary CMR</a> · <a href="../reference/typing.html#jaxcmr.typing.MemorySearch">Study and retrieval interface</a> · <a href="https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py">RepFR model configurations</a></p>
 
 
-</section>
 </section>
 </section>
 

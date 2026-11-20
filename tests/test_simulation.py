@@ -8,7 +8,7 @@ import numpy as np
 from jax import random
 from support import CMR_PARAMS
 from jaxcmr.models.cmr import CMR
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.dataset import make_dataset
 from jaxcmr.helpers import save_dict_to_hdf5
 from jaxcmr.simulation import (
@@ -37,7 +37,7 @@ def _recall_item_selected_by_parameter(model, present, trial, rng):
 
 
 def test_study_matches_replayed_events_before_retrieval():
-    model = CMR(4, CMR_PARAMS, termination_policy_create_fn=NoStopTermination)
+    model = CMR(4, CMR_PARAMS, response_policy_create_fn=RecallUntilExhausted)
     present = jnp.array([2, 1, 2, 3])
     initial = [np.array(value, copy=True) for value in jax.tree.leaves(model)]
     expected = model

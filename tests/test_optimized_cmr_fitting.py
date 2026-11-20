@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.experimental.optimized_cmr_fitting import (
     EvosaxDE,
     ScipyTrustConstr,
@@ -22,7 +22,7 @@ from jaxcmr.experimental.optimized_cmr import (
 )
 
 FACTORY = make_factory(
-    linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
+    linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=RecallUntilExhausted
 )
 PARAMS = dict(CMR_PARAMS)
 OPTIMIZED_PARAMS = dict(OPTIMIZED_CMR_PARAMS)

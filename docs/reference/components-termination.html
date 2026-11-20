@@ -36,7 +36,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../reference/components-factory.html" rel="next">
-<link href="../reference/components-instance-memory.html" rel="prev">
+<link href="../reference/components-response.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -387,6 +393,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-instance-memory.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Instance memory</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +733,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -830,7 +848,7 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>The probability of stopping depends on which candidates remain available. A model can stop only on exhaustion, use a schedule indexed by recall count, or compare support for available and unavailable studied candidates. Each calculation returns one if retrieval has ended or no candidates remain.</p>
-<p>A model with a fixed stopping rule can call the corresponding function directly. To select a rule when configuring CMR, pass its class to the model factory. Each class specifies what it reads from the model. The legacy STOP-item rule requires a model that scores STOP as a separate candidate.</p>
+<p>A model with a fixed stopping rule can call the corresponding function directly. Configurable CMR variants use these calculations through the response policy that assigns probabilities to STOP and each item.</p>
 <section id="stopping-on-exhaustion" class="level2 api-function-index">
 <h2 class="api-function-index anchored" data-anchor-id="stopping-on-exhaustion">Stopping on exhaustion</h2>
 <table class="caption-top table">
@@ -1067,7 +1085,7 @@ ul.task-list li input[type="checkbox"] {
 <code>jaxcmr.components.termination.PositionalTermination(list_length, parameters)</code>
 </div>
 <p>Set stopping probability from the number of items recalled so far.</p>
-<p>At recall count <code>r</code>, the probability is <code>stop_probability_scale * exp(r * stop_probability_growth)</code>, capped at <code>1 - FLOAT32_EPS * number_available</code>. The first decision uses <code>r = 0</code>. The schedule ends at <code>r = list_length - 1</code>. Higher counts use its last value. The model supplies <code>is_active</code>, the candidate mask <code>recallable</code>, and the recall count <code>recall_total</code>. Ordinary CMR uses this rule by default. <a href="#jaxcmr.components.termination.SupportsPositional">Model requirements</a></p>
+<p>At recall count <code>r</code>, the probability is <code>stop_probability_scale * exp(r * stop_probability_growth)</code>, capped at <code>1 - FLOAT32_EPS * number_available</code>. The first decision uses <code>r = 0</code>. The schedule ends at <code>r = list_length - 1</code>. Higher counts use its last value. The model supplies <code>is_active</code>, the candidate mask <code>recallable</code>, and the recall count <code>recall_total</code>. <a href="#jaxcmr.components.termination.SupportsPositional">Model requirements</a></p>
 <section id="parameters-2" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
 <table class="caption-top table">
@@ -1205,7 +1223,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>Compare support for available and unavailable studied candidates.</p>
 <p>The model supplies <code>is_active</code>, the masks <code>studied</code> and <code>recallable</code>, and <code>candidate_activations(mask)</code>. Both masks and the returned scores refer to the same candidates. The model must be able to score unavailable candidates too. The rule scores each group separately and sums its support.</p>
-<p>In ordinary CMR, recalling an item makes it unavailable when repeated recalls are disabled. When repeats are enabled, a recalled item stays in the available group and contributes to its support. <a href="#jaxcmr.components.termination.SupportsSupportRatio">Model requirements</a></p>
+<p>Recalling an item makes it unavailable when repeated recalls are disabled. When repeats are enabled, a recalled item stays in the available group and contributes to its support. <a href="#jaxcmr.components.termination.SupportsSupportRatio">Model requirements</a></p>
 <section id="parameters-4" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
 <table class="caption-top table">
@@ -1279,7 +1297,7 @@ ul.task-list li input[type="checkbox"] {
 <code>jaxcmr.components.termination.RetrievalDependentTermination(list_length, parameters)</code>
 </div>
 <p>Use a dedicated STOP candidate’s independently calculated probability.</p>
-<p>The model supplies <code>is_active</code> and a Boolean <code>recallable</code> mask. It must score <code>outcome_probability(item_count)</code> as STOP without calling this policy. In ordinary CMR, <code>item_count</code> is the highest local item code and scoring an outcome calls the stopping rule again.</p>
+<p>The model supplies <code>is_active</code> and a Boolean <code>recallable</code> mask. It must score <code>outcome_probability(item_count)</code> as STOP without calling this policy. A model that uses <code>item_count</code> for the last study item cannot use this rule.</p>
 <p>The rule reads no stopping parameters. While recall can continue, the returned probability is capped at <code>1 - FLOAT32_EPS * number_available</code>. <a href="#jaxcmr.components.termination.SupportsRetrievalDependent">Model requirements</a></p>
 </section>
 <section id="jaxcmr.components.termination.SupportsRetrievalDependent" class="level3 api-entry">
@@ -1311,7 +1329,7 @@ ul.task-list li input[type="checkbox"] {
 <code>jaxcmr.components.termination.SupportsRetrievalDependent.outcome_probability(choice)</code>
 </div>
 <p>Evaluate the requested outcome independently of this stopping rule.</p>
-<p><a href="../reference/typing.html#jaxcmr.typing.TerminationPolicy">Stopping-policy interface</a> · <a href="../reference/models-cmr.html">Ordinary CMR</a> · <a href="../overview/components.html#context-memory-and-termination-interfaces">Using and writing stopping rules</a></p>
+<p><a href="../reference/components-response.html">Complete response policies</a> · <a href="../reference/typing.html#jaxcmr.typing.TerminationPolicy">Stopping-policy interface</a> · <a href="../reference/models-cmr.html">Ordinary CMR</a> · <a href="../overview/components.html#context-memory-and-response-interfaces">Using and writing response policies</a></p>
 
 
 </section>
@@ -1846,8 +1864,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
-      <a href="../reference/components-instance-memory.html" class="pagination-link" aria-label="Instance memory">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Instance memory</span>
+      <a href="../reference/components-response.html" class="pagination-link" aria-label="Response policies">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Response policies</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

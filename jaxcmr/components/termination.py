@@ -4,9 +4,8 @@ or compare support for available and unavailable studied candidates. Each
 calculation returns one if retrieval has ended or no candidates remain.
 
 A model with a fixed stopping rule can call the corresponding function
-directly. To select a rule when configuring CMR, pass its class to the model
-factory. Each class specifies what it reads from the model. The legacy
-STOP-item rule requires a model that scores STOP as a separate candidate.
+directly. Configurable CMR variants use these calculations through the
+response policy that assigns probabilities to STOP and each item.
 """
 
 from __future__ import annotations
@@ -166,7 +165,7 @@ class PositionalTermination(Pytree):
     ``1 - FLOAT32_EPS * number_available``. The first decision uses ``r = 0``.
     The schedule ends at ``r = list_length - 1``. Higher counts use its last
     value. The model supplies ``is_active``, the candidate mask ``recallable``,
-    and the recall count ``recall_total``. Ordinary CMR uses this rule by default.
+    and the recall count ``recall_total``.
     [Model requirements](#jaxcmr.components.termination.SupportsPositional)
 
     Parameters
@@ -202,12 +201,12 @@ def _support_ratio_probability(
 ) -> Float[Array, ""]:
     """Apply the support-ratio stopping equation before the probability ceiling."""
     dtype = jnp.result_type(available_support, unavailable_support, 0.0)
-    ratio = lax.cond(
-        unavailable_support > 0,
-        lambda: jnp.divide(available_support, unavailable_support),
-        lambda: jnp.asarray(jnp.inf, dtype=dtype),
-    )
-    return scale + jnp.exp(-growth * ratio)
+    # No unavailable support: for positive growth the exponential contributes
+    # zero with zero derivative. Preserve the infinite-ratio limit explicitly.
+    has_competitor = unavailable_support > 0
+    ratio = available_support / jnp.where(has_competitor, unavailable_support, 1)
+    limit = -lax.stop_gradient(jnp.asarray(growth, dtype=dtype)) * jnp.inf
+    return scale + jnp.exp(jnp.where(has_competitor, -growth * ratio, limit))
 
 
 def support_ratio_stop_probability(
@@ -287,7 +286,7 @@ class SupportRatioTermination(Pytree):
     refer to the same candidates. The model must be able to score unavailable
     candidates too. The rule scores each group separately and sums its support.
 
-    In ordinary CMR, recalling an item makes it unavailable when repeated
+    Recalling an item makes it unavailable when repeated
     recalls are disabled. When repeats are enabled, a recalled item stays in
     the available group and contributes to its support.
     [Model requirements](#jaxcmr.components.termination.SupportsSupportRatio)
@@ -312,8 +311,8 @@ class SupportRatioTermination(Pytree):
     def stop_probability(self, model: SupportsSupportRatio) -> Float[Array, ""]:
         def probability_while_active() -> Float[Array, ""]:
             unavailable = model.studied & ~model.recallable
-            available = model.studied & model.recallable
             unavailable_support = jnp.sum(model.candidate_activations(unavailable))
+            available = model.studied & model.recallable
             available_support = jnp.sum(model.candidate_activations(available))
             return _support_ratio_probability(
                 available_support, unavailable_support, self.scale, self.growth
@@ -348,8 +347,8 @@ class RetrievalDependentTermination(Pytree):
 
     The model supplies ``is_active`` and a Boolean ``recallable`` mask. It must
     score ``outcome_probability(item_count)`` as STOP without
-    calling this policy. In ordinary CMR, ``item_count`` is the highest local
-    item code and scoring an outcome calls the stopping rule again.
+    calling this policy. A model that uses
+    ``item_count`` for the last study item cannot use this rule.
 
     The rule reads no stopping parameters. While recall can continue, the
     returned probability is capped at ``1 - FLOAT32_EPS * number_available``.

@@ -420,12 +420,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-9"><a href="#cb3-9" aria-label="9"></a></span>
 <span id="cb3-10"><a href="#cb3-10" aria-label="10"></a><span class="im">from</span> jaxcmr <span class="im">import</span> repetition</span>
 <span id="cb3-11"><a href="#cb3-11" aria-label="11"></a><span class="im">from</span> jaxcmr.examples <span class="im">import</span> copy_example_inputs</span>
-<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> make_scipy_loss_fn</span>
-<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> import_from_string</span>
-<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
-<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_path, resolve_project_root</span>
-<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> save_figure</span>
-<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-12"><a href="#cb3-12" aria-label="12"></a><span class="im">from</span> jaxcmr.models <span class="im">import</span> model_factory_from_paths, recorded_policy_path</span>
+<span id="cb3-13"><a href="#cb3-13" aria-label="13"></a><span class="im">from</span> jaxcmr.fitting <span class="im">import</span> make_scipy_loss_fn</span>
+<span id="cb3-14"><a href="#cb3-14" aria-label="14"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> import_from_string</span>
+<span id="cb3-15"><a href="#cb3-15" aria-label="15"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
+<span id="cb3-16"><a href="#cb3-16" aria-label="16"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> resolve_project_path, resolve_project_root</span>
+<span id="cb3-17"><a href="#cb3-17" aria-label="17"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> save_figure</span>
+<span id="cb3-18"><a href="#cb3-18" aria-label="18"></a><span class="im">from</span> jaxcmr.plotting <span class="im">import</span> iter_analysis_figures</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>Feature composition stays explicit here. <code>feature_column</code> selects the categorical feature, and <code>concat_features=True</code> combines categorical columns before semantic columns. When concatenation is requested, supply both feature arrays; otherwise the configured concatenation fails rather than substituting a different feature set.</p>
@@ -452,9 +453,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-18"><a href="#cb4-18" aria-label="18"></a></span>
 <span id="cb4-19"><a href="#cb4-19" aria-label="19"></a></span>
 <span id="cb4-20"><a href="#cb4-20" aria-label="20"></a><span class="kw">def</span> construct_model(spec):</span>
-<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    <span class="cf">return</span> import_from_string(spec[<span class="st">"model_factory"</span>])(</span>
-<span id="cb4-22"><a href="#cb4-22" aria-label="22"></a>        <span class="op">**</span>{name: import_from_string(path) <span class="cf">for</span> name, path <span class="kw">in</span> spec[<span class="st">"components"</span>].items()}</span>
-<span id="cb4-23"><a href="#cb4-23" aria-label="23"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-21"><a href="#cb4-21" aria-label="21"></a>    <span class="cf">return</span> model_factory_from_paths(spec[<span class="st">"model_factory"</span>], spec[<span class="st">"components"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="b241aace" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:41.895824Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:41.895764Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:41.912017Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:41.911653Z&quot;}}" data-execution_count="6">
@@ -494,7 +493,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details open="" class="code-fold">
 <summary>6 — Load the named pooled fits</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-label="1"></a>records <span class="op">=</span> {name: json.loads(resolve_project_path(path, root_path).read_text()) <span class="cf">for</span> name, path <span class="kw">in</span> fit_paths.items()}</span>
-<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a>display_labels <span class="op">=</span> {name: model_labels.get(name, name) <span class="cf">for</span> name <span class="kw">in</span> records}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-2"><a href="#cb6-2" aria-label="2"></a><span class="co"># The bundled records predate the move of this sequential likelihood.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-label="3"></a><span class="cf">for</span> record <span class="kw">in</span> records.values():</span>
+<span id="cb6-4"><a href="#cb6-4" aria-label="4"></a>    <span class="cf">if</span> record[<span class="st">"loss_function"</span>] <span class="op">==</span> <span class="st">"jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss"</span>:</span>
+<span id="cb6-5"><a href="#cb6-5" aria-label="5"></a>        record[<span class="st">"loss_function"</span>] <span class="op">=</span> <span class="st">"jaxcmr.loss.sequence_likelihood.ExcludeTerminationLikelihoodLoss"</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>display_labels <span class="op">=</span> {name: model_labels.get(name, name) <span class="cf">for</span> name <span class="kw">in</span> records}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="f4953e4b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:41.916865Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:41.916800Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:42.011047Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:42.010633Z&quot;}}" data-execution_count="9">
@@ -520,19 +523,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: observations or selected rows differ."</span>)</span>
 <span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    <span class="cf">if</span> (</span>
 <span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>        record[<span class="st">"loss_function"</span>] <span class="op">!=</span> first[<span class="st">"loss_function"</span>]</span>
-<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>        <span class="kw">or</span> record[<span class="st">"components"</span>][<span class="st">"termination_policy_create_fn"</span>]</span>
-<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>        <span class="op">!=</span> first[<span class="st">"components"</span>][<span class="st">"termination_policy_create_fn"</span>]</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>        <span class="kw">or</span> recorded_policy_path(record[<span class="st">"components"</span>])</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>        <span class="op">!=</span> recorded_policy_path(first[<span class="st">"components"</span>])</span>
 <span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>    ):</span>
 <span id="cb7-24"><a href="#cb7-24" aria-label="24"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"These fits do not use a common objective and stopping rule."</span>)</span>
 <span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>comparison_mask <span class="op">=</span> (</span>
 <span id="cb7-26"><a href="#cb7-26" aria-label="26"></a>    jnp.zeros(<span class="bu">len</span>(subjects), dtype<span class="op">=</span><span class="bu">bool</span>).at[jnp.asarray(selected_rows)].<span class="bu">set</span>(<span class="va">True</span>)</span>
 <span id="cb7-27"><a href="#cb7-27" aria-label="27"></a>)</span>
 <span id="cb7-28"><a href="#cb7-28" aria-label="28"></a><span class="bu">print</span>(<span class="bu">len</span>(selected_rows), <span class="st">"shared lists; objective:"</span>, first[<span class="st">"loss_function"</span>])</span>
-<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a><span class="bu">print</span>(<span class="st">"Stopping policy:"</span>, first[<span class="st">"components"</span>][<span class="st">"termination_policy_create_fn"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-29"><a href="#cb7-29" aria-label="29"></a><span class="bu">print</span>(<span class="st">"Stopping policy:"</span>, recorded_policy_path(first[<span class="st">"components"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>492 shared lists; objective: jaxcmr.loss.transform_sequence_likelihood.ExcludeTerminationLikelihoodLoss
-Stopping policy: jaxcmr.components.termination.NoStopTermination</code></pre>
+<pre><code>492 shared lists; objective: jaxcmr.loss.sequence_likelihood.ExcludeTerminationLikelihoodLoss
+Stopping policy: jaxcmr.components.response.RecallUntilExhausted</code></pre>
 </div>
 </div>
 <div id="b5170df9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:42.012483Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:42.012411Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:42.016446Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:42.016093Z&quot;}}" data-execution_count="10">
@@ -618,7 +621,7 @@ Broader eCMR      emotion_scale                         Estimated   0.16479   [2
 </section>
 <section id="recalculate-likelihoods" class="level2">
 <h2 class="anchored" data-anchor-id="recalculate-likelihoods">Recalculate likelihoods</h2>
-<p>The notebook rebuilds each saved model and evaluates the recorded physical parameter values on the shared observations. This checks numerical consistency with the saved result. It does not rerun optimization or establish convergence to a global optimum.</p>
+<p>The notebook rebuilds each saved model and evaluates the recorded physical parameter values on the shared observations. This checks numerical consistency with the saved result. It does not rerun optimization or establish convergence to a global optimum. The displayed table is the historical output saved with this notebook. Running the cell recalculates the scores with the installed library.</p>
 <div id="d367b707" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-10T01:44:42.017649Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-11-10T01:44:42.017562Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-11-10T01:44:43.641239Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-10T01:44:43.640763Z&quot;}}" data-execution_count="11">
 <details open="" class="code-fold">
 <summary>9 — Check saved likelihoods against the current inputs</summary>
@@ -643,22 +646,23 @@ Broader eCMR      emotion_scale                         Estimated   0.16479   [2
 <span id="cb11-19"><a href="#cb11-19" aria-label="19"></a>    recalculated[name] <span class="op">=</span> <span class="bu">float</span>(evaluate(values))</span>
 <span id="cb11-20"><a href="#cb11-20" aria-label="20"></a>    <span class="cf">if</span> <span class="kw">not</span> np.isclose(recalculated[name], record[<span class="st">"fitness"</span>][<span class="dv">0</span>], rtol<span class="op">=</span><span class="fl">1e-6</span>, atol<span class="op">=</span><span class="fl">1e-5</span>):</span>
 <span id="cb11-21"><a href="#cb11-21" aria-label="21"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
-<span id="cb11-22"><a href="#cb11-22" aria-label="22"></a>            <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: saved NLL does not match the installed implementation and inputs."</span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-label="23"></a>        )</span>
-<span id="cb11-24"><a href="#cb11-24" aria-label="24"></a><span class="bu">print</span>(</span>
-<span id="cb11-25"><a href="#cb11-25" aria-label="25"></a>    tabulate(</span>
-<span id="cb11-26"><a href="#cb11-26" aria-label="26"></a>        [</span>
-<span id="cb11-27"><a href="#cb11-27" aria-label="27"></a>            {</span>
-<span id="cb11-28"><a href="#cb11-28" aria-label="28"></a>                <span class="st">"Model"</span>: display_labels[name],</span>
-<span id="cb11-29"><a href="#cb11-29" aria-label="29"></a>                <span class="st">"Saved NLL"</span>: record[<span class="st">"fitness"</span>][<span class="dv">0</span>],</span>
-<span id="cb11-30"><a href="#cb11-30" aria-label="30"></a>                <span class="st">"Recalculated NLL"</span>: recalculated[name],</span>
-<span id="cb11-31"><a href="#cb11-31" aria-label="31"></a>            }</span>
-<span id="cb11-32"><a href="#cb11-32" aria-label="32"></a>            <span class="cf">for</span> name, record <span class="kw">in</span> records.items()</span>
-<span id="cb11-33"><a href="#cb11-33" aria-label="33"></a>        ],</span>
-<span id="cb11-34"><a href="#cb11-34" aria-label="34"></a>        headers<span class="op">=</span><span class="st">"keys"</span>,</span>
-<span id="cb11-35"><a href="#cb11-35" aria-label="35"></a>        floatfmt<span class="op">=</span><span class="st">".6f"</span>,</span>
-<span id="cb11-36"><a href="#cb11-36" aria-label="36"></a>    )</span>
-<span id="cb11-37"><a href="#cb11-37" aria-label="37"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-22"><a href="#cb11-22" aria-label="22"></a>            <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: saved NLL </span><span class="sc">{</span>record[<span class="st">'fitness'</span>][<span class="dv">0</span>]<span class="sc">:.6f}</span><span class="ss">, "</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-label="23"></a>            <span class="ss">f"recalculated NLL </span><span class="sc">{</span>recalculated[name]<span class="sc">:.6f}</span><span class="ss">."</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-label="24"></a>        )</span>
+<span id="cb11-25"><a href="#cb11-25" aria-label="25"></a><span class="bu">print</span>(</span>
+<span id="cb11-26"><a href="#cb11-26" aria-label="26"></a>    tabulate(</span>
+<span id="cb11-27"><a href="#cb11-27" aria-label="27"></a>        [</span>
+<span id="cb11-28"><a href="#cb11-28" aria-label="28"></a>            {</span>
+<span id="cb11-29"><a href="#cb11-29" aria-label="29"></a>                <span class="st">"Model"</span>: display_labels[name],</span>
+<span id="cb11-30"><a href="#cb11-30" aria-label="30"></a>                <span class="st">"Saved NLL"</span>: record[<span class="st">"fitness"</span>][<span class="dv">0</span>],</span>
+<span id="cb11-31"><a href="#cb11-31" aria-label="31"></a>                <span class="st">"Recalculated NLL"</span>: recalculated[name],</span>
+<span id="cb11-32"><a href="#cb11-32" aria-label="32"></a>            }</span>
+<span id="cb11-33"><a href="#cb11-33" aria-label="33"></a>            <span class="cf">for</span> name, record <span class="kw">in</span> records.items()</span>
+<span id="cb11-34"><a href="#cb11-34" aria-label="34"></a>        ],</span>
+<span id="cb11-35"><a href="#cb11-35" aria-label="35"></a>        headers<span class="op">=</span><span class="st">"keys"</span>,</span>
+<span id="cb11-36"><a href="#cb11-36" aria-label="36"></a>        floatfmt<span class="op">=</span><span class="st">".6f"</span>,</span>
+<span id="cb11-37"><a href="#cb11-37" aria-label="37"></a>    )</span>
+<span id="cb11-38"><a href="#cb11-38" aria-label="38"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Model               Saved NLL    Recalculated NLL

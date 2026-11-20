@@ -11,7 +11,7 @@ from jaxcmr.components.factory import (
     global_item_ids_by_code,
     source_categories_by_item,
 )
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.models.additive_semantic_ecmr import AdditiveSemanticECMR
 from jaxcmr.models.ecmr import eCMR
@@ -20,13 +20,14 @@ from jaxcmr.typing import (
     Bool,
     ContextCreateFn,
     Float,
+    Float_,
     Integer,
     MemoryCreateFn,
     MemorySearch,
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -47,9 +48,7 @@ class AdditiveSemanticRetrievalBiasECMR(AdditiveSemanticECMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            eCMR
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
     ) -> None:
         """Initialize semantic eCMR with retrieval-stage target bias."""
         super().__init__(
@@ -60,32 +59,50 @@ class AdditiveSemanticRetrievalBiasECMR(AdditiveSemanticECMR):
             mfc_create_fn,
             mcf_create_fn,
             context_create_fn,
-            termination_policy_create_fn,
+            response_policy_create_fn,
         )
         self.emotional_retrieval_bias = parameters["emotional_retrieval_bias"]
 
-    def candidate_activations(
-        self, candidates: Bool[Array, " item_count"]
-    ) -> Float[Array, " item_count"]:
-        """Compute activations with a multiplicative emotional target bias."""
-        base_activations = super().candidate_activations(candidates)
+    def item_evidence(self) -> Float[Array, " items"]:
+        """Raw memory evidence does not define this post-choice-weight bias."""
+        raise NotImplementedError(
+            "Retrieval-bias eCMR requires a policy that uses candidate_weights."
+        )
+
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Compute item weights for the selected studied candidates."""
+        candidates = candidates & self.studied
+        base_activations = super().candidate_weights(candidates, sensitivity)
         retrieval_bias = jnp.exp(self.emotional_retrieval_bias * self.is_emotional)
         return base_activations * retrieval_bias
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Compute activations with a multiplicative emotional target bias."""
-        return self.candidate_activations(self.recallable)
 
 
 def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn[
-        eCMR
-    ] = PositionalTermination,
+    response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
-    """Build an emotional-target-bias semantic eCMR factory."""
+    """Weight candidates using semantic associations and an emotional target bias.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct the memory probed to reinstate context.
+    mcf_create_fn : MemoryCreateFn
+        Construct the memory probed for candidate support.
+    context_create_fn : ContextCreateFn
+        Construct the temporal context for a trial.
+    response_policy_create_fn : ResponsePolicyCreateFn[eCMR]
+        The policy assigns probability to STOP and each recorded item.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        A factory class initialized with the dataset and any semantic inputs.
+    """
 
     class AdditiveSemanticRetrievalBiasECMRModelFactory:
         """Factory creating trial-specific retrieval-bias semantic eCMR instances."""
@@ -117,7 +134,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

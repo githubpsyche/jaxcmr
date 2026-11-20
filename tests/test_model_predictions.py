@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination, PositionalTermination
+from jaxcmr.components.response import PositionalStop, RecallUntilExhausted
 from jaxcmr.dataset import make_dataset
 from jaxcmr.loss.sequence_likelihood import (
     ExcludeTerminationLikelihoodLoss,
@@ -22,7 +22,7 @@ from jaxcmr.simulation import simulate_free_recall, simulate_dataset
 PARAMS = dict(CMR_PARAMS)
 OPTIMIZED_PARAMS = dict(OPTIMIZED_CMR_PARAMS)
 REFERENCE = make_factory(
-    linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
+    linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=RecallUntilExhausted
 )
 
 
@@ -163,7 +163,7 @@ def test_public_primacy_parameter_changes_event_and_bulk_predictions():
 def test_compatibility_loss_honors_a_different_model_factory():
     data = dataset()
     positional_stop = make_factory(
-        linear_memory.init_mfc, linear_memory.init_mcf, context.init, PositionalTermination
+        linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=PositionalStop
     )
     params = PARAMS | {
         "stop_probability_scale": jnp.array(0.1, dtype=jnp.float64),

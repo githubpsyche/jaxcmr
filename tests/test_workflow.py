@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from jaxcmr.analyses.spc import spc, plot_spc
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.experimental.cross_validation import generate_fold_masks
 from jaxcmr.fitting.gradient import ScipyLBFGSB
 from jaxcmr.helpers import load_data, save_dict_to_hdf5
@@ -45,7 +45,7 @@ def test_complete_modeling_workflow(tmp_path):
         np.testing.assert_array_equal(limited[key], original[key][:1])
     np.testing.assert_allclose(spc(data), [0.5, 0.5, 1, 1, 1, 1, 0, 0])
     factory = make_factory(
-        linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
+        linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=RecallUntilExhausted
     )
     loss = ExcludeTerminationLikelihoodLoss(factory, data, None)
     fitter = ScipyLBFGSB(

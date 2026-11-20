@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from jaxcmr.components.factory import build_trial_connections, build_trial_connections_from_similarity
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.dataset import make_dataset
 from jaxcmr.models import (
     additive_semantic_cmr, additive_semantic_matrix_cmr, multiplicative_semantic_cmr,
@@ -18,7 +18,7 @@ from jaxcmr.models import (
 ])
 def test_semantic_factories_batch_item_identities(module):
     factory = module.make_factory(linear_memory.init_mfc, linear_memory.init_mcf,
-                                  context.init, NoStopTermination)
+                                  context.init, RecallUntilExhausted)
     # Repeated code 2, an internal padding slot, and a storage width larger
     # than the model's item count all distinguish positions from item codes.
     data = make_dataset([1, 2, 0], pres_itemnos=[2, 1, 2, 0, 3, 0])

@@ -36,7 +36,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../reference/models-positional.html" rel="next">
-<link href="../reference/models-cmr.html" rel="prev">
+<link href="../reference/models-terminal-item.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -387,6 +393,12 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../reference/components-instance-memory.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Instance memory</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +733,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -787,6 +805,8 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#semantic-associations" id="toc-semantic-associations" class="nav-link active" data-scroll-target="#semantic-associations">Semantic associations</a></li>
   <li><a href="#emotional-source-context" id="toc-emotional-source-context" class="nav-link" data-scroll-target="#emotional-source-context">Emotional source context</a></li>
+  <li><a href="#reinstatement-and-temporal-context" id="toc-reinstatement-and-temporal-context" class="nav-link" data-scroll-target="#reinstatement-and-temporal-context">Reinstatement and temporal context</a></li>
+  <li><a href="#item-and-position-routes" id="toc-item-and-position-routes" class="nav-link" data-scroll-target="#item-and-position-routes">Item and position routes</a></li>
   <li><a href="#api-entries" id="toc-api-entries" class="nav-link" data-scroll-target="#api-entries">API entries</a>
   <ul class="collapse">
   <li><a href="#jaxcmr.models.additive_semantic_cmr.make_factory" id="toc-jaxcmr.models.additive_semantic_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.additive_semantic_cmr.make_factory">additive_semantic_cmr.make_factory</a></li>
@@ -794,6 +814,15 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#jaxcmr.models.multiplicative_semantic_cmr.make_factory" id="toc-jaxcmr.models.multiplicative_semantic_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.multiplicative_semantic_cmr.make_factory">multiplicative_semantic_cmr.make_factory</a></li>
   <li><a href="#jaxcmr.models.ecmr.make_factory" id="toc-jaxcmr.models.ecmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.ecmr.make_factory">ecmr.make_factory</a></li>
   <li><a href="#jaxcmr.models.cmr3.make_factory" id="toc-jaxcmr.models.cmr3.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.cmr3.make_factory">cmr3.make_factory</a></li>
+  <li><a href="#jaxcmr.models.additive_semantic_ecmr.make_factory" id="toc-jaxcmr.models.additive_semantic_ecmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.additive_semantic_ecmr.make_factory">additive_semantic_ecmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory" id="toc-jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory">additive_semantic_retrieval_bias_ecmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.ecmr_source_switch.make_factory" id="toc-jaxcmr.models.ecmr_source_switch.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.ecmr_source_switch.make_factory">ecmr_source_switch.make_factory</a></li>
+  <li><a href="#jaxcmr.models.cmr3_source_switch.make_factory" id="toc-jaxcmr.models.cmr3_source_switch.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.cmr3_source_switch.make_factory">cmr3_source_switch.make_factory</a></li>
+  <li><a href="#jaxcmr.models.no_reinstate_cmr.make_factory" id="toc-jaxcmr.models.no_reinstate_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.no_reinstate_cmr.make_factory">no_reinstate_cmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.outlist_cmr.make_factory" id="toc-jaxcmr.models.outlist_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.outlist_cmr.make_factory">outlist_cmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.distinct_contexts_cmr.make_factory" id="toc-jaxcmr.models.distinct_contexts_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.distinct_contexts_cmr.make_factory">distinct_contexts_cmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.blend_positional_cmr.make_factory" id="toc-jaxcmr.models.blend_positional_cmr.make_factory" class="nav-link" data-scroll-target="#jaxcmr.models.blend_positional_cmr.make_factory">blend_positional_cmr.make_factory</a></li>
+  <li><a href="#jaxcmr.models.blend_positional_cmr.RouteCandidates" id="toc-jaxcmr.models.blend_positional_cmr.RouteCandidates" class="nav-link" data-scroll-target="#jaxcmr.models.blend_positional_cmr.RouteCandidates">blend_positional_cmr.RouteCandidates</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -822,7 +851,7 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>Each model module supplies a <code>make_factory</code> function. It binds the component creators and returns a factory class. Construct that class with the dataset and any vocabulary features or similarities. Its <code>create_trial_model</code> method takes a trial index and a parameter mapping.</p>
-<p>The semantic factories prepare a connection matrix for each trial. The emotional-source factories prepare a category for each local item. Both use the selected trial’s item codes when constructing its model.</p>
+<p>The semantic factories prepare a connection matrix for each trial. The emotional-source factories prepare a category for each local item. Both use the selected trial’s item codes when constructing its model. Each configurable factory takes a response policy that assigns probabilities to STOP and each item. The positional and blended models account for repeated presentations before returning a probability for the recorded item.</p>
 <section id="semantic-associations" class="level2 api-function-index">
 <h2 class="api-function-index anchored" data-anchor-id="semantic-associations">Semantic associations</h2>
 <table class="caption-top table">
@@ -854,6 +883,56 @@ ul.task-list li input[type="checkbox"] {
 <td><a href="#jaxcmr.models.cmr3.make_factory"><code>cmr3.make_factory</code></a></td>
 <td>Build CMR3 with separate source features for negative and positive items.</td>
 </tr>
+<tr class="odd">
+<td><a href="#jaxcmr.models.additive_semantic_ecmr.make_factory"><code>additive_semantic_ecmr.make_factory</code></a></td>
+<td>Add semantic support to emotional and temporal support before weighting candidates.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory"><code>additive_semantic_retrieval_bias_ecmr.make_factory</code></a></td>
+<td>Weight candidates using semantic associations and an emotional target bias.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.models.ecmr_source_switch.make_factory"><code>ecmr_source_switch.make_factory</code></a></td>
+<td>Drift toward fresh context when the emotional category changes during study.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.cmr3_source_switch.make_factory"><code>cmr3_source_switch.make_factory</code></a></td>
+<td>Drift toward fresh context when successive study items change valence category.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reinstatement-and-temporal-context" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="reinstatement-and-temporal-context">Reinstatement and temporal context</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.models.no_reinstate_cmr.make_factory"><code>no_reinstate_cmr.make_factory</code></a></td>
+<td>Keep the retrieval context fixed after each recall.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.outlist_cmr.make_factory"><code>outlist_cmr.make_factory</code></a></td>
+<td>Integrate an out-of-list context unit when a study item repeats.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.models.distinct_contexts_cmr.make_factory"><code>distinct_contexts_cmr.make_factory</code></a></td>
+<td>Encode distinct study positions and track recall availability by item.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="item-and-position-routes" class="level2 api-function-index">
+<h2 class="api-function-index anchored" data-anchor-id="item-and-position-routes">Item and position routes</h2>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.models.blend_positional_cmr.make_factory"><code>blend_positional_cmr.make_factory</code></a></td>
+<td>Mix item and positional response distributions before reinstating the recalled item.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.blend_positional_cmr.RouteCandidates"><code>blend_positional_cmr.RouteCandidates</code></a></td>
+<td>Evidence for a single route in blended positional CMR.</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -862,7 +941,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.additive_semantic_cmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.additive_semantic_cmr.make_factory">additive_semantic_cmr.make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.additive_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)</code>
+<code>jaxcmr.models.additive_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
 </div>
 <p>Build additive semantic CMR from vocabulary feature vectors.</p>
 <p>The factory uses <code>pres_itemnos</code> to put vocabulary IDs from <code>pres_itemids</code> in local item-code order. Each row of <code>features</code> describes one vocabulary item. <code>None</code> gives zero semantic support. The trial model’s <code>semantic_scale</code> weights the similarity row added after a recall.</p>
@@ -870,10 +949,10 @@ ul.task-list li input[type="checkbox"] {
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 25%">
-<col style="width: 43%">
-<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 26%">
+<col style="width: 39%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -903,9 +982,9 @@ ul.task-list li input[type="checkbox"] {
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Assign probabilities to STOP and each item.</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
@@ -939,7 +1018,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.additive_semantic_matrix_cmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.additive_semantic_matrix_cmr.make_factory">additive_semantic_matrix_cmr.make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.additive_semantic_matrix_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)</code>
+<code>jaxcmr.models.additive_semantic_matrix_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
 </div>
 <p>Build the same additive semantic model from a supplied similarity matrix.</p>
 <p>The factory uses <code>pres_itemnos</code> to put vocabulary IDs from <code>pres_itemids</code> in local item-code order. Supply a square matrix with the same vocabulary along both axes. <code>None</code> gives zero semantic support. The trial model uses the same <code>semantic_scale</code> as the feature-based additive model.</p>
@@ -947,10 +1026,10 @@ ul.task-list li input[type="checkbox"] {
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 25%">
-<col style="width: 43%">
-<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 26%">
+<col style="width: 39%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -980,9 +1059,9 @@ ul.task-list li input[type="checkbox"] {
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Assign probabilities to STOP and each item.</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
@@ -1016,7 +1095,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.multiplicative_semantic_cmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.multiplicative_semantic_cmr.make_factory">multiplicative_semantic_cmr.make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.multiplicative_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, termination_policy_create_fn)</code>
+<code>jaxcmr.models.multiplicative_semantic_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
 </div>
 <p>Build multiplicative semantic CMR from vocabulary feature vectors.</p>
 <p>The factory uses <code>pres_itemnos</code> to put vocabulary IDs from <code>pres_itemids</code> in local item-code order. The model uses <code>choice_sensitivity</code> for temporal support and <code>semantic_scale</code> for semantic support. With positive <code>semantic_scale</code>, the strongest positive semantic match among available items has weight one. If <code>features</code> is <code>None</code>, all semantic connections are zero. After the first recall only the common support floor remains among available items.</p>
@@ -1024,10 +1103,10 @@ ul.task-list li input[type="checkbox"] {
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 25%">
-<col style="width: 43%">
-<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 26%">
+<col style="width: 39%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1057,9 +1136,9 @@ ul.task-list li input[type="checkbox"] {
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>Assign probabilities to STOP and each item.</td>
 <td><em>required</em></td>
 </tr>
 </tbody>
@@ -1093,7 +1172,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.ecmr.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.ecmr.make_factory">ecmr.make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.ecmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)</code>
+<code>jaxcmr.models.ecmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>Build eCMR with separate source features for emotional and neutral items.</p>
 <p>The dataset supplies <code>pres_itemids</code> and study-position <code>valence</code>. Both positive and negative values cue the emotional feature. Zero cues the neutral feature. The model sums support from temporal and emotional context before applying choice sensitivity.</p>
@@ -1102,9 +1181,9 @@ ul.task-list li input[type="checkbox"] {
 <table class="caption-top table">
 <colgroup>
 <col style="width: 20%">
-<col style="width: 23%">
-<col style="width: 39%">
-<col style="width: 16%">
+<col style="width: 24%">
+<col style="width: 34%">
+<col style="width: 19%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1134,10 +1213,10 @@ ul.task-list li input[type="checkbox"] {
 <td><code>TemporalContext.init</code></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[eCMR]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
-<td><code>PositionalTermination</code></td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[eCMR]</td>
+<td>Assign probabilities to STOP and each item.</td>
+<td><code>PositionalStop</code></td>
 </tr>
 </tbody>
 </table>
@@ -1170,7 +1249,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="jaxcmr.models.cmr3.make_factory" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.cmr3.make_factory">cmr3.make_factory</h3>
 <div class="api-signature">
-<code>jaxcmr.models.cmr3.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, termination_policy_create_fn=PositionalTermination)</code>
+<code>jaxcmr.models.cmr3.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, response_policy_create_fn=PositionalStop)</code>
 </div>
 <p>Build CMR3 with separate source features for negative and positive items.</p>
 <p>The dataset supplies <code>pres_itemids</code> and study-position <code>valence</code>. Negative and positive items begin with associations to their respective source features. Neutral items begin with neither association. Temporal and emotional context both contribute to item support at retrieval.</p>
@@ -1179,9 +1258,9 @@ ul.task-list li input[type="checkbox"] {
 <table class="caption-top table">
 <colgroup>
 <col style="width: 20%">
-<col style="width: 23%">
-<col style="width: 39%">
-<col style="width: 16%">
+<col style="width: 24%">
+<col style="width: 34%">
+<col style="width: 19%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1211,10 +1290,10 @@ ul.task-list li input[type="checkbox"] {
 <td><code>TemporalContext.init</code></td>
 </tr>
 <tr class="even">
-<td>termination_policy_create_fn</td>
-<td>TerminationPolicyCreateFn[CMR3]</td>
-<td>Construct a stopping rule that accepts this trial model.</td>
-<td><code>PositionalTermination</code></td>
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR3]</td>
+<td>Assign probabilities to STOP and each item.</td>
+<td><code>PositionalStop</code></td>
 </tr>
 </tbody>
 </table>
@@ -1242,9 +1321,659 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
+</section>
+</section>
+<section id="jaxcmr.models.additive_semantic_ecmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.additive_semantic_ecmr.make_factory">additive_semantic_ecmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.additive_semantic_ecmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, response_policy_create_fn=PositionalStop)</code>
+</div>
+<p>Add semantic support to emotional and temporal support before weighting candidates.</p>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 21%">
+<col style="width: 43%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><code>LinearMemory.init_mfc</code></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><code>LinearMemory.init_mcf</code></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>ContextCreateFn</td>
+<td>Construct the temporal context for a trial.</td>
+<td><code>TemporalContext.init</code></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[eCMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><code>PositionalStop</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory">additive_semantic_retrieval_bias_ecmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.additive_semantic_retrieval_bias_ecmr.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=TemporalContext.init, response_policy_create_fn=PositionalStop)</code>
+</div>
+<p>Weight candidates using semantic associations and an emotional target bias.</p>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 21%">
+<col style="width: 43%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><code>LinearMemory.init_mfc</code></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><code>LinearMemory.init_mcf</code></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>ContextCreateFn</td>
+<td>Construct the temporal context for a trial.</td>
+<td><code>TemporalContext.init</code></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[eCMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><code>PositionalStop</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-6" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.ecmr_source_switch.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.ecmr_source_switch.make_factory">ecmr_source_switch.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.ecmr_source_switch.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=_init_expanded_context, response_policy_create_fn=PositionalStop)</code>
+</div>
+<p>Drift toward fresh context when the emotional category changes during study.</p>
+<section id="parameters-7" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 21%">
+<col style="width: 42%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><code>LinearMemory.init_mfc</code></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><code>LinearMemory.init_mcf</code></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>OutlistContextCreateFn</td>
+<td>Use a context with room for out-of-list units.</td>
+<td><code>_init_expanded_context</code></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[eCMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><code>PositionalStop</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-7" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.cmr3_source_switch.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.cmr3_source_switch.make_factory">cmr3_source_switch.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.cmr3_source_switch.make_factory(mfc_create_fn=LinearMemory.init_mfc, mcf_create_fn=LinearMemory.init_mcf, context_create_fn=_init_expanded_context, response_policy_create_fn=PositionalStop)</code>
+</div>
+<p>Drift toward fresh context when successive study items change valence category.</p>
+<section id="parameters-8" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 14%">
+<col style="width: 61%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct temporal item-to-context memory.</td>
+<td><code>LinearMemory.init_mfc</code></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct temporal context-to-item memory.</td>
+<td><code>LinearMemory.init_mcf</code></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>OutlistContextCreateFn</td>
+<td>Construct temporal context with units reserved for source switches.</td>
+<td><code>_init_expanded_context</code></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR3]</td>
+<td>Assign probabilities to STOP and the items using the current source and temporal context. The default schedules STOP by recall count.</td>
+<td><code>PositionalStop</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-8" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-8">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 29%">
+<col style="width: 63%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class that reads each studied item’s valence from the dataset.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.no_reinstate_cmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.no_reinstate_cmr.make_factory">no_reinstate_cmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.no_reinstate_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
+</div>
+<p>Keep the retrieval context fixed after each recall.</p>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 23%">
+<col style="width: 47%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>ContextCreateFn</td>
+<td>Construct the temporal context for a trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-9" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-9">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.outlist_cmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.outlist_cmr.make_factory">outlist_cmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.outlist_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
+</div>
+<p>Integrate an out-of-list context unit when a study item repeats.</p>
+<section id="parameters-10" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 23%">
+<col style="width: 47%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>OutlistContextCreateFn</td>
+<td>Use a context with room for out-of-list units.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-10" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-10">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.distinct_contexts_cmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.distinct_contexts_cmr.make_factory">distinct_contexts_cmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.distinct_contexts_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
+</div>
+<p>Encode distinct study positions and track recall availability by item.</p>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 23%">
+<col style="width: 47%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>ContextCreateFn</td>
+<td>Construct the temporal context for a trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[CMR]</td>
+<td>The policy assigns probability to STOP and each recorded item.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-11" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-11">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.blend_positional_cmr.make_factory" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.blend_positional_cmr.make_factory">blend_positional_cmr.make_factory</h3>
+<div class="api-signature">
+<code>jaxcmr.models.blend_positional_cmr.make_factory(mfc_create_fn, mcf_create_fn, context_create_fn, response_policy_create_fn)</code>
+</div>
+<p>Mix item and positional response distributions before reinstating the recalled item.</p>
+<section id="parameters-12" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 30%">
+<col style="width: 42%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mfc_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed to reinstate context.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>mcf_create_fn</td>
+<td>MemoryCreateFn</td>
+<td>Construct the memory probed for candidate support.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>context_create_fn</td>
+<td>ContextCreateFn</td>
+<td>Construct the temporal context for a trial.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>response_policy_create_fn</td>
+<td>ResponsePolicyCreateFn[RouteCandidates]</td>
+<td>The policy scores the item and position routes separately.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-12" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-12">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 30%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>type[MemorySearchModelFactory]</td>
+<td>A factory class initialized with the dataset and any semantic inputs.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.models.blend_positional_cmr.RouteCandidates" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.models.blend_positional_cmr.RouteCandidates">blend_positional_cmr.RouteCandidates</h3>
+<div class="api-signature">
+<code>jaxcmr.models.blend_positional_cmr.RouteCandidates(evidence, recallable, studied, recall_total, is_active)</code>
+</div>
+<p>Evidence for a single route in blended positional CMR.</p>
+<p>On the item route each candidate identifies an item. On the positional route each identifies a study position. The response policy chooses among that route’s candidates and STOP. The positional route then adds together probabilities for positions that contained the same item.</p>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#jaxcmr.models.blend_positional_cmr.RouteCandidates.item_evidence"><code>item_evidence</code></a></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.models.blend_positional_cmr.RouteCandidates.candidate_weights"><code>candidate_weights</code></a></td>
+<td>Weight the selected studied items by their relative memory evidence.</td>
+</tr>
+</tbody>
+</table>
+<section id="jaxcmr.models.blend_positional_cmr.RouteCandidates.item_evidence" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.blend_positional_cmr.RouteCandidates.item_evidence">item_evidence</h5>
+<div class="api-signature">
+<code>jaxcmr.models.blend_positional_cmr.RouteCandidates.item_evidence()</code>
+</div>
+</section>
+<section id="jaxcmr.models.blend_positional_cmr.RouteCandidates.candidate_weights" class="level5">
+<h5 class="anchored" data-anchor-id="jaxcmr.models.blend_positional_cmr.RouteCandidates.candidate_weights">candidate_weights</h5>
+<div class="api-signature">
+<code>jaxcmr.models.blend_positional_cmr.RouteCandidates.candidate_weights(candidates, sensitivity)</code>
+</div>
+<p>Weight the selected studied items by their relative memory evidence.</p>
 <p><a href="../reference/models.html">Compare model families</a> · <a href="../reference/components-factory.html">Preparing trial inputs</a> · <a href="../reference/typing.html#jaxcmr.typing.MemorySearch">Trial-model interface</a></p>
 
 
+</section>
 </section>
 </section>
 </section>
@@ -1776,8 +2505,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
-      <a href="../reference/models-cmr.html" class="pagination-link" aria-label="Ordinary CMR">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Ordinary CMR</span>
+      <a href="../reference/models-terminal-item.html" class="pagination-link" aria-label="Terminal-item CMR">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Terminal-item CMR</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.fitting import ParameterSpace, ScipyDE, select_starts
 from jaxcmr.fitting.gradient import ScipyLBFGSB
 from jaxcmr.dataset import make_dataset
@@ -15,7 +15,7 @@ from jaxcmr.loss.sequence_likelihood import ExcludeTerminationLikelihoodLoss
 from jaxcmr.models.cmr import make_factory
 
 FACTORY = make_factory(
-    linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
+    linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=RecallUntilExhausted
 )
 PARAMS = dict(CMR_PARAMS)
 

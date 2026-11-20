@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from jax import jit, lax
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.models import first_bias_positional_cmr, positional_cmr, trace_reinf_positional_cmr
 
 PARAMS: dict[str, Any] = {
@@ -26,7 +26,7 @@ STUDY = [1, 2, 3, 4, 2, 6]
 
 
 def make_model(module, **params):
-    return module.CMR(len(STUDY), PARAMS | params, termination_policy_create_fn=NoStopTermination)
+    return module.CMR(len(STUDY), PARAMS | params, response_policy_create_fn=RecallUntilExhausted)
 
 
 def study(model, events=STUDY):
@@ -205,7 +205,7 @@ def test_reinstatement_only_bias_does_not_change_access_at_fixed_state():
     np.testing.assert_allclose(
         base.outcome_probabilities(), selection.outcome_probabilities(), atol=1e-06
     )
-    assert support.item_probability(1) > base.item_probability(1)
+    assert support.outcome_probability(2) > base.outcome_probability(2)
     selection_after = selection.retrieve(jnp.int32(2))
     support_after = support.retrieve(jnp.int32(2))
     np.testing.assert_allclose(

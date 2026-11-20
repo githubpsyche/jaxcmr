@@ -34,14 +34,15 @@ import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.components.factory import source_categories_by_item
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop, relative_choice_weights
 from jaxcmr.dataset import _require_pres_itemids
-from jaxcmr.math import FLOAT32_EPS, exponential_primacy_decay, relative_power_scale
+from jaxcmr.math import exponential_primacy_decay
 from jaxcmr.typing import (
     Array,
     Bool,
     ContextCreateFn,
     Float,
+    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
@@ -49,7 +50,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -69,9 +70,7 @@ class eCMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            "eCMR"
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn["eCMR"] = PositionalStop,
     ) -> None:
         """Initialize full eCMR with dual context and category modulation.
 
@@ -89,8 +88,8 @@ class eCMR(Pytree):
             Factory for context-to-item memory.
         context_create_fn : ContextCreateFn, optional
             Factory for temporal context.
-        termination_policy_create_fn : TerminationPolicyCreateFn[eCMR], optional
-            Factory for a compatible stopping rule; defaults to PositionalTermination.
+        response_policy_create_fn : ResponsePolicyCreateFn[eCMR], optional
+            Factory for a compatible stopping rule; defaults to PositionalStop.
 
         """
         # --- Parameters ---
@@ -110,7 +109,6 @@ class eCMR(Pytree):
                 self.recall_drift_rate,
             )
         self.mfc_learning_rate = parameters["learning_rate"]
-        self.mcf_sensitivity = parameters["choice_sensitivity"]
         self.modulate_emotion_by_primacy = parameters["modulate_emotion_by_primacy"]
         self.phi_emot_modulates_temporal = parameters.get(
             "phi_emot_modulates_temporal", False
@@ -166,7 +164,7 @@ class eCMR(Pytree):
         self.emotion_mcf = LinearMemory.LinearMemory(jnp.zeros((3, list_length)))
 
         # --- Recall state ---
-        self.termination_policy = termination_policy_create_fn(list_length, parameters)
+        self.response_policy = response_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(self.item_count, dtype=int)
         self.studied = jnp.zeros(self.item_count, dtype=bool)
         self.recallable = jnp.zeros(self.item_count, dtype=bool)
@@ -337,99 +335,34 @@ class eCMR(Pytree):
             lambda: self._retrieve_item(choice - 1),
         )
 
-    def candidate_activations(
-        self, candidates: Bool[Array, " item_count"]
-    ) -> Float[Array, " item_count"]:
-        """Compute retrieval activations combining both pathways.
-
-        Returns
-        -------
-        Float[Array, " item_count"]
-
-        """
-        temporal_act = self.mcf.probe(self.context.state) * candidates
-        emotional_act = self.emotion_mcf.probe(self.emotion_context.state) * candidates
-        combined = temporal_act + emotional_act
-        return (relative_power_scale(combined, self.mcf_sensitivity) + FLOAT32_EPS) * candidates
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Compute retrieval activations combining both pathways.
-
-        Returns
-        -------
-        Float[Array, " item_count"]
-
-        """
-        return self.candidate_activations(self.recallable)
-
-    def stop_probability(self) -> Float[Array, ""]:
-        """Compute probability of terminating recall.
-
-        Returns
-        -------
-        Float[Array, ""]
-
-        """
-        return self.termination_policy.stop_probability(self)
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Compute probability of a specific retrieval outcome.
-
-        Parameters
-        ----------
-        choice : Int_
-            Item index (1-indexed), or 0 for termination.
-
-        Returns
-        -------
-        Float[Array, ""]
-
-        """
-        p_stop = self.stop_probability()
-        return lax.cond(
-            choice == 0,
-            lambda: p_stop,
-            lambda: lax.cond(
-                jnp.logical_or(p_stop == 1.0, ~self.recallable[choice - 1]),
-                lambda: 0.0,
-                lambda: (1 - p_stop) * self._item_probability(choice - 1),
-            ),
+    def item_evidence(self) -> Float[Array, " items"]:
+        """Return absolute temporal and source evidence in recorded item order."""
+        return self.mcf.probe(self.context.state) + self.emotion_mcf.probe(
+            self.emotion_context.state
         )
 
-    def _item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        item_activations = self.activations()
-        return item_activations[item_index] / jnp.sum(item_activations)
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Weight the selected studied items by their relative memory evidence."""
+        return relative_choice_weights(
+            self.item_evidence(), candidates & self.studied, sensitivity
+        )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Compute probabilities for all retrieval outcomes.
+        """Return probabilities in recorded order: STOP, then each local item."""
+        return self.response_policy.outcome_probabilities(self)
 
-        Returns
-        -------
-        Float[Array, " recall_outcomes"]
-
-        """
-        p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
-        return jnp.hstack(
-            (
-                p_stop,
-                (
-                    (1 - p_stop)
-                    * item_activation
-                    / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
-                ),
-            )
-        )
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Score the recorded STOP or item using the same distribution as simulation."""
+        return self.outcome_probabilities()[choice]
 
 
 def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: ContextCreateFn = TemporalContext.init,
-    termination_policy_create_fn: TerminationPolicyCreateFn[
-        eCMR
-    ] = PositionalTermination,
+    response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
     """Build eCMR with separate source features for emotional and neutral items.
 
@@ -446,8 +379,8 @@ def make_factory(
         Construct temporal context-to-item memory.
     context_create_fn : ContextCreateFn, optional
         Construct temporal context for the trial.
-    termination_policy_create_fn : TerminationPolicyCreateFn[eCMR], optional
-        Construct a stopping rule that accepts this trial model.
+    response_policy_create_fn : ResponsePolicyCreateFn[eCMR], optional
+        Assign probabilities to STOP and each item.
 
     Returns
     -------
@@ -481,7 +414,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

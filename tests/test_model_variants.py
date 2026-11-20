@@ -12,7 +12,7 @@ import jax
 import jax.numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.dataset import make_dataset
 
 _LIST_LENGTH = 4
@@ -159,11 +159,9 @@ def test_additive_semantic_matrix_cmr_zero_scale_matches_base_cmr():
     from jaxcmr.models.cmr import make_factory as make_base_factory
     from jaxcmr.models.additive_semantic_matrix_cmr import make_factory
 
-    base_factory_cls = make_base_factory(
-        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalTermination
-    )
+    base_factory_cls = make_base_factory()
     semantic_factory_cls = make_factory(
-        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalTermination
+        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalStop
     )
     dataset: Any = {
         **_DATASET,
@@ -181,7 +179,7 @@ def test_additive_semantic_matrix_cmr_zero_scale_matches_base_cmr():
         [1, 2, 3, 4],
         [1],
     )
-    assert jnp.allclose(base_model.activations(), semantic_model.activations()).item()
+    assert jnp.allclose(base_model.outcome_probabilities(), semantic_model.outcome_probabilities()).item()
 
 
 def test_additive_semantic_matrix_cmr_boosts_related_candidates():
@@ -189,7 +187,7 @@ def test_additive_semantic_matrix_cmr_boosts_related_candidates():
     from jaxcmr.models.additive_semantic_matrix_cmr import make_factory
 
     Factory = make_factory(
-        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalTermination
+        LinearMemory.init_mfc, LinearMemory.init_mcf, TemporalContext.init, PositionalStop
     )
     dataset: Any = {
         **_DATASET,
@@ -208,7 +206,7 @@ def test_additive_semantic_matrix_cmr_boosts_related_candidates():
     semantic_model = _run_sequence(
         factory.create_trial_model(jnp.int32(0), semantic_params), [1, 2, 3, 4], [1]
     )
-    boosts = semantic_model.activations() - zero_model.activations()
+    boosts = semantic_model.outcome_probabilities()[1:] - zero_model.outcome_probabilities()[1:]
     assert boosts[1] > boosts[3]
 
 
@@ -250,7 +248,11 @@ def test_positional_choice_has_correct_gradient_at_sensitivity_one():
         model = model.replace(mcf=model.mcf.replace(
             state=jnp.zeros_like(model.mcf.state).at[0].set(jnp.array([2., 1.]))
         ))
-        probability = jax.jit(lambda scale: model.replace(mcf_sensitivity=scale).item_probability(0))
+        @jax.jit
+        def probability(scale):
+            weights = model.candidate_weights(model.recallable, scale)
+            return weights[0] / weights.sum()
+
         value, derivative = jax.value_and_grad(probability)(1.)
         # For raw support [2, 1], p = (1+e)/(1+2**(-s)+2e).
         # At s=1, dp/ds = (1+e)*log(2)/[2*(1.5+2e)**2].
@@ -272,21 +274,21 @@ def test_blended_reinstatement_is_continuous_at_sensitivity_one():
 
 
 def test_support_ratio_stopping_is_continuous_at_sensitivity_one():
-    from jaxcmr.components.termination import SupportRatioTermination
+    from jaxcmr.components.response import RelativePowerSupportRatio
     from jaxcmr.models.ecmr import eCMR
 
     with jax.enable_x64(True):
         parameters = _BASE_PARAMS | {"choice_sensitivity": 1., "emotion_scale": 0.,
                                     "modulate_emotion_by_primacy": False, "stop_probability_growth": 2.}
         model = eCMR(4, parameters, jnp.zeros(4, dtype=bool),
-                     termination_policy_create_fn=SupportRatioTermination)
+                     response_policy_create_fn=RelativePowerSupportRatio)
         model = model.replace(
             studied=jnp.ones(4, dtype=bool), recallable=jnp.array([False, False, True, True]),
             recall_total=jnp.array(2),
             mcf=model.mcf.replace(state=jnp.zeros_like(model.mcf.state).at[0].set(jnp.array([8., 2., 2., 1.]))),
             emotion_mcf=model.emotion_mcf.replace(state=jnp.zeros_like(model.emotion_mcf.state)),
         )
-        stop = jax.jit(lambda scale: model.replace(mcf_sensitivity=scale).stop_probability())
+        stop = jax.jit(lambda scale: model.replace(response_policy=model.response_policy.replace(sensitivity=scale)).outcome_probability(0))
         # Each group is scaled by its own maximum. At exponent s the two
         # totals are 1 + (1/2)**s + 2*eps and 1 + (1/4)**s + 2*eps.
         epsilon = 2**-23
@@ -300,15 +302,15 @@ def test_support_ratio_stopping_is_continuous_at_sensitivity_one():
 
 
 def test_support_ratio_keeps_a_recalled_item_available_when_repeats_are_allowed():
-    from jaxcmr.components.termination import SupportRatioTermination
+    from jaxcmr.components.response import RelativePowerSupportRatio
     from jaxcmr.models.cmr import CMR
 
     model = CMR(3, _BASE_PARAMS | {"allow_repeated_recalls": True},
-                termination_policy_create_fn=SupportRatioTermination)
+                response_policy_create_fn=RelativePowerSupportRatio)
     after_recall = _run_sequence(model, [1, 2, 3], [2])
     # All three candidates, including item 2, remain available. With zero
     # unavailable support and positive growth, only the additive term remains.
     assert after_recall.recall_total == 1
-    assert jax.jit(lambda state: state.stop_probability())(after_recall) == pytest.approx(
+    assert jax.jit(lambda state: state.outcome_probability(0))(after_recall) == pytest.approx(
         _BASE_PARAMS["stop_probability_scale"]
     )

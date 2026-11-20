@@ -11,7 +11,7 @@ For multiple participants with shared likelihood compilation:
 For a minimal example with actual repeated presentations, add --trial-index 82.
 Use --output PATH to retain the full FitResult, timings and data provenance.
 This example fits recall order conditional on observed recall length. The
-NoStopTermination policy and loss do not estimate stopping behavior.
+RecallUntilExhausted policy and loss do not estimate stopping behavior.
 This experimental example defaults to screened trust-constr/BFGS and optimized
 regular-CMR model. Use --optimizer lbfgsb or --model reference to
 compare the experimental route with ordinary event-based fitting.
@@ -30,7 +30,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.experimental import optimized_cmr_fitting
 from jaxcmr.fitting import ScipyLBFGSB, ScipyTrustConstr
 from jaxcmr.helpers import load_data
@@ -97,7 +97,7 @@ def fit_cohort(
         "optimizer": type(fitter).__name__,
         "loss": type(fitter.loss_fn).__name__,
         "canonical_verification_loss": "ExcludeTerminationLikelihoodLoss",
-        "termination": "NoStopTermination",
+        "termination": "RecallUntilExhausted",
         "timing_note": "Setup and fitting exclude data loading, interpreter startup and independent validation.",
     }
 
@@ -206,7 +206,7 @@ def main() -> None:
     reference_params = {"learn_after_context_update": False, "allow_repeated_recalls": False}
     base_params = {} if args.model == "optimized" else reference_params
     reference_factory = make_factory(
-        linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
+        linear_memory.init_mfc, linear_memory.init_mcf, context.init, response_policy_create_fn=RecallUntilExhausted
     )
     settings = {
         "bounds": bounds,
@@ -324,7 +324,7 @@ def main() -> None:
         "optimizer": fitter_class.__name__,
         "loss": loss_class.__name__,
         "canonical_verification_loss": "ExcludeTerminationLikelihoodLoss",
-        "termination": "NoStopTermination",
+        "termination": "RecallUntilExhausted",
     }
     if args.output is not None:
         with args.output.open("x") as file:

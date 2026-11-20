@@ -17,7 +17,7 @@ import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.context import OutlistContext, OutlistContextCreateFn
 from jaxcmr.components.factory import source_categories_by_item
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.models.ecmr import eCMR
 from jaxcmr.typing import (
@@ -32,7 +32,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -62,9 +62,7 @@ class eCMRSourceSwitch(eCMR):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: OutlistContextCreateFn = _init_expanded_context,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            eCMR
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
     ) -> None:
         """Initialize eCMR with expanded temporal context for switch events."""
         super().__init__(
@@ -74,7 +72,7 @@ class eCMRSourceSwitch(eCMR):
             mfc_create_fn,
             mcf_create_fn,
             context_create_fn,
-            termination_policy_create_fn,
+            response_policy_create_fn,
         )
         self.source_switch_drift_rate = parameters.get("source_switch_drift_rate", 0.0)
         self.source_categories = self.is_emotional.astype(jnp.int32)
@@ -113,11 +111,26 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: OutlistContextCreateFn = _init_expanded_context,
-    termination_policy_create_fn: TerminationPolicyCreateFn[
-        eCMR
-    ] = PositionalTermination,
+    response_policy_create_fn: ResponsePolicyCreateFn[eCMR] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
-    """Build an eCMR source-switch factory."""
+    """Drift toward fresh context when the emotional category changes during study.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn
+        Construct the memory probed to reinstate context.
+    mcf_create_fn : MemoryCreateFn
+        Construct the memory probed for candidate support.
+    context_create_fn : OutlistContextCreateFn
+        Use a context with room for out-of-list units.
+    response_policy_create_fn : ResponsePolicyCreateFn[eCMR]
+        The policy assigns probability to STOP and each recorded item.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        A factory class initialized with the dataset and any semantic inputs.
+    """
 
     class eCMRSourceSwitchModelFactory:
         """Factory creating trial-specific eCMR source-switch instances."""
@@ -143,7 +156,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

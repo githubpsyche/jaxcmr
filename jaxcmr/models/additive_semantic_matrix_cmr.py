@@ -24,7 +24,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -37,7 +37,7 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
+    response_policy_create_fn: ResponsePolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
     """Build the same additive semantic model from a supplied similarity matrix.
 
@@ -54,8 +54,8 @@ def make_factory(
         Construct context-to-item memory.
     context_create_fn : ContextCreateFn
         Construct temporal context for the trial.
-    termination_policy_create_fn : TerminationPolicyCreateFn[CMR]
-        Construct a stopping rule that accepts this trial model.
+    response_policy_create_fn : ResponsePolicyCreateFn[CMR]
+        Assign probabilities to STOP and each item.
 
     Returns
     -------
@@ -92,7 +92,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

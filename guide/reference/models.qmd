@@ -4,7 +4,7 @@ title: "Memory-search models"
 
 ## Context Maintenance and Retrieval
 
-[Ordinary CMR](models-cmr.qmd) learns associations between items and temporal context. Its factory combines two associative memories, a context, and a stopping rule. The [model interface](typing.qmd#jaxcmr.typing.MemorySearch) describes the events that simulators and losses use.
+[Ordinary CMR](models-cmr.qmd) learns associations between items and temporal context. Its factory combines two associative memories, a context, and a [response policy](components-response.qmd). The [model interface](typing.qmd#jaxcmr.typing.MemorySearch) describes the events that simulators and losses use.
 
 ## Semantic associations
 
@@ -29,4 +29,11 @@ The [trial-input reference](components-factory.qmd) shows how valence and vocabu
 
 ## Repeated presentations
 
-[Positional CMR](models-positional.qmd) learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The [RepFR model configurations](https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py) identify the reinforcement and reinstatement variants used in that project's comparisons.
+[Positional CMR](models-positional.qmd) learns an association at each study position. If an item occurs twice, both positions can contribute to the probability of recalling that item. The response policy evaluates the available study positions. Positional CMR
+sums their weights by item code before assigning item probabilities. In the
+[blended model](models-factories.qmd#jaxcmr.models.blend_positional_cmr.make_factory)
+each route first gives its own probability to STOP and each item. When an item
+is recalled, those route probabilities also determine how much each route
+contributes to reinstatement.
+
+The [RepFR model configurations](https://github.com/githubpsyche/repfr/blob/main/repfr/model_registry.py) identify the reinforcement and reinstatement variants used in that project's comparisons.

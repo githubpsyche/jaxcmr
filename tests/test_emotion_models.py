@@ -139,8 +139,8 @@ def test_source_switch_allocation_and_neutral_equivalence(
         for choice in range(1, 5):
             reference = reference.experience(jnp.int32(choice))
         np.testing.assert_allclose(
-            model.start_retrieving().activations(),
-            reference.start_retrieving().activations(),
+            model.start_retrieving().outcome_probabilities(),
+            reference.start_retrieving().outcome_probabilities(),
             rtol=1e-6,
         )
 

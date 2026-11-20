@@ -12,6 +12,15 @@ title: "Model components"
 
 Both modules supply `init_mfc` for item-to-context memory and `init_mcf` for context-to-item memory. [Memory interface](typing.qmd#jaxcmr.typing.Memory)
 
+## Choosing the next response
+
+[Response policies](components-response.qmd) assign probabilities to STOP and
+each item. Ordinary CMR can choose a stopping probability separately, compete
+STOP against items, or use an [experimental diffusion race](experimental-finite-window-race.qmd).
+Semantic and positional models can use their own candidate weights with scheduled stopping or recall until exhaustion. Models that supply item evidence on a common scale can use the [raw support ratio](components-support-ratio.qmd) to decide when to stop.
+Direct competition with STOP requires raw candidate evidence.
+A [terminal-item model](models-terminal-item.qmd) can also retrieve a learned STOP.
+
 ## Stopping rules
 
 The [stopping rules](components-termination.qmd) use candidate availability, output position, support for recalled items, or an explicit STOP candidate. Each entry identifies the information its rule needs from a model.

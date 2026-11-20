@@ -7,7 +7,8 @@ import pytest
 from support import CMR_PARAMS, OPTIMIZED_CMR_PARAMS
 
 from jaxcmr.components import context, linear_memory
-from jaxcmr.components.termination import NoStopTermination
+from jaxcmr.components.response import RecallUntilExhausted
+from jaxcmr.components.response import RecallUntilExhausted
 from jaxcmr.dataset import make_dataset
 from jaxcmr.loss.sequence_likelihood import (
     ExcludeFirstRecallAndTerminationLikelihoodLoss,
@@ -23,10 +24,10 @@ from jaxcmr.simulation import (
 )
 
 
-def factory_for(module):
-    return module.make_factory(
-        linear_memory.init_mfc, linear_memory.init_mcf, context.init, NoStopTermination
-    )
+CMR_NO_STOP = cmr.make_factory(response_policy_create_fn=RecallUntilExhausted)
+SEMANTIC_NO_STOP = additive_semantic_matrix_cmr.make_factory(
+    linear_memory.init_mfc, linear_memory.init_mcf, context.init, RecallUntilExhausted
+)
 
 
 @pytest.fixture(autouse=True)
@@ -46,7 +47,7 @@ def dataset(recalls=(2, 4, 1, 0, 0)):
 
 @pytest.mark.parametrize('recalls', [(2, 4, 1, 0, 0), (2, 0, 0, 0, 0), (0, 0, 0, 0, 0)])
 @pytest.mark.parametrize('factory,parameters', [
-    (factory_for(cmr), CMR_PARAMS), (optimized_cmr.ModelFactory, OPTIMIZED_CMR_PARAMS),
+    (CMR_NO_STOP, CMR_PARAMS), (optimized_cmr.ModelFactory, OPTIMIZED_CMR_PARAMS),
 ])
 def test_conditional_product_and_prepared_gradients(recalls, factory, parameters):
     data = dataset(recalls)
@@ -103,7 +104,7 @@ def test_combined_mask_scores_only_recalls_after_the_first():
 def test_simulation_forces_start_count_and_exact_retrieval_state(count, semantic):
     observed = (2, 4, 1, 3)[:count] + (0,) * (5 - count)
     data = dataset(observed)
-    factory = factory_for(additive_semantic_matrix_cmr if semantic else cmr)
+    factory = SEMANTIC_NO_STOP if semantic else CMR_NO_STOP
     features = np.eye(8) + 0.2 if semantic else None
     params = {**CMR_PARAMS, 'semantic_scale': 2.0}
     model = factory(data, features).create_trial_model(jnp.int32(0), params)

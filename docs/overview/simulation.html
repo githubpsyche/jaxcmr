@@ -384,7 +384,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-5"><a href="#cb3-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
 <span id="cb3-6"><a href="#cb3-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
 <span id="cb3-7"><a href="#cb3-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb3-8"><a href="#cb3-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.response <span class="im">import</span> RecallUntilExhausted</span>
 <span id="cb3-9"><a href="#cb3-9" aria-label="9"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
 <span id="cb3-10"><a href="#cb3-10" aria-label="10"></a></span>
 <span id="cb3-11"><a href="#cb3-11" aria-label="11"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
@@ -399,7 +399,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-20"><a href="#cb3-20" aria-label="20"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
 <span id="cb3-21"><a href="#cb3-21" aria-label="21"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
 <span id="cb3-22"><a href="#cb3-22" aria-label="22"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb3-23"><a href="#cb3-23" aria-label="23"></a>    response_policy_create_fn<span class="op">=</span>RecallUntilExhausted,</span>
 <span id="cb3-24"><a href="#cb3-24" aria-label="24"></a>)</span>
 <span id="cb3-25"><a href="#cb3-25" aria-label="25"></a></span>
 <span id="cb3-26"><a href="#cb3-26" aria-label="26"></a><span class="im">from</span> jax <span class="im">import</span> random</span>

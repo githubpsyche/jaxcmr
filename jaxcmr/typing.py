@@ -4,7 +4,7 @@
 ``Parameters`` maps parameter names to scalar model values. Array annotations
 specify the dtype and dimensions a caller supplies.
 
-``Memory``, ``Context`` and ``TerminationPolicy`` describe components used to
+``Memory``, ``Context``, ``TerminationPolicy`` and ``ResponsePolicy`` describe components used to
 build a model. ``MemorySearch`` describes how a model experiences study
 items and produces recall responses. A ``MemorySearchModelFactory``
 constructs that model for a particular trial. A ``TrialSimulator`` uses it
@@ -59,6 +59,8 @@ __all__ = [
     "Parameters",
     "Real",
     "RecallDataset",
+    "ResponsePolicy",
+    "ResponsePolicyCreateFn",
     "Shaped",
     "TerminationPolicy",
     "TerminationPolicyCreateFn",
@@ -335,6 +337,22 @@ class TerminationPolicyCreateFn[ModelT](Protocol):
         ...
 
 
+class ResponsePolicy[ModelT](Protocol):
+    """Score one retrieval attempt without advancing the model.
+
+    Entry zero is STOP. Remaining entries correspond to one-indexed item
+    codes. Inactive and exhausted models place all probability on STOP.
+    """
+
+    def outcome_probabilities(self, model: ModelT) -> Float[Array, " outcomes"]: ...
+
+
+class ResponsePolicyCreateFn[ModelT](Protocol):
+    """Construct a response policy whose evidence requirements the model supplies."""
+
+    def __call__(self, list_length: int, parameters: Parameters) -> ResponsePolicy[ModelT]: ...
+
+
 @runtime_checkable
 class MemorySearch(Protocol):
     """Study and retrieval operations used by simulation and likelihood evaluation.
@@ -346,7 +364,7 @@ class MemorySearch(Protocol):
     and carry their changing state in a JAX pytree.
 
     Internal representations of studied items, context and retrieval support
-    belong to the concrete model. Stopping policies and diagnostic views
+    belong to the concrete model. Response policies and diagnostic views
     specify any additional information they require separately.
 
     Attributes

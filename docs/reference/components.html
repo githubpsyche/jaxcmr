@@ -350,6 +350,12 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/models-terminal-item.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Terminal-item CMR</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/models-factories.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Semantic and emotional models</span></a>
   </div>
@@ -391,8 +397,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/components-response.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Response policies</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/components-termination.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Stopping rules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/components-support-ratio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw support-ratio policies</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -721,6 +739,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-11" aria-labelledby="quarto-sidebar-section-11-label" class="collapse list-unstyled sidebar-section depth1 ">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../reference/experimental-finite-window-race.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Finite-window race</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../reference/experimental-prepared.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Prepared observations</span></a>
   </div>
@@ -787,6 +811,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#context" id="toc-context" class="nav-link active" data-scroll-target="#context">Context</a></li>
   <li><a href="#associative-memory" id="toc-associative-memory" class="nav-link" data-scroll-target="#associative-memory">Associative memory</a></li>
+  <li><a href="#choosing-the-next-response" id="toc-choosing-the-next-response" class="nav-link" data-scroll-target="#choosing-the-next-response">Choosing the next response</a></li>
   <li><a href="#stopping-rules" id="toc-stopping-rules" class="nav-link" data-scroll-target="#stopping-rules">Stopping rules</a></li>
   <li><a href="#preparing-trial-inputs" id="toc-preparing-trial-inputs" class="nav-link" data-scroll-target="#preparing-trial-inputs">Preparing trial inputs</a></li>
   </ul>
@@ -823,6 +848,10 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="associative-memory">Associative memory</h2>
 <p><a href="../reference/components-linear-memory.html">Linear memory</a> adds associations to a matrix. <a href="../reference/components-instance-memory.html">Instance memory</a> keeps a trace for each association. Suppose a cue matches two stored inputs with strengths 2 and 1. Linear retrieval weights their outputs by 2 and 1. Instance retrieval at sensitivity one weights them by 1 and 0.5. Its <code>probe_without_scale</code> method recovers the raw weights.</p>
 <p>Both modules supply <code>init_mfc</code> for item-to-context memory and <code>init_mcf</code> for context-to-item memory. <a href="../reference/typing.html#jaxcmr.typing.Memory">Memory interface</a></p>
+</section>
+<section id="choosing-the-next-response" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-the-next-response">Choosing the next response</h2>
+<p><a href="../reference/components-response.html">Response policies</a> assign probabilities to STOP and each item. Ordinary CMR can choose a stopping probability separately, compete STOP against items, or use an <a href="../reference/experimental-finite-window-race.html">experimental diffusion race</a>. Semantic and positional models can use their own candidate weights with scheduled stopping or recall until exhaustion. Models that supply item evidence on a common scale can use the <a href="../reference/components-support-ratio.html">raw support ratio</a> to decide when to stop. Direct competition with STOP requires raw candidate evidence. A <a href="../reference/models-terminal-item.html">terminal-item model</a> can also retrieve a learned STOP.</p>
 </section>
 <section id="stopping-rules" class="level2">
 <h2 class="anchored" data-anchor-id="stopping-rules">Stopping rules</h2>

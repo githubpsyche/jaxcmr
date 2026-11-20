@@ -18,7 +18,7 @@ import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr.components.context import OutlistContext, OutlistContextCreateFn
 from jaxcmr.components.factory import source_categories_by_item
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import PositionalStop
 from jaxcmr.dataset import _require_pres_itemids
 from jaxcmr.models.cmr3 import CMR3
 from jaxcmr.typing import (
@@ -33,7 +33,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -64,9 +64,7 @@ class CMR3SourceSwitch(CMR3):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: OutlistContextCreateFn = _init_expanded_context,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            CMR3
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn[CMR3] = PositionalStop,
     ) -> None:
         """Initialize CMR3 with expanded temporal context for switch events."""
         super().__init__(
@@ -77,7 +75,7 @@ class CMR3SourceSwitch(CMR3):
             mfc_create_fn,
             mcf_create_fn,
             context_create_fn,
-            termination_policy_create_fn,
+            response_policy_create_fn,
         )
         self.source_switch_drift_rate = parameters.get("source_switch_drift_rate", 0.0)
         self.source_categories = (
@@ -118,11 +116,27 @@ def make_factory(
     mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
     mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
     context_create_fn: OutlistContextCreateFn = _init_expanded_context,
-    termination_policy_create_fn: TerminationPolicyCreateFn[
-        CMR3
-    ] = PositionalTermination,
+    response_policy_create_fn: ResponsePolicyCreateFn[CMR3] = PositionalStop,
 ) -> type[MemorySearchModelFactory]:
-    """Build a CMR3 source-switch factory."""
+    """Drift toward fresh context when successive study items change valence category.
+
+    Parameters
+    ----------
+    mfc_create_fn : MemoryCreateFn, optional
+        Construct temporal item-to-context memory.
+    mcf_create_fn : MemoryCreateFn, optional
+        Construct temporal context-to-item memory.
+    context_create_fn : OutlistContextCreateFn, optional
+        Construct temporal context with units reserved for source switches.
+    response_policy_create_fn : ResponsePolicyCreateFn[CMR3], optional
+        Assign probabilities to STOP and the items using the current source
+        and temporal context. The default schedules STOP by recall count.
+
+    Returns
+    -------
+    type[MemorySearchModelFactory]
+        A factory class that reads each studied item's valence from the dataset.
+    """
 
     class CMR3SourceSwitchModelFactory:
         """Factory creating trial-specific CMR3 source-switch instances."""
@@ -153,7 +167,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn

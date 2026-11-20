@@ -1,0 +1,35 @@
+---
+title: "jaxcmr.components.response"
+---
+
+{{< include _generated/components-response/_body.qmd >}}
+
+Use the same factory argument to compare two response rules on ordinary CMR:
+
+```python
+from jaxcmr.components.response import PowerLawStopCompetition
+from jaxcmr.components.support_ratio import RawSupportRatioSoftmaxChoice
+from jaxcmr.models import cmr, terminal_item_cmr
+
+ratio_factory = cmr.make_factory(response_policy_create_fn=RawSupportRatioSoftmaxChoice)
+competition_factory = cmr.make_factory(response_policy_create_fn=PowerLawStopCompetition)
+terminal_factory = terminal_item_cmr.make_factory()
+```
+
+The third factory adds an end-of-list association during study. To compare
+response rules while holding that encoding fixed, pass another
+`response_policy_create_fn` to `terminal_item_cmr.make_factory`.
+
+## Which models support each rule?
+
+| Response rule | Models that supply its inputs |
+|---|---|
+| Scheduled stopping or recall until exhaustion | All configurable CMR variants. Semantic and emotional models provide their own item weights. Positional models sum weights over occurrences of each item. |
+| [Raw support-ratio policies](components-support-ratio.qmd), exponential or power-law STOP competition, exponential-evidence support ratio, or the [finite-window race](experimental-finite-window-race.qmd) | Ordinary CMR, CMR without reinstatement, outlist CMR, eCMR (including additive semantic and source-switch eCMR), CMR3 and its source-switch variant, and terminal-item CMR expose raw evidence. The additive semantic retrieval-bias variant requires a policy using candidate weights because its bias operates after the choice transform. [Blended positional CMR](models-factories.qmd#jaxcmr.models.blend_positional_cmr.RouteCandidates) supplies evidence separately for each route. |
+| Competition with a learned terminal item | [Terminal-item CMR](models-terminal-item.qmd) encodes an end-of-list item and supplies its evidence alongside the study items. |
+
+Historical fits can select `RelativePowerSupportRatio`. It computes candidate weights separately for available and unavailable items, then divides their totals. Use that policy to reproduce fits made with separately weighted groups.
+
+Dual-cue CMR stops when it exhausts its candidates and has a fixed response rule.
+
+[Ordinary CMR](models-cmr.qmd) · [Terminal-item CMR](models-terminal-item.qmd) · [Stopping rules](components-termination.qmd) · [Finite-window race](experimental-finite-window-race.qmd)

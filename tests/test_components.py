@@ -233,13 +233,11 @@ def test_instance_memory_composes_with_ordinary_cmr_and_differentiates_at_one():
         instance_memory.init_mfc,
         instance_memory.init_mcf,
         context.init,
-        PositionalTermination,
     )(data, None)
     linear_factory = make_factory(
         linear_memory.init_mfc,
         linear_memory.init_mcf,
         context.init,
-        PositionalTermination,
     )(data, None)
 
     def outcome_probabilities(factory, sensitivity):

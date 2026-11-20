@@ -244,7 +244,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#context-memory-and-termination-interfaces" id="toc-context-memory-and-termination-interfaces" class="nav-link active" data-scroll-target="#context-memory-and-termination-interfaces">Context, memory and termination interfaces</a></li>
+  <li><a href="#context-memory-and-response-interfaces" id="toc-context-memory-and-response-interfaces" class="nav-link active" data-scroll-target="#context-memory-and-response-interfaces">Context, memory and response interfaces</a></li>
   <li><a href="#creators-supply-components-to-a-model" id="toc-creators-supply-components-to-a-model" class="nav-link" data-scroll-target="#creators-supply-components-to-a-model">Creators supply components to a model</a></li>
   <li><a href="#what-the-model-does-with-them" id="toc-what-the-model-does-with-them" class="nav-link" data-scroll-target="#what-the-model-does-with-them">What the model does with them</a></li>
   <li><a href="#instance-memory-as-an-ordinary-cmr-component" id="toc-instance-memory-as-an-ordinary-cmr-component" class="nav-link" data-scroll-target="#instance-memory-as-an-ordinary-cmr-component">Instance memory as an ordinary CMR component</a></li>
@@ -273,9 +273,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Components provide the state representations and operations that a model combines. In CMR, item-to-context memory cues a context representation, context-to-item memory supports retrieval, and a termination policy supplies a stopping probability. The model determines when and how to use them.</p>
-<section id="context-memory-and-termination-interfaces" class="level2">
-<h2 class="anchored" data-anchor-id="context-memory-and-termination-interfaces">Context, memory and termination interfaces</h2>
+<p>Components provide the state representations and operations that a model combines. In CMR, item-to-context memory cues a context representation, context-to-item memory supports retrieval, and a response policy assigns probabilities to STOP and each item. The model determines when and how to use them.</p>
+<section id="context-memory-and-response-interfaces" class="level2">
+<h2 class="anchored" data-anchor-id="context-memory-and-response-interfaces">Context, memory and response interfaces</h2>
 <p><code>Context</code> stores the current and initial context and returns updated context after integration. Models that also integrate fresh out-of-list input use <code>OutlistContext</code> and <code>OutlistContextCreateFn</code> from <code>jaxcmr.components.context</code>. That additional operation is required by Outlist CMR and the source-switch variants. The <a href="../reference/components-context.html">temporal context reference</a> describes both constructors and their update methods.</p>
 <p>Selected declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="kw">class</span> Context(Protocol):</span>
@@ -309,28 +309,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-3"><a href="#cb3-3" aria-label="3"></a><span class="co"># Inside dual-cue CMR</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-label="4"></a><span class="kw">def</span> stop_probability(<span class="va">self</span>):</span>
 <span id="cb3-5"><a href="#cb3-5" aria-label="5"></a>    <span class="cf">return</span> stop_when_exhausted(<span class="va">self</span>.is_active, <span class="va">self</span>.recallable.<span class="bu">sum</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Ordinary CMR lets the researcher choose a rule. Its factory accepts a class or function that takes the list length and parameters and returns an object with a <code>stop_probability(model)</code> method. Each <a href="../reference/components-termination.html">stopping rule</a> specifies what it reads from the model.</p>
-<p>For example, this project-defined rule allows at most two recalls. <code>SupportsPositional</code> describes the three inputs it uses: the active flag, the available candidates, and the number of items recalled. The rule stores no trial data or parameters, so JAX can treat the instance as static.</p>
+<p>Ordinary CMR, positional CMR and eCMR each select a <a href="../reference/components-response.html">response policy</a>. Each factory accepts a class or function that constructs the policy from list length and parameters. At each recall attempt, the policy returns one probability for STOP and one for each item.</p>
+<p>This policy chooses uniformly among available items and stops after two recalls. A positional model can have two available positions for the same item. Asking the model for weights in item order lets each available item enter the uniform choice once.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a><span class="im">import</span> jax</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> SupportsPositional, stop_when_exhausted</span>
-<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
-<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a><span class="im">from</span> jaxcmr.typing <span class="im">import</span> Array, Float, Parameters</span>
-<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="at">@jax.tree_util.register_static</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a><span class="kw">class</span> TwoRecallLimit:</span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, list_length: <span class="bu">int</span>, parameters: Parameters) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
-<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a>        <span class="cf">pass</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>    <span class="kw">def</span> stop_probability(<span class="va">self</span>, model: SupportsPositional) <span class="op">-&gt;</span> Float[Array, <span class="st">""</span>]:</span>
-<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>        exhausted <span class="op">=</span> stop_when_exhausted(model.is_active, model.recallable.<span class="bu">sum</span>())</span>
-<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a>        <span class="cf">return</span> jnp.where(model.recall_total <span class="op">&gt;=</span> <span class="dv">2</span>, <span class="fl">1.0</span>, exhausted)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>TwoRecallCMR <span class="op">=</span> make_factory(</span>
-<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a>    linear_memory.init_mfc, linear_memory.init_mcf, context.init,</span>
-<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>    termination_policy_create_fn<span class="op">=</span>TwoRecallLimit,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-label="20"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-3"><a href="#cb4-3" aria-label="3"></a><span class="im">from</span> jaxcmr.components.response <span class="im">import</span> SupportsWeightsAndRecallCount</span>
+<span id="cb4-4"><a href="#cb4-4" aria-label="4"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
+<span id="cb4-5"><a href="#cb4-5" aria-label="5"></a><span class="im">from</span> jaxcmr.typing <span class="im">import</span> Array, Float, Parameters</span>
+<span id="cb4-6"><a href="#cb4-6" aria-label="6"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-label="7"></a><span class="at">@jax.tree_util.register_static</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-label="8"></a><span class="kw">class</span> TwoRecallLimit:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, list_length: <span class="bu">int</span>, parameters: Parameters) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>        <span class="cf">pass</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-label="11"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-label="12"></a>    <span class="kw">def</span> outcome_probabilities(<span class="va">self</span>, model: SupportsWeightsAndRecallCount) <span class="op">-&gt;</span> Float[Array, <span class="st">" outcomes"</span>]:</span>
+<span id="cb4-13"><a href="#cb4-13" aria-label="13"></a>        eligible_items <span class="op">=</span> model.candidate_weights(model.recallable, <span class="fl">1.0</span>) <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-label="14"></a>        count <span class="op">=</span> eligible_items.<span class="bu">sum</span>()</span>
+<span id="cb4-15"><a href="#cb4-15" aria-label="15"></a>        can_recall <span class="op">=</span> model.is_active <span class="op">&amp;</span> (count <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> (model.recall_total <span class="op">&lt;</span> <span class="dv">2</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-label="16"></a>        items <span class="op">=</span> jnp.where(can_recall, eligible_items <span class="op">/</span> jnp.maximum(count, <span class="dv">1</span>), <span class="fl">0.0</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-label="17"></a>        <span class="cf">return</span> jnp.append(<span class="op">~</span>can_recall, items)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-label="18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-label="19"></a>TwoRecallCMR <span class="op">=</span> make_factory(response_policy_create_fn<span class="op">=</span>TwoRecallLimit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>These protocols describe extension points for compatible implementations. They do not prescribe a context equation, association rule or stopping rule, and do not require inheritance from a common implementation class.</p>
 </section>
 <section id="creators-supply-components-to-a-model" class="level2">
@@ -348,10 +347,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-6"><a href="#cb6-6" aria-label="6"></a>        context: Context,</span>
 <span id="cb6-7"><a href="#cb6-7" aria-label="7"></a>    ) <span class="op">-&gt;</span> Memory: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Declaration from <a href="../reference/typing.html"><code>jaxcmr.typing</code></a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="kw">class</span> TerminationPolicyCreateFn[ModelT](Protocol):</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="kw">class</span> ResponsePolicyCreateFn[ModelT](Protocol):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>        <span class="va">self</span>, list_length: <span class="bu">int</span>, parameters: Parameters</span>
-<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> TerminationPolicy[ModelT]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    ) <span class="op">-&gt;</span> ResponsePolicy[ModelT]: ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ordinary CMR’s <code>make_factory()</code> accepts four such callables:</p>
 <table class="caption-top table">
 <colgroup>
@@ -383,9 +382,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Construct context-to-item memory.</td>
 </tr>
 <tr class="even">
-<td><code>termination_policy_create_fn</code></td>
-<td><code>NoStopTermination</code></td>
-<td>Construct the stopping policy.</td>
+<td><code>response_policy_create_fn</code></td>
+<td><code>RecallUntilExhausted</code></td>
+<td>Assign probabilities to STOP and each item.</td>
 </tr>
 </tbody>
 </table>
@@ -413,7 +412,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-5"><a href="#cb9-5" aria-label="5"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> load_data</span>
 <span id="cb9-6"><a href="#cb9-6" aria-label="6"></a><span class="im">from</span> jaxcmr.dataset <span class="im">import</span> generate_trial_mask</span>
 <span id="cb9-7"><a href="#cb9-7" aria-label="7"></a><span class="im">from</span> jaxcmr.components <span class="im">import</span> context, linear_memory</span>
-<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.termination <span class="im">import</span> NoStopTermination</span>
+<span id="cb9-8"><a href="#cb9-8" aria-label="8"></a><span class="im">from</span> jaxcmr.components.response <span class="im">import</span> RecallUntilExhausted</span>
 <span id="cb9-9"><a href="#cb9-9" aria-label="9"></a><span class="im">from</span> jaxcmr.models.cmr <span class="im">import</span> make_factory</span>
 <span id="cb9-10"><a href="#cb9-10" aria-label="10"></a></span>
 <span id="cb9-11"><a href="#cb9-11" aria-label="11"></a>jax.config.update(<span class="st">"jax_enable_x64"</span>, <span class="va">True</span>)</span>
@@ -428,7 +427,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-20"><a href="#cb9-20" aria-label="20"></a>    mfc_create_fn<span class="op">=</span>linear_memory.init_mfc,</span>
 <span id="cb9-21"><a href="#cb9-21" aria-label="21"></a>    mcf_create_fn<span class="op">=</span>linear_memory.init_mcf,</span>
 <span id="cb9-22"><a href="#cb9-22" aria-label="22"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb9-23"><a href="#cb9-23" aria-label="23"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-label="23"></a>    response_policy_create_fn<span class="op">=</span>RecallUntilExhausted,</span>
 <span id="cb9-24"><a href="#cb9-24" aria-label="24"></a>)</span>
 <span id="cb9-25"><a href="#cb9-25" aria-label="25"></a></span>
 <span id="cb9-26"><a href="#cb9-26" aria-label="26"></a>factory <span class="op">=</span> CMRFactory(data, features<span class="op">=</span><span class="va">None</span>)</span>
@@ -438,19 +437,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-30"><a href="#cb9-30" aria-label="30"></a><span class="bu">print</span>(<span class="st">"Context:"</span>, <span class="bu">type</span>(initial.context).<span class="va">__name__</span>, initial.context.state.shape)</span>
 <span id="cb9-31"><a href="#cb9-31" aria-label="31"></a><span class="bu">print</span>(<span class="st">"Item-to-context memory:"</span>, <span class="bu">type</span>(initial.mfc).<span class="va">__name__</span>, initial.mfc.state.shape)</span>
 <span id="cb9-32"><a href="#cb9-32" aria-label="32"></a><span class="bu">print</span>(<span class="st">"Context-to-item memory:"</span>, <span class="bu">type</span>(initial.mcf).<span class="va">__name__</span>, initial.mcf.state.shape)</span>
-<span id="cb9-33"><a href="#cb9-33" aria-label="33"></a><span class="bu">print</span>(<span class="st">"Termination:"</span>, <span class="bu">type</span>(initial.termination_policy).<span class="va">__name__</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-33"><a href="#cb9-33" aria-label="33"></a><span class="bu">print</span>(<span class="st">"Response:"</span>, <span class="bu">type</span>(initial.response_policy).<span class="va">__name__</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Context: TemporalContext (13,)
 Item-to-context memory: LinearMemory (12, 13)
 Context-to-item memory: LinearMemory (13, 12)
-Termination: NoStopTermination</code></pre>
+Response: RecallUntilExhausted</code></pre>
 </div>
 </div>
 </section>
 <section id="what-the-model-does-with-them" class="level2">
 <h2 class="anchored" data-anchor-id="what-the-model-does-with-them">What the model does with them</h2>
-<p>For a CMR study event, item-to-context memory is probed with the item pattern. Context integrates that input using encoding drift. The model then updates both associative memories; <code>learn_after_context_update</code> determines which context state is used for learning. During retrieval, context-to-item memory supplies item activations and the termination policy supplies the probability of stopping. Those steps belong to CMR’s composition, not to <code>Context</code> or <code>Memory</code> on their own.</p>
+<p>For a CMR study event, item-to-context memory is probed with the item pattern. Context integrates that input using encoding drift. The model then updates both associative memories; <code>learn_after_context_update</code> determines which context state is used for learning. During retrieval, context-to-item memory supplies one evidence value per item. Here the response policy <code>RecallUntilExhausted</code> assigns all probability to available items, weighting their relative evidence by <code>choice_sensitivity</code>. It assigns all probability to STOP once the items are exhausted.</p>
 <div id="e7e9bfca" class="cell" data-execution_count="2">
 <details open="" class="code-fold">
 <summary>Display the context after CMR processes one study event</summary>
@@ -473,7 +472,7 @@ Context changed: True</code></pre>
 <p><img src="data:image/png;base64,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"></p>
 </div>
 </div>
-<p>The figure uses the context object’s built-in notebook display. It shows the representation after one update; the original model retains its earlier state. A compatible replacement must satisfy the required dimensions, functional update behavior and JAX operations, as well as the protocol’s named methods. A termination policy additionally needs the attributes of the model or view passed to it.</p>
+<p>The figure uses the context object’s built-in notebook display. It shows the representation after one update; the original model retains its earlier state. A compatible replacement must satisfy the required dimensions, functional update behavior and JAX operations, as well as the protocol’s named methods. A response policy additionally needs the attributes of the model or view passed to it.</p>
 <p>See <a href="../overview/models.html">Memory Search Models</a> for the enclosing lifecycle and the <a href="../templates/parameter_shifting.html">parameter exploration template</a> for changing parameters within a fixed model configuration.</p>
 </section>
 <section id="instance-memory-as-an-ordinary-cmr-component" class="level2">
@@ -485,7 +484,7 @@ Context changed: True</code></pre>
 <span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>    mfc_create_fn<span class="op">=</span>instance_memory.init_mfc,</span>
 <span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>    mcf_create_fn<span class="op">=</span>instance_memory.init_mcf,</span>
 <span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>    context_create_fn<span class="op">=</span>context.init,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>    termination_policy_create_fn<span class="op">=</span>NoStopTermination,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>    response_policy_create_fn<span class="op">=</span>RecallUntilExhausted,</span>
 <span id="cb13-8"><a href="#cb13-8" aria-label="8"></a>)</span>
 <span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>instance_parameters <span class="op">=</span> parameters <span class="op">|</span> {</span>
 <span id="cb13-10"><a href="#cb13-10" aria-label="10"></a>    <span class="st">"mfc_trace_sensitivity"</span>: <span class="fl">1.0</span>,</span>

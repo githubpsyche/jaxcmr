@@ -16,16 +16,21 @@ from jax import numpy as jnp
 import jaxcmr.components.context as TemporalContext
 import jaxcmr.components.linear_memory as LinearMemory
 from jaxcmr._vendor.simple_pytree import Pytree
-from jaxcmr.components.termination import PositionalTermination
+from jaxcmr.components.response import (
+    PositionalStop,
+    pool_position_weights,
+    relative_choice_weights,
+)
 from jaxcmr.math import (
-    FLOAT32_EPS,
     exponential_primacy_decay,
     relative_power_scale,
 )
 from jaxcmr.typing import (
     Array,
+    Bool,
     ContextCreateFn,
     Float,
+    Float_,
     Int_,
     Integer,
     MemoryCreateFn,
@@ -33,7 +38,7 @@ from jaxcmr.typing import (
     MemorySearchModelFactory,
     Parameters,
     RecallDataset,
-    TerminationPolicyCreateFn,
+    ResponsePolicyCreateFn,
 )
 
 __all__ = [
@@ -52,9 +57,7 @@ class CMR(Pytree):
         mfc_create_fn: MemoryCreateFn = LinearMemory.init_mfc,
         mcf_create_fn: MemoryCreateFn = LinearMemory.init_mcf,
         context_create_fn: ContextCreateFn = TemporalContext.init,
-        termination_policy_create_fn: TerminationPolicyCreateFn[
-            "CMR"
-        ] = PositionalTermination,
+        response_policy_create_fn: ResponsePolicyCreateFn["CMR"] = PositionalStop,
     ) -> None:
         self.encoding_drift_rate = parameters["encoding_drift_rate"]
         self.start_drift_rate = parameters["start_drift_rate"]
@@ -82,7 +85,7 @@ class CMR(Pytree):
         self.context = context_create_fn(list_length)
         self.mfc = mfc_create_fn(list_length, parameters, self.context)
         self.mcf = mcf_create_fn(list_length, parameters, self.context)
-        self.termination_policy = termination_policy_create_fn(list_length, parameters)
+        self.response_policy = response_policy_create_fn(list_length, parameters)
         self.recalls = jnp.zeros(list_length, dtype=int)
         self.recallable = jnp.zeros(list_length, dtype=bool)
         self.is_active = jnp.array(True)
@@ -199,83 +202,42 @@ class CMR(Pytree):
             lambda: self.retrieve_item(choice - 1),
         )
 
-    def position_activations(self) -> Float[Array, " list_length"]:
-        """Returns relative support for retrieval of each study position given model state"""
-        #! refactored to get position activations separately
-        _activations = self.mcf.probe(self.context.state) * self.recallable
-        return (relative_power_scale(_activations, self.mcf_sensitivity) + FLOAT32_EPS) * self.recallable
-
-    def activations(self) -> Float[Array, " item_count"]:
-        """Returns relative support for retrieval of each item given model state"""
-        #! reworked to pool position activations by item
-        position_activations = self.position_activations()
-        return lax.map(
-            lambda i: jnp.sum(position_activations * (self.studied == i + 1)),
-            self.item_ids,
+    def position_weights(
+        self, candidates: Bool[Array, " positions"], sensitivity: Float_
+    ) -> Float[Array, " positions"]:
+        """Weight the selected study positions before combining occurrences of an item."""
+        return relative_choice_weights(
+            self.mcf.probe(self.context.state),
+            candidates & (self.studied > 0),
+            sensitivity,
         )
 
-    def stop_probability(self) -> Float[Array, ""]:
-        """Returns probability of stopping retrieval given model state"""
-        return self.termination_policy.stop_probability(self)
+    def position_activations(self) -> Float[Array, " positions"]:
+        """Return the available position weights at the model's choice sensitivity."""
+        return self.position_weights(self.recallable, self.mcf_sensitivity)
 
-    def item_probability(self, item_index: Int_) -> Float[Array, ""]:
-        """Return the probability of retrieval of an item at the specified index.
-
-        Assumes that some items are recallable, with at least the minimum recall probability.
-
-        Args:
-            item_index: the index of the item to retrieve.
-        """
-        #! Since item activations are potentially distributed across position activations,
-        #! instead of indexing by item, we mask position activations by item then sum/normalize
-        position_activations = self.position_activations()
-        item_activation = jnp.sum(
-            position_activations * (self.studied == item_index + 1)
-        )
-        return item_activation / jnp.sum(position_activations)
-
-    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
-        """Return probability of the specified retrieval event.
-
-        Args:
-            choice: the index of the item to retrieve (1-indexed) or 0 to stop.
-        """
-        p_stop = self.stop_probability()
-        return lax.cond(
-            choice == 0,
-            lambda: p_stop,
-            lambda: lax.cond(
-                jnp.logical_or(
-                    p_stop == 1.0,
-                    jnp.all(self.recallable * (self.studied == choice) == 0),
-                ),
-                lambda: 0.0,
-                lambda: (1 - p_stop) * self.item_probability(choice - 1),
-            ),
+    def candidate_weights(
+        self, candidates: Bool[Array, " candidates"], sensitivity: Float_
+    ) -> Float[Array, " items"]:
+        """Sum the selected occurrence weights for each recorded item."""
+        return pool_position_weights(
+            self.position_weights(candidates, sensitivity), self.studied
         )
 
     def outcome_probabilities(self) -> Float[Array, " recall_outcomes"]:
-        """Return the outcome probabilities of all recall events."""
-        p_stop = self.stop_probability()
-        item_activation = self.activations()
-        item_activation_sum = jnp.sum(item_activation)
-        return jnp.hstack(
-            (
-                p_stop,
-                (
-                    (1 - p_stop)
-                    * item_activation
-                    / lax.select(item_activation_sum == 0, 1.0, item_activation_sum)
-                ),
-            )
-        )
+        """Return probabilities in recorded order: STOP, then each local item."""
+        return self.response_policy.outcome_probabilities(self)
+
+    def outcome_probability(self, choice: Int_) -> Float[Array, ""]:
+        """Score the recorded STOP or item using the same distribution as simulation."""
+        return self.outcome_probabilities()[choice]
 
 
 def make_factory(
     mfc_create_fn: MemoryCreateFn,
     mcf_create_fn: MemoryCreateFn,
     context_create_fn: ContextCreateFn,
-    termination_policy_create_fn: TerminationPolicyCreateFn[CMR],
+    response_policy_create_fn: ResponsePolicyCreateFn[CMR],
 ) -> type[MemorySearchModelFactory]:
     class CMRModelFactory:
         def __init__(
@@ -295,7 +257,7 @@ def make_factory(
                     mfc_create_fn,
                     mcf_create_fn,
                     context_create_fn,
-                    termination_policy_create_fn,
+                    response_policy_create_fn,
                 )
 
             self.model_create_fn = model_create_fn
