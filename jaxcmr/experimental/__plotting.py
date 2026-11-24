@@ -10,7 +10,7 @@ rates across conditions (emotional vs. neutral, by serial position, etc.)
 where ignoring the nested structure would underestimate CI width.
 
 The remaining functions (``init_plot``, ``plot_data``, etc.) duplicate
-``jaxcmr.plotting`` and exist only to keep this module self-contained.
+``jaxcmr.plotting``.
 
 """
 
@@ -25,6 +25,7 @@ from matplotlib.axes import Axes
 from matplotlib.ticker import MaxNLocator
 from scipy.stats import bootstrap
 
+from jaxcmr.plotting import add_analysis_legend
 from jaxcmr.typing import Array, Bool, Integer, Real, RecallDataset
 
 __all__ = [
@@ -121,7 +122,7 @@ def init_plot(axis: Axes | None = None) -> Axes:
         axis: An existing axis to use for the plot.
     """
     if axis is None:
-        plt.figure()
+        plt.figure(tight_layout=True)
         axis = plt.gca()
     return axis
 
@@ -692,7 +693,7 @@ def set_plot_labels(
     axis.set_ylabel(ylabel, fontsize=16)
 
     if contrast_name:
-        axis.legend(title=contrast_name)
+        add_analysis_legend(axis, contrast_name)
 
     axis.tick_params(labelsize=14)
     for loc in ("top", "right"):

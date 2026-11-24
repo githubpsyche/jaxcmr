@@ -18,50 +18,120 @@ from jaxcmr.simulation import load_matching_simulation
 ROOT=Path(__file__).parents[1]
 
 
-@pytest.mark.parametrize('template', ['cat_recall_rate','cat_spc'])
-@pytest.mark.parametrize('mode', ['single_override','one_in_list','two_in_list'])
-def test_custom_category_data_selection_layout_and_paired_outputs(tmp_path, monkeypatch, mode, template):
-    monkeypatch.setattr(plt, 'show', lambda: None)
-    monkeypatch.delitem(__import__('sys').modules, 'google.colab', raising=False)
-    data = dict(
-        subject=jnp.repeat(jnp.arange(1,5),2)[:,None],
-        listLength=jnp.full((8,1),2), pres_itemnos=jnp.tile(jnp.array([1,2,0]),(8,1)),
-        recalls=jnp.array([[1,0,0],[2,0,0],[1,2,0],[1,0,0],[2,0,0],[2,1,0],[1,0,0],[1,2,0]]),
-        kind=jnp.tile(jnp.array([2,5,0]),(8,1)), condition=jnp.tile(jnp.array([1,2]),4),
-    )
-    source=tmp_path/'my-responses.h5'
-    save_dict_to_hdf5(data,str(source)); original=source.read_bytes()
-    nb=json.loads((ROOT/f'templates/{template}.ipynb').read_text())
-    namespace={}
-    transform=InteractiveShell.instance().transform_cell
-    def unexpected_install(*args): raise AssertionError('Local execution attempted installation')
-    namespace['get_ipython']=lambda: type('Shell',(),{'run_line_magic':unexpected_install})()
-    for cell in nb['cells']:
-        if cell['cell_type']!='code':continue
-        exec(compile(transform(''.join(cell['source'])),'category-template','exec'),namespace)
-        if 'parameters' in cell.get('metadata',{}).get('tags',[]):
-            namespace.update(project_root=str(tmp_path),data_path=str(source) if mode=='single_override' else None,
-                data_paths=['unused-missing.h5'] if mode=='single_override' else [str(source)]*(2 if mode=='two_in_list' else 1),
-                data_labels=['Custom','Replica'] if mode=='two_in_list' else ['Custom'],
-                output_dir='results',category_field='kind',category_values=[2,5],category_labels=['A','B'],
-                trial_queries=["data['condition'] == 1", "data['condition'] == 2"],labels=['First','Second'] if template=='cat_recall_rate' else None,trial_labels=['First','Second'],
-                selection_label='Custom',comparisons=[('Within first',0,0,0,1)],
-                contrast_of_contrasts=[('Change',(0,0),(0,1),(1,0),(1,1))])
-    assert source.read_bytes()==original
-    if template == 'cat_spc':
-        assert len(namespace['panels']) == (2 if mode == 'single_override' else 4)
-        assert namespace['panels'][0]['categories'] == ([2,5] if mode == 'single_override' else [2])
-        assert (tmp_path/'results/category_spc.png').stat().st_size > 0
-        plt.close('all')
-        return
-    assert len(namespace['panels'])==(1 if mode=='single_override' else 2)
-    rows=list(csv.DictReader((tmp_path/'results/participant_category_rates.csv').open()))
-    assert len(rows)==(16 if mode=='two_in_list' else 8)
-    first=next(r for r in rows if r['Condition']=='First' and r['Subject']=='1')
-    assert float(first['A'])==1 and float(first['B'])==0
-    assert set(namespace['cells'][0,0])=={1,2,3,4}
-    assert (tmp_path/'results/category_rates.png').stat().st_size>0
-    plt.close('all')
+def run_analysis(template, settings):
+    notebook = json.loads((ROOT / f"templates/{template}.ipynb").read_bytes())
+    namespace = {}
+    transform = InteractiveShell.instance().transform_cell
+    for cell in notebook["cells"]:
+        if cell["cell_type"] == "code":
+            exec(compile(transform("".join(cell["source"])), template, "exec"), namespace)
+            if "parameters" in cell["metadata"].get("tags", []):
+                namespace.update(settings)
+    return namespace
+
+
+@pytest.fixture
+def response_settings(tmp_path):
+    study = np.tile([1, 2, 3, 4], (8, 1))
+    responses = np.array([
+        [1, 2, 0, 0], [1, 4, 2, 0], [2, 4, 3, 0], [2, 1, 4, 3],
+        [4, 2, 0, 0], [2, 3, 1, 0], [1, 3, 2, 4], [4, 1, 2, 0],
+    ])
+    path = tmp_path / "responses.h5"
+    save_dict_to_hdf5(dict(
+        subject=np.repeat([1, 2, 3, 4], 2)[:, None], listLength=np.full((8, 1), 4),
+        pres_itemnos=study, pres_itemids=study, recalls=responses,
+        kind=np.tile([2, 5, 2, 5], (8, 1)), condition=np.tile([1, 2], 4),
+    ), path)
+    return dict(project_root=str(tmp_path), data_paths=[str(path)], data_labels=["Observed"],
+                trial_queries=["data['condition'] == 1", "data['condition'] == 2"],
+                labels=["First", "Second"], output_dir="results", figure_str="analysis",
+                category_field="kind", category_values=[2, 5], category_labels=["A", "B"])
+
+
+@pytest.mark.parametrize("template,mode,figure_count", [
+    ("cat_spc", "categories", 2), ("cat_spc", "conditions", 2), ("cat_spc", "datasets", 4),
+    ("cat_recall_rate", "conditions", 1), ("cat_recall_rate", "datasets", 2),
+])
+def test_custom_category_outputs(tmp_path, monkeypatch, response_settings, template, mode, figure_count):
+    settings = response_settings | {"comparison": mode}
+    if mode == "datasets":
+        settings.update(data_paths=settings["data_paths"] * 2, data_labels=["Observed", "Replica"])
+    if template == "cat_recall_rate":
+        settings.update(category_values=[2, 5, 9], category_labels=["A", "B", "Absent"],
+                        comparisons=[("Within first", 0, 0, 0, 1)],
+                        contrast_of_contrasts=[("Change", (0, 0), (0, 1), (1, 0), (1, 1))])
+    seen = []
+    monkeypatch.setattr(plt, "show", lambda: seen.append(plt.gca()))
+    path = Path(settings["data_paths"][0])
+    before = path.read_bytes()
+    namespace = run_analysis(template, settings)
+    assert path.read_bytes() == before
+    assert len(seen) == figure_count
+    output = tmp_path / "results"
+    files = sorted(p.name for p in output.glob("*.png"))
+    assert len(files) == figure_count
+    if figure_count == 1:
+        assert files == ["analysis.png"]
+    else:
+        assert all(name.startswith(f"analysis_{i}_") for i, name in enumerate(files, 1))
+    for axis in seen:
+        axis.figure.canvas.draw()
+        legend = axis.get_legend()
+        assert legend is not None
+        bounds = legend.get_window_extent()
+        assert bounds.x0 >= axis.bbox.x1
+        assert axis.figure.bbox.contains(*bounds.p1)
+    if template == "cat_spc":
+        labels = seen[0].get_legend_handles_labels()[1]
+        assert labels == {"categories": ["A", "B"], "conditions": ["First", "Second"],
+                          "datasets": ["Observed", "Replica"]}[mode]
+    else:
+        with (output / "participant_category_rates.csv").open() as stream:
+            rows = list(csv.DictReader(stream))
+        assert len(rows) == 8 * len(settings["data_paths"])
+        first = next(r for r in rows if r["Condition"] == "First" and r["Subject"] == "1")
+        assert float(first["A"]) == float(first["B"]) == 0.5
+        assert all(np.isnan(float(row["Absent"])) for row in rows)
+        assert set(namespace["cells"][0, 0]) == {1, 2, 3, 4}
+        assert seen[0].get_legend_handles_labels()[1] == ["A", "B"]
+
+
+@pytest.mark.parametrize("template", ["lagrank", "distrank"])
+def test_rank_figures_draw_exported_intervals_under_both_layouts(tmp_path, monkeypatch, response_settings, template):
+    distance_path = tmp_path / "distance.npy"
+    np.save(distance_path, np.abs(np.subtract.outer(np.arange(4), np.arange(4))))
+    settings = response_settings | dict(distance_matrix_path=str(distance_path), figure_str="",
+                                         bootstrap_seed=19, n_resamples=107)
+    axes = []
+    monkeypatch.setattr(plt, "show", lambda: axes.append(plt.gca()))
+    earlier = None
+    for mode in ["conditions", "datasets"]:
+        axes.clear()
+        run_analysis(template, settings | {"comparison": mode})
+        with (tmp_path / "results/summary_intervals.csv").open() as stream:
+            rows = list(csv.DictReader(stream))
+        with (tmp_path / "results/participant_ranks.csv").open() as stream:
+            participants = list(csv.DictReader(stream))
+        assert len(participants) == 8
+        assert [int(row["seed"]) for row in rows] == [19, 20]
+        if earlier is not None:
+            assert rows == earlier
+        earlier = rows
+        for index, row in enumerate(rows):
+            axis = axes[0 if mode == "conditions" else index]
+            points = [line for line in axis.lines if line.get_marker() == "o"]
+            group = index if mode == "conditions" else 0
+            assert points[group].get_ydata()[0] == pytest.approx(float(row["mean"]))
+            np.testing.assert_allclose(axis.collections[group].get_segments()[0][:, 1],
+                                       [float(row["low"]), float(row["high"])])
+            has_reference = any(line.get_label() == "Uniform-choice reference" for line in axis.lines)
+            assert has_reference == (template == "distrank")
+    if template == "lagrank":
+        axes.clear()
+        run_analysis(template, settings | {"comparison": "conditions", "rank_method": "item_midrank"})
+        assert any(line.get_label() == "Uniform-choice reference" for line in axes[0].lines)
+
 
 
 @pytest.mark.parametrize("template_name,cell_id", [

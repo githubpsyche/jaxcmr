@@ -34,7 +34,7 @@ from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.dataset import _require_pres_itemids, apply_by_subject
 
 from ..math import cosine_similarity_matrix
-from ..plotting import format_analysis_axes, prepare_plot_inputs
+from ..plotting import plot_mean_intervals, prepare_plot_inputs
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 from ._transitions import masked_midrank
 from .statistics import mean_interval
@@ -280,38 +280,15 @@ def plot_distrank(
     else:
         distances = jnp.asarray(distance_matrix)
 
-    x = np.arange(len(datasets))
-    for i, data in enumerate(datasets):
-        factors = subject_distrank(data, trial_masks[i], distances)
-        valid = factors[np.isfinite(factors)]
-        color = color_cycle[i % len(color_cycle)]
-
-        interval = mean_interval(
-            valid,
-            confidence_level=confidence_level,
-            method=bootstrap_method,
-            n_resamples=n_resamples,
-            seed=bootstrap_seed,
+    intervals = [
+        mean_interval(
+            subject_distrank(dataset, mask, distances),
+            confidence_level=confidence_level, method=bootstrap_method,
+            n_resamples=n_resamples, seed=bootstrap_seed,
         )
-        mean = interval["mean"]
-        yerr = [[mean - interval["low"]], [interval["high"] - mean]]
-
-        axis.errorbar(
-            x[i],
-            mean,
-            yerr=yerr,
-            fmt="o",
-            color=color,
-            ecolor="black",
-            capsize=5,
-            linestyle="none",
-            markersize=6,
-            label=labels[i],
-            zorder=3,
-        )
-
-    axis.set_xticks(x)
-    axis.set_xticklabels(labels, fontsize=14)
-    axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
-    format_analysis_axes(axis, "", "Organization Score", contrast_name)
-    return axis
+        for dataset, mask in zip(datasets, trial_masks, strict=True)
+    ]
+    return plot_mean_intervals(
+        axis, intervals, labels, ylabel="Organization Score",
+        color_cycle=color_cycle, contrast_name=contrast_name,
+    )

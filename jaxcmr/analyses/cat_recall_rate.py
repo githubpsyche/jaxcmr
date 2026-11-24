@@ -19,6 +19,7 @@ from collections.abc import Sequence
 import numpy as np
 from jax import jit
 from jax import numpy as jnp
+from matplotlib import rcParams
 from matplotlib.axes import Axes
 
 from jaxcmr.dataset import apply_by_subject
@@ -32,6 +33,7 @@ __all__ = [
     "cat_recall_rate",
     "category_recall_hits",
     "plot_cat_recall_rate",
+    "plot_category_rates",
     "subject_cat_recall_rate",
 ]
 
@@ -152,7 +154,6 @@ def _category_point_summaries(
         valid_values = valid_values[np.isfinite(valid_values)]
         if not valid_values.size:
             continue
-        mean = float(np.nanmean(valid_values))
         interval = mean_interval(
             valid_values,
             confidence_level=confidence_level,
@@ -163,6 +164,92 @@ def _category_point_summaries(
         errors = [[mean - interval["low"]], [interval["high"] - mean]]
         summaries.append((category_index, mean, errors))
     return summaries
+
+
+def plot_category_rates(
+    axis: Axes,
+    rates: Sequence[Float[np.ndarray, "participants categories"]],
+    labels: Sequence[str],
+    category_labels: Sequence[str],
+    *,
+    color_cycle: Sequence[str] | None = None,
+    confidence_level: float = 0.95,
+    n_resamples: int = 9999,
+    bootstrap_seed: int | None = None,
+    contrast_name: str | None = None,
+) -> Axes:
+    """Plot category means from participant rates already calculated for each group.
+
+    Parameters
+    ----------
+    axis : Axes
+        Axes on which to draw the groups.
+    rates : sequence of arrays
+        One participant-by-category matrix per group, as returned by
+        ``subject_cat_recall_rate``. Each finite participant rate has equal
+        weight. A category missing from a group leaves no point in that group.
+    labels, category_labels : sequences of str
+        Horizontal-axis group names and category names in column order.
+    color_cycle : sequence of str, optional
+        Category colors, shared across groups.
+    confidence_level, n_resamples, bootstrap_seed : optional
+        Coverage, number of bootstrap draws, and random seed for the interval
+        around each category mean.
+    contrast_name : str, optional
+        Title for the category legend.
+
+    Returns
+    -------
+    Axes
+        The axes containing the category means and their intervals.
+    """
+    if color_cycle is None:
+        color_cycle = [entry["color"] for entry in rcParams["axes.prop_cycle"]]
+    x = np.arange(len(rates))
+    dodge_width = 0.35
+    labeled_category_indices = set()
+
+    for data_index, subject_values_for_dataset in enumerate(rates):
+        summaries = _category_point_summaries(
+            subject_values_for_dataset,
+            confidence_level,
+            n_resamples=n_resamples,
+            bootstrap_seed=bootstrap_seed,
+        )
+        if not summaries:
+            continue
+        offsets = (
+            np.array([0.0])
+            if len(summaries) == 1
+            else np.linspace(-dodge_width / 2, dodge_width / 2, len(summaries))
+        )
+        for present_index, (category_index, mean, yerr) in enumerate(summaries):
+            offset = offsets[present_index]
+
+            color = color_cycle[category_index % len(color_cycle)]
+            label = None
+            if category_index not in labeled_category_indices:
+                label = category_labels[category_index]
+                labeled_category_indices.add(category_index)
+
+            axis.errorbar(
+                x[data_index] + offset,
+                mean,
+                yerr=yerr,
+                fmt="o",
+                color=color,
+                ecolor="black",
+                capsize=5,
+                linestyle="none",
+                markersize=6,
+                label=label,
+                zorder=3,
+            )
+
+    axis.set_xticks(x)
+    axis.set_xticklabels(labels, fontsize=14)
+    format_analysis_axes(axis, "", "Recall Rate", contrast_name)
+    return axis
 
 
 def plot_cat_recall_rate(
@@ -228,8 +315,6 @@ def plot_cat_recall_rate(
     if category_labels is None:
         category_labels = [str(value) for value in category_values]
 
-    x = np.arange(len(datasets))
-    dodge_width = 0.35
     subject_values_by_dataset = [
         subject_cat_recall_rate(
             data,
@@ -240,46 +325,9 @@ def plot_cat_recall_rate(
         )
         for data_index, data in enumerate(datasets)
     ]
-    labeled_category_indices = set()
-
-    for data_index, subject_values_for_dataset in enumerate(subject_values_by_dataset):
-        summaries = _category_point_summaries(
-            subject_values_for_dataset,
-            confidence_level,
-            n_resamples=n_resamples,
-            bootstrap_seed=bootstrap_seed,
-        )
-        if not summaries:
-            continue
-        offsets = (
-            np.array([0.0])
-            if len(summaries) == 1
-            else np.linspace(-dodge_width / 2, dodge_width / 2, len(summaries))
-        )
-        for present_index, (category_index, mean, yerr) in enumerate(summaries):
-            offset = offsets[present_index]
-
-            color = color_cycle[category_index % len(color_cycle)]
-            label = None
-            if category_index not in labeled_category_indices:
-                label = category_labels[category_index]
-                labeled_category_indices.add(category_index)
-
-            axis.errorbar(
-                x[data_index] + offset,
-                mean,
-                yerr=yerr,
-                fmt="o",
-                color=color,
-                ecolor="black",
-                capsize=5,
-                linestyle="none",
-                markersize=6,
-                label=label,
-                zorder=3,
-            )
-
-    axis.set_xticks(x)
-    axis.set_xticklabels(labels, fontsize=14)
-    format_analysis_axes(axis, "", "Recall Rate", contrast_name)
-    return axis
+    return plot_category_rates(
+        axis, subject_values_by_dataset, labels, category_labels,
+        color_cycle=color_cycle, confidence_level=confidence_level,
+        n_resamples=n_resamples, bootstrap_seed=bootstrap_seed,
+        contrast_name=contrast_name,
+    )

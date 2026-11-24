@@ -45,7 +45,7 @@ from matplotlib.axes import Axes
 from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.dataset import apply_by_subject
 
-from ..plotting import format_analysis_axes, prepare_plot_inputs
+from ..plotting import plot_mean_intervals, prepare_plot_inputs
 from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 from ._transitions import absolute_lag_counts, masked_midrank, remove_positions
@@ -508,40 +508,15 @@ def plot_lagrank(
     if labels is None:
         labels = [""] * len(datasets)
 
-    x = np.arange(len(datasets))
-    for i, data in enumerate(datasets):
-        factors = subject_lagrank(
-            data, trial_masks[i], size=size, rank_method=rank_method
+    intervals = [
+        mean_interval(
+            subject_lagrank(dataset, mask, size=size, rank_method=rank_method),
+            confidence_level=confidence_level, method=bootstrap_method,
+            n_resamples=n_resamples, seed=bootstrap_seed,
         )
-        valid = factors[np.isfinite(factors)]
-        color = color_cycle[i % len(color_cycle)]
-
-        interval = mean_interval(
-            valid,
-            confidence_level=confidence_level,
-            method=bootstrap_method,
-            n_resamples=n_resamples,
-            seed=bootstrap_seed,
-        )
-        mean = interval["mean"]
-        yerr = [[mean - interval["low"]], [interval["high"] - mean]]
-
-        axis.errorbar(
-            x[i],
-            mean,
-            yerr=yerr,
-            fmt="o",
-            color=color,
-            ecolor="black",
-            capsize=5,
-            linestyle="none",
-            markersize=6,
-            label=labels[i],
-            zorder=3,
-        )
-
-    axis.set_xticks(x)
-    axis.set_xticklabels(labels, fontsize=14)
-    axis.set_xlim(x[0] - 0.5, x[-1] + 0.5)
-    format_analysis_axes(axis, "", "Organization Score", contrast_name)
-    return axis
+        for dataset, mask in zip(datasets, trial_masks, strict=True)
+    ]
+    return plot_mean_intervals(
+        axis, intervals, labels, ylabel="Organization Score",
+        color_cycle=color_cycle, contrast_name=contrast_name,
+    )

@@ -1,0 +1,239 @@
+---
+title: Running and adapting a template
+---
+
+## Run a notebook locally {#from-a-template-to-a-run}
+
+Download a notebook from the [template catalog](templates.qmd). Open it in your
+project’s Python environment, edit its **parameters** cell, and run the cells in
+order. The example inputs are copied into your project when you run the notebook.
+For your own study, supply the input files and give each run its own output folder.
+
+## Run in Colab
+
+Use **Open in Colab** on a template page, then save your own copy before editing.
+The [Colab setup guide](colab-setup.qmd) explains running cells, using your own
+files and keeping outputs between sessions.
+
+Keep the template’s short installation cell and input-preparation call. The cell
+installs JAXCMR from GitHub’s `main` branch; input preparation copies selected
+examples from that installation. Update the installation when you need newer
+library code or examples. Custom input files remain yours to provide. Colab labels
+the first raw cell “Unsupported Cell Type”; it contains website metadata and is
+skipped during execution.
+
+## Choose a working directory {#paths-and-working-directories}
+
+The `project_root` parameter selects the base for **all** relative input and output paths:
+
+| Setting or execution context | Base directory |
+|---|---|
+| An explicit `project_root` | That directory; a relative value uses the kernel's starting directory. |
+| Local checkout, `project_root=None` | The enclosing Git root, found by the existing `find_project_root()` helper. |
+| Standalone folder, `project_root=None` | The kernel's working directory. |
+| Colab, `project_root=None` | The runtime's working directory. |
+
+Running from `templates/` or a nested
+prepared-job directory inside a checkout uses the same project inputs and outputs.
+When the kernel starts outside the project, supply `project_root` explicitly. The
+root belongs to your research project; it is not the installed JAXCMR package directory.
+
+Absolute paths remain absolute, and `~` expands to your home directory. On Windows,
+`"C:/Users/Alex/my-study"` or `r"C:\Users\Alex\my-study"` works; avoid a partially
+specified drive path such as `"C:my-study"`. UNC paths are supported on Windows.
+Relative defaults such as `"data/Dupertuys2026.h5"` work on both platforms. An absolute
+path from another computer must be updated there.
+
+The input helper copies recognized relative example names into this same base on every platform. Custom files
+remain your responsibility; selecting an absolute custom path does not download an
+example over it. Path resolution happens after parameter injection and does not
+change the process's working directory.
+
+## Reuse fits and simulated responses {#saved-products-and-regeneration}
+
+Copy the `fit_paths` printed by fitting into simulation, then supply the printed
+`simulation_paths` to model comparison or their values as analysis `data_paths`.
+The defaults continue to use the supplied examples until you replace them. For example,
+a one-model simulation job can use:
+
+```python
+fit_paths = {"CMR": "results/fits/Dupertuys2026_CMR_demo_best_of_3.json"}
+```
+
+`output_dir` supplies default locations, but explicit directory settings take precedence:
+
+| Procedure | Directory precedence |
+|---|---|
+| Fitting | `target_directory` or `output_dir` supplies the product root; explicit `fit_dir`, `simulation_dir` and `figure_dir` override their defaults. |
+| Simulation | Explicit `simulation_dir` and `figure_dir` override `output_dir`. The example sets `simulation_dir="results/simulations"`. |
+| Parameter shifting, model comparison and analyses | Explicit `figure_dir` overrides its default; summary tables use `output_dir`. |
+
+Give independent jobs distinct names or directories for every product they write.
+`redo_fits=False` loads an existing fit at the chosen path; you must establish that
+its model, parameters, participants, observations and input data match your intended
+run. Compatibility is not checked. A missing fit is still computed. After relevant
+changes, set `redo_fits=True` or choose a new output location. `redo_sims=False` permits matching response reuse;
+when predictions are requested, missing or stale responses are regenerated. Fitting
+is fit-only when both `redo_sims` and `redo_figures` are false. `figure_str=""` disables
+figure saving, but does not disable summary CSVs.
+
+The fitting notebook recalculates the objective at the saved parameters so you
+can compare it with the recorded value. If you edit data or model code in place,
+give the run a new output location or regenerate the affected fits and simulations.
+
+You can also supply settings externally. [Quarto](https://quarto.org/docs/computations/parameters.html)
+and [Papermill](https://papermill.readthedocs.io/en/latest/usage-parameterize.html)
+use the same tagged cell. An override replaces a whole top-level value: to
+change one model, supply the complete `model_configs` dictionary for that work unit.
+Use `fit_alg_path` and `fit_hyperparams` to select and configure the optimizer. Analysis
+templates accept a list of response files (`data_paths`) and a matching list of
+names (`data_labels`). Each trial query applies to every file.
+
+## Adapting a procedure
+
+Adapt the settings cell: input paths, trial selection, parameters
+and output folder. Check the meanings of item codes, participant identifiers,
+categories and response padding before interpreting results. Retain the same
+selection for comparisons that are intended to address the same observations.
+
+Use one-entry lists for a single file or trial selection. Set
+`comparison="datasets"` to compare response files within each condition, or
+`comparison="conditions"` to overlay selections from one file. The dataset label
+titles a condition overlay and the condition labels identify its curves. In the
+category SPC template, `comparison="categories"` overlays item categories
+within each condition. Each figure is saved separately. A run that produces
+one figure uses the supplied `figure_str` as its filename stem.
+
+Additional research notebooks, with their own input requirements, are available in the
+[repository’s templates directory](https://github.com/githubpsyche/jaxcmr/tree/main/templates).
+
+### Comparing observed and simulated SPCs {#spc-model-inputs}
+
+In the bundled Dupertuys example, the `list_type` field codes mixed lists as 1,
+pure emotional lists as 2, and pure neutral lists as 3. The [SPC notebook](templates/spc.ipynb)
+starts with observed recall for each of those conditions. To overlay model
+predictions, supply the simulated response files alongside the observations.
+These settings include all three bundled models. For one model, keep its entry
+and the observed entry in both lists.
+
+```python
+data_paths = [
+    "data/Dupertuys2026.h5",
+    "data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5",
+    "data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5",
+    "data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5",
+]
+data_labels = ["Observed", "CMR", "Source-only eCMR", "Broader eCMR"]
+comparison = "datasets"
+```
+
+## Execute a report with Quarto
+
+With [Quarto installed](https://quarto.org/docs/get-started/), you can execute a
+notebook with overrides and render its results to HTML. Python parameter injection uses Papermill, which the repository's default `uv sync`
+already installs. For this example, run from the repository root and select the
+environment for Quarto using the command for your shell:
+
+::: {.panel-tabset}
+
+### macOS / Linux
+
+```bash
+export QUARTO_PYTHON="$(uv run python -c 'import sys; print(sys.executable)')"
+```
+
+### Windows PowerShell
+
+```powershell
+$env:QUARTO_PYTHON = (uv run python -c "import sys; print(sys.executable)")
+```
+
+:::
+
+Save the settings for the third recall in `pnr-third.yml`:
+
+```yaml
+output_positions: [2]
+output_dir: results/pnr-third
+```
+
+Run the notebook with these settings on either platform:
+
+```text
+quarto render templates/pnr.ipynb --execute --execute-params pnr-third.yml --output pnr-third.html
+```
+
+Quarto normally executes from the notebook's directory; the template's root lookup
+handles that. An injected `project_root` also works for notebooks prepared outside
+the project. The website build does not execute notebooks.
+
+Output positions are zero-based, so `[2]` selects the third response.
+The explicit `--execute` runs the notebook; rendering an `.ipynb` without it
+normally displays its stored results. The website displays saved example outputs.
+
+## Prepare independent jobs with Papermill
+
+For a cluster batch, it can be useful to inspect the complete set of jobs
+before executing any of them. Papermill's `prepare_only=True` creates a
+configured notebook for each job. From the repository root, the following Python cell prepares two
+fitting runs that differ only in optimization seed and output folder:
+
+```{python}
+#| eval: false
+#| code-summary: "Prepare two fitting jobs without running them"
+
+from pathlib import Path
+from copy import deepcopy
+import nbformat
+import papermill as pm
+
+source = nbformat.read("templates/fitting.ipynb", as_version=4)
+defaults = {}
+parameter_cell = next(cell for cell in source.cells
+                      if "parameters" in cell.metadata.get("tags", []))
+# Evaluate only the parameter assignments, not the fitting procedure.
+exec(parameter_cell.source, defaults)
+
+jobs = Path("analyses/rendered")
+jobs.mkdir(parents=True, exist_ok=True)
+for seed in [0, 1]:
+    configs = deepcopy(defaults["model_configs"])
+    for config in configs.values():
+        config["seed"] = seed
+    path = jobs / f"fitting_seed_{seed}.ipynb"
+    prepared = pm.execute_notebook(
+        "templates/fitting.ipynb", str(path),
+        parameters={"model_configs": configs, "output_dir": f"results/fitting-seed-{seed}"},
+        prepare_only=True,
+    )
+    # Stored example results are not results from this new job.
+    for cell in prepared.cells:
+        if cell.cell_type == "code":
+            cell.outputs = []
+            cell.execution_count = None
+    nbformat.write(prepared, path)
+```
+
+To prepare one model per job, pass a one-entry `model_configs` dictionary. Preserve the
+project's chosen job boundaries: a model collection does not require running every model in
+each scheduled job. Inspect the injected settings in each notebook. Execute one from the working
+folder with:
+
+```text
+uv run papermill analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb --cwd .
+```
+
+The same prepared notebooks can be transferred with their inputs and run as
+separate Slurm jobs, using the project folder as the working directory. This
+keeps the prepared paths portable: set `--cwd` to the destination project folder, or
+inject its `project_root` when executing. Do not inject a local machine's absolute root
+into jobs intended for a different machine. This matches the [remote-cluster workflow](https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd):
+maintain a procedure, prepare concrete work units, then schedule their execution.
+Preparing jobs does not fit a model; rendering HTML is a separate presentation step.
+
+For participant jobs, the fitting template uses `pooled=False` and
+`subject_indices=[i]`, where `i` indexes the sorted participant IDs. Simulation
+and parameter exploration can instead vary seeds or parameter values. Choose
+the work unit around the scientific question and keep its inputs and outputs
+explicit. A fit-only job sets both `redo_sims` and `redo_figures` to `False`;
+later simulation can use its saved result.

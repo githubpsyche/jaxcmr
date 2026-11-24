@@ -31,7 +31,7 @@ from jaxcmr._vendor.simple_pytree import Pytree
 from jaxcmr.dataset import apply_by_subject
 
 from ..analyses._transitions import remove_positions
-from ..plotting import prepare_plot_inputs
+from ..plotting import add_analysis_legend, prepare_plot_inputs
 from ..repetition import equivalent_study_positions
 from ..typing import Array, Bool, Float, Int_, Integer, RecallDataset
 
@@ -350,6 +350,6 @@ def plot_compound_cueing(
     axis.set_ylabel("P(transition to repeated item)")
 
     if contrast_name:
-        axis.legend(title=contrast_name)
+        add_analysis_legend(axis, contrast_name)
 
     return axis

@@ -18,12 +18,32 @@ from jaxcmr.analyses import (
 )
 from jaxcmr.dataset import make_dataset
 from jaxcmr.plotting import (
+    add_analysis_legend,
     comparison_panels,
     iter_analysis_figures,
     matrix_heatmap,
     plot_mean_curve,
     save_figure,
 )
+
+
+@pytest.mark.parametrize("title", [None, "Item category"])
+def test_legend_stays_outside_data_and_inside_figure(title):
+    figure, axes = plt.subplots(1, 2, figsize=(7.5, 3.2), constrained_layout=True)
+    for axis in axes:
+        axis.errorbar([1, 2], [0.5, 0.7], yerr=0.2, label="Observed")
+        axis.plot([1, 2], [0.7, 0.5], label="Model")
+        add_analysis_legend(axis, title)
+    figure.canvas.draw()
+    for axis in axes:
+        legend = axis.get_legend()
+        assert legend is not None
+        bounds = legend.get_window_extent()
+        assert bounds.x0 >= axis.bbox.x1
+        assert figure.bbox.contains(*bounds.p0) and figure.bbox.contains(*bounds.p1)
+        assert all(not bounds.overlaps(other.bbox) for other in axes)
+        assert [text.get_text() for text in legend.get_texts()] == axis.get_legend_handles_labels()[1]
+    plt.close(figure)
 
 
 @pytest.mark.parametrize(

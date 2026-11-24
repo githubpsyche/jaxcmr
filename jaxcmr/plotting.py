@@ -32,15 +32,17 @@ from matplotlib import rcParams
 from matplotlib.axes import Axes
 from matplotlib.colors import Normalize
 from matplotlib.figure import Figure, SubFigure
+from matplotlib.legend import Legend
 from matplotlib.ticker import MaxNLocator
 from typing_extensions import TypedDict
 
-from jaxcmr.analyses.statistics import mean_interval
+from jaxcmr.analyses.statistics import _MeanInterval, mean_interval
 from jaxcmr.dataset import generate_trial_mask
 from jaxcmr.helpers import import_from_string
 from jaxcmr.typing import Array, Bool, Float, Real, RecallDataset
 
 __all__ = [
+    "add_analysis_legend",
     "bootstrap_mean_errors",
     "comparison_panels",
     "format_analysis_axes",
@@ -49,6 +51,7 @@ __all__ = [
     "iter_condition_curves",
     "matrix_heatmap",
     "plot_mean_curve",
+    "plot_mean_intervals",
     "prepare_plot_inputs",
     "save_figure",
 ]
@@ -70,7 +73,7 @@ def init_plot(axis: Axes | None = None) -> Axes:
     ----------
     axis : Axes, optional
         Existing axes to draw on. Omit to create a figure using Matplotlib's
-        current defaults.
+        current figure size and automatic spacing.
 
     Returns
     -------
@@ -79,7 +82,7 @@ def init_plot(axis: Axes | None = None) -> Axes:
     """
     if axis is not None:
         return axis
-    _, new_axis = plt.subplots()
+    _, new_axis = plt.subplots(tight_layout=True)
     return new_axis
 
 
@@ -272,6 +275,27 @@ def plot_mean_curve(
     return axis
 
 
+def add_analysis_legend(axis: Axes, title: str | None = None) -> Legend:
+    """Place the legend to the right of the axes, clear of curves and error bars.
+
+    Parameters
+    ----------
+    axis : Axes
+        Axes containing the labeled artists. For an existing figure, use
+        tight or constrained layout to reserve space for the legend.
+    title : str, optional
+        Heading above the legend entries.
+
+    Returns
+    -------
+    Legend
+        The legend attached to the supplied axes.
+    """
+    return axis.legend(
+        title=title, loc="upper left", bbox_to_anchor=(1, 1), frameon=False
+    )
+
+
 def format_analysis_axes(
     axis: Axes, xlabel: str, ylabel: str, contrast_name: str | None = None
 ) -> Axes:
@@ -284,7 +308,7 @@ def format_analysis_axes(
     xlabel, ylabel : str
         Labels for the horizontal and vertical axes.
     contrast_name : str, optional
-        Legend title. A nonempty value adds a legend using the plotted labels.
+        Legend title. A nonempty value adds the plotted labels in the right margin.
 
     Returns
     -------
@@ -296,7 +320,7 @@ def format_analysis_axes(
     axis.set_ylabel(ylabel, fontsize=16)
 
     if contrast_name:
-        axis.legend(title=contrast_name)
+        add_analysis_legend(axis, contrast_name)
 
     axis.tick_params(labelsize=14)
     for loc in ("top", "right"):
@@ -305,6 +329,51 @@ def format_analysis_axes(
     axis.yaxis.grid(True, color="#e8e8e8", linewidth=0.8)
 
     return axis
+
+
+def plot_mean_intervals(
+    axis: Axes,
+    intervals: Sequence[_MeanInterval],
+    labels: Sequence[str],
+    *,
+    ylabel: str,
+    color_cycle: Sequence[str] | None = None,
+    contrast_name: str | None = None,
+) -> Axes:
+    """Draw one point and its precomputed confidence interval for each group.
+
+    Parameters
+    ----------
+    axis : Axes
+        Axes on which to draw the points.
+    intervals : sequence of mean_interval results
+        One summary per group. The point uses ``mean`` and the error bar
+        extends from ``low`` to ``high``. Missing limits leave the point alone.
+    labels : sequence of str
+        Group names in display order along the horizontal axis.
+    ylabel : str
+        Name of the measured quantity on the vertical axis.
+    color_cycle : sequence of str, optional
+        Marker colors in group order.
+    contrast_name : str, optional
+        Title for the group legend.
+
+    Returns
+    -------
+    Axes
+        The axes containing the group means and intervals.
+    """
+    if color_cycle is None:
+        color_cycle = [entry["color"] for entry in rcParams["axes.prop_cycle"]]
+    for index, (interval, label) in enumerate(zip(intervals, labels, strict=True)):
+        mean, low, high = interval["mean"], interval["low"], interval["high"]
+        axis.plot(index, mean, "o", color=color_cycle[index % len(color_cycle)],
+                  markersize=6, label=label, zorder=3)
+        axis.vlines(index, low, high, color="black")
+        axis.plot([index, index], [low, high], "_", color="black", markersize=10)
+    axis.set_xticks(np.arange(len(labels)), labels, fontsize=14)
+    axis.set_xlim(-0.5, len(labels) - 0.5)
+    return format_analysis_axes(axis, "", ylabel, contrast_name)
 
 
 def matrix_heatmap(
@@ -681,7 +750,7 @@ def iter_analysis_figures(
             generate_trial_mask(data, config.get("trial_query", trial_query)) & base
             for data, base in zip(datasets, base_trial_masks)
         ]
-        figure, axis = plt.subplots(figsize=config.get("figsize", figure_size))
+        figure, axis = plt.subplots(figsize=config.get("figsize", figure_size), tight_layout=True)
         options = {
             "labels": config.get("labels", labels),
             "contrast_name": config.get("contrast_name", "Responses"),

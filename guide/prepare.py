@@ -134,6 +134,33 @@ def stage():
     print(f"Staged {len(names)} templates with Colab links to main.")
 
 
+def prepare_template_index() -> None:
+    """Pair notebook titles and research questions in the order used by the sidebar."""
+    import yaml
+
+    project = yaml.safe_load((GUIDE / "_quarto.yml").read_text())
+    sidebar = next(bar for bar in project["website"]["sidebar"] if bar.get("id") == "templates")
+    overview = (GUIDE / "templates.qmd").read_text().split("---", 2)[1]
+    questions = yaml.safe_load(overview)["template-questions"]
+    sections = []
+    for group in sidebar["contents"]:
+        if not isinstance(group, dict) or "section" not in group:
+            continue
+        anchor = group["href"].split("#", 1)[1]
+        sections.extend([f"## {group['section']} {{#{anchor}}}", "",
+                         "| Notebook | Research question | Download |",
+                         "|:-------------------------|:------------------------------------|:---------|"])
+        for source in group["contents"]:
+            notebook = json.loads((ROOT / source).read_bytes())
+            front = "".join(notebook["cells"][0]["source"]).split("---", 2)[1]
+            title = yaml.safe_load(front)["title"]
+            path = Path(source)
+            download = f'[.ipynb](downloads/{path.name}){{download="" aria-label="Download {title}"}}'
+            sections.append(f"| [{title}]({source}) | {questions[path.stem]} | {download} |")
+        sections.append("")
+    (GUIDE / "_template-index.qmd").write_text("\n".join(sections))
+
+
 def prepare_reference_navigation() -> None:
     """Use the API sidebar's groups and links for the homepage and reference index."""
     import yaml
@@ -229,6 +256,8 @@ if __name__ == "__main__":
     full_render = os.environ.get("QUARTO_PROJECT_RENDER_ALL") == "1"
     if full_render or not inputs or inputs & {"index.ipynb", "reference/index.qmd"}:
         prepare_reference_navigation()
+    if full_render or not inputs or "templates.qmd" in inputs:
+        prepare_template_index()
     prepare_references(None if full_render or not inputs else inputs)
     # A reference-only render has no notebook or example-download inputs.
     if full_render or not inputs or any(

@@ -1,0 +1,128 @@
+---
+title: About the example data
+---
+
+## The experiment
+
+In this experiment, Dupertuys and colleagues asked whether emotion changes both
+**which pictures people remember** and **the order in which they remember them**. Participants studied
+photographs relating to the war in Ukraine, then recalled them from memory.
+The final sample comprised 123 English-speaking adults selected for their
+reported concern about the war.
+
+Each participant completed four rounds, each with two phases:
+
+1. **Study the photographs.** A list contained twelve target photographs, plus
+   an extra “buffer” photograph at each end. Each image appeared for six seconds,
+   followed by a three-second blank screen.
+2. **Recall the photographs.** Immediately after the list, participants typed
+   short descriptions of as many photographs as they could remember, in any
+   order. They then continued to the next study-and-recall round.
+
+Researchers later scored the typed responses by matching descriptions to
+photograph identities, retaining the order in which the pictures were recalled.
+
+The lists differed in their emotional composition. **Emotional** photographs
+were rated as more negative and more arousing; **neutral** photographs were the
+less negative, less arousing comparison images from the same war-related set.
+Every participant encountered all three conditions:
+
+| List condition | Target photographs in each list | Lists per participant |
+|---|---|---:|
+| Mixed | 6 emotional and 6 neutral | 2 |
+| Pure emotional | 12 emotional | 1 |
+| Pure neutral | 12 neutral | 1 |
+
+List order was counterbalanced across participants, and target-picture order
+was randomized within each list. Targets were not repeated across a
+participant's four lists.
+
+Mixed lists let us compare emotional and neutral recall within the same list.
+Pure lists let us ask how that difference changes when the two types of picture
+are studied separately. Recording recall order also lets us examine memory
+search: for example, whether one recalled picture tends to be followed by a
+picture studied nearby in time, or by a picture with similar meaning.
+
+## What the observation file contains {#the-data-used-in-the-templates}
+
+The supplied file contains **492 list records**: 246 mixed, 123 pure-emotional
+and 123 pure-neutral. Photographs are represented by item identifiers, and
+recall responses by scored sequences. Buffer photographs are excluded, so the
+study positions used in these templates refer to the twelve target photographs.
+One pure-emotional record contains eleven valid target items and a padded slot;
+the fixed-length analyses identify and exclude that record.
+
+| Field | Meaning in these procedures |
+|---|---|
+| `subject` | Participant identifier, retained when simulating. |
+| `list_type` | Whole-list condition: 1 = mixed, 2 = pure emotional, 3 = pure neutral. |
+| `pres_itemnos` | Studied item codes within a trial; zero is a padded slot. |
+| `pres_itemids` | Global picture identifiers used to align the distance matrix and categories. |
+| `recalls` | One-based **study positions** of recalled items; zero is an unused response slot. |
+| `valence` | Category at each study position: −1 = emotional, 0 = neutral. Check valid study items before counting categories. |
+
+Study positions and item identities are different: a recall code of 3 points to
+the third study slot, whose global picture identifier is found in `pres_itemids`.
+The supplied distance matrix is indexed by global identifier minus one. Its
+missing entries are outside the within-list comparisons used here; every
+within-list pair required by the semantic examples has a finite distance.
+
+Selections are made in notebook cells and leave the source file unchanged:
+
+- **Fitting and pooled model comparison:** all 492 lists and all conditions.
+- **SPC, PNR, stopping and temporal organization:** the 491 complete twelve-item
+  lists.
+- **Conditional response probability by item distance:** the 246 mixed lists, using the supplied distance matrix.
+- **Distance rank:** mixed, pure emotional, and pure neutral lists, scored separately using the same distance matrix.
+- **Category recall rate:** all conditions, with valid-item denominators.
+- **Category SPC and category-CRP:** mixed lists by default.
+
+Plots summarize each participant's selected lists before averaging across
+participants. Error bars describe bootstrap intervals for those participant
+summaries. Some bins have no variation or no defined values, so the current
+plotters can report that a bootstrap interval is undefined; this does not turn
+an unavailable category or transition into a zero-valued observation.
+
+## Download the shared inputs
+
+The templates automatically copy the inputs they need from the installed JAXCMR package into your project’s `data` folder. This works locally, on Slurm, and in Colab, without an additional download. Matching files are reused; conflicting files are preserved and reported. Custom input paths remain yours to provide.
+
+The links below are available if you want to inspect or download individual files yourself. Save them with the names shown; use **Save Link As** if your browser opens a JSON file. No repository checkout is required.
+
+| Input | Save inside your working folder as |
+|---|---|
+| [Observations](templates/data/Dupertuys2026.h5) | `data/Dupertuys2026.h5` |
+| [Semantic distances](templates/data/Dupertuys2026_semantic_distances.npy) | `data/Dupertuys2026_semantic_distances.npy` |
+| [CMR demonstration fit](templates/data/fits/Dupertuys2026_CMR_demo.json) | `data/fits/Dupertuys2026_CMR_demo.json` |
+| [Source-only eCMR fit](templates/data/fits/Dupertuys2026_eCMR_source_only.json) | `data/fits/Dupertuys2026_eCMR_source_only.json` |
+| [Broader eCMR fit](templates/data/fits/Dupertuys2026_eCMR_broad.json) | `data/fits/Dupertuys2026_eCMR_broad.json` |
+| [CMR responses](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5` |
+| [CMR simulation settings](templates/data/simulations/Dupertuys2026_CMR_demo_best_of_3.json) | `data/simulations/Dupertuys2026_CMR_demo_best_of_3.json` |
+| [Broader eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5` |
+| [Broader eCMR simulation settings](templates/data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.json` |
+| [Source-only eCMR responses](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5` |
+| [Source-only eCMR simulation settings](templates/data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json) | `data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.json` |
+
+The observations and distance matrix describe the war-photo-recall experiment.
+The [example-fit methods](templates/data/fits/README.md) identify the models,
+searches and assumptions behind the three supplied fit records. Response examples
+were generated with ten repetitions per selected list and seed 1. Their JSON
+files record the parameters, selections and simulation settings. These are saved
+inputs to analysis: analysis notebooks do not fit or simulate when an input is missing.
+
+## The example models
+
+The example collection estimates nine continuous CMR parameters and ten for each eCMR
+variant, using the same observations and termination-excluded likelihood. The two eCMR
+specifications differ in whether emotional modulation also affects temporal association learning.
+The default simulator conditions on observed recall counts. Recall length, stopping distributions
+and pure-list category totals therefore are imposed; mixed-list category allocation and recall
+organization can vary.
+
+Simulation and parameter shifting start from the supplied fits without optimization. The latter
+includes encoding-drift sweeps and a separate controlled temporal-emotional-modulation switch.
+Model comparison consumes the saved fits and responses. Its results describe pooled solutions,
+not independent participant estimates. Each procedure remains configurable for other inputs,
+models and scientific questions.
+
+Open the [template catalog](templates.qmd) to choose an analysis or model.

@@ -15,6 +15,8 @@ project:
     - overview/*.qmd
     - overview/*.ipynb
     - templates.qmd
+    - template-data.qmd
+    - running-templates.qmd
     - templates/*.ipynb
     - development.qmd
     - references.qmd
@@ -266,22 +268,39 @@ website:
             - href: reference/experimental-log_odds_crp.qmd
               text: log_odds_crp
     - title: Templates
+      id: templates
+      collapse-level: 1
       contents:
-        - templates.qmd
-        - templates/fitting.ipynb
-        - templates/simulation.ipynb
-        - templates/parameter_shifting.ipynb
-        - templates/model_comparison.ipynb
-        - templates/spc.ipynb
-        - templates/pnr.ipynb
-        - templates/termination_probability.ipynb
-        - templates/crp.ipynb
-        - templates/lagrank.ipynb
-        - templates/distcrp.ipynb
-        - templates/distrank.ipynb
-        - templates/cat_recall_rate.ipynb
-        - templates/cat_spc.ipynb
-        - templates/catcrp.ipynb
+        - href: templates.qmd
+          text: Overview
+        - section: Recall and output position
+          href: templates.html#recall-performance
+          contents:
+            - templates/spc.ipynb
+            - templates/pnr.ipynb
+            - templates/termination_probability.ipynb
+        - section: Transitions and organization
+          href: templates.html#temporal-and-semantic-organization
+          contents:
+            - templates/crp.ipynb
+            - templates/lagrank.ipynb
+            - templates/distcrp.ipynb
+            - templates/distrank.ipynb
+        - section: Recall by category
+          href: templates.html#category-analyses
+          contents:
+            - templates/cat_recall_rate.ipynb
+            - templates/cat_spc.ipynb
+            - templates/catcrp.ipynb
+        - section: Model evaluation
+          href: templates.html#modeling-procedures
+          contents:
+            - templates/fitting.ipynb
+            - templates/simulation.ipynb
+            - templates/parameter_shifting.ipynb
+            - templates/model_comparison.ipynb
+        - template-data.qmd
+        - running-templates.qmd
 
 format:
   html:

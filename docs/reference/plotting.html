@@ -897,8 +897,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <li><a href="#jaxcmr.plotting.init_plot" id="toc-jaxcmr.plotting.init_plot" class="nav-link" data-scroll-target="#jaxcmr.plotting.init_plot">init_plot</a></li>
     <li><a href="#jaxcmr.plotting.prepare_plot_inputs" id="toc-jaxcmr.plotting.prepare_plot_inputs" class="nav-link" data-scroll-target="#jaxcmr.plotting.prepare_plot_inputs">prepare_plot_inputs</a></li>
     <li><a href="#jaxcmr.plotting.plot_mean_curve" id="toc-jaxcmr.plotting.plot_mean_curve" class="nav-link" data-scroll-target="#jaxcmr.plotting.plot_mean_curve">plot_mean_curve</a></li>
+    <li><a href="#jaxcmr.plotting.plot_mean_intervals" id="toc-jaxcmr.plotting.plot_mean_intervals" class="nav-link" data-scroll-target="#jaxcmr.plotting.plot_mean_intervals">plot_mean_intervals</a></li>
     <li><a href="#jaxcmr.plotting.bootstrap_mean_errors" id="toc-jaxcmr.plotting.bootstrap_mean_errors" class="nav-link" data-scroll-target="#jaxcmr.plotting.bootstrap_mean_errors">bootstrap_mean_errors</a></li>
     <li><a href="#jaxcmr.plotting.format_analysis_axes" id="toc-jaxcmr.plotting.format_analysis_axes" class="nav-link" data-scroll-target="#jaxcmr.plotting.format_analysis_axes">format_analysis_axes</a></li>
+    <li><a href="#jaxcmr.plotting.add_analysis_legend" id="toc-jaxcmr.plotting.add_analysis_legend" class="nav-link" data-scroll-target="#jaxcmr.plotting.add_analysis_legend">add_analysis_legend</a></li>
     <li><a href="#jaxcmr.plotting.matrix_heatmap" id="toc-jaxcmr.plotting.matrix_heatmap" class="nav-link" data-scroll-target="#jaxcmr.plotting.matrix_heatmap">matrix_heatmap</a></li>
     <li><a href="#jaxcmr.plotting.comparison_panels" id="toc-jaxcmr.plotting.comparison_panels" class="nav-link" data-scroll-target="#jaxcmr.plotting.comparison_panels">comparison_panels</a></li>
     <li><a href="#jaxcmr.plotting.iter_condition_curves" id="toc-jaxcmr.plotting.iter_condition_curves" class="nav-link" data-scroll-target="#jaxcmr.plotting.iter_condition_curves">iter_condition_curves</a></li>
@@ -945,8 +947,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <li><a href="#jaxcmr.plotting.init_plot" id="toc-jaxcmr.plotting.init_plot-body">init_plot</a></li>
     <li><a href="#jaxcmr.plotting.prepare_plot_inputs" id="toc-jaxcmr.plotting.prepare_plot_inputs-body">prepare_plot_inputs</a></li>
     <li><a href="#jaxcmr.plotting.plot_mean_curve" id="toc-jaxcmr.plotting.plot_mean_curve-body">plot_mean_curve</a></li>
+    <li><a href="#jaxcmr.plotting.plot_mean_intervals" id="toc-jaxcmr.plotting.plot_mean_intervals-body">plot_mean_intervals</a></li>
     <li><a href="#jaxcmr.plotting.bootstrap_mean_errors" id="toc-jaxcmr.plotting.bootstrap_mean_errors-body">bootstrap_mean_errors</a></li>
     <li><a href="#jaxcmr.plotting.format_analysis_axes" id="toc-jaxcmr.plotting.format_analysis_axes-body">format_analysis_axes</a></li>
+    <li><a href="#jaxcmr.plotting.add_analysis_legend" id="toc-jaxcmr.plotting.add_analysis_legend-body">add_analysis_legend</a></li>
     <li><a href="#jaxcmr.plotting.matrix_heatmap" id="toc-jaxcmr.plotting.matrix_heatmap-body">matrix_heatmap</a></li>
     <li><a href="#jaxcmr.plotting.comparison_panels" id="toc-jaxcmr.plotting.comparison_panels-body">comparison_panels</a></li>
     <li><a href="#jaxcmr.plotting.iter_condition_curves" id="toc-jaxcmr.plotting.iter_condition_curves-body">iter_condition_curves</a></li>
@@ -984,12 +988,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Draw the mean across observation rows, optionally with bootstrap intervals.</td>
 </tr>
 <tr class="even">
+<td><a href="#jaxcmr.plotting.plot_mean_intervals"><code>plot_mean_intervals</code></a></td>
+<td>Draw one point and its precomputed confidence interval for each group.</td>
+</tr>
+<tr class="odd">
 <td><a href="#jaxcmr.plotting.bootstrap_mean_errors"><code>bootstrap_mean_errors</code></a></td>
 <td>Return finite-observation bootstrap error distances around a mean curve.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#jaxcmr.plotting.format_analysis_axes"><code>format_analysis_axes</code></a></td>
 <td>Apply labels, an optional legend and the shared analysis-plot style.</td>
+</tr>
+<tr class="odd">
+<td><a href="#jaxcmr.plotting.add_analysis_legend"><code>add_analysis_legend</code></a></td>
+<td>Place the legend to the right of the axes, clear of curves and error bars.</td>
 </tr>
 </tbody>
 </table>
@@ -1047,10 +1059,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 6%">
-<col style="width: 6%">
-<col style="width: 76%">
-<col style="width: 9%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 80%">
+<col style="width: 7%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1064,7 +1076,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>axis</td>
 <td>Axes</td>
-<td>Existing axes to draw on. Omit to create a figure using Matplotlib’s current defaults.</td>
+<td>Existing axes to draw on. Omit to create a figure using Matplotlib’s current figure size and automatic spacing.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
@@ -1277,14 +1289,97 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </section>
 </section>
+<section id="jaxcmr.plotting.plot_mean_intervals" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.plotting.plot_mean_intervals">plot_mean_intervals</h3>
+<div class="api-signature">
+<code>jaxcmr.plotting.plot_mean_intervals(axis, intervals, labels, *, ylabel, color_cycle=None, contrast_name=None)</code>
+</div>
+<p>Draw one point and its precomputed confidence interval for each group.</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 17%">
+<col style="width: 69%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>axis</td>
+<td>Axes</td>
+<td>Axes on which to draw the points.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>intervals</td>
+<td>sequence of mean_interval results</td>
+<td>One summary per group. The point uses <code>mean</code> and the error bar extends from <code>low</code> to <code>high</code>. Missing limits leave the point alone.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>labels</td>
+<td>sequence of str</td>
+<td>Group names in display order along the horizontal axis.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>ylabel</td>
+<td>str</td>
+<td>Name of the measured quantity on the vertical axis.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>color_cycle</td>
+<td>sequence of str</td>
+<td>Marker colors in group order.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>contrast_name</td>
+<td>str</td>
+<td>Title for the group legend.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Axes</td>
+<td>The axes containing the group means and intervals.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
 <section id="jaxcmr.plotting.bootstrap_mean_errors" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.plotting.bootstrap_mean_errors">bootstrap_mean_errors</h3>
 <div class="api-signature">
 <code>jaxcmr.plotting.bootstrap_mean_errors(y_values, y_mean, *, confidence_level=0.95, n_resamples=9999, bootstrap_seed=None)</code>
 </div>
 <p>Return finite-observation bootstrap error distances around a mean curve.</p>
-<section id="parameters-3" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<section id="parameters-4" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 10%">
@@ -1334,8 +1429,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="returns-3" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<section id="returns-4" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 4%">
@@ -1365,14 +1460,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <code>jaxcmr.plotting.format_analysis_axes(axis, xlabel, ylabel, contrast_name=None)</code>
 </div>
 <p>Apply labels, an optional legend and the shared analysis-plot style.</p>
-<section id="parameters-4" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 14%">
+<col style="width: 13%">
 <col style="width: 7%">
-<col style="width: 67%">
-<col style="width: 11%">
+<col style="width: 68%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1404,14 +1499,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>contrast_name</td>
 <td>str</td>
-<td>Legend title. A nonempty value adds a legend using the plotted labels.</td>
+<td>Legend title. A nonempty value adds the plotted labels in the right margin.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns-4" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
+<section id="returns-5" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 5%">
@@ -1435,14 +1530,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </section>
 </section>
+<section id="jaxcmr.plotting.add_analysis_legend" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.plotting.add_analysis_legend">add_analysis_legend</h3>
+<div class="api-signature">
+<code>jaxcmr.plotting.add_analysis_legend(axis, title=None)</code>
+</div>
+<p>Place the legend to the right of the axes, clear of curves and error bars.</p>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 81%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>axis</td>
+<td>Axes</td>
+<td>Axes containing the labeled artists. For an existing figure, use tight or constrained layout to reserve space for the legend.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>title</td>
+<td>str</td>
+<td>Heading above the legend entries.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-6" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Legend</td>
+<td>The legend attached to the supplied axes.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
 <section id="jaxcmr.plotting.matrix_heatmap" class="level3 api-entry">
 <h3 class="api-entry anchored" data-anchor-id="jaxcmr.plotting.matrix_heatmap">matrix_heatmap</h3>
 <div class="api-signature">
 <code>jaxcmr.plotting.matrix_heatmap(matrix, figsize=(15, 15), axis=None, label_font_size=32, annot_font_size=14, print_threshold=0.005, title='', xlabel='Column Index', ylabel='Row Index', *, colorbar=True, norm=None, row_labels=None, column_labels=None)</code>
 </div>
 <p>Draw a vector or matrix as a value-annotated heatmap.</p>
-<section id="parameters-5" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<section id="parameters-7" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 5%">
@@ -1540,8 +1694,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="returns-5" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h4>
+<section id="returns-7" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 5%">
@@ -1578,8 +1732,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <code>jaxcmr.plotting.comparison_panels(datasets, masks_by_dataset, dataset_labels, condition_labels, *, mode, selection_label='Selected lists')</code>
 </div>
 <p>Arrange selected datasets for condition or dataset comparisons.</p>
-<section id="parameters-6" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<section id="parameters-8" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 6%">
@@ -1635,8 +1789,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="returns-6" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-6">Returns</h4>
+<section id="returns-8" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-8">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 3%">
@@ -1697,8 +1851,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <code>jaxcmr.plotting.iter_condition_curves(subject_values, condition_count, dataset_index, labels, color_cycle)</code>
 </div>
 <p>Arrange participant results into curves with matching labels and colors.</p>
-<section id="parameters-7" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 10%">
@@ -1820,8 +1974,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <code>jaxcmr.plotting.iter_analysis_figures(datasets, analysis_configs, labels=None, *, base_masks=None, trial_query=None, confidence_level=0.95, figure_size=(10, 4.8), suffix='', n_resamples=9999, bootstrap_seed=None)</code>
 </div>
 <p>Create configured behavioral figures in order, one figure at a time.</p>
-<section id="parameters-8" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<section id="parameters-10" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 5%">
@@ -2013,8 +2167,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <code>jaxcmr.plotting.save_figure(figure_dir, figure_str, suffix=None, dpi=600, formats=('png',), *, figure)</code>
 </div>
 <p>Lay out and save a supplied figure without displaying or closing it.</p>
-<section id="parameters-9" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 6%">
@@ -2070,8 +2224,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="returns-7" class="level4 doc-section doc-section-returns">
-<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-7">Returns</h4>
+<section id="returns-9" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-9">Returns</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 9%">

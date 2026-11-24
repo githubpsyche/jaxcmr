@@ -861,6 +861,7 @@ ul.task-list li input[type="checkbox"] {
     <li><a href="#jaxcmr.analyses.cat_recall_rate.category_recall_hits" id="toc-jaxcmr.analyses.cat_recall_rate.category_recall_hits" class="nav-link" data-scroll-target="#jaxcmr.analyses.cat_recall_rate.category_recall_hits">category_recall_hits</a></li>
     <li><a href="#jaxcmr.analyses.cat_recall_rate.subject_cat_recall_rate" id="toc-jaxcmr.analyses.cat_recall_rate.subject_cat_recall_rate" class="nav-link" data-scroll-target="#jaxcmr.analyses.cat_recall_rate.subject_cat_recall_rate">subject_cat_recall_rate</a></li>
     <li><a href="#jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate" id="toc-jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate" class="nav-link" data-scroll-target="#jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate">plot_cat_recall_rate</a></li>
+    <li><a href="#jaxcmr.analyses.cat_recall_rate.plot_category_rates" id="toc-jaxcmr.analyses.cat_recall_rate.plot_category_rates" class="nav-link" data-scroll-target="#jaxcmr.analyses.cat_recall_rate.plot_category_rates">plot_category_rates</a></li>
     </ul></li>
     </ul>
   </nav>
@@ -901,6 +902,7 @@ ul.task-list li input[type="checkbox"] {
     <li><a href="#jaxcmr.analyses.cat_recall_rate.category_recall_hits" id="toc-jaxcmr.analyses.cat_recall_rate.category_recall_hits-body">category_recall_hits</a></li>
     <li><a href="#jaxcmr.analyses.cat_recall_rate.subject_cat_recall_rate" id="toc-jaxcmr.analyses.cat_recall_rate.subject_cat_recall_rate-body">subject_cat_recall_rate</a></li>
     <li><a href="#jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate" id="toc-jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate-body">plot_cat_recall_rate</a></li>
+    <li><a href="#jaxcmr.analyses.cat_recall_rate.plot_category_rates" id="toc-jaxcmr.analyses.cat_recall_rate.plot_category_rates-body">plot_category_rates</a></li>
     </ul></li>
     </ul>
   </nav>
@@ -941,6 +943,10 @@ ul.task-list li input[type="checkbox"] {
 <tr class="odd">
 <td><a href="#jaxcmr.analyses.cat_recall_rate.plot_cat_recall_rate"><code>plot_cat_recall_rate</code></a></td>
 <td>Plot category-filtered recall rates as points with error bars.</td>
+</tr>
+<tr class="even">
+<td><a href="#jaxcmr.analyses.cat_recall_rate.plot_category_rates"><code>plot_category_rates</code></a></td>
+<td>Plot category means from participant rates already calculated for each group.</td>
 </tr>
 </tbody>
 </table>
@@ -1232,6 +1238,112 @@ ul.task-list li input[type="checkbox"] {
 <td></td>
 <td>Axes</td>
 <td>Axes with the category recall-rate plot.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="jaxcmr.analyses.cat_recall_rate.plot_category_rates" class="level3 api-entry">
+<h3 class="api-entry anchored" data-anchor-id="jaxcmr.analyses.cat_recall_rate.plot_category_rates">plot_category_rates</h3>
+<div class="api-signature">
+<code>jaxcmr.analyses.cat_recall_rate.plot_category_rates(axis, rates, labels, category_labels, *, color_cycle=None, confidence_level=0.95, n_resamples=9999, bootstrap_seed=None, contrast_name=None)</code>
+</div>
+<p>Plot category means from participant rates already calculated for each group.</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 80%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>axis</td>
+<td>Axes</td>
+<td>Axes on which to draw the groups.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>rates</td>
+<td>sequence of arrays</td>
+<td>One participant-by-category matrix per group, as returned by <code>subject_cat_recall_rate</code>. Each finite participant rate has equal weight. A category missing from a group leaves no point in that group.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>labels</td>
+<td>sequences of str</td>
+<td>Horizontal-axis group names and category names in column order.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>category_labels</td>
+<td>sequences of str</td>
+<td>Horizontal-axis group names and category names in column order.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>color_cycle</td>
+<td>sequence of str</td>
+<td>Category colors, shared across groups.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>confidence_level</td>
+<td>optional</td>
+<td>Coverage, number of bootstrap draws, and random seed for the interval around each category mean.</td>
+<td><code>0.95</code></td>
+</tr>
+<tr class="odd">
+<td>n_resamples</td>
+<td>optional</td>
+<td>Coverage, number of bootstrap draws, and random seed for the interval around each category mean.</td>
+<td><code>0.95</code></td>
+</tr>
+<tr class="even">
+<td>bootstrap_seed</td>
+<td>optional</td>
+<td>Coverage, number of bootstrap draws, and random seed for the interval around each category mean.</td>
+<td><code>0.95</code></td>
+</tr>
+<tr class="odd">
+<td>contrast_name</td>
+<td>str</td>
+<td>Title for the category legend.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 79%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>Axes</td>
+<td>The axes containing the category means and their intervals.</td>
 </tr>
 </tbody>
 </table>
