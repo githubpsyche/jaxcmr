@@ -468,7 +468,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <li><a href="#recall-performance" id="toc-recall-performance" class="nav-link" data-scroll-target="#recall-performance">Recall performance</a></li>
     <li><a href="#temporal-and-semantic-organization" id="toc-temporal-and-semantic-organization" class="nav-link" data-scroll-target="#temporal-and-semantic-organization">Temporal and semantic organization</a></li>
     <li><a href="#category-analyses" id="toc-category-analyses" class="nav-link" data-scroll-target="#category-analyses">Category analyses</a></li>
-    <li><a href="#adapting-a-procedure" id="toc-adapting-a-procedure" class="nav-link" data-scroll-target="#adapting-a-procedure">Adapting a procedure</a></li>
+    <li><a href="#adapting-a-procedure" id="toc-adapting-a-procedure" class="nav-link" data-scroll-target="#adapting-a-procedure">Adapting a procedure</a>
+    <ul class="collapse">
+    <li><a href="#spc-model-inputs" id="toc-spc-model-inputs" class="nav-link" data-scroll-target="#spc-model-inputs">Comparing observed and simulated SPCs</a></li>
+    </ul></li>
     </ul>
   </nav>
     </div>
@@ -514,7 +517,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <li><a href="#recall-performance" id="toc-recall-performance-body">Recall performance</a></li>
     <li><a href="#temporal-and-semantic-organization" id="toc-temporal-and-semantic-organization-body">Temporal and semantic organization</a></li>
     <li><a href="#category-analyses" id="toc-category-analyses-body">Category analyses</a></li>
-    <li><a href="#adapting-a-procedure" id="toc-adapting-a-procedure-body">Adapting a procedure</a></li>
+    <li><a href="#adapting-a-procedure" id="toc-adapting-a-procedure-body">Adapting a procedure</a>
+    <ul>
+    <li><a href="#spc-model-inputs" id="toc-spc-model-inputs-body">Comparing observed and simulated SPCs</a></li>
+    </ul></li>
     </ul>
   </nav>
 </details>
@@ -767,7 +773,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Settings are ordinary values: paths, numbers, lists, dictionaries and import names. Imports, trial masks and model construction happen afterward, using the effective values. The fitting template can select a model and its components, objective, fitted parameters, participant subset and displayed analyses. Analysis templates expose their trial selections and measure-specific settings. Their inputs are saved response files; preparing or running an analysis does not generate missing simulations.</p>
 <p>Ordinary imports occupy their own cell after the optional Colab bootstrap. Derived paths, loading and calculations follow the injected parameters. <code>figure_str=""</code> displays figures without saving them; a nonempty name saves under <code>figure_dir</code>. The defaults provide explicit names for the worked examples. Subject-level CSV summaries use <code>output_dir</code>.</p>
 <p>The analysis controls include repeated-item capacity (<code>size</code>), stopping <code>mode</code>, condition queries, category fields and labels, and plot limits. Category recall also accepts configured paired contrasts and contrasts of contrasts. Select these for the question being asked; the defaults leave the optional tests empty.</p>
-<p>You can also supply settings externally. <a href="https://quarto.org/docs/computations/parameters.html">Quarto</a> and <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">Papermill</a> use the same tagged cell. An override replaces a whole top-level value: to change one model, supply the complete <code>model_configs</code> dictionary for that work unit. Use <code>fit_alg_path</code> and <code>fit_hyperparams</code> to select and configure the optimizer. Analysis templates use <code>data_paths</code> and <code>data_labels</code> for a collection; an explicit <code>data_path</code> retains single-dataset use. Their condition queries are applied to each input.</p>
+<p>You can also supply settings externally. <a href="https://quarto.org/docs/computations/parameters.html">Quarto</a> and <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">Papermill</a> use the same tagged cell. An override replaces a whole top-level value: to change one model, supply the complete <code>model_configs</code> dictionary for that work unit. Use <code>fit_alg_path</code> and <code>fit_hyperparams</code> to select and configure the optimizer. Analysis templates accept a list of response files (<code>data_paths</code>) and a matching list of names (<code>data_labels</code>). Each trial query applies to every file.</p>
 </section>
 <section id="execute-a-report-with-quarto" class="level3">
 <h3 class="anchored" data-anchor-id="execute-a-report-with-quarto">Execute a report with Quarto</h3>
@@ -791,7 +797,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="prepare-independent-jobs-with-papermill" class="level3">
 <h3 class="anchored" data-anchor-id="prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</h3>
 <p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. From the repository root, the following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
-<div id="0285c0f3" class="cell">
+<div id="ff94848a" class="cell">
 <details open="" class="code-fold">
 <summary>Prepare two fitting jobs without running them</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -964,11 +970,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="adapting-a-procedure" class="level2">
 <h2 class="anchored" data-anchor-id="adapting-a-procedure">Adapting a procedure</h2>
 <p>Each published notebook explains its required inputs, common settings, selection checks, calculation and saved outputs. Start with its settings cell, then run in order. You can read the explanatory text with code folded on the website or beside the executable cells in Jupyter and Colab.</p>
-<p>In the analysis templates, setting <code>data_path</code> overrides <code>data_paths</code> and selects the single-file comparison layout. Leaving <code>data_path=None</code> uses the dataset-list layout, even when <code>data_paths</code> contains one file. Category-specific curves have additional category panels; each notebook explains its layout and label settings.</p>
 <p>Adapt the settings cell: input paths, trial selection, parameters and output folder. Check the meanings of item codes, participant identifiers, categories and response padding before interpreting results. Retain the same selection for comparisons that are intended to address the same observations.</p>
+<p>Most analysis templates use <code>data_path</code> to compare conditions within one file and <code>data_paths</code> to compare files within each condition. The SPC template selects which curves share a figure with <code>comparison</code>. In SPC, use one-entry lists for a single file or condition. With <code>comparison="conditions"</code>, the dataset label titles the figure and the condition labels identify its curves. Category-specific templates describe their additional panels alongside the calculations.</p>
 <p>The <a href="https://github.com/githubpsyche/jaxcmr/tree/main/templates">remaining repository templates</a> are research examples with varying dependencies and maintenance status. They remain at their original paths and are outside this prepared set.</p>
+<section id="spc-model-inputs" class="level3">
+<h3 class="anchored" data-anchor-id="spc-model-inputs">Comparing observed and simulated SPCs</h3>
+<p>In the bundled Dupertuys example, the <code>list_type</code> field codes mixed lists as 1, pure emotional lists as 2, and pure neutral lists as 3. The <a href="./templates/spc.html">SPC notebook</a> starts with observed recall for each of those conditions. To overlay model predictions, supply the simulated response files alongside the observations. These settings include all three bundled models. For one model, keep its entry and the observed entry in both lists.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a>data_paths <span class="op">=</span> [</span>
+<span id="cb7-2"><a href="#cb7-2" aria-label="2"></a>    <span class="st">"data/Dupertuys2026.h5"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-label="3"></a>    <span class="st">"data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5"</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-label="4"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-label="5"></a>    <span class="st">"data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5"</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-label="6"></a>]</span>
+<span id="cb7-7"><a href="#cb7-7" aria-label="7"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>, <span class="st">"CMR"</span>, <span class="st">"Source-only eCMR"</span>, <span class="st">"Broader eCMR"</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>comparison <span class="op">=</span> <span class="st">"datasets"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

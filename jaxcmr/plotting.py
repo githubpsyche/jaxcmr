@@ -549,42 +549,35 @@ def comparison_panels(
 
     In conditions mode, the same dataset appears once per condition with a
     different mask. In datasets mode, each panel contains all datasets with the
-    corresponding condition masks. Supply aligned dataset, mask and label
-    collections.
+    corresponding condition masks. Mismatched numbers of datasets, labels,
+    or condition masks raise ``ValueError``.
     """
-    datasets = list(datasets)
-    dataset_labels, condition_labels = list(dataset_labels), list(condition_labels)
-    normalized_masks_by_dataset = [
-        [
-            (
-                jnp.ones(data["recalls"].shape[0], dtype=bool)
-                if condition_mask is None
-                else jnp.asarray(condition_mask)
+    overlay_conditions = mode == "conditions"
+    if overlay_conditions and len(datasets) != 1:
+        raise ValueError("Choose one response dataset to overlay conditions.")
+
+    titles = [selection_label] if overlay_conditions else condition_labels
+    panels: list[_ComparisonPanel] = [
+        {"title": title, "datasets": [], "labels": [], "trial_masks": []}
+        for title in titles
+    ]
+    for dataset, dataset_label, masks in zip(
+        datasets, dataset_labels, masks_by_dataset, strict=True
+    ):
+        selections = zip(condition_labels, masks, strict=True)
+        for index, (condition_label, mask) in enumerate(selections):
+            if overlay_conditions:
+                panel, label = panels[0], condition_label
+            else:
+                panel, label = panels[index], dataset_label
+            panel["datasets"].append(dataset)
+            panel["labels"].append(label)
+            panel["trial_masks"].append(
+                jnp.ones(dataset["recalls"].shape[0], dtype=bool)
+                if mask is None
+                else jnp.asarray(mask)
             )
-            for condition_mask in condition_masks
-        ]
-        for data, condition_masks in zip(datasets, masks_by_dataset)
-    ]
-    if mode == "conditions":
-        return [
-            {
-                "datasets": datasets * len(condition_labels),
-                "trial_masks": normalized_masks_by_dataset[0],
-                "labels": condition_labels,
-                "title": selection_label,
-            }
-        ]
-    return [
-        {
-            "datasets": list(datasets),
-            "trial_masks": [
-                masks[condition_index] for masks in normalized_masks_by_dataset
-            ],
-            "labels": list(dataset_labels),
-            "title": label,
-        }
-        for condition_index, label in enumerate(condition_labels)
-    ]
+    return panels
 
 
 def iter_analysis_figures(

@@ -451,8 +451,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="describe-observed-recall" class="level2">
 <h2 class="anchored" data-anchor-id="describe-observed-recall">Describe observed recall</h2>
-<p>Open <a href="../templates/spc.html">Serial position curves</a>. In its parameter cell, set <code>data_paths = ["data/Dupertuys2026.h5"]</code>, <code>data_labels = ["Observed"]</code> and <code>output_dir = "results/tutorial/model-comparison/observed"</code>. Leave the single-input override <code>data_path</code> unset. Retain the three <code>trial_queries</code> and matching <code>labels</code> shown above.</p>
-<p>Run the notebook. It reports 491 complete lists from 123 participants, excluding the one padded study list, and produces one condition panel per query. The saved figure is <code>observed/spc.png</code> beneath this tutorial’s output folder. The vertical axis describes recall probability at each study position; the curve alone does not identify a memory mechanism.</p>
+<p>Open <a href="../templates/spc.html">Serial position curves</a>. In its parameter cell, set <code>data_paths = ["data/Dupertuys2026.h5"]</code>, <code>data_labels = ["Observed"]</code> and <code>output_dir = "results/tutorial/model-comparison/observed"</code>. Retain the three <code>trial_queries</code> and matching <code>labels</code> shown above.</p>
+<p>Run the notebook. The complete-list selection includes 491 lists from 123 participants. Each query produces a separate figure under <code>observed/</code>, such as <code>spc_1_mixed.png</code>. The vertical axis describes recall probability at each study position; the curve alone does not identify a memory mechanism.</p>
 </section>
 <section id="inspect-a-fitted-model" class="level2">
 <h2 class="anchored" data-anchor-id="inspect-a-fitted-model">Inspect a fitted model</h2>
@@ -502,7 +502,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="compare-observed-and-simulated-recall" class="level2">
 <h2 class="anchored" data-anchor-id="compare-observed-and-simulated-recall">Compare observed and simulated recall</h2>
 <p>Return to <a href="../templates/spc.html">SPC</a>. Supply the observation file followed by simulation’s printed response paths as <code>data_paths</code>, with matching <code>data_labels</code>. Use the same condition queries and complete-list selection. Simulated repetitions stay grouped under the original participant IDs when summarizing behavior.</p>
-<p>The sequence below writes <code>predictions/spc.png</code>: each condition panel compares observations with all three models. Other <a href="../templates.html">analysis templates</a> can read these same saved response files without fitting or simulating again.</p>
+<p>The sequence below saves one figure per condition under <code>predictions/</code>. Each compares observations with all three models. Other <a href="../templates.html">analysis templates</a> can read these same saved response files without fitting or simulating again.</p>
 </section>
 <section id="compare-models" class="level2">
 <h2 class="anchored" data-anchor-id="compare-models">Compare models</h2>
@@ -521,11 +521,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-label="2"></a><span class="im">import</span> json</span>
 <span id="cb2-3"><a href="#cb2-3" aria-label="3"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb2-4"><a href="#cb2-4" aria-label="4"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span>
+<span id="cb2-5"><a href="#cb2-5" aria-label="5"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
 <span id="cb2-6"><a href="#cb2-6" aria-label="6"></a><span class="im">import</span> papermill <span class="im">as</span> pm</span>
 <span id="cb2-7"><a href="#cb2-7" aria-label="7"></a><span class="im">from</span> tabulate <span class="im">import</span> tabulate</span>
 <span id="cb2-8"><a href="#cb2-8" aria-label="8"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-9"><a href="#cb2-9" aria-label="9"></a><span class="im">from</span> jaxcmr.helpers <span class="im">import</span> find_project_root, resolve_project_path</span>
+<span id="cb2-10"><a href="#cb2-10" aria-label="10"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-label="11"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-label="12"></a><span class="kw">def</span> display_figures(report):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-label="13"></a>    <span class="cf">for</span> cell <span class="kw">in</span> report.cells:</span>
+<span id="cb2-14"><a href="#cb2-14" aria-label="14"></a>        <span class="cf">for</span> output <span class="kw">in</span> cell.get(<span class="st">"outputs"</span>, []):</span>
+<span id="cb2-15"><a href="#cb2-15" aria-label="15"></a>            <span class="cf">if</span> <span class="st">"image/png"</span> <span class="kw">in</span> output.get(<span class="st">"data"</span>, {}):</span>
+<span id="cb2-16"><a href="#cb2-16" aria-label="16"></a>                display(output.data, raw<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="152d234f" class="cell" data-tags="[]" data-execution_count="4">
@@ -557,7 +564,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="a7c5352e" class="cell" data-tags="[]" data-execution_count="5">
 <details open="" class="code-fold">
 <summary>4 — Run the observed-data analysis</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>pm.execute_notebook(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-label="1"></a>spc_report <span class="op">=</span> pm.execute_notebook(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"spc.ipynb"</span>), <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"observed_spc.ipynb"</span>),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-label="3"></a>    parameters<span class="op">=</span>{</span>
 <span id="cb4-4"><a href="#cb4-4" aria-label="4"></a>        <span class="op">**</span>analysis_parameters,</span>
@@ -566,12 +573,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-7"><a href="#cb4-7" aria-label="7"></a>    },</span>
 <span id="cb4-8"><a href="#cb4-8" aria-label="8"></a>    <span class="op">**</span>execution_options,</span>
 <span id="cb4-9"><a href="#cb4-9" aria-label="9"></a>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>display(Image(filename<span class="op">=</span><span class="bu">str</span>(output_path <span class="op">/</span> <span class="st">"observed"</span> <span class="op">/</span> <span class="st">"spc.png"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-10"><a href="#cb4-10" aria-label="10"></a>display_figures(spc_report)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
 <p><a href="template-tour_files/figure-html/cell-5-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="template-tour_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="template-tour_files/figure-html/cell-5-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="template-tour_files/figure-html/cell-5-output-2.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="template-tour_files/figure-html/cell-5-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="template-tour_files/figure-html/cell-5-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -684,7 +705,7 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 <div id="6908e709" class="cell" data-tags="[]" data-execution_count="9">
 <details open="" class="code-fold">
 <summary>8 — Run SPC on the observations and saved model responses</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>pm.execute_notebook(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-label="1"></a>spc_report <span class="op">=</span> pm.execute_notebook(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"spc.ipynb"</span>), <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"predicted_spc.ipynb"</span>),</span>
 <span id="cb12-3"><a href="#cb12-3" aria-label="3"></a>    parameters<span class="op">=</span>{</span>
 <span id="cb12-4"><a href="#cb12-4" aria-label="4"></a>        <span class="op">**</span>analysis_parameters,</span>
@@ -694,12 +715,26 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 <span id="cb12-8"><a href="#cb12-8" aria-label="8"></a>    },</span>
 <span id="cb12-9"><a href="#cb12-9" aria-label="9"></a>    <span class="op">**</span>execution_options,</span>
 <span id="cb12-10"><a href="#cb12-10" aria-label="10"></a>)</span>
-<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a>display(Image(filename<span class="op">=</span><span class="bu">str</span>(output_path <span class="op">/</span> <span class="st">"predictions"</span> <span class="op">/</span> <span class="st">"spc.png"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-11"><a href="#cb12-11" aria-label="11"></a>display_figures(spc_report)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="template-tour_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="template-tour_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
+<p><a href="template-tour_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="template-tour_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="template-tour_files/figure-html/cell-9-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="template-tour_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="template-tour_files/figure-html/cell-9-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="template-tour_files/figure-html/cell-9-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>

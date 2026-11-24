@@ -160,11 +160,36 @@ def test_panels_use_explicit_mode_even_with_one_dataset():
     assert conditions[0]['title']=='Comparison' and conditions[0]['datasets']==[data,data]
     assert len(datasets)==2 and [p['title'] for p in datasets]==['First','Second']
     assert datasets[0]['labels']==['Observed']
-    second=comparison_panels([data,data],[masks,masks],['Observed','Model'],['First','Second'],mode='datasets')
+    second = comparison_panels(
+        [data, data], [masks, [None, masks[0]]], ["Observed", "Model"], ["First", "Second"],
+        mode="datasets",
+    )
+    np.testing.assert_array_equal(second[0]["trial_masks"][1], np.ones(4, dtype=bool))
+    np.testing.assert_array_equal(second[1]["trial_masks"][1], masks[0])
     assert second[1]['datasets'][1] is data
     np.testing.assert_array_equal(second[1]['trial_masks'][0],masks[1])
     second[0]['labels'].append('extra')
     assert second[1]['labels']==['Observed','Model']
+
+
+@pytest.mark.parametrize(
+    "mode, masks, dataset_labels, condition_labels",
+    [
+        ("datasets", [[None, None]], ["Observed"], ["A"]),
+        ("conditions", [[None]], ["Observed"], ["A", "B"]),
+        ("datasets", [[None]], [], ["A"]),
+        ("datasets", [], ["Observed"], ["A"]),
+    ],
+)
+def test_comparison_panels_reject_misaligned_inputs(mode, masks, dataset_labels, condition_labels):
+    with pytest.raises(ValueError):
+        comparison_panels([sample_data()], masks, dataset_labels, condition_labels, mode=mode)
+
+
+def test_condition_overlay_requires_one_dataset():
+    data = sample_data()
+    with pytest.raises(ValueError, match="one response dataset"):
+        comparison_panels([data, data], [[None], [None]], ["A", "B"], ["All"], mode="conditions")
 
 
 PLOT_CALLS = []

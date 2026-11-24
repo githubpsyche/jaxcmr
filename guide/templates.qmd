@@ -245,8 +245,8 @@ and [Papermill](https://papermill.readthedocs.io/en/latest/usage-parameterize.ht
 use the same tagged cell. An override replaces a whole top-level value: to
 change one model, supply the complete `model_configs` dictionary for that work unit.
 Use `fit_alg_path` and `fit_hyperparams` to select and configure the optimizer. Analysis
-templates use `data_paths` and `data_labels` for a collection; an explicit `data_path`
-retains single-dataset use. Their condition queries are applied to each input.
+templates accept a list of response files (`data_paths`) and a matching list of
+names (`data_labels`). Each trial query applies to every file.
 
 ### Execute a report with Quarto
 
@@ -410,17 +410,38 @@ checks, calculation and saved outputs. Start with its settings cell, then run in
 order. You can read the explanatory text with code folded on the website or beside
 the executable cells in Jupyter and Colab.
 
-In the analysis templates, setting `data_path` overrides `data_paths` and selects
-the single-file comparison layout. Leaving `data_path=None` uses the dataset-list
-layout, even when `data_paths` contains one file. Category-specific curves have
-additional category panels; each notebook explains its layout and label settings.
-
-
 Adapt the settings cell: input paths, trial selection, parameters
 and output folder. Check the meanings of item codes, participant identifiers,
 categories and response padding before interpreting results. Retain the same
 selection for comparisons that are intended to address the same observations.
 
+Most analysis templates use `data_path` to compare conditions within one file and
+`data_paths` to compare files within each condition. The SPC template selects
+which curves share a figure with `comparison`. In SPC, use one-entry lists for
+a single file or condition. With `comparison="conditions"`, the dataset label
+titles the figure and the condition labels identify its curves. Category-specific
+templates describe their additional panels alongside the calculations.
+
 The [remaining repository templates](https://github.com/githubpsyche/jaxcmr/tree/main/templates)
 are research examples with varying dependencies and maintenance status. They
 remain at their original paths and are outside this prepared set.
+
+### Comparing observed and simulated SPCs {#spc-model-inputs}
+
+In the bundled Dupertuys example, the `list_type` field codes mixed lists as 1,
+pure emotional lists as 2, and pure neutral lists as 3. The [SPC notebook](templates/spc.ipynb)
+starts with observed recall for each of those conditions. To overlay model
+predictions, supply the simulated response files alongside the observations.
+These settings include all three bundled models. For one model, keep its entry
+and the observed entry in both lists.
+
+```python
+data_paths = [
+    "data/Dupertuys2026.h5",
+    "data/simulations/Dupertuys2026_CMR_demo_best_of_3.h5",
+    "data/simulations/Dupertuys2026_eCMR_source_only_demo_best_of_3.h5",
+    "data/simulations/Dupertuys2026_eCMR_broad_demo_best_of_3.h5",
+]
+data_labels = ["Observed", "CMR", "Source-only eCMR", "Broader eCMR"]
+comparison = "datasets"
+```
