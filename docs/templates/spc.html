@@ -501,33 +501,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A serial position curve shows how often participants recall an item as a function of its position on the study list. A recall at any output position counts.</p>
 <section id="choose-the-lists-to-compare" class="level2">
 <h2 class="anchored" data-anchor-id="choose-the-lists-to-compare">Choose the lists to compare</h2>
-<p>Supply a trial query and a label for each condition you want to plot. The notebook applies the same queries to every response file. To draw one curve per file across all eligible lists, use <code>trial_queries = [None]</code> and <code>labels = ["All lists"]</code>. With <code>complete_lists_only=True</code>, a list contributes only if every study position contains an item.</p>
+<p>List each response file once and give it a label. Write one trial query per condition using fields shared by the files, and supply the condition names in the same order. To use all eligible lists as one condition, set <code>trial_queries = [None]</code> and <code>labels = ["All lists"]</code>.</p>
 <div id="30503f7b" class="cell" data-tags="[&quot;parameters&quot;]" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Select datasets, conditions and outputs</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a><span class="co"># Example inputs and conditions for the bundled Dupertuys study.</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>data_paths <span class="op">=</span> [<span class="st">"data/Dupertuys2026.h5"</span>]</span>
-<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>]</span>
-<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a><span class="co"># For several conditions from the same file, list that file once and give each condition a query.</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>, <span class="st">"data['list_type'] == 2"</span>, <span class="st">"data['list_type'] == 3"</span>]</span>
-<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span>
-<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a><span class="co"># Overlay datasets within each condition, or use "conditions" to overlay conditions from one file.</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>comparison <span class="op">=</span> <span class="st">"datasets"</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>complete_lists_only <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>max_subjects <span class="op">=</span> <span class="dv">0</span>              <span class="co"># Zero includes all participants.</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>plot_seed <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>project_root <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>output_dir <span class="op">=</span> <span class="st">"results/spc"</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>figure_dir <span class="op">=</span> <span class="va">None</span>             <span class="co"># Defaults to output_dir.</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>figure_str <span class="op">=</span> <span class="st">"spc"</span>            <span class="co"># An empty name displays figures without saving.</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a><span class="co"># Optional plot settings for parameterized runs.</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>contrast_name <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-label="22"></a>ylim <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">1</span>)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-label="23"></a>yticks <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>data_paths <span class="op">=</span> [<span class="st">"data/Dupertuys2026.h5"</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-label="2"></a>data_labels <span class="op">=</span> [<span class="st">"Observed"</span>]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-label="3"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>, <span class="st">"data['list_type'] == 2"</span>, <span class="st">"data['list_type'] == 3"</span>]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-label="4"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-label="5"></a><span class="co"># Use "datasets" for one figure per condition or "conditions" to overlay conditions from one file.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-label="6"></a>comparison <span class="op">=</span> <span class="st">"datasets"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-label="7"></a>complete_lists_only <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-label="8"></a>max_subjects <span class="op">=</span> <span class="dv">0</span>              <span class="co"># Zero includes all participants.</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-label="9"></a>confidence_level <span class="op">=</span> <span class="fl">0.95</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-label="10"></a>plot_seed <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-label="11"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>project_root <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>output_dir <span class="op">=</span> <span class="st">"results/spc"</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>figure_dir <span class="op">=</span> <span class="va">None</span>             <span class="co"># Defaults to output_dir.</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>figure_str <span class="op">=</span> <span class="st">"spc"</span>            <span class="co"># An empty name displays figures without saving.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a><span class="co"># Optional plot settings for parameterized runs.</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>color_cycle <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>contrast_name <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>ylim <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-label="21"></a>yticks <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -568,6 +566,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="select-the-trials" class="level2">
 <h2 class="anchored" data-anchor-id="select-the-trials">Select the trials</h2>
+<p>With <code>complete_lists_only=True</code>, the selection excludes any trial with a padded study position. This includes shorter lists stored alongside longer ones.</p>
 <div id="e005bba6" class="cell" data-execution_count="5">
 <details open="" class="code-fold">
 <summary>Select trials for each condition</summary>
@@ -580,8 +579,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="recall-by-study-position" class="level2">
 <h2 class="anchored" data-anchor-id="recall-by-study-position">Recall by study position</h2>
-<p>Each point is the mean of the participants’ recall probabilities at that position. Error bars show bootstrap confidence intervals across participants. On lists with repeated items, recalling an item credits each position where it appeared once per trial.</p>
-<p>Each comparison is displayed and saved separately. With several conditions, filenames include the condition number and label. A single figure uses the supplied <code>figure_str</code> alone.</p>
+<p>Each point is the mean of the participants’ recall probabilities at that position. Error bars show bootstrap confidence intervals for that mean. If an item appeared more than once on a list, recalling it credits each of its study positions once.</p>
+<p>When saving several figures, the notebook adds the condition number and label to each filename. A single figure uses <code>figure_str</code> alone.</p>
 <div id="3a8adf1c" class="cell" data-execution_count="6">
 <details open="" class="code-fold">
 <summary>Plot and save each comparison</summary>
