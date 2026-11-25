@@ -40,12 +40,12 @@ def overrides(profile, project):
     settings = {
         "analysis": "max_subjects = 4\ndata_paths = data_paths[:2]\ndata_labels = data_labels[:2]\ntrial_queries = trial_queries[:2]\nlabels = labels[:2] if labels is not None else None\n",
         "simulation": "max_subjects = 2\nexperiment_count = 1\nsimulation_dir = 'results/responses'\n",
-        "fitting": "max_subjects = 2\nmodel_configs = {'CMR': model_configs['CMR']}\nfit_hyperparams.update(num_steps=2, pop_size=2, best_of=1)\nexperiment_count = 1\n",
+        "fitting": "fit_action = 'estimate'\nmax_subjects = 2\nmodel_configs = {'CMR': model_configs['CMR']}\nfit_hyperparams.update(num_steps=2, pop_size=2, best_of=1)\n",
         "shifting": "max_subjects = 2\nexperiment_count = 1\nparameter_sweeps = {'CMR_encoding': dict(parameter_sweeps['CMR_encoding'], values=[0.2, 0.8])}\n",
         "comparison": "", "first": "", "preparation": "",
         "spreadsheet": "source_dir = 'synthetic-inputs'\n",
     }[profile]
-    if profile in {"simulation", "fitting", "shifting", "comparison"}:
+    if profile in {"simulation", "shifting", "comparison"}:
         settings += "comparison_analysis_configs = [c for c in comparison_analysis_configs if c['target'] == 'jaxcmr.analyses.spc.plot_spc']\nassert len(comparison_analysis_configs) == 1\n"
     return common + settings
 

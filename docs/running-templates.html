@@ -610,7 +610,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="saved-products-and-regeneration" class="level2">
 <h2 class="anchored" data-anchor-id="saved-products-and-regeneration">Reuse fits and simulated responses</h2>
-<p>Copy the <code>fit_paths</code> printed by fitting into simulation, then supply the printed <code>simulation_paths</code> to model comparison or their values as analysis <code>data_paths</code>. The defaults continue to use the supplied examples until you replace them. For example, a one-model simulation job can use:</p>
+<p>Pass the fit JSON paths displayed by fitting to simulation, then supply the printed <code>simulation_paths</code> to model comparison or their values as analysis <code>data_paths</code>. The defaults continue to use the supplied examples until you replace them. For example, a one-model simulation job can use:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-label="1"></a>fit_paths <span class="op">=</span> {<span class="st">"CMR"</span>: <span class="st">"results/fits/Dupertuys2026_CMR_demo_best_of_3.json"</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>output_dir</code> supplies default locations, but explicit directory settings take precedence:</p>
 <table class="caption-top table">
@@ -627,7 +627,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>Fitting</td>
-<td><code>target_directory</code> or <code>output_dir</code> supplies the product root; explicit <code>fit_dir</code>, <code>simulation_dir</code> and <code>figure_dir</code> override their defaults.</td>
+<td>New JSON records go under <code>output_dir/fits</code> or the explicit <code>fit_dir</code>. Inspection reads <code>saved_fit_paths</code>.</td>
 </tr>
 <tr class="even">
 <td>Simulation</td>
@@ -639,7 +639,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Give independent jobs distinct names or directories for every product they write. <code>redo_fits=False</code> loads an existing fit at the chosen path; you must establish that its model, parameters, participants, observations and input data match your intended run. Compatibility is not checked. A missing fit is still computed. After relevant changes, set <code>redo_fits=True</code> or choose a new output location. <code>redo_sims=False</code> permits matching response reuse; when predictions are requested, missing or stale responses are regenerated. Fitting is fit-only when both <code>redo_sims</code> and <code>redo_figures</code> are false. <code>figure_str=""</code> disables figure saving, but does not disable summary CSVs.</p>
+<p>Give independent jobs distinct names or directories for every product they write. Choose <code>fit_action="inspect"</code> to read named records, or <code>"estimate"</code> to run the optimizer. To resume batch jobs, <code>"fit_if_missing"</code> estimates a model only when its destination file is missing. Give changed models or selections new destinations. Simulation can reuse matching responses with <code>redo_sims=False</code>. An empty <code>figure_str</code> displays plots without saving them.</p>
 <p>The fitting notebook recalculates the objective at the saved parameters so you can compare it with the recorded value. If you edit data or model code in place, give the run a new output location or regenerate the affected fits and simulations.</p>
 <p>You can also supply settings externally. <a href="https://quarto.org/docs/computations/parameters.html">Quarto</a> and <a href="https://papermill.readthedocs.io/en/latest/usage-parameterize.html">Papermill</a> use the same tagged cell. An override replaces a whole top-level value: to change one model, supply the complete <code>model_configs</code> dictionary for that work unit. Use <code>fit_alg_path</code> and <code>fit_hyperparams</code> to select and configure the optimizer. Analysis templates accept a list of response files (<code>data_paths</code>) and a matching list of names (<code>data_labels</code>). Each trial query applies to every file.</p>
 </section>
@@ -686,7 +686,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="prepare-independent-jobs-with-papermill" class="level2">
 <h2 class="anchored" data-anchor-id="prepare-independent-jobs-with-papermill">Prepare independent jobs with Papermill</h2>
 <p>For a cluster batch, it can be useful to inspect the complete set of jobs before executing any of them. Papermill’s <code>prepare_only=True</code> creates a configured notebook for each job. From the repository root, the following Python cell prepares two fitting runs that differ only in optimization seed and output folder:</p>
-<div id="0b5027fa" class="cell">
+<div id="20c68885" class="cell">
 <details open="" class="code-fold">
 <summary>Prepare two fitting jobs without running them</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-label="1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -710,7 +710,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    path <span class="op">=</span> jobs <span class="op">/</span> <span class="ss">f"fitting_seed_</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">.ipynb"</span></span>
 <span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    prepared <span class="op">=</span> pm.execute_notebook(</span>
 <span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>        <span class="st">"templates/fitting.ipynb"</span>, <span class="bu">str</span>(path),</span>
-<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>        parameters<span class="op">=</span>{<span class="st">"model_configs"</span>: configs, <span class="st">"output_dir"</span>: <span class="ss">f"results/fitting-seed-</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">"</span>},</span>
+<span id="cb7-22"><a href="#cb7-22" aria-label="22"></a>        parameters<span class="op">=</span>{<span class="st">"fit_action"</span>: <span class="st">"estimate"</span>, <span class="st">"model_configs"</span>: configs, <span class="st">"output_dir"</span>: <span class="ss">f"results/fitting-seed-</span><span class="sc">{</span>seed<span class="sc">}</span><span class="ss">"</span>},</span>
 <span id="cb7-23"><a href="#cb7-23" aria-label="23"></a>        prepare_only<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb7-24"><a href="#cb7-24" aria-label="24"></a>    )</span>
 <span id="cb7-25"><a href="#cb7-25" aria-label="25"></a>    <span class="co"># Stored example results are not results from this new job.</span></span>
@@ -724,7 +724,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>To prepare one model per job, pass a one-entry <code>model_configs</code> dictionary. Preserve the project’s chosen job boundaries: a model collection does not require running every model in each scheduled job. Inspect the injected settings in each notebook. Execute one from the working folder with:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb8-1"><a href="#cb8-1" aria-label="1"></a>uv run papermill analyses/rendered/fitting_seed_0.ipynb analyses/rendered/fitting_seed_0.ipynb --cwd .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The same prepared notebooks can be transferred with their inputs and run as separate Slurm jobs, using the project folder as the working directory. This keeps the prepared paths portable: set <code>--cwd</code> to the destination project folder, or inject its <code>project_root</code> when executing. Do not inject a local machine’s absolute root into jobs intended for a different machine. This matches the <a href="https://github.com/githubpsyche/sbatch/blob/master/workshop/04-prepare-work-units.qmd">remote-cluster workflow</a>: maintain a procedure, prepare concrete work units, then schedule their execution. Preparing jobs does not fit a model; rendering HTML is a separate presentation step.</p>
-<p>For participant jobs, the fitting template uses <code>pooled=False</code> and <code>subject_indices=[i]</code>, where <code>i</code> indexes the sorted participant IDs. Simulation and parameter exploration can instead vary seeds or parameter values. Choose the work unit around the scientific question and keep its inputs and outputs explicit. A fit-only job sets both <code>redo_sims</code> and <code>redo_figures</code> to <code>False</code>; later simulation can use its saved result.</p>
+<p>For participant jobs, the fitting template uses <code>pooled=False</code> and <code>subject_indices=[i]</code>, where <code>i</code> indexes the sorted participant IDs. Simulation and parameter exploration can instead vary seeds or parameter values. Choose the work unit around the scientific question and keep its inputs and outputs explicit. Fitting ends at the JSON record. Pass that file to the simulation template to generate responses.</p>
 
 
 </section>

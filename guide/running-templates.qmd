@@ -51,7 +51,7 @@ change the process's working directory.
 
 ## Reuse fits and simulated responses {#saved-products-and-regeneration}
 
-Copy the `fit_paths` printed by fitting into simulation, then supply the printed
+Pass the fit JSON paths displayed by fitting to simulation, then supply the printed
 `simulation_paths` to model comparison or their values as analysis `data_paths`.
 The defaults continue to use the supplied examples until you replace them. For example,
 a one-model simulation job can use:
@@ -64,18 +64,12 @@ fit_paths = {"CMR": "results/fits/Dupertuys2026_CMR_demo_best_of_3.json"}
 
 | Procedure | Directory precedence |
 |---|---|
-| Fitting | `target_directory` or `output_dir` supplies the product root; explicit `fit_dir`, `simulation_dir` and `figure_dir` override their defaults. |
+| Fitting | New JSON records go under `output_dir/fits` or the explicit `fit_dir`. Inspection reads `saved_fit_paths`. |
 | Simulation | Explicit `simulation_dir` and `figure_dir` override `output_dir`. The example sets `simulation_dir="results/simulations"`. |
 | Parameter shifting, model comparison and analyses | Explicit `figure_dir` overrides its default; summary tables use `output_dir`. |
 
 Give independent jobs distinct names or directories for every product they write.
-`redo_fits=False` loads an existing fit at the chosen path; you must establish that
-its model, parameters, participants, observations and input data match your intended
-run. Compatibility is not checked. A missing fit is still computed. After relevant
-changes, set `redo_fits=True` or choose a new output location. `redo_sims=False` permits matching response reuse;
-when predictions are requested, missing or stale responses are regenerated. Fitting
-is fit-only when both `redo_sims` and `redo_figures` are false. `figure_str=""` disables
-figure saving, but does not disable summary CSVs.
+Choose `fit_action="inspect"` to read named records, or `"estimate"` to run the optimizer. To resume batch jobs, `"fit_if_missing"` estimates a model only when its destination file is missing. Give changed models or selections new destinations. Simulation can reuse matching responses with `redo_sims=False`. An empty `figure_str` displays plots without saving them.
 
 The fitting notebook recalculates the objective at the saved parameters so you
 can compare it with the recorded value. If you edit data or model code in place,
@@ -203,7 +197,7 @@ for seed in [0, 1]:
     path = jobs / f"fitting_seed_{seed}.ipynb"
     prepared = pm.execute_notebook(
         "templates/fitting.ipynb", str(path),
-        parameters={"model_configs": configs, "output_dir": f"results/fitting-seed-{seed}"},
+        parameters={"fit_action": "estimate", "model_configs": configs, "output_dir": f"results/fitting-seed-{seed}"},
         prepare_only=True,
     )
     # Stored example results are not results from this new job.
@@ -235,5 +229,4 @@ For participant jobs, the fitting template uses `pooled=False` and
 `subject_indices=[i]`, where `i` indexes the sorted participant IDs. Simulation
 and parameter exploration can instead vary seeds or parameter values. Choose
 the work unit around the scientific question and keep its inputs and outputs
-explicit. A fit-only job sets both `redo_sims` and `redo_figures` to `False`;
-later simulation can use its saved result.
+explicit. Fitting ends at the JSON record. Pass that file to the simulation template to generate responses.

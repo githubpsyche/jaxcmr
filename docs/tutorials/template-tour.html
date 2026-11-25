@@ -442,11 +442,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-label="12"></a>    <span class="st">"eCMR_source_only"</span>: <span class="st">"Source-only eCMR"</span>,</span>
 <span id="cb1-13"><a href="#cb1-13" aria-label="13"></a>    <span class="st">"eCMR_broad"</span>: <span class="st">"Broader eCMR"</span>,</span>
 <span id="cb1-14"><a href="#cb1-14" aria-label="14"></a>}</span>
-<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>redo_fits <span class="op">=</span> <span class="va">False</span>  <span class="co"># True launches the full recorded optimization settings.</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>experiment_count <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>simulation_seed <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>, <span class="st">"data['list_type'] == 2"</span>, <span class="st">"data['list_type'] == 3"</span>]</span>
-<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-15"><a href="#cb1-15" aria-label="15"></a>redo_fits <span class="op">=</span> <span class="va">False</span>  <span class="co"># True estimates new parameters with the recorded search settings.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-label="16"></a>compare_saved_fits <span class="op">=</span> <span class="va">False</span>  <span class="co"># Enable for saved fits estimated on the current observations.</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-label="17"></a>experiment_count <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-label="18"></a>simulation_seed <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-label="19"></a>trial_queries <span class="op">=</span> [<span class="st">"data['list_type'] == 1"</span>, <span class="st">"data['list_type'] == 2"</span>, <span class="st">"data['list_type'] == 3"</span>]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-label="20"></a>labels <span class="op">=</span> [<span class="st">"Mixed"</span>, <span class="st">"Pure emotional"</span>, <span class="st">"Pure neutral"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <section id="describe-observed-recall" class="level2">
@@ -456,7 +457,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="inspect-a-fitted-model" class="level2">
 <h2 class="anchored" data-anchor-id="inspect-a-fitted-model">Inspect a fitted model</h2>
-<p>Open <a href="../templates/fitting.html">Fitting models</a>. Its first cell collects the observation selection, model specifications, fixed/free parameters, optimizer and output settings. The three supplied specifications fit all 492 lists with pooled parameters; the analysis selection for complete lists does not change the fitting selection.</p>
+<p>Open <a href="../templates/fitting.html">Fitting models</a>. Its first cell collects the observation selection, model specifications, fixed/free parameters, optimizer and output settings. This tutorial supplies one model per fitting job and uses all 492 lists with pooled parameters; the analysis selection for complete lists does not change the fitting selection.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -482,21 +483,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Optimizer and search settings, separate from model parameters.</td>
 </tr>
 <tr class="even">
-<td><code>redo_fits = False</code></td>
-<td>Load the result at the chosen path; you establish compatibility. A missing result still starts fitting.</td>
-</tr>
-<tr class="odd">
-<td><code>redo_sims = False</code>, <code>redo_figures = False</code></td>
-<td>Run fitting/objective inspection only.</td>
+<td><code>fit_action = "inspect"</code></td>
+<td>Read the named fit. Choose <code>"estimate"</code> to run a new optimization.</td>
 </tr>
 </tbody>
 </table>
-<p>The Papermill cells below place copies of the supplied fits at the expected paths before executing fitting. They display fitted parameters and independently recalculated objectives. Expected NLLs are approximately <strong>7202.029</strong> (CMR), <strong>7169.426</strong> (source-only) and <strong>7164.358</strong> (broader eCMR). Each fit estimates one parameter set across all participants.</p>
+<p>The Papermill cells below open each supplied fit. They display fitted parameters and independently recalculated objectives. The originally recorded NLLs are approximately <strong>7202.029</strong> (CMR), <strong>7169.426</strong> (source-only) and <strong>7164.358</strong> (broader eCMR). Each fit estimates one parameter set across all participants.</p>
 <p>To start new fits, choose a new <code>output_dir</code> and set this tour’s <code>redo_fits = True</code>. That uses the full recorded SciPy DE settings: 1,000 generations, population multiplier 15 and three restarts, with the recorded bounds and seeds. It can take substantially longer than inspecting saved fits. For different scientific specifications, edit the per-job <code>model_configs</code> passed to fitting and use a new output directory.</p>
 </section>
 <section id="generate-responses-from-the-fits" class="level2">
 <h2 class="anchored" data-anchor-id="generate-responses-from-the-fits">Generate responses from the fits</h2>
-<p>Open <a href="../templates/simulation.html">Simulating from saved fits</a>. Supply fitting’s printed <code>fit_paths</code>, set <code>experiment_count = 10</code> and <code>simulation_seed = 1</code>, and choose a <code>simulation_dir</code>. The sequence below uses a distinct folder for each model and sets <code>redo_sims = False</code>, allowing matching responses to be reused on a later run.</p>
+<p>Open <a href="../templates/simulation.html">Simulating from saved fits</a>. Supply the fit JSON paths displayed by fitting, set <code>experiment_count = 10</code> and <code>simulation_seed = 1</code>, and choose a <code>simulation_dir</code>. The sequence below uses a distinct folder for each model and sets <code>redo_sims = False</code>, allowing matching responses to be reused on a later run.</p>
 <p>The first run generates 4,920 response rows per model: ten repetitions of each of the 492 lists, retaining the original 123 participant IDs and list conditions. Each <code>.h5</code> response file has a <code>.json</code> file recording its model parameters, selected rows, seed and repetitions. These simulations impose observed recall lengths; matching recall counts are not a successful prediction of stopping behavior.</p>
 </section>
 <section id="compare-observed-and-simulated-recall" class="level2">
@@ -507,7 +504,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="compare-models" class="level2">
 <h2 class="anchored" data-anchor-id="compare-models">Compare models</h2>
 <p>Open <a href="../templates/model_comparison.html">Comparing pooled model fits</a>. Supply the same named <code>fit_paths</code> and <code>simulation_paths</code>. The notebook checks that the models use matching observations, objectives and stopping rules, recalculates likelihoods, and reports NLL, parameter counts, AIC, ΔAIC and search histories alongside behavioral comparisons.</p>
-<p>The expected parameter counts are 9, 10 and 10. Lower AIC is better within this comparison, but its interpretation depends on the fitted specifications and optimization quality; these pooled results are not independent participant-level estimates. The saved table is <code>comparison/pooled_model_comparison.csv</code>.</p>
+<p>The comparison step runs after fresh estimation on the current observations. The example models estimate 9, 10 and 10 parameters. Lower AIC is better within this comparison, but its interpretation depends on the fitted specifications and optimization quality; these pooled results are not independent participant-level estimates. The saved table is <code>comparison/pooled_model_comparison.csv</code>.</p>
 <p>For supported statistical examples, see <a href="../templates/cat_recall_rate.html">category recall rate</a> for paired participant contrasts and <a href="../templates/distrank.html">distance rank</a> for tests against chance. Use participant summaries as the sampling units; simulation repetitions are not additional participants.</p>
 </section>
 <section id="sequence-the-templates-with-papermill" class="level2">
@@ -597,45 +594,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The work-unit preparation below reads the exact specifications from the supplied fit records. It copies results into this run’s folder and supplies the cohort metadata omitted by the older records, using their recorded cohort indices. Original inputs are left unchanged; existing working results are not replaced.</p>
+<p>Each fitting job reads its model specification and search settings from a supplied record. Inspecting reads the original file. Estimating writes a new fit into the job’s own directory.</p>
 <div id="dd0e2268" class="cell" data-tags="[]" data-execution_count="6">
 <details open="" class="code-fold">
 <summary>5 — Prepare a separate fitting work unit for each model</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-label="1"></a>fit_jobs <span class="op">=</span> []</span>
 <span id="cb5-2"><a href="#cb5-2" aria-label="2"></a><span class="cf">for</span> model_name, source <span class="kw">in</span> fit_sources.items():</span>
 <span id="cb5-3"><a href="#cb5-3" aria-label="3"></a>    fit_record <span class="op">=</span> json.loads(resolve_project_path(source, root_path).read_text())</span>
-<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    fit_record[<span class="st">"fit_configuration"</span>].setdefault(</span>
-<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>        <span class="st">"cohort_trial_indices"</span>, fit_record[<span class="st">"cohort_trial_indices"</span>]</span>
-<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    )</span>
-<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>    job_path <span class="op">=</span> output_path <span class="op">/</span> model_name</span>
-<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a>    fit_directory <span class="op">=</span> job_path <span class="op">/</span> <span class="st">"fits"</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>    fit_directory.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>    fit_path <span class="op">=</span> fit_directory <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>fit_record[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">.json"</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>    <span class="cf">if</span> <span class="kw">not</span> redo_fits <span class="kw">and</span> <span class="kw">not</span> fit_path.exists():</span>
-<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>        fit_path.write_text(json.dumps(fit_record, indent<span class="op">=</span><span class="dv">2</span>) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>    search <span class="op">=</span> fit_record[<span class="st">"fit_configuration"</span>][<span class="st">"search_settings"</span>]</span>
-<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a>    model_spec <span class="op">=</span> {</span>
-<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a>        <span class="st">"label"</span>: model_labels[model_name],</span>
-<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a>        <span class="st">"model_factory"</span>: fit_record[<span class="st">"model_factory"</span>],</span>
-<span id="cb5-18"><a href="#cb5-18" aria-label="18"></a>        <span class="st">"components"</span>: fit_record[<span class="st">"components"</span>],</span>
-<span id="cb5-19"><a href="#cb5-19" aria-label="19"></a>        <span class="st">"parameters"</span>: fit_record[<span class="st">"fit_configuration"</span>][<span class="st">"parameters"</span>],</span>
-<span id="cb5-20"><a href="#cb5-20" aria-label="20"></a>        <span class="st">"seed"</span>: search[<span class="st">"seed"</span>], <span class="st">"output_stem"</span>: fit_record[<span class="st">"name"</span>],</span>
-<span id="cb5-21"><a href="#cb5-21" aria-label="21"></a>        <span class="st">"embedding_path"</span>: fit_record[<span class="st">"embedding_path"</span>],</span>
-<span id="cb5-22"><a href="#cb5-22" aria-label="22"></a>        <span class="st">"emotion_feature_path"</span>: fit_record[<span class="st">"emotion_feature_path"</span>],</span>
-<span id="cb5-23"><a href="#cb5-23" aria-label="23"></a>        <span class="st">"feature_column"</span>: fit_record[<span class="st">"feature_column"</span>],</span>
-<span id="cb5-24"><a href="#cb5-24" aria-label="24"></a>        <span class="st">"concat_features"</span>: fit_record[<span class="st">"concat_features"</span>],</span>
-<span id="cb5-25"><a href="#cb5-25" aria-label="25"></a>    }</span>
-<span id="cb5-26"><a href="#cb5-26" aria-label="26"></a>    fit_jobs.append({</span>
-<span id="cb5-27"><a href="#cb5-27" aria-label="27"></a>        <span class="st">"name"</span>: model_name, <span class="st">"directory"</span>: job_path, <span class="st">"fit_path"</span>: fit_path,</span>
-<span id="cb5-28"><a href="#cb5-28" aria-label="28"></a>        <span class="st">"model_configs"</span>: {model_name: model_spec},</span>
-<span id="cb5-29"><a href="#cb5-29" aria-label="29"></a>        <span class="st">"fit_alg_path"</span>: fit_record[<span class="st">"fit_algorithm"</span>],</span>
-<span id="cb5-30"><a href="#cb5-30" aria-label="30"></a>        <span class="st">"fit_hyperparams"</span>: {key: value <span class="cf">for</span> key, value <span class="kw">in</span> search.items() <span class="cf">if</span> key <span class="kw">not</span> <span class="kw">in</span> {<span class="st">"seed"</span>, <span class="st">"bounds"</span>}},</span>
-<span id="cb5-31"><a href="#cb5-31" aria-label="31"></a>        <span class="st">"loss_fn_path"</span>: fit_record[<span class="st">"loss_function"</span>],</span>
-<span id="cb5-32"><a href="#cb5-32" aria-label="32"></a>        <span class="st">"sim_alg_path"</span>: fit_record[<span class="st">"simulation_function"</span>],</span>
-<span id="cb5-33"><a href="#cb5-33" aria-label="33"></a>        <span class="st">"trial_query"</span>: fit_record[<span class="st">"trial_query"</span>],</span>
-<span id="cb5-34"><a href="#cb5-34" aria-label="34"></a>    })</span>
-<span id="cb5-35"><a href="#cb5-35" aria-label="35"></a><span class="bu">print</span>(<span class="st">"Fitting work units:"</span>, [job[<span class="st">"name"</span>] <span class="cf">for</span> job <span class="kw">in</span> fit_jobs])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-4"><a href="#cb5-4" aria-label="4"></a>    job_path <span class="op">=</span> output_path <span class="op">/</span> model_name</span>
+<span id="cb5-5"><a href="#cb5-5" aria-label="5"></a>    fit_directory <span class="op">=</span> job_path <span class="op">/</span> <span class="st">"fits"</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-label="6"></a>    fit_path <span class="op">=</span> (fit_directory <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>fit_record[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss">.json"</span> <span class="cf">if</span> redo_fits</span>
+<span id="cb5-7"><a href="#cb5-7" aria-label="7"></a>                <span class="cf">else</span> resolve_project_path(source, root_path))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-label="8"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-label="9"></a>    search <span class="op">=</span> fit_record[<span class="st">"fit_configuration"</span>][<span class="st">"search_settings"</span>]</span>
+<span id="cb5-10"><a href="#cb5-10" aria-label="10"></a>    model_spec <span class="op">=</span> {</span>
+<span id="cb5-11"><a href="#cb5-11" aria-label="11"></a>        <span class="st">"label"</span>: model_labels[model_name],</span>
+<span id="cb5-12"><a href="#cb5-12" aria-label="12"></a>        <span class="st">"model_factory"</span>: fit_record[<span class="st">"model_factory"</span>],</span>
+<span id="cb5-13"><a href="#cb5-13" aria-label="13"></a>        <span class="st">"components"</span>: fit_record[<span class="st">"components"</span>],</span>
+<span id="cb5-14"><a href="#cb5-14" aria-label="14"></a>        <span class="st">"parameters"</span>: fit_record[<span class="st">"fit_configuration"</span>][<span class="st">"parameters"</span>],</span>
+<span id="cb5-15"><a href="#cb5-15" aria-label="15"></a>        <span class="st">"simulation_function"</span>: fit_record[<span class="st">"simulation_function"</span>],</span>
+<span id="cb5-16"><a href="#cb5-16" aria-label="16"></a>        <span class="st">"seed"</span>: search[<span class="st">"seed"</span>], <span class="st">"output_stem"</span>: fit_record[<span class="st">"name"</span>],</span>
+<span id="cb5-17"><a href="#cb5-17" aria-label="17"></a>        <span class="st">"embedding_path"</span>: fit_record[<span class="st">"embedding_path"</span>],</span>
+<span id="cb5-18"><a href="#cb5-18" aria-label="18"></a>        <span class="st">"emotion_feature_path"</span>: fit_record[<span class="st">"emotion_feature_path"</span>],</span>
+<span id="cb5-19"><a href="#cb5-19" aria-label="19"></a>        <span class="st">"feature_column"</span>: fit_record[<span class="st">"feature_column"</span>],</span>
+<span id="cb5-20"><a href="#cb5-20" aria-label="20"></a>        <span class="st">"concat_features"</span>: fit_record[<span class="st">"concat_features"</span>],</span>
+<span id="cb5-21"><a href="#cb5-21" aria-label="21"></a>    }</span>
+<span id="cb5-22"><a href="#cb5-22" aria-label="22"></a>    fit_jobs.append({</span>
+<span id="cb5-23"><a href="#cb5-23" aria-label="23"></a>        <span class="st">"name"</span>: model_name, <span class="st">"directory"</span>: job_path, <span class="st">"fit_path"</span>: fit_path,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-label="24"></a>        <span class="st">"model_configs"</span>: {model_name: model_spec},</span>
+<span id="cb5-25"><a href="#cb5-25" aria-label="25"></a>        <span class="st">"fit_alg_path"</span>: fit_record[<span class="st">"fit_algorithm"</span>],</span>
+<span id="cb5-26"><a href="#cb5-26" aria-label="26"></a>        <span class="st">"fit_hyperparams"</span>: {key: value <span class="cf">for</span> key, value <span class="kw">in</span> search.items() <span class="cf">if</span> key <span class="kw">not</span> <span class="kw">in</span> {<span class="st">"seed"</span>, <span class="st">"bounds"</span>}},</span>
+<span id="cb5-27"><a href="#cb5-27" aria-label="27"></a>        <span class="st">"loss_fn_path"</span>: fit_record[<span class="st">"loss_function"</span>].replace(</span>
+<span id="cb5-28"><a href="#cb5-28" aria-label="28"></a>            <span class="st">"jaxcmr.loss.transform_sequence_likelihood."</span>, <span class="st">"jaxcmr.loss.sequence_likelihood."</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-label="29"></a>        ),</span>
+<span id="cb5-30"><a href="#cb5-30" aria-label="30"></a>        <span class="st">"trial_query"</span>: fit_record[<span class="st">"trial_query"</span>],</span>
+<span id="cb5-31"><a href="#cb5-31" aria-label="31"></a>    })</span>
+<span id="cb5-32"><a href="#cb5-32" aria-label="32"></a><span class="bu">print</span>(<span class="st">"Fitting work units:"</span>, [job[<span class="st">"name"</span>] <span class="cf">for</span> job <span class="kw">in</span> fit_jobs])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Fitting work units: ['CMR', 'eCMR_source_only', 'eCMR_broad']</code></pre>
@@ -654,16 +648,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-8"><a href="#cb7-8" aria-label="8"></a>            <span class="st">"project_root"</span>: <span class="bu">str</span>(root_path), <span class="st">"data_path"</span>: <span class="bu">str</span>(observation_path),</span>
 <span id="cb7-9"><a href="#cb7-9" aria-label="9"></a>            <span class="st">"model_configs"</span>: job[<span class="st">"model_configs"</span>],</span>
 <span id="cb7-10"><a href="#cb7-10" aria-label="10"></a>            <span class="st">"fit_alg_path"</span>: job[<span class="st">"fit_alg_path"</span>], <span class="st">"fit_hyperparams"</span>: job[<span class="st">"fit_hyperparams"</span>],</span>
-<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>            <span class="st">"loss_fn_path"</span>: job[<span class="st">"loss_fn_path"</span>], <span class="st">"sim_alg_path"</span>: job[<span class="st">"sim_alg_path"</span>],</span>
+<span id="cb7-11"><a href="#cb7-11" aria-label="11"></a>            <span class="st">"loss_fn_path"</span>: job[<span class="st">"loss_fn_path"</span>],</span>
 <span id="cb7-12"><a href="#cb7-12" aria-label="12"></a>            <span class="st">"trial_query"</span>: job[<span class="st">"trial_query"</span>], <span class="st">"pooled"</span>: <span class="va">True</span>,</span>
 <span id="cb7-13"><a href="#cb7-13" aria-label="13"></a>            <span class="st">"output_dir"</span>: <span class="bu">str</span>(job[<span class="st">"directory"</span>]), <span class="st">"fit_dir"</span>: <span class="bu">str</span>(job[<span class="st">"fit_path"</span>].parent),</span>
-<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>            <span class="st">"redo_fits"</span>: redo_fits, <span class="st">"redo_sims"</span>: <span class="va">False</span>, <span class="st">"redo_figures"</span>: <span class="va">False</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>        },</span>
-<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>        <span class="op">**</span>execution_options,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>    )</span>
-<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>    fit_paths[model_name] <span class="op">=</span> <span class="bu">str</span>(job[<span class="st">"fit_path"</span>])</span>
-<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    fitted <span class="op">=</span> json.loads(job[<span class="st">"fit_path"</span>].read_text())</span>
-<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    <span class="bu">print</span>(model_labels[model_name], <span class="st">"— saved NLL:"</span>, fitted[<span class="st">"fitness"</span>][<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-14"><a href="#cb7-14" aria-label="14"></a>            <span class="st">"fit_action"</span>: <span class="st">"estimate"</span> <span class="cf">if</span> redo_fits <span class="cf">else</span> <span class="st">"inspect"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-label="15"></a>            <span class="st">"saved_fit_paths"</span>: {model_name: <span class="bu">str</span>(job[<span class="st">"fit_path"</span>])},</span>
+<span id="cb7-16"><a href="#cb7-16" aria-label="16"></a>        },</span>
+<span id="cb7-17"><a href="#cb7-17" aria-label="17"></a>        <span class="op">**</span>execution_options,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-label="18"></a>    )</span>
+<span id="cb7-19"><a href="#cb7-19" aria-label="19"></a>    fit_paths[model_name] <span class="op">=</span> <span class="bu">str</span>(job[<span class="st">"fit_path"</span>])</span>
+<span id="cb7-20"><a href="#cb7-20" aria-label="20"></a>    fitted <span class="op">=</span> json.loads(job[<span class="st">"fit_path"</span>].read_text())</span>
+<span id="cb7-21"><a href="#cb7-21" aria-label="21"></a>    <span class="bu">print</span>(model_labels[model_name], <span class="st">"— saved NLL:"</span>, fitted[<span class="st">"fitness"</span>][<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>CMR — saved NLL: 7202.029122199305</code></pre>
@@ -742,26 +737,25 @@ Broader eCMR — saved NLL: 7164.357873171088</code></pre>
 <div id="8a2f59bd" class="cell" data-tags="[]" data-execution_count="10">
 <details open="" class="code-fold">
 <summary>9 — Compare the same fits and responses and display their scores</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a>pm.execute_notebook(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"model_comparison.ipynb"</span>),</span>
-<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a>    <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"model_comparison.ipynb"</span>),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>    parameters<span class="op">=</span>{</span>
-<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>        <span class="st">"project_root"</span>: <span class="bu">str</span>(root_path), <span class="st">"data_path"</span>: <span class="bu">str</span>(observation_path),</span>
-<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>        <span class="st">"fit_paths"</span>: fit_paths, <span class="st">"simulation_paths"</span>: simulation_paths,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>        <span class="st">"model_labels"</span>: model_labels, <span class="st">"output_dir"</span>: <span class="bu">str</span>(output_path <span class="op">/</span> <span class="st">"comparison"</span>),</span>
-<span id="cb13-8"><a href="#cb13-8" aria-label="8"></a>    },</span>
-<span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>    <span class="op">**</span>execution_options,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-label="10"></a>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-label="11"></a><span class="cf">with</span> (output_path <span class="op">/</span> <span class="st">"comparison"</span> <span class="op">/</span> <span class="st">"pooled_model_comparison.csv"</span>).<span class="bu">open</span>(newline<span class="op">=</span><span class="st">""</span>) <span class="im">as</span> stream:</span>
-<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>    comparison_rows <span class="op">=</span> <span class="bu">list</span>(csv.DictReader(stream))</span>
-<span id="cb13-13"><a href="#cb13-13" aria-label="13"></a><span class="bu">print</span>(tabulate(comparison_rows, headers<span class="op">=</span><span class="st">"keys"</span>, floatfmt<span class="op">=</span><span class="st">".3f"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-label="1"></a><span class="cf">if</span> <span class="kw">not</span> (redo_fits <span class="kw">or</span> compare_saved_fits):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-label="2"></a>    <span class="bu">print</span>(<span class="st">"The bundled fits describe an earlier version of the observations. Refit before comparing AIC."</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-label="3"></a><span class="cf">else</span>:</span>
+<span id="cb13-4"><a href="#cb13-4" aria-label="4"></a>    pm.execute_notebook(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-label="5"></a>        <span class="bu">str</span>(template_path <span class="op">/</span> <span class="st">"model_comparison.ipynb"</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-label="6"></a>        <span class="bu">str</span>(executed_path <span class="op">/</span> <span class="st">"model_comparison.ipynb"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-label="7"></a>        parameters<span class="op">=</span>{</span>
+<span id="cb13-8"><a href="#cb13-8" aria-label="8"></a>            <span class="st">"project_root"</span>: <span class="bu">str</span>(root_path), <span class="st">"data_path"</span>: <span class="bu">str</span>(observation_path),</span>
+<span id="cb13-9"><a href="#cb13-9" aria-label="9"></a>            <span class="st">"fit_paths"</span>: fit_paths, <span class="st">"simulation_paths"</span>: simulation_paths,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-label="10"></a>            <span class="st">"model_labels"</span>: model_labels, <span class="st">"output_dir"</span>: <span class="bu">str</span>(output_path <span class="op">/</span> <span class="st">"comparison"</span>),</span>
+<span id="cb13-11"><a href="#cb13-11" aria-label="11"></a>        },</span>
+<span id="cb13-12"><a href="#cb13-12" aria-label="12"></a>        <span class="op">**</span>execution_options,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-label="13"></a>    )</span>
+<span id="cb13-14"><a href="#cb13-14" aria-label="14"></a>    <span class="cf">with</span> (output_path <span class="op">/</span> <span class="st">"comparison"</span> <span class="op">/</span> <span class="st">"pooled_model_comparison.csv"</span>).<span class="bu">open</span>(newline<span class="op">=</span><span class="st">""</span>) <span class="im">as</span> stream:</span>
+<span id="cb13-15"><a href="#cb13-15" aria-label="15"></a>        comparison_rows <span class="op">=</span> <span class="bu">list</span>(csv.DictReader(stream))</span>
+<span id="cb13-16"><a href="#cb13-16" aria-label="16"></a>    <span class="bu">print</span>(tabulate(comparison_rows, headers<span class="op">=</span><span class="st">"keys"</span>, floatfmt<span class="op">=</span><span class="st">".3f"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Model               Free parameters    Negative log likelihood        AIC    Delta AIC
-----------------  -----------------  -------------------------  ---------  -----------
-CMR                               9                   7202.029  14422.058       73.342
-Source-only eCMR                 10                   7169.426  14358.853       10.137
-Broader eCMR                     10                   7164.358  14348.716        0.000</code></pre>
+<pre><code>The bundled fits describe an earlier version of the observations. Refit before comparing AIC.</code></pre>
 </div>
 </div>
 <p>Executed notebooks are under <code>output_dir/executed</code>; fit records, simulated responses, figures and summary tables remain in their named result folders. Papermill stops on an execution error, so a failed fitting job prevents the later comparison from silently continuing.</p>

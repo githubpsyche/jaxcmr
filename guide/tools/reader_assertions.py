@@ -51,7 +51,7 @@ def verify_outputs(project, profile):
         assert len(list((root / "responses").glob("*.h5"))) == 3
     elif profile == "fitting":
         assert any("fits" in json.loads(p.read_text(encoding="utf-8")) for p in (root / "fits").glob("*.json"))
-    if profile in {"analysis", "simulation", "fitting", "shifting", "comparison"}:
+    if profile in {"analysis", "simulation", "shifting", "comparison"}:
         assert any(p.suffix == ".png" for p in files), "Missing figure"
 
 
